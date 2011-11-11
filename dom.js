@@ -57,6 +57,16 @@ function show(obj)
   showHide(obj, true);
 }
 
+function hideById(id)
+{
+  showHideById(id, false);
+}
+
+function showById(id)
+{
+  showHideById(id, true);
+}
+
 function toggle_show(obj)
 {
    obj.style.display = obj.style.display=='none'?'':'none';
