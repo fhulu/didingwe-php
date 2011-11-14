@@ -67,6 +67,17 @@ function showById(id)
   showHideById(id, true);
 }
 
+function swapShow(obj1, obj2)
+{
+  toggle_show(obj1);
+  toggle_show(obj2);
+}
+
+function swapShowById(id1, id2)
+{
+  swapShow(document.getElementById(id1), document.getElementById(id2));
+}
+
 function toggle_show(obj)
 {
    obj.style.display = obj.style.display=='none'?'':'none';
