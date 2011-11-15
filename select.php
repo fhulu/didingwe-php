@@ -1,6 +1,7 @@
 <?php 
 
-require_once('session.php');
+/* remove these comments for functionality - session php is highly needed
+require_once('session.php');*/
 
 class select
 {
@@ -35,7 +36,10 @@ EOT;
     while ($db->more_rows()) 
       select::add($db->row[0],$db->row[$descript_field],$selected==$db->row[0]);
   }
-  
+  static function load_from_db($sql,$selected=null,$first_value=null, $first_text=null)
+  {
+    select::add_db($sql, $selected, $first_value, $first_text);
+  }  
   static function add_months($selected=null)
   {
     $selected = is_null($selected) ? date('n', time()) : $selected;
