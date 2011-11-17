@@ -1,5 +1,5 @@
 <?php
-require_once("session.php");
+//require_once("session.php");
 require_once("log.php");
 
 $path_info = explode('/', $_SERVER[PATH_INFO]);
