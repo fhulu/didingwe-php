@@ -8,7 +8,7 @@ global $client_id;
 
 $client_id = $_SESSION['client_id'];
 if ($client_id=='' && $_SESSION['function'] != 'session::login') {
-  header("Location: /login.php");
+  header("Location: login.php");
   return;
 }
 
@@ -39,11 +39,11 @@ function login()
 
     unset($_SESSION['login_error']);
 
-    header("Location: /index.php");
+    header("Location: index.php");
   }
   catch (Exception $e) {
     $_SESSION['login_error'] = $e->getMessage();
-    header("Location: /login.php");
+    header("Location: login.php");
   }
 }
 
