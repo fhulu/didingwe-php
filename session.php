@@ -1,48 +1,49 @@
 <?php session_id(); session_start();
 
-require_once("config.php");
-require_once("db.php");
+require_once('log.php');
 
 class session_exception extends Exception {};
 
 global $client_id;
 
 $client_id = $_SESSION['client_id'];
+if ($client_id=='' && $_SESSION['function'] != 'session::login') {
+  header("Location: /login.php");
+  return;
+}
 
-if (!isset($_SESSION['session_id']))
-  header("Location: login.php");
-
+require_once('db.php');
+require_once('config.php');
 
 function login()
 {
   try {
-  	global $db;
-  	global $client_id;
+    global $db;
+    global $client_id;
 
-	$email = $_REQUEST['email'];
-  	$passwd = $_REQUEST['password'];
-	$sql = "select id, client_id, first_name, last_name, role_id from mukonin_audit.user
-	where email_address='$email' and password='$passwd'";
-	if (!$db->exists($sql))
-	 throw new session_exception("Invalid username/password for '$email'");
+    $email = $_REQUEST['email'];
+    $passwd = $_REQUEST['password'];
+    $sql = "select id, client_id, first_name, last_name, role_id from mukonin_audit.user
+       where email_address='$email' and password=password('$passwd')";
+    if (!$db->exists($sql))
+      throw new session_exception("Invalid username/password for '$email'");
 
+    list($user_id, $client_id, $first_name, $last_name, $role_id) = $db->row;
+    $session_id = sprintf("%08x%04x%04x%08x",rand(0,0xffffffff),$client_id,$user_id,time());
+    $sql = "insert mukonin_audit.session (id, user_id) values ('$session_id','$user_id')";
+    $db->insert($sql);
+    $_SESSION['session_id'] = $session_id;
+    $_SESSION['client_id'] = $client_id;
+    $_SESSION['user_email'] = $email;
+    $client_id = $_SESSION['client_id'];
 
-	list($user_id, $client_id, $first_name, $last_name, $role_id) = $db->row;
-	$session_id = sprintf("%08x%04x%04x%08x",rand(0,0xffffffff),$client_id,$user_id,time());
-	$sql = "insert mukonin_audit.session (id, user_id) values ('$session_id','$user_id')";
-	$db->insert($sql);
-	$_SESSION['session_id'] = $session_id;
-	$_SESSION['client_id'] = $client_id;
-  $_SESSION['user_email'] = $email;
-  $client_id = $_SESSION['client_id'];
+    unset($_SESSION['login_error']);
 
-	unset($_SESSION['login_error']);
-
-	header("Location: /index.php");
+    header("Location: /index.php");
   }
   catch (Exception $e) {
-	$_SESSION['login_error'] = $e->getMessage();
-	header("Location: login.php");
+    $_SESSION['login_error'] = $e->getMessage();
+    header("Location: /login.php");
   }
 }
 
