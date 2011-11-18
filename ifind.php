@@ -1,4 +1,5 @@
-<?php require_once('session.php');
+<?php 
+require_once('db.php');
 require_once('table.php');
 
 class ifind
@@ -12,6 +13,7 @@ class ifind
   var $max_rows;
   var $key_fields;
   var $extra_fields;
+  var $on_select;
   const PAGESIZE=15;
   
   static function get_dest_key(&$fields)
@@ -25,22 +27,23 @@ class ifind
     return null;
   }
   
-  static function add($key_fields, $extra_fields, $table)
+  static function add($key_fields, $extra_fields, $table, $on_select='')
   {
     $table = $table;
     $key_fields = explode(',', $key_fields);
-    $extra_fields = explode(',', $extra_fields);
+    if (!is_null($extra_fields)) $extra_fields = explode(',', $extra_fields);
     
     $dest_key = ifind::get_dest_key($key_fields);
-    if (is_null($dest_key))
+    if (is_null($dest_key) && !is_null($extra_fields))
       $dest_key = ifind::get_dest_key($extra_fields);
 
     $input_name = $key_fields[0];
     $key_fields = urlencode(implode(',', $key_fields));
     $extra_fields = urlencode(implode(',', $extra_fields));
+    $on_select = urlencode($on_select);
     echo <<<EOT
       <input type='text' name='$input_name' size=40
-        onkeyup="ajax_inner('div_$input_name', 'do.php/ifind/drop?k=$key_fields,$input_name,x=$extra_fields,t=$table,d=$dest_key')" />
+        onkeyup="ajax_inner('div_$input_name', 'do.php/ifind/drop?k=$key_fields,$input_name,x=$extra_fields,t=$table,d=$dest_key,s=$on_select')" />
       <div class=dropdown id=div_$input_name></div>
 EOT;
   }
@@ -57,6 +60,7 @@ EOT;
     $ifind->dest_key = $_GET[d];
     $ifind->page = (int)$_GET[p];
     $ifind->extra_fields = urldecode($_GET[x]);
+    $ifind->on_select = urldecode($_GET['s']);
     $ifind->table = $_GET[t];
     $row = $ifind->page * self::PAGESIZE;
 
@@ -91,12 +95,18 @@ EOT;
       $key = $row_data[$ifind->input_name];
       $len = strlen($ifind->hint);
       $row_data[$ifind->input_name] = '<b>'.substr($key, 0, $len).'</b>'.substr($key, $len);
-      $dest = $row_data[$ifind->dest_key];
-      $attr = <<<EOT
-      onclick = "getElementByName('$ifind->input_name').value='$key'; 
-        getElementByName('$ifind->dest_key').value=$dest;  
-        hide(this.parentNode);"
-EOT;
+            
+      $attr = " onclick = \"getElementByName('$ifind->input_name').value='$key';";
+      if ($ifind->dest_key!='') {
+        $dest = $row_data[$ifind->dest_key];
+        $attr .= "getElementByName('$ifind->dest_key').value=$dest;";
+      }        
+      $attr .= 'hide(this.parentNode);';
+      if ($ifind->on_select != '') {
+        $action = str_replace("\\'","'", $ifind->on_select);
+        $attr .= "$action;";
+      }
+      $attr .= '"';
       return true;
     }
     
