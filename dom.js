@@ -88,20 +88,38 @@ function backOnReject(msg)
   if (!confirm(ms)) history.go(-1);
 }
 
+function make_name_pair(name)
+{
+  var obj = getElementByIdOrName(name);
+  if (obj != null) 
+    return obj.name + "=" + obj.value;
+  return name;
+
+}
+
 function get_name_value(params)
 {
   params = params.split(',');
   var pairs='';
-  var prefix='';
   for (var i=0; i<params.length; ++i)  {
-    var obj = getElementByIdOrName(params[i]);
-    if (obj != null) 
-      pairs += prefix + obj.name + "=" + obj.value;
-    else  
-      pairs += prefix + params[i];
-    prefix = '&';
+    var name = params[i];
+    var range_spec = name.split(':');
+    if (range_spec.length > 2) {
+      name = range_spec[0];
+      var first = range_spec[1];
+      var last = range_spec[2];
+      for (var j=first; j <= last; j++) {
+        //pairs += '&' + make_name_pair(name + j);
+        var obj = getElementByIdOrName(name + j);
+        if (obj != null) 
+          pairs += '&' + obj.name + "=" + obj.value;
+      }
+    }
+    else {  
+      pairs += '&' + make_name_pair(name);
+    }
   }
-  return pairs;
+  return pairs.substr(1,pairs.length-1);
 }
 
 
