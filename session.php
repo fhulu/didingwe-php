@@ -42,7 +42,9 @@ function login()
 
     unset($_SESSION['login_error']);
 
-    header("Location: ". $_SESSION['referrer']);
+    if ($referrer == '') $referrer = $_REQUEST[next];
+    if ($referrer == '') $referrer = '/';
+    header("Location: $referrer");
   }
   catch (Exception $e) {
     $_SESSION['login_error'] = $e->getMessage();
