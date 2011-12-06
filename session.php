@@ -1,13 +1,12 @@
-<?php session_id(); session_start();
+<?php session_start();
 
 require_once('log.php');
 
 class session_exception extends Exception {};
 
-global $client_id;
-
 $client_id = $_SESSION['client_id'];
-if ($client_id=='' && $_SESSION['function'] != 'session::login') {
+if ($client_id=='' && strstr($_SERVER[PATH_INFO], 'session/login')===false) {
+  $_SESSION['referrer'] = $_SERVER[REQUEST_URI];
   header("Location: login.php");
   return;
 }
@@ -19,12 +18,15 @@ function login()
 {
   try {
     global $db;
-    global $client_id;
-
+    global $client_id, $program_id, $user_id;
+    
+    $program_id = $_REQUEST['program'];
     $email = $_REQUEST['email'];
     $passwd = $_REQUEST['password'];
+    $referrer = $_SESSION['referrer'];
+    log::debug("LOGIN: $email PROGRAM: $program_id REFERRER: $referrer");
     $sql = "select id, client_id, first_name, last_name, role_id from mukonin_audit.user
-       where email_address='$email' and password=password('$passwd')";
+       where email_address='$email' and password=password('$passwd') and program_id = $program_id";
     if (!$db->exists($sql))
       throw new session_exception("Invalid username/password for '$email'");
 
@@ -35,11 +37,12 @@ function login()
     $_SESSION['session_id'] = $session_id;
     $_SESSION['client_id'] = $client_id;
     $_SESSION['user_email'] = $email;
-    $client_id = $_SESSION['client_id'];
+    $_SESSION['program_id'] = $program_id;
+    $_SESSION['user_id'] = $user_id;
 
     unset($_SESSION['login_error']);
 
-    header("Location: index.php");
+    header("Location: ". $_SESSION['referrer']);
   }
   catch (Exception $e) {
     $_SESSION['login_error'] = $e->getMessage();

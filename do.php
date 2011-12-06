@@ -1,4 +1,4 @@
-<?php session_start();
+<?php 
 require_once('log.php');
 
 {
@@ -24,12 +24,11 @@ require_once('log.php');
   $_SESSION['function'] = $class_function;
 
   log::init($class, log::DEBUG);
-  log::debug("CLASS_FUNCTION: $class_function");
+  log::debug("PATH_INFO ". implode('/', $path_info));
   try {
     require_once($source_file);
     if (is_callable($class_function)) $function = $class_function;
-    log::debug("FUNCTION CALL: $function");  
-    call_user_func($function);
+    if (is_callable($function)) call_user_func($function);
   }
   catch (Exception $e) {
     log::error("UNCAUGHT EXCEPTION: " . $e->getMessage() );
