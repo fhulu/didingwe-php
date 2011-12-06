@@ -179,3 +179,48 @@ function url_params(url)
   
   return url;
 }
+
+function checkAll(name, checked)
+{
+  var objs = document.getElementsByName(name);
+
+  for (var i=0; i<objs.length; ++i) {
+    objs[i].checked = checked;
+  }
+}
+
+function getChecked(name, separator)
+{
+  var objs = document.getElementsByName(name);
+
+  var checked = '';
+  for (var i=0; i<objs.length; ++i) {
+    if (objs[i].checked)
+      checked += separator + objs[i].value;
+  }
+  return checked.substring(separator.length);
+}
+
+
+function swapShow(obj1, obj2)
+{
+  toggle_show(obj1);
+  toggle_show(obj2);
+}
+
+function swapShowById(id1, id2)
+{
+  swapShow(document.getElementById(id1), document.getElementById(id2));
+}
+
+function set_inner(id, inner)
+{
+  var obj = getElementByIdOrName(id);
+  obj.innerHTML = inner;
+}
+
+function set_value(id, value)
+{
+  var obj = getElementByIdOrName(id);
+  obj.value = value;
+}
