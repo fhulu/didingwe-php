@@ -224,3 +224,10 @@ function set_value(id, value)
   var obj = getElementByIdOrName(id);
   obj.value = value;
 }
+
+function load_js(filename)
+{
+  var file=document.createElement('script');
+  file.setAttribute("type","text/javascript");
+  file.setAttribute("src", filename);
+}
