@@ -3,7 +3,7 @@ require_once('log.php');
 
 {
   $path_info = explode('/', $_SERVER[PATH_INFO]);
-  if (sizeof($path_info) < 3) {
+  if (sizeof($path_info) < 2) {
     echo "Not enough arguments supplied for path info";
     return;
   }
@@ -18,20 +18,25 @@ require_once('log.php');
     $class = substr($source_file, 0, $pos);
   }
 
-  $function = $path_info[2];
+  if (sizeof($path_info) > 2) {
+    $function = $path_info[2];
 
-  $class_function = $class. '::' . $function;
-  $_SESSION['function'] = $class_function;
+    $class_function = $class. '::' . $function;
+    $_SESSION['function'] = $class_function;
 
   log::init($class, log::DEBUG);
-  log::debug("PATH_INFO ". implode('/', $path_info));
-  try {
-    require_once($source_file);
-    if (is_callable($class_function)) $function = $class_function;
-    if (is_callable($function)) call_user_func($function);
+    log::debug("PATH_INFO ". implode('/', $path_info));
+    try {
+      require_once($source_file);
+      if (is_callable($class_function)) $function = $class_function;
+      if (is_callable($function)) call_user_func($function);
+    }
+    catch (Exception $e) {
+      log::error("UNCAUGHT EXCEPTION: " . $e->getMessage() );
+    }
   }
-  catch (Exception $e) {
-    log::error("UNCAUGHT EXCEPTION: " . $e->getMessage() );
+  else {
+    require_once($source_file);
   }
 } 
 ?>
