@@ -4,9 +4,10 @@ require_once('log.php');
 
 class session_exception extends Exception {};
 
+log::init('session', log::DEBUG);
+
 $client_id = $_SESSION['client_id'];
 if ($client_id=='' && strstr($_SERVER[PATH_INFO], 'session/login')===false) {
-  $_SESSION['referrer'] = $_SERVER[REQUEST_URI];
   header("Location: login.php");
   return;
 }
