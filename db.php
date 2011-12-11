@@ -1,6 +1,7 @@
 <?php
-require_once("config.php");
-require_once("log.php");
+require_once('session.php');
+require_once('config.php');
+require_once('log.php');
 
 class db_exception extends Exception {
    public function __construct($message, $code = 0)//, Exception $previous = null)
