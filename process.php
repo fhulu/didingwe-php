@@ -2,7 +2,6 @@
 
 require_once('log.php');
 
-
 class process_entry
 {
   var $method;
@@ -46,7 +45,7 @@ class process
   
   static private function get_handle()
   {
-    $key = ftok('process.php','k');
+    $key = ftok(__FILE__,'k');
     return msg_get_queue($key, 0660);
   }
   
@@ -54,7 +53,7 @@ class process
   {
     $msg = new process_entry;
     $msg->method = $method;
-	$msg->options = $options;
+    $msg->options = $options;
     $msg->env[client_id] = $_SESSION[client_id];
     $msg->env[user_email] = $_SESSION[user_email];
     log::init("process", log::TRACE);
@@ -74,8 +73,7 @@ class process
      process::send($method, array_slice(func_get_args(), 1), 'start');
   }
   
-  static function 
-  static function restart($log_level)`
+  static function restart($log_level)
   {
     process::q('restart', $log_level);
   }
@@ -151,8 +149,9 @@ class process
       $pid = pcntl_fork();
       if ($pid == -1) 
         log::error("Could not fork");
-      if ($pid != 0)
+      if ($pid != 0) {
         exit(0);
+       }
       log::info("Now running with child process with pid " . getmypid());
     } 
     return $msg;
