@@ -11,7 +11,6 @@ function load_div($div, $page)
   $args = explode('?', $paths[sizeof($paths)-1]);
   $file_name = $args[0];
   $js = "$file_name.js";
-  log::debug("JSFILE: $js");
   if (file_exists($js))
     echo "<script type='text/javascript' src='$js'></script>\n"; 
   if (file_exists("$file_name") || file_exists("$file_name.php") || file_exists("$file_name.html")) 
@@ -26,6 +25,14 @@ function init_div($div, $default=null)
     if (!isset($_SESSION[$div])) 
       $page = is_null($default)? $div: $default;
   }
+  
+  $params = '';
+  array_walk($_GET, function($value, $key) use (&$params, $var) {
+    if ($key != $var)
+      $params .= "&$key=".urlencode($value);
+  });
+  if ($params != '')
+    $page .= '?'. substr($params, 1);
   load_div($div, $page);
 }
 
