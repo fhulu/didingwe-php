@@ -2,7 +2,7 @@
 require_once('log.php');
 
 {
-  $path_info = explode('/', $_SERVER[PATH_INFO]);
+  $path_info = explode('/', $_SERVER['PATH_INFO']);
   if (sizeof($path_info) < 2) {
     echo "Not enough arguments supplied for path info";
     return;
