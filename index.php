@@ -4,15 +4,17 @@ require_once('log.php');
 log::init('index', log::DEBUG);
 $_SESSION['referrer'] = $_SERVER[REQUEST_URI];
 
+echo "<script type='text/javascript' src='../common/dom.js'></script>\n";
 
 function load_div($div, $page)
 {
   $paths = explode('/', $page);
   $args = explode('?', $paths[sizeof($paths)-1]);
   $file_name = $args[0];
-  $js = "$file_name.js";
-  if (file_exists($js))
-    echo "<script type='text/javascript' src='$js'></script>\n"; 
+ 
+  $jsfile = "$file_name.js";
+  if (file_exists($jsfile)) 
+     echo "<script type='text/javascript'>load_js('$jsfile')</script>\n"; 
   if (file_exists("$file_name") || file_exists("$file_name.php") || file_exists("$file_name.html")) 
     $_SESSION[$div] = "do.php/$page";
 }
