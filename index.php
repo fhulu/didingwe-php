@@ -15,6 +15,11 @@ function load_div($div, $page)
   $jsfile = "$file_name.js";
   if (file_exists($jsfile)) 
      echo "<script type='text/javascript'>load_js('$jsfile')</script>\n"; 
+     /*
+      perhaps the above line should be:
+      echo "<script type='text/javascript' src='$jsfile'></script>\n";
+      Since at the moment we seem not to be reading from this java script file
+    */
   if (file_exists("$file_name") || file_exists("$file_name.php") || file_exists("$file_name.html")) 
     $_SESSION[$div] = "do.php/$page";
 }
