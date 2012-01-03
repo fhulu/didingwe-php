@@ -7,6 +7,7 @@ class session_exception extends Exception {};
 log::init('session', log::DEBUG);
 
 $client_id = $_SESSION['client_id'];
+$user_id = $_SESSION['user_id'];
 if ($client_id=='' && strstr($_SERVER[PATH_INFO], 'session/login')===false) {
   header("Location: login.php");
   return;
