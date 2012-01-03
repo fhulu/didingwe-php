@@ -35,7 +35,17 @@ function ajax_query(source, url, result_id)
 {
   ajax_inner(result_id, url+"?q="+source.value);
 }
-
+/*
+  sets an object's inner html from the output of an ajax call. 
+  It can optionally sets the inner html to a fixed string while the ajax call is in progress.
+  parameters:
+    result_id : id of the object to be set
+    url: url of the ajax call
+    progress_str: optional string to be set to the object while ajax call is in progress
+    progress_id: id of the object to set the progress string to while ajax in in progress. 
+      Note that if this parameter is given, the progress string above does not affect
+      the result object.
+*/
 function ajax_inner(result_id, url, progress_str, progress_id, sync)
 {
   if (progress_str === true)
