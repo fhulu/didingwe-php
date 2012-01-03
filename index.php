@@ -61,9 +61,11 @@ init_div('footer');
     <script type="text/javascript" src="../common/dom.js"></script> 
 	<script language="JavaScript" src="pop-up.js"></script>
 	<link rel=StyleSheet href="pop-upstyle.css" type="text/css" media="screen">
+ 
 	<script type="text/javascript" src="../common/dom.js"></script> 
     <script type="text/javascript" src="../common/ajax.js"></script> 
     <script type="text/javascript">
+    
 	
       window.onload = function() {
       <?php 
