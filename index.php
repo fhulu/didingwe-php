@@ -4,19 +4,12 @@ require_once('log.php');
 log::init('index', log::DEBUG);
 $_SESSION['referrer'] = $_SERVER[REQUEST_URI];
 
-echo "<script type='text/javascript' src='../common/dom.js'></script>\n";
 
 function load_div($div, $page)
 {
-  $paths = explode('/', $page);
-  $args = explode('?', $paths[sizeof($paths)-1]);
-  $file_name = $args[0];
- 
-  $jsfile = "$file_name.js";
-  if (file_exists($jsfile)) 
-     echo "<script type='text/javascript' src='$jsfile'></script>\n"; 
+  list($file_name, $params) = explode('&', $page);
   if (file_exists("$file_name") || file_exists("$file_name.php") || file_exists("$file_name.html")) 
-    $_SESSION[$div] = "do.php/$page";
+    $_SESSION[$div] = "a.php?a=$page";
 }
 
 function init_div($div, $default=null)
@@ -33,16 +26,16 @@ function init_div($div, $default=null)
     if ($key != $var)
       $params .= "&$key=".urlencode($value);
   });
-  if ($params != '')
-    $page .= '?'. substr($params, 1);
+  
+  $page .= $params;
   load_div($div, $page);
 }
 
 function set_div($div)
 {
   $page = $_SESSION[$div];
-  if ($page != '') 
-    echo "ajax_inner('$div','$page',true);\n";  
+  if ($page != '')
+    echo "ajax_inner('$div', '$page', true);\n";
 }
 
 init_div('content', 'home');
@@ -61,8 +54,9 @@ init_div('footer');
   
 	<script language="JavaScript" src="pop-up.js"></script>
 	<link rel=StyleSheet href="pop-upstyle.css" type="text/css" media="screen">
- 
-    <script type="text/javascript" src="../common/ajax.js"></script> 
+  <script type='text/javascript' src='../common/dom.js'></script>
+  <script type="text/javascript" src="../common/ajax.js"></script> 
+
     <script type="text/javascript">
     
 	
@@ -91,6 +85,6 @@ init_div('footer');
         <div id='content'></div>
       </div>
       <div id='footer'></div>
-    </div>
+   </div>
   </body>
 </html>
