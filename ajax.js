@@ -19,8 +19,8 @@ function ajax_call(url, async, func)
 function ajax_inner_cb(obj)
 {
   if (ajax.readyState==4 && ajax.status==200) {
-    //eval(ajax.responseText);
-    obj.innerHTML=ajax.responseText;
+    parseScript(ajax.responseText);
+    obj.innerHTML = ajax.responseText;
   }
 }
 
