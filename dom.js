@@ -131,7 +131,7 @@ function check_if(names, value)
   for (i=0; i<names.length; ++i) {
     var obj = getElementByName(names[i]);
     if (obj==null) {
-      alert(names[i]);
+      //alert(names[i]);
     }
     else if (obj.value == value) {
       result = true;
