@@ -5,36 +5,61 @@ log::init('index', log::DEBUG);
 $_SESSION['referrer'] = $_SERVER[REQUEST_URI];
 
 
-function load_div($div, $page)
+function get_page_file($page)
 {
-  list($file_name, $params) = explode('&', $page);
-  if (file_exists("$file_name") || file_exists("$file_name.php") || file_exists("$file_name.html")) 
-    $_SESSION[$div] = "a.php?a=$page";
+  list($name, $params) = explode('?', $page);
+  static $extensions = array('','.php','.htm','.html');
+  foreach ($extensions as $ext) {
+    $file_name = $name . $ext;
+    if (file_exists($file_name))
+      return $file_name;
+  }
+  return null;
 }
 
 function init_div($div, $default=null)
 {
-  $var = $div[0];
-  $page = $_GET[$var]; 
+  $section = $div[0];
+  $page = $_GET[ $section ]; 
   if ($page == '') {
-    if (!isset($_SESSION[$div])) 
-      $page = is_null($default)? $div: $default;
+    $page = $_SESSION[$div];
+    if ($page != '') 
+      return;
+    $page = is_null($default)? $div: $default;
   }
-  
-  $params = '';
-  array_walk($_GET, function($value, $key) use (&$params, $var) {
-    if ($key != $var)
-      $params .= "&$key=".urlencode($value);
-  });
-  
-  $page .= $params;
-  load_div($div, $page);
+  // determine file name from page
+  $file_name = get_page_file($page);
+  if (is_null($file_name)) {
+   
+    $params = '';
+    array_walk($_GET, function($value, $key) use (&$params, $section) {
+      if ($key != $section)
+        $params .= "&$key=".urlencode($value);
+    });
+    
+    $page .= $params;
+
+    $_SESSION[$div] = "a.php?a=$page";
+  }
+  else
+    $_SESSION[$div] = $file_name;
+  //echo "SESSION[div] = ". $_SESSION[$div] . "<br>\n";
 }
+
+function load_div($div)
+{
+  $page = $_SESSION[$div];
+  echo "<div id='$div'>";
+  if (strpos($page, '?') === false && file_exists($page))
+    require_once($page);
+  echo "</div>\n";
+}
+
 
 function set_div($div)
 {
   $page = $_SESSION[$div];
-  if ($page != '')
+  if (strpos($page, '?') !== false) 
     echo "ajax_inner('$div', '$page', true);\n";
 }
 
@@ -49,13 +74,8 @@ init_div('footer');
 <html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-	<link href="default.style.css" media="screen" rel="stylesheet" type="text/css" />	
-	<link href="slideshowstyle.css" media="screen" rel="stylesheet" type="text/css" />
-  
-	<script language="JavaScript" src="pop-up.js"></script>
-	<link rel=StyleSheet href="pop-upstyle.css" type="text/css" media="screen">
-  <script type='text/javascript' src='../common/dom.js'></script>
-  <script type="text/javascript" src="../common/ajax.js"></script> 
+    <script type='text/javascript' src='../common/dom.js'></script>
+    <script type="text/javascript" src="../common/ajax.js"></script> 
 
     <script type="text/javascript">
     
@@ -76,15 +96,15 @@ init_div('footer');
   <body>
     <div id='frame'>
       <div id='header'>
-        <div id='banner'></div>
-        <div id='menu'></div>
+        <?php load_div('banner'); ?>
+        <?php load_div('menu'); ?>
       </div>
       <div id='body'>
-        <div id='left-nav'></div>
-        <div id='right-nav'></div>
-        <div id='content'></div>
+        <?php load_div('left-div'); ?>
+        <?php load_div('content'); ?>
+        <?php load_div('right-div'); ?>
       </div>
-      <div id='footer'></div>
+      <?php load_div('footer'); ?>
    </div>
   </body>
 </html>
