@@ -49,6 +49,7 @@ class log
   {
     if ($this->level < $level) return;
     $message = str_replace("\n", " ", $message);
+    $message = str_replace("\r", " ", $message);
 
         if (!is_null($this->instance))
       $file = fopen(dirname($_SERVER['SCRIPT_FILENAME']).'/log/'.date('Y-m-d').'-'.$this->instance .'.log','a+');
