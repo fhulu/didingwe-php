@@ -37,9 +37,10 @@ class table
   var $last_page_index;
   var $sql;
   var $visible_field_count;
-  function __construct($fields=null, $flags=null, $class=null, $page_size=0, $row_callback=null, $cell_callback=null, &$user_data=null)
+  var $dataset;
+  function __construct($fields=null, $flags=0, $class=null, $page_size=0, $row_callback=null, $cell_callback=null, &$user_data=null)
   {
-    $this->flags = is_null($flags)?  (self::TITLES | self::TOTALS): $flags;
+    $this->flags = $flags;
     $this->class = $class;
     $this->row_callback = $row_callback;
     $this->cell_callback = $cell_callback;
@@ -146,17 +147,31 @@ class table
     if ($has_subfields) echo "\n</tr>";
     echo "\n</thead>\n";
   }
-
-  function show_cells($reset_totals=true)
+  
+  static function show_db_row($table)
+  {
+    global $db;
+    if (is_null($db->row)) return false;
+    $table->show_row($db->row);
+    return $db->more_rows(MYSQL_ASSOC);
+  }
+  
+  static function show_data_row($table)
+  {
+    if ($table->row_count >= sizeof($table->dataset)) return false;
+    $table->show_row($table->dataset[$table->row_count]);
+    return true;
+  }
+  
+  function show_cells($iterator, $reset_totals=true)
   {
     global $db;
     echo "<tbody>\n";
     if ($reset_totals) $this->totals = array();
     $this->row_count = 0;
-    do {
-      $this->show_row($db->row);
-      ++$this->row_count;
-    } while ($db->more_rows(MYSQL_ASSOC));
+    while (call_user_func($iterator, $this)) {
+      ++$this->row_count;  
+    }
     if ($this->flags & self::TOTALS) $this->show_totals();
     echo "</tbody>\n";
     return $row_idx;
@@ -260,17 +275,24 @@ class table
   {
     if (!is_null($sql)) {
       $this->sql = $sql;
-      if ($this->page_size > 0) {
-        $sql = 'select SQL_CALC_FOUND_ROWS ' . substr($sql, 6) . " limit $page_index, $this->page_size";
+      if (!is_array($sql)) {
+        $iterator = 'table::show_db_row';
+        if ($this->page_size > 0) 
+          $sql = 'select SQL_CALC_FOUND_ROWS ' . substr($sql, 6) . " limit $page_index, $this->page_size";
+        global $db;
+        if (!$db->exists($sql,MYSQL_ASSOC)) return;
+        if (is_null($this->fields)) $this->set_fields(array_keys($db->row));
       }
-      global $db;
-      if (!$db->exists($sql,MYSQL_ASSOC)) return;
-      if (is_null($this->fields)) $this->set_fields(array_keys($db->row));
-   }
+      else {
+        $iterator = 'table::show_data_row';
+        $this->dataset = $sql;
+        if (is_null($this->fields)) $this->set_fields($sql[0]);
+      }
+    }
     $class=is_null($this->class)?'':"class=$this->class";
     echo "<div $class><table $class>\n";
     if ($this->flags & self::TITLES) $this->show_titles();
-    $this->show_cells();
+    $this->show_cells($iterator);
     if ($this->page_size > 0) {
       $this->page_index = $page_index;
       $this->max_rows = $db->read_one_value('select found_rows()');
@@ -279,11 +301,10 @@ class table
     echo "</table>\n";
   }
   
-  //table::display($fields, $sql, $class, $altrows, $has_totals, $has_titles)
-  static function display($sql, $fields=null, $flags=null, $class=null, $page_size=0, $row_callback=null, $cell_callback=null, &$user_data=null)
+  static function display($sql_or_data, $fields=null, $flags=null, $class=null, $page_size=0, $row_callback=null, $cell_callback=null, &$user_data=null)
   {
     $table = new table($fields, $flags, $class, $page_size, $row_callback, $cell_callback, &$user_data);
-    $table->show($sql);
+    $table->show($sql_or_data);
     return $table;
   }
   
