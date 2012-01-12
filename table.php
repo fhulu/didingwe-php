@@ -1,5 +1,6 @@
 <?php
 
+require_once('db.php');
 
 class table_field
 {
@@ -16,6 +17,8 @@ class table
   const TOTALS = 0x0002;
   const CHECKBOXES = 0x0004;
   const ALTROWS = 0x0008;
+  const SCROLLABLE = 0x0010;
+  const PAGEABLE = 0x0020;
 
   var $fields;
   var $symbols;
@@ -92,7 +95,7 @@ class table
 
   function show_titles()
   {
-    echo "<tr>\n\t";
+    echo "<thead><tr>\n\t";
     $this->flags |= self::TITLES;
     if ($this->flags & self::CHECKBOXES) {
       echo "<th rowspan=$this->title_rowspan><input type='checkbox' name='checkall' onclick='checkAll(\"row[]\", this.checked)'/></th>\n";
@@ -121,7 +124,7 @@ class table
       }
       $this->show_title($key, 1, $colspan);
     }
-    echo "</tr>\n<tr>\n\t";
+    echo "</tr>\n\t";
     $i = 0;
     foreach ($this->fields as $key=>&$field) {
       if (is_numeric($key) || is_numeric($field)) {
@@ -129,17 +132,25 @@ class table
         continue;
       }
       foreach ($field as &$sub_field) {
-        if ($this->symbols[$i] != '#')  echo "<th>$sub_field</th>";
+        if ($this->symbols[$i] != '#')  {
+            if (!$has_subfields) {
+                echo "<tr>\n";
+                $has_subfields = true;
+            }
+            echo "<th>$sub_field</th>";
+        }
         ++$i;
       }
     }
     
-    echo "\n</tr>\n";
+    if ($has_subfields) echo "\n</tr>";
+    echo "\n</thead>\n";
   }
 
   function show_cells($reset_totals=true)
   {
     global $db;
+    echo "<tbody>\n";
     if ($reset_totals) $this->totals = array();
     $this->row_count = 0;
     do {
@@ -147,6 +158,7 @@ class table
       ++$this->row_count;
     } while ($db->more_rows(MYSQL_ASSOC));
     if ($this->flags & self::TOTALS) $this->show_totals();
+    echo "</tbody>\n";
     return $row_idx;
   }
 
@@ -256,7 +268,7 @@ class table
       if (is_null($this->fields)) $this->set_fields(array_keys($db->row));
    }
     $class=is_null($this->class)?'':"class=$this->class";
-    echo "<table $class>\n";
+    echo "<div $class><table $class>\n";
     if ($this->flags & self::TITLES) $this->show_titles();
     $this->show_cells();
     if ($this->page_size > 0) {
