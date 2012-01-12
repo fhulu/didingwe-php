@@ -293,7 +293,7 @@ class table
     echo "<div $class><table $class>\n";
     if ($this->flags & self::TITLES) $this->show_titles();
     $this->show_cells($iterator);
-    if ($this->page_size > 0) {
+    if ($this->page_size > 0 && !is_array($sql)) {
       $this->page_index = $page_index;
       $this->max_rows = $db->read_one_value('select found_rows()');
       $this->last_page_index = (int)ceil($this->max_rows / $this->page_size) - 1;
