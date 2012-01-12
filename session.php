@@ -8,6 +8,7 @@ log::init('session', log::DEBUG);
 
 $client_id = $_SESSION['client_id'];
 $user_id = $_SESSION['user_id'];
+$session_id = $_SESSION['session_id'];
 if ($client_id=='' && strstr($_GET['a'], 'session/login')===false) {
   header("Location: login.php");
   return;
@@ -20,7 +21,7 @@ function login()
 {
   try {
     global $db;
-    global $client_id, $program_id, $user_id;
+    global $client_id, $program_id, $user_id, $session_id;
     
     $program_id = $_REQUEST['program'];
     $email = $_REQUEST['email'];
