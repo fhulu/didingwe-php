@@ -9,7 +9,7 @@ log::init('session', log::DEBUG);
 $client_id = $_SESSION['client_id'];
 $user_id = $_SESSION['user_id'];
 $session_id = $_SESSION['session_id'];
-if ($client_id=='' && strstr($_GET['a'], 'session/login')===false) {
+if ($client_id=='' && strstr($_SERVER[PATH_INFO], 'session/login')===false) {
   header("Location: login.php");
   return;
 }
