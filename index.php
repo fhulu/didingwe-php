@@ -74,6 +74,7 @@ init_div('footer');
 <html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+	<link href="default.style.css" media="screen" rel="stylesheet" type="text/css" />	
     <script type='text/javascript' src='../common/dom.js'></script>
     <script type="text/javascript" src="../common/ajax.js"></script> 
 
