@@ -2,7 +2,6 @@
 session_start(); 
 require_once('log.php');
 log::init('index', log::DEBUG);
-$_SESSION['referrer'] = $_SERVER[REQUEST_URI];
 
 
 function get_page_file($page)
