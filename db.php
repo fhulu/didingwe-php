@@ -1,5 +1,4 @@
 <?php
-require_once('session.php');
 require_once('config.php');
 require_once('log.php');
 
@@ -35,14 +34,17 @@ class db
  function connect($newlink=false)
  {
     if ($this->connected()) return;
+    log::debug("MySQL connect to $this->hostname with user $this->user");
     $this->handle = mysql_connect($this->hostname,$this->user,$this->passwd, $newlink);
     if (!$this->handle) throw new db_exception("Could not connect to '$this->dbname' :" . mysql_error());
     @mysql_select_db($this->dbname, $this->handle);// or throw new db_exception(mysql_error());
+    log::debug("User $this->user connected to MySQL on $this->hostname");
   }
 
   function disconnect()
   {
     $this->handle = null;
+    log::debug("User $this->user disconnected to MySQL on $this->hostname");
   }
   
   function reconnect()
