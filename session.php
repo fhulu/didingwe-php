@@ -6,8 +6,6 @@ require_once('config.php');
 require_once('user.php');
 
 
-$session = null;
-session::restore();
 class session_exception extends Exception {};
 
 
@@ -28,13 +26,9 @@ class session {
     $this->schema_prefix = config::$schema_prefix;
   }
   
-  static function restore()
+  static function ensure_logged_in()
   {
-    if (isset($_SESSION['instance'])) {
-      global $session;
-      $session = $_SESSION['instance'];
-    }
-    else if (strstr($_GET['a'], 'session/login')===false) {
+    if (strstr($_REQUEST['a'], 'session/login')===false) {
       $_SESSION['referrer'] = $_SERVER[REQUEST_URI];
       session::redirect('/?c=login');
     }
@@ -58,12 +52,14 @@ class session {
       if (!$db->exists($sql))
         throw new session_exception("Invalid username/password for '$email'");
 
-      $session->user = new user($db->row);
+      $user = new user($db->row);
+      $session->user = $user;
       
-      $session->id = sprintf("%08x%04x%04x%08x",rand(0,0xffffffff),$user_partner_id,$user->id,time());
+      $session->id = sprintf("%08x%04x%04x%08x",rand(0,0xffffffff),$user->partner_id,$user->id,time());
       $sql = "insert mukonin_audit.session (id, user_id) values ('$session->id','$user->id')";
       $db->insert($sql);
-      $_SESSION['instance'] = $session;
+      $_SESSION['instance'] = serialize($session);
+      if ($session->referrer == '') $session->referrer = '/';
       session::redirect($session->referrer);
     }
     catch (Exception $e) {
@@ -82,7 +78,7 @@ class session {
   static function logout()
   {
     global $db;
-    $session_id = $_SESSION['session_id'];
+    $session_id = $_SESSION['instance'];
     if (isset($db)) {
       $sql = "update mukonin_audit.session set status='C', end_time=now() where id = '$session_id'";
       $db->send($sql);
@@ -91,5 +87,7 @@ class session {
   }
 }
 
+$session = unserialize($_SESSION['instance']);
+if (is_null($session)) session::ensure_logged_in();
 
 ?>
