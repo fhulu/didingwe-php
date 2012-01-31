@@ -1,5 +1,7 @@
 <?php
 
+require_once('log.php');
+
 class user_exception extends Exception {};
 class user
 {
@@ -12,8 +14,10 @@ class user
   var $last_name;
   function __construct($data)
   {
-    list($this->id, $this->partner_id, $this->email, $this->first_name, $this->last_name, $this->role_id) = $data;
-  }
+  
+   list($this->id, $this->partner_id, $this->email, $this->first_name, $this->last_name, $this->role_id) = $data;
+    log::debug("User $this->email $this->first_name $this->last_name");
+   }
 }
 
 ?>
