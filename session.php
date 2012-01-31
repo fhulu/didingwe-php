@@ -59,7 +59,7 @@ class session {
       $sql = "insert mukonin_audit.session (id, user_id) values ('$session->id','$user->id')";
       $db->insert($sql);
       $_SESSION['instance'] = serialize($session);
-      if ($session->referrer == '') $session->referrer = '/';
+      if ($session->referrer == '') $session->referrer = '/?c=home';
       session::redirect($session->referrer);
     }
     catch (Exception $e) {
