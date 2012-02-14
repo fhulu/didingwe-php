@@ -52,11 +52,13 @@ class user
   static function create($email, $password, $first_name, $last_name, $role_id=0)
   {
     global $session;
-    $user = $session->user;
-    $partner_id = $user->partner_id;
-    $program_id = config::program_id;
-    $sql = "insert into mukonin_audit.user(program_id, partner_id,first_name,last_name, password, role_id)
-    values($program_id,$partner_id,'$first_name','$last_name','$password', $role_id)";
+    if (is_null($session))
+      throw user_exception("Must be logged on to create a user");
+
+    $partner_id = $session->user->partner_id;
+    $program_id = config::$program_id;
+    $sql = "insert into mukonin_audit.user(program_id, partner_id, email_address, password, first_name,last_name, role_id)
+    values($program_id,$partner_id, '$email', password('$password'), '$first_name','$last_name',$role_id)";
     
     global $db;
     $id = $db->insert($sql);
