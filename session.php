@@ -87,6 +87,6 @@ class session {
 }
 
 $session = unserialize($_SESSION['instance']);
-if (is_null($session) || is_null($sssion->user)) session::ensure_logged_in();
+if (is_null($session) || is_null($session->user)) session::ensure_logged_in();
 
 ?>
