@@ -1,4 +1,5 @@
-<?php session_start();
+<?php 
+session_start();
 
 require_once('log.php');
 require_once('db.php');
@@ -28,7 +29,7 @@ class session {
   
   static function ensure_logged_in()
   {
-    if (strstr($_REQUEST['a'], 'session/login')===false) {
+    if (strstr($_REQUEST['a'], 'session/log')===false) {
       $_SESSION['referrer'] = $_SERVER[REQUEST_URI];
       session::redirect('/?c=login');
     }
@@ -39,24 +40,22 @@ class session {
     try { 
       global $session;
       $session = new session();
-      $session->program_id = $_REQUEST['program'];
       $session->referrer = $_SESSION['referrer'];
         
       $email = $_REQUEST['email'];
       $passwd = $_REQUEST['password'];
       log::debug("LOGIN: $email PROGRAM: $session->program_id REFERRER: $session->referrer");
-      $sql = "select id, partner_id, email_address, first_name, last_name, role_id from mukonin_audit.user
-         where email_address='$email' and password=password('$passwd') and program_id = $session->program_id";
          
-      global $db;
-      if (!$db->exists($sql))
-        throw new session_exception("Invalid username/password for '$email'");
-
-      $user = new user($db->row);
-      $session->user = $user;
+      $user = user::restore($_REQUEST['email'], $_REQUEST['password']);
       
+      if (!$user)
+        throw new session_exception("Invalid username/password for ". $_REQUEST[email]);
+
+      $session->user = $user;
       $session->id = sprintf("%08x%04x%04x%08x",rand(0,0xffffffff),$user->partner_id,$user->id,time());
       $sql = "insert mukonin_audit.session (id, user_id) values ('$session->id','$user->id')";
+      
+      global $db;
       $db->insert($sql);
       $_SESSION['instance'] = serialize($session);
       if ($session->referrer == '') $session->referrer = '/?c=home';
@@ -88,6 +87,6 @@ class session {
 }
 
 $session = unserialize($_SESSION['instance']);
-if (is_null($session)) session::ensure_logged_in();
+if (is_null($session) || is_null($sssion->user)) session::ensure_logged_in();
 
 ?>
