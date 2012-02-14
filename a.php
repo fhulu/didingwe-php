@@ -17,6 +17,8 @@ require_once('log.php');
     $class = substr($source_file, 0, $pos);
     $source_file = $page;
   }
+  
+  if (!file_exists($source_file)) return;
 
   if ($function!='') {
 
