@@ -264,3 +264,29 @@ function parseScript(_source)
   // Return the cleaned source
   return source;
 }
+
+
+function popup(URL, width, height) {
+    var popup_width = width==undefined?500:width;
+    var popup_height = height==undefined?600:height;
+    day = new Date();
+    id = day.getTime();
+    eval("page" + id + " = window.open(URL, '" + id + "', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=1,width='+popup_width+',height='+popup_height+'');");
+}
+
+function toggle_enable_bycheck(checkbox, id1, id2)
+{
+  var control1 = getElementByIdOrName(id1);
+  var control2 = getElementByIdOrName(id2);
+  control1.disabled = checkbox.checked==false;
+  control2.disabled = checkbox.checked==true; 
+}
+
+function values_match(v1, v2, msg)
+{
+  if (getElementByIdOrName(v1).value == getElementByIdOrName(v2).value) return true;
+  
+  if (msg !== undefined) alert(msg);
+  
+  return false;
+}
