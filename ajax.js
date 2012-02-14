@@ -75,6 +75,16 @@ function ajax_value(result_id, url, progress_str, progress_id, sync)
   ajax_call(url_params(url), true, function() { ajax_value_cb(obj); });
 }
 
+function ajax_get(url)
+{
+  ajax_call(url_params(url), true, function() {
+    if (ajax.readyState==4 && ajax.status==200) {
+     return ajax.responseText;
+    }
+  });
+}
+  
+
 function ajax_confirm(url)
 {
   var confirmation;
