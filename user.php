@@ -49,11 +49,14 @@ class user
     return false;
   }
   
-  static function create($partner_id, $email, $first_name, $last_name, $role_id=0)
+  static function create($email, $password, $first_name, $last_name, $role_id=0)
   {
+    global $session;
+    $user = $session->user;
+    $partner_id = $user->partner_id;
     $program_id = config::program_id;
-    $sql = "insert into mukonin_audit.user(program_id, partner_id,first_name,last_name, role_id)
-    values($program_id,$partner_id,'$first_name','$last_name',$role_id)";
+    $sql = "insert into mukonin_audit.user(program_id, partner_id,first_name,last_name, password, role_id)
+    values($program_id,$partner_id,'$first_name','$last_name','$password', $role_id)";
     
     global $db;
     $id = $db->insert($sql);
@@ -61,6 +64,19 @@ class user
      
     return new user(array($id, $partner_id, $email, $first_name, $last_name, $role_id));
   }
+  
+    static function ajax_add()
+    {
+      $fname = $_GET[first_name];
+      $lname = $_GET[last_name];
+      $email = $_GET[email];
+      $password = $_GET[password];
+      $role = $_GET[role];
+      
+      $user = user::create($email, $password, $fname, $lname, $role);
+      echo $user->id;
+    }
+    
   
 }
 ?>
