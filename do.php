@@ -2,6 +2,8 @@
 require_once('log.php');
 
 {
+  log::init('do', log::TRACE);
+  log::debug("PATH_INFO ". $_SERVER['PATH_INFO']);
   $path_info = explode('/', $_SERVER['PATH_INFO']);
   if (sizeof($path_info) < 2) {
     echo "Not enough arguments supplied for path info";
@@ -24,8 +26,7 @@ require_once('log.php');
     $class_function = $class. '::' . $function;
     $_SESSION['function'] = $class_function;
 
-  log::init($class, log::DEBUG);
-    log::debug("PATH_INFO ". implode('/', $path_info));
+    log::init($class, log::DEBUG);
     try {
       require_once($source_file);
       if (is_callable($class_function)) $function = $class_function;
