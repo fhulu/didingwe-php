@@ -33,10 +33,10 @@ class user
       echo "!We do not have a user with email address '$email' on our system";
   }
   
-  static function is_authentic($email, $password)
+  static function authenticate($email, $passwd)
   {
     $sql = "select id, partner_id, email_address, first_name, last_name, role_id from mukonin_audit.user
-     where email_address='$email' and password=password('$passwd') and program_id = ". config::program_id;         
+     where email_address='$email' and password=password('$passwd') and program_id = ". config::$program_id;         
     
     global $db;
     return $db->exists($sql)? $db->row: false;
@@ -44,7 +44,7 @@ class user
   
   static function restore($email, $password)
   {
-    if (($data = user::verify($email, $password)) !== false)
+    if (($data = user::authenticate($email, $password)) !== false)
       return new user($data);
     return false;
   }
