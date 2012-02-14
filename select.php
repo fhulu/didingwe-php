@@ -5,13 +5,13 @@ require_once('session.php');*/
 
 class select
 {
-  static function add($value, $text, $selected=false)
+  static function add($value, $text=null, $selected=false)
   {              
-   $selected = $selected? ' selected': '';
-   echo <<<EOT
-    <option value='$value'$selected>$text</option>
-
-EOT;
+    $selected = $selected? ' selected': '';
+    if (is_null($text)) 
+      echo "<option$selected>$value</option>\n";
+    else
+      echo "<option value='$value'$selected>$text</option>\n";
   }
 
   static function add_items($items,$selected=null)
