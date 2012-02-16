@@ -11,7 +11,7 @@ class record_format extends format_delimited
   {
     $this->delimiter = $delimiter;
     $this->quotes = $quotes;
-    $formats = explode("|", $format_string);
+    $formats = is_array($format_string)? $format_string: explode("|", $format_string);
     record_format::parse(&$formats, &$this->fields, &$this->positions);
   }
   
@@ -189,6 +189,31 @@ class record_format extends format_delimited
     }
     record_format::read_line(&$this->positions, &$this->fields, &$line, 0, &$values);
 
-  }     
+  }    
+
+  static function load_delimited_file($file_path, $delimeter, $fields, $callback)
+  {
+    $format = new record_format($delimiter, $fields);
+   	$file = fopen($file_path, "rb");
+    $row_index = 0;
+    while(!feof($file)) {
+      $line = fgets($file);
+      if ($line == "") continue;
+      $value = null;
+      $format->read(&$line, &$values);
+      if (!$callback($row_index, &$values)) break;
+      ++$row_index;
+    }
+  }
+
+  static function read_tag_line($file_path, $delimeter)
+  {
+   	$file = fopen($file_path, "rb");
+    $line = fgets($file);
+    if ($delimiter[0] == '/')
+      return preg_split($delimiter, trim($line));
+    return explode($delimiter, trim($line));
+  }
+  
 }
 ?>
