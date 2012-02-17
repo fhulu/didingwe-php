@@ -191,28 +191,41 @@ class record_format extends format_delimited
 
   }    
 
-  static function load_delimited_file($file_path, $delimeter, $fields, $callback)
+  static function load_delimited_file($file_path, $delimiter, $fields, $callback)
   {
+    if (is_null($fields)) {
+      list($file, $fields) = record_format::read_tag_line($file_path, $delimiter);
+      $line_index = 1;
+    }
+    else {
+      $file = fopen($file_path, "rb");
+      if (!$file) 
+        throw record_format_exception("Unable to load file '$file_path'");
+
+      $line_index = 0;
+    }
     $format = new record_format($delimiter, $fields);
-   	$file = fopen($file_path, "rb");
-    $row_index = 0;
     while(!feof($file)) {
       $line = fgets($file);
       if ($line == "") continue;
-      $value = null;
+      $values = null;
       $format->read(&$line, &$values);
-      if (!$callback($row_index, &$values)) break;
-      ++$row_index;
+      if ($callback($line_index, &$values) === false) break;
+      ++$line_index;
     }
+    
+    return $line_index;
   }
 
-  static function read_tag_line($file_path, $delimeter)
+  static function read_tag_line($file_path, $delim)
   {
    	$file = fopen($file_path, "rb");
+    if (!$file) 
+      throw record_format_exception("Unable to load file '$file_path'");
     $line = fgets($file);
-    if ($delimiter[0] == '/')
-      return preg_split($delimiter, trim($line));
-    return explode($delimiter, trim($line));
+    if ($delim[0] == '/')
+      return array($file, preg_split($delim, trim($line)));
+    return array($file, explode($delim, trim($line)));
   }
   
 }
