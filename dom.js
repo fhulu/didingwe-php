@@ -290,3 +290,27 @@ function values_match(v1, v2, msg)
   
   return false;
 }
+
+function OnSelect(dropdown, callback)
+{
+  var selectedIndex  = dropdown.selectedIndex;
+  callback(dropdown.options[selectedIndex].value, dropdown.options[selectedIndex].text);
+}
+
+// set another control's value on select
+function SetInnerOnSelect(dropdown, dest_id)
+{ 
+  var dest = document.getElementById(dest_id);
+  OnSelect(dropdown, function(value, text) {
+    dest.innerHTML = text;
+  });
+}
+
+function SetValueOnSelect(dropdown, dest_id)
+{ 
+  var dest = document.getElementById(dest_id);
+  OnSelect(dropdown, function(value, text) {
+    dest.value = text;
+  });
+}
+
