@@ -60,7 +60,8 @@ function ajax_inner(result_id, url, progress_str, progress_id, sync)
     sync = false;
 
   var obj = getElementByIdOrName(result_id);
-  ajax_call(url_params(url), !sync, function() { ajax_inner_cb(obj); });
+  if (obj == null) alert('No object with id ' + result_id);
+  ajax_call(expand_url(url), !sync, function() { ajax_inner_cb(obj); });
 }
 
 function ajax_value(result_id, url, progress_str, progress_id, sync)
@@ -72,7 +73,7 @@ function ajax_value(result_id, url, progress_str, progress_id, sync)
     sync = true;
   }
   var obj = getElementByIdOrName(result_id);
-  ajax_call(url_params(url), true, function() { ajax_value_cb(obj); });
+  ajax_call(expand_url(url), true, function() { ajax_value_cb(obj); });
 }
 
 function ajax_get(url)
@@ -88,7 +89,7 @@ function ajax_get(url)
 function ajax_confirm(url)
 {
   var confirmation;
-  ajax_call(url_params(url), false, function() { 
+  ajax_call(expand_url(url), false, function() { 
     if (ajax.readyState==4 && ajax.status==200) 
       confirmation = ajax.responseText;
   });
@@ -128,5 +129,5 @@ function ajax_inner_progress(result_id, progress_id, progress_str, url)
   var obj = getElementByIdOrName(progress_id);
   obj.innerHTML = '<div class=progress>' + progress_str + '.</div>';
   obj = getElementByIdOrName(result_id);
-  ajax_call(url_params(url), false, function() { ajax_inner_cb(obj); });
+  ajax_call(expand_url(url), false, function() { ajax_inner_cb(obj); });
 }
