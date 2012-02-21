@@ -34,8 +34,10 @@
     },
     
     start: function(index) {
-      this.stack = new Array();
       if (index == undefined) index = 0;
+      this.stack = new Array();
+      for (var i=0; i < index; i++)
+        this.stack.push(1);
       this.dialogs[index].dialog('open');
       return false;
     },
