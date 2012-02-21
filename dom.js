@@ -88,7 +88,7 @@ function backOnReject(msg)
   if (!confirm(ms)) history.go(-1);
 }
 
-function make_name_pair(name)
+function make_nv_pair(name)
 {
   var obj = getElementByIdOrName(name);
   if (obj != null) 
@@ -97,7 +97,7 @@ function make_name_pair(name)
 
 }
 
-function get_name_value(params)
+function params2pairs(params, pairer, separator)
 {
   params = params.split(',');
   var pairs='';
@@ -109,19 +109,34 @@ function get_name_value(params)
       var first = range_spec[1];
       var last = range_spec[2];
       for (var j=first; j <= last; j++) {
-        //pairs += '&' + make_name_pair(name + j);
         var obj = getElementByIdOrName(name + j);
         if (obj != null) 
           pairs += '&' + obj.name + "=" + obj.value;
       }
     }
     else {  
-      pairs += '&' + make_name_pair(name);
+      pairs += '&' + make_nv_pair(name);
     }
   }
   return pairs.substr(1,pairs.length-1);
 }
+function params2url(params)
+{ 
+  return params2pairs(params, '=', '&');
+}
 
+function expand_url(url)
+{ 
+  var param_idx = url.indexOf('?')+1;
+  if (param_idx > 0) 
+    return url = url.substr(0, param_idx) + params2url(url.substr(param_idx));
+  return url;
+}
+
+function params2json(params)
+{
+  return params2pairs(params, ':', ',');
+}
 
 function check_if(names, value)
 {
