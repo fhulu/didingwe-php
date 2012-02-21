@@ -23,11 +23,10 @@
 
         $(this).find("[wizard='back']").click(function() {
           self.go_back();
-        })
+        });
         
       });
-      
-     ;
+
     },
     
     dialog: function(selector) { 
