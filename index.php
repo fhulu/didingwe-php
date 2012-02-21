@@ -70,10 +70,16 @@ init_div('right-nav');
 init_div('footer');
 
 ?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-	<link href="default.style.css" media="screen" rel="stylesheet" type="text/css" />	
+    
+    <link href="default.style.css" media="screen" rel="stylesheet" type="text/css" />	
+    <link href="jquery/lightness/ui.css" media="screen" rel="stylesheet" type="text/css" />	
+
+    <script type='text/javascript' src='jquery/min.js'></script>
+    <script type='text/javascript' src='jquery/ui-min.js'></script>
     <script type='text/javascript' src='../common/dom.js'></script>
     <script type="text/javascript" src="../common/ajax.js"></script> 
 
@@ -97,12 +103,14 @@ init_div('footer');
     <div id='frame'>
       <div id='header'>
         <?php load_div('banner'); ?>
-        <?php load_div('menu'); ?>
+        <div class=container>
+          <?php load_div('menu'); ?>
+        </div>
       </div>
       <div id='body'>
-        <?php load_div('left-div'); ?>
+        <?php load_div('left-nav'); ?>
         <?php load_div('content'); ?>
-        <?php load_div('right-div'); ?>
+        <?php load_div('right-nav'); ?>
       </div>
       <?php load_div('footer'); ?>
    </div>
