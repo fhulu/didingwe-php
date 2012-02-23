@@ -150,6 +150,20 @@ class db
     return $row[0];
   }
 
+  function json($sql) 
+  {
+    $this->exec($sql);
+    $result = "";
+    while (($row = mysql_fetch_row($this->result, MYSQL_ASSOC))) {
+      $jrow = '';
+      foreach($row as $key => $value) {
+        $jrow .= ',"' . $key .'":"' . str_replace('"', '\"', $value) .'"'; 
+      }
+      
+      $result .= ',{' . substr($jrow, 1) . '}';
+    }
+    return '[' . substr($result,1) .']';
+  }
 }
 
 $db = null;
