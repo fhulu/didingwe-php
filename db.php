@@ -62,10 +62,10 @@ class db
      return $other;
   }
 
-  function exec($q, $max_rows=0)
+  function exec($q, $max_rows=0, $start=0)
   {
-    log::debug("SQL: $q");
-    if ($max_rows > 0) $q .= " limit 0, $max_rows";
+    log::debug("SQL: $q, start=$start, rows=$max_rows");
+    if ($max_rows > 0) $q .= " limit $start, $max_rows";
     $this->result = mysql_query($q, $this->handle);
     if (!$this->result) throw new db_exception("SQL='$q', ERROR=".mysql_error());
   }
@@ -120,16 +120,62 @@ class db
     }
   }
 
-  function read($sql, $fetch_type=MYSQL_BOTH, $max_rows=0)
+  function read($sql, $fetch_type=MYSQL_BOTH, $max_rows=0, $start=0)
   {
-    $this->exec($sql, $max_rows);
     $rows = array();
-    $row_count = 0;
-    while (($row = mysql_fetch_array($this->result, $fetch_type))) $rows[] = $row;
+    $this->each($sql, function($index, $row) use ($rows) {
+      $rows[] = $row;
+    }, array('fetch'=>$fetch_type, 'size'=>max_rows, 'start'=>$start));
+
     return $rows;
   }
 
-  function read_column($sql,$column_idx=0)
+  function each($sql, $callback, $options=null)
+  {
+    if (!is_null($options)) {
+      $start = $options['start'];
+      $size = $options['size'];
+      $fetch = $options['fetch'];
+    }
+    else {
+      $start = $size = 0;
+      $fetch = MYSQL_BOTH;
+    }
+    $this->exec($sql, $size, $start);
+    $index = 0;
+    
+    while (($row = mysql_fetch_array($this->result, $fetch))) {
+      if (!$callback($index, &$row)) break;
+      ++$index;
+    }
+  }
+
+  function page($sql, $size, $start=0, $callback=null, $options=null)
+  {
+    $options['start'] = $start;
+    $options['size'] = $size+1;
+    $rows = array();
+    $this->each($sql, function($index, $row) use (&$rows) {
+      $rows[] = $row;
+      return !$callback || !$callback($index, $row);
+    }, $options);
+    return $rows;
+  }
+
+  function page_names($sql, $size, $start=0, $callback=null, $options=null)
+  {
+    $options['fetch'] = MYSQL_ASSOC;
+    return $this->page($sql, $size, $start, $callback, $options);
+  }
+  
+  function page_indices($sql, $size, $start=0, $callback=null, $options=null)
+  {
+    $options['fetch'] = MYSQL_ROW;
+    return $this->page($sql, $size, $start, $callback, $options);
+  }
+
+
+  function read_column($sql)
   {
     $this->exec($sql);
     $rows = array();
@@ -150,19 +196,9 @@ class db
     return $row[0];
   }
 
-  function json($sql) 
+  function json($sql, $max_rows=0) 
   {
-    $this->exec($sql);
-    $result = "";
-    while (($row = mysql_fetch_row($this->result, MYSQL_ASSOC))) {
-      $jrow = '';
-      foreach($row as $key => $value) {
-        $jrow .= ',"' . $key .'":"' . str_replace('"', '\"', $value) .'"'; 
-      }
-      
-      $result .= ',{' . substr($jrow, 1) . '}';
-    }
-    return '[' . substr($result,1) .']';
+    return json_encode($this->read($sql, MYSQL_ASSOC, $max_rows));
   }
 }
 
