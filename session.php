@@ -64,6 +64,7 @@ class session {
     catch (Exception $e) {
       $_SESSION[last_error] = $e->getMessage();
       log::error("EXCEPTION: ". $e->getMessage());
+      session::redirect("/?c=login");
     }
   }
   
