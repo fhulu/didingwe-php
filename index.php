@@ -103,9 +103,7 @@ init_div('footer');
     <div id='frame'>
       <div id='header'>
         <?php load_div('banner'); ?>
-        <div class=container>
-          <?php load_div('menu'); ?>
-        </div>
+        <?php load_div('menu'); ?>
       </div>
       <div id='body'>
         <?php load_div('left-nav'); ?>
