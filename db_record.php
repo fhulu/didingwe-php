@@ -1,6 +1,6 @@
 <?php
 
-require_once ("db.php");
+require_once ('db.php');
 
 class db_record_exception extends Exception {};
 
@@ -11,6 +11,7 @@ class db_record
   var $keys;
   var $values;
   var $in_db;
+  var $db_fields;
 
   function __construct($dest_db, $table, $key_names=null, $value_names=null, $data=null)
   {
@@ -24,18 +25,22 @@ class db_record
     $this->table = $table;
     $this->values = array();
     $this->keys = array();
-    
-    if (!is_array($key_names)) $key_names = is_null($key_names)?null:explode(",", $key_names);
-    if (!is_array($value_names)) $value_names = is_null($value_names)?null: explode(",", $value_names);
+    if (is_null($key_names) || is_null($value_names)) {
+      $db_fields = db_record::load_field_names($this->db, $table);
+      $data_fields = array_keys($data);
+      if (!is_array($key_names)) $key_names = is_null($key_names)?null:explode(",", $key_names);
+      if (!is_array($value_names)) $value_names = is_null($value_names)?null: explode(",", $value_names);
 
-    if (is_null($value_names)) {
-      $value_names = db_record::load_field_names($this->db, $table);
-       if (is_array($key_names)) $value_names = array_diff($value_names, $key_names);
-    }
-      
-    if (is_null($key_names)) 
-      $key_names = array_diff(db_record::load_field_names($this->db, $table), $value_names);
-     
+      if (is_null($value_names)) {
+        $value_names = is_null($data)? $this->db_fields: array_intersect($db_fields, $data_fields);
+        if (is_array($key_names)) $value_names = array_diff($value_names, $key_names);
+      }
+        
+      if (is_null($key_names)) 
+        $key_names = array_diff(is_null($data)?$db_fields:$data_fields, $value_names);
+
+        }
+    
     
     if (is_null($data))  {
       db_record::reset_data(&$this->keys, null, $key_names); 
@@ -194,7 +199,7 @@ class db_record
   }
 
 
-  static function create_width_data($db, $table, $key_names, $value_names, $data, $updatable=true)
+  static function create_with_data($db, $table, $key_names, $value_names, $data, $updatable=true)
   {
     if ($updatable) {
       db_record::set_data(&$keys, $key_names, $data);
@@ -209,13 +214,28 @@ class db_record
   }
   
 
-  function exists($reload = false)
+  function get_search_keys($key_names)
   {
-    if (isset($this->in_db) && !$reload) return $this->in_db;
-    $sql = "select " . implode(",", array_keys($this->keys)) . " from $this->table " . db_record::get_sql_where($this->keys);
-    global $db;
-    $this->in_db = $db->exists($sql);
-    return $this->in_db;
+    $keys = null;
+    if (is_null($key_names)) {
+      $keys = $this->keys;
+      $key_names = array_keys($keys);
+    }
+    else {     
+      db_record::set_data(&$keys, $this->keys, $key_names); 
+      db_record::set_data(&$keys, $this->values, $key_names); 
+    }
+    return $keys;
+  }
+  
+  function exists($keys=null)
+  {
+    if (is_null($keys)) $keys = $this->keys;
+    $sql = "select " . implode(',', array_keys($this->keys))
+    . " from $this->table " . db_record::get_sql_where($keys);
+    if (!$this->db->exists($sql)) return false;
+    db_record::set_data(&$this->keys, $this->db->row);
+    return true;
   }    
   
   static function get_field_values($fields, $separator=",")
@@ -228,13 +248,13 @@ class db_record
   }
 
 
-  function insert() 
+  function insert($keys=null) 
   {
     $data = array_merge($this->keys, $this->values);
     $sql = "insert $this->table (" . implode(",", array_keys($data));
     $sql .= ") values (" . db_record::get_field_values($data) . ")";
-
-    return $this->db->insert($sql);
+    $this->db->exec($sql);
+    if (!is_null($keys)) $this->exists($keys);
   }
  
   function remove($keys)
@@ -249,25 +269,18 @@ class db_record
   {
     return $this->values[$value_name];
   }
+
   
-  function save($force_update = false)
-  {
-    $new_values = array();
-    foreach($this->values as $key=>$value) {
-      $new_values[$key] = $value;
+  function save($key_names=null)
+  {   
+    if (!is_null($key_names)) {
+      if (!is_array($key_names)) $key_names = explode(',',$key_names);
+      $keys = $this->get_search_keys($key_names);
     }
-    
-    if ($this->load_by_key())
-      $force_update? $this->update(): $this->update_better($new_values);
-    else 
-      $this->insert();
-/*
-    $data = array_merge($this->keys, $this->values);
-    $sql = "insert into $this->table (" . implode(",", array_keys($data)) . ")";
-    $sql .= " values (" . db_record::get_field_values($data) . ")";
-    $sql .= " on duplicate key update " . db_record::get_name_value_pairs($this->values);
-    $this->db->exec($sql);
-*/
+    else $keys = $this->keys;
+    if ($this->exists($keys)) 
+      return $this->update();
+    return $this->insert();
   }
   
   static function load_matched($db, $table, $keys, $value_names=null)
