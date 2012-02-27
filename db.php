@@ -64,7 +64,7 @@ class db
 
   function exec($q, $max_rows=0, $start=0)
   {
-    log::debug("SQL: $q, start=$start, rows=$max_rows");
+    log::debug("SQL: $q");
     if ($max_rows > 0) $q .= " limit $start, $max_rows";
     $this->result = mysql_query($q, $this->handle);
     if (!$this->result) throw new db_exception("SQL='$q', ERROR=".mysql_error());
@@ -123,7 +123,7 @@ class db
   function read($sql, $fetch_type=MYSQL_BOTH, $max_rows=0, $start=0)
   {
     $rows = array();
-    $this->each($sql, function($index, $row) use ($rows) {
+    $this->each($sql, function($index, $row) use (&$rows) {
       $rows[] = $row;
     }, array('fetch'=>$fetch_type, 'size'=>max_rows, 'start'=>$start));
 
@@ -145,7 +145,7 @@ class db
     $index = 0;
     
     while (($row = mysql_fetch_array($this->result, $fetch))) {
-      if (!$callback($index, &$row)) break;
+      if ($callback($index, &$row)===false) break;
       ++$index;
     }
   }
