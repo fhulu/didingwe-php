@@ -6,11 +6,11 @@ class record_format_exception extends Exception {};
 
 class record_format extends format_delimited
 { 
-  var $quotes;
-  function __construct($delimiter, $format_string, $quotes='')
+  var $quote;
+  function __construct($delimiter, $format_string, $quote='')
   {
     $this->delimiter = $delimiter;
-    $this->quotes = $quotes;
+    $this->quote = $quote;
     $formats = is_array($format_string)? $format_string: explode("|", $format_string);
     record_format::parse(&$formats, &$this->fields, &$this->positions);
   }
@@ -177,15 +177,20 @@ class record_format extends format_delimited
   {
     if (!is_array($line)) {
       $delimiter = $this->delimiter==''?' ':$this->delimiter;
-      if ($this->quotes != '') {
-        $delimiter = "$this->quotes$delimiter$this->quotes";
-        //todo: fix for cases where column is not quoted
-        $quotes_len = strlen($quotes);
-        $line = substr($line, $quotes_len, strlen($line)-2*$quotes_len);
-      }
-      if ($delimiter[0] == '/')
+      if ($delimiter[0] == '/') {
         $line = preg_split($delimiter, trim($line));
-      else $line = explode($delimiter, trim($line));
+      }
+      else if ($this->quote != '') {
+        $pattern = '/((?:(?:"[^"]+")|(?:[^'.$delimiter.']+))+)/';
+        $matches = array();
+        preg_match_all($pattern, $line, &$matches);
+        $line = $matches[0];
+        foreach($line as &$value) {
+          $value= str_replace($this->quote, '', $value);
+        }
+      }
+      else 
+        $line = explode($delimiter, trim($line));
     }
     record_format::read_line(&$this->positions, &$this->fields, &$line, 0, &$values);
 
@@ -204,13 +209,13 @@ class record_format extends format_delimited
 
       $line_index = 0;
     }
-    $format = new record_format($delimiter, $fields);
+    $format = new record_format($delimiter, $fields, '"');
     while(!feof($file)) {
       $line = fgets($file);
       if ($line == "") continue;
       $values = null;
-      $format->read(&$line, &$values);
-      if ($callback($line_index, &$values) === false) break;
+      $format->read($line, &$values);
+      if ($callback($line, $line_index, &$values) === false) break;
       ++$line_index;
     }
     
@@ -224,9 +229,13 @@ class record_format extends format_delimited
       throw record_format_exception("Unable to load file '$file_path'");
     $line = fgets($file);
     if ($delim[0] == '/')
-      return array($file, preg_split($delim, trim($line)));
-    return array($file, explode($delim, trim($line)));
+      $tags = preg_split($delim, trim($line));
+    else 
+      $tags = explode($delim, trim($line));
+    foreach($tags as &$tag) {
+      $tag = str_replace(' ', '_', strtolower($tag));
+    }
+    return array($file, $tags);
   }
-  
 }
 ?>
