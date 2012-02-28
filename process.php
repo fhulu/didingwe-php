@@ -1,9 +1,12 @@
 <?php
-
 require_once('log.php');
+
+$daemon_mode = true;
+require_once('session.php');
 
 class process_entry
 {
+  var $session;
   var $method;
   var $env;
   var $options;
@@ -39,7 +42,6 @@ class process
       
     $process = new process($log_level);  
     $msg = $process->listen();
-    $process->audit($msg);
     $process->dispatch($msg);
   }
   
@@ -52,10 +54,10 @@ class process
   static function send($method, $arguments, $options)
   {
     $msg = new process_entry;
+    global $session;
+    $msg->session = serialize($session);
     $msg->method = $method;
     $msg->options = $options;
-    $msg->env[client_id] = $_SESSION[client_id];
-    $msg->env[user_email] = $_SESSION[user_email];
     log::init("process", log::TRACE);
     log::info("Queued $method");
     $msg->arguments = $arguments;
@@ -80,7 +82,7 @@ class process
   
   static function fork($method)
   {
-    log::info("Received method $method, user: " . $_SESSION[user_email] .', client_id '. $_SESSION[client_id]);
+    log::info("Received method $method");
     $pid = pcntl_fork();
     if ($pid != 0) {
       if ($pid == -1) log::error("Unable to fork");
@@ -131,14 +133,13 @@ class process
         log::error("Failed to receive message with error $error_code");
         continue;
       }
-      log::info("Received $msg->method, user: " . $msg->env[user_email] .', client_id '. $msg->env[client_id]);
+      log::info("Received $msg->method");
       $pid = pcntl_fork();
       if ($pid == -1) 
         log::error("Could not fork");
       else if ($msg->method == 'restart') {
         if ($pid != 0) {
           log::info("About to restart process");
-          $this->audit($msg);
           pcntl_exec('/usr/bin/php', array_merge(array('call.php', 'process::init'), $msg->arguments, $msg->env));
         }
         exit(0);
@@ -159,30 +160,23 @@ class process
   
   function dispatch($msg)
   {
-    log::debug("DISPATCH: method $msg->method");      
-    global $client_id;
-    $client_id = $msg->env[client_id];
-    $_SESSION[client_id] = $msg->env[client_id];
-    $_SESSION[user_email] = $msg->env[user_email];
+    global $session;
+    $session = unserialize($msg->session);
+    $user = $session->user;
+    log::debug("DISPATCH: method: $msg->method user: $user->id partner: $user->partner_id");      
     $method = $msg->method;
     list($class, $function) = explode('::', $method);
+    db::connect_default();
     require_once($class.'.php');
     global $logger;
-    log::init($class, $logger->level);
+    //log::init($class, $logger->level);
     try {
       call_user_func_array($method, $msg->arguments);
     } 
     catch (Exception $e) {
       log::error("UNCAUGHT EXCEPTION: " . $e->getMessage() );
     } 
-  }
-  
-  function audit($msg)
-  {
-    global $client_id;
-    $_SESSION[client_id] = $client_id = $msg->client_id;
-    $_SESSION[user_email]  = $msg->user_email;
-  }
+  }  
 }
 
 ?>
