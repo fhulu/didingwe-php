@@ -184,7 +184,10 @@ class record_format extends format_delimited
         $pattern = '/((?:(?:"[^"]+")|(?:[^'.$delimiter.']+))+)/';
         $matches = array();
         preg_match_all($pattern, $line, &$matches);
-        $line = $matches[0];
+        if (strpos($line, $delimiter) === 0)
+          $line = array_merge(array(''), $matches[0]);
+        else
+          $line = $matches[0];
         foreach($line as &$value) {
           $value= str_replace($this->quote, '', $value);
         }
