@@ -292,8 +292,13 @@ class db_record
     if (!is_null($key_names)) {
       if (!is_array($key_names)) $key_names = explode(',',$key_names);
       $keys = $this->get_search_keys($key_names);
+      $keys_custom = true;
     }
-    else $keys = $this->keys;
+    else {
+      $keys = $this->keys;
+      $keys_custom = false
+      ;
+    }
     
     $data = array_merge($keys, $this->values);
     $columns = implode(',',array_keys($data));
@@ -304,12 +309,12 @@ class db_record
    
     $db = $this->db;
     $db->exec($sql);
-    $prev_keys = $this->keys;
-    $columns = implode(',',array_keys($this->keys));
-    $sql = " select $columns from $this->table $where";
-    $db->exists($sql);
-    db_record::set_data(&$this->keys, $this->db->row);
-    $this->is_new = $prev_keys == $this->keys;
+    $key_columns = implode(',',array_keys($this->keys));  
+    if ($keys_custom || $key_columns != $columns) {
+      $sql = " select $key_columns from $this->table $where";
+      $db->exists($sql);
+      db_record::set_data(&$this->keys, $this->db->row);
+    }
   }
 
   
