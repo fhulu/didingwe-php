@@ -14,7 +14,6 @@ class session {
   var $schema_prefix;
   var $default_schema;
   var $vars;
-  var $db;
   var $id;
   var $user;
   var $program_id;
@@ -87,7 +86,9 @@ class session {
   }
 }
 
-$session = unserialize($_SESSION['instance']);
-if (is_null($session) || is_null($session->user)) session::ensure_logged_in();
+if (!$daemon_mode) {
+  $session = unserialize($_SESSION['instance']);
+  if (is_null($session) || is_null($session->user)) session::ensure_logged_in();
+}
 
 ?>
