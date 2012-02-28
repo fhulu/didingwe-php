@@ -203,6 +203,6 @@ class db
 }
 
 $db = null;
-db::connect_default();
+if (!$daemon_mode) db::connect_default();
 
 ?>
