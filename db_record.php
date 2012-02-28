@@ -12,8 +12,10 @@ class db_record
   var $values;
   var $in_db;
   var $db_fields;
+  var $is_new;
+  static $field_names;
 
-  function __construct($dest_db, $table, $key_names=null, $value_names=null, $data=null)
+  function __construct($table, $key_names=null, $data=null, $dest_db=null, $value_names=null)
   {
     global $db;
 
@@ -28,8 +30,8 @@ class db_record
     if (is_null($key_names) || is_null($value_names)) {
       $db_fields = db_record::load_field_names($this->db, $table);
       $data_fields = array_keys($data);
-      if (!is_array($key_names)) $key_names = is_null($key_names)?null:explode(",", $key_names);
-      if (!is_array($value_names)) $value_names = is_null($value_names)?null: explode(",", $value_names);
+      if (!is_null($key_names) && !is_array($key_names)) $key_names = explode(",", $key_names);
+      if (!is_null($value_names) && !is_array($value_names)) $value_names = explode(",", $value_names);
 
       if (is_null($value_names)) {
         $value_names = is_null($data)? $this->db_fields: array_intersect($db_fields, $data_fields);
@@ -38,10 +40,7 @@ class db_record
         
       if (is_null($key_names)) 
         $key_names = array_diff(is_null($data)?$db_fields:$data_fields, $value_names);
-
-        }
-    
-    
+    }
     if (is_null($data))  {
       db_record::reset_data(&$this->keys, null, $key_names); 
       db_record::reset_data(&$this->values, null, $value_names); 
@@ -49,21 +48,27 @@ class db_record
     else {
       db_record::set_data(&$this->keys, $data, $key_names); 
       db_record::set_data(&$this->values, $data, $value_names); 
-    }    
+    }
   }
   
   static function load_field_names($db, $table_name)
   {
-    $db->exec("show columns from $table_name");
+    if (is_array(db_record::$field_names[$table_name])) 
+      return db_record::$field_names[$table_name];
+      
+
+      $db->exec("show columns from $table_name");
     while ($db->more_rows()) {
       $field_names[] = $db->row['Field'];
     }
+    db_record::$field_names[$table_name] = $field_names;
     return $field_names;
   }
 
   static function set_data($fields, $data, $field_names=null)
   {
     if (is_null($field_names)) $field_names = array_keys($fields);
+    if (is_null($field_names)) return;
     foreach($field_names as $name)
       $fields[$name] = $data[$name];
   }
@@ -71,10 +76,16 @@ class db_record
   static function reset_data($fields, $data, $field_names=null)
   {
     if (is_null($field_names)) $field_names = array_keys($fields);
+    if (is_null($field_names)) return;
     foreach($field_names as $name)
       $fields[$name] = $data;
   }
 
+  function all_field_names()
+  {
+    return array_merge(array_keys($this->keys), array_keys($this->values));
+  }
+  
   function trim_all()
   {
     foreach($this->keys as $name => &$value) {
@@ -238,6 +249,11 @@ class db_record
     return true;
   }    
   
+  static function get_field_names($fields, $separator=",")
+  {
+    return implode($separator, array_keys($fields));
+  }
+  
   static function get_field_values($fields, $separator=",")
   {
     $values = '';
@@ -278,10 +294,24 @@ class db_record
       $keys = $this->get_search_keys($key_names);
     }
     else $keys = $this->keys;
-    if ($this->exists($keys)) 
-      return $this->update();
-    return $this->insert();
+    
+    $data = array_merge($keys, $this->values);
+    $columns = implode(',',array_keys($data));
+    $values = db_record::get_field_values($data);
+    $where = db_record::get_sql_where($keys);
+    $sql = "insert $this->table ($columns) select $values from dual "
+        ." where not exists (select 1 from $this->table $where);";
+   
+    $db = $this->db;
+    $db->exec($sql);
+    $prev_keys = $this->keys;
+    $columns = implode(',',array_keys($this->keys));
+    $sql = " select $columns from $this->table $where";
+    $db->exists($sql);
+    db_record::set_data(&$this->keys, $this->db->row);
+    $this->is_new = $prev_keys == $this->keys;
   }
+
   
   static function load_matched($db, $table, $keys, $value_names=null)
   {
