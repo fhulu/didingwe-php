@@ -43,6 +43,7 @@ class db
 
   function disconnect()
   {
+    mysql_close($this->handle);
     $this->handle = null;
     log::debug("User $this->user disconnected to MySQL on $this->hostname");
   }
@@ -64,8 +65,9 @@ class db
 
   function exec($q, $max_rows=0, $start=0)
   {
-    log::debug("SQL: $q");
+    if ($start=='') $start = 0;
     if ($max_rows > 0) $q .= " limit $start, $max_rows";
+    log::debug("SQL: $q");
     $this->result = mysql_query($q, $this->handle);
     if (!$this->result) throw new db_exception("SQL='$q', ERROR=".mysql_error());
   }
@@ -114,7 +116,7 @@ class db
   static function connect_default()
   {
     global $db;
-    if ($db == null) {
+    if ($db == null || !$db->connected()) {
       $db = new db(config::$audit_db, config::$audit_user, config::$audit_passwd);
       $db->connect();
     }
@@ -133,13 +135,14 @@ class db
   function each($sql, $callback, $options=null)
   {
     if (!is_null($options)) {
-      $start = $options['start'];
-      $size = $options['size'];
-      $fetch = $options['fetch'];
+      $start = (int)$options['start'];
+      $size = (int)$options['size'];
+      $fetch = (int)$options['fetch'];
+      if ($fetch == '') $fetch = MYSQL_NUM;
     }
     else {
       $start = $size = 0;
-      $fetch = MYSQL_BOTH;
+      $fetch = MYSQL_NUM;
     }
     $this->exec($sql, $size, $start);
     $index = 0;
