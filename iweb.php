@@ -42,9 +42,7 @@ class iweb extends qworker
     log::debug("Login Response: $result");
     if (!strstr($result, "Success"))
       throw new iweb_exception("Unable to connect to iweb: $result");
-/*
-Success&SessionID=b5749584541ff110fb72
-*/
+
     $this->session_id = trim(substr($result,18));  
     log::debug("Session ID: $this->session_id");
   }
@@ -58,7 +56,7 @@ Success&SessionID=b5749584541ff110fb72
     $session_id = null;
   } 
 
-  function submit($id, $msisdn, $message, $try_count=1, $encode=true)
+  function submit($id, $msisdn, $message, $attempts=1, $encode=true)
   {
     if ($encode) $message=urlencode($message);
     $url = "$this->root/Submit?SessionID=$this->session_id&PhoneNumber=$msisdn&Reference=$id&MessageText=$message";
@@ -84,16 +82,16 @@ Success&SessionID=b5749584541ff110fb72
     else {
       ++$this->errors;
       $value = $values['ErrorCode'];
-      if ($try_count < 2) {
+      if ($attempts < 2) {
         $this->login();
-        return $this->submit($id, $msisdn, $message, ++$try_count, false);
+        return $this->submit($id, $msisdn, $message, ++$attempts, false);
       }
       else {
         $status = 'sub';
         $field = 'error_code';
       }
     }
-    $this->db_update->exec("update outq set status='$status',attempts=$attempts,$field='$value' where id = $id");
+    $this->db_update->exec("update mukonin_sms.outq set status='$status',attempts=$attempts,$field='$value' where id = $id");
   }
  
   function start()
@@ -103,17 +101,17 @@ Success&SessionID=b5749584541ff110fb72
     $this->db_read = $db;
     $this->db_update = $db->dup();
     $self = &$this;
-    parent::listen(function($schedule_id, $qid) use (&$self)  {
+    parent::listen(function($load, $schedule_id, $qid) use (&$self)  {
       if ($schedule_id == '' && $qid == '') {
         log::error("No schedule_id or qid given for iweb");
         return;
       }
-      $sql = "select id,msisdn, message, reference1 from outq";
-      if ($id != '')
+      $sql = "select id,msisdn, message, reference1 from mukonin_sms.outq";
+      if ($qid != '')
         $sql .= " where id = $qid and status = 'pnd'";
       else 
         $sql .= " where schedule_id = $schedule_id and status = 'pnd' limit 0, $self->capacity";
-      $self->db_read->each($sql, function($index, $row) {
+      $self->db_read->each($sql, function($index, $row) use (&$self) {
         list($id, $msisdn, $message) = $row;
         $self->submit($id, $msisdn, $message);
       });

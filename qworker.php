@@ -56,9 +56,10 @@ class qworker extends qworker_info
         log::error("Failed to receive message with error $error_code");
         continue;
       }
+      array_shift($msg->arguments);  // ignore type
       log::debug("Received $msg->method(" . implode(',',$msg->arguments) . ')');
   
-      list($type, $load, $arguments) = $msg->arguments;
+      $load = $msg->arguments[0];
       if ($msg->method == 'restart')
         ;//todo: fork to restart
       else if ($msg->method == 'stop') {
@@ -66,7 +67,7 @@ class qworker extends qworker_info
         break;
       }
       else {
-        call_user_function_array($callback, $msg->arguments);
+        call_user_func_array($callback, $msg->arguments);
         qmanager::completed($type, $this->id, $load);
       }
     } 
