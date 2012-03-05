@@ -97,11 +97,14 @@ class iweb extends qworker
   function start()
   {
     $this->login();
+    
+    //todo: process pending item on queue before listening
+    
     global $db;
     $this->db_read = $db;
     $this->db_update = $db->dup();
     $self = &$this;
-    parent::listen(function($load, $schedule_id, $qid) use (&$self)  {
+    parent::listen(function($provider_id, $type, $load, $schedule_id, $qid) use (&$self)  {
       if ($schedule_id == '' && $qid == '') {
         log::error("No schedule_id or qid given for iweb");
         return;

@@ -101,7 +101,19 @@ class qmanager
   
   static function work($type, $load, $parameters )
   {
-    qmanager::send('work', func_get_args(), 'q');
+    global $db, $session;
+    $user = $session->user;
+    $provider_id  = $db->read_one_value(
+      "select pr.id from mukonin_process.provider pr join mukonin_process.group_provider gp on pr.id = gp.provider_id
+      join mukonin_audit.partner pa on pa.routing_group_id = gp.group_id and gp.type = '$type'
+      join mukonin_audit.user u on u.partner_id = pa.id and u.id = $user->id");
+    if ($provider_id == '') {
+      log::error("Unable to route work of type $type for user $user");
+      return;
+    }
+    
+    $arguments = array_merge(array($provider_id), func_get_args());
+    qmanager::send('work', $arguments, 'q');
   }
   
   static function complete($type, $id, $load)
@@ -173,8 +185,9 @@ class qmanager
   static function get_control_sql($msg)
   {
     list($option, $filter) = $msg->arguments;
-    $sql = "select w.id, p.id, w.type, w.name, p.program, w.allocation from mukonin_process.worker w, mukonin_process.provider p"
-          . " where w.provider_id = p.id and w.enabled = 1 and p.enabled = 1";
+    $sql = "select w.id, p.id, w.type, w.name, p.program, w.allocation 
+          from mukonin_process.worker w, mukonin_process.provider p
+          where w.provider_id = p.id and w.enabled = 1 and p.enabled = 1";
     if ($option == '-p')
       $sql .= " and p.name like '%$filter%'";
     else if ($option == '-t')
@@ -203,6 +216,7 @@ class qmanager
       $self->workers[$info->type][$info->id] = $info;
       log::info("Starting $program $info->name $info->id $info->provider_id $info->capacity");
       exec("$program $info->name $info->id $info->provider_id >/dev/null 2>&1 &");
+      //todo: use signal handler to test when executed program dies
     });    
   }
   
@@ -226,16 +240,9 @@ class qmanager
     });
   }
 
-  
-  function registered($msg)
-  {
-    list($pid, $type, $capacity) = $msg->arguments;
-    $this->workes[$type][$pid] = array($capacity, 0);
-  } 
-
   function distribute($msg)
   {
-    list($type, $provider_id, $required, $arguments) = $msg->arguments;
+    list($provider_id, $type, $required, $arguments) = $msg->arguments;
     do {
       $most_available = 0;
       $best_info = null;
@@ -249,6 +256,7 @@ class qmanager
       }
       
       if ($best_info === null) {
+        //todo: process unprocessed items when worker becomes available
         log::error("No worker of type $type available to process the work, please dispatch additional workers");
         break;
       }
