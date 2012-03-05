@@ -22,6 +22,7 @@ class qworker_info
   var $msg_handle;
   var $capacity;
   var $load;
+  var $completed;
 }
 
 class qmanager_exception extends Exception {};
@@ -116,12 +117,18 @@ class qmanager
     qmanager::send('work', $arguments, 'q');
   }
   
+  // e.g. schedule_time, options, 'sms', size, etc)//
+  static function schedule($schedule_time, $options, $type, $size, $etc )
+  {
+    global $db, $session;
+    $user = $session->user;
+    call_user_func_array('qmanager::work', array_merge(array('schedule', 1, $user->id), func_get_args()));
+  }
+
   static function complete($type, $id, $load)
   {
     qmanager::send('complete', func_get_args(), 'q');
   }
-  
- 
   
   function listen()
   {
@@ -199,6 +206,8 @@ class qmanager
   
   function started($msg)
   {
+    //todo: allow for multiple number of the same worker type
+    //todo: check that we don't exceed number of instances allowed
     list($option, $filter) = $msg->arguments;
     db::connect_default();
     global $db;

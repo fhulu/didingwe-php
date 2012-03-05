@@ -11,6 +11,8 @@ class qworker extends qworker_info
   var $params;
   function __construct($max_msg_size=2048) 
   {   
+    $this->load = $this->completed = 0;
+    
     global $argv;
     
     $this->name = $argv[1];
@@ -41,7 +43,9 @@ class qworker extends qworker_info
     global $db;
     $db->each($sql, function($index, $row) use (&$values) {
       list($name, $value) = $row;
-      $values[$name] = $value;
+      if (isset($values[$name])
+        $values[$name] = array($values[$name], $value);
+      else $values[$name] = $value;
     });
     return $values;
   }
