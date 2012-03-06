@@ -76,7 +76,6 @@ class iweb extends qworker
     if ($values[0] == 'Success') {
       ++$this->successes;
       $status = 'sub';
-      $field = 'esme_reference';
       $value = $values['MessageReference'];
     }
     else {
@@ -87,11 +86,10 @@ class iweb extends qworker
         return $this->submit($id, $msisdn, $message, ++$attempts, false);
       }
       else {
-        $status = 'sub';
-        $field = 'error_code';
+        $status = 'err';
       }
     }
-    $this->db_update->exec("update mukonin_sms.outq set status='$status',attempts=$attempts,$field='$value' where id = $id");
+    $this->db_update->exec("update mukonin_sms.outq set status='$status',attempts=$attempts,esme_reference='$value' where id = $id");
   }
  
   function start()

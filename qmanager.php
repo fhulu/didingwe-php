@@ -100,21 +100,38 @@ class qmanager
     qmanager::send('start', func_get_args(), 'q');
   }
   
+  static function get_provider($user_id, $type)
+  {
+    global $db;
+    $provider_id  = $db->read_one_value(
+      "select pr.id from mukonin_process.provider pr, mukonin_process.group_provider gp
+        ,mukonin_audit.partner pa,mukonin_audit.user u 
+      where pr.id = gp.provider_id and  (pa.routing_group_id = gp.group_id or gp.group_id = 0) and gp.type = '$type' 
+        and u.partner_id = pa.id and u.id = $user_id order by gp.group_id desc");
+    if (is_null($provider_id)) 
+      log::error("Unable to route work of type $type for user $user_id");
+    return $provider_id;
+  }
+
+  static function daemon_work($user_id, $type, $load, $parameters )
+  {
+    $provider_id  = qmanager::get_provider($user_id, $type);  
+    if (is_null($provider_id)) return false;
+    $arguments = func_get_args();
+    $arguments[0] = $provider_id;
+    qmanager::send('work', $arguments, 'q');
+    return true;
+  }
+  
   static function work($type, $load, $parameters )
   {
-    global $db, $session;
-    $user = $session->user;
-    $provider_id  = $db->read_one_value(
-      "select pr.id from mukonin_process.provider pr join mukonin_process.group_provider gp on pr.id = gp.provider_id
-      join mukonin_audit.partner pa on pa.routing_group_id = gp.group_id and gp.type = '$type'
-      join mukonin_audit.user u on u.partner_id = pa.id and u.id = $user->id");
-    if ($provider_id == '') {
-      log::error("Unable to route work of type $type for user $user");
-      return;
-    }
-    
-    $arguments = array_merge(array($provider_id), func_get_args());
+    global $session;
+    $provider_id  = qmanager::get_provider($session->user->id, $type);  
+    if (is_null($provider_id)) return false;
+    $arguments = array_merge(array($provider_id),func_get_args());
     qmanager::send('work', $arguments, 'q');
+    return true;
+    
   }
   
   // e.g. schedule_time, options, 'sms', size, etc)//
@@ -227,9 +244,14 @@ class qmanager
       exec("$program $info->name $info->id $info->provider_id >/dev/null 2>&1 &");
       //todo: use signal handler to test when executed program dies
     });    
+    
   }
   
-    function stopped($msg)
+  function registered($msg)
+  {
+  }
+  
+  function stopped($msg)
   {
     list($option, $filter) = $msg->arguments;
     db::connect_default();
@@ -247,6 +269,8 @@ class qmanager
       if (!msg_send($info->msg_handle, 1, $msg))
         log::error("Unable to send message to $info->name");
     });
+  
+    if ($option == 'all') exit(0);
   }
 
   function distribute($msg)

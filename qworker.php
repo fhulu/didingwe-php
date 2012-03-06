@@ -43,8 +43,12 @@ class qworker extends qworker_info
     global $db;
     $db->each($sql, function($index, $row) use (&$values) {
       list($name, $value) = $row;
-      if (isset($values[$name])
-        $values[$name] = array($values[$name], $value);
+      if (isset($values[$name])) {
+        if (is_array($values[$name]))
+          $values[$name][] = $value;
+        else
+          $values[$name] = array($values[$name], $value);
+      }
       else $values[$name] = $value;
     });
     return $values;
@@ -53,11 +57,12 @@ class qworker extends qworker_info
   function listen($callback)
   {
     while(1) {
-      log::debug("Waiting for a work");
+      log::debug("Waiting for work");
       $error_code = 0;
 
       if (!msg_receive($this->msg_handle, 1, &$type, $this->max_msg_size, &$msg, true, 0, &$error_code)) {
         log::error("Failed to receive message with error $error_code");
+        pcntl_signal_dispatch();
         continue;
       }
       log::debug("Received $msg->method(" . implode(',',$msg->arguments) . ')');
