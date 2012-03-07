@@ -20,7 +20,9 @@ class qworker extends qworker_info
     $this->provider_id = $argv[3];
     $this->max_msg_size = $max_msg_size;
  
-    $this->msg_handle = msg_get_queue($this->id, 0660);
+    $this->msg_handle = msg_get_queue($this->id, 0666);
+    msg_remove_queue($this->msg_handle);
+    $this->msg_handle = msg_get_queue($this->id, 0666);
     global $db;
     list($log_level, $this->type, $this->capacity) 
       = $db->read_one("select log_level, type, allocation from mukonin_process.worker where id = $this->id");
