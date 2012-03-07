@@ -49,7 +49,6 @@
         cur_idx += parseInt(v);
       });
   
-     console.log("cur-idx = " + cur_idx);
       $.each(self.dialogs, function(i) {
         var dialog = this.dialog().data('dialog');
         if (i == cur_idx) {
