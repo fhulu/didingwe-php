@@ -9,15 +9,14 @@
           modal: true,
           autoOpen: false,
           width: parseInt($(this).css('width')),
-          height: parseInt($(this).css('height')),
+          height: parseInt($(this).css('height')), 
           show: 'blind',
           hide: 'explode',
         });
         self.dialogs.push(div);
         
         $(this).find("[wizard='next']").click(function() {
-          var steps = this.getAttribute('steps');
-          if (steps == undefined) steps = 1;
+          var steps = $(this).attr('steps');
           self.go_next(steps);
         });
 
@@ -43,6 +42,7 @@
     },
     
     go_next: function(steps) {
+      steps = steps==undefined? 1: parseInt(steps);
       var cur_idx = 0;
       var self = this;
       $.each(self.stack, function(i, v) {
