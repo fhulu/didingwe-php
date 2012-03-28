@@ -5,12 +5,14 @@
       this.dialogs = new Array();
       var self = this;
       $.each(this.element.children(), function(i) {
-        var div = $(this).dialog({
+        var dialog = $(this);
+        var div = dialog.dialog({
           modal: true,
           autoOpen: false,
           width: parseInt($(this).css('width')),
           height: parseInt($(this).css('height')), 
-          show: 'blind',
+          //note: show commented out, using show causes an exception if div contains input[type=file]
+//          show: 'blind', 
           hide: 'explode',
         });
         self.dialogs.push(div);
@@ -22,6 +24,10 @@
 
         $(this).find("[wizard='back']").click(function() {
           self.go_back();
+        });
+        
+        $(this).find("[wizard='close']").click(function() {
+          dialog.dialog('close');
         });
         
       });
