@@ -6,7 +6,6 @@ class select
    $selected = $selected? ' selected': '';
    if ($text=='') $text = $value;
    echo <<<EOT
-   echo <<<EOT
     <option value='$value'$selected>$text</option>
 
 EOT;
