@@ -1,17 +1,15 @@
 <?php 
-
-/* remove these comments for functionality - session php is highly needed
-require_once('session.php');*/
-
 class select
 {
-  static function add($value, $text=null, $selected=false)
+  static function add($value, $text, $selected=false)
   {              
-    $selected = $selected? ' selected': '';
-    if (is_null($text)) 
-      echo "<option$selected>$value</option>\n";
-    else
-      echo "<option value='$value'$selected>$text</option>\n";
+   $selected = $selected? ' selected': '';
+   if ($text=='') $text = $value;
+   echo <<<EOT
+   echo <<<EOT
+    <option value='$value'$selected>$text</option>
+
+EOT;
   }
 
   static function add_items($items,$selected=null)
