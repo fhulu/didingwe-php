@@ -3,6 +3,8 @@
     _create: function() {
       this.stack = new Array();   
       this.dialogs = new Array();
+      this.last_url = undefined;
+      this.auto_closed = false;
       var self = this;
       $.each(this.element.children(), function(i) {
         var dialog = $(this);
@@ -14,6 +16,15 @@
           //note: show commented out, using show causes an exception if div contains input[type=file]
 //          show: 'blind', 
           hide: 'explode',
+          close: function() 
+          {
+          /*
+            if (!self.auto_closed && self.last_url != undefined) {
+              window.location.href = self.last_url;
+              alert("closed later");
+            }
+          */
+          }
         });
         self.dialogs.push(div);
         
@@ -59,9 +70,11 @@
         var dialog = this.dialog().data('dialog');
         if (i == cur_idx) {
           if (dialog.isOpen()) { 
+            self.auto_closed = true;
             dialog.close();
           }
           else {
+            self.auto_closed = false;
             dialog.open();
             return false;
           }   
@@ -80,6 +93,7 @@
          
       $.each(this.dialogs, function(i) {
         if (i == cur_idx) {
+            self.auto_closed = true;
           this.dialog('close');
           return false;
         }
@@ -88,9 +102,19 @@
       cur_idx -= this.stack.pop();
       $.each(this.dialogs, function(i) {
         if (i == cur_idx) {
+            self.auto_closed = false;
           this.dialog('open');
           return false;
         }
+      });
+    },
+    
+    bind: function(event, callback) 
+    {
+      $.each(this.dialogs, function() {
+        $(this).bind( event, function(evt, ui) {
+          callback(evt, ui);
+        });
       });
     }
   })
