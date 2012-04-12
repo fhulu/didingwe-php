@@ -1,6 +1,11 @@
 <?php
 session_start(); 
 require_once('log.php');
+if (isset($_SESSION['instance'])) {
+  global $session;
+  require_once('../common/session.php');
+}
+
 log::init('index', log::DEBUG);
 
 
@@ -44,13 +49,13 @@ function init_div($div, $default=null)
     $_SESSION[$div] = $file_name;
   //echo "SESSION[div] = ". $_SESSION[$div] . "<br>\n";
 }
-
 function load_div($div)
 {
   $page = $_SESSION[$div];
   echo "<div id='$div'>";
-  if (strpos($page, '?') === false && file_exists($page))
+  if (strpos($page, '?') === false && file_exists($page)) {
     require_once($page);
+  }
   echo "</div>\n";
 }
 
