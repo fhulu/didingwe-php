@@ -9,7 +9,7 @@ class db_exception extends Exception {
    }
 };
 
-class db
+class db 
 {
   var $handle;
   var $dbname;
@@ -84,6 +84,11 @@ class db
     return $this->row_valid();
   }
 
+  function affected_rows()
+  {
+    return mysql_affected_rows($this->handle);
+  }
+  
   function exists($q, $fetch_type=MYSQL_BOTH, $max_rows = 0)
   {
     $this->exec($q, $max_rows);
