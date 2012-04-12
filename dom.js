@@ -329,8 +329,8 @@ function SetValueOnSelect(dropdown, dest_id)
   });
 }
 
-function insertAtCursor(myField, myValue) 
-{
+function insertAtCursor(myField, myValue) {
+
 	//IE support
 	if (document.selection) {
 		myField.focus();
