@@ -86,6 +86,7 @@ class session {
   }
 }
 
+$session = null;
 if (!$daemon_mode) {
   $session = unserialize($_SESSION['instance']);
   if (is_null($session) || is_null($session->user)) session::ensure_logged_in();
