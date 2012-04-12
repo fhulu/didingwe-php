@@ -290,7 +290,7 @@ class table
       }
     }
     $class=is_null($this->class)?'':"class=$this->class";
-    echo "<div $class><table $class>\n";
+    echo "<table $class>\n";
     if ($this->flags & self::TITLES) $this->show_titles();
     $this->show_cells($iterator);
     if ($this->page_size > 0 && !is_array($sql)) {
