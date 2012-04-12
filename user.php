@@ -2,6 +2,8 @@
 
 require_once('db.php');
 require_once('config.php');
+require_once('../common/session.php');
+require_once('../common/table.php'); 
 
 class user_exception extends Exception {};
 class user
@@ -79,6 +81,48 @@ class user
       echo $user->id;
     }
     
-  
+    static function changePassword()
+    {
+      $currpassword = $_POST['currpassword'];
+      $newpassword = $_POST["newpassword"];
+      
+      global $session, $db;
+
+      $curr_user_id = $session->user->id;
+      
+      $db->exec("update mukonin_audit.user
+                 set password = password('$newpassword')
+                 where id = $curr_user_id 
+                 and password = password('$currpassword')");
+      
+      if ($db->affected_rows() == 0) 
+      { 
+        echo "Invalid password"; 
+        return;
+      }       
+      
+      header("Location: /?c=password_changed");
+     
+    }
+    
+  static function userManagement()
+  {   
+    
+    $titles = array('#id', 'Username', 'First Name', 'Last Name', 'Create Time','');
+    
+    $sql = "select id, email_address, first_name, last_name, create_time
+            from mukonin_audit.user
+            order by create_time desc"; 
+              
+    table::display($sql, $titles, table::TITLES | table::ALTROWS, 'qmsg', 430,
+    
+      function (&$user_data, &$row_data, $row_num, &$attr) 
+      {
+        $attr .= " id=b" . $row_data['id'];
+        $row_data[''] = "<img src='edit16.png' onclick='editUser(this)'> <img  src='remove16.png';/>";
+
+        return true;
+      });
+  }
 }
 ?>
