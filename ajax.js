@@ -76,22 +76,34 @@ function ajax_value(result_id, url, progress_str, progress_id, sync)
   ajax_call(expand_url(url), true, function() { ajax_value_cb(obj); });
 }
 
-function ajax_get(url)
-{
-  ajax_call(url_params(url), true, function() {
-    if (ajax.readyState==4 && ajax.status==200) {
-     return ajax.responseText;
-    }
-  });
-}
-  
-
 function ajax_confirm(url)
 {
   var confirmation;
   ajax_call(expand_url(url), false, function() { 
     if (ajax.readyState==4 && ajax.status==200) 
       confirmation = ajax.responseText;
+  });
+  
+  if (confirmation.charAt(0) == '!') {
+    alert(confirmation.substr(1));
+    return false;
+  }
+  if (confirmation != '')
+    return confirm(confirmation);
+  return true;
+}
+
+function jq_confirm(url, params)
+{
+  var values = params2values(params);
+  var confirmation;
+  $.post({
+    url: url,
+    data: JSON.stringify(params2values(params));
+    async: false
+    success: function(data) {
+      confirmation = data;
+    }
   });
   
   if (confirmation.charAt(0) == '!') {
