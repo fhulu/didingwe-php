@@ -88,11 +88,12 @@ function backOnReject(msg)
   if (!confirm(ms)) history.go(-1);
 }
 
-function make_nv_pair(name)
+function make_nv_pair(name, pairer)
 {
   var obj = getElementByIdOrName(name);
-  if (obj != null) 
-    return obj.name + "=" + obj.value;
+  if (obj != null) {
+    if (pairer == undefined) pairer = '=';
+    return obj.name + pairer + obj.value;
   return name;
 
 }
@@ -111,11 +112,11 @@ function params2pairs(params, pairer, separator)
       for (var j=first; j <= last; j++) {
         var obj = getElementByIdOrName(name + j);
         if (obj != null) 
-          pairs += '&' + obj.name + "=" + obj.value;
+          pairs += separator + obj.name + pairer + obj.value;
       }
     }
     else {  
-      pairs += '&' + make_nv_pair(name);
+      pairs += separator + make_nv_pair(name, pairer);
     }
   }
   return pairs.substr(1,pairs.length-1);
