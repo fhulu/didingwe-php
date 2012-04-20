@@ -94,9 +94,21 @@ function make_nv_pair(name, pairer)
   if (obj != null) {
     if (pairer == undefined) pairer = '=';
     return obj.name + pairer + obj.value;
+  }
   return name;
 
 }
+
+function toJSON(obj){
+  var json = '({';
+  $.each(obj, function(k,v){
+    var q = typeof v == 'string' ? ~v.indexOf("'") ? '"' : "'" : '';
+    if (typeof v == 'object')
+      v = toJSON(v).slice(0,-1).substr(1);
+    json+= k + ':'+ q + v + q + ',';
+  });
+  return json.slice(0,-1)+'})';
+};
 
 function params2values(params, separator)
 {
@@ -105,7 +117,7 @@ function params2values(params, separator)
     params = params.split(separator);
   }
   
-  var values;
+  var values = new Object;
   for (var i=0; i<params.length; ++i)  {
     var name = params[i];
     var range_spec = name.split(':');

@@ -95,12 +95,12 @@ function ajax_confirm(url)
 
 function jq_confirm(url, params)
 {
-  var values = params2values(params);
-  var confirmation;
-  $.post({
+  var confirmation = '';
+  $.ajax({
+    type: 'post',
     url: url,
-    data: JSON.stringify(params2values(params));
-    async: false
+    data: params2values(params),
+    async: false,
     success: function(data) {
       confirmation = data;
     }
