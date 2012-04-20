@@ -98,10 +98,14 @@ function make_nv_pair(name, pairer)
 
 }
 
-function params2pairs(params, pairer, separator)
+function params2values(params, separator)
 {
-  params = params.split(',');
-  var pairs='';
+	if (!(params instanceof Array)) {
+		if (separator == undefined) separator = ',';
+    params = params.split(separator);
+  }
+  
+  var values;
   for (var i=0; i<params.length; ++i)  {
     var name = params[i];
     var range_spec = name.split(':');
@@ -109,18 +113,32 @@ function params2pairs(params, pairer, separator)
       name = range_spec[0];
       var first = range_spec[1];
       var last = range_spec[2];
+      var range = new Array(last-first+1);
       for (var j=first; j <= last; j++) {
         var obj = getElementByIdOrName(name + j);
-        if (obj != null) 
-          pairs += separator + obj.name + pairer + obj.value;
+        if (obj != null) range[j] = obj.value;
       }
+      values[name] = range;
     }
     else {  
-      pairs += separator + make_nv_pair(name, pairer);
+      var obj = getElementByIdOrName(name);
+      if (obj != null) values[name] = obj.value;
     }
+  }
+  return values; 
+}
+
+function params2pairs(params, pairer, separator)
+{
+  var values = params2values(params);
+  var pairs = '';
+  var name;
+  for (name in values) {
+    pairs += separator + name + pairer + values[name];
   }
   return pairs.substr(1,pairs.length-1);
 }
+
 function params2url(params)
 { 
   return params2pairs(params, '=', '&');
