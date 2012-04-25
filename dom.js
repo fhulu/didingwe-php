@@ -35,6 +35,11 @@ function getElementByIdOrName(name)
   return obj==null? getElementByName(name): obj;
 }
 
+function getJQObject(name)
+{
+  var obj = $("#"+name+",[name='"+name+"']");
+  return obj.length == 0? null: obj;
+}
 
 function showHide(obj, show)
 {
@@ -127,14 +132,14 @@ function params2values(params, separator)
       var last = range_spec[2];
       var range = new Array(last-first+1);
       for (var j=first; j <= last; j++) {
-        var obj = getElementByIdOrName(name + j);
-        if (obj != null) range[j] = obj.value;
+        var obj = getJQObject(name+j);
+        if (obj != null) range[j] = obj.val();
       }
       values[name] = range;
     }
     else {  
-      var obj = getElementByIdOrName(name);
-      if (obj != null) values[name] = obj.value;
+      var obj = getJQObject(name);
+      if (obj != null) values[name] = obj.val();
     }
   }
   return values; 
