@@ -50,18 +50,18 @@ EOT;
 
   static function drop()
   {
-    $key_fields = urldecode($_GET[k]);
+    $key_fields = urldecode($_REQUEST[k]);
     $ifind = new ifind;
     $ifind->key_fields = $key_fields;
     $key_fields = explode(',',$key_fields);
     $ifind->input_name = $key_fields[0];
-    $ifind->hint = trim($_GET[$ifind->input_name]);
+    $ifind->hint = trim($_REQUEST[$ifind->input_name]);
     if ($ifind->hint == '') return;
-    $ifind->dest_key = $_GET[d];
-    $ifind->page = (int)$_GET[p];
-    $ifind->extra_fields = urldecode($_GET[x]);
-    $ifind->on_select = urldecode($_GET['s']);
-    $ifind->table = $_GET[t];
+    $ifind->dest_key = $_REQUEST[d];
+    $ifind->page = (int)$_REQUEST[p];
+    $ifind->extra_fields = urldecode($_REQUEST[x]);
+    $ifind->on_select = urldecode($_REQUEST['s']);
+    $ifind->table = $_REQUEST[t];
     $row = $ifind->page * self::PAGESIZE;
 
     $where = " where $ifind->input_name like '$ifind->hint%'";
