@@ -43,7 +43,7 @@ class ifind
     $on_select = urlencode($on_select);
     echo <<<EOT
       <input type='text' name='$input_name' size=40
-        onkeyup="ajax_inner('div_$input_name', 'do.php/ifind/drop?k=$key_fields,$input_name,x=$extra_fields,t=$table,d=$dest_key,s=$on_select')" />
+        onkeyup="ajax_inner('div_$input_name', 'do.php/ifind/drop?k=$key_fields,$input_name,x=$extra_fields,t=$table,d=$dest_key,s=$on_select');getElementByIdOrName('$dest_key').value = '';" />
       <div class=dropdown id=div_$input_name></div>
 EOT;
   }
