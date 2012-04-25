@@ -179,7 +179,7 @@ function check_if(names, value)
     if (obj==null) {
       //alert(names[i]);
     }
-    else if (obj.value == value) {
+    else if (obj.value == value && obj.style.display != 'none') {
       result = true;
       break;
     }
@@ -210,7 +210,33 @@ function disable_if_empty(result_id, names)
   disable_if(result_id, names, '');
 }
 
+function enable_if(target, controls, callback)
+{
+  var enabled = true;
+  $(controls).each(function() {
+    if (!callback(this)) {
+      enabled = false;
+      return false;
+    }
+  });
+  if (enabled)
+    $(target).removeAttr("disabled");
+  else
+    $(target).attr("disabled", "disabled");
+}
 
+function enable_nonempty(target, controls)
+{
+  var names = controls.split(',');
+  var filter='';
+  $.each(names, function() {
+    filter += ",[name='"+this+"']";
+  });
+  filter = filter.substring(1);
+  enable_if(target, filter, function(control) {
+    return $(control).val() != '' && $(control).is(':visible');
+  });
+}
 function byref()
 {
   this.value;
