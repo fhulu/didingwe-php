@@ -28,37 +28,46 @@ class session {
   
   static function ensure_logged_in()
   {
-    if (strstr($_REQUEST['a'], 'session/log')===false) {
+    $request = $_REQUEST['a'];
+    $path = $_SERVER['PATH_INFO'];
+    if (strstr($request, 'session/log') === false 
+      && strstr($path, 'user/check') === false 
+      && strstr($path, 'user/register') === false) {
       $_SESSION['referrer'] = $_SERVER[REQUEST_URI];
       session::redirect('/?c=login');
     }
   }
 
+  
+  static function register($user)
+  {
+    global $session;
+    $session = new session();
+    $session->referrer = $_SESSION['referrer'];
+    $session->user = $user;
+    $session->id = sprintf("%08x%04x%04x%08x",rand(0,0xffffffff),$user->partner_id,$user->id,time());
+    $sql = "insert mukonin_audit.session (id, user_id) values ('$session->id','$user->id')";
+    
+    global $db;
+    $db->insert($sql);
+    $_SESSION['instance'] = serialize($session);
+  }
+  
   static function login()
   {
-    try { 
-      global $session;
-      $session = new session();
-      $session->referrer = $_SESSION['referrer'];
-        
+    try {        
       $email = $_REQUEST['email'];
       $passwd = $_REQUEST['password'];
       log::debug("LOGIN: $email PROGRAM: $session->program_id REFERRER: $session->referrer");
          
       $user = user::restore($_REQUEST['email'], $_REQUEST['password']);
-      
+      session::register($user);
       if (!$user)
         throw new session_exception("Invalid username/password for ". $_REQUEST[email]);
 
-      $session->user = $user;
-      $session->id = sprintf("%08x%04x%04x%08x",rand(0,0xffffffff),$user->partner_id,$user->id,time());
-      $sql = "insert mukonin_audit.session (id, user_id) values ('$session->id','$user->id')";
-      
-      global $db;
-      $db->insert($sql);
-      $_SESSION['instance'] = serialize($session);
+      global $session;
       if ($session->referrer == '') $session->referrer = '/?c=home';
-      session::redirect($session->referrer);
+        session::redirect($session->referrer);
     }
     catch (Exception $e) {
       $_SESSION[last_error] = $e->getMessage();
