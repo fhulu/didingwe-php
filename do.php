@@ -29,7 +29,7 @@ require_once('log.php');
     try {
       require_once($source_file);
       if (is_callable($class_function)) $function = $class_function;
-      if (is_callable($function)) call_user_func($function);
+      if (is_callable($function)) call_user_func($function, $_REQUEST);
     }
     catch (Exception $e) {
       log::error("UNCAUGHT EXCEPTION: " . $e->getMessage() );
