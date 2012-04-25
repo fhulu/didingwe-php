@@ -139,7 +139,7 @@ function params2values(params, separator)
     }
     else {  
       var obj = getJQObject(name);
-      if (obj != null) values[name] = obj.val();
+      values[name] = obj==null? null: obj.val();
     }
   }
   return values; 
@@ -151,9 +151,12 @@ function params2pairs(params, pairer, separator)
   var pairs = '';
   var name;
   for (name in values) {
-    pairs += separator + name + pairer + values[name];
+    if (values[name] != null)
+      pairs += separator + name + pairer + values[name];
+    else
+      pairs += separator + name;
   }
-  return pairs.substr(1,pairs.length-1);
+  return pairs.substr(separator.length,pairs.length-separator.length);
 }
 
 function params2url(params)
@@ -165,7 +168,7 @@ function expand_url(url)
 { 
   var param_idx = url.indexOf('?')+1;
   if (param_idx > 0) 
-    return url = url.substr(0, param_idx) + params2url(url.substr(param_idx));
+    url = url.substr(0, param_idx) + params2url(url.substr(param_idx));
   return url;
 }
 
