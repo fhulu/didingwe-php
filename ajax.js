@@ -93,27 +93,35 @@ function ajax_confirm(url)
   return true;
 }
 
-function jq_confirm(url, params)
+function jq_submit(url, params, async)
 {
-  var confirmation = '';
+  if (async == undefined) async = false;
+  var result;
   $.ajax({
     type: 'post',
     url: url,
     data: params2values(params),
-    async: false,
+    async: async,
     success: function(data) {
-      confirmation = data;
+      result = data;
     }
   });
-  
-  if (confirmation.charAt(0) == '!') {
-    alert(confirmation.substr(1));
-    return false;
+  return result;
+}
+
+function jq_confirm(url, params)
+{
+  var result = jq_submit(url, params);  
+  if (result.charAt(0) == '!') {
+    alert(result.substr(1));
+    return '';
   }
-  if (confirmation != '')
-    return confirm(confirmation);
+  if (result != '')
+    return confirm(result);
   return true;
 }
+
+
 
 function ajax_mconfirm(url,params)
 {
