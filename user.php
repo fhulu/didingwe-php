@@ -2,8 +2,8 @@
 
 require_once('db.php');
 require_once('config.php');
-require_once('../common/session.php');
-require_once('../common/table.php'); 
+require_once('session.php');
+require_once('table.php'); 
 
 class user_exception extends Exception {};
 class user
@@ -68,7 +68,7 @@ class user
     return false;
   }
   
-  static function create($email, $password, $first_name, $last_name, $cellphone)
+  static function create($email, $password, $first_name, $last_name, $cellphone, $otp)
   {
     $program_id = config::$program_id;
     global $session;
@@ -77,7 +77,6 @@ class user
     else 
       $partner_id = $session->user->partner_id;
    
-    $otp = rand(23671,99999);
     $sql = "insert into mukonin_audit.user(program_id, partner_id, email_address, password, first_name,last_name, cellphone, otp, otp_time)
       values($program_id,$partner_id, '$email', password('$password'), '$first_name','$last_name','$cellphone', '$otp', now())";
     
@@ -90,8 +89,8 @@ class user
   
   static function register($request)
   {
-    $fname = $request[first_name];
-    $lname = $request[last_name];
+    $first_name = $request[first_name];
+    $last_name = $request[last_name];
     $email = $request[email];
     $password = $request[password];
     $cellphone = $request[cellphone];
@@ -101,17 +100,26 @@ class user
     // First check if email already exists
     if (user::exists($email, 0)) {
       global $db;
-      $sql = "update mukonin_audit.user set password=password('$password'), first_name = '$fname',last_name='$lname', cellphone='$cellphone',
+      $sql = "update mukonin_audit.user set password=password('$password'), first_name = '$first_name',last_name= '$last_name', cellphone='$cellphone',
         otp=$otp, otp_time = now() where email_address='$email' and program_id = $program_id";
       $db->exec($sql);
       $id = $db->read_one_value("select id from mukonin_audit.user where email_address = '$email' and program_id = $program_id");
-      $user = new user(array($id,0, $email, $fname, $name, $cellphone, $otp));
+      $user = new user(array($id,0, $email, $first_name, $last_name, $cellphone, $otp));
     }
     else {
-      $user = user::create($email, $password, $fname, $lname, $cellphone);
+      $user = user::create($email, $password, $first_name, $last_name, $cellphone, $otp);
     }
 
     session::register($user);
+    
+    //todo: send email and/or sms
+
+    $message = "Your One Time Password is $otp";
+    $subject = "One Time Password";
+    $headers = "from: donotreply@gct.fpb.gov.za";
+    $mail_sent = mail($email, $subject, $message, $headers);
+    
+
     global $session;
     $user_id = $session->user->id;
     log::debug("logged in user session id is $user_id");
@@ -136,10 +144,51 @@ class user
   static function activate($request)
   {
     if (!user::check_otp($request)) return false;
-    global $db;
     global $db, $session;
     $id = $session->user->id;
     $db->exec("update mukonin_audit.user set active = 1 where id = $id");
+  }
+  
+  static function update($request)
+  {
+    foreach($request as $key=>$value) {
+      if ($key != 'PHPSESSID')
+        $values .= ", $key = '$value'";
+    }
+    global $db, $session;
+    $id = $session->user->id;
+    $sql = "update mukonin_audit.user set ". substr($values,1). " where id = $id";
+    $db->exec($sql);
+  }
+  
+  static function start_approval($request)
+  {     
+    //todo: email main user
+
+    global $db, $session;
+    $user = &$session->user;
+    $partner_id = $user->partner_id = $request['partner_id'];
+    $requestor = "$user->first_name $user->last_name <$user->email>";
+    user::update($request);
+
+
+    $emails = $db->read_column("select email_address 
+            from mukonin_audit.user u, mukonin_audit.user_role ur
+            where u.id = ur.user_id and partner_id = $partner_id and role_id = 1");
+    
+    foreach($emails as $email) {
+      $link = "http://lungelwa.gct.test/?c=approve_reg"; //todo: get right http address for production
+      $message = "$requestor would like to register as the user. Please click <a href=\"$link\">here</a> to give access to user.";
+      $subject = "Approve Registration";
+      $headers  = "MIME-Version: 1.0\r\n";
+      $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
+      $headers .= "from: donotreply@gct.fpb.gov.za";
+      log::debug("Sending email for $requestor to $email");
+      $mail_sent = mail($email, $subject, $message, $headers);
+      
+    }
+
+    
   }
 
     static function changePassword()
