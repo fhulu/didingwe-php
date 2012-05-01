@@ -97,10 +97,11 @@ function jq_submit(url, params, async)
 {
   if (async == undefined) async = false;
   var result;
+  var data = params == undefined? undefined: params2values(params);
   $.ajax({
     type: 'post',
     url: url,
-    data: params2values(params),
+    data: data,
     async: async,
     success: function(data) {
       result = data;
@@ -111,13 +112,20 @@ function jq_submit(url, params, async)
 
 function jq_confirm(url, params)
 {
-  var result = jq_submit(url, params);  
-  if (result.charAt(0) == '!') {
-    alert(result.substr(1));
-    return '';
+  var func_idx = url.lastIndexOf('/') + 1;
+  var funcs = url.substr(func_idx);
+  url = url.substr(0, func_idx);
+  funcs = funcs.split(',');
+  for (var i=0; i<funcs.length; ++i) {
+    var func = funcs[i];
+    var result = jq_submit(url+func, params);  
+    if (result.charAt(0) == '!') {
+      alert(result.substr(1));
+      return '';
+    }
+    if (result != '')
+      return confirm(result);
   }
-  if (result != '')
-    return confirm(result);
   return true;
 }
 
