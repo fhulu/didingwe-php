@@ -4,7 +4,6 @@
       this.stack = new Array();   
       this.dialogs = new Array();
       this.last_url = undefined;
-      this.auto_closed = false;
       var self = this;
       $.each(this.element.children(), function(i) {
         var dialog = $(this);
@@ -15,16 +14,7 @@
           height: parseInt($(this).css('height')), 
           //note: show commented out, using show causes an exception if div contains input[type=file]
 //          show: 'blind', 
-          hide: 'explode',
-          close: function() 
-          {
-          /*
-            if (!self.auto_closed && self.last_url != undefined) {
-              window.location.href = self.last_url;
-              alert("closed later");
-            }
-          */
-          }
+          hide: 'explode'
         });
         self.dialogs.push(div);
         
@@ -38,6 +28,8 @@
         });
         
         $(this).find("[wizard='close']").click(function() {
+          if (self.last_url != undefined)
+            window.location.href = self.last_url;
           dialog.dialog('close');
         });
         
