@@ -1,15 +1,12 @@
 <?php 
 class select
 {
-  static function add($value, $text, $selected=false)
+  static function option($value, $text, $selected=false)
   {              
    $selected = $selected? ' selected': '';
    if ($text=='') $text = $value;
-   echo <<<EOT
-    <option value='$value'$selected>$text</option>
-
-EOT;
-  }
+   return "<option value='$value'$selected>$text</option>";
+ }
 
   static function add_items($items,$selected=null)
   {
@@ -17,22 +14,30 @@ EOT;
   
     foreach($items as $item) {
       list($value, $text) = explode(',', $item);
-      select::add($value, $text, $value==$selected);
+      echo select::option($value, $text, $value==$selected);
     }
   }
 
-  static function add_db($sql,$selected=null,$first_value=null, $first_text=null)
+  static function read_db($sql,$selected=null,$first_value=null, $first_text=null)
   {
     if (!is_null($first_value))
-      select::add($first_value,$first_text,$first_value==$selected);
+      return select::option($first_value,$first_text,$first_value==$selected);
 
     global $db;
     $db->send($sql);
     $descript_field = $db->field_count()<2?0:1; 
    
+    $options = '';
     while ($db->more_rows()) 
-      select::add($db->row[0],$db->row[$descript_field],$selected==$db->row[0]);
+      $options .= select::option($db->row[0],$db->row[$descript_field],$selected==$db->row[0]);
+    return $options;
   }
+  
+  static function add_db($sql,$selected=null,$first_value=null, $first_text=null)
+  {
+    echo select::read_db($sql, selected, $first_value, $first_text);
+  }
+  
   static function load_from_db($sql,$selected=null,$first_value=null, $first_text=null)
   {
     select::add_db($sql, $selected, $first_value, $first_text);
