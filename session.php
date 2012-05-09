@@ -30,9 +30,11 @@ class session {
   {
     $request = $_REQUEST['a'];
     $path = $_SERVER['PATH_INFO'];
+    log::debug("Check login: PATH: $path REQUEST $request"); 
     if (strstr($request, 'session/log') === false 
       && strstr($path, 'user/check') === false 
-      && strstr($path, 'user/register') === false) {
+      && strstr($path, 'user/register') === false
+      && request != 'menu') {
       $_SESSION['referrer'] = $_SERVER[REQUEST_URI];
       session::redirect('/?c=login');
     }
@@ -41,9 +43,9 @@ class session {
   
   static function register($user)
   {
-    global $session;
-    $session = new session();
-    $session->referrer = $_SESSION['referrer'];
+      global $session;
+      $session = new session();
+      $session->referrer = $_SESSION['referrer'];
     $session->user = $user;
     $session->id = sprintf("%08x%04x%04x%08x",rand(0,0xffffffff),$user->partner_id,$user->id,time());
     $sql = "insert mukonin_audit.session (id, user_id) values ('$session->id','$user->id')";
@@ -52,7 +54,7 @@ class session {
     $db->insert($sql);
     $_SESSION['instance'] = serialize($session);
   }
-  
+        
   static function login()
   {
     try {        
@@ -67,7 +69,7 @@ class session {
 
       global $session;
       if ($session->referrer == '') $session->referrer = '/?c=home';
-        session::redirect($session->referrer);
+      session::redirect($session->referrer);
     }
     catch (Exception $e) {
       $_SESSION[last_error] = $e->getMessage();
@@ -92,10 +94,11 @@ class session {
       $db->send($sql);
     }
     session_destroy();
+    session::redirect("/?c=home");
   }
+  
 }
 
-$session = null;
 if (!$daemon_mode) {
   $session = unserialize($_SESSION['instance']);
   if (is_null($session) || is_null($session->user)) session::ensure_logged_in();
