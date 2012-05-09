@@ -16,9 +16,43 @@ class user
   var $last_name;
   var $cellphone;
   var $otp;
+  var $groups;
+  var $roles;
+  var $functions;
   function __construct($data)
   {
     list($this->id, $this->partner_id, $this->email, $this->first_name, $this->last_name, $this->cellphone) = $data;
+    $this->load_roles();
+    $this->load_functions();
+  }
+  
+  static function default_functions()
+  {
+    global $db;
+    
+    return $db->read_column("select distinct function_code from mukonin_audit.role_function
+    where role_code in ('base', 'unreg')");
+  }
+  
+  function load_roles()
+  {
+    global $db;
+    $assigned_roles = $db->read_column("select role_code from mukonin_audit.user_role where user_id = $this->id");
+    $this->roles = array();
+    foreach ($assigned_roles as $role) {
+      $roles = array($role);
+      $db->lineage($roles, "code", "base_code", "role");
+      array_merge($this->roles, $roles);
+    }
+  }
+  
+  function load_functions()
+  {
+    if (sizeof($this->roles) < 1) return;
+    $roles = "'". implode("','", $this->roles) . "'";
+    global $db;
+    $this->functions = $db->read_column("select distinct role_code from mukonin_audit.role_functions
+    where role_code in($roles)");
   }
   
   static function remind($email=null)
@@ -54,7 +88,7 @@ class user
   
   static function authenticate($email, $passwd)
   {
-    $sql = "select id, partner_id, email_address, first_name, last_name, role_id from mukonin_audit.user
+    $sql = "select id, partner_id, email_address, first_name, last_name, cellphone from mukonin_audit.user
      where email_address='$email' and password=password('$passwd') and program_id = ". config::$program_id;         
     
     global $db;
