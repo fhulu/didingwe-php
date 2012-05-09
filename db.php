@@ -203,6 +203,16 @@ class db
   {
     return json_encode($this->read($sql, MYSQL_ASSOC, $max_rows));
   }
+  
+  function lineage(&$values, $key, $parent_key, $table)
+  {
+    $value = $values[sizeof($values)-1];
+    $sql = "select $parent_key from $table where $key = '$value'";
+    $value = $this->read_one_value($sql);
+    if ($value == null) return;
+    $values[] = $value;
+    $this->lineage($values, $key, $parent_key, $table);
+  }
 }
 
 $db = null;
