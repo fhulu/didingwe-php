@@ -1,4 +1,4 @@
-<?php
+  <?php
 
 require_once('db.php');
 require_once('config.php');
@@ -16,43 +16,9 @@ class user
   var $last_name;
   var $cellphone;
   var $otp;
-  var $groups;
-  var $roles;
-  var $functions;
   function __construct($data)
   {
     list($this->id, $this->partner_id, $this->email, $this->first_name, $this->last_name, $this->cellphone) = $data;
-    $this->load_roles();
-    $this->load_functions();
-  }
-  
-  static function default_functions()
-  {
-    global $db;
-    
-    return $db->read_column("select distinct function_code from mukonin_audit.role_function
-    where role_code in ('base', 'unreg')");
-  }
-  
-  function load_roles()
-  {
-    global $db;
-    $assigned_roles = $db->read_column("select role_code from mukonin_audit.user_role where user_id = $this->id");
-    $this->roles = array();
-    foreach ($assigned_roles as $role) {
-      $roles = array($role);
-      $db->lineage($roles, "code", "base_code", "role");
-      array_merge($this->roles, $roles);
-    }
-  }
-  
-  function load_functions()
-  {
-    if (sizeof($this->roles) < 1) return;
-    $roles = "'". implode("','", $this->roles) . "'";
-    global $db;
-    $this->functions = $db->read_column("select distinct role_code from mukonin_audit.role_functions
-    where role_code in($roles)");
   }
   
   static function remind($email=null)
@@ -88,7 +54,7 @@ class user
   
   static function authenticate($email, $passwd)
   {
-    $sql = "select id, partner_id, email_address, first_name, last_name, cellphone from mukonin_audit.user
+    $sql = "select id, partner_id, email_address, first_name, last_name from mukonin_audit.user
      where email_address='$email' and password=password('$passwd') and program_id = ". config::$program_id;         
     
     global $db;
@@ -117,8 +83,10 @@ class user
     global $db;
     $id = $db->insert($sql);
     if ($id == null) return false;
-     
-    return new user(array($id, $partner_id, $email, $first_name, $last_name, $cellphone, $otp));
+    $sql = "insert into mukonin_audit.user_role(user_id,role_code)
+      values($id,'unreg')";
+	$db->insert($sql);
+    return new user(array($id, $partner_id, $email, $first_name, $last_name, $cellphone, $otp, $partner_id));
   }
   
   static function register($request)
@@ -183,6 +151,18 @@ class user
     $db->exec("update mukonin_audit.user set active = 1 where id = $id");
   }
   
+  static function deactivate()
+  {
+    global $db;
+    $id = $_REQUEST['id'];
+    $sql = "delete from mukonin_audit.user_role where user_id=$id";
+    $db->exec($sql);
+    
+    $sql = "update  mukonin_audit.user set active=0 where id=$id";
+    $db->exec($sql);
+    
+      
+  }
   static function update($request)
   {
     foreach($request as $key=>$value) {
@@ -194,6 +174,18 @@ class user
     $sql = "update mukonin_audit.user set ". substr($values,1). " where id = $id";
     $db->exec($sql);
   }
+
+  static function update_role($request)
+  {
+   
+    global $db;
+    $id = $_REQUEST['id'];
+    $role = $_REQUEST['role'];
+  
+    $sql = "update mukonin_audit.user_role set role_code='$role' where user_id = $id";
+    $db->exec($sql);
+  }
+
   
   static function start_approval($request)
   {     
@@ -208,7 +200,7 @@ class user
 
     $emails = $db->read_column("select email_address 
             from mukonin_audit.user u, mukonin_audit.user_role ur
-            where u.id = ur.user_id and partner_id = $partner_id and role_id = 1");
+            where u.id = ur.user_id and partner_id = $partner_id and ur.role_id = 1");
     
     foreach($emails as $email) {
       $link = "http://lungelwa.gct.test/?c=approve_reg"; //todo: get right http address for production
