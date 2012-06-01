@@ -63,7 +63,7 @@ class qworker extends qworker_info
       $error_code = 0;
 
       if (!msg_receive($this->msg_handle, 1, &$type, $this->max_msg_size, &$msg, true, 0, &$error_code)) {
-        log::error("Failed to receive message with error $error_code");
+        //log::error("Failed to receive message with error $error_code");
         pcntl_signal_dispatch();
         continue;
       }

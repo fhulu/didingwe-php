@@ -105,7 +105,7 @@ class schedule_mgr extends qworker
       pcntl_alarm($self->interval);
     });
     
-    parent::listen(function($provider_id, $type, $load, $user_id, $options, $work_type, $size, $etc) use (&$self)  {
+    parent::listen(function($user_id, $type, $start, $load, $options, $work_type, $size, $etc) use (&$self)  {
       $item = new schedule_item();
       $item->type = $work_type;
       $item->size = $size;

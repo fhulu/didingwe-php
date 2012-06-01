@@ -131,10 +131,6 @@ class qmanager
 
   static function daemon_work($user_id, $type, $load, $parameters )
   {
-    $provider_id  = qmanager::get_provider($user_id, $type);  
-    if (is_null($provider_id)) return false;
-    $arguments = func_get_args();
-    $arguments[0] = $provider_id;
     qmanager::send('work', $arguments, 'q');
     return true;
   }
@@ -142,9 +138,7 @@ class qmanager
   static function work($type, $load, $parameters )
   {
     global $session;
-    $provider_id  = qmanager::get_provider($session->user->id, $type);  
-    if (is_null($provider_id)) return false;
-    $arguments = array_merge(array($provider_id),func_get_args());
+    $arguments = array_merge(array($session->user_id),func_get_args());
     qmanager::send('work', $arguments, 'q');
     return true;
     
@@ -156,6 +150,11 @@ class qmanager
     global $db, $session;
     $user = $session->user;
     call_user_func_array('qmanager::work', array_merge(array('schedule', 1, $user->id), func_get_args()));
+  }
+  
+  static function daemon_schedule($user_id, $options, $type, $size, $etc )
+  {
+    call_user_func_array('qmanager::work', array_merge(array('schedule', 1, $user_id), func_get_args()));
   }
 
   static function report($type, $provider_id, $pid, $time, $load)
@@ -224,6 +223,7 @@ class qmanager
 
   static function get_control_sql($msg)
   {
+    db::connect_default();
     list($option, $filter) = $msg->arguments;
     $sql = "select w.id, p.id, w.type, w.name, p.program, w.allocation, p.max_instances 
           from mukonin_process.worker w, mukonin_process.provider p
@@ -242,7 +242,6 @@ class qmanager
     //todo: allow for multiple number of the same worker type
     //todo: check that we don't exceed number of instances allowed
     list($option, $filter) = $msg->arguments;
-    db::connect_default();
     global $db;
     $sql = qmanager::get_control_sql($msg);
     
@@ -314,23 +313,27 @@ class qmanager
 
   function distribute($msg)
   {
-    list($provider_id, $type, $required, $arguments) = $msg->arguments;
+    list($user_id, $type, $required, $arguments) = $msg->arguments;
+    $provider_id = qmanager::get_provider($user_id);
     do {
       $most_available = 0;
       $best_info = null;
       $provider = &$this->providers[$type][$provider_id];
+      
+      // first find if there is a worker with no load
+      $found_free = false;
       foreach($provider->workers as $worker) {
-        $available = $worker->capacity - $worker->load;
-        if ($available >= $most_available) {
-          $best_info = $info;
-          $most_available = $available;
+        if ($worker->load == 0) {
+          $found_free = true;
+          break;
         }
       }
       
-      if ($best_info === null) {
-        if (sizeof($provider->workers) < $provider->max_instances)) 
-          //todo: process unprocessed items when worker becomes available
-          log::error("No worker of type $type available to process the work, please reconfigure to allow for additional workers");
+      if (!$found_free) {
+        if (sizeof($provider->workers) < $provider->max_instances)) {
+          log::warn("No worker of type $type available to process the work, please reconfigure to allow for additional workers");
+          //todo: schedule message to go after 5 minutes
+          qmanager::schedule(
         }
         else {
           qmanager::start($provider->name);

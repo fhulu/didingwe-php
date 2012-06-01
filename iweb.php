@@ -102,13 +102,13 @@ class iweb extends qworker
     $this->db_read = $db;
     $this->db_update = $db->dup();
     $self = &$this;
-    parent::listen(function($provider_id, $type, $load, $key_name, $key_value) use (&$self)  {
+    parent::listen(function($provider_id, $type, $start, $load, $key_name, $key_value) use (&$self)  {
       if ($key_name == '' && $key_value == '') {
         log::error("No keys given for iweb work");
         return;
       }
       $sql = "select id,msisdn, message, reference1 from mukonin_sms.outq 
-        where $key_name = $key_value and status = 'pnd' limit 0, $self->capacity";
+        where $key_name = $key_value and status = 'pnd' limit $start, $load";
       $self->db_read->each($sql, function($index, $row) use (&$self) {
         list($id, $msisdn, $message) = $row;
         $self->submit($id, $msisdn, $message);

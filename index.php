@@ -1,11 +1,6 @@
 <?php
 session_start(); 
 require_once('log.php');
-if (isset($_SESSION['instance'])) {
-  global $session;
-  require_once('../common/session.php');
-}
-
 log::init('index', log::DEBUG);
 
 
@@ -43,19 +38,19 @@ function init_div($div, $default=null)
     
     $page .= $params;
 
-    $_SESSION[$div] = "a.php?a=$page";
+    $_SESSION[$div] = "/?a=$page";
   }
   else
     $_SESSION[$div] = $file_name;
   //echo "SESSION[div] = ". $_SESSION[$div] . "<br>\n";
 }
+
 function load_div($div)
 {
   $page = $_SESSION[$div];
   echo "<div id='$div'>";
-  if (strpos($page, '?') === false && file_exists($page)) {
+  if (strpos($page, '?') === false && file_exists($page))
     require_once($page);
-  }
   echo "</div>\n";
 }
 
@@ -66,20 +61,23 @@ function set_div($div)
   if (strpos($page, '?') !== false) 
     echo "ajax_inner('$div', '$page', true);\n";
 }
-
+if (isset($_GET['a'])) {
+  require_once('action.php');
+  return;
+}
 init_div('content', 'home');
 init_div('banner');
 init_div('menu');
 init_div('left-nav');
 init_div('right-nav');
 init_div('footer');
-
 ?>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-    
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+  
     <link href="default.style.css" media="screen" rel="stylesheet" type="text/css" />	
     <link href="jquery/smoothness/ui.css" media="screen" rel="stylesheet" type="text/css" />	
 
@@ -88,20 +86,6 @@ init_div('footer');
     <script type='text/javascript' src='../common/dom.js'></script>
     <script type="text/javascript" src="../common/ajax.js"></script> 
 
-    <script type="text/javascript">
-    
-	
-      window.onload = function() {
-      <?php 
-        set_div('banner');
-        set_div('menu');
-        set_div('left-nav');
-        set_div('content');
-        set_div('right-nav');
-        set_div('footer');
-      ?>
-      };
-    </script> 
   </head>
   
   <body>

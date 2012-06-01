@@ -6,16 +6,17 @@ class menu
 {
    static function show($type, $li='li', $attr='')
   {
-    if ($session == '') {
+    if ($_SESSION[instance] == '') {
       global $db;
     
       $functions =  $db->read_column("select distinct function_code from mukonin_audit.role_function
         where role_code in ('base', 'unreg')");
     }
     else {
-      require_once("session.php");
       global $session;
-      $functions = explode(',',$session->user->functions);
+      require_once("session.php");
+      $user = $session->user;
+      $functions = $session->user->functions;
     }
     
     global $db;
@@ -30,7 +31,7 @@ class menu
   static function show_subitems($parent_id, $functions, $li, $level)
   {
   
-    $sql = "select function_code, m.id, parent_id, name, url, description 
+    $sql = "select function_code, m.id, name, url, description 
       from mukonin_audit.menu m join mukonin_audit.function f on f.code = m.function_code and f.program_id = m.program_id
       where parent_id = $parent_id and f.program_id = ". config::$program_id;
     $sql .= " order by position"; 
@@ -43,7 +44,10 @@ class menu
       if (!in_array($function, $functions)) continue;
       if ($level == 0 && $li != '') echo "<$li>";
       $url = $item['url'];
-      if ($url == '') $url = "/?c=$function";
+      if ($url == '') 
+        $url = "/?c=$function";
+      else
+        $url = "/?a=$function&u=$url";
       $name = $item['name'];
       echo "<a href='$url'>$name</a>\n";
       menu::show_subitems($item['id'], $functions, $li, $level+1);
