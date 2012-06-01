@@ -1,22 +1,29 @@
 (function( $ ) {
   $.widget( "ui.slideshow", {
+    options: {
+      fadesAfter: 2500,
+      changesEvery: 5000
+    },
+
     _create: function() 
     {
       this.cur_idx = 0;
+      this.container = this.element;
       this.slides = this.element.children();
       this.cur_slide = null;
-      this.slides.hide().css('z-index', 100);
+    },
+	
+    fade: function()
+    {
+      var self = this;
     },
 
-    slideshow: function(selector) 
-    { 
-      return $(this).find(selector); 
-    },
-    
-    start: function(fade_interval, show_interval, start_idx)
+    start: function(start_idx)
     {
+      this.slides.css('z-index', this.container.css('z-index')).hide();
       if (start_idx == undefined) start_idx = 0;
       this.cur_slide = this.slides.eq(start_idx);
+      this.cur_slide.show();
       var self = this;
       this.interval_id = setInterval(function() {
         ++self.cur_idx;
@@ -24,11 +31,11 @@
         var next_slide = self.slides.eq(self.cur_idx);
         var zindex = self.cur_slide.css('z-index');
         next_slide.css('z-index', zindex-1).show();
-        self.cur_slide.fadeOut(fade_interval, function() {
+        self.cur_slide.fadeOut(self.options.fadesAfter, function() {
           next_slide.css('z-index', zindex);
           self.cur_slide = next_slide;
         });
-      }, show_interval); 
+      }, this.options.changesEvery); 
     },
     
     stop: function()
