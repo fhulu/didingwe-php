@@ -86,22 +86,7 @@ init_div('footer');
     <script type='text/javascript' src='jquery/ui-min.js'></script>
     <script type='text/javascript' src='../common/dom.js'></script>
     <script type="text/javascript" src="../common/ajax.js"></script> 
-
-    <script type="text/javascript">
-    
-	
-      window.onload = function() {
-      <?php 
-        set_div('banner');
-        set_div('menu');
-        set_div('left-nav');
-        set_div('content');
-        set_div('right-nav');
-        set_div('footer');
-      ?>
-      };
-    </script> 
-  </head>
+ </head>
   
   <body>
     <div id='frame'>
