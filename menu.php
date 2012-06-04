@@ -6,7 +6,8 @@ class menu
 {
    static function show($type, $li='li', $attr='')
   {
-    if ($_SESSION[instance] == '') {
+    global $session;
+    if ($_SESSION[instance] == '' || $_SESSION[last_error] != '') {
       global $db;
     
       $functions =  $db->read_column("select distinct function_code from mukonin_audit.role_function
@@ -17,6 +18,7 @@ class menu
       require_once("session.php");
       $user = $session->user;
       $functions = $session->user->functions;
+      log::debug("functions are ". implode(',', $functions));
     }
     
     global $db;
@@ -46,8 +48,6 @@ class menu
       $url = $item['url'];
       if ($url == '') 
         $url = "/?c=$function";
-      else
-        $url = "/?a=$function&u=$url";
       $name = $item['name'];
       echo "<a href='$url'>$name</a>\n";
       menu::show_subitems($item['id'], $functions, $li, $level+1);
