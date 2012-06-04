@@ -31,7 +31,7 @@ $_SESSION['function'] = $function;
 
 log::init($class, log::DEBUG);
 try {
-  call_user_func($function);
+  call_user_func($function, $_REQUEST);
 }
 catch (Exception $e) {
   log::error("UNCAUGHT EXCEPTION: " . $e->getMessage() );
