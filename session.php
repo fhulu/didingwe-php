@@ -68,12 +68,13 @@ class session {
 
       global $session;
       if ($session->referrer == '') $session->referrer = '/?c=home';
-      session::redirect($session->referrer);
+      $_SESSION[last_error] = '';
+      echo $session->referrer;
     }
     catch (Exception $e) {
       $_SESSION[last_error] = $e->getMessage();
       log::error("EXCEPTION: ". $e->getMessage());
-      session::redirect("/?c=login");
+      echo "!".$e->getMessage();
     }
   }
   
