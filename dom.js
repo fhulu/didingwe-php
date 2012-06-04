@@ -37,7 +37,10 @@ function getElementByIdOrName(name)
 
 function getJQObject(name)
 {
-  var obj = $("#"+name+",[name='"+name+"']");
+  var filter = "#"+name+",[name='"+name+"']";
+  
+  var obj = $(filter+":checked");
+  if (obj.length == 0) obj = $(filter);
   return obj.length == 0? null: obj;
 }
 
@@ -125,6 +128,11 @@ function params2values(params, separator)
   var values = new Object;
   for (var i=0; i<params.length; ++i)  {
     var name = params[i];
+    if (name.indexOf("=") > 1) {
+      name = name.split("=");
+      values[name[0]] = name[1];
+      continue;
+    }
     var range_spec = name.split(':');
     if (range_spec.length > 2) {
       name = range_spec[0];
@@ -132,14 +140,19 @@ function params2values(params, separator)
       var last = range_spec[2];
       var range = new Array(last-first+1);
       for (var j=first; j <= last; j++) {
-        var obj = getJQObject(name+j);
-        if (obj != null) range[j] = obj.val();
+        var objname = name+j;
+        var obj = getJQObject(objname);
+        if (obj != null && (obj.type != 'radio' || $("["+objname+"]").is('checked')))
+          values[objname] = obj.val();
+        
       }
-      values[name] = range;
     }
     else {  
       var obj = getJQObject(name);
-      values[name] = obj==null? null: obj.val();
+      if (obj==null) 
+        values[name] = null;
+      else
+        values[name] = obj.val();
     }
   }
   return values; 
