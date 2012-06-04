@@ -111,6 +111,7 @@ function jq_submit(url, params, method, async)
 
   return result;
 }
+
 function jq_confirm(url, params, method)
 {
   var func_idx = url.lastIndexOf('/') + 1;
@@ -122,12 +123,12 @@ function jq_confirm(url, params, method)
     var result = jq_submit(url+func, params, method);  
     if (result.charAt(0) == '!') {
       alert(result.substr(1));
-      return '';
+      return false;
     }
     if (result != '')
       return confirm(result);
   }
-  return result;
+  return true;
 }
 
 function ajax_mconfirm(url,params)
