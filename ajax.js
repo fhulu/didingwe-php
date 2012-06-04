@@ -97,7 +97,7 @@ function jq_submit(url, params, method, async)
 {
   if (async == undefined) async = false;
   if (method == undefined) method = 'post';
-  var result = '';
+  var result;
   var data = params == undefined? undefined: params2values(params);
   $.ajax({
     type: method,
@@ -125,7 +125,8 @@ function jq_confirm(url, params, method)
       alert(result.substr(1));
       return false;
     }
-    if (result != '')
+    result = $.trim(result);
+    if (result != '' && result != undefined)
       return confirm(result);
   }
   return true;
