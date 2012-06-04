@@ -29,11 +29,10 @@ class session {
   static function ensure_logged_in()
   {
     $request = $_REQUEST['a'];
-    $path = $_SERVER['PATH_INFO'];
     log::debug("Check login: PATH: $path REQUEST $request"); 
     if (strstr($request, 'session/log') === false 
-      && strstr($path, 'user/check') === false 
-      && strstr($path, 'user/register') === false
+      && strstr($request, 'user/register') === false
+      && strstr($request, 'user/register') === false
       && request != 'menu') {
       $_SESSION['referrer'] = $_SERVER[REQUEST_URI];
       session::redirect('/?c=login');
