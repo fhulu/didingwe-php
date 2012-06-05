@@ -62,6 +62,14 @@ class user
       $this->roles = array($role);
   }
   
+  function assign_role($role)
+  {
+    if (is_array($this->roles)) 
+      $this->roles = array_merge($this->roles, array($role));
+    else
+      $this->roles = array($role);
+  }
+  
   static function remind($email=null)
   {
     if (is_null($email)) {
@@ -112,7 +120,7 @@ class user
   {
     $program_id = config::$program_id;
     global $session;
-    if (is_null($session) || is_null($session->user)) 
+    if (is_null($session->user->partner_id)) 
       $partner_id = 0;
     else 
       $partner_id = $session->user->partner_id;
