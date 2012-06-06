@@ -31,7 +31,7 @@ class session {
     $request = $_REQUEST['a'];
     log::debug("Check login: PATH: $path REQUEST $request"); 
     if (strstr($request, 'session/log') === false 
-      && strstr($request, 'user/register') === false
+      && strstr($request, 'user/check') === false
       && strstr($request, 'user/register') === false
       && request != 'menu') {
       $_SESSION['referrer'] = $_SERVER[REQUEST_URI];
