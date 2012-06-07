@@ -121,12 +121,12 @@ function jq_confirm(url, params, method)
   for (var i=0; i<funcs.length; ++i) {
     var func = funcs[i];
     var result = jq_submit(url+func, params, method);  
-    if (result.charAt(0) == '!') {
+    if (result != undefined && result.charAt(0) == '!') {
       alert(result.substr(1));
       return false;
     }
     result = $.trim(result);
-    if (result != '' && result != undefined)
+    if (result != undefined && result != '')
       return confirm(result);
   }
   return true;
