@@ -146,6 +146,7 @@ function params2values(params, separator)
           values[objname] = obj.val();
         
       }
+      values[name] = range;
     }
     else {  
       var obj = getJQObject(name);
