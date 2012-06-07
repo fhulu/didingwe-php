@@ -267,7 +267,7 @@ class user
       
      //todo: send email and/or sms
     foreach($emails as $email) {
-        $message = "Dear $username, <br> Administrator would like to inform you that you have been registed and you role is $user_role.";
+        $message = "Dear $username, <br> Administrator would like to inform you that you have been registerd and you role is $user_role.";
         $subject = "Approve Application";
         $headers = "MIME-Version: 1.0\r\n";
         $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
@@ -299,7 +299,7 @@ class user
       $subject = "Approve Registration";
       $headers  = "MIME-Version: 1.0\r\n";
       $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
-      $headers .= "from: donotreply@submit.fpb.org.za";
+      $headers .= "from: $requestor";
       log::debug("Sending email for $requestor to $email");
       $mail_sent = mail($email, $subject, $message, $headers);
       
