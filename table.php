@@ -19,6 +19,8 @@ class table
   const ALTROWS = 0x0008;
   const SCROLLABLE = 0x0010;
   const PAGEABLE = 0x0020;
+  const FILTERABLE = 0x0040;
+  const SORTABLE = 0x0080;
 
   var $fields;
   var $symbols;
@@ -33,8 +35,8 @@ class table
   var $class;
   var $field_names;
   var $page_size;
-  var $page_index;
-  var $last_page_index;
+  var $page_offset;
+  var $last_page_offset;
   var $sql;
   var $visible_field_count;
   var $dataset;
@@ -48,6 +50,16 @@ class table
     if (!is_null($fields)) $this->set_fields($fields);
     $this->row_count = 0;
     $this->page_size = $page_size;
+  }
+  
+  function set_callback($callback)
+  {
+    $this->row_callback = $callback;
+  }
+  
+  function set_heading($heading)
+  {
+    $this->heading = $heading;
   }
   
   function set_fields($fields)
@@ -94,9 +106,16 @@ class table
       echo "\t<th>$field</th>\n";
   }
 
+  function show_heading()
+  {
+    echo "<tr><th class=heading colspan=$this->visible_field_count>$this->heading";
+    if ($this->flags & self::PAGEABLE) $this->show_paging();
+    echo"</th></tr>\n";
+  }
+  
   function show_titles()
   {
-    echo "<thead><tr>\n\t";
+    echo "<tr>\n\t";
     $this->flags |= self::TITLES;
     if ($this->flags & self::CHECKBOXES) {
       echo "<th rowspan=$this->title_rowspan><input type='checkbox' name='checkall' onclick='checkAll(\"row[]\", this.checked)'/></th>\n";
@@ -145,42 +164,12 @@ class table
     }
     
     if ($has_subfields) echo "\n</tr>";
-    echo "\n</thead>\n";
   }
-  
-  static function show_db_row($table)
-  {
-    global $db;
-    if (is_null($db->row)) return false;
-    $table->show_row($db->row);
-    return $db->more_rows(MYSQL_ASSOC);
-  }
-  
-  static function show_data_row($table)
-  {
-    if ($table->row_count >= sizeof($table->dataset)) return false;
-    $table->show_row($table->dataset[$table->row_count]);
-    return true;
-  }
-  
-  function show_cells($iterator, $reset_totals=true)
-  {
-    global $db;
-    echo "<tbody>\n";
-    if ($reset_totals) $this->totals = array();
-    $this->row_count = 0;
-    while (call_user_func($iterator, $this)) {
-      ++$this->row_count;  
-    }
-    if ($this->flags & self::TOTALS) $this->show_totals();
-    echo "</tbody>\n";
-    return $row_idx;
-  }
-
+ 
   function show_row($row_data)
   {
     if ($this->flags & self::ALTROWS)
-      $attr = ($this->row_count % 2)?'':" class = 'alt'";
+      $attr = ($this->row_count % 2)?'':" class='alt'";
     else
       $attr = '';
       
@@ -245,60 +234,55 @@ class table
     echo "</tr>\n";
   }
   
-  function show_paging()
+  function show_paging($new_row=false)
   {
-  /*
-    $colspan = $this->visible_field_count-1;
-    echo "<tr class=nav><td colspan=$colspan>\n";
-    if ($this->page > 0) {
-      $page = $this->page_index-1;
-      echo "
-        <a href=\"javascript:ajax_inner(this.parentNode.parentNode.parent_node.name,
-          'do.php/table/next?p=$prev_page,$input_name=$ifind->hint,k=$key_fields,x=$extra_fields,t=$ifind->table,d=$ifind->dest_key')\">
-            <img src='prev16.png'></a>";
-    }
-    echo "</td>\n<td>\n";
-//  if ($row_num== self::PAGESIZE) {
-    if ($ifind->page < $ifind->max_page) {
-      $next_page = $ifind->page+1;
-      echo " 
-        <a href=\"javascript:ajax_inner('div_$input_name',
-          'do.php/ifind/drop?p=$next_page,$input_name=$ifind->hint,k=$key_fields,x=$extra_fields,t=$ifind->table,d=$ifind->dest_key')\">
-            <div class=right><img src='next16.png'></div></a>";
-    
-    }
-    echo "</td></tr>\n";
-    */
+    $last_offset = $this->page_offset + $this->page_size;
+    if ($new_row) echo "<tr><th colspan=$this->visible_field_count >\n";
+    echo <<< HEREDOC
+      <div class=paging>
+        Showing <b>$this->page_offset</b> to <b>$last_offset</b> of <b>$this->max_rows</b>&nbsp;&nbsp;
+        <button class=prev onclick='prev_page(this)'>Prev</button>
+        <button class=next onclick='next_page(this)'>Next</button>
+      </div>
+HEREDOC;
+    if ($new_row) echo "</th></tr>";
+
   }
   
-  function show($sql = null, $page_index=0)
+  function show($sql = null)
   {
     if (!is_null($sql)) {
       $this->sql = $sql;
       if (!is_array($sql)) {
-        $iterator = 'table::show_db_row';
         if ($this->page_size > 0) 
-          $sql = 'select SQL_CALC_FOUND_ROWS ' . substr($sql, 6) . " limit $page_index, $this->page_size";
+          $sql = 'select SQL_CALC_FOUND_ROWS ' . substr($this->sql, 6) . " limit $this->page_offset, $this->page_size";
         global $db;
-        if (!$db->exists($sql,MYSQL_ASSOC)) return;
+        $rows = $db->read($sql, MYSQL_ASSOC);
+        if (sizeof($rows) == 0) return;
+        if ($this->page_size > 0 && !is_array($sql)) {
+          $this->max_rows = $db->read_one_value('select found_rows()');
+          $this->last_page_offset = (int)ceil($this->max_rows / $this->page_size) - 1;
+        }
         if (is_null($this->fields)) $this->set_fields(array_keys($db->row));
       }
       else {
-        $iterator = 'table::show_data_row';
-        $this->dataset = $sql;
-        if (is_null($this->fields)) $this->set_fields($sql[0]);
+        $rows = $sql;
+        if (is_null($this->fields)) $this->set_fields($rows[0]);
       }
     }
     $class=is_null($this->class)?'':"class=$this->class";
     echo "<table $class>\n";
-    if ($this->flags & self::TITLES) $this->show_titles();
-    $this->show_cells($iterator);
-    if ($this->page_size > 0 && !is_array($sql)) {
-      $this->page_index = $page_index;
-      $this->max_rows = $db->read_one_value('select found_rows()');
-      $this->last_page_index = (int)ceil($this->max_rows / $this->page_size) - 1;
+    if ($this->flags & (self::TITLES | self::FILTERABLE | self::PAGEABLE)) {
+      echo "<thead>\n";
+      if ($this->flags & (self::FILTERABLE | self::PAGEABLE)) $this->show_heading();
+      if ($this->flags & self::TITLES) $this->show_titles();
+      echo "</thead>\n";
     }
-    echo "</table>\n";
+    echo "<tbody>\n";
+    foreach($rows as $row) $this->show_row($row);
+    if ($this->flags & self::TOTALS) $this->show_totals();
+    if ($this->flags & self::PAGEABLE) $this->show_paging(true);
+    echo "</tbody>\n</table>\n";
   }
   
   static function display($sql_or_data, $fields=null, $flags=null, $class=null, $page_size=0, $row_callback=null, $cell_callback=null, &$user_data=null)
@@ -307,18 +291,5 @@ class table
     $table->show($sql_or_data);
     return $table;
   }
-  
-  /*
-    row_callback: 
-    signature: static [boolean] function my_row_callback($user_data, $row_data, $row_num, &$attr, $inner) 
-    returns boolean: true means display, false means hide
-  */
-  
-  /*
-    cell_callback: 
-    signature: static [void] function my_row_callback($user_data, $row_data, $field, &$attr, $inner) 
-    $field = array(row, col);
-    returns $td
-  */
 }
 ?>
