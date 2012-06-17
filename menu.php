@@ -4,7 +4,7 @@ require_once("db.php");
 
 class menu
 {
-   static function show($type, $li='li', $attr='')
+   static function show($type, $li='li')
   {
     global $session;
     if ($_SESSION[instance] == '' || $_SESSION[last_error] != '') {
@@ -25,9 +25,7 @@ class menu
     $parent_id = $db->read_one_value("select id from mukonin_audit.menu where type = '$type' and program_id = ".config::$program_id );
     if ($parent_id == '') return;
     
-    echo "<ul $attr>\n";
     menu::show_subitems($parent_id, $functions, $li, 0);
-    echo "</ul>\n";
   }
   
   static function show_subitems($parent_id, $functions, $li, $level)
