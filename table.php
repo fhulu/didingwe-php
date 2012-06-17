@@ -21,6 +21,7 @@ class table
   const PAGEABLE = 0x0020;
   const FILTERABLE = 0x0040;
   const SORTABLE = 0x0080;
+  const HEADING = 0x0100;
 
   var $fields;
   var $symbols;
@@ -40,6 +41,8 @@ class table
   var $sql;
   var $visible_field_count;
   var $dataset;
+  var $sort_field;
+  var $sort_order;
   function __construct($fields=null, $flags=0, $class=null, $page_size=0, $row_callback=null, $cell_callback=null, &$user_data=null)
   {
     $this->flags = $flags;
@@ -60,6 +63,20 @@ class table
   function set_heading($heading)
   {
     $this->heading = $heading;
+  }
+  
+  function set_paging($size, $offset)
+  {
+    $this->flags |= self::PAGEABLE;
+    $this->page_size = $size;
+    $this->page_offset = $offset;
+  }
+  
+  function set_sorting($field, $order)
+  {
+    $this->flags |= self::SORTABLE;
+    $this->sort_field = $field;
+    $this->sort_order = $order;
   }
   
   function set_fields($fields)
@@ -89,21 +106,25 @@ class table
   function add_symbol(&$field, $hidden=false)
   {
     $symbol = $field[0];
-    if ($symbol == '+' || $symbol == '#' || $symbol == '%') {
+    if ($symbol == '+' || $symbol == '#' || $symbol == '%' || $symbol == '~') {
       $field = substr($field,1);
     }
     if (!$hidden && $symbol[0] != '#') ++$this->visible_field_count;
     $this->symbols[] = $hidden?'#':$symbol;
   }
   
-  static function show_title($field, $rowspan, $colspan=1)
+  function show_title($field, $rowspan, $colspan, $symbol, $name)
   {
+    if ($this->flags & self::SORTABLE && $symbol == '~') {
+      $sort = " sort='$name'";
+      if ($name == $this->sort_field) $sort .= " order='$this->sort_order'";
+    }
     if ($rowspan > 1)
-      echo "\t<th rowspan=$rowspan>$field</th>\n";
+      echo "\t<th rowspan=$rowspan$sort>$field</th>\n";
     else if ($colspan > 1)
       echo "\t<th colspan=$colspan>$field</th>\n";
     else 
-      echo "\t<th>$field</th>\n";
+      echo "\t<th$sort>$field</th>\n";
   }
 
   function show_heading()
@@ -112,6 +133,7 @@ class table
     if ($this->flags & self::PAGEABLE) $this->show_paging();
     echo"</th></tr>\n";
   }
+  
   
   function show_titles()
   {
@@ -123,8 +145,9 @@ class table
 
     $i = 0;    
     foreach ($this->fields as $key=>&$field) {
+      $symbol = $this->symbols[$i];
       if (is_numeric($key)) {
-        if ($this->symbols[$i] != '#') $this->show_title($field, $this->title_rowspan);
+        if ($symbol != '#') $this->show_title($field, $this->title_rowspan, 1, $symbol,$this->field_names[$i]);
         ++$i;
         continue;
       }
@@ -142,7 +165,7 @@ class table
         if ($this->symbols[$i] != '#') ++$colspan;
         ++$i;
       }
-      $this->show_title($key, 1, $colspan);
+      $this->show_title($key, 1, $colspan, $symbol, $this->field_names[$i]);
     }
     echo "</tr>\n\t";
     $i = 0;
@@ -188,11 +211,6 @@ class table
     foreach($this->symbols as $symbol) {
       list($key,$cell) = each($row_data);
       if ($symbol == '#') continue;
-      /*
-      $attr='';
-      if (!is_null($this->cell_callback)) {
-        call_user_func($this->cell_callback, &$this->user_data, &$row_data, array($this->row_count, $key), &$attr, &$cell);
-      }*/
       echo "<td>$cell</td>";
       if ($symbol == '+' || $symbol == '%') {
         $this->totals[$key] += $cell;
@@ -236,13 +254,13 @@ class table
   
   function show_paging($new_row=false)
   {
-    $last_offset = $this->page_offset + $this->page_size;
+    $last_offset = min($this->page_offset + $this->page_size, $this->max_rows);
     if ($new_row) echo "<tr><th colspan=$this->visible_field_count >\n";
     echo <<< HEREDOC
       <div class=paging>
         Showing <b>$this->page_offset</b> to <b>$last_offset</b> of <b>$this->max_rows</b>&nbsp;&nbsp;
-        <button class=prev onclick='prev_page(this)'>Prev</button>
-        <button class=next onclick='next_page(this)'>Next</button>
+        <button nav=prev>Prev</button>
+        <button nav=next>Next</button>
       </div>
 HEREDOC;
     if ($new_row) echo "</th></tr>";
@@ -254,16 +272,19 @@ HEREDOC;
     if (!is_null($sql)) {
       $this->sql = $sql;
       if (!is_array($sql)) {
-        if ($this->page_size > 0) 
+        if ($this->flags & self::SORTABLE)
+          $sql .= " order by '$this->sort_field' $this->sort_order";
+        if ($this->flags & self::PAGEABLE) 
           $sql = 'select SQL_CALC_FOUND_ROWS ' . substr($this->sql, 6) . " limit $this->page_offset, $this->page_size";
         global $db;
         $rows = $db->read($sql, MYSQL_ASSOC);
         if (sizeof($rows) == 0) return;
-        if ($this->page_size > 0 && !is_array($sql)) {
+        if ($this->flags & self::PAGEABLE) { 
           $this->max_rows = $db->read_one_value('select found_rows()');
           $this->last_page_offset = (int)ceil($this->max_rows / $this->page_size) - 1;
         }
-        if (is_null($this->fields)) $this->set_fields(array_keys($db->row));
+        $this->field_names = array_keys($rows[0]);
+        if (is_null($this->fields)) $this->set_fields($field_names);
       }
       else {
         $rows = $sql;
@@ -271,7 +292,9 @@ HEREDOC;
       }
     }
     $class=is_null($this->class)?'':"class=$this->class";
-    echo "<table $class>\n";
+    if ($this->flags & self::PAGEABLE) 
+      $paging = " page_size=$this->page_size page_offset=$this->page_offset rows=$this->max_rows";
+    echo "<table $class $paging>\n";
     if ($this->flags & (self::TITLES | self::FILTERABLE | self::PAGEABLE)) {
       echo "<thead>\n";
       if ($this->flags & (self::FILTERABLE | self::PAGEABLE)) $this->show_heading();
