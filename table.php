@@ -254,12 +254,14 @@ class table
   
   function show_paging($new_row=false)
   {
-    $last_offset = min($this->page_offset + $this->page_size, $this->max_rows);
+    $last_offset = min($this->page_offset + $this->page_size, $this->row_count-1)+1;
+    $offset = $this->page_offset+1;
     if ($new_row) echo "<tr><th colspan=$this->visible_field_count >\n";
     echo <<< HEREDOC
       <div class=paging>
-        Showing <b>$this->page_offset</b> to <b>$last_offset</b> of <b>$this->max_rows</b>&nbsp;&nbsp;
+        Showing from <b>$offset</b> to <b>$last_offset</b> of <b>$this->row_count</b>&nbsp;&nbsp;
         <button nav=prev>Prev</button>
+        <input type=text value='$this->page_size'/>
         <button nav=next>Next</button>
       </div>
 HEREDOC;
@@ -279,9 +281,8 @@ HEREDOC;
         global $db;
         $rows = $db->read($sql, MYSQL_ASSOC);
         if (sizeof($rows) == 0) return;
-        if ($this->flags & self::PAGEABLE) { 
-          $this->max_rows = $db->read_one_value('select found_rows()');
-          $this->last_page_offset = (int)ceil($this->max_rows / $this->page_size) - 1;
+        if ($this->flags & self::PAGEABLE) {
+          $this->row_count = $db->read_one_value('select found_rows()');
         }
         $this->field_names = array_keys($rows[0]);
         if (is_null($this->fields)) $this->set_fields($field_names);
@@ -293,7 +294,7 @@ HEREDOC;
     }
     $class=is_null($this->class)?'':"class=$this->class";
     if ($this->flags & self::PAGEABLE) 
-      $paging = " page_size=$this->page_size page_offset=$this->page_offset rows=$this->max_rows";
+      $paging = " page_size=$this->page_size page_offset=$this->page_offset rows=$this->row_count";
     echo "<table $class $paging>\n";
     if ($this->flags & (self::TITLES | self::FILTERABLE | self::PAGEABLE)) {
       echo "<thead>\n";
