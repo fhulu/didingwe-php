@@ -22,6 +22,7 @@ class table
   const FILTERABLE = 0x0040;
   const SORTABLE = 0x0080;
   const HEADING = 0x0100;
+  const EXPANDABLE = 0x0200;
 
   var $fields;
   var $symbols;
@@ -43,6 +44,7 @@ class table
   var $dataset;
   var $sort_field;
   var $sort_order;
+  var $key_field;
   function __construct($fields=null, $flags=0, $class=null, $page_size=0, $row_callback=null, $cell_callback=null, &$user_data=null)
   {
     $this->flags = $flags;
@@ -77,6 +79,13 @@ class table
     $this->flags |= self::SORTABLE;
     $this->sort_field = $field;
     $this->sort_order = $order;
+  }
+  
+  function set_expandable($key=null)
+  {
+    $this->flags |= self::EXPANDABLE;
+    if (!is_null($key)) 
+      $this->key_field = $key;
   }
   
   function set_fields($fields)
@@ -211,12 +220,13 @@ HEREDOC;
     if ($has_subfields) echo "\n</tr>";
   }
  
-  function show_row($row_data)
+  function show_row($row_data, $index)
   {
+    $attr = '';
     if ($this->flags & self::ALTROWS)
-      $attr = ($this->row_count % 2)?'':" class='alt'";
-    else
-      $attr = '';
+      $attr = ($index % 2)?'':" class='alt'";
+    if ($this->flags & self::EXPANDABLE)
+      $attr = " expandable $this->key_field='". $row_data[$this->key_field] . "'";
       
     if ($this->row_callback && 
       !call_user_func($this->row_callback, &$this->user_data, &$row_data, $this->row_count, &$attr)) {
@@ -230,9 +240,14 @@ HEREDOC;
       echo "\t<td><input type='checkbox' name='row[]' value='$value' /></td>";
     }
     reset($row_data);
+    $show_expand = $this->flags & self::EXPANDABLE;
     foreach($this->symbols as $symbol) {
       list($key,$cell) = each($row_data);
       if ($symbol == '#') continue;
+      if ($show_expand) {
+        $cell = "<div expand=collapsed />$cell";
+        $show_expand = false;
+      }
       echo "<td>$cell</td>";
       if ($symbol == '+' || $symbol == '%') {
         $this->totals[$key] += $cell;
@@ -280,10 +295,12 @@ HEREDOC;
     if (!is_null($sql)) {
       $this->sql = $sql;
       if (!is_array($sql)) {
-        if ($this->flags & self::SORTABLE)
-          $sql .= " order by '$this->sort_field' $this->sort_order";
         if ($this->flags & self::PAGEABLE) 
-          $sql = 'select SQL_CALC_FOUND_ROWS ' . substr($this->sql, 6) . " limit $this->page_offset, $this->page_size";
+          $sql = 'select SQL_CALC_FOUND_ROWS ' . substr($this->sql, 6);
+        if ($this->flags & self::SORTABLE)
+          $sql .= " order by `$this->sort_field` $this->sort_order";
+        if ($this->flags & self::PAGEABLE) 
+          $sql .= " limit $this->page_offset, $this->page_size";
         global $db;
         $rows = $db->read($sql, MYSQL_ASSOC);
         if (sizeof($rows) == 0) return;
@@ -309,7 +326,8 @@ HEREDOC;
       echo "</thead>\n";
     }
     echo "<tbody>\n";
-    foreach($rows as $row) $this->show_row($row);
+    $index = 0;
+    foreach($rows as $row) $this->show_row($row, $index++);
     if ($this->flags & self::TOTALS) $this->show_totals();
     if ($this->flags & self::PAGEABLE) $this->show_paging(true);
     echo "</tbody>\n</table>\n";
