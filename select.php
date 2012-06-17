@@ -20,14 +20,14 @@ class select
 
   static function read_db($sql,$selected=null,$first_value=null, $first_text=null)
   {
+    $options = '';
     if (!is_null($first_value))
-      return select::option($first_value,$first_text,$first_value==$selected);
+      $options = select::option($first_value,$first_text,$first_value==$selected);
 
     global $db;
     $db->send($sql);
     $descript_field = $db->field_count()<2?0:1; 
    
-    $options = '';
     while ($db->more_rows()) 
       $options .= select::option($db->row[0],$db->row[$descript_field],$selected==$db->row[0]);
     return $options;
