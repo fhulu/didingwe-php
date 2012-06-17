@@ -116,25 +116,47 @@ class table
   function show_title($field, $rowspan, $colspan, $symbol, $name)
   {
     if ($this->flags & self::SORTABLE && $symbol == '~') {
-      $sort = " sort='$name'";
+      $sort = " sort";
       if ($name == $this->sort_field) $sort .= " order='$this->sort_order'";
     }
     if ($rowspan > 1)
-      echo "\t<th rowspan=$rowspan$sort>$field</th>\n";
+      echo "\t<th rowspan=$rowspan name='$name'$sort>$field</th>\n";
     else if ($colspan > 1)
       echo "\t<th colspan=$colspan>$field</th>\n";
     else 
-      echo "\t<th$sort>$field</th>\n";
+      echo "\t<th name='$name'$sort>$field</th>\n";
   }
 
   function show_heading()
   {
     echo "<tr><th class=heading colspan=$this->visible_field_count>$this->heading";
+    if ($this->flags & self::FILTERABLE) $this->show_filter();
     if ($this->flags & self::PAGEABLE) $this->show_paging();
     echo"</th></tr>\n";
   }
   
+    function show_paging($new_row=false)
+  {
+    $last_offset = min($this->page_offset + $this->page_size, $this->row_count-1)+1;
+    $offset = $this->page_offset+1;
+    if ($new_row) echo "<tr><th colspan=$this->visible_field_count >\n";
+    echo <<< HEREDOC
+      <div class=paging>
+        Showing from <b>$offset</b> to <b>$last_offset</b> of <b>$this->row_count</b>&nbsp;&nbsp;
+        <button nav=prev>Prev</button>
+        <input type=text value='$this->page_size'/>
+        <button nav=next>Next</button>
+      </div>
+HEREDOC;
+    if ($new_row) echo "</th></tr>";
+
+  }
   
+  function show_filter()
+  {
+    echo "<div class='filtering'></div>";
+  }
+
   function show_titles()
   {
     echo "<tr>\n\t";
@@ -252,22 +274,6 @@ class table
     echo "</tr>\n";
   }
   
-  function show_paging($new_row=false)
-  {
-    $last_offset = min($this->page_offset + $this->page_size, $this->row_count-1)+1;
-    $offset = $this->page_offset+1;
-    if ($new_row) echo "<tr><th colspan=$this->visible_field_count >\n";
-    echo <<< HEREDOC
-      <div class=paging>
-        Showing from <b>$offset</b> to <b>$last_offset</b> of <b>$this->row_count</b>&nbsp;&nbsp;
-        <button nav=prev>Prev</button>
-        <input type=text value='$this->page_size'/>
-        <button nav=next>Next</button>
-      </div>
-HEREDOC;
-    if ($new_row) echo "</th></tr>";
-
-  }
   
   function show($sql = null)
   {
@@ -294,7 +300,7 @@ HEREDOC;
     }
     $class=is_null($this->class)?'':"class=$this->class";
     if ($this->flags & self::PAGEABLE) 
-      $paging = " page_size=$this->page_size page_offset=$this->page_offset rows=$this->row_count";
+      $paging = " rows=$this->row_count";
     echo "<table $class $paging>\n";
     if ($this->flags & (self::TITLES | self::FILTERABLE | self::PAGEABLE)) {
       echo "<thead>\n";
