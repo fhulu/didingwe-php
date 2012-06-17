@@ -160,3 +160,8 @@ function ajax_inner_progress(result_id, progress_id, progress_str, url)
   obj = getElementByIdOrName(result_id);
   ajax_call(expand_url(url), false, function() { ajax_inner_cb(obj); });
 }
+
+$.fn.exists = function()
+{
+  return this.get(0) != undefined;
+}
