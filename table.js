@@ -6,6 +6,7 @@
       sortField: null,
       sortOrder: 'asc',
       url: null,
+      method: 'post',
       onRefresh: function(table) {},
       onExpand: function(row) { return true; },
       onCollapse: function(row) { return true; }
@@ -39,7 +40,7 @@
         data.order = this.options.sortOrder;
       };
       var self = this;
-      $.get(this.options.url, data, function(data) {
+      $.ajax({url: this.options.url, type: this.options.method, data: data, success: function(data) {
         self.element.html(data);
         var table = self.table = self.element.find('table');
         self.options.sortOrder = table.find('[order]').attr('order');
@@ -86,9 +87,13 @@
         
         table.find("td div[expand=collapsed]").click(function() { self.expand(this); });        
         table.find("td div[expand=expanded]").click(function() { self.collapse(this); });
+        
+        table.find(".filtering").click(function() {
+          //todo:
+        });
 
         self.options.onRefresh(table);
-      });
+      }});
       return this;
     },
     
