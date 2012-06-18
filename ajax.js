@@ -165,3 +165,15 @@ $.fn.exists = function()
 {
   return this.get(0) != undefined;
 }
+
+function load_text(parent, url, data, callback)
+{
+  $.getJSON(url, data, function(result) {
+    console.log(result);
+    $.each(result, function(key, val) {
+      var filter = "[name='"+key+"']";
+      parent.find(filter).text(val);
+    });
+    if (callback != undefined) callback(result);
+  });
+}
