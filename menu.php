@@ -47,7 +47,8 @@ class menu
       if ($url == '') 
         $url = "/?c=$function";
       $name = $item['name'];
-      echo "<a href='$url'>$name</a>\n";
+      $title = $item['description'];
+      echo "<a href='$url' title='$title'>$name</a>\n";
       menu::show_subitems($item['id'], $functions, $li, $level+1);
       if ($level == 0 && $li != '') echo "</$li>\n";
     }
