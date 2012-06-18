@@ -169,10 +169,15 @@ $.fn.exists = function()
 function load_text(parent, url, data, callback)
 {
   $.getJSON(url, data, function(result) {
-    console.log(result);
     $.each(result, function(key, val) {
       var filter = "[name='"+key+"']";
-      parent.find(filter).text(val);
+      parent.find(filter).each(function() {
+        if ($(this).is("a")) {
+          var proto = $(this).attr('proto')==undefined? '': $(this).attr('proto');
+          $(this).attr('href', proto+val);
+        }
+        else $(this).text(val);
+      });
     });
     if (callback != undefined) callback(result);
   });
