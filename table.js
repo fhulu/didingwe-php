@@ -7,8 +7,8 @@
       sortOrder: 'asc',
       url: null,
       onRefresh: function(table) {},
-      onExpand: function(table) { return true; },
-      onCollapse: function(table) { return true; }
+      onExpand: function(row) { return true; },
+      onCollapse: function(row) { return true; }
     },
     
     _create: function() 
@@ -94,7 +94,7 @@
     
     expand: function(button)
     {
-      if (!this.options.onExpand(this.table)) return this;
+      if (!this.options.onExpand($(button).parent().parent())) return this;
       var self = this;
       $(button).attr("expand","expanded").click(function() { self.collapse(button); });
       return this;
@@ -102,7 +102,7 @@
     
     collapse: function(button)
     {
-      if (!this.options.onCollapse(this.table)) return this;
+      if (!this.options.onCollapse($(button).parent().parent())) return this;
       var self = this;
       $(button).attr("expand","collapsed").click(function() { self.expand(button); });
       return this;
