@@ -146,7 +146,7 @@ class table
   
     function show_paging($new_row=false)
   {
-    $last_offset = min($this->page_offset + $this->page_size, $this->row_count-1)+1;
+    $last_offset = min($this->page_offset + $this->page_size, $this->row_count);
     $offset = $this->page_offset+1;
     if ($new_row) echo "<tr><th colspan=$this->visible_field_count >\n";
     echo <<< HEREDOC
@@ -163,7 +163,7 @@ HEREDOC;
   
   function show_filter()
   {
-    echo "<div class='filtering'></div>";
+    echo "<div class='filtering' title='Filter/Search'></div>";
   }
 
   function show_titles()
