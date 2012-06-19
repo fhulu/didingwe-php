@@ -93,10 +93,10 @@ class table
   function set_options($request)
   {
     $this->request = $request;
-    if (!is_null($request['_size']) || !is_null($request['_offset']))
+    if (!is_null($request['_size']) && !is_null($request['_offset']))
       $this->set_paging($request['_size'], $request['_offset']);
       
-    if (!is_null($request['_SORT']) || !is_null($request['_sort']))
+    if (!is_null($request['_sort']) && !is_null($request['_order']))
       $this->set_sorting($request['_sort'], $request['_order']);    
   }
   
@@ -150,7 +150,8 @@ class table
 
   function show_header()
   {
-    echo "<tr class=header><th colspan=$this->visible_field_count><div class=heading>$this->heading</div>";
+    echo "<tr class=header><th colspan=$this->visible_field_count>";
+    if ($this->heading != '') echo "<div class=heading>$this->heading</div>";
     if ($this->flags & self::FILTERABLE) $this->show_filter();
     if ($this->flags & self::PAGEABLE) $this->show_paging();
     echo"</th></tr>\n";
@@ -217,7 +218,6 @@ HEREDOC;
         ++$i;
         continue;
       }
-      log::debug("processing subfields on $key");
       foreach ($field as &$sub_field) {
         if ($this->symbols[$i] != '#')  {
           if (!$has_subfields) {
