@@ -93,8 +93,11 @@ class table
   function set_options($request)
   {
     $this->request = $request;
-    $this->set_paging($request['_size'], $request['_offset']);
-    $this->set_sorting($request['_sort'], $request['_order']);    
+    if (!is_null($request['_size']) || !is_null($request['_offset']))
+      $this->set_paging($request['_size'], $request['_offset']);
+      
+    if (!is_null($request['_SORT']) || !is_null($request['_sort']))
+      $this->set_sorting($request['_sort'], $request['_order']);    
   }
   
   function set_fields($fields)
