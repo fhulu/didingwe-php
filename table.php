@@ -45,6 +45,7 @@ class table
   var $sort_field;
   var $sort_order;
   var $key_field;
+  var $request;
   function __construct($fields=null, $flags=0, $class=null, $page_size=0, $row_callback=null, $cell_callback=null, &$user_data=null)
   {
     $this->flags = $flags;
@@ -86,6 +87,13 @@ class table
     $this->flags |= self::EXPANDABLE;
     if (!is_null($key)) 
       $this->key_field = $key;
+  }
+  
+  function set_options($request)
+  {
+    $this->request = $request;
+    $this->set_paging($request['_size'], $request['_offset']);
+    $this->set_sorting($request['_sort'], $request['_order']);    
   }
   
   function set_fields($fields)
@@ -138,19 +146,19 @@ class table
 
   function show_heading()
   {
-    echo "<tr><th class=heading colspan=$this->visible_field_count>$this->heading";
+    echo "<tr class=heading><th colspan=$this->visible_field_count>$this->heading";
     if ($this->flags & self::FILTERABLE) $this->show_filter();
     if ($this->flags & self::PAGEABLE) $this->show_paging();
     echo"</th></tr>\n";
   }
   
-    function show_paging($new_row=false)
+  function show_paging($new_row=false)
   {
     $last_offset = min($this->page_offset + $this->page_size, $this->row_count);
-    $offset = $this->page_offset+1;
+    $offset = $this->row_count == 0? 0: $this->page_offset+1;
     if ($new_row) echo "<tr><th colspan=$this->visible_field_count >\n";
     echo <<< HEREDOC
-      <div class=paging>
+      <div class=paging rows=$this->row_count>
         Showing from <b>$offset</b> to <b>$last_offset</b> of <b>$this->row_count</b>&nbsp;&nbsp;
         <button nav=prev>Prev</button>
         <input type=text value='$this->page_size'/>
@@ -168,7 +176,7 @@ HEREDOC;
 
   function show_titles()
   {
-    echo "<tr>\n\t";
+    echo "<tr class=titles>\n\t";
     $this->flags |= self::TITLES;
     if ($this->flags & self::CHECKBOXES) {
       echo "<th rowspan=$this->title_rowspan><input type='checkbox' name='checkall' onclick='checkAll(\"row[]\", this.checked)'/></th>\n";
@@ -289,36 +297,49 @@ HEREDOC;
     echo "</tr>\n";
   }
   
+  function set_filters()
+  {
+    $conjuctor .= stripos($this->sql, 'where ') === false? 'where (': 'and (';
+    foreach($this->request as $key=>$value) {
+      if ($key[0] == '_' || $key == 'a' || $key == 'PHPSESSID') continue;
+      $this->sql .= " $conjuctor $key like '%$value%'";
+      $conjuctor = "and";
+    }
+    if ($conjuctor == "and") $this->sql .= ')';
+  }
+  
   
   function show($sql = null)
   {
     if (!is_null($sql)) {
       $this->sql = $sql;
       if (!is_array($sql)) {
-        if ($this->flags & self::PAGEABLE) 
-          $sql = 'select SQL_CALC_FOUND_ROWS ' . substr($this->sql, 6);
+        if ($this->flags & self::FILTERABLE | self::SORTABLE) 
+          $this->sql = "select * from ($sql) tmp";
+        if ($this->flags & self::FILTERABLE) 
+          $this->set_filters();
         if ($this->flags & self::SORTABLE)
-          $sql .= " order by `$this->sort_field` $this->sort_order";
-        if ($this->flags & self::PAGEABLE) 
-          $sql .= " limit $this->page_offset, $this->page_size";
+          $this->sql .= " order by `$this->sort_field` $this->sort_order";
+        if ($this->flags & self::PAGEABLE)
+          $this->sql = 'select SQL_CALC_FOUND_ROWS ' . substr($this->sql, 6) . " limit $this->page_offset, $this->page_size";
         global $db;
-        $rows = $db->read($sql, MYSQL_ASSOC);
-        if (sizeof($rows) == 0) return;
+        $rows = $db->read($this->sql, MYSQL_ASSOC);
         if ($this->flags & self::PAGEABLE) {
           $this->row_count = $db->read_one_value('select found_rows()');
         }
-        $this->field_names = array_keys($rows[0]);
-        if (is_null($this->fields)) $this->set_fields($field_names);
+        
+        $empty = sizeof($rows) == 0;
+        if (!$empty ) {
+          $this->field_names = array_keys($rows[0]);
+          if (is_null($this->fields)) $this->set_fields($field_names);
+        }
       }
       else {
         $rows = $sql;
         if (is_null($this->fields)) $this->set_fields($rows[0]);
       }
     }
-    $class=is_null($this->class)?'':"class=$this->class";
-    if ($this->flags & self::PAGEABLE) 
-      $paging = " rows=$this->row_count";
-    echo "<table $class $paging>\n";
+    echo "<table>\n";
     if ($this->flags & (self::TITLES | self::FILTERABLE | self::PAGEABLE)) {
       echo "<thead>\n";
       if ($this->flags & (self::FILTERABLE | self::PAGEABLE)) $this->show_heading();
@@ -327,7 +348,9 @@ HEREDOC;
     }
     echo "<tbody>\n";
     $index = 0;
-    foreach($rows as $row) $this->show_row($row, $index++);
+    if (!$empty) {
+      foreach($rows as $row) $this->show_row($row, $index++);
+    } 
     if ($this->flags & self::TOTALS) $this->show_totals();
     if ($this->flags & self::PAGEABLE) $this->show_paging(true);
     echo "</tbody>\n</table>\n";
