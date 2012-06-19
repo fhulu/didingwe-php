@@ -144,9 +144,9 @@ class table
       echo "\t<th name='$name'$sort>$field</th>\n";
   }
 
-  function show_heading()
+  function show_header()
   {
-    echo "<tr class=heading><th colspan=$this->visible_field_count>$this->heading";
+    echo "<tr class=header><th colspan=$this->visible_field_count><div class=heading>$this->heading</div>";
     if ($this->flags & self::FILTERABLE) $this->show_filter();
     if ($this->flags & self::PAGEABLE) $this->show_paging();
     echo"</th></tr>\n";
@@ -342,7 +342,7 @@ HEREDOC;
     echo "<table>\n";
     if ($this->flags & (self::TITLES | self::FILTERABLE | self::PAGEABLE)) {
       echo "<thead>\n";
-      if ($this->flags & (self::FILTERABLE | self::PAGEABLE)) $this->show_heading();
+      if ($this->flags & (self::FILTERABLE | self::PAGEABLE)) $this->show_header();
       if ($this->flags & self::TITLES) $this->show_titles();
       echo "</thead>\n";
     }

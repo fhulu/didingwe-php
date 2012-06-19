@@ -51,14 +51,14 @@
         parent.append(newer);
     },
     
-    show_heading: function()
+    show_header: function()
     {
       var table = this.element;
       var thead = table.find('thead');
       if (!thead.exists()) 
         thead = $('<thead></thead>').appendTo(table);;
 
-      this.update('.heading', thead);
+      this.update('.header', thead);
       
       var self = this;
       table.find(".filtering").click(function() {
@@ -70,13 +70,7 @@
       
       this.update('.titles', thead);
     },
-    
-    toggle_paging: function()
-    {
-      table.find("[nav='next']").prop('disabled', this.data._offset + this.options.pageSize >= this.row_count);
-      table.find("[nav='prev']").prop('disabled', this.data._offset <= 0);    
-    },
-    
+        
     bind_paging: function()
     {
       var table = this.element;
@@ -84,6 +78,8 @@
       if (!paging.exists()) return;
 
       this.row_count = parseInt(paging.attr('rows'));
+      table.find("[nav='next']").prop('disabled', this.data._offset + this.options.pageSize >= this.row_count);
+      table.find("[nav='prev']").prop('disabled', this.data._offset <= 0);    
     
       var self = this;
       table.find("[nav='next']").click(function() {
@@ -91,11 +87,10 @@
         if (new_size == self.options.pageSize) {
           self.options.pageSize = new_size;
           self.data._offset += size;
-          if (self.data_.offset > self.row_count) self.offset = Math.min(0, self.row_count-self.options.pageSize);
+          if (self.data._offset > self.row_count) self.offset = Math.min(0, self.row_count-self.options.pageSize);
         }
         else   
           self.options.pageSize = new_size;
-        self.toggle_paging();
         self.refresh();
       });
     
@@ -148,7 +143,7 @@
       var self = this;
       $.ajax({url: this.options.url, type: this.options.method, data: this.data, success: function(data) {
         self.result = $(data);
-        self.show_heading();
+        self.show_header();
         self.update('tbody');
         self.bind_paging();
         self.bind_titles();
@@ -159,41 +154,43 @@
     },
     
     
-    show_filter: function(table)
+    show_filter: function()
     {
+      var table = this.element;
       var titles = table.find(".titles");
       var filter = $("<tr class=filter></tr>").insertAfter(titles);
       titles.find("th").each(function() {
         var name = $(this).attr('name');
         if ($(this).attr('sort') === undefined) 
           filter.append("<th></th>");
-        else 
-          filter.append("<th><input type='text' style='width:100%;' name='"+name+"'></input></th>");
+        else {
+          var width = $(this).css('width');
+          filter.append("<th><input type='text' name='"+name+"' style='width:"+width+"' ></input></th>");
+        }
       });
       
       var self = this;
-      filter.find("input").bind('keyup input cut paste', function() { self.filter(filter); });
-    },
-    
-    hide_filter: function(table)
-    {
-      table.find(".filter").remove();
-      this.data = { _offset: 0 };
-    },
-    
-    filter: function(tr)
-    {
-      var self = this;
-      tr.find("input").each(function() {
+      filter.find("input").bind('keyup input cut paste', function() {
         var val = $(this).val();
         var name = $(this).attr('name')  
         if (val.trim() == '')
           delete self.data[name];
         else
           self.data[name] = val;
+        self.refresh();
       });
-      self.refresh();
+      
+      table.find(".filtering").attr('on','');
     },
+    
+    hide_filter: function(table)
+    {
+      table.find(".filter").remove();
+      table.find(".filtering").removeAttr('on');
+      this.data = { _offset: 0 };
+      this.refresh();
+    },
+    
     
     expand: function(button)
     {
