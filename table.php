@@ -217,13 +217,14 @@ HEREDOC;
         ++$i;
         continue;
       }
+      log::debug("processing subfields on $key");
       foreach ($field as &$sub_field) {
         if ($this->symbols[$i] != '#')  {
-            if (!$has_subfields) {
-                echo "<tr>\n";
-                $has_subfields = true;
-            }
-            echo "<th>$sub_field</th>";
+          if (!$has_subfields) {
+            echo "<tr class=titles>\n";
+            $has_subfields = true;
+        }
+          echo "<th>$sub_field</th>";
         }
         ++$i;
       }
