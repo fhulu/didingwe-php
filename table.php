@@ -233,7 +233,7 @@ HEREDOC;
   {
     $attr = '';
     if (!is_null($this->key_field))
-      $attr = "$this->key_field='". $row_data[$this->key_field] . "'";
+      $attr = " $this->key_field='". $row_data[$this->key_field] . "'";
    
     if ($this->flags & self::ALTROWS)
       $attr .= ($index % 2)?'':" class='alt'";
@@ -242,7 +242,7 @@ HEREDOC;
       
     if ($this->callback && call_user_func($this->callback, &$row_data, $index, &$attr) === false) 
       return;
-      
+ 
     echo "<tr$attr>\n";
     if ($this->flags & self::CHECKBOXES) {
       $keys = array_keys($row_data);
