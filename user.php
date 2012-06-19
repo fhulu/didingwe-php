@@ -62,13 +62,6 @@ class user
       $this->roles = array($role);
   }
   
-  function assign_role($role)
-  {
-    if (is_array($this->roles)) 
-      $this->roles = array_merge($this->roles, array($role));
-    else
-      $this->roles = array($role);
-  }
   
   static function remind($email=null)
   {
