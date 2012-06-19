@@ -11,7 +11,6 @@
           modal: true,
           autoOpen: false,
           width: parseInt($(this).css('width')),
-          height: parseInt($(this).css('height')), 
           //note: show commented out, using show causes an exception if div contains input[type=file]
 //          show: 'blind', 
           hide: 'explode'
