@@ -30,8 +30,7 @@ class table
   var $title_rowspan;
   var $checkboxes;
   var $row_count;
-  var $row_callback;
-  var $cell_callback;
+  var $callback;
   var $user_data;
   var $flags;
   var $class;
@@ -46,13 +45,11 @@ class table
   var $sort_order;
   var $key_field;
   var $request;
-  function __construct($fields=null, $flags=0, $class=null, $page_size=0, $row_callback=null, $cell_callback=null, &$user_data=null)
+  function __construct($fields=null, $flags=0, $callback=null)
   {
     $this->flags = $flags;
     $this->class = $class;
-    $this->row_callback = $row_callback;
-    $this->cell_callback = $cell_callback;
-    $this->user_data = &$user_data;
+    $this->callback = $callback;
     if (!is_null($fields)) $this->set_fields($fields);
     $this->row_count = 0;
     $this->page_size = $page_size;
@@ -60,7 +57,7 @@ class table
   
   function set_callback($callback)
   {
-    $this->row_callback = $callback;
+    $this->callback = $callback;
   }
   
   function set_heading($heading)
@@ -236,8 +233,8 @@ HEREDOC;
     if ($this->flags & self::EXPANDABLE)
       $attr = " expandable $this->key_field='". $row_data[$this->key_field] . "'";
       
-    if ($this->row_callback && 
-      !call_user_func($this->row_callback, &$this->user_data, &$row_data, $this->row_count, &$attr)) {
+    if ($this->calback && 
+      !call_user_func($this->calback, &$row_data, $index, &$attr)) {
       return;
     }
       
@@ -267,8 +264,8 @@ HEREDOC;
   function show_totals()
   {
     $this->flags |= self::TOTALS;
-    if (!is_null($this->row_callback) && 
-      !call_user_func($this->row_callback, &$this->user_data, &$this->totals, null, &$attr)) {
+    if (!is_null($this->calback) && 
+      !call_user_func($this->calback, &$this->user_data, &$this->totals, null, &$attr)) {
       return;
     }
       
@@ -354,13 +351,6 @@ HEREDOC;
     if ($this->flags & self::TOTALS) $this->show_totals();
     if ($this->flags & self::PAGEABLE) $this->show_paging(true);
     echo "</tbody>\n</table>\n";
-  }
-  
-  static function display($sql_or_data, $fields=null, $flags=null, $class=null, $page_size=0, $row_callback=null, $cell_callback=null, &$user_data=null)
-  {
-    $table = new table($fields, $flags, $class, $page_size, $row_callback, $cell_callback, &$user_data);
-    $table->show($sql_or_data);
-    return $table;
   }
 }
 ?>
