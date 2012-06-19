@@ -79,11 +79,15 @@ class table
     $this->sort_order = $order;
   }
   
+  function set_key($key)
+  {
+    $this->key_field = $key;
+  }
   function set_expandable($key=null)
   {
     $this->flags |= self::EXPANDABLE;
     if (!is_null($key)) 
-      $this->key_field = $key;
+      $this->set_key($key);
   }
   
   function set_options($request)
@@ -228,15 +232,16 @@ HEREDOC;
   function show_row($row_data, $index)
   {
     $attr = '';
+    if (!is_null($this->key_field))
+      $attr = "$this->key_field='". $row_data[$this->key_field] . "'";
+   
     if ($this->flags & self::ALTROWS)
-      $attr = ($index % 2)?'':" class='alt'";
+      $attr .= ($index % 2)?'':" class='alt'";
     if ($this->flags & self::EXPANDABLE)
-      $attr = " expandable $this->key_field='". $row_data[$this->key_field] . "'";
+      $attr .= " expandable";
       
-    if ($this->calback && 
-      !call_user_func($this->calback, &$row_data, $index, &$attr)) {
+    if ($this->callback && call_user_func($this->callback, &$row_data, $index, &$attr) === false) 
       return;
-    }
       
     echo "<tr$attr>\n";
     if ($this->flags & self::CHECKBOXES) {
@@ -264,8 +269,8 @@ HEREDOC;
   function show_totals()
   {
     $this->flags |= self::TOTALS;
-    if (!is_null($this->calback) && 
-      !call_user_func($this->calback, &$this->user_data, &$this->totals, null, &$attr)) {
+    if (!is_null($this->callback) && 
+      !call_user_func($this->callback, &$this->totals, &$attr)) {
       return;
     }
       
@@ -296,7 +301,7 @@ HEREDOC;
   
   function set_filters()
   {
-    $conjuctor .= stripos($this->sql, 'where ') === false? 'where (': 'and (';
+    $conjuctor .= ' where (';
     foreach($this->request as $key=>$value) {
       if ($key[0] == '_' || $key == 'a' || $key == 'PHPSESSID') continue;
       $this->sql .= " $conjuctor $key like '%$value%'";
