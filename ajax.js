@@ -161,24 +161,3 @@ function ajax_inner_progress(result_id, progress_id, progress_str, url)
   ajax_call(expand_url(url), false, function() { ajax_inner_cb(obj); });
 }
 
-$.fn.exists = function()
-{
-  return this.get(0) != undefined;
-}
-
-function load_text(parent, url, data, callback)
-{
-  $.getJSON(url, data, function(result) {
-    $.each(result, function(key, val) {
-      var filter = "[name='"+key+"']";
-      parent.find(filter).each(function() {
-        if ($(this).is("a")) {
-          var proto = $(this).attr('proto')==undefined? '': $(this).attr('proto');
-          $(this).attr('href', proto+val);
-        }
-        else $(this).text(val);
-      });
-    });
-    if (callback != undefined) callback(result);
-  });
-}
