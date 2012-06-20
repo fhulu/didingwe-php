@@ -165,9 +165,9 @@ class table
     echo <<< HEREDOC
       <div class=paging rows=$this->row_count>
         Showing from <b>$offset</b> to <b>$last_offset</b> of <b>$this->row_count</b>&nbsp;&nbsp;
-        <button nav=prev>Prev</button>
+        <button nav=prev></button>
         <input type=text value='$this->page_size'/>
-        <button nav=next>Next</button>
+        <button nav=next></button>
       </div>
 HEREDOC;
     if ($new_row) echo "</th></tr>";
