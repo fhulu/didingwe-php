@@ -2,14 +2,13 @@
   $.widget( "ui.table", {
     options: {
       pageSize: 30,
-      minPageSize: 10,
       sortField: null,
       sortOrder: 'asc',
       url: null,
       method: 'get',
-      onRefresh: function(table) {},
-      onExpand: function(row) { return true; },
-      onCollapse: function(row) { return true; }
+      onRefresh: function(table) { return this; },
+      onExpand: function(row) { return this; },
+      onCollapse: function(row) { return this; }
     },
     
     _create: function() 
@@ -21,15 +20,15 @@
       this.refresh();
     },
   
-    readPageSize: function()
+    _readPageSize: function()
     {
       size = parseInt(this.element.find(".paging [type='text']").val());
       return Math.min(size, this.row_count);
     },
     
-    savePageSize: function()
+    _savePageSize: function()
     {
-      this.options.pageSize = this.readPageSize();
+      this.options.pageSize = this._readPageSize();
       return this;
     },
 
@@ -83,7 +82,7 @@
     
       var self = this;
       table.find("[nav='next']").click(function() {
-        var new_size = self.readPageSize();
+        var new_size = self._readPageSize();
         if (new_size == self.options.pageSize) {
           self.options.pageSize = new_size;
           self.data._offset += size;
@@ -95,9 +94,8 @@
       });
     
       table.find("[nav='prev']").click(function() {
-        self.offset -= self.savePageSize().options.pageSize;
-        if (self.offset < 0) self.offset = 0;
-        self.toggle_paging();
+        self.data._offset -= self._savePageSize().options.pageSize;
+        if (self._offset < 0) self.data._offset = 0;
         self.refresh();
       });
     
@@ -194,7 +192,7 @@
     
     expand: function(button)
     {
-      if (!this.options.onExpand($(button).parent().parent())) return this;
+      if (!this.options.onExpand($(button).parent().parent())=== false) return this;
       var self = this;
       $(button).attr("expand","expanded").click(function() { self.collapse(button); });
       return this;
@@ -202,7 +200,7 @@
     
     collapse: function(button)
     {
-      if (!this.options.onCollapse($(button).parent().parent())) return this;
+      if (!this.options.onCollapse($(button).parent().parent()) === false) return this;
       var self = this;
       $(button).attr("expand","collapsed").click(function() { self.expand(button); });
       return this;
