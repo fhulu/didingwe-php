@@ -80,7 +80,7 @@ init_div('footer');
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
     <link href="default.style.css" media="screen" rel="stylesheet" type="text/css" />	
-    <link href="jquery/lightness/ui.css" media="screen" rel="stylesheet" type="text/css" />	
+    <link href="jquery/smoothness/ui.css" media="screen" rel="stylesheet" type="text/css" />	
 
     <script type='text/javascript' src='jquery/min.js'></script>
     <script type='text/javascript' src='jquery/ui-min.js'></script>
