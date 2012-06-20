@@ -23,6 +23,7 @@ class table
   const SORTABLE = 0x0080;
   const HEADING = 0x0100;
   const EXPANDABLE = 0x0200;
+  const EDITABLE = 0x0400;
 
   var $fields;
   var $symbols;
@@ -141,11 +142,11 @@ class table
       if ($name == $this->sort_field) $sort .= " order='$this->sort_order'";
     }
     if ($rowspan > 1)
-      echo "\t<th rowspan=$rowspan name='$name'$sort>$field</th>\n";
+      echo "\t<th rowspan=$rowspan name='$name'$sort><div>$field</div></th>\n";
     else if ($colspan > 1)
-      echo "\t<th colspan=$colspan>$field</th>\n";
+      echo "\t<th colspan=$colspan><div>$field</div></th>\n";
     else 
-      echo "\t<th name='$name'$sort>$field</th>\n";
+      echo "\t<th name='$name'$sort><div>$field</div></th>\n";
   }
 
   function show_header()
