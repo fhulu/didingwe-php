@@ -337,7 +337,7 @@ HEREDOC;
         $empty = sizeof($rows) == 0;
         if (!$empty ) {
           $this->field_names = array_keys($rows[0]);
-          if (is_null($this->fields)) $this->set_fields($field_names);
+          if (is_null($this->fields)) $this->set_fields($this->field_names);
         }
       }
       else {
