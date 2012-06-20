@@ -96,7 +96,7 @@ function ajax_confirm(url)
 function jq_submit(url, params, method, async)
 {
   if (async == undefined) async = false;
-  if (method == undefined) method = 'post';
+  if (method == undefined) method = 'get';
   var result;
   var data = params == undefined? undefined: params2values(params);
   $.ajax({
@@ -112,7 +112,7 @@ function jq_submit(url, params, method, async)
   return result;
 }
 
-function jq_confirm(url, params, method)
+function jq_confirm(url, params, event, method)
 {
   var func_idx = url.lastIndexOf('/') + 1;
   var funcs = url.substr(func_idx);
@@ -123,11 +123,17 @@ function jq_confirm(url, params, method)
     var result = jq_submit(url+func, params, method);  
     if (result != undefined && result.charAt(0) == '!') {
       alert(result.substr(1));
+      if (event != undefined) event.stopImmediatePropagation();
       return false;
     }
     result = $.trim(result);
-    if (result != undefined && result != '')
-      return confirm(result);
+    if (result != undefined && result != '') {
+      if (!confirm(result)) {
+        if (event != undefined) event.stopImmediatePropagation();
+        return false;
+      }
+      return true;
+    }
   }
   return true;
 }
