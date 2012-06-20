@@ -5,10 +5,9 @@ require_once('db.php');
 class table_field
 {
   var $visible;
-  var $max_len;
-  var $sum;
-  var $sum_type;
-  var $value_type;  // numeric / text / selection
+  var $width;
+  var $total;
+  var $edit_type;
 };
 
 class table
@@ -255,7 +254,7 @@ HEREDOC;
       echo "\t<td><input type='checkbox' name='row[]' value='$value' /></td>";
     }
     reset($row_data);
-    $show_expand = $this->flags & self::EXPANDABLE;
+    $show_expand = strpos($attr, ' expandable') !== false;
     foreach($this->symbols as $symbol) {
       list($key,$cell) = each($row_data);
       if ($symbol == '#') continue;
