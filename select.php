@@ -22,7 +22,7 @@ class select
   {
     $options = '';
     if (!is_null($first_value))
-      $options = select::option($first_value,$first_text,$first_value==$selected);
+      $options .= select::option($first_value,$first_text,$first_value==$selected);
 
     global $db;
     $db->send($sql);
