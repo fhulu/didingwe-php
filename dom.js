@@ -454,10 +454,10 @@ $.fn.exists = function()
 
 function load_text(parent, url, data, callback) // deprecated
 {
-  parent.loadChildren(url, data, callback);
+  parent.load(url, data, callback);
 }
 
-$.fn.loadChildren = function(url, data, callback)
+$.fn.load = function(url, data, callback)
 {
   var self = this;
   $.getJSON(url, data, function(result) {
@@ -468,7 +468,7 @@ $.fn.loadChildren = function(url, data, callback)
           var proto = $(this).attr('proto')==undefined? '': $(this).attr('proto');
           $(this).attr('href', proto+val);
         }
-        else if ($(this).attr('value') == undefined)
+        else if ($(this).attr('value') === undefined)
           $(this).text(val);
         else
           $(this).val(val);
@@ -476,4 +476,5 @@ $.fn.loadChildren = function(url, data, callback)
     });
     if (callback != undefined) callback(result);
   });
+  return this;
 }
