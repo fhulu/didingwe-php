@@ -142,16 +142,16 @@
     {      
       if (this.editor == null)
         this.editor = this._create_editor('edit', '<td></td>');
-        
-      this.editor.children().each(function(i) {
-        if ($(this).attr('edit') === undefined) return true;
-        ++i;
-        var selector = "td:nth-child("+i+")";
-        var td = row.find(selector);
-        var val = td.html();
-        td.replaceWith($(this).clone());
-        row.find(selector).children().val(val);
-      }); 
+      
+      var editors = this.editor.children();
+      row.children().each(function(i) {
+        var edit = editors.eq(i);
+        if (edit.attr('edit') === undefined) return true;
+        var val = $(this).html();
+        $(this).html(edit.html());
+        var input = $(this).children().eq(0);
+        input.val(val);
+      });
     },
     
     _edit_row: function(button)
@@ -173,7 +173,7 @@
       
       var self = this;
       button.attr('edit', 'off').unbind('click');
-      button.click(function() { self._show_editor(button); }); 
+      button.click(function() { self._edit_row(button); }); 
       
       var body = self.element.find("tbody")
       var data = { };
@@ -188,18 +188,31 @@
         $(this).html(val);
         //todo: update conditionally based on input type
       });
-        //todo: save to db
-      var url = body.attr('saver');
-      if (url != undefined) $.get(url, data);
+
+      var is_new = row.attr('new') == undefined;
+      
+      // remove delete button if not specified for the form
+      var save_url = body.attr('saver');
+      if (is_new && save_url == undefined) 
+          row.find(".actions div[delete]").remove();
+ 
+      var url = is_new? body.attr('adder'): save_url;
+      if (url == undefined || url == '') return;
+      
+      $.get(url, data, function(result) {
+        if (row.attr('new') == undefined || key == undefined) return true;
+        row.attr(key, result);
+        row.find("[name="+key+"]").html(result);
+      });
     },
     
     _delete_row: function(button)
     {
-      var body = self.element.find("tbody");
+      var body = this.element.find("tbody");
       var key = body.attr('key');
       var url = body.attr('deleter');
       var row = button.parent().parent();
-      if (key != undefined && url != undefined) {        
+      if (key != undefined && url != undefined && url != '') {        
         var data = { };
         data[key] = row.attr(key);
         $.get(url, data);
@@ -212,15 +225,17 @@
       if (this.editor == null)
         this.editor = this._create_editor('edit', '<td></td>');
       
-      var table = this.element;
-      var row = this.editor.clone();
-      row.children().each(function() {
-        $(this).html('');
+      var row = $("<tr new></tr>");
+      this.editor.children().each(function() {
+        var name = $(this).attr('name');
+        row.append("<td name="+name+"></td>");
       });
-      row.insertBefore(button.parent().parent());
-      var actions =  row.children().last();
+    
+      var actions = row.children().last();
       actions.addClass('actions');
       actions.html("<div edit=on></div><div delete></div>");
+      
+      row.insertBefore(button.parent().parent());
       this._bind_actions(row);
       this._show_editor(row);
     },
@@ -232,7 +247,7 @@
       if  (adder == undefined) 
         self.element.find(".adder").click(function() { self._add_row($(this)); });
       else 
-        parent = parent;
+        parent = adder;
         
       parent.find(".actions div[edit='off']").click(function() { self._edit_row($(this)); });
       parent.find(".actions div[edit='on']").click(function() { self._save_row($(this)); });
@@ -283,17 +298,20 @@
       titles.find("th").each(function() {
         var name = $(this).attr('name');
         var col = $(col_text);
+        col.attr('name', name);
         col.appendTo(editor);
+        
         var attr = $(this).attr(type);
         if (attr == undefined) return true;
+        
         col.attr(type, attr);
         var width = parseInt($(this).css('width')) * 0.8;
         if (attr.indexOf('list:') == 0) 
           self._create_list(col, name, attr);
-        else if (attr.indexOf('table/') == 0)
-          self._create_subtable(col, attr);
+        else if (attr.indexOf('table:') == 0)
+          self._create_subtable(col, name, attr);
         else
-          col.append("<input type='text' name='"+name+"' style='width:"+width+"' ></input>");
+          col.append("<input type='text' name='"+name+"' style='width:"+width+";'></input>");
       });
       
       return editor;
