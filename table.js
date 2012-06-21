@@ -77,7 +77,7 @@
       this.update('.titles', thead);
     },
         
-    bind_paging: function()
+    _bind_paging: function()
     {
       var table = this.element;
       var paging = table.find('.paging');
@@ -116,7 +116,7 @@
       });      
     },
     
-    bind_titles: function()
+    _bind_titles: function()
     {
       var table = this.element;
       if (!table.find('.titles')) return;
@@ -137,15 +137,9 @@
       table.find("td div[expand=expanded]").click(function() { self.collapse(this); });
     },
     
-    _show_editor: function(button)
-    {
-      var row = button.parent().parent();
-      if (!this.options.onEdit(row)) return this;
-      
-      var self = this;
-      button.attr('edit', 'on').unbind('click');
-      button.click(function() { self._save_editor(button); }); 
-      
+    
+    _show_editor: function(row)
+    {      
       if (this.editor == null)
         this.editor = this._create_editor('edit', '<td></td>');
         
@@ -160,7 +154,19 @@
       }); 
     },
     
-    _save_editor: function(button)
+    _edit_row: function(button)
+    {
+      var row = button.parent().parent();
+      if (!this.options.onEdit(row)) return this;
+
+      this._show_editor(row);
+      
+      var self = this;
+      button.attr('edit', 'on').unbind('click');
+      button.click(function() { self._save_row(button); });
+    },
+    
+    _save_row: function(button)
     {
       var row = button.parent().parent();
       if (!this.options.onSave(row)) return this;
@@ -187,25 +193,50 @@
       if (url != undefined) $.get(url, data);
     },
     
-    bind_actions: function()
+    _delete_row: function(button)
+    {
+      var body = self.element.find("tbody");
+      var key = body.attr('key');
+      var url = body.attr('deleter');
+      var row = button.parent().parent();
+      if (key != undefined && url != undefined) {        
+        var data = { };
+        data[key] = row.attr(key);
+        $.get(url, data);
+      }
+      row.remove();
+    },
+    
+    _add_row: function(button)
+    {
+      if (this.editor == null)
+        this.editor = this._create_editor('edit', '<td></td>');
+      
+      var table = this.element;
+      var row = this.editor.clone();
+      row.children().each(function() {
+        $(this).html('');
+      });
+      row.insertBefore(button.parent().parent());
+      var actions =  row.children().last();
+      actions.addClass('actions');
+      actions.html("<div edit=on></div><div delete></div>");
+      this._bind_actions(row);
+      this._show_editor(row);
+    },
+    
+    _bind_actions: function(adder)
     {
       var self = this;
-      var table = self.element;
-      table.find(".actions div[edit='off']").click(function() { self._show_editor($(this)); });
-      table.find(".actions div[edit='on']").click(function() { self._save_editor($(this)); });
-      
-      var body = table.find("tbody");
-      var key = body.attr('key');
-       var url = body.attr('deleter');
-      table.find(".actions div[delete]").click(function() {
-        var row = $(this).parent().parent();
-        if (key != undefined && url != undefined) {        
-          var data = { };
-          data[key] = row.attr(key);
-          $.get(url, data);
-        }
-        row.remove();
-      });
+      var parent = this.element;
+      if  (adder == undefined) 
+        self.element.find(".adder").click(function() { self._add_row($(this)); });
+      else 
+        parent = parent;
+        
+      parent.find(".actions div[edit='off']").click(function() { self._edit_row($(this)); });
+      parent.find(".actions div[edit='on']").click(function() { self._save_row($(this)); });
+      parent.find(".actions div[delete]").click(function() { self._delete_row($(this)); });
     },
     
     refresh: function()
@@ -221,9 +252,9 @@
         self.result = $(data);
         self.show_header();
         self.update('tbody');
-        self.bind_paging();
-        self.bind_titles();
-        self.bind_actions();
+        self._bind_paging();
+        self._bind_titles();
+        self._bind_actions();
 
         self.options.onRefresh(self.element);
       }});
