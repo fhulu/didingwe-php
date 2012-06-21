@@ -168,6 +168,9 @@ class table
       if (!is_null($this->heading)) echo "<div class=heading>$this->heading</div>";
       if ($this->flags & self::FILTERABLE) $this->show_filter();
     }
+    else {
+      if ($this->flags & self::ADDABLE) echo "<div class=adder></div>";
+    }
     if ($this->flags & self::PAGEABLE) $this->show_paging();
     echo"</th></tr>\n";
   }
@@ -408,7 +411,7 @@ HEREDOC;
       foreach($rows as $row) $this->show_row($row, $index++);
     } 
     if ($this->flags & self::TOTALS) $this->show_totals();
-    if ($this->flags & self::PAGEABLE) $this->show_headerfooter("footer");
+    if ($this->flags & (self::PAGEABLE | self::ADDABLE)) $this->show_headerfooter("footer");
     echo "</tbody>\n</table>\n";
   }
 }
