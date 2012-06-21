@@ -454,10 +454,10 @@ $.fn.exists = function()
 
 function load_text(parent, url, data, callback) // deprecated
 {
-  parent.load(url, data, callback);
+  parent.loadChildren(url, data, callback);
 }
 
-$.fn.load = function(url, data, callback)
+$.fn.loadChildren = function(url, data, callback)
 {
   var self = this;
   $.getJSON(url, data, function(result) {
@@ -475,6 +475,16 @@ $.fn.load = function(url, data, callback)
       });
     });
     if (callback != undefined) callback(result);
+  });
+  return this;
+}
+
+$.fn.load = function(url, data, callback)
+{
+  var self = this;
+  $.getJSON(url, data, function(result) {
+    self.val(result);
+    callback(result);
   });
   return this;
 }
