@@ -6,9 +6,11 @@
       sortOrder: 'asc',
       url: null,
       method: 'get',
-      onRefresh: function(table) { return this; },
-      onExpand: function(row) { return this; },
-      onCollapse: function(row) { return this; }
+      onRefresh: function(table) { return true; },
+      onExpand: function(row) { return true; },
+      onCollapse: function(row) { return true; },
+      onEdit: function(row) { return true; },
+      onSave: function(row) { return true; }
     },
     
     _create: function() 
@@ -135,24 +137,51 @@
       table.find("td div[expand=expanded]").click(function() { self.collapse(this); });
     },
     
+    _show_editor: function(button)
+    {
+      var row = button.parent().parent();
+      if (!this.options.onEdit(row)) return this;
+      
+      var self = this;
+      button.attr('edit', 'on').unbind('click');
+      button.click(function() { self._save_editor(button); }); 
+      
+      if (this.editor == null)
+        this.editor = this._create_editor('edit', '<td></td>');
+        
+      this.editor.children().each(function(i) {
+        if ($(this).attr('edit') === undefined) return true;
+        ++i;
+        var selector = "td:nth-child("+i+")";
+        var td = row.find(selector);
+        var val = td.html();
+        td.replaceWith($(this).clone());
+        row.find(selector).children().val(val);
+      }); 
+    },
+    
+    _save_editor: function(button)
+    {
+      var row = button.parent().parent();
+      if (!this.options.onSave(row)) return this;
+      
+      var self = this;
+      button.attr('edit', 'off').unbind('click');
+      button.click(function() { self._show_editor(button); }); 
+      
+      row.children('[edit]').each(function() {
+        var input = $(this).children().eq(0);
+        $(this).html(input.val());
+        //todo: save table data
+        //todo: save to db
+      });
+    },
+    
     bind_actions: function()
     {
       var self = this;
-      var table = this.element;
-      table.find(".actions div[edit=off]").click(function() {        
-        if (self.editor == null)
-          self.editor = self._create_editor('edit', '<td></td>');
-        var row = $(this).parent().parent();
-        self.editor.children().each(function(i) {
-          if ($(this).attr('edit') === undefined) return true;
-          ++i;
-          var selector = "td:nth-child("+i+")";
-          var td = row.find(selector);
-          var val = td.html();
-          td.replaceWith($(this).clone());
-          row.find(selector).children().val(val);
-        });
-      });
+      self.element.find(".actions div[edit='off']").click(function() { self._show_editor($(this)); });
+      self.element.find(".actions div[edit='on']").click(function() { self._save_editor($(this)); });
     },
     
     refresh: function()
@@ -177,6 +206,11 @@
       return this;
     },
     
+    _create_sub_table: function(col, attr)
+    {
+    
+    },
+    
     _create_editor: function(type, col_text)
     {
       var table = this.element;
@@ -190,8 +224,10 @@
         if (attr == undefined) return true;
         col.attr(type, attr);
         var width = parseInt($(this).css('width')) * 0.8;
-        if (attr.indexOf('lists/') == 0)
-          col.html(jq_submit('/?a='+attr));
+        if (attr.indexOf('list:') == 0) 
+          col.html(jq_submit('/?a='+attr.substr(attr.indexOf(':')+1)));
+        else if (attr.indexOf('table/') == 0)
+          this._create_subtable(col, attr);
         else
           col.append("<input type='text' name='"+name+"' style='width:"+width+"' ></input>");
       });

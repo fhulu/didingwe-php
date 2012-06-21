@@ -452,39 +452,3 @@ $.fn.exists = function()
   return this.get(0) != undefined;
 }
 
-function load_text(parent, url, data, callback) // deprecated
-{
-  parent.loadChildren(url, data, callback);
-}
-
-$.fn.loadChildren = function(url, data, callback)
-{
-  var self = this;
-  $.getJSON(url, data, function(result) {
-    $.each(result, function(key, val) {
-      var filter = "[name='"+key+"']";
-      self.find(filter).each(function() {
-        if ($(this).is("a")) {
-          var proto = $(this).attr('proto')==undefined? '': $(this).attr('proto');
-          $(this).attr('href', proto+val);
-        }
-        else if ($(this).attr('value') === undefined)
-          $(this).text(val);
-        else
-          $(this).val(val);
-      });
-    });
-    if (callback != undefined) callback(result);
-  });
-  return this;
-}
-
-$.fn.load = function(url, data, callback)
-{
-  var self = this;
-  $.getJSON(url, data, function(result) {
-    self.val(result);
-    callback(result);
-  });
-  return this;
-}

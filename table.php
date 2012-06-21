@@ -195,8 +195,8 @@ HEREDOC;
 
   function show_titles()
   {
-    echo "<tr class=titles>\n\t";
-    $this->flags |= self::TITLES;
+    $display = $this->flags & self::TITLES? '': " style='display: none;'";
+    echo "<tr class=titles$display>\n\t";
     if ($this->flags & self::CHECKBOXES) {
       echo "<th rowspan=$this->title_rowspan><input type='checkbox' name='checkall' onclick='checkAll(\"row[]\", this.checked)'/></th>\n";
     }
@@ -368,14 +368,10 @@ HEREDOC;
         if (is_null($this->fields)) $this->set_fields($rows[0]);
       }
     }
-    echo "<table>\n";
-    if ($this->flags & (self::TITLES | self::FILTERABLE | self::PAGEABLE)) {
-      echo "<thead>\n";
-      if ($this->flags & (self::FILTERABLE | self::PAGEABLE)) $this->show_headerfooter("header");
-      if ($this->flags & self::TITLES) $this->show_titles();
-      echo "</thead>\n";
-    }
-    echo "<tbody>\n";
+    echo "<table><thead>\n";
+    $this->show_titles();
+    if ($this->flags & (self::FILTERABLE | self::PAGEABLE)) $this->show_headerfooter("header");
+    echo "</thead><tbody>\n";
     $index = 0;
     if (!$empty) {
       foreach($rows as $row) $this->show_row($row, $index++);
