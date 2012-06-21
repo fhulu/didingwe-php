@@ -169,12 +169,22 @@
       button.attr('edit', 'off').unbind('click');
       button.click(function() { self._show_editor(button); }); 
       
+      var body = self.element.find("tbody")
+      var data = { };
+      var key = body.attr('key');
+      if (key != undefined) data[key] = row.attr(key);
+      
       row.children('[edit]').each(function() {
         var input = $(this).children().eq(0);
-        $(this).html(input.val());
-        //todo: save table data
-        //todo: save to db
+        var val = input.val();
+        var name = input.attr('name');
+        data[name] = val;
+        $(this).html(val);
+        //todo: update conditionally based on input type
       });
+        //todo: save to db
+      var url = body.attr('saver');
+      if (url != undefined) $.get(url, data);
     },
     
     bind_actions: function()
@@ -211,11 +221,20 @@
     
     },
     
+    _create_list: function(col, name, attr)
+    {
+      var url = '/?a='+attr.substr(attr.indexOf(':')+1);
+      var select = $("<select name='"+name+"'></select>");
+      select.html(jq_submit(url));
+      col.append(select);
+    },
+   
     _create_editor: function(type, col_text)
     {
       var table = this.element;
       var titles = table.find(".titles");
       var editor = $("<tr class="+type+"></tr>");
+      var self = this;
       titles.find("th").each(function() {
         var name = $(this).attr('name');
         var col = $(col_text);
@@ -225,9 +244,9 @@
         col.attr(type, attr);
         var width = parseInt($(this).css('width')) * 0.8;
         if (attr.indexOf('list:') == 0) 
-          col.html(jq_submit('/?a='+attr.substr(attr.indexOf(':')+1)));
+          self._create_list(col, name, attr);
         else if (attr.indexOf('table/') == 0)
-          this._create_subtable(col, attr);
+          self._create_subtable(col, attr);
         else
           col.append("<input type='text' name='"+name+"' style='width:"+width+"' ></input>");
       });

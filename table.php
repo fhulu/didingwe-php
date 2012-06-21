@@ -48,6 +48,9 @@ class table
   var $sort_order;
   var $key_field;
   var $request;
+  var $save_url;
+  var $delete_url;
+  var $add_url;
   function __construct($fields=null, $flags=0, $callback=null)
   {
     $this->flags = $flags;
@@ -80,6 +83,24 @@ class table
     $this->flags |= self::SORTABLE;
     $this->sort_field = $field;
     $this->sort_order = $order;
+  }
+  
+  function set_saver($url)
+  {
+    $this->flags |= self::EDITABLE;
+    $this->save_url = $url;
+  }
+  
+  function set_deleter($url)
+  {
+    $this->flags |= self::DELETABLE;
+    $this->delete_url = $url;
+  }
+
+  function set_adder($url)
+  {
+    $this->flags |= self::ADDABLE;
+    $this->add_url = $url;
   }
   
   function set_key($key)
@@ -368,10 +389,20 @@ HEREDOC;
         if (is_null($this->fields)) $this->set_fields($rows[0]);
       }
     }
-    echo "<table><thead>\n";
+    $options = '';
+    
+    
+    echo "<table>\n<thead$options>\n";
     $this->show_titles();
     if ($this->flags & (self::FILTERABLE | self::PAGEABLE)) $this->show_headerfooter("header");
-    echo "</thead><tbody>\n";
+    echo "</thead>\n";
+    if ($this->flags & self::EDITABLE | self::DELETABLE) {
+      if ($this->key_field != '' ) $options .= " key='$this->key_field'";
+      if ($this->flags & self::EDITABLE) $options .= " saver='$this->save_url'";
+      if ($this->flags & self::DELETABLE) $options .= " deleter='$this->delete_url'";
+    }
+    if ($this->flags & self::ADDABLE) $options .= " adder='$this->add_url'";
+    echo "<tbody $options>\n";
     $index = 0;
     if (!$empty) {
       foreach($rows as $row) $this->show_row($row, $index++);
