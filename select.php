@@ -12,10 +12,12 @@ class select
   {
     $items = explode('|', $items);
   
+    $options = '';
     foreach($items as $item) {
       list($value, $text) = explode(',', $item);
-      echo select::option($value, $text, $value==$selected);
+      $options .= select::option($value, $text, $value==$selected);
     }
+    return $options;
   }
 
   static function read_db($sql,$selected=null,$first_value=null, $first_text=null)
