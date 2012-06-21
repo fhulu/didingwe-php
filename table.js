@@ -142,15 +142,14 @@
     {      
       if (this.editor == null)
         this.editor = this._create_editor('edit', '<td></td>');
-      
-      var editors = this.editor.children();
-      row.children().each(function(i) {
-        var edit = editors.eq(i);
-        if (edit.attr('edit') === undefined) return true;
-        var val = $(this).html();
-        $(this).html(edit.html());
-        var input = $(this).children().eq(0);
-        input.val(val);
+
+      this.editor.children().each(function(i) {
+        if ($(this).attr('edit') === undefined) return true;
+        var td = row.children().eq(i);
+        var val = td.html();
+        td.replaceWith($(this).clone());
+        td = row.children().eq(i);
+        td.children().val(val);
       });
     },
     
@@ -181,9 +180,9 @@
       if (key != undefined) data[key] = row.attr(key);
       
       row.children('[edit]').each(function() {
+        var name = $(this).attr('edit');
         var input = $(this).children().eq(0);
         var val = input.val();
-        var name = input.attr('name');
         data[name] = val;
         $(this).html(val);
         //todo: update conditionally based on input type
@@ -202,7 +201,7 @@
       $.get(url, data, function(result) {
         if (row.attr('new') == undefined || key == undefined) return true;
         row.attr(key, result);
-        row.find("[name="+key+"]").html(result);
+        row.find("[key]").html(result);
       });
     },
     
@@ -225,10 +224,14 @@
       if (this.editor == null)
         this.editor = this._create_editor('edit', '<td></td>');
       
+      var key = this.element.find("tbody").attr('key');
       var row = $("<tr new></tr>");
       this.editor.children().each(function() {
         var name = $(this).attr('name');
-        row.append("<td name="+name+"></td>");
+        if (key != undefined && name == key)
+          row.append("<td key></td");
+        else
+          row.append("<td></td");
       });
     
       var actions = row.children().last();
@@ -281,10 +284,10 @@
     
     },
     
-    _create_list: function(col, name, attr)
+    _create_list: function(col, attr)
     {
       var url = '/?a='+attr.substr(attr.indexOf(':')+1);
-      var select = $("<select name='"+name+"'></select>");
+      var select = $("<select></select>");
       select.html(jq_submit(url));
       col.append(select);
     },
@@ -299,19 +302,18 @@
         var name = $(this).attr('name');
         var col = $(col_text);
         col.attr('name', name);
-        col.appendTo(editor);
-        
+        col.appendTo(editor);        
         var attr = $(this).attr(type);
         if (attr == undefined) return true;
-        
-        col.attr(type, attr);
+        col.attr('type', attr);
+        col.attr(type, name);
         var width = parseInt($(this).css('width')) * 0.8;
         if (attr.indexOf('list:') == 0) 
-          self._create_list(col, name, attr);
+          self._create_list(col, attr);
         else if (attr.indexOf('table:') == 0)
-          self._create_subtable(col, name, attr);
+          self._create_subtable(col, attr);
         else
-          col.append("<input type='text' name='"+name+"' style='width:"+width+";'></input>");
+          col.append("<input type='text' style='width:"+width+";'></input>");
       });
       
       return editor;
