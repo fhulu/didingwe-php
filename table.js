@@ -17,6 +17,8 @@
       this.row_count = 0;
       this.data = { _offset: 0 } ;
       this.result = null;
+      this.filter = null;
+      this.editor = null;
       this.refresh();
     },
   
@@ -59,14 +61,17 @@
 
       this.update('.header', thead);
       
+      if (this.filter != null && this.filter.is(':visible')) 
+         table.find('.filtering').attr('on','');
+
       var self = this;
       table.find(".filtering").click(function() {
-        if (!table.find('.filter').exists()) 
-          self.show_filter(table);
-        else
+        if (table.find('.filter').is(':visible')) 
           self.hide_filter(table);
+        else
+          self.show_filter(table);
       });
-      
+
       this.update('.titles', thead);
     },
         
@@ -102,7 +107,7 @@
       table.find(".paging [type='text']").bind('keyup input cut paste', function(e) {
         var me = $(this);
         if (e.keyCode == 13)
-          self.savePageSize().refresh();
+          self._savePageSize().refresh();
         else table.find(".paging [type='text']").each(function() {
           if (!$(this).is(me)) $(this).val(me.val());
         });
@@ -130,6 +135,26 @@
       table.find("td div[expand=expanded]").click(function() { self.collapse(this); });
     },
     
+    bind_actions: function()
+    {
+      var self = this;
+      var table = this.element;
+      table.find(".actions div[edit=off]").click(function() {        
+        if (self.editor == null)
+          self.editor = self._create_editor('edit', '<td></td>');
+        var row = $(this).parent().parent();
+        self.editor.children().each(function(i) {
+          if ($(this).attr('edit') === undefined) return true;
+          ++i;
+          var selector = "td:nth-child("+i+")";
+          var td = row.find(selector);
+          var val = td.html();
+          td.replaceWith($(this).clone());
+          row.find(selector).children().val(val);
+        });
+      });
+    },
+    
     refresh: function()
     {
       this.data._size = this.options.pageSize;
@@ -137,7 +162,7 @@
         this.data._sort = this.options.sortField;
         this.data._order = this.options.sortOrder;
       };
-      
+
       var self = this;
       $.ajax({url: this.options.url, type: this.options.method, data: this.data, success: function(data) {
         self.result = $(data);
@@ -145,30 +170,54 @@
         self.update('tbody');
         self.bind_paging();
         self.bind_titles();
+        self.bind_actions();
 
         self.options.onRefresh(self.element);
       }});
       return this;
     },
     
-    
-    show_filter: function()
+    _create_editor: function(type, col_text)
     {
       var table = this.element;
       var titles = table.find(".titles");
-      var filter = $("<tr class=filter></tr>").insertAfter(titles);
+      var editor = $("<tr class="+type+"></tr>");
       titles.find("th").each(function() {
         var name = $(this).attr('name');
-        if ($(this).attr('sort') === undefined) 
-          filter.append("<th></th>");
-        else {
-          var width = $(this).css('width');
-          filter.append("<th><input type='text' name='"+name+"' style='width:"+width+"' ></input></th>");
-        }
+        var col = $(col_text);
+        col.appendTo(editor);
+        var attr = $(this).attr(type);
+        if (attr == undefined) return true;
+        col.attr(type, attr);
+        var width = parseInt($(this).css('width')) * 0.8;
+        if (attr.indexOf('lists/') == 0)
+          col.html(jq_submit('/?a='+attr));
+        else
+          col.append("<input type='text' name='"+name+"' style='width:"+width+"' ></input>");
       });
       
+      return editor;
+    },
+    
+    _reset_editor: function(editor)
+    {
+      editor.find('*').val('');
+      editor.show();
+      return this;
+    },
+    
+    show_filter: function()
+    {
+      if (this.filter != null) {
+        this._reset_editor(this.filter);
+        this.filter.show();
+      }
+      else {
+        this.filter = this._create_editor('filter', '<th></th>');
+        this.filter.insertAfter(this.element.find('.titles'));
+      }
       var self = this;
-      filter.find("input").bind('keyup input cut paste', function() {
+      this.filter.find("input").bind('keyup input cut paste', function() {
         var val = $(this).val();
         var name = $(this).attr('name')  
         if (val.trim() == '')
@@ -178,13 +227,13 @@
         self.refresh();
       });
       
-      table.find(".filtering").attr('on','');
+      this.element.find(".filtering").attr('on','');
     },
     
     hide_filter: function(table)
     {
-      table.find(".filter").remove();
-      table.find(".filtering").removeAttr('on');
+      this.filter.hide();
+      this.element.find(".filtering").removeAttr('on');
       this.data = { _offset: 0 };
       this.refresh();
     },

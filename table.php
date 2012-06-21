@@ -4,10 +4,11 @@ require_once('db.php');
 
 class table_field
 {
+  var $title;
+  var $name;
   var $visible;
   var $width;
-  var $total;
-  var $edit_type;
+  var $edit;
 };
 
 class table
@@ -23,6 +24,8 @@ class table
   const HEADING = 0x0100;
   const EXPANDABLE = 0x0200;
   const EDITABLE = 0x0400;
+  const DELETABLE = 0x800;
+  const ADDABLE = 0x0800;
 
   var $fields;
   var $symbols;
@@ -134,34 +137,24 @@ class table
     $this->symbols[] = $hidden?'#':$symbol;
   }
   
-  function show_title($field, $rowspan, $colspan, $symbol, $name)
+  function show_headerfooter($type)
   {
-    if ($this->flags & self::SORTABLE && $symbol == '~') {
-      $sort = " sort";
-      if ($name == $this->sort_field) $sort .= " order='$this->sort_order'";
+    $colspan=$this->visible_field_count;
+    if ($this->flags & (self::EDITABLE | self::DELETABLE)) 
+      $colspan++;
+    echo "<tr class=$type><th colspan=$colspan>";
+    if ($type=='header') {
+      if (!is_null($this->heading)) echo "<div class=heading>$this->heading</div>";
+      if ($this->flags & self::FILTERABLE) $this->show_filter();
     }
-    if ($rowspan > 1)
-      echo "\t<th rowspan=$rowspan name='$name'$sort><div>$field</div></th>\n";
-    else if ($colspan > 1)
-      echo "\t<th colspan=$colspan><div>$field</div></th>\n";
-    else 
-      echo "\t<th name='$name'$sort><div>$field</div></th>\n";
-  }
-
-  function show_header()
-  {
-    echo "<tr class=header><th colspan=$this->visible_field_count>";
-    if ($this->heading != '') echo "<div class=heading>$this->heading</div>";
-    if ($this->flags & self::FILTERABLE) $this->show_filter();
     if ($this->flags & self::PAGEABLE) $this->show_paging();
     echo"</th></tr>\n";
   }
   
-  function show_paging($new_row=false)
+  function show_paging()
   {
     $last_offset = min($this->page_offset + $this->page_size, $this->row_count);
     $offset = $this->row_count == 0? 0: $this->page_offset+1;
-    if ($new_row) echo "<tr><th colspan=$this->visible_field_count >\n";
     echo <<< HEREDOC
       <div class=paging rows=$this->row_count>
         Showing from <b>$offset</b> to <b>$last_offset</b> of <b>$this->row_count</b>&nbsp;&nbsp;
@@ -170,13 +163,34 @@ class table
         <button nav=next></button>
       </div>
 HEREDOC;
-    if ($new_row) echo "</th></tr>";
-
   }
   
   function show_filter()
   {
     echo "<div class='filtering' title='Filter/Search'></div>";
+  }
+
+  function show_title($field, $rowspan, $colspan=1, $symbol=null, $name=null)
+  {
+    $options = explode('|', $field);
+    $title = array_shift($options);   
+    $options = implode(' ', $options);
+
+    if ($this->flags & self::SORTABLE && $symbol == '~') {
+      $options .= " sort";
+      if ($name == $this->sort_field) $options .= " order='$this->sort_order'";
+      if (strpos($options, 'filter') === false && strpos($options, 'filteroff') === false) 
+        $options .= ' filter';
+    }
+
+    if (!is_null($name)) $options .= " name ='$name'";
+    
+    if ($rowspan > 1)
+      echo "\t<th rowspan=$rowspan $options><div>$title</div></th>\n";
+    else if ($colspan > 1)
+      echo "\t<th colspan=$colspan><div>$title</div></th>\n";
+    else 
+      echo "\t<th $options><div>$title</div></th>\n";
   }
 
   function show_titles()
@@ -211,6 +225,9 @@ HEREDOC;
       }
       $this->show_title($key, 1, $colspan, $symbol, $this->field_names[$i]);
     }
+    if ($this->flags & (self::EDITABLE | self::DELETABLE)) 
+      $this->show_title('', $this->title_rowspan);
+      
     echo "</tr>\n\t";
     $i = 0;
     foreach ($this->fields as $key=>&$field) {
@@ -267,6 +284,12 @@ HEREDOC;
         $this->totals[$key] += $cell;
       }
     }
+    if ($this->flags & (self::EDITABLE | self::DELETABLE)) {
+      echo "<td class=actions>\n";
+      if ($this->flags & self::EDITABLE) echo "<div edit=off></div>\n";
+      if ($this->flags & self::DELETABLE) echo "<div delete></div>\n";
+      echo "</td>\n";
+    }
     echo "</tr>\n";
   }
   
@@ -320,7 +343,7 @@ HEREDOC;
     if (!is_null($sql)) {
       $this->sql = $sql;
       if (!is_array($sql)) {
-        if ($this->flags & self::FILTERABLE | self::SORTABLE) 
+        if ($this->flags & (self::FILTERABLE | self::SORTABLE))
           $this->sql = "select * from ($sql) tmp";
         if ($this->flags & self::FILTERABLE) 
           $this->set_filters();
@@ -348,7 +371,7 @@ HEREDOC;
     echo "<table>\n";
     if ($this->flags & (self::TITLES | self::FILTERABLE | self::PAGEABLE)) {
       echo "<thead>\n";
-      if ($this->flags & (self::FILTERABLE | self::PAGEABLE)) $this->show_header();
+      if ($this->flags & (self::FILTERABLE | self::PAGEABLE)) $this->show_headerfooter("header");
       if ($this->flags & self::TITLES) $this->show_titles();
       echo "</thead>\n";
     }
@@ -358,7 +381,7 @@ HEREDOC;
       foreach($rows as $row) $this->show_row($row, $index++);
     } 
     if ($this->flags & self::TOTALS) $this->show_totals();
-    if ($this->flags & self::PAGEABLE) $this->show_paging(true);
+    if ($this->flags & self::PAGEABLE) $this->show_headerfooter("footer");
     echo "</tbody>\n</table>\n";
   }
 }
