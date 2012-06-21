@@ -190,8 +190,22 @@
     bind_actions: function()
     {
       var self = this;
-      self.element.find(".actions div[edit='off']").click(function() { self._show_editor($(this)); });
-      self.element.find(".actions div[edit='on']").click(function() { self._save_editor($(this)); });
+      var table = self.element;
+      table.find(".actions div[edit='off']").click(function() { self._show_editor($(this)); });
+      table.find(".actions div[edit='on']").click(function() { self._save_editor($(this)); });
+      
+      var body = table.find("tbody");
+      var key = body.attr('key');
+       var url = body.attr('deleter');
+      table.find(".actions div[delete]").click(function() {
+        var row = $(this).parent().parent();
+        if (key != undefined && url != undefined) {        
+          var data = { };
+          data[key] = row.attr(key);
+          $.get(url, data);
+        }
+        row.remove();
+      });
     },
     
     refresh: function()
