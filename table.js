@@ -256,7 +256,7 @@
       parent.find(".actions div[edit='on']").click(function() { self._save_row($(this)); });
       parent.find(".actions div[delete]").click(function() { self._delete_row($(this)); });
     },
-    
+
     refresh: function()
     {
       this.data._size = this.options.pageSize;
@@ -273,8 +273,16 @@
         self._bind_paging();
         self._bind_titles();
         self._bind_actions();
-
-        self.options.onRefresh(self.element);
+        
+        var width = 0;
+        self.element.find("tbody tr:first-child td.action").children().each(function() {
+          width += parseInt($(this).css('width')) 
+            + parseInt($(this).css('padding-left'))
+            + parseInt($(this).css('padding-right'));
+          console.log(width);
+        })   
+        if (width > 0)        
+          self.element.find(".titles th:last-child").css('width', width);
       }});
       return this;
     },
