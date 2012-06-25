@@ -227,7 +227,7 @@
       var key = this.element.find("tbody").attr('key');
       var row = $("<tr new></tr>");
       this.editor.children().each(function() {
-        var name = $(this).attr('name');
+        var name = $(this).attr('edit');
         if (key != undefined && name == key)
           row.append("<td key></td");
         else
@@ -301,7 +301,6 @@
       titles.find("th").each(function() {
         var name = $(this).attr('name');
         var col = $(col_text);
-        col.attr('name', name);
         col.appendTo(editor);        
         var attr = $(this).attr(type);
         if (attr == undefined) return true;
@@ -310,9 +309,7 @@
         var width = parseInt($(this).css('width')) * 0.8;
         if (attr.indexOf('list:') == 0) 
           self._create_list(col, attr);
-        else if (attr.indexOf('table:') == 0)
-          self._create_subtable(col, attr);
-        else
+        else if (attr == '')
           col.append("<input type='text' style='width:"+width+";'></input>");
       });
       
@@ -339,7 +336,7 @@
       var self = this;
       this.filter.find("input").bind('keyup input cut paste', function() {
         var val = $(this).val();
-        var name = $(this).attr('name')  
+        var name = $(this).parent().attr('filter')  
         if (val.trim() == '')
           delete self.data[name];
         else
