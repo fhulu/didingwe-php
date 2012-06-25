@@ -88,9 +88,14 @@ class user
   
   static function check($request)
   {
-    $program_id = config::$program_id;
-    if (user::exists($request[email]))
+    $email = $request['email'];
+    if (user::exists($email))
       echo "!The email address already exists";
+      
+    $program_id = config::$program_id;
+    if ($program_id == 3 && !preg_match('/@(fpb\.(org|gov)\.za|mukoni\.co\.za)/i', $email)) {
+      echo "!Application not yet released to the public. An announcement will be made soon";
+    }
   }
 
   static function authenticate($email, $passwd)
