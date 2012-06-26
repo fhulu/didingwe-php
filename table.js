@@ -188,18 +188,16 @@
         //todo: update conditionally based on input type
       });
 
-      var is_new = row.attr('new') == undefined;
-      
+      var is_new = row.hasAttr('new');
       // remove delete button if not specified for the form
-      var save_url = body.attr('saver');
-      if (is_new && save_url == undefined) 
+      if (is_new && !body.hasAttr('saver')) 
           row.find(".actions div[delete]").remove();
  
-      var url = is_new? body.attr('adder'): save_url;
+      var url = is_new? body.attr('adder'): body.attr('saver');
       if (url == undefined || url == '') return;
       
       $.get(url, data, function(result) {
-        if (row.attr('new') == undefined || key == undefined) return true;
+        if (!row.hasAttr('new') || !body.hasAttr('key')) return true;
         row.attr(key, result);
         row.find("[key]").html(result);
       });
