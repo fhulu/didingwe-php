@@ -25,7 +25,7 @@ class table
   const EXPANDABLE = 0x0200;
   const EDITABLE = 0x0400;
   const DELETABLE = 0x800;
-  const ADDABLE = 0x0800;
+  const ADDABLE = 0x1000;
 
   var $fields;
   var $symbols;
