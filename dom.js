@@ -452,3 +452,9 @@ $.fn.exists = function()
   return this.get(0) != undefined;
 }
 
+$.fn.hasAttr = function(name) 
+{  
+  return this.attr(name) !== undefined;
+}
+
+
