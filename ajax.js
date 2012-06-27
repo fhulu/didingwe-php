@@ -96,7 +96,7 @@ function ajax_confirm(url)
 function jq_submit(url, params, method, async)
 {
   if (async == undefined) async = false;
-  if (method == undefined) method = 'get';
+  if (method == undefined) method = 'post';
   var result;
   var data = params == undefined? undefined: params2values(params);
   $.ajax({

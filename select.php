@@ -2,10 +2,11 @@
 class select
 {
   static function option($value, $text, $selected=false)
-  {              
-   $selected = $selected? ' selected': '';
+  {    
+   if ($selected)  
+   $selected = ' selected';
    if ($text=='') $text = $value;
-   return "<option value='$value'$selected>$text</option>";
+   return "<option value='$value'$selected>$text</option>\n";
  }
 
   static function add_items($items,$selected=null)
@@ -37,7 +38,7 @@ class select
   
   static function add_db($sql,$selected=null,$first_value=null, $first_text=null)
   {
-    echo select::read_db($sql, selected, $first_value, $first_text);
+    echo select::read_db($sql, $selected, $first_value, $first_text);
   }
   
   static function load_from_db($sql,$selected=null,$first_value=null, $first_text=null)
