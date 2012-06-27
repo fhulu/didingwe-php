@@ -204,10 +204,10 @@ class db
     return json_encode($this->read($sql, MYSQL_ASSOC, $max_rows));
   }
   
-  function lineage(&$values, $key, $parent_key, $table)
+  function lineage(&$values, $key, $parent_key, $table, $other='')
   {
     $value = $values[sizeof($values)-1];
-    $sql = "select $parent_key from $table where $key = '$value'";
+    $sql = "select $parent_key from $table where $key = '$value' $other";
     $value = $this->read_one_value($sql);
     if ($value == null) return;
     $values[] = $value;
