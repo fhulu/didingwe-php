@@ -88,14 +88,10 @@ class user
   
   static function check($request)
   {
+    if (!verify_internal($request)) return;
     $email = $request['email'];
     if (user::exists($email))
       echo "!The email address already exists";
-      
-    $program_id = config::$program_id;
-    if ($program_id == 3 && !preg_match('/@(fpb\.(org|gov)\.za|mukoni\.co\.za)/i', $email)) {
-      echo "!Application not yet released to the public. An announcement will be made soon";
-    }
   }
 
   static function authenticate($email, $passwd)
@@ -136,7 +132,9 @@ class user
   }
   
   static function register($request)
-  {
+  {    
+    if (!user::verify_internal($request)) return;
+
     $first_name = $request[first_name];
     $last_name = $request[last_name];
     $email = $request[email];
@@ -193,6 +191,7 @@ class user
   static function activate($request)
   {
     if (!user::check_otp($request)) return false;
+    
     global $db, $session;
     $id = $session->user->id;
     $db->exec("update mukonin_audit.user set active = 1 where id = $id");
@@ -245,7 +244,6 @@ class user
   
   static function update_role($request)
   {
-   
     global $db, $session;
     $user = &$session->user;
     $id = $_REQUEST['id'];
@@ -276,10 +274,25 @@ class user
     }
   }
   
+  static function verify_internal($request)
+  {
+    $email = $request[email];
+    if (config::$program_id == 3 && !preg_match('/@(fpb\.(org|gov)\.za|mukoni\.co\.za)/i', $email)) {
+      echo "!Application not yet released to the public. An announcement will be made soon";
+      return false;
+    }
+    return true;
+  }
+  
+  static function verify_hacker($request)
+  {
+    return user::verify_internal($request) && user::check_otp($request); 
+  }
+  
   static function start_approval($request)
   {     
-    //todo: email main user
-
+    if (!verify_hacker($request)) return;
+    
     global $db, $session;
     $user = &$session->user;
    
