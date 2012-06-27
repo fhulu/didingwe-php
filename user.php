@@ -17,6 +17,7 @@ class user
   var $cellphone;
   var $otp;
   var $roles;
+  var $functions;
   function __construct($data)
   {
     list($this->id, $this->partner_id, $this->email, $this->first_name, $this->last_name, $this->cellphone) = $data;
@@ -47,10 +48,18 @@ class user
   function load_functions()
   {
     if (sizeof($this->roles) < 1) return;
-    $roles = "'". implode("','", $this->roles) . "'";
+    $roles = implode("','", $this->roles);
     global $db;
-    $this->functions = $db->read_column("select distinct function_code from mukonin_audit.role_function
-    where role_code in($roles)");
+    
+    $groups = $db->read_column("select group_code from mukonin_audit.group_partner where partner_id = $this->partner_id");
+    $db->lineage($groups, "code", "parent_code", "mukonin_audit.partner_group", "and program_id=".config::$program_id);
+    $groups = implode("','", $groups);
+    $functions = $db->read_column(
+      "select distinct function_code from mukonin_audit.role_function where role_code in('$roles') 
+          and function_code in 
+          (select distinct function_code from mukonin_audit.partner_group_function where group_code in ('$groups'))");
+    $base_functions = $db->read_column("select distinct function_code from mukonin_audit.role_function where role_code = 'base'"); 
+    $this->functions = array_merge($functions, $base_functions);
   }
   
  
@@ -224,10 +233,9 @@ class user
         $headers .= "from:  $admin";
         $mail_sent = mail($email, $subject, $message, $headers);
         log::debug("Sending email to $email");  
-    }
-  
-      
+    }       
   }
+  
   static function update($request)
   {
     foreach($request as $key=>$value) {
@@ -240,21 +248,33 @@ class user
     $db->exec($sql);
   }
 
-  
+  static function verify($function)
+  {
+    global $session;
+    $user = $session->user;
+    if (is_null($session) || is_null($user) || !in_array($function, $users->functions)) {
+      log::ERROR("Unauthorised access from $user->email");
+      return false;
+    }
+    return true;
+  }
   
   static function update_role($request)
   {
+    if (!verify('update_role')) return;
+    
     global $db, $session;
     $user = &$session->user;
-    $id = $_REQUEST['id'];
-    $role = $_REQUEST['role'];
+
+    $id = $request['id'];
+    $role = $request['role'];
     $partner_id = $user->partner_id;
     $sql = "update mukonin_audit.user_role set role_code='$role' where user_id = $id";
     $db->exec($sql);
     
-      $emails = $db->read_column("select email_address 
-                                from mukonin_audit.user 
-                                where id =  $id and partner_id=$partner_id");  
+    $emails = $db->read_column("select email_address 
+                from mukonin_audit.user 
+                  where id =  $id and partner_id=$partner_id");  
                    
 
     $username = $db->read_one_value("select Concat( first_name, ' ', last_name ) AS contact_person from mukonin_audit.user where id = $id ");
