@@ -60,7 +60,9 @@ class session {
       $email = $_REQUEST['email'];
       $passwd = $_REQUEST['password'];
       log::debug("LOGIN: $email PROGRAM: $session->program_id REFERRER: $session->referrer");
-         
+      
+      if (!user::verify_internal($_REQUEST)) return; 
+      
       $user = user::restore($_REQUEST['email'], $_REQUEST['password']);
       session::register($user);
       if (!$user)
