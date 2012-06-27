@@ -263,6 +263,19 @@
       parent.find(".actions div[delete]").click(function() { self._delete_row($(this)); });
     },
 
+    
+    _adjust_actions_width: function()
+    {
+      var width = 0;
+      self.element.find("tbody tr:first-child td.action").children().each(function() {
+        width += parseInt($(this).css('width')) 
+          + parseInt($(this).css('padding-left'))
+          + parseInt($(this).css('padding-right'));
+      })   
+      if (width > 0)        
+        self.element.find(".titles th:last-child").css('width', width);
+    },
+    
     refresh: function()
     {
       this.data._size = this.options.pageSize;
@@ -279,16 +292,8 @@
         self._bind_paging();
         self._bind_titles();
         self._bind_actions();
+        self._adjust_actions_width();
         
-        var width = 0;
-        self.element.find("tbody tr:first-child td.action").children().each(function() {
-          width += parseInt($(this).css('width')) 
-            + parseInt($(this).css('padding-left'))
-            + parseInt($(this).css('padding-right'));
-          console.log(width);
-        })   
-        if (width > 0)        
-          self.element.find(".titles th:last-child").css('width', width);
       }});
       return this;
     },
@@ -356,7 +361,7 @@
         else
           self.data[name] = val;
         self.refresh();
-      });
+      }); 
       
       this.element.find(".filtering").attr('on','');
     },
@@ -367,8 +372,7 @@
       this.element.find(".filtering").removeAttr('on');
       this.data = { _offset: 0 };
       this.refresh();
-    },
-    
+    },    
     
     expand: function(button)
     {
