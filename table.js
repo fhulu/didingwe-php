@@ -174,18 +174,26 @@
       button.attr('edit', 'off').unbind('click');
       button.click(function() { self._edit_row(button); }); 
       
-      var body = self.element.find("tbody")
+      var body = self.element.find("tbody");
       var data = { };
       var key = body.attr('key');
       if (key != undefined) data[key] = row.attr(key);
       
       row.children('[edit]').each(function() {
         var name = $(this).attr('edit');
-        var input = $(this).children().eq(0);
-        var val = input.val();
+        var type = $(this).attr('type');
+        var text, val;
+        if (type.indexOf('list:') == 0) {  // select dropdown
+          var option  = $(this).find(":selected");
+          text = option.text();
+          val = option.val();
+        }
+        else {
+          var input = $(this).children().eq(0);
+          text = val = input.val();
+        }
         data[name] = val;
-        $(this).html(val);
-        //todo: update conditionally based on input type
+        $(this).html(text);
       });
 
       var is_new = row.hasAttr('new');
