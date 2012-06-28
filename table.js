@@ -1,7 +1,21 @@
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+// Author     : Fhulu Lidzhade
+// Date       : 17/06/2012   20:39
+// Description:
+//   table.js defines a jquery ui extension enhancing html tables. It adds featues 
+//   such as:
+//    1) sorting by field on column header click
+//    2) paging with adjustable page size
+//    3) customable row expansion/collapse when required
+//    4) editable rows including select boxes
+//    5) dynamic addition of rows
+//    6) dynamic deletion of rows
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
 (function( $ ) {
   $.widget( "ui.table", {
     options: {
-      pageSize: 30,
+      pageSize: 0,
       sortField: null,
       sortOrder: 'asc',
       url: null,
@@ -138,13 +152,13 @@
     },
     
     
-    _show_editor: function(row)
+    showEditor: function(row)
     {      
       if (this.editor == null)
         this.editor = this._create_editor('edit', '<td></td>');
 
       this.editor.children().each(function(i) {
-        if ($(this).attr('edit') === undefined) return true;
+        if (!$(this).hasAttr('edit')) return true;
         var td = row.children().eq(i);
         var val = td.html();
         td.replaceWith($(this).clone());
@@ -158,7 +172,7 @@
       var row = button.parent().parent();
       if (!this.options.onEdit(row)) return this;
 
-      this._show_editor(row);
+      this.showEditor(row);
       
       var self = this;
       button.attr('edit', 'on').unbind('click');
@@ -211,12 +225,11 @@
       });
     },
     
-    _delete_row: function(button)
+    deleteRow: function(row)
     {
       var body = this.element.find("tbody");
       var key = body.attr('key');
       var url = body.attr('deleter');
-      var row = button.parent().parent();
       if (key != undefined && url != undefined && url != '') {        
         var data = { };
         data[key] = row.attr(key);
@@ -225,12 +238,13 @@
       row.remove();
     },
     
-    _add_row: function(button)
+    addRow: function(button)
     {
       if (this.editor == null)
         this.editor = this._create_editor('edit', '<td></td>');
       
-      var key = this.element.find("tbody").attr('key');
+      var body = this.element.find("tbody");
+      var key = body.attr('key');
       var row = $("<tr new></tr>");
       this.editor.children().each(function() {
         var name = $(this).attr('edit');
@@ -244,9 +258,12 @@
       actions.addClass('actions');
       actions.html("<div edit=on></div><div delete></div>");
       
-      row.insertBefore(button.parent().parent());
+      if (button !== undefined) 
+        row.insertBefore(button.parent().parent());
+      else
+        body.append(row);
       this._bind_actions(row);
-      this._show_editor(row);
+      this.showEditor(row);
     },
     
     _bind_actions: function(adder)
@@ -254,31 +271,33 @@
       var self = this;
       var parent = this.element;
       if  (adder == undefined) 
-        self.element.find(".adder").click(function() { self._add_row($(this)); });
+        self.element.find(".adder").click(function() { self.addRow($(this)); });
       else 
         parent = adder;
         
       parent.find(".actions div[edit='off']").click(function() { self._edit_row($(this)); });
       parent.find(".actions div[edit='on']").click(function() { self._save_row($(this)); });
-      parent.find(".actions div[delete]").click(function() { self._delete_row($(this)); });
+      parent.find(".actions div[delete]").click(function() { self.deleteRow($(this).parent().parent()); });
     },
 
     
     _adjust_actions_width: function()
     {
       var width = 0;
-      self.element.find("tbody tr:first-child td.action").children().each(function() {
+      this.element.find("tbody tr:first-child td.action").children().each(function() {
         width += parseInt($(this).css('width')) 
           + parseInt($(this).css('padding-left'))
           + parseInt($(this).css('padding-right'));
       })   
       if (width > 0)        
-        self.element.find(".titles th:last-child").css('width', width);
+        this.element.find(".titles th:last-child").css('width', width);
     },
     
     refresh: function()
     {
-      this.data._size = this.options.pageSize;
+      if (this.option.pageSize > 0)
+        this.data._size = this.options.pageSize;
+  
       if (this.options.sortField != null) {
         this.data._sort = this.options.sortField;
         this.data._order = this.options.sortOrder;
