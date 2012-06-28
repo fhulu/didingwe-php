@@ -4,6 +4,7 @@ require_once('session.php');
 require_once('db.php');
 require_once('config.php');
 require_once('table.php'); 
+require_once('select.php');
 
 class user_exception extends Exception {};
 class user
@@ -238,30 +239,43 @@ class user
   
   static function update($request)
   {
+    user::audit("manage_users", $request['email_address']);
+    $fields = array('email_address','first_name', 'last_name', 'otp');
+    $values = '';
     foreach($request as $key=>$value) {
-      if ($key != 'PHPSESSID')
+      if (in_array($key, $fields))
         $values .= ", $key = '$value'";
     }
     global $db, $session;
-    $id = $session->user->id;
+    $id = $request['id'];
     $sql = "update mukonin_audit.user set ". substr($values,1). " where id = $id";
     $db->exec($sql);
+    if (!is_null($request['role']))
+      user::update_role($request);
   }
 
   static function verify($function)
   {
     global $session;
     $user = $session->user;
-    if (is_null($session) || is_null($user) || !in_array($function, $users->functions)) {
-      log::ERROR("Unauthorised access from $user->email");
-      return false;
-    }
-    return true;
+    if (is_null($session) || is_null($user) || !in_array($function, $user->functions)) 
+      throw new user_exception("Unauthorised access to function $function from $user->email");
+  }
+  
+  static function audit($function, $detail='')
+  {
+    user::verify($function);
+    log::info("FUNCTION: $function DETAIL: $detail");
+    global $db, $session;
+    $user = $session->user;
+    $detail = addslashes($detail);
+    $db->insert("insert into mukonin_audit.trx(user_id, function_code, details)
+      values($user->id, '$function', '$detail')");
   }
   
   static function update_role($request)
   {
-    if (!verify('update_role')) return;
+    user::audit('update_role', $request['email_address']);
     
     global $db, $session;
     $user = &$session->user;
@@ -338,48 +352,53 @@ class user
     
   }
 
-    static function changePassword()
-    {
-      $currpassword = $_POST['currpassword'];
-      $newpassword = $_POST["newpassword"];
-      
-      global $session, $db;
+  static function changePassword()
+  {
+    $currpassword = $_POST['currpassword'];
+    $newpassword = $_POST["newpassword"];
+    
+    global $session, $db;
 
-      $curr_user_id = $session->user->id;
-      
-      $db->exec("update mukonin_audit.user
-                 set password = password('$newpassword')
-                 where id = $curr_user_id 
-                 and password = password('$currpassword')");
-      
-      if ($db->affected_rows() == 0) 
-      { 
-        echo "Invalid password"; 
-        return;
-      }       
-      
-      header("Location: /?c=password_changed");
+    $curr_user_id = $session->user->id;
+    
+    $db->exec("update mukonin_audit.user
+               set password = password('$newpassword')
+               where id = $curr_user_id 
+               and password = password('$currpassword')");
+    
+    if ($db->affected_rows() == 0) 
+    { 
+      echo "Invalid password"; 
+      return;
+    }       
+    
+    header("Location: /?c=password_changed");
+   
+  }
      
-    }
-     
-  static function userManagement()
-  {   
+  static function roles($request)
+  {
+    echo select::add_db("select code, name from mukonin_audit.role where code not in('unreg','base')");
+  }
+  
+  static function manage($request)
+  {  
+    user::verify('manage_users');
     
-    $titles = array('#id', 'Username', 'First Name', 'Last Name', 'Create Time','');
-    
-    $sql = "select id, email_address, first_name, last_name, create_time
-            from mukonin_audit.user
-            order by create_time desc"; 
-              
-    table::display($sql, $titles, table::TITLES | table::ALTROWS, 'qmsg', 430,
-    
-      function (&$user_data, &$row_data, $row_num, &$attr) 
-      {
-        $attr .= " id=b" . $row_data['id'];
-        $row_data[''] = "<img src='edit16.png' onclick='editUser(this)'> <img  src='remove16.png';/>";
-
-        return true;
-      });
+    global $session;
+    $partner_id = $session->user->partner_id;
+    $sql = "select id, u.create_time, email_address, first_name, last_name, group_concat(r.name) role  
+      from mukonin_audit.user u, mukonin_audit.user_role ur, mukonin_audit.role r
+      where u.id=ur.user_id and r.code = ur.role_code 
+      and partner_id = $partner_id and program_id = ". config::$program_id;    
+            
+    $titles = array('#id','~Time', '~Email Address|edit','~First Name|edit','~Last Name|edit','Role|edit=list:user/roles');
+    $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE);
+    $table->set_heading("Manage Users");
+    $table->set_key('id');
+    $table->set_saver("/?a=user/update");
+    $table->set_options($request);
+    $table->show($sql);
   }
 }
 ?>
