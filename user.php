@@ -239,7 +239,6 @@ class user
   
   static function update($request)
   {
-    user::audit("manage_users", $request['email_address']);
     $fields = array('email_address','first_name', 'last_name', 'otp');
     $values = '';
     foreach($request as $key=>$value) {
@@ -248,6 +247,8 @@ class user
     }
     global $db, $session;
     $id = $request['id'];
+    user::audit("manage_users", $id, 'update', $values);
+    
     $sql = "update mukonin_audit.user set ". substr($values,1). " where id = $id";
     $db->exec($sql);
     if (!is_null($request['role']))
@@ -256,32 +257,41 @@ class user
 
   static function verify($function)
   {
+    session::ensure_logged_in();
     global $session;
     $user = $session->user;
     if (is_null($session) || is_null($user) || !in_array($function, $user->functions)) 
       throw new user_exception("Unauthorised access to function $function from $user->email");
   }
   
-  static function audit($function, $detail='')
+  static function audit($function, $object='', $detail='')
   {
     user::verify($function);
-    log::info("FUNCTION: $function DETAIL: $detail");
     global $db, $session;
     $user = $session->user;
+    log::info("FUNCTION: $function USER: $user->id OBJECT: $object DETAIL: $detail");
+    if (is_numeric($object)) {
+      $object_id = $object; 
+      $object_code = 'null';
+    }
+    else {
+      $object_code = "'$object'";
+      $object_id = 'null';
+    }
     $detail = addslashes($detail);
-    $db->insert("insert into mukonin_audit.trx(user_id, function_code, detail)
-      values($user->id, '$function', '$detail')");
+    $db->insert("insert into mukonin_audit.trx(user_id, function_code, object_id, object_code, detail)
+      values($user->id, '$function', $object_id, $object_code, '$detail')");
   }
   
   static function update_role($request)
   {
-    user::audit('update_role', $request['email_address']);
+    $id = $request['id'];
+    $role = $request['role'];
+    user::audit('update_role', id, $role);
     
     global $db, $session;
     $user = &$session->user;
 
-    $id = $request['id'];
-    $role = $request['role'];
     $partner_id = $user->partner_id;
     $sql = "update mukonin_audit.user_role set role_code='$role' where user_id = $id";
     $db->exec($sql);
@@ -387,7 +397,7 @@ class user
     
     global $session;
     $partner_id = $session->user->partner_id;
-    $sql = "select id, u.create_time, email_address, first_name, last_name, group_concat(r.name) role  
+    $sql = "select id, u.create_time, email_address, first_name, last_name, '' role#, group_concat(r.name) role  
       from mukonin_audit.user u, mukonin_audit.user_role ur, mukonin_audit.role r
       where u.id=ur.user_id and r.code = ur.role_code 
       and partner_id = $partner_id and program_id = ". config::$program_id;    

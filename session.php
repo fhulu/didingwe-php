@@ -26,25 +26,31 @@ class session {
     $this->schema_prefix = config::$schema_prefix;
   }
   
+  static function validate($fallback_url)
+  {
+    global $session;
+    if (!is_null($session) && !is_null($session->user)) return;
+  
+    $_SESSION['referrer'] = $_SERVER[REQUEST_URI];
+    session::redirect($fallback_url);
+    exit(0);
+  }
+
   static function ensure_logged_in()
   {
-    $request = $_REQUEST['a'];
-    log::debug("Check login: PATH: $path REQUEST $request"); 
-    if (strstr($request, 'session/log') === false 
-      && strstr($request, 'user/check') === false
-      && strstr($request, 'user/register') === false
-      && request != 'menu') {
-      $_SESSION['referrer'] = $_SERVER[REQUEST_URI];
-      session::redirect('/?c=login');
-    }
+    session::validate('/?c=login');
+  }
+  static function ensure_not_expired()
+  {
+    session::validate('/?c=home');
   }
 
   
   static function register($user)
   {
-      global $session;
-      $session = new session();
-      $session->referrer = $_SESSION['referrer'];
+    global $session;
+    $session = new session();
+    $session->referrer = $_SESSION['referrer'];
     $session->user = $user;
     $session->id = sprintf("%08x%04x%04x%08x",rand(0,0xffffffff),$user->partner_id,$user->id,time());
     $sql = "insert mukonin_audit.session (id, user_id) values ('$session->id','$user->id')";
@@ -64,14 +70,14 @@ class session {
       if (!user::verify_internal($_REQUEST)) return; 
       
       $user = user::restore($_REQUEST['email'], $_REQUEST['password']);
-      session::register($user);
       if (!$user)
         throw new session_exception("Invalid username/password for ". $_REQUEST[email]);
 
+      session::register($user);
       global $session;
       if ($session->referrer == '') $session->referrer = '/?c=home';
       $_SESSION[last_error] = '';
-      echo $session->referrer;
+      session::redirect($session->referrer);
     }
     catch (Exception $e) {
       $_SESSION[last_error] = $e->getMessage();
@@ -103,7 +109,6 @@ class session {
 
 if (!$daemon_mode) {
   $session = unserialize($_SESSION['instance']);
-  if (is_null($session) || is_null($session->user)) session::ensure_logged_in();
 }
 
 ?>
