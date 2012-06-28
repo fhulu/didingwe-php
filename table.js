@@ -304,16 +304,15 @@
       };
 
       var self = this;
-      $.ajax({url: this.options.url, type: this.options.method, data: this.data, success: function(data) {
+      jq_post(this.options.url, this.data, function(data) {
         self.result = $(data);
         self.show_header();
         self.update('tbody');
         self._bind_paging();
         self._bind_titles();
         self._bind_actions();
-        self._adjust_actions_width();
-        
-      }});
+        self._adjust_actions_width();    
+      });
       return this;
     },
     

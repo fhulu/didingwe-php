@@ -105,6 +105,11 @@ function jq_submit(url, params, method, async)
     data: data,
     async: async,
     success: function(data) {
+      var script = data.match(/<script[^>]+>(.+)<\/script>/);
+      if (script != null && script.length > 1) {
+        eval(script[1]);
+        return;
+      }
       result = data;
     }
   });
@@ -202,4 +207,17 @@ $.fn.loadChildren = function(url, data, callback)
     if (callback != undefined) callback(result);
   });
   return this;
+}
+
+function jq_post(url, data, callback)
+{
+  return $.post(url, data, function(result) {
+    var regex = /<script[^>]+>(.+)<\/script>/;
+    var script = regex.exec(result);
+    if (script != null && script.length > 2) {
+      eval(script[1]);
+      return;
+    }
+    callback(result);
+  });
 }
