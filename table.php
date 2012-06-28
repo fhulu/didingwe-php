@@ -117,7 +117,7 @@ class table
   function set_options($request)
   {
     $this->request = $request;
-    if (!is_null($request['_size']) && !is_null($request['_offset']))
+    if ($request['_size'] > 0 && !is_null($request['_offset']))
       $this->set_paging($request['_size'], $request['_offset']);
       
     if (!is_null($request['_sort']) && !is_null($request['_order']))
