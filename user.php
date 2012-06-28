@@ -269,7 +269,7 @@ class user
     global $db, $session;
     $user = $session->user;
     $detail = addslashes($detail);
-    $db->insert("insert into mukonin_audit.trx(user_id, function_code, details)
+    $db->insert("insert into mukonin_audit.trx(user_id, function_code, detail)
       values($user->id, '$function', '$detail')");
   }
   
