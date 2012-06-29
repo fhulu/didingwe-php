@@ -31,7 +31,7 @@
     {
       this.row = null;
       this.row_count = 0;
-      this.data = { _offset: 0 } ;
+      this.data = { _offset: 0, _size: 0 } ;
       this.result = null;
       this.filter = null;
       this.editor = null;
@@ -295,7 +295,7 @@
 
     post: function(url, data, callback)
     { 
-      return $.post(url, data, function(result) {
+      return $.get(url, data, function(result) {
         var regex = /<script[^>]+>(.+)<\/script>/;
         var script = regex.exec(result);
         if (script != null && script.length > 2) {
@@ -308,7 +308,7 @@
     
     refresh: function()
     {
-      if (this.option.pageSize > 0) 
+      if (this.options.pageSize > 0) 
         this.data._size = this.options.pageSize;
   
       if (this.options.sortField != null) {
