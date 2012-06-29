@@ -292,10 +292,23 @@
       if (width > 0)        
         this.element.find(".titles th:last-child").css('width', width);
     },
+
+    post: function(url, data, callback)
+    { 
+      return $.post(url, data, function(result) {
+        var regex = /<script[^>]+>(.+)<\/script>/;
+        var script = regex.exec(result);
+        if (script != null && script.length > 2) {
+          eval(script[1]);
+          return;
+        }
+        callback(result);
+      });
+    },
     
     refresh: function()
     {
-      if (this.option.pageSize > 0)
+      if (this.option.pageSize > 0) 
         this.data._size = this.options.pageSize;
   
       if (this.options.sortField != null) {
@@ -304,14 +317,15 @@
       };
 
       var self = this;
-      jq_post(this.options.url, this.data, function(data) {
+      this.post(this.options.url, this.data, function(data) {
         self.result = $(data);
         self.show_header();
         self.update('tbody');
         self._bind_paging();
         self._bind_titles();
         self._bind_actions();
-        self._adjust_actions_width();    
+        self._adjust_actions_width();   
+        self.options.onRefresh(self.element);
       });
       return this;
     },
