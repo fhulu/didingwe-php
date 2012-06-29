@@ -10,7 +10,8 @@ require_once('user.php');
 class session_exception extends Exception {};
 
 
-class session {
+class session 
+{
   var $schema_prefix;
   var $default_schema;
   var $vars;
@@ -77,7 +78,9 @@ class session {
       global $session;
       if ($session->referrer == '') $session->referrer = '/?c=home';
       $_SESSION[last_error] = '';
-      session::redirect($session->referrer);
+      if ($_REQUEST['a'] == 'session/login' || !isset($_SERVER['HTTP_X_REQUESTED_WITH'])) {
+        session::redirect($session->referrer);
+      }
     }
     catch (Exception $e) {
       $_SESSION[last_error] = $e->getMessage();
