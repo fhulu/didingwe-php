@@ -74,7 +74,6 @@ class session
       if (!$user)
         throw new session_exception("Invalid username/password for ". $_REQUEST[email]);
 
-      session::register($user);
       global $session;
       if ($session->referrer == '') $session->referrer = '/?c=home';
       $_SESSION[last_error] = '';
