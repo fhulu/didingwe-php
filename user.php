@@ -98,7 +98,7 @@ class user
   
   static function check($request)
   {
-    if (!verify_internal($request)) return;
+    if (!user::verify_internal($request)) return;
     $email = $request['email'];
     if (user::exists($email))
       echo "!The email address already exists";
@@ -150,7 +150,7 @@ class user
     $email = $request[email];
     $password = $request[password];
     $cellphone = $request[cellphone];
-    $otp = rand(23671,99999);
+    $otp = rand(13671,99999);
     $program_id = config::$program_id;
     
     // First check if email already exists
