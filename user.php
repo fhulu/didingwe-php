@@ -22,8 +22,7 @@ class user
   function __construct($data)
   {
     list($this->id, $this->partner_id, $this->email, $this->first_name, $this->last_name, $this->cellphone) = $data;
-    $this->load_roles();
-    $this->load_functions();
+    $this->reload();
   }
 
   static function default_functions()
@@ -34,6 +33,12 @@ class user
     where role_code in ('base', 'unreg')");
   }
   
+  function reload()
+  {
+    $this->load_roles();
+    $this->load_functions();
+    session::register($this);
+  }
   function load_roles()
   {
     global $db;
