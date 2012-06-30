@@ -457,4 +457,31 @@ $.fn.hasAttr = function(name)
   return this.attr(name) !== undefined;
 }
 
+$.fn.enableWhen = function(condition)
+{
+  if (condition())
+    this.attr('disabled', 'disabled');
+  else
+    this.removeAttr('disabled');
+}
 
+function isString(o) {
+    return typeof o == "string" || (typeof o == "object" && o.constructor === String);
+}
+
+$.fn.enableOnSet = function(controls)
+{
+  this.attr('disabled','disabled');
+  controls = $(controls).filter(':visible').filter(':not(div,button)');
+  var self = this;
+  controls.bind('keyup input cut paste click change', function() {
+    var set = 0;
+    controls.each(function() {
+      if ($(this).val() != '') ++set;
+    });
+    if (set < controls.length)
+      self.attr('disabled', 'disabled');
+    else
+      self.removeAttr('disabled');
+  });
+}
