@@ -19,11 +19,11 @@
         
         $(this).find("[wizard='next']").click(function() {
           var steps = $(this).attr('steps');
-          self.go_next(steps);
+          self.goNext(steps);
         });
 
         $(this).find("[wizard='back']").click(function() {
-          self.go_back();
+          self.goBack();
         });
         
         $(this).find("[wizard='close']").click(function() {
@@ -34,6 +34,12 @@
         
       });
 
+    },
+    
+    onNext: function(index, callback)
+    {
+      var dialog = this.element.children().eq(index);
+      dialog.find("[wizard='next']").click(callback);
     },
     
     dialog: function(selector) { 
@@ -49,7 +55,7 @@
       return false;
     },
     
-    go_next: function(steps) {
+    goNext: function(steps) {
       steps = steps==undefined? 1: parseInt(steps);
       var cur_idx = 0;
       var self = this;
@@ -76,7 +82,7 @@
       });
     },
     
-    go_back: function() {
+    goBack: function() {
       var cur_idx = 0;
       $.each(this.stack, function(i, v) {
         cur_idx += v;
