@@ -33,7 +33,12 @@ log::init($class, log::DEBUG);
 try {
   call_user_func($function, $_REQUEST);
 }
-catch (Exception $e) {
+catch (user_exception $exception) {
+  session::redirect('/?c=breach');
+}
+catch (Exception $exception)
+{
   log::error("UNCAUGHT EXCEPTION: " . $e->getMessage() );
+  require_once('error.php');
 }
 ?>
