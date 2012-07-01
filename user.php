@@ -139,10 +139,9 @@ class user
     
     global $db;
     $id = $db->insert($sql);
-    if ($id == null) return false;
     $sql = "insert into mukonin_audit.user_role(user_id,role_code)
       values($id,'unreg')";
-	$db->insert($sql);
+    $db->exec($sql);
     return new user(array($id, $partner_id, $email, $first_name, $last_name, $cellphone, $otp, $partner_id));
   }
   
@@ -165,18 +164,15 @@ class user
         otp=$otp, otp_time = now() where email_address='$email' and program_id = $program_id";
       $db->exec($sql);
       $id = $db->read_one_value("select id from mukonin_audit.user where email_address = '$email' and program_id = $program_id");
+      $db->exec("delete from mukonin_audit.user_role where user_id = $id");
+      $db->exec("insert into mukonin_audit.user_role(user_id,role_code) values($id,'unreg')");
       $user = new user(array($id,0, $email, $first_name, $last_name, $cellphone, $otp));
     }
     else {
       $user = user::create($email, $password, $first_name, $last_name, $cellphone, $otp);
     }
 
-    $user->partner_id = $request[partner_id];
-    $db->exec("update mukonin_audit.user set partner_id = $user->partner_id where id = $user->id");
-    session::register($user);
-    
     //todo: send email and/or sms
-
     $message = "Your One Time Password is $otp";
     $subject = "One Time Password";
     $headers = "from: donotreply@gct.fpb.gov.za";
@@ -260,13 +256,21 @@ class user
       user::update_role($request);
   }
 
-  static function verify($function)
+  static function verify($function, $private=true)
   {
-    session::ensure_logged_in();
+    if ($private) session::ensure_logged_in();
     global $session;
     $user = $session->user;
-    if (is_null($session) || is_null($user) || !in_array($function, $user->functions)) 
-      throw new user_exception("Unauthorised access to function $function from $user->email");
+    if (is_null($session) || is_null($user) || $user->partner_id == 0) {
+      $email = 'public';
+      $functions = user::default_functions();
+    } 
+    else {
+      $email = $user->email; 
+      $functions = &$user->functions;
+    }
+    if (!in_array($function, $functions)) 
+      throw new user_exception("Unauthorised access to function $function from $email");
   }
   
   static function audit($function, $object='', $detail='')
