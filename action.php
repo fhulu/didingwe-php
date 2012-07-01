@@ -34,11 +34,12 @@ try {
   call_user_func($function, $_REQUEST);
 }
 catch (user_exception $exception) {
+  log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
   session::redirect('/?c=breach');
 }
 catch (Exception $exception)
 {
-  log::error("UNCAUGHT EXCEPTION: " . $e->getMessage() );
+  log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
   require_once('error.php');
 }
 ?>
