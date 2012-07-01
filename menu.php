@@ -29,7 +29,7 @@ class menu
       global $session;
       require_once("user.php");
       $user = $session->user;
-      $functions = $session->user->functions;
+      $functions = $user->partner_id? $user->functions: user::default_functions();
     }
     log::debug("functions are ". implode(',', $functions));
     
