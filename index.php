@@ -53,12 +53,14 @@ function load_div($div)
       require_once($page);
     }
     catch (user_exception $exception) {
+      log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
       require_once('breach.php');
-    }/*
+    }
     catch (Exception $exception)
     {
+      log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
       require_once('error.php');
-    }*/
+    }
   }
   echo "</div>\n";
 }
