@@ -103,10 +103,13 @@ class user
   
   static function check($request)
   {
-    if (!user::verify_internal($request)) return;
+    if (!user::verify_internal($request)) return false;
     $email = $request['email'];
-    if (user::exists($email))
+    if (user::exists($email)) {
       echo "!The email address already exists";
+      return false;
+    }
+    return true;
   }
 
   static function authenticate($email, $passwd)
@@ -125,22 +128,16 @@ class user
     return false;
   }
   
-  static function create($email, $password, $first_name, $last_name, $cellphone, $otp)
+  static function create($partner_id, $email, $password, $first_name, $last_name, $cellphone, $otp)
   {
-    $program_id = config::$program_id;
-    global $session;
-    if (is_null($session->user->partner_id)) 
-      $partner_id = 0;
-    else 
-      $partner_id = $session->user->partner_id;
-   
+    $program_id = config::$program_id;   
     $sql = "insert into mukonin_audit.user(program_id, partner_id, email_address, password, first_name,last_name, cellphone, otp, otp_time)
       values($program_id,$partner_id, '$email',password('$password'), '$first_name','$last_name','$cellphone', '$otp', now())";
     
     global $db;
     $id = $db->insert($sql);
     $sql = "insert into mukonin_audit.user_role(user_id,role_code)
-      values($id,'unreg')";
+      values($id,'reg')";
     $db->exec($sql);
     return new user(array($id, $partner_id, $email, $first_name, $last_name, $cellphone, $otp, $partner_id));
   }
@@ -149,6 +146,8 @@ class user
   {    
     if (!user::verify_internal($request)) return;
 
+    if (!user::check($request)) return;
+    
     $first_name = $request[first_name];
     $last_name = $request[last_name];
     $email = $request[email];
@@ -156,20 +155,21 @@ class user
     $cellphone = $request[cellphone];
     $otp = rand(13671,99999);
     $program_id = config::$program_id;
+    $partner_id = (int)$request['partner_id'];
     
     // First check if email already exists
     global $db;
     if (user::exists($email, 0)) {
       $sql = "update mukonin_audit.user set password=password('$password'), first_name = '$first_name',last_name= '$last_name', cellphone='$cellphone',
-        otp=$otp, otp_time = now() where email_address='$email' and program_id = $program_id";
+        otp=$otp, otp_time = now(), partner_id = $partner_id where email_address='$email' and program_id = $program_id";
       $db->exec($sql);
       $id = $db->read_one_value("select id from mukonin_audit.user where email_address = '$email' and program_id = $program_id");
       $db->exec("delete from mukonin_audit.user_role where user_id = $id");
-      $db->exec("insert into mukonin_audit.user_role(user_id,role_code) values($id,'unreg')");
-      $user = new user(array($id,0, $email, $first_name, $last_name, $cellphone, $otp));
+      $db->exec("insert into mukonin_audit.user_role(user_id,role_code) values($id,'reg')");
+      $user = new user(array($id, $partner_id, $email, $first_name, $last_name, $cellphone, $otp));
     }
     else {
-      $user = user::create($email, $password, $first_name, $last_name, $cellphone, $otp);
+      $user = user::create($partner_id, $email, $password, $first_name, $last_name, $cellphone, $otp);
     }
 
     //todo: send email and/or sms
@@ -177,10 +177,6 @@ class user
     $subject = "One Time Password";
     $headers = "from: donotreply@gct.fpb.gov.za";
     $mail_sent = mail($email, $subject, $message, $headers);
-    
-    global $session;
-    $user_id = $session->user->id;
-    log::debug("logged in user session id is $user_id");
       
   }
     
@@ -248,7 +244,11 @@ class user
     }
     global $db, $session;
     $id = $request['id'];
-    user::audit("manage_users", $id, 'update', $values);
+    if ($id == $user_id)
+      $function = 'update_own_details';
+    else
+      $function = 'update_details';
+    user::audit($function, $id, $values);
     
     $sql = "update mukonin_audit.user set ". substr($values,1). " where id = $id";
     $db->exec($sql);
@@ -406,10 +406,10 @@ class user
     
     global $session;
     $partner_id = $session->user->partner_id;
-    $sql = "select id, u.create_time, email_address, first_name, last_name, '' role#, group_concat(r.name) role  
+    $sql = "select id, u.create_time, email_address, first_name, last_name, r.name role  
       from mukonin_audit.user u, mukonin_audit.user_role ur, mukonin_audit.role r
       where u.id=ur.user_id and r.code = ur.role_code 
-      and partner_id = $partner_id and program_id = ". config::$program_id;    
+      and partner_id = $partner_id and r.program_id = ". config::$program_id;    
             
     $titles = array('#id','~Time', '~Email Address|edit','~First Name|edit','~Last Name|edit','Role|edit=list:user/roles');
     $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE);
