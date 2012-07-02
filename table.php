@@ -182,9 +182,9 @@ class table
     echo <<< HEREDOC
       <div class=paging rows=$this->row_count>
         Showing from <b>$offset</b> to <b>$last_offset</b> of <b>$this->row_count</b>&nbsp;&nbsp;
-        <button nav=prev></button>
+        <button nav=prev><</button>
         <input type=text value='$this->page_size'/>
-        <button nav=next></button>
+        <button nav=next>></button>
       </div>
 HEREDOC;
   }
@@ -413,6 +413,10 @@ HEREDOC;
     if ($this->flags & self::TOTALS) $this->show_totals();
     if ($this->flags & (self::PAGEABLE | self::ADDABLE)) $this->show_headerfooter("footer");
     echo "</tbody>\n</table>\n";
+  }
+  
+  function load($sql)
+  {
   }
 }
 ?>
