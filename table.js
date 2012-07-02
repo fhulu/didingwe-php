@@ -411,17 +411,27 @@
     
     expand: function(button)
     {
-      if (!this.options.onExpand($(button).parent().parent())=== false) return this;
-      var self = this;
-      $(button).attr("expand","expanded").click(function() { self.collapse(button); });
+      var row = $(button).parent().parent();
+      $(button).unbind('click').attr("expand","expanded");
+      var self = this; 
+      if (this.options.onExpand(row)=== false) {
+        $(button).attr("expand","collapsed").click(function() { self.expand(button); });
+        return this;
+      }
+      $(button).click( function() { self.collapse(button); });
       return this;
     },
     
     collapse: function(button)
     {
-      if (!this.options.onCollapse($(button).parent().parent()) === false) return this;
-      var self = this;
-      $(button).attr("expand","collapsed").click(function() { self.expand(button); });
+      var row = $(button).parent().parent();
+      $(button).unbind('click').attr("expand","collapsed");
+      var self = this; 
+      if (this.options.onCollapse(row) === false) {
+        $(button).attr("expand","expanded").click(function() { self.collapse(button); });
+        return this;
+      }
+      $(button).click(function() { self.expand(button); });
       return this;
     }
   });
