@@ -164,6 +164,9 @@
         td.replaceWith($(this).clone());
         td = row.children().eq(i);
         td.children().val(val);
+        td.find("select option").each(function() {
+          if ($(this).text() == val) $(this).attr("selected","selected");
+        });
       });
     },
     

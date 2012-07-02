@@ -54,11 +54,11 @@ function load_div($div)
     }
     catch (user_exception $exception) {
       require_once('breach.php');
-    }
+    }/*
     catch (Exception $exception)
     {
       require_once('error.php');
-    }
+    }*/
   }
   echo "</div>\n";
 }
