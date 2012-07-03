@@ -95,8 +95,10 @@ init_div('footer');
 
     <script type='text/javascript' src='jquery/min.js'></script>
     <script type='text/javascript' src='jquery/ui-min.js'></script>
-    <script type='text/javascript' src='../common/dom.js'></script>
-    <script type="text/javascript" src="../common/ajax.js"></script> 
+    <script type="text/javascript" src='common/mukoni.jquery.js'></script> 
+    <script type="text/javascript" src='common/mukoni.jquery-ui.js'></script> 
+    <script type='text/javascript' src='common/dom.js'></script>
+    <script type="text/javascript" src="common/ajax.js"></script> 
  </head>
   
   <body>
