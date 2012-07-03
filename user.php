@@ -344,12 +344,14 @@ class user
   
   static function start_approval($request)
   {     
-    if (!verify_hacker($request)) return;
+    if (!user::check_otp($request)) return;
     
     global $db, $session;
     $user = &$session->user;
    
     $partner_id = $user->partner_id;
+    if ($partner_id == 0) throw user_exception("Trying to approve a user without a partner id");
+    
     $requestor = "$user->first_name $user->last_name <$user->email>";
 
 
