@@ -469,12 +469,12 @@ function isString(o) {
     return typeof o == "string" || (typeof o == "object" && o.constructor === String);
 }
 
-$.fn.enableOnSet = function(controls)
+$.fn.enableOnSet = function(controls, events)
 {
   this.attr('disabled','disabled');
-  controls = $(controls).filter(':visible').filter(':not(div,button)');
+  controls = $(controls).filter(':visible').filter('input,select,textarea');
   var self = this;
-  controls.bind('keyup input cut paste click change', function() {
+  controls.bind('keyup input cut paste click change onClose', function() {
     var set = 0;
     controls.each(function() {
       if ($(this).val() != '') ++set;
