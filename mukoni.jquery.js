@@ -30,7 +30,7 @@ $.fn.enableOnSet = function(controls, events)
 $.fn.values = function()
 {
   var data = {};
-  $(this).filter('input,textarea,select').each(function() {
+  this.filter('input,textarea,select').each(function() {
     var ctrl = $(this);
     var name = ctrl.hasAttr('id')? ctrl.attr('id'): ctrl.attr('name');
     if (name === undefined) return true;
@@ -43,15 +43,18 @@ $.fn.values = function()
 
 $.fn.submit = function(url, options, callback)
 {
-  var data = $(this).values();
-  var method = options.method === undefined? 'post': method;
-  var async = options.async === undefined? true: false;
+  var data = this.values();
+  options = $.extend({
+    method: 'post',
+    async: true,
+    error: function() {}
+  }, options);
   var result;
   $.ajax({
-    type: method,
+    type: options.method,
     url: url,
     data: data,
-    async: async,
+    async: options.async,
     success: function(data) {
       var script = data.match(/<script[^>]+>(.+)<\/script>/);
       if (script != null && script.length > 1) {
@@ -68,9 +71,9 @@ $.fn.submit = function(url, options, callback)
 
 $.fn.confirm = function(url, options, callback)
 {
-  var event = options.event;
   options.async = false;
-  $(this).submit(url, options, function(result) {
+  this.submit(url, options, function(result) {
+    var event = options.event;
     if (result !== undefined && result.charAt(0) == '!') {
       alert(result.substr(1));
       if (event !== undefined) event.stopImmediatePropagation();
@@ -86,9 +89,3 @@ $.fn.confirm = function(url, options, callback)
     }  
   });
 }
-
-(function($){
-	$.extend($.ui.datePicker.prototype, {
-		//Custom Dialog Functions go in here
-	});
-})(jQuery);
