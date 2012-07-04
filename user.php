@@ -93,23 +93,27 @@ class user
       echo "!We do not have a user with email address '$email' on our system";
   }
   
-  static function exists($email, $active = 1)
+  static function exists($email, $active = 1, $echo=true)
   {
     $program_id = config::$program_id;
     global $db;
-    return $db->exists("select id from mukonin_audit.user where email_address = '$email' 
-      and program_id = $program_id and active = $active");
+    if (!$db->exists("select id from mukonin_audit.user where email_address = '$email' 
+        and program_id = $program_id and active = $active")) return false;
+    if ($echo) echo "!The email address already exists"; 
+    return true;
   }
   
-  static function check($request)
+  static function check($request, $check_email=true)
   {
     if (!user::verify_internal($request)) return false;
-    $email = $request['email'];
-    if (user::exists($email)) {
-      echo "!The email address already exists";
-      return false;
-    }
-    return true;
+    $check = new validator($request); 
+    return $check->is('first_name', 'First Name', 'name')
+      && $check->is('last_name', 'Last Name', 'name')
+      && $check->is('email', 'Email', 'email')
+      && $check->match('password', 'password2','Passwords')
+      && $check->is('password', '', 'password', 6)
+      && (!$check_email || !user::exists($request['email'], 1))
+      && $check->is('cellphone', 'Cellphone', 'int_tel');
   }
 
   static function authenticate($email, $passwd)
@@ -153,13 +157,13 @@ class user
     $email = $request[email];
     $password = $request[password];
     $cellphone = $request[cellphone];
-    $otp = rand(13671,99999);
+    $otp = rand(10042,99999);
     $program_id = config::$program_id;
     $partner_id = (int)$request['partner_id'];
     
     // First check if email already exists
     global $db;
-    if (user::exists($email, 0)) {
+    if (user::exists($email, 0, false)) {
       $sql = "update mukonin_audit.user set password=password('$password'), first_name = '$first_name',last_name= '$last_name', cellphone='$cellphone',
         otp=$otp, otp_time = now(), partner_id = $partner_id where email_address='$email' and program_id = $program_id";
       $db->exec($sql);
@@ -341,7 +345,7 @@ class user
   {
     return user::verify_internal($request) && user::check_otp($request); 
   }
-  
+
   static function start_approval($request)
   {     
     if (!user::check_otp($request)) return;
@@ -360,7 +364,7 @@ class user
             where u.id = ur.user_id and partner_id = $partner_id and role_code = 'admin' ");
     
     foreach($emails as $email) {
-      $link = "http://". $_SERVER['SERVER_NAME'] ."/?c=user_view"; //todo: get right http address for production
+      $link = "http://". $_SERVER['SERVER_NAME'] ."/?c=manage_users"; //todo: get right http address for production
       $message = "$requestor would like to register as the user. Please click <a href=\"$link\">here</a> to give access to user.";
       $subject = "Approve Registration";
       $headers  = "MIME-Version: 1.0\r\n";
