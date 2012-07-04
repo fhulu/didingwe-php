@@ -40,6 +40,6 @@ catch (user_exception $exception) {
 catch (Exception $exception)
 {
   log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
-  require_once('error.php');
+  session::redirect('/?c=error');
 }
 ?>
