@@ -350,7 +350,7 @@ class user
     $user = &$session->user;
    
     $partner_id = $user->partner_id;
-    if ($partner_id == 0) throw user_exception("Trying to approve a user without a partner id");
+    if ($partner_id == 0) throw new user_exception("Trying to approve a user without a partner id");
     
     $requestor = "$user->first_name $user->last_name <$user->email>";
 
