@@ -48,7 +48,7 @@ $.fn.values = function()
   return data;
 }
 
-$.submit = function(url, options, callback)
+$.send = function(url, options, callback)
 {
   options = $.extend({
     progress: 'Processing...',
@@ -69,7 +69,7 @@ $.submit = function(url, options, callback)
     setTimeout(function() {
       if (!done)
         progress_box.html('<p>'+options.progress+'</p').show();
-    }, 1000);
+    }, 500);
     if (options.error ===undefined) {
       options.error = function(jqHXR, status, text) 
       {
@@ -100,8 +100,8 @@ $.submit = function(url, options, callback)
             p.html(data);
           progress_box.html('')
             .append(p)
-            .show(3000)
-            .delay(3000)
+            .show()
+            .delay(4000)
             .fadeOut(2000);
         }
         else if (options.progress !== false)
@@ -115,32 +115,34 @@ $.submit = function(url, options, callback)
 }
 
 
-$.fn.submit = function(url, options, callback)
+$.fn.send = function(url, options, callback)
 {
-  options.data = $.extend($(this).values(), options.data);
-  return $.submit(url, options, callback);  
+  if (options !== undefined)
+    options.data = $.extend($(this).values(), options.data);
+  return $.send(url, options, callback);  
 }
 
-$.fn.submitOnSet = function(controls, url, options, callback)
+$.fn.sendOnSet = function(controls, url, options, callback)
 {
   var self = this;
   this.enableOnSet(controls);
   this.click(function() {
-    $(controls).submit(url, $.extend({invoker: self}, options), callback);
+    $(controls).send(url, $.extend({invoker: self}, options), callback);
   });
 }
 
 $.fn.confirm = function(url, options, callback)
 {
   options.async = false;
-  this.submit(url, options, function(result) {
+  this.send(url, options, function(result) {
+    if (result === undefined) return true;
     var event = options.event;
-    if (result !== undefined && result.charAt(0) == '!') {
+    if (result[0] == '!') {
       if (event !== undefined) event.stopImmediatePropagation();
       return false;
     }
     result = $.trim(result);
-    if (result !== undefined && result != '') {
+    if (result[0] == '?') {
       if (!confirm(result)) {
         if (event !== undefined) event.stopImmediatePropagation();
         return false;
