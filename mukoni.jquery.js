@@ -42,14 +42,13 @@ $.fn.values = function()
     var ctrl = $(this);
     var name = ctrl.hasAttr('id')? ctrl.attr('id'): ctrl.attr('name');
     if (name === undefined) return true;
-    var type = ctrl.attr('type');
-    if (type=='radio') ctrl = ctrl.filter(':checked');
+    if (ctrl.attr('type') == 'radio' && !ctrl.is(':checked')) return true;
     data[name] = ctrl.val();
   });
   return data;
 }
 
-$.fn.submit = function(url, options, callback)
+$.submit = function(url, options, callback)
 {
   options = $.extend({
     progress: 'Processing...',
@@ -61,9 +60,7 @@ $.fn.submit = function(url, options, callback)
     data: {},
     error: function() {}
   }, options);
-  
-  var data = $.extend(this.values(), options.data);
-  
+   
   if (options.invoker !== undefined) 
     options.invoker.prop('disabled', true);
   var progress_box = $('.ajax_result');
@@ -73,7 +70,7 @@ $.fn.submit = function(url, options, callback)
   $.ajax({
     type: options.method,
     url: url,
-    data: data,
+    data: options.data,
     async: options.async,
     success: function(data) {
       var script = data.match(/<script[^>]+>(.+)<\/script>/);
@@ -105,6 +102,21 @@ $.fn.submit = function(url, options, callback)
   return this;
 }
 
+
+$.fn.submit = function(url, options, callback)
+{
+  options.data = $.extend(this.values(), options.data);
+  console.log(options.data);
+  return $.submit(url, options, callback);  
+}
+
+$.fn.submitOnSet = function(controls, url, options, callback)
+{
+  this.enableOnSet(controls);
+  this.click(function() {
+    $(controls).submit(url, options, callback);
+  });
+}
 $.fn.confirm = function(url, options, callback)
 {
   options.async = false;
