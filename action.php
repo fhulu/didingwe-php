@@ -30,6 +30,7 @@ $function = $class. '::' . $function;
 $_SESSION['function'] = $function;
 
 log::init($class, log::DEBUG);
+log::debug("FUNCTION: $function");
 try {
   call_user_func($function, $_REQUEST);
 }
