@@ -58,21 +58,33 @@ $.submit = function(url, options, callback)
     invoker: undefined,
     eval: true,
     data: {},
-    error: function() {}
+    error: undefined,
   }, options);
    
   if (options.invoker !== undefined) 
     options.invoker.prop('disabled', true);
   var progress_box = $('.ajax_result');
-  if (options.progress !== false)
-    progress_box.html('<p>'+options.progress+'</p').show();
-   
+  var done = false;
+  if (options.progress !== false) {
+    setTimeout(function() {
+      if (!done)
+        progress_box.html('<p>'+options.progress+'</p').show();
+    }, 1000);
+    if (options.error ===undefined) {
+      options.error = function(jqHXR, status, text) 
+      {
+        progress_box.html('<p class=error>'+text+'</p').show();        
+      };
+    }
+  }
   $.ajax({
     type: options.method,
     url: url,
     data: options.data,
     async: options.async,
+    error: options.error,
     success: function(data) {
+      done = true;
       var script = data.match(/<script[^>]+>(.+)<\/script>/);
       if (options.eval && script != null && script.length > 1) {
         eval(script[1]);
@@ -82,7 +94,7 @@ $.submit = function(url, options, callback)
           var p = $('<p></p>');
           if(data[0] == '!') {
              p.html(data.substr(1));
-             p.css('border','1px solid red');
+             p.addClass('error');
           }
           else 
             p.html(data);
@@ -117,13 +129,13 @@ $.fn.submitOnSet = function(controls, url, options, callback)
     $(controls).submit(url, $.extend({invoker: self}, options), callback);
   });
 }
+
 $.fn.confirm = function(url, options, callback)
 {
   options.async = false;
   this.submit(url, options, function(result) {
     var event = options.event;
     if (result !== undefined && result.charAt(0) == '!') {
-      alert(result.substr(1));
       if (event !== undefined) event.stopImmediatePropagation();
       return false;
     }
@@ -138,3 +150,12 @@ $.fn.confirm = function(url, options, callback)
   });
 }
 
+$.fn.confirmOnSet = function(controls,url, options, callback)
+{
+  var self = this;
+  this.enableOnSet(controls);
+  this.click(function(event) {
+    var params = $.extend({invoker: self, event: event}, options);
+    $(controls).confirm(url, params, callback);
+  });
+}
