@@ -19,11 +19,9 @@ $.fn.enableOnSet = function(controls, events)
     controls.each(function() {
       if ($(this).val() != '') ++set;
     });
-    if (set < controls.length)
-      self.attr('disabled', 'disabled');
-    else
-      self.removeAttr('disabled');
+    self.prop('disabled', set < controls.length);
   });
+  return this;
 }
 
 
@@ -45,11 +43,21 @@ $.fn.submit = function(url, options, callback)
 {
   var data = this.values();
   options = $.extend({
+    progress: 'Processing...',
     method: 'post',
     async: true,
+    showResult: false,
+    invoker: undefined,
+    eval: true,
     error: function() {}
   }, options);
-  var result;
+  
+  if (options.invoker !== undefined) 
+    options.invoker.prop('disabled', true);
+  var progress_box = $('.ajax_result');
+  if (options.progress !== false)
+    progress_box.html('<p>'+options.progress+'</p').show();
+   
   $.ajax({
     type: options.method,
     url: url,
@@ -57,16 +65,30 @@ $.fn.submit = function(url, options, callback)
     async: options.async,
     success: function(data) {
       var script = data.match(/<script[^>]+>(.+)<\/script>/);
-      if (script != null && script.length > 1) {
+      if (options.eval && script != null && script.length > 1) {
         eval(script[1]);
-        return;
       }
-      result = data;
+      else if (options.showResult === true && data != '') {
+        console.log(data);
+        var p = $('<p></p>');
+        if(data[0] == '!') {
+           p.html(data.substr(1));
+           p.css('border','1px solid red');
+        }
+        else p.html(data);
+        progress_box.html('')
+          .append(p)
+          .show()
+          .delay(3000)
+          .fadeOut(2000);
+      }  
       if (callback !== undefined)
-        callback(result);
+        callback(data);
+      if (options.invoker !== undefined) 
+        options.invoker.prop('disabled', false);
     }
   });
-  return result;
+  return this;
 }
 
 $.fn.confirm = function(url, options, callback)
@@ -89,3 +111,4 @@ $.fn.confirm = function(url, options, callback)
     }  
   });
 }
+
