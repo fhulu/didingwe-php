@@ -118,7 +118,7 @@ class validator
   function password()
   {
     if ($this->title=='') {
-      $$this->title = "!Passwords must contain at least:
+      $this->title = "!Passwords must contain at least:
         <li>one upper case letter
         <li>one lower case letter
         <li>one number or special character
@@ -133,16 +133,16 @@ class validator
       throw new validator_exception('checking for existance with no db table supplied');
    
     $db = $this->db;
-    if ($db->exists("select * from $this->table where $name = '$val'")) return true;
+    if ($db->exists("select * from $this->table where $this->name = '$this->value'")) return true;
     if (!$report) return false;
-    echo $this->title[0] == '!'? $this->title:"!No such $title found.";
+    echo $this->title[0] == '!'? $this->title:"!No such $this->title found.";
     return false;
   }
 
   function unique()
   {
-    if (!exist(false)) return true;
-    echo $title[0] == '!'? $title: "!$title already exist.";
+    if (!$this->exist(false)) return true;
+    echo $this->title[0] == '!'? $this->title: "!$this->title already exist.";
     return false;
   }
   
@@ -156,6 +156,7 @@ class validator
     if ($this->value == '') {
       if (in_array('optional', $funcs)) return true;
       echo $title[0] == '!'? $title: "!$title must be provided.";
+      return false;
     }
     foreach($funcs as $func) {
       if ($func == 'optional') continue;
@@ -166,7 +167,9 @@ class validator
       else if (method_exists($this, $func)) {
         if (!$this->{$func}()) return false;
       }
-      else 
+      else if ($func[0] = '/') {
+        if (!$this->regex($func)) return false;
+      } else 
         throw new validator_exception('validator method $func does not exists!');
     }
     return true;
