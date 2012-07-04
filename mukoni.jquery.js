@@ -11,15 +11,25 @@ $.fn.hasAttr = function(name)
 $.fn.enableOnSet = function(controls, events)
 {
   this.attr('disabled','disabled');
-  controls = $(controls).filter(':visible').filter('input,select,textarea');
+  controls = $(controls)
+    .filter(':visible')
+    .filter('input,select,textarea')
   if (events === undefined) events = '';
   var self = this;
   controls.bind('keyup input cut paste click change '+events, function() {
     var set = 0;
+    var total = controls.length;
     controls.each(function() {
-      if ($(this).val() != '') ++set;
+      if ($(this).attr('type') == 'radio') {
+        if ($(this).is(':checked')) {
+          var name = $(this).attr('name');
+          total -= controls.filter('[name='+name+']').length - 1;
+          ++set;
+        }
+      }
+      else if ($(this).val() != '') ++set;
     });
-    self.prop('disabled', set < controls.length);
+    self.prop('disabled', set < total);
   });
   return this;
 }
@@ -41,7 +51,6 @@ $.fn.values = function()
 
 $.fn.submit = function(url, options, callback)
 {
-  var data = this.values();
   options = $.extend({
     progress: 'Processing...',
     method: 'post',
@@ -49,8 +58,11 @@ $.fn.submit = function(url, options, callback)
     showResult: false,
     invoker: undefined,
     eval: true,
+    data: {},
     error: function() {}
   }, options);
+  
+  var data = $.extend(this.values(), options.data);
   
   if (options.invoker !== undefined) 
     options.invoker.prop('disabled', true);
@@ -68,24 +80,26 @@ $.fn.submit = function(url, options, callback)
       if (options.eval && script != null && script.length > 1) {
         eval(script[1]);
       }
-      else if (options.showResult === true && data != '') {
-        console.log(data);
-        var p = $('<p></p>');
-        if(data[0] == '!') {
-           p.html(data.substr(1));
-           p.css('border','1px solid red');
+      else {
+        if (options.showResult === true && data != '') {
+          var p = $('<p></p>');
+          if(data[0] == '!') {
+             p.html(data.substr(1));
+             p.css('border','1px solid red');
+          }
+          else 
+            p.html(data);
+          progress_box.html('')
+            .append(p)
+            .show(3000)
+            .delay(3000)
+            .fadeOut(2000);
         }
-        else p.html(data);
-        progress_box.html('')
-          .append(p)
-          .show()
-          .delay(3000)
-          .fadeOut(2000);
-      }  
-      if (callback !== undefined)
-        callback(data);
-      if (options.invoker !== undefined) 
-        options.invoker.prop('disabled', false);
+        else if (options.progress !== false)
+          progress_box.hide();
+      }
+      if (callback !== undefined) callback(data);
+      if (options.invoker !== undefined) options.invoker.prop('disabled', false);
     }
   });
   return this;
