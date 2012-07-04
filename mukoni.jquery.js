@@ -78,7 +78,7 @@ $.submit = function(url, options, callback)
         eval(script[1]);
       }
       else {
-        if (options.showResult === true && data != '') {
+        if (options.showResult === true && data != '' || data[0] == '!') {
           var p = $('<p></p>');
           if(data[0] == '!') {
              p.html(data.substr(1));
@@ -105,16 +105,16 @@ $.submit = function(url, options, callback)
 
 $.fn.submit = function(url, options, callback)
 {
-  options.data = $.extend(this.values(), options.data);
-  console.log(options.data);
+  options.data = $.extend($(this).values(), options.data);
   return $.submit(url, options, callback);  
 }
 
 $.fn.submitOnSet = function(controls, url, options, callback)
 {
+  var self = this;
   this.enableOnSet(controls);
   this.click(function() {
-    $(controls).submit(url, options, callback);
+    $(controls).submit(url, $.extend({invoker: self}, options), callback);
   });
 }
 $.fn.confirm = function(url, options, callback)
