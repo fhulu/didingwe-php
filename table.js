@@ -320,7 +320,7 @@
       };
 
       var self = this;
-      $.submit(this.options.url, {data: this.data}, function(data) {
+      $.send(this.options.url, {data: this.data}, function(data) {
         self.result = $(data);
         self.show_header();
         self.update('tbody');
