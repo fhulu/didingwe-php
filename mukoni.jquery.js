@@ -59,8 +59,11 @@ $.send = function(url, options, callback)
     eval: true,
     data: {},
     error: undefined,
+    event: undefined
   }, options);
    
+  if (options.event !== undefined) options.async = false;
+  var ret = this;
   if (options.invoker !== undefined) 
     options.invoker.prop('disabled', true);
   var progress_box = $('.ajax_result');
@@ -69,11 +72,15 @@ $.send = function(url, options, callback)
     setTimeout(function() {
       if (!done)
         progress_box.html('<p>'+options.progress+'</p').show();
-    }, 500);
+    }, 400);
     if (options.error ===undefined) {
       options.error = function(jqHXR, status, text) 
       {
-        progress_box.html('<p class=error>'+text+'</p').show();        
+        progress_box.html('<p class=error>Status:'+status+'<br>Text:'+text+'</p').show();        
+        if (options.event !== undefined) {
+          options.event.stopImmediatePropagation();
+          ret = false;
+        }
       };
     }
   }
@@ -90,18 +97,22 @@ $.send = function(url, options, callback)
         eval(script[1]);
       }
       else {
-        if (options.showResult === true && data != '' || data[0] == '!') {
+        if ((options.showResult === true && data != '') || data[0] == '!') {
           var p = $('<p></p>');
           if(data[0] == '!') {
-             p.html(data.substr(1));
-             p.addClass('error');
+            p.html(data.substr(1));
+            p.addClass('error');
+            if (options.event !== undefined) {
+              options.event.stopImmediatePropagation();
+              ret = false;
+            }
           }
           else 
             p.html(data);
           progress_box.html('')
             .append(p)
             .show()
-            .delay(4000)
+            .delay(Math.min(8000,Math.max(4000,p.text().length*50)))
             .fadeOut(2000);
         }
         else if (options.progress !== false)
@@ -111,7 +122,7 @@ $.send = function(url, options, callback)
       if (options.invoker !== undefined) options.invoker.prop('disabled', false);
     }
   });
-  return this;
+  return ret;
 }
 
 
@@ -125,39 +136,51 @@ $.fn.send = function(url, options, callback)
 $.fn.sendOnSet = function(controls, url, options, callback)
 {
   var self = this;
-  this.enableOnSet(controls);
-  this.click(function() {
-    $(controls).send(url, $.extend({invoker: self}, options), callback);
+  if (options !== undefined && options.optional !== undefined)
+    this.enableOnSet($(controls).filter(':not('+options.optional+')'));
+  else this.enableOnSet(controls);
+  
+  this.click(function(e) {
+    return $(controls).send(url, $.extend({invoker: self, event: e}, options), callback);
   });
+  return this;
 }
 
 $.fn.confirm = function(url, options, callback)
 {
   options.async = false;
-  this.send(url, options, function(result) {
-    if (result === undefined) return true;
-    var event = options.event;
-    if (result[0] == '!') {
-      if (event !== undefined) event.stopImmediatePropagation();
+  var result;
+  this.send(url, options, function(data) { result = data; });
+  if (callback != undefined)
+    callback(result);
+  if (result === false) return false;
+  if (result === undefined) return this;
+  result = $.trim(result);
+  if (result[0] == '?') {
+    if (!confirm(result)) {
+      if (options.event !== undefined) options.event.stopImmediatePropagation();
       return false;
     }
-    result = $.trim(result);
-    if (result[0] == '?') {
-      if (!confirm(result)) {
-        if (event !== undefined) event.stopImmediatePropagation();
-        return false;
-      }
-      return true;
-    }  
-  });
+  }
+  return this;
 }
 
 $.fn.confirmOnSet = function(controls,url, options, callback)
 {
   var self = this;
   this.enableOnSet(controls);
-  this.click(function(event) {
+  return this.click(function(event) {
     var params = $.extend({invoker: self, event: event}, options);
     $(controls).confirm(url, params, callback);
   });
+}
+
+$.fn.loadHtml = function(url, options, callback)
+{
+  var self = this;
+  $.send(url, options, function(result) {
+    self.html(result);
+    if (callback) callback(result);
+  });
+  return this;
 }
