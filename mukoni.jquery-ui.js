@@ -1,5 +1,6 @@
-(function($){
+$(function(){
 
+  // date picker extensions
 	var old = $.fn.datepicker;
   $.fn.datepicker = function(options) 
   {
@@ -21,5 +22,4 @@
     }
     old.apply(this, [options]);
   }
-
-})(jQuery);
+});
