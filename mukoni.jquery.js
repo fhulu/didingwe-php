@@ -61,22 +61,22 @@ $.send = function(url, options, callback)
     error: undefined,
     event: undefined
   }, options);
-   
   if (options.event !== undefined) options.async = false;
   var ret = this;
   if (options.invoker !== undefined) 
     options.invoker.prop('disabled', true);
-  var progress_box = $('.ajax_result');
-  var done = false;
+  var progress =  {};
   if (options.progress !== false) {
-    setTimeout(function() {
-      if (!done)
-        progress_box.html('<p>'+options.progress+'</p').show();
-    }, 1000);
+    progress.box = $('.ajax_result');
+    
+    progress.timeout = setTimeout(function() {
+      progress.box.html('<p>'+options.progress+'</p').show();
+    }, 500);
+    
     if (options.error ===undefined) {
       options.error = function(jqHXR, status, text) 
       {
-        progress_box.html('<p class=error>Status:'+status+'<br>Text:'+text+'</p').show();        
+        progress.box.html('<p class=error>Status:'+status+'<br>Text:'+text+'</p').show();        
         if (options.event !== undefined) {
           options.event.stopImmediatePropagation();
           ret = false;
@@ -91,13 +91,14 @@ $.send = function(url, options, callback)
     async: options.async,
     error: options.error,
     success: function(data) {
-      done = true;
       var script = data.match(/<script[^>]+>(.+)<\/script>/);
       if (options.eval && script != null && script.length > 1) {
         eval(script[1]);
       }
       else {
         if ((options.showResult === true && data != '') || data[0] == '!') {
+          if (progress.timeout !== undefined) clearTimeout(progress.timeout);
+          
           var p = $('<p></p>');
           if(data[0] == '!') {
             p.html(data.substr(1));
@@ -109,17 +110,19 @@ $.send = function(url, options, callback)
           }
           else 
             p.html(data);
-          progress_box.html('')
+          progress.box.html('')
             .append(p)
             .show()
             .delay(Math.min(8000,Math.max(4000,p.text().length*50)))
             .fadeOut(2000);
         }
-        else if (options.progress !== false)
-          progress_box.hide();
+        else if (progress.box !== undefined) 
+          progress.box.hide();
+
       }
       if (callback !== undefined) callback(data);
       if (options.invoker !== undefined) options.invoker.prop('disabled', false);
+      if (progress.timeout !== undefined) clearTimeout(progress.timeout);
     }
   });
   return ret;
@@ -140,6 +143,15 @@ $.fn.sendOnSet = function(controls, url, options, callback)
     this.enableOnSet($(controls).filter(':not('+options.optional+')'));
   else this.enableOnSet(controls);
   
+  this.click(function(e) {
+    return $(controls).send(url, $.extend({invoker: self, event: e}, options), callback);
+  });
+  return this;
+}
+
+$.fn.sendOnClick = function(controls, url, options, callback)
+{
+  var self = this;
   this.click(function(e) {
     return $(controls).send(url, $.extend({invoker: self, event: e}, options), callback);
   });
