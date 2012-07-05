@@ -119,7 +119,7 @@ class user
   static function authenticate($email, $passwd)
   {
     $sql = "select id, partner_id, email_address, first_name, last_name from mukonin_audit.user
-     where email_address='$email' and password=password('$passwd') and program_id = ". config::$program_id;         
+     where email_address='$email' and password=password('$passwd') and active=1 and program_id = ". config::$program_id;         
     
     global $db;
     return $db->exists($sql)? $db->row: false;
@@ -306,7 +306,7 @@ class user
     $user = &$session->user;
 
     $partner_id = $user->partner_id;
-    $sql = "update mukonin_audit.user_role set role_code='$role' where user_id = $id";
+    $sql = "update mukonin_audit.user_role set role_code='$role' active = 1 where user_id = $id";
     $db->exec($sql);
     
     $emails = $db->read_column("select email_address 
