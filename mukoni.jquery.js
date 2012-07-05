@@ -72,7 +72,7 @@ $.send = function(url, options, callback)
     setTimeout(function() {
       if (!done)
         progress_box.html('<p>'+options.progress+'</p').show();
-    }, 400);
+    }, 1000);
     if (options.error ===undefined) {
       options.error = function(jqHXR, status, text) 
       {
