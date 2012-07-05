@@ -117,6 +117,7 @@ class validator
   
   function password()
   {
+    if ($this->min_length == 0) $this->min_length = 6;
     if ($this->title=='') {
       $this->title = "!Passwords must contain at least:
         <li>one upper case letter
