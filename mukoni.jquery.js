@@ -18,12 +18,13 @@ $.fn.enableOnSet = function(controls, events)
   var self = this;
   controls.bind('keyup input cut paste click change '+events, function() {
     var set = 0;
-    var total = controls.length;
-    controls.each(function() {
+    var mandatory = controls.filter(':not([optional])');
+    var total = mandatory.length;
+    mandatory.each(function() {
       if ($(this).attr('type') == 'radio') {
         if ($(this).is(':checked')) {
           var name = $(this).attr('name');
-          total -= controls.filter('[name='+name+']').length - 1;
+          total -= mandatory.filter('[name='+name+']').length - 1;
           ++set;
         }
       }
@@ -113,7 +114,7 @@ $.send = function(url, options, callback)
           progress.box.html('')
             .append(p)
             .show()
-            .delay(Math.min(8000,Math.max(4000,p.text().length*50)))
+            .delay(5000)
             .fadeOut(2000);
         }
         else if (progress.box !== undefined) 
@@ -139,8 +140,12 @@ $.fn.send = function(url, options, callback)
 $.fn.sendOnSet = function(controls, url, options, callback)
 {
   var self = this;
-  if (options !== undefined && options.optional !== undefined)
-    this.enableOnSet($(controls).filter(':not('+options.optional+')'));
+  if (options instanceof Function) {
+    callback = options;
+    options = undefined;
+  }
+  else if (options !== undefined && options.optional !== undefined)
+    this.enableOnSet(controls).filter(':not('+options.optional+')');
   else this.enableOnSet(controls);
   
   this.click(function(e) {
