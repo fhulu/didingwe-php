@@ -10,7 +10,6 @@ class validator
   var $db;
   var $name;
   var $title;
-  var $min_length;
   var $value;
   var $error_cb;
   function __construct($request=null, $table=null, $conn=null, $error_cb='validator::cout')
@@ -27,7 +26,7 @@ class validator
   {
     if (is_null($this->error_cb)) return false;
     if ($this->title[0] == '!') $msg = $this->title;
-    log::error($msg);
+    log::warn($msg);
     return call_user_func($this->error_cb, $msg);
   }
   
@@ -89,11 +88,10 @@ class validator
     return $this->at_least(8) && $this->regex('/^0\d+$/', "!Please use national format for $this->title, e.g. 0821234567");
   }
 
-  function at_least($length=null)
+  function at_least($length)
   {
-    if ($length == 0) $length = $this->min_length;
     if (strlen($this->value) >= $length) return true;
-    return $this->error("!$this->title must contain at least $this->min_length characters.");
+    return $this->error("!$this->title must contain at least $length characters.");
   }
   
   function numeric()
@@ -141,8 +139,11 @@ class validator
   function unique()
   {
     $cb = $this->error_cb;
-    $this->error_cb = false;
-    if (!$this->exist()) return true;
+    $this->error_cb = null;
+    if (!$this->exist()) {
+      $this->error_cb = $cb;
+      return true;
+    }
     $this->error_cb = $cb;
     return $this->error("!$this->title already exist.");
   }
@@ -161,7 +162,6 @@ class validator
     foreach($funcs as $func) {
       if ($func == 'optional') continue;
       if (is_numeric($func)) {
-        $this->min_length = $func;
         if (!$this->at_least($func)) return false;
         continue;
       }
