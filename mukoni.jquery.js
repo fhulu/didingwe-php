@@ -11,14 +11,12 @@ $.fn.hasAttr = function(name)
 $.fn.enableOnSet = function(controls, events)
 {
   this.attr('disabled','disabled');
-  controls = $(controls)
-    .filter(':visible')
-    .filter('input,select,textarea')
+  controls = $(controls).filter('input,select,textarea')
   if (events === undefined) events = '';
   var self = this;
   controls.bind('keyup input cut paste click change '+events, function() {
     var set = 0;
-    var mandatory = controls.filter(':not([optional])');
+    var mandatory = controls.filter(':visible').filter(':not([optional])');
     var total = mandatory.length;
     mandatory.each(function() {
       if ($(this).attr('type') == 'radio') {
@@ -69,6 +67,9 @@ $.send = function(url, options, callback)
   var progress =  {};
   if (options.progress !== false) {
     progress.box = $('.ajax_result');
+    progress.box.click(function() {
+      $(this).fadeOut('slow');
+    });
     
     progress.timeout = setTimeout(function() {
       progress.box.html('<p>'+options.progress+'</p').show();
@@ -113,9 +114,9 @@ $.send = function(url, options, callback)
             p.html(data);
           progress.box.html('')
             .append(p)
-            .show()
-            .delay(5000)
-            .fadeOut(2000);
+            .show();
+          var timeout = setTimeout(function() { progress.box.fadeOut(2000); }, 8000);
+                   
         }
         else if (progress.box !== undefined) 
           progress.box.hide();
@@ -200,4 +201,19 @@ $.fn.loadHtml = function(url, options, callback)
     if (callback) callback(result);
   });
   return this;
+}
+
+$.fn.load = function(url, options, callback)
+{
+  var self = this;
+  $.send(url, options, function(result) {
+    self.replaceWith(result);
+    if (callback) callback(result);
+  });
+  return this;
+}
+
+$.fn.loadOptions = function(url, options, callback)
+{
+  this.html('<option>loading...</option>').loadHtml(url, options, callback);
 }
