@@ -4,9 +4,6 @@ require_once('db.php');
 class validator_exception extends Exception {};
 class validator
 {
-  const UNIQUE = 0x0001;
-  const EXISTS = 0x0002;
-  const OPTIONAL = 0x0004;
   
   var $table;
   var $request;
@@ -15,20 +12,36 @@ class validator
   var $title;
   var $min_length;
   var $value;
-  function __construct($request=null, $table=null, $conn=null)
+  var $error_cb;
+  function __construct($request=null, $table=null, $conn=null, $error_cb='validator::cout')
   {
+    $this->error_cb = $error_cb;
     $this->table = $table;
     $this->request = is_null($request)? $_REQUEST: $request;
+    
     global $db;
     $this->db = is_null($conn)? $db: $conn;
   }
   
+  function error($msg)
+  {
+    if (is_null($this->error_cb)) return false;
+    if ($this->title[0] == '!') $msg = $this->title;
+    log::error($msg);
+    return call_user_func($this->error_cb, $msg);
+  }
+  
+  static function cout($msg)
+  {
+    echo $msg;
+    return false;
+  }
 
-  function regex($regex)
+  function regex($regex, $title=null)
   {
     if (preg_match($regex, $this->value)) return true;
-    echo $this->title[0] == '!'? $this->title: "!Invalid $this->title.";
-    return false;
+    if ($title == '') $title = "!Invalid $this->title.";
+    return $this->error($title);
   }
   
   function name()
@@ -68,36 +81,29 @@ class validator
 
   function int_tel()
   {
-    if ($this->title != '') $this->title = "!Please use international format for $this->title, e.g. +27821234567";
-    return $this->regex('/^\+\d{10,}$/');
+    return $this->at_least(10) && $this->regex('/^\+\d+$/',"!Please use international format for $this->title, e.g. +27821234567");
   }
   
-  function local_tel()
+  function national_tel()
   {
-    if ($this->title != '') $this->title = "!Please use local format for $this->title, e.g. +0821234567";
-    return $this->regex('/^0\d{9,}$/');
+    return $this->at_least(8) && $this->regex('/^0\d+$/', "!Please use national format for $this->title, e.g. 0821234567");
   }
 
-  function at_least()
+  function at_least($length=null)
   {
-    if (strlen($this->value) >= $this->min_length) return true;
-    if ($this->title != '') $this->title = "!$this->title must contain at least $this->min_length characters." ;
-    echo $this->title;
-    return false;
-    
-    return $this->regex('/^.{'.$this->min_length.',}/');
+    if ($length == 0) $length = $this->min_length;
+    if (strlen($this->value) >= $length) return true;
+    return $this->error("!$this->title must contain at least $this->min_length characters.");
   }
   
   function numeric()
   {
-    if ($this->title != '') $this->title == "!$title must be numeric." ;
-    return $this->regex('/^\d+$/');
+    return $this->regex('/^\d+$/', "!$title must be numeric.");
   }
   
   function alphabetic()
   {
-    if ($this->title != '') $this->title == "!$title must be numeric." ;
-    return $this->regex('/^\[a-zA-Z]+$/');
+    return $this->regex('/^\[a-zA-Z]+$/', "!$title must be numeric.");
   }
   
   function proc()
@@ -108,47 +114,37 @@ class validator
   function match($name)
   {
     if ($this->value == $this->request[$name]) return true;
-    echo $title[0] == '!'? $title: "!$this->title do not match.";
-    return false;
-  }
-  
-  function not_match($name1, $name2, $title1, $title2)
-  {
-    if ($this->request[$name1] != $this->request[$name2]) return true;
-    echo $title1[0] == '!'? $title1: "!$title1 cannot be the same as $title2.";
-    return false;
+    return $this->error("!$this->title do not match.");
   }
   
   function password($min_length)
   {
-    if ($this->title[0] != '') {
-      if ($min_length == 0) $min_length=6;
-      $this->title = "!$this->title must contain at least:
-        <li>one upper case letter
-        <li>one lower case letter
-        <li>one number or special character
-        <li>at least $min_length characters";
-    }
-    return $this->regex('/(?=^.{'.$min_length.',}$)((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/');
+    if ($min_length == 0) $min_length=6;
+    $title = "!$this->title must contain at least:
+      <li>one upper case letter
+      <li>one lower case letter
+      <li>one number or special character
+      <li>at least $min_length characters";
+    return $this->regex('/(?=^.{'.$min_length.',}$)((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/', $title);
   }
 
-  function exist($report=true)
+  function exist()
   {
     if ($this->table == '') 
       throw new validator_exception('checking for existance with no db table supplied');
    
     $db = $this->db;
     if ($db->exists("select * from $this->table where $this->name = '$this->value'")) return true;
-    if (!$report) return false;
-    echo $this->title[0] == '!'? $this->title:"!No such $this->title found.";
-    return false;
+    return $this->error("!No such $this->title found.");
   }
 
   function unique()
   {
-    if (!$this->exist(false)) return true;
-    echo $this->title[0] == '!'? $this->title: "!$this->title already exist.";
-    return false;
+    $cb = $this->error_cb;
+    $this->error_cb = false;
+    if (!$this->exist()) return true;
+    $this->error_cb = $cb;
+    return $this->error("!$this->title already exist.");
   }
   
   function is($name, $title)
@@ -159,9 +155,8 @@ class validator
     $funcs = array_slice(func_get_args(), 2);
     log::debug("VALIDATE $name=$this->value $title ".implode(',',$funcs));
     if ($this->value == '') {
-      if (in_array('optional', $funcs)) return true;
-      echo $title[0] == '!'? $title: "!$title must be provided.";
-      return false;
+      if (in_array('optional', $funcs)) return true;      
+      return $this->error("!$title must be provided.");
     }
     foreach($funcs as $func) {
       if ($func == 'optional') continue;
@@ -175,7 +170,7 @@ class validator
         continue;
       } 
       $matches = array();
-      if (!preg_match('/^([a-z_]+)(?:\((.*)\))*$/', $func, $matches)) 
+      if (!preg_match('/^([a-z_]+)(?:\((.*)\))*$/i', $func, $matches)) 
         throw new validator_exception('Invalid validator expression $func!');
 
       $func = $matches[1];
