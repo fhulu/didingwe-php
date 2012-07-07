@@ -110,8 +110,7 @@ class user
     return $check->is('first_name', 'First Name', 'name')
       && $check->is('last_name', 'Last Name', 'name')
       && $check->is('email', 'Email', 'email')
-      && $check->match('password', 'password2','Passwords')
-      && $check->is('password', '', 'password', 6)
+      && $check->is('password', 'Passwords','match(password2)', 'password(6)')
       && (!$check_email || !user::exists($request['email'], 1))
       && $check->is('cellphone', 'Cellphone', 'int_tel');
   }
