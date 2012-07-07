@@ -96,12 +96,12 @@ class validator
   
   function numeric()
   {
-    return $this->regex('/^\d+$/', "!$title must be numeric.");
+    return $this->regex('/^\d+$/', "!$this->title must be numeric.");
   }
   
   function alphabetic()
   {
-    return $this->regex('/^\[a-zA-Z]+$/', "!$title must be numeric.");
+    return $this->regex('/^[a-zA-Z]+$/', "!$this->title must be alphabetic.");
   }
   
   function proc()
