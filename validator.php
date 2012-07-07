@@ -97,14 +97,18 @@ class validator
   function alphabetic()
   {
     if ($this->title != '') $this->title == "!$title must be numeric." ;
-    return $this->regex('/^\w+$/');
+    return $this->regex('/^\[a-zA-Z]+$/');
   }
   
-  function match($name1, $name2, $title)
+  function proc()
   {
-    $val = $this->request[$name1];
-    if ($val == '' && $allow_blank || $val == $this->request[$name2]) return true;
-    echo $title[0] == '!'? $title: "!$title do not match.";
+    return $this->regex('/^([a-z_]+)(?:\((.*)\))*$/');
+  }
+  
+  function match($name)
+  {
+    if ($this->value == $this->request[$name]) return true;
+    echo $title[0] == '!'? $title: "!$this->title do not match.";
     return false;
   }
   
@@ -115,17 +119,17 @@ class validator
     return false;
   }
   
-  function password()
+  function password($min_length)
   {
-    if ($this->min_length == 0) $this->min_length = 6;
-    if ($this->title=='') {
-      $this->title = "!Passwords must contain at least:
+    if ($this->title[0] != '') {
+      if ($min_length == 0) $min_length=6;
+      $this->title = "!$this->title must contain at least:
         <li>one upper case letter
         <li>one lower case letter
         <li>one number or special character
-        <li>$this->min_length characters";
+        <li>at least $min_length characters";
     }
-    return $this->regex('/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/');
+    return $this->regex('/(?=^.{'.$min_length.',}$)((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/');
   }
 
   function exist($report=true)
@@ -164,14 +168,23 @@ class validator
       if (is_numeric($func)) {
         $this->min_length = $func;
         if (!$this->at_least($func)) return false;
+        continue;
       }
-      else if (method_exists($this, $func)) {
-        if (!$this->{$func}()) return false;
-      }
-      else if ($func[0] = '/') {
+      if ($func[0] == '/') {
         if (!$this->regex($func)) return false;
-      } else 
+        continue;
+      } 
+      $matches = array();
+      if (!preg_match('/^([a-z_]+)(?:\((.*)\))*$/', $func, $matches)) 
+        throw new validator_exception('Invalid validator expression $func!');
+
+      $func = $matches[1];
+      $arg = $matches[2];
+     
+      if (!method_exists($this, $func)) 
         throw new validator_exception('validator method $func does not exists!');
+        
+      if (!$this->{$func}($arg)) return false;
     }
     return true;
   }
