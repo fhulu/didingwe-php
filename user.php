@@ -106,13 +106,13 @@ class user
   static function check($request, $check_email=true)
   {
     if (!user::verify_internal($request)) return false;
-    $check = new validator($request); 
-    return $check->is('first_name', 'First Name', 'name')
-      && $check->is('last_name', 'Last Name', 'name')
-      && $check->is('email', 'Email', 'email')
-      && $check->is('password', 'Passwords','match(password2)', 'password(6)')
+    $v = new validator($request); 
+    return $v->check('first_name')->is('name')
+      && $v->check('last_name')->is('name')
+      && $v->check('email')->is('email')
       && (!$check_email || !user::exists($request['email'], 1))
-      && $check->is('cellphone', 'Cellphone', 'int_tel');
+      && $v->check('password', 'Passwords')->is('match(password2)', 'password(6)')
+      && $v->check('cellphone')->is('int_tel');
   }
 
   static function authenticate($email, $passwd)
