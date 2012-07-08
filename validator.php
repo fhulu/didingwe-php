@@ -178,7 +178,7 @@ class validator
       } 
       $matches = array();
       if (!preg_match('/^([a-z_]+)(?:\((.*)\))*$/i', $func, $matches)) 
-        throw new validator_exception('Invalid validator expression $func!');
+        throw new validator_exception("Invalid validator expression $func!");
 
       $func = $matches[1];
       $arg = $matches[2];
