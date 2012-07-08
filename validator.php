@@ -148,13 +148,20 @@ class validator
     return $this->error("!$this->title already exist.");
   }
   
-  function is($name, $title)
+  function check($name, $title=null)
   {
+    if (is_null($title)) 
+      $title = str_replace('_', ' ', $name);
     $this->name = $name;
     $this->title = $title;
     $this->value = $this->request[$name];
-    $funcs = array_slice(func_get_args(), 2);
-    log::debug("VALIDATE $name=$this->value $title ".implode(',',$funcs));
+    return $this;
+  }
+  
+  function is()
+  {
+    $funcs = func_get_args();
+    log::debug("VALIDATE $this->name=$this->value ".implode(',',$funcs));
     if ($this->value == '') {
       if (in_array('optional', $funcs)) return true;      
       return $this->error("!$title must be provided.");
