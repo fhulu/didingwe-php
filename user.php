@@ -4,7 +4,7 @@ require_once('session.php');
 require_once('db.php');
 require_once('config.php');
 require_once('table.php'); 
-require_once('select.php');
+require_once('validator.php');
 
 class user_exception extends Exception {};
 class user
@@ -78,20 +78,59 @@ class user
   }
   
   
-  static function remind($email=null)
-  {
-    if (is_null($email)) {
-      $email = $_GET['forgot_email'];
-      $ajax = true;
-    }
-    
+  static function start_reset_pw($request)
+  {    
+    if (!user::verify_internal($request)) return false;
+    $validator = new validator($request);
+    if (!$validator->check('email')->is('email')) return false;
+    $otp = rand(10042,99999);
+    $email = $request['email'];
     $sql = "select id from mukonin_audit.user where email_address='$email' and program_id = " . config::$program_id; 
     global $db;
-    if ($db->exists($sql)) return true;
-    
-    if ($ajax)
-      echo "!We do not have a user with email address '$email' on our system";
+    if (!$db->exists($sql)) {
+      echo "!We do not have a user with email address '$email' registered on the system";
+      return false;
+    }
+    $db->exec("update mukonin_audit.user set otp = '$otp', otp_time = now()
+      where email_address='$email' and program_id = " . config::$program_id);
+    $message = "You are currently trying to reset your password. 
+      If you have not requested this, please inform the System Adminstrator.<br><br>
+      Your One Time Password is : <br><b>$otp</b>. ";
+    $subject = "One Time Password";
+    $headers = "from: donotreply@gct.fpb.gov.za\r\n";
+    $headers .= "MIME-Version: 1.0\r\n";
+    $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
+    mail($email, $subject, $message, $headers);
   }
+  
+  static function reset_pw($request)
+  {
+    if (!user::verify_internal($request)) return false;
+    $validator = new validator($request);
+    if (!$validator->check('email')->is('email')
+      || !$validator->check('password')->is('password', 'match(password2)')) return false;
+
+    $email = $request['email'];
+    $otp = $request['otp'];
+        
+    $sql = "select id, partner_id, email_address, first_name, last_name from mukonin_audit.user
+     where email_address='$email' and otp = $otp and active=1 and program_id = ". config::$program_id; 
+    global $db;
+    if (!$db->exists($sql)) {
+      echo '!Invalid OTP or OTP has expired';
+      return false;
+    }
+    $user = new user($db->row); 
+    
+    $password = $request['password'];
+    $db->exec("update mukonin_audit.user set password = password('$password')
+    where email_address='$email' and program_id = " . config::$program_id);
+    
+    session::redirect('/?c=home');
+    global $session;
+    $session->restore();
+}
+
   
   static function exists($email, $active = 1, $echo=true)
   {
