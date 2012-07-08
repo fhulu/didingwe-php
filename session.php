@@ -30,7 +30,7 @@ class session
   static function validate($fallback_url)
   {
     global $session;
-    if (!is_null($session) && !is_null($session->user)) return;
+    if (!is_null($session) && !is_null($session->user)) return $sesion;
   
     $_SESSION['referrer'] = $_SERVER[REQUEST_URI];
     session::redirect($fallback_url);
@@ -74,18 +74,22 @@ class session
       if (!$user)
         throw new session_exception("Invalid username/password for ". $_REQUEST[email]);
 
-      global $session;
-      if ($session->referrer == '') $session->referrer = '/?c=home';
-      $_SESSION[last_error] = '';
-      if ($_REQUEST['a'] == 'session/login' || !isset($_SERVER['HTTP_X_REQUESTED_WITH'])) {
-        session::redirect($session->referrer);
-      }
+     global $session;
+     if ($_REQUEST['a'] == 'session/login' || !isset($_SERVER['HTTP_X_REQUESTED_WITH'])) 
+       $session->restore();
     }
     catch (Exception $e) {
       $_SESSION[last_error] = $e->getMessage();
       log::error("EXCEPTION: ". $e->getMessage());
       echo "!".$e->getMessage();
     }
+  }
+  
+  function restore()
+  {
+    $_SESSION[last_error] = '';
+    if ($this->referrer == '') $this->referrer = '/?c=home';
+    $this->redirect($this->referrer);
   }
   
   static function redirect($url)
