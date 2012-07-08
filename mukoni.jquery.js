@@ -49,6 +49,11 @@ $.fn.values = function()
 
 $.send = function(url, options, callback)
 {
+  if (options instanceof Function) {
+    callback = options;
+    options = undefined;
+  }
+
   options = $.extend({
     progress: 'Processing...',
     method: 'post',
@@ -133,6 +138,10 @@ $.send = function(url, options, callback)
 
 $.fn.send = function(url, options, callback)
 {
+  if (options instanceof Function) {
+    callback = options;
+    options = undefined;
+  }
   if (options !== undefined)
     options.data = $.extend($(this).values(), options.data);
   return $.send(url, options, callback);  
@@ -158,6 +167,10 @@ $.fn.sendOnSet = function(controls, url, options, callback)
 $.fn.sendOnClick = function(controls, url, options, callback)
 {
   var self = this;
+  if (options instanceof Function) {
+    callback = options;
+    options = undefined;
+  }
   this.click(function(e) {
     return $(controls).send(url, $.extend({invoker: self, event: e}, options), callback);
   });
@@ -166,6 +179,13 @@ $.fn.sendOnClick = function(controls, url, options, callback)
 
 $.fn.confirm = function(url, options, callback)
 {
+  if (options instanceof Function) {
+    callback = options;
+    options = {};
+  }
+  else if (options === undefined) {
+    options = {};
+  }
   options.async = false;
   var result;
   this.send(url, options, function(data) { result = data; });
