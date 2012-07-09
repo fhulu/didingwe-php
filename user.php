@@ -6,6 +6,8 @@ require_once('config.php');
 require_once('table.php'); 
 require_once('select.php');
 require_once('validator.php');
+require_once('select.php');
+
 
 class user_exception extends Exception {};
 class user
@@ -463,6 +465,24 @@ class user
     $table->set_saver("/?a=user/update");
     $table->set_options($request);
     $table->show($sql);
+  }
+  
+   static function track_reg($request)
+  {
+    user::verify('track_reg');
+    global $session;
+    $user_id = $session->user->id;
+    $headings = array('~Time','First Name', 'Last Name', 'Email', 'Action');
+    $table = new table($headings,table::TITLES | table::ALTROWS | table::FILTERABLE);
+    
+    $table->set_heading("Registration Status History");
+    $table->set_options($request);
+    $table->show("select t.create_time,  u.first_name, u.last_name, u.email_address,f.name
+      from mukonin_audit.trx t 
+        join mukonin_audit.user o on t.object_id = o.id
+        join mukonin_audit.function f on t.function_code = f.code
+        join mukonin_audit.user u on t.user_id = u.id
+      where o.id = $user_id"); 
   }
 }
 ?>
