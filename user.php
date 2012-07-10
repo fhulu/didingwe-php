@@ -125,7 +125,7 @@ class user
     }
     $user = new user($db->row); 
     
-    $password = $request['password'];
+    $password = addslashes($request['password']);
     $db->exec("update mukonin_audit.user set password = password('$password')
     where email_address='$email' and program_id = " . config::$program_id);
     
@@ -149,8 +149,8 @@ class user
   {
     if (!user::verify_internal($request)) return false;
     $v = new validator($request); 
-    return $v->check('first_name')->is('name')
-      && $v->check('last_name')->is('name')
+    return $v->check('first_name')->is(2)
+      && $v->check('last_name')->is(2)
       && $v->check('email')->is('email')
       && (!$check_email || !user::exists($request['email'], 1))
       && $v->check('password', 'Passwords')->is('match(password2)', 'password(6)')
@@ -159,6 +159,7 @@ class user
 
   static function authenticate($email, $passwd)
   {
+    $passwd = addslashes($passwd);
     $sql = "select id, partner_id, email_address, first_name, last_name from mukonin_audit.user
      where email_address='$email' and password=password('$passwd') and active=1 and program_id = ". config::$program_id;         
     
@@ -176,6 +177,9 @@ class user
   static function create($partner_id, $email, $password, $first_name, $last_name, $cellphone, $otp)
   {
     $program_id = config::$program_id;   
+    $password = addslashes($password);
+    $first_name = addslashes($first_name);
+    $last_name = addslashes($last_name);
     $sql = "insert into mukonin_audit.user(program_id, partner_id, email_address, password, first_name,last_name, cellphone, otp, otp_time)
       values($program_id,$partner_id, '$email',password('$password'), '$first_name','$last_name','$cellphone', '$otp', now())";
     
@@ -192,7 +196,7 @@ class user
     if (!user::verify_internal($request)) return;
 
     if (!user::check($request)) return;
-    
+    $request = db::quote($request);
     $first_name = $request[first_name];
     $last_name = $request[last_name];
     $email = $request[email];
@@ -393,6 +397,8 @@ class user
     
     global $db, $session;
     $user = &$session->user;
+    $id = $session->user->id;
+    $db->exec("update mukonin_audit.user set active = 1 where id = $id");
    
     $partner_id = $user->partner_id;
     if ($partner_id == 0) throw new user_exception("Trying to approve a user without a partner id");
@@ -416,30 +422,6 @@ class user
       
     }
     
-  }
-
-  static function changePassword()
-  {
-    $currpassword = $_POST['currpassword'];
-    $newpassword = $_POST["newpassword"];
-    
-    global $session, $db;
-
-    $curr_user_id = $session->user->id;
-    
-    $db->exec("update mukonin_audit.user
-               set password = password('$newpassword')
-               where id = $curr_user_id 
-               and password = password('$currpassword')");
-    
-    if ($db->affected_rows() == 0) 
-    { 
-      echo "Invalid password"; 
-      return;
-    }       
-    
-    header("Location: /?c=password_changed");
-   
   }
      
   static function roles($request)
