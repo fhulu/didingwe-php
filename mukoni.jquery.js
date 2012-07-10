@@ -216,7 +216,8 @@ $.fn.confirmOnSet = function(controls,url, options, callback)
   this.click(function(event) {
     var params = $.extend({invoker: self, event: event}, options);
     var result = $(controls).confirm(url, params);
-    callback(result);
+    if (callback !== undefined)
+      callback(result);
   });
 }
 
