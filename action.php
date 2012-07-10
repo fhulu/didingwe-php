@@ -32,6 +32,12 @@ $_SESSION['function'] = $function;
 log::init($class, log::DEBUG);
 log::debug("FUNCTION: $function");
 try {
+  foreach($_REQUEST as $key=>&$value) {
+    if ($key == 'a' || $key == 'PHPSESSID') continue;
+    $value = str_replace("\'", "'", $value);
+    $value = str_replace('\"', '"', $value);
+  }
+
   call_user_func($function, $_REQUEST);
 }
 catch (user_exception $exception) {
