@@ -195,7 +195,7 @@ $.fn.confirm = function(url, options, callback)
   if (result === undefined) return this;
   result = $.trim(result);
   if (result[0] == '?') {
-    if (!confirm(result)) {
+    if (!confirm(result.substr(1))) {
       if (options.event !== undefined) options.event.stopImmediatePropagation();
       return false;
     }
@@ -205,11 +205,18 @@ $.fn.confirm = function(url, options, callback)
 
 $.fn.confirmOnSet = function(controls,url, options, callback)
 {
+  if (options instanceof Function) {
+    callback = options;
+    options = {};
+  }
+
   var self = this;
   this.enableOnSet(controls);
-  return this.click(function(event) {
+  
+  this.click(function(event) {
     var params = $.extend({invoker: self, event: event}, options);
-    $(controls).confirm(url, params, callback);
+    var result = $(controls).confirm(url, params);
+    callback(result);
   });
 }
 
