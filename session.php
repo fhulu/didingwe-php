@@ -101,10 +101,9 @@ class session
 
   static function logout()
   {
-    global $db;
-    $session_id = $_SESSION['instance'];
+    global $db, $session;
     if (isset($db)) {
-      $sql = "update mukonin_audit.session set status='C', end_time=now() where id = '$session_id'";
+      $sql = "update mukonin_audit.session set status='C', end_time=now() where id = '$session->id'";
       $db->send($sql);
     }
     session_destroy();
