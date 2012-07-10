@@ -43,6 +43,11 @@ class validator
     return $this->error($title);
   }
   
+  function country_code()
+  { 
+    return $this->in('mukonin_contact.country.code');
+  }
+  
   function name()
   {
     return $this->regex('/^\w{2}[\w\s]*$/i');
@@ -126,14 +131,28 @@ class validator
     return $this->regex('/(?=^.{'.$min_length.',}$)((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/', $title);
   }
 
-  function exist()
+  function in($table)
   {
-    if ($this->table == '') 
+    if ($table == '') 
       throw new validator_exception('checking for existance with no db table supplied');
    
+    $pos = strrpos($table, '.');
+    if ($pos === false) {
+      $field = $this->name;
+    }
+    else {
+      $field = substr($table,$pos+1);
+      $table = substr($table,0, $pos);
+    }
     $db = $this->db;
-    if ($db->exists("select * from $this->table where $this->name = '$this->value'")) return true;
+    $value = addslashes($this->value);
+    if ($db->exists("select $field from $table where $field = '$value'")) return true;
     return $this->error("!No such $this->title found.");
+  }
+
+  function exist()
+  {
+    return in($this->table);
   }
 
   function unique()
@@ -190,5 +209,18 @@ class validator
     }
     return true;
   }
+  
+  function date($type)
+  {
+    if (!$this->regex('/^\d{4}([-\/])(0\d|1[0-2])\1([0-2][0-9]|3[01])$/')) return false;
+    $today = Date('Y-m-d');
+    if ($type == 'future' && $this->value < $today)
+      return $this->error("!$this->title must be in the future");
+      
+    if ($type == 'past' && $this->value >= $today)
+      return $this->error("!$this->title must be in the past");    
+    return true;      
+  }
+ 
 }
 ?>
