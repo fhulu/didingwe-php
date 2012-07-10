@@ -188,6 +188,9 @@ class user
     $sql = "insert into mukonin_audit.user_role(user_id,role_code)
       values($id,'reg')";
     $db->exec($sql);
+    $password = stripslashes($password);
+    $first_name = stripslashes($first_name);
+    $last_name = stripslashes($last_name);
     return new user(array($id, $partner_id, $email, $first_name, $last_name, $cellphone, $otp, $partner_id));
   }
   
@@ -215,6 +218,9 @@ class user
       $id = $db->read_one_value("select id from mukonin_audit.user where email_address = '$email' and program_id = $program_id");
       $db->exec("delete from mukonin_audit.user_role where user_id = $id");
       $db->exec("insert into mukonin_audit.user_role(user_id,role_code) values($id,'reg')");
+      $password = stripslashes($password);
+      $first_name = stripslashes($first_name);
+      $last_name = stripslashes($last_name);
       $user = new user(array($id, $partner_id, $email, $first_name, $last_name, $cellphone, $otp));
     }
     else {
@@ -397,8 +403,6 @@ class user
     
     global $db, $session;
     $user = &$session->user;
-    $id = $session->user->id;
-    $db->exec("update mukonin_audit.user set active = 1 where id = $id");
    
     $partner_id = $user->partner_id;
     if ($partner_id == 0) throw new user_exception("Trying to approve a user without a partner id");
@@ -421,7 +425,9 @@ class user
       $mail_sent = mail($email, $subject, $message, $headers);
       
     }
-    
+    $id = $session->user->id;
+    $db->exec("update mukonin_audit.user set active = 1 where id = $id");
+  
   }
      
   static function roles($request)

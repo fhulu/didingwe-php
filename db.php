@@ -214,11 +214,24 @@ class db
     $this->lineage($values, $key, $parent_key, $table);
   }
   
-  static function quote($array)
+  static function addslashes($array)
   {
     $output = array();
     foreach($array as $key => $val) {
-      $output[$key] = $val;
+      $output[$key] = addslashes($val);
+    }
+    return $output;
+  }
+  
+  static function quote($array)
+  {
+    return db::addslashes($array);
+  }
+  static function stripslashes($array)
+  {
+    $output = array();
+    foreach($array as $key => $val) {
+      $output[$key] = stripslashes($val);
     }
     return $output;
   }

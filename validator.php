@@ -203,7 +203,7 @@ class validator
       $arg = $matches[2];
      
       if (!method_exists($this, $func)) 
-        throw new validator_exception('validator method $func does not exists!');
+        throw new validator_exception("validator method $func does not exists!");
         
       if (!$this->{$func}($arg)) return false;
     }
