@@ -213,6 +213,15 @@ class db
     $values[] = $value;
     $this->lineage($values, $key, $parent_key, $table);
   }
+  
+  static function quote($array)
+  {
+    $output = array();
+    foreach($array as $key => $val) {
+      $output[$key] = $val;
+    }
+    return $output;
+  }
 }
 
 $db = null;
