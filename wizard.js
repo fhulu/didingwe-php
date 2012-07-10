@@ -105,7 +105,18 @@
         }
       });
     },
-    
+
+    close: function() 
+    {
+      var cur_idx = 0;
+      var self = this;
+      $.each(self.stack, function(i, v) {
+        cur_idx += parseInt(v);
+      });
+  
+      this.dialogs[cur_idx].dialog('close');
+    },
+        
     bind: function(event, callback) 
     {
       $.each(this.dialogs, function() {
