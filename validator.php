@@ -152,7 +152,7 @@ class validator
 
   function exist()
   {
-    return in($this->table);
+    return $this->in($this->table);
   }
 
   function unique()
