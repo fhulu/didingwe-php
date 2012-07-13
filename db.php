@@ -235,6 +235,12 @@ class db
     }
     return $output;
   }
+  
+  static function unquote($array)
+  {
+    return db::stripslashes($array);
+  }
+
 }
 
 $db = null;
