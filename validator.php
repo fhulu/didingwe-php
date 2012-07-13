@@ -114,6 +114,11 @@ class validator
     return $this->regex('/^([a-z_]+)(?:\((.*)\))*$/');
   }
   
+  function money()
+  {
+    return $this->regex('/^\d+\(\.\d+)?$/');
+  }
+  
   function match($name)
   {
     if ($this->value == $this->request[$name]) return true;
