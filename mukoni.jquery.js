@@ -145,7 +145,7 @@ $.fn.send = function(url, options, callback)
   if (options !== undefined)
     options.data = $.extend($(this).values(), options.data);
   else
-    options.data = $(this).values();
+    options = { data : $(this).values() };
   return $.send(url, options, callback);  
 }
 
