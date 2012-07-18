@@ -88,12 +88,20 @@ class user
     if (!$validator->check('email')->is('email')) return false;
     $otp = rand(10042,99999);
     $email = $request['email'];
-    $sql = "select id from mukonin_audit.user where email_address='$email' and program_id = " . config::$program_id; 
+    $sql = "select attempts from mukonin_audit.user where email_address='$email' and program_id = " . config::$program_id; 
     global $db;
     if (!$db->exists($sql)) {
       echo "!We do not have a user with email address '$email' registered on the system";
       return false;
     }
+    
+    $attempts = $db->row[0];
+    
+    if($attempts>3){
+      echo "!Account locked. Please contact FPB on (012)345-6789";
+      return false;
+    }
+    
     $db->exec("update mukonin_audit.user set otp = '$otp', otp_time = now()
       where email_address='$email' and program_id = " . config::$program_id);
     $message = "You are currently trying to reset your password. 
@@ -160,11 +168,21 @@ class user
   static function authenticate($email, $passwd)
   {
     $passwd = addslashes($passwd);
-    $sql = "select id, partner_id, email_address, first_name, last_name from mukonin_audit.user
+    $sql = "select id, partner_id, email_address, first_name, last_name,attempts from mukonin_audit.user
      where email_address='$email' and password=password('$passwd') and active=1 and program_id = ". config::$program_id;         
     
     global $db;
-    return $db->exists($sql)? $db->row: false;
+    $success = $db->exists($sql);
+    $tries = $db->row[5];
+    if($tries >3){
+      echo "!Account locked. Please contact FPB on (012)345-6789";
+    }
+    
+    $attempts = $success? '0': 'attempts+1';
+    $db->exec("update mukonin_audit.user set attempts = $attempts
+     where email_address='$email' and active=1 and program_id = ". config::$program_id);
+      
+    return $success? $db->row: false;
   }
   
   static function restore($email, $password)
