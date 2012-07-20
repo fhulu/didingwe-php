@@ -24,10 +24,11 @@ require_once('log.php');
     $class_function = $class. '::' . $function;
     $_SESSION['function'] = $class_function;
 
-  log::init($class, log::DEBUG);
+    log::init($class, log::DEBUG);
     log::debug("PATH_INFO ". implode('/', $path_info));
     try {
       require_once($source_file);
+      log::debug("CLASSFUNCTION: $class_function");
       if (is_callable($class_function)) $function = $class_function;
       if (is_callable($function)) call_user_func($function, $_REQUEST);
     }
