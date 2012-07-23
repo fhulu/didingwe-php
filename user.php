@@ -249,6 +249,7 @@ class user
     $message = "Your One Time Password is $otp";
     $subject = "One Time Password";
     $headers = "from: donotreply@gct.fpb.gov.za";
+    log::debug("Sending OTP email to $subject");
     $mail_sent = mail($email, $subject, $message, $headers);
       
   }
