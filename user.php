@@ -376,7 +376,7 @@ class user
     $user = &$session->user;
 
     $partner_id = $user->partner_id;
-    $sql = "update mukonin_audit.user_role set role_code='$role' active = 1 where user_id = $id";
+    $sql = "update mukonin_audit.user_role set role_code='$role' where user_id = $id";
     $db->exec($sql);
     
     $emails = $db->read_column("select email_address 
