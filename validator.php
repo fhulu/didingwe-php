@@ -60,6 +60,8 @@ class validator
   
   function za_company_reg()
   {
+    $year = date('Y');
+    if ((int)$this->value > $year) return $this->error("!Invalid $this->title."); 
     return $this->regex('/^(19|20)[0-9]{2}\/?[0-9]{6}\/?[0-9]{2}$/');
   }
   
