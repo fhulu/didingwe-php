@@ -127,7 +127,7 @@ $.send = function(url, options, callback)
           progress.box.hide();
 
       }
-      if (callback !== undefined) callback(data);
+      if (callback !== undefined) callback(data, options.event);
       if (options.invoker !== undefined) options.invoker.prop('disabled', false);
       if (progress.timeout !== undefined) clearTimeout(progress.timeout);
     }
