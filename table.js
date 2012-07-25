@@ -19,9 +19,7 @@
       sortField: null,
       sortOrder: 'asc',
       url: null,
-      method: 'get',
-      onEdit: function(row) { return true; },
-      onSave: function(row) { return true; }
+      method: 'get'
     },
     
     _create: function() 
@@ -280,9 +278,11 @@
       parent.find(".actions div").filter('not([title=edit],[title=save],[title=delete]').click(function() {
         var row = $(this).parent().parent();
         var action = $(this).attr('title');
+        action = action.replace(' ','_');
         var data = {};
         data[key] = row.attr(key);
-        self.element.trigger(action.replace(' ','_'), [row, data]);
+        self.element.trigger('action', [action, row, data]);
+        self.element.trigger(action, [row, data]);
       });
       parent.find(".actions div[title=edit]").click(function() { self._edit_row($(this)); });
       parent.find(".actions div[title=save]").click(function() { self._save_row($(this)); });
@@ -326,15 +326,15 @@
       };
 
       var self = this;
-      $.send(this.options.url, {data: this.data, method: 'get'}, function(data) {
+      $.send(this.options.url, {data: this.data, method: self.options.method}, function(data) {
         self.result = $(data);
         self.show_header();
         self.update('tbody');
         self._bind_paging();
         self._bind_titles();
         self._bind_actions();
-        self._adjust_actions_width();   
-        self.trigger('refresh');
+        self._adjust_actions_width(); 
+        self.element.trigger('refresh');
       });
       return this;
     },
