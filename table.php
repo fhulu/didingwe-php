@@ -325,7 +325,7 @@ HEREDOC;
       }
       if ($key == 'actions' && sizeof($this->actions) > 0) {
         $actions_shown = true;
-        $this->show_actions($actions);
+        $this->show_actions($row_data['actions']);
       }
       else 
         echo "<td>$cell</td>";
