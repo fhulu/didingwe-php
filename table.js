@@ -20,9 +20,6 @@
       sortOrder: 'asc',
       url: null,
       method: 'get',
-      onRefresh: function(table) { return true; },
-      onExpand: function(row) { return true; },
-      onCollapse: function(row) { return true; },
       onEdit: function(row) { return true; },
       onSave: function(row) { return true; }
     },
@@ -173,22 +170,22 @@
     _edit_row: function(button)
     {
       var row = button.parent().parent();
-      if (!this.options.onEdit(row)) return this;
+      if (!this.element.trigger('edit', [row])) return this;
 
       this.showEditor(row);
       
       var self = this;
-      button.attr('edit', 'on').unbind('click');
+      button.attr('title', 'save').unbind('click');
       button.click(function() { self._save_row(button); });
     },
     
     _save_row: function(button)
     {
       var row = button.parent().parent();
-      if (!this.options.onSave(row)) return this;
+      if (!this.element.trigger('save', [row])) return this;
       
       var self = this;
-      button.attr('edit', 'off').unbind('click');
+      button.attr('title', 'edit').unbind('click');
       button.click(function() { self._edit_row(button); }); 
       
       var body = self.element.find("tbody");
@@ -215,13 +212,13 @@
 
       var is_new = row.hasAttr('new');
       // remove delete button if not specified for the form
-      if (is_new && !body.hasAttr('saver')) 
+      if (is_new && !body.hasAttr('save')) 
           row.find(".actions div[delete]").remove();
  
-      var url = is_new? body.attr('adder'): body.attr('saver');
+      var url = is_new? body.attr('adder'): body.attr('save');
       if (url == undefined || url == '') return;
       
-      $.get(url, data, function(result) {
+      $.send(unescape(url), {data: data}, function(result) {
         if (!row.hasAttr('new') || !body.hasAttr('key')) return true;
         row.attr(key, result);
         row.find("[key]").html(result);
@@ -277,10 +274,19 @@
         self.element.find(".adder").click(function() { self.addRow($(this)); });
       else 
         parent = adder;
-        
-      parent.find(".actions div[edit='off']").click(function() { self._edit_row($(this)); });
-      parent.find(".actions div[edit='on']").click(function() { self._save_row($(this)); });
-      parent.find(".actions div[delete]").click(function() { self.deleteRow($(this).parent().parent()); });
+ 
+      var body = this.element.find("tbody");
+      var key = body.attr('key');
+      parent.find(".actions div").filter('not([title=edit],[title=save],[title=delete]').click(function() {
+        var row = $(this).parent().parent();
+        var action = $(this).attr('title');
+        var data = {};
+        data[key] = row.attr(key);
+        self.element.trigger(action.replace(' ','_'), [row, data]);
+      });
+      parent.find(".actions div[title=edit]").click(function() { self._edit_row($(this)); });
+      parent.find(".actions div[title=save]").click(function() { self._save_row($(this)); });
+      parent.find(".actions div[title=delete]").click(function() { self.deleteRow($(this).parent().parent()); });
     },
 
     
@@ -328,7 +334,7 @@
         self._bind_titles();
         self._bind_actions();
         self._adjust_actions_width();   
-        self.options.onRefresh(self.element);
+        self.trigger('refresh');
       });
       return this;
     },
@@ -414,7 +420,7 @@
       var row = $(button).parent().parent();
       $(button).unbind('click').attr("expand","expanded");
       var self = this; 
-      if (this.options.onExpand(row)=== false) {
+      if (self.element.trigger('expand', [row]) == false) {
         $(button).attr("expand","collapsed").click(function() { self.expand(button); });
         return this;
       }
@@ -427,7 +433,7 @@
       var row = $(button).parent().parent();
       $(button).unbind('click').attr("expand","collapsed");
       var self = this; 
-      if (this.options.onCollapse(row) === false) {
+      if (self.element.trigger('collapse', [row]) == false) {
         $(button).attr("expand","expanded").click(function() { self.collapse(button); });
         return this;
       }
