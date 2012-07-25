@@ -51,6 +51,7 @@ class table
   var $save_url;
   var $delete_url;
   var $add_url;
+  var $actions;
   function __construct($fields=null, $flags=0, $callback=null)
   {
     $this->flags = $flags;
@@ -88,13 +89,13 @@ class table
   function set_saver($url)
   {
     $this->flags |= self::EDITABLE;
-    $this->save_url = $url;
+    $this->actions[] = 'edit|save='.urlencode($url);
   }
   
   function set_deleter($url)
   {
     $this->flags |= self::DELETABLE;
-    $this->delete_url = $url;
+    $this->actions[] = "delete=".urlencode($url);
   }
 
   function set_adder($url)
@@ -122,6 +123,13 @@ class table
       
     if (!is_null($request['_sort']) && !is_null($request['_order']))
       $this->set_sorting($request['_sort'], $request['_order']);    
+  }
+   
+  function set_actions($actions)
+  {
+    if (!is_array($actions)) 
+      $actions = explode(',',$actions);
+    $this->actions = $actions;
   }
   
   function set_fields($fields)
@@ -161,7 +169,7 @@ class table
   function show_headerfooter($type)
   {
     $colspan=$this->visible_field_count;
-    if ($this->flags & (self::EDITABLE | self::DELETABLE)) 
+    if ($this->actions != '') 
       $colspan++;
     echo "<tr class=$type><th colspan=$colspan>";
     if ($type=='header') {
@@ -249,7 +257,7 @@ HEREDOC;
       }
       $this->show_title($key, 1, $colspan, $symbol, $this->field_names[$i]);
     }
-    if ($this->flags & (self::EDITABLE | self::DELETABLE)) 
+    if (sizeof($this->actions) > 1)
       $this->show_title('', $this->title_rowspan);
       
     echo "</tr>\n\t";
@@ -274,6 +282,17 @@ HEREDOC;
     if ($has_subfields) echo "\n</tr>";
   }
  
+  function show_actions($actions)
+  {
+    echo "<td class=actions>\n";
+    if (!is_array($actions)) $actions = explode(',',$actions);
+    foreach($actions as $action) {
+      list($action) = explode('=', $action);
+      list($action) = explode('|', $action);
+      echo "<div title='$action'></div>\n";
+    }
+    echo "</td>\n";
+  }
   function show_row($row_data, $index)
   {
     $attr = '';
@@ -284,7 +303,7 @@ HEREDOC;
       $attr .= ($index % 2)?'':" class='alt'";
     if ($this->flags & self::EXPANDABLE)
       $attr .= " expandable";
-      
+   
     if ($this->callback && call_user_func($this->callback, &$row_data, $index, &$attr) === false) 
       return;
  
@@ -296,6 +315,7 @@ HEREDOC;
     }
     reset($row_data);
     $show_expand = strpos($attr, ' expandable') !== false;
+    $actions_shown = false;
     foreach($this->symbols as $symbol) {
       list($key,$cell) = each($row_data);
       if ($symbol == '#') continue;
@@ -303,17 +323,17 @@ HEREDOC;
         $cell = "<div expand=collapsed />$cell";
         $show_expand = false;
       }
-      echo "<td>$cell</td>";
+      if ($key == 'actions' && sizeof($this->actions) > 0) {
+        $actions_shown = true;
+        $this->show_actions($actions);
+      }
+      else 
+        echo "<td>$cell</td>";
       if ($symbol == '+' || $symbol == '%') {
         $this->totals[$key] += $cell;
       }
     }
-    if ($this->flags & (self::EDITABLE | self::DELETABLE)) {
-      echo "<td class=actions>\n";
-      if ($this->flags & self::EDITABLE) echo "<div edit=off></div>\n";
-      if ($this->flags & self::DELETABLE) echo "<div delete></div>\n";
-      echo "</td>\n";
-    }
+    if (sizeof($this->actions) > 0 && !$actions_shown) $this->show_actions($this->actions);
     echo "</tr>\n";
   }
   
@@ -401,8 +421,11 @@ HEREDOC;
     echo "</thead>\n";
     if ($this->flags & self::EDITABLE | self::DELETABLE) {
       if ($this->key_field != '' ) $options .= " key='$this->key_field'";
-      if ($this->flags & self::EDITABLE) $options .= " saver='$this->save_url'";
-      if ($this->flags & self::DELETABLE) $options .= " deleter='$this->delete_url'";
+    }
+    foreach($this->actions as $action) {
+      foreach(explode('|',$action) as $option) {
+        $options .= " $option";
+      }
     }
     if ($this->flags & self::ADDABLE) $options .= " adder='$this->add_url'";
     echo "<tbody $options>\n";
