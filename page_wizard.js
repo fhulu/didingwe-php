@@ -1,16 +1,16 @@
 (function( $ ) {
   $.widget( "ui.pageWizard", {
     options: {
-      lastUrl: '/'
+      url: '/'
     },
 
-    _create: function() {
+    _create: function() 
+    {
       this.stack = new Array();   
       var container = this.element;
       container.addClass('page-wizard');
       this.pages = container.children();
       this.index = 0;
-      var self = this;
       this.pages.each(function() {
         var page = $(this);
         page.hide();
@@ -24,10 +24,10 @@
           var button = $("<button wizard="+name+">"+text+"</button>");
           button.button();
           nav.append(button);
-        }
-        
+        }        
         add_button('Back');
         add_button('Next');
+        
         bar.append(nav);
         
         var display = page.attr('wizard');
@@ -39,18 +39,29 @@
           bar.append("<span class='page-wizard-title ui-dialog-title'>"+caption+"</span>");
           page.prepend(bar);
         }
+
+        var id = page.attr('id');
+        page.find('[wizard]').each(function() {
+          var cls = id + '_' + $(this).attr('wizard');
+          $(this).addClass(cls);
+        });
       });
-      container.find('[wizard=next]').click(function() {
+      var self = this;
+      setTimeout(function() { self.bindActions(); }, 1000);      
+    },
+    
+    bindActions: function()
+    {
+      var self = this;
+      var container = this.element;
+      this.element.find('[wizard=next]').click(function() {
         var page = self.currentPage();
         var trigger = page.attr('id')+'_next';
-        //if (wizard.trigger(trigger))
-        console.log(trigger);
-        self.goNext($(this).attr('steps'));
+        if (container.trigger(trigger))
+          self.goNext($(this).attr('steps'));
       });
 
-      container.find('[wizard=back]').click(function() {
-        self.goBack();
-      });
+      container.find('[wizard=back]').click(function() { self.goBack(); });
     },
     
     at: function(index)
@@ -73,32 +84,32 @@
       return this;
     },
     
-    goNext: function(steps) {
+    goNext: function(steps) 
+    {
       steps = steps==undefined? 1: parseInt(steps);
       this.stack.push(steps);
-      console.log(this.index,steps);
       this.currentPage().hide();
       this.index += steps;
       this.currentPage().show();
       return this;
     },
     
-    goBack: function() {
+    goBack: function() 
+    {
       var index = 0;
       $.each(this.stack, function(i, v) {
         index += v;
       });
-         
-      index -= this.stack.pop();
-      this.pages.eq(this.index).hide();
-      this.index = index;
+      
+      this.currentPage().hide();
+      this.index -= this.stack.pop();
+      this.currentPage().show();
       return this;
     },
-
-    close: function() 
+    
+    close: function()
     {
-      this.pages.eq(this.index).hide();
-      window.location.href = this.options.lastUrl;
+      window.location.href = this.options.url;
     }
   })
 }) (jQuery);
