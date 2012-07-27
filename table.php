@@ -60,6 +60,7 @@ class table
     if (!is_null($fields)) $this->set_fields($fields);
     $this->row_count = 0;
     $this->page_size = $page_size;
+    $this->actions = array();
   }
   
   function set_callback($callback)
