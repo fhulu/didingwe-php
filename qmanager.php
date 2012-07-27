@@ -242,15 +242,15 @@ class qmanager
     //todo: allow for multiple number of the same worker type
     //todo: check that we don't exceed number of instances allowed
     list($option, $filter) = $msg->arguments;
-    global $db;
-    $sql = qmanager::get_control_sql($msg);
+    global $db;   
+    $sql = qmanager::get_control_sql($msg);   
     
     $self = $this;
     $db->each($sql, function($index, $row) use (&$self) {
       list($id, $provider_id, $type, $name, $program, $capacity, $max_instances) = $row;
-      if (isset($self->providers[$type] && isset($self->providers[$type][$provider_id] 
-        && sizeof($self->providers[$type][$provider_id]->workers) >= $max_instances)) {
-        log::warn("Cannot have more than $info->max_instances of type $info->type");
+      if (isset($self->providers[$type]) && isset($self->providers[$type][$provider_id]) 
+        && sizeof($self->providers[$type][$provider_id]) >= $max_instances) {
+        log::warn("Cannot have more than $max_instances of type $type");
         return;
       }
       
@@ -330,10 +330,10 @@ class qmanager
       }
       
       if (!$found_free) {
-        if (sizeof($provider->workers) < $provider->max_instances)) {
+        if (sizeof($provider->workers) < $provider->max_instances) {
           log::warn("No worker of type $type available to process the work, please reconfigure to allow for additional workers");
           //todo: schedule message to go after 5 minutes
-          qmanager::schedule(
+          //qmanager::schedule(
         }
         else {
           qmanager::start($provider->name);
