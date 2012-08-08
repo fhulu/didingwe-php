@@ -388,8 +388,6 @@ HEREDOC;
     if (!is_null($sql)) {
       $this->sql = $sql;
       if (!is_array($sql)) {
-        if ($this->flags & (self::FILTERABLE | self::SORTABLE))
-          $this->sql = "select * from ($sql) tmp";
         if ($this->flags & self::FILTERABLE) 
           $this->set_filters();
         if ($this->flags & self::SORTABLE)
