@@ -108,7 +108,7 @@ class user
       If you have not requested this, please inform the System Adminstrator.<br><br>
       Your One Time Password is : <br><b>$otp</b>. ";
     $subject = "One Time Password";
-    $headers = "from: donotreply@gct.fpb.gov.za\r\n";
+    $headers = "from: donotreply@fpb.org.za\r\n";
     $headers .= "MIME-Version: 1.0\r\n";
     $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
     mail($email, $subject, $message, $headers);
@@ -248,7 +248,7 @@ class user
     //todo: send email and/or sms
     $message = "Your One Time Password is $otp";
     $subject = "One Time Password";
-    $headers = "from: donotreply@gct.fpb.gov.za";
+    $headers = "from: donotreply@fpb.org.za";
     log::debug("Sending OTP email to $subject");
     $mail_sent = mail($email, $subject, $message, $headers);
       
