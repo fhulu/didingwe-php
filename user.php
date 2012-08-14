@@ -246,9 +246,14 @@ class user
     }
 
     //todo: send email and/or sms
-    $message = "Your One Time Password is $otp";
+    $message = "Good day <br><br>Below is your one time password, required to continue with your application.
+				Your One Time Password is <b>$otp</b>.<br><br>
+				Regards<br>
+				Customer Operations";
     $subject = "One Time Password";
-    $headers = "from: donotreply@fpb.org.za";
+	$headers = "MIME-Version: 1.0\r\n";
+    $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
+    $headers .= "from: donotreply@fpb.org.za";
     log::debug("Sending OTP email to $subject");
     $mail_sent = mail($email, $subject, $message, $headers);
       
