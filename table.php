@@ -375,6 +375,7 @@ HEREDOC;
   {
     $conjuctor .= ' where (';
     foreach($this->request as $key=>$value) {
+      $key = str_replace('~', '.', $key);
       if ($key[0] == '_' || $key == 'a' || $key == 'PHPSESSID') continue;
       $this->sql .= " $conjuctor $key like '%$value%'";
       $conjuctor = "and";
@@ -390,22 +391,24 @@ HEREDOC;
       if (!is_array($sql)) {
         if ($this->flags & self::FILTERABLE) 
           $this->set_filters();
-        if ($this->flags & self::SORTABLE)
-          $this->sql .= " order by `$this->sort_field` $this->sort_order";
+        if ($this->flags & self::SORTABLE) 
+          $this->sql .= " order by ". str_replace('~','.',$this->sort_field). " $this->sort_order";
         if ($this->flags & self::PAGEABLE)
           $this->sql = 'select SQL_CALC_FOUND_ROWS ' . substr($this->sql, 6) . " limit $this->page_offset, $this->page_size";
         global $db;
-        $rows = $db->read($this->sql, MYSQL_ASSOC);
-        if ($this->flags & self::PAGEABLE) {
-          $this->row_count = $db->read_one_value('select found_rows()');
-        }
+        $rows = $db->read($this->sql, MYSQLI_ASSOC);
         
         $empty = sizeof($rows) == 0;
         if (!$empty ) {
-          $this->field_names = array_keys($rows[0]);
+          foreach ($db->fields as $field) {
+            $this->field_names[] = $field->table.'~'.$field->orgname;
+          }
           if (is_null($this->fields)) $this->set_fields($this->field_names);
         }
-      }
+        if ($this->flags & self::PAGEABLE) {
+          $this->row_count = $db->read_one_value('select found_rows()');
+        }
+     }
       else {
         $rows = $sql;
         if (is_null($this->fields)) $this->set_fields($rows[0]);
