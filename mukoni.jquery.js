@@ -247,4 +247,5 @@ $.fn.load = function(url, options, callback)
 $.fn.loadOptions = function(url, options, callback)
 {
   this.html('<option>loading...</option>').loadHtml(url, options, callback);
+  return this;
 }
