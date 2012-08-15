@@ -11,7 +11,7 @@ class db_exception extends Exception {
 
 class db
 {
-  var $handle;
+  var $mysqli;
   var $dbname;
   var $user;
   var $passwd;
@@ -20,6 +20,7 @@ class db
   var $error;
   var $id;
   var $row;
+  var $fields;
 
 
   function __construct($dbname,$user,$passwd,$hostname="localhost")
@@ -35,16 +36,15 @@ class db
  {
     if ($this->connected()) return;
     log::debug("MySQL connect to $this->hostname with user $this->user");
-    $this->handle = mysql_connect($this->hostname,$this->user,$this->passwd, $newlink);
-    if (!$this->handle) throw new db_exception("Could not connect to '$this->dbname' :" . mysql_error());
-    @mysql_select_db($this->dbname, $this->handle);// or throw new db_exception(mysql_error());
+    $this->mysqli = new mysqli($this->hostname,$this->user,$this->passwd, $this->dbname);
+    if ($this->mysqli->connect_errno) throw new db_exception("Could not connect to '$this->dbname' :" . $this->mysqli->connect_error);
     log::debug("User $this->user connected to MySQL on $this->hostname");
   }
 
   function disconnect()
   {
-    mysql_close($this->handle);
-    $this->handle = null;
+    $this->mysqli->close();
+    $this->mysqli = null;
     log::debug("User $this->user disconnected to MySQL on $this->hostname");
   }
   
@@ -68,27 +68,28 @@ class db
     if ($start=='') $start = 0;
     if ($max_rows > 0) $q .= " limit $start, $max_rows";
     log::debug("SQL: $q");
-    $this->result = mysql_query($q, $this->handle);
-    if (!$this->result) throw new db_exception("SQL='$q', ERROR=".mysql_error());
+    $this->result = $this->mysqli->query($q);
+    if (!$this->result) throw new db_exception("SQL='$q', ERROR=".$this->mysqli->error);
+    $this->fields = $this->result->fetch_fields();
   }
 
   function send($q) { return $this->exec($q); }
 
   function row_valid() { return $this->row != null; }
 
-  function get_row($fetch_type=MYSQL_BOTH) { $this->row = mysql_fetch_array($this->result, $fetch_type); }
+  function get_row($fetch_type=MYSQLI_BOTH) { $this->row = $this->result->fetch_array($fetch_type); }
 
-  function more_rows($fetch_type=MYSQL_BOTH)
+  function more_rows($fetch_type=MYSQLI_BOTH)
   {
     $this->get_row($fetch_type);
     return $this->row_valid();
   }
 
-  function exists($q, $fetch_type=MYSQL_BOTH, $max_rows = 0)
+  function exists($q, $fetch_type=MYSQLI_BOTH, $max_rows = 0)
   {
     $this->exec($q, $max_rows);
 
-    $this->row = mysql_fetch_array($this->result, $fetch_type);
+    $this->row = $this->result->fetch_array($fetch_type);     
     if (!$this->row) return false;
 
     $this->id = $this->row[0];
@@ -98,7 +99,7 @@ class db
   function insert($q)
   {
     $this->exec($q);
-    $this->id = mysql_insert_id();
+    $this->id = $this->mysqli->insert_id;
     return $this->id;
   }
 
@@ -110,7 +111,7 @@ class db
 
   function field_count()
   {
-    return mysql_num_fields($this->result);
+    return $this->result->field_count;
   }
 
   static function connect_default()
@@ -122,13 +123,13 @@ class db
     }
   }
 
-  function read($sql, $fetch_type=MYSQL_BOTH, $max_rows=0, $start=0)
+  function read($sql, $fetch_type=MYSQLI_BOTH, $max_rows=0, $start=0)
   {
     $rows = array();
     $this->each($sql, function($index, $row) use (&$rows) {
       $rows[] = $row;
-    }, array('fetch'=>$fetch_type, 'size'=>max_rows, 'start'=>$start));
-
+    }, array('fetch'=>$fetch_type, 'size'=>$max_rows, 'start'=>$start));
+    
     return $rows;
   }
 
@@ -138,16 +139,16 @@ class db
       $start = (int)$options['start'];
       $size = (int)$options['size'];
       $fetch = (int)$options['fetch'];
-      if ($fetch == '') $fetch = MYSQL_NUM;
+      if ($fetch == '') $fetch = MYSQLI_NUM;
     }
     else {
       $start = $size = 0;
-      $fetch = MYSQL_NUM;
+      $fetch = MYSQLI_NUM;
     }
     $this->exec($sql, $size, $start);
     $index = 0;
     
-    while (($row = mysql_fetch_array($this->result, $fetch))) {
+    while (($row = $this->result->fetch_array( $fetch))) {
       if ($callback($index, &$row)===false) break;
       ++$index;
     }
@@ -167,13 +168,13 @@ class db
 
   function page_names($sql, $size, $start=0, $callback=null, $options=null)
   {
-    $options['fetch'] = MYSQL_ASSOC;
+    $options['fetch'] = MYSQLI_ASSOC;
     return $this->page($sql, $size, $start, $callback, $options);
   }
   
   function page_indices($sql, $size, $start=0, $callback=null, $options=null)
   {
-    $options['fetch'] = MYSQL_ROW;
+    $options['fetch'] = MYSQLI_ROW;
     return $this->page($sql, $size, $start, $callback, $options);
   }
 
@@ -182,11 +183,11 @@ class db
   {
     $this->exec($sql);
     $rows = array();
-    while (($row = mysql_fetch_row($this->result))) $rows[] = $row[$column_idx];
+    while (($row = $this->result->fetch_row())) $rows[] = $row[$column_idx];
     return $rows;
   }
 
-  function read_one($sql, $fetch_type=MYSQL_BOTH)
+  function read_one($sql, $fetch_type=MYSQLI_BOTH)
   {
     $rows = db::read($sql, $fetch_type, 1);
     return $rows[0];
@@ -195,13 +196,13 @@ class db
   function read_one_value($sql)
   {
     $this->exec($sql);
-    $row = mysql_fetch_row($this->result);
+    $row = $this->result->fetch_row();
     return $row[0];
   }
 
   function json($sql, $max_rows=0) 
   {
-    return json_encode($this->read($sql, MYSQL_ASSOC, $max_rows));
+    return json_encode($this->read($sql, MYSQLI_ASSOC, $max_rows));
   }
   
   function lineage(&$values, $key, $parent_key, $table, $other='')
