@@ -70,7 +70,8 @@ class db
     log::debug("SQL: $q");
     $this->result = $this->mysqli->query($q);
     if (!$this->result) throw new db_exception("SQL='$q', ERROR=".$this->mysqli->error);
-    $this->fields = $this->result->fetch_fields();
+    if ($this->result !== true)
+     $this->fields = $this->result->fetch_fields();
   }
 
   function send($q) { return $this->exec($q); }
