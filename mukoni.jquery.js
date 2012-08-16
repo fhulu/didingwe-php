@@ -249,3 +249,25 @@ $.fn.loadOptions = function(url, options, callback)
   this.html('<option>loading...</option>').loadHtml(url, options, callback);
   return this;
 }
+
+$.fn.loadChildren = function(url, data, callback)
+{
+  var self = this;
+  $.getJSON(url, data, function(result) {
+    $.each(result, function(key, val) {
+      var filter = "#"+key+",[name='"+key+"']";
+      self.find(filter).each(function() {
+        if ($(this).is("a")) {
+          var proto = $(this).attr('proto')==undefined? '': $(this).attr('proto');
+          $(this).attr('href', proto+val);
+        }
+        else if ($(this).attr('value') === undefined)
+          $(this).text(val);
+        else
+          $(this).val(val);
+      });
+    });
+    if (callback != undefined) callback(result);
+  });
+  return this;
+}
