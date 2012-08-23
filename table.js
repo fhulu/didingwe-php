@@ -216,7 +216,7 @@
       var url = is_new? body.attr('adder'): body.attr('save');
       if (url == undefined || url == '') return;
       
-      $.send(unescape(url), {data: data}, function(result) {
+      $.send(unescape(url), {data: data, method: self.options.method}, function(result) {
         if (!row.hasAttr('new') || !body.hasAttr('key')) return true;
         row.attr(key, result);
         row.find("[key]").html(result);
@@ -231,7 +231,7 @@
       if (key != undefined && url != undefined && url != '') {        
         var data = { };
         data[key] = row.attr(key);
-        $.get(url, data);
+         $.send(unescape(url), {data: data, method: self.options.method});
       }
       row.remove();
     },
