@@ -275,7 +275,8 @@
  
       var body = this.element.find("tbody");
       var key = body.attr('key');
-      parent.find(".actions div").filter('not([title=edit],[title=save],[title=delete]').click(function() {
+      
+      parent.find(".actions div").filter('not([title=edit],[title=save],[title=delete])').click(function() {
         var row = $(this).parent().parent();
         var action = $(this).attr('title');
         action = action.replace(' ','_');
@@ -283,7 +284,7 @@
         data[key] = row.attr(key);
         self.element.trigger('action', [action, row, data]);
         self.element.trigger(action, [row, data]);
-      });
+      }); 
       parent.find(".actions div[title=edit]").click(function() { self._edit_row($(this)); });
       parent.find(".actions div[title=save]").click(function() { self._save_row($(this)); });
       parent.find(".actions div[title=delete]").click(function() { self.deleteRow($(this).parent().parent()); });
@@ -329,12 +330,12 @@
       $.send(this.options.url, {data: this.data, method: self.options.method}, function(data) {
         self.result = $(data);
         self.show_header();
-        self.update('tbody');
-        self._bind_paging();
-        self._bind_titles();
-        self._bind_actions();
+        self.update('tbody'); 
+        self._bind_paging(); 
+        self._bind_titles(); 
+        self._bind_actions(); 
         self._adjust_actions_width(); 
-        self.element.trigger('refresh');
+        self.element.trigger('refresh'); 
       });
       return this;
     },
