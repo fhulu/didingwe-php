@@ -271,3 +271,21 @@ $.fn.loadChildren = function(url, data, callback)
   });
   return this;
 }
+
+$(function(){
+    $.each(["show","hide", "toggleClass", "addClass", "removeClass"], function(){
+        var _oldFn = $.fn[this];
+        $.fn[this] = function(){
+            var hidden = this.find(":hidden").add(this.filter(":hidden"));
+            var visible = this.find(":visible").add(this.filter(":visible"));
+            var result = _oldFn.apply(this, arguments);
+            hidden.filter(":visible").each(function(){
+                $(this).triggerHandler("show");
+            });
+            visible.filter(":hidden").each(function(){
+                $(this).triggerHandler("hide");
+            });
+            return result;
+        }
+    });
+});
