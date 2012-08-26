@@ -62,10 +62,10 @@ class menu
       $name = $item['name'];
       $title = $item['description'];
       $toplevel = ($level == 0 && $this->level0 != '');
-      if (!($this->flags & self::LINKS)) $onclick = " onclick=\"location.href='$url'\"";
+      if (!($this->flags & self::LINKS)) $onclick = " onclick='location.href=\"$url\"'";
       if ($toplevel) echo "<$this->level0$onclick>\n";
       if ($this->flags & self::LINKS) 
-        echo "<a href='$url' title='$title'>$name</a>\n";
+        echo "<a href=\"$url\" title=\"$title\">$name</a>\n";
       else
         echo $name;
       menu::show_subitems($item['id'], $functions, $level+1);
