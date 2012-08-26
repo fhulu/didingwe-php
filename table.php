@@ -90,19 +90,21 @@ class table
   function set_saver($url)
   {
     $this->flags |= self::EDITABLE;
-    $this->actions[] = 'edit|save='.urlencode($url);
+    $url = urlencode($url);
+    $this->actions[] = "edit|save='$url'";
   }
   
   function set_deleter($url)
   {
     $this->flags |= self::DELETABLE;
-    $this->actions[] = "delete=".urlencode($url);
+    $url = urlencode($url);
+    $this->actions[] = "delete='$url'";
   }
 
   function set_adder($url)
   {
     $this->flags |= self::ADDABLE;
-    $this->add_url = $url;
+    $this->add_url = urlencode($url);
   }
   
   function set_key($key)
