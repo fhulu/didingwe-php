@@ -251,7 +251,7 @@ class user
 				Regards<br>
 				Customer Operations";
     $subject = "One Time Password";
-	$headers = "MIME-Version: 1.0\r\n";
+    $headers = "MIME-Version: 1.0\r\n";
     $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
     $headers .= "from: donotreply@fpb.org.za";
     log::debug("Sending OTP email to $subject");
