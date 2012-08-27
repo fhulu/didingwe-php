@@ -51,6 +51,16 @@ function load_div($div)
   if (strpos($page, '?') === false && file_exists($page)) {
     require_once($page);
   }
+    catch (user_exception $exception) {
+      log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
+      require_once('breach.php');
+    }
+    catch (Exception $exception)
+    {
+      log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
+      require_once('error.php');
+    }
+  }
   echo "</div>\n";
 }
 
@@ -84,8 +94,10 @@ init_div('footer');
 
     <script type='text/javascript' src='jquery/min.js'></script>
     <script type='text/javascript' src='jquery/ui-min.js'></script>
-    <script type='text/javascript' src='../common/dom.js'></script>
-    <script type="text/javascript" src="../common/ajax.js"></script> 
+    <script type='text/javascript' src='common/dom.js'></script>
+    <script type="text/javascript" src="common/ajax.js"></script> 
+    <script type="text/javascript" src='common/mukoni.jquery.js'></script> 
+    <script type="text/javascript" src='common/mukoni.jquery-ui.js'></script> 
  </head>
   
   <body>
