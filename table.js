@@ -275,8 +275,7 @@
  
       var body = this.element.find("tbody");
       var key = body.attr('key');
-      
-      parent.find(".actions div").filter('not([title=edit],[title=save],[title=delete])').click(function() {
+      parent.find(".actions div").filter(':not([title=edit],[title=save],[title=delete])').click(function() {
         var row = $(this).parent().parent();
         var action = $(this).attr('title');
         action = action.replace(' ','_');
