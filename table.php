@@ -131,8 +131,8 @@ class table
   function set_actions($actions)
   {
     if (!is_array($actions)) 
-      $actions = explode(',',$actions);
-    $this->actions = $actions;
+      $this->actions = explode(',',$actions);
+    else $this->actions = $actions;
   }
   
   function set_fields($fields)
@@ -275,7 +275,7 @@ HEREDOC;
           if (!$has_subfields) {
             echo "<tr class=titles>\n";
             $has_subfields = true;
-        }
+          }
           echo "<th>$sub_field</th>";
         }
         ++$i;
