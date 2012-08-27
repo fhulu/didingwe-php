@@ -49,6 +49,7 @@ function load_div($div)
   $page = $_SESSION[$div];
   echo "<div id='$div'>";
   if (strpos($page, '?') === false && file_exists($page)) {
+    try {
     require_once($page);
   }
     catch (user_exception $exception) {
