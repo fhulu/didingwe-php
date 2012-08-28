@@ -227,11 +227,11 @@
     {
       var body = this.element.find("tbody");
       var key = body.attr('key');
-      var url = body.attr('deleter');
+      var url = body.attr('delete');
       if (key != undefined && url != undefined && url != '') {        
         var data = { };
         data[key] = row.attr(key);
-         $.send(unescape(url), {data: data, method: self.options.method});
+        $.send(unescape(url), {data: data, method: this.options.method});
       }
       row.remove();
     },
@@ -335,7 +335,7 @@
         self._bind_actions(); 
         self._adjust_actions_width(); 
         self.element.trigger('refresh'); 
-      });
+      }); 
       return this;
     },
     
@@ -375,7 +375,7 @@
       
       return editor;
     },
-    
+     
     _reset_editor: function(editor)
     {
       editor.find('*').val('');
@@ -388,7 +388,7 @@
       if (this.filter != null) {
         this._reset_editor(this.filter);
         this.filter.show();
-      }
+      } 
       else {
         this.filter = this._create_editor('filter', '<th></th>');
         this.filter.insertAfter(this.element.find('.titles'));
