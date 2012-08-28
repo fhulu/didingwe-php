@@ -393,8 +393,13 @@ HEREDOC;
       if (!is_array($sql)) {
         if ($this->flags & self::FILTERABLE) 
           $this->set_filters();
-        if ($this->flags & self::SORTABLE) 
-          $this->sql .= " order by ". str_replace('~','.',$this->sort_field). " $this->sort_order";
+        if ($this->flags & self::SORTABLE)  {
+          if ($this->sort_field[0] == '~')
+            $field = substr($this->sort_field,1);
+          else
+            $field = str_replace('~','.',$this->sort_field);
+          $this->sql .= " order by $field $this->sort_order";
+        }
         if ($this->flags & self::PAGEABLE)
           $this->sql = 'select SQL_CALC_FOUND_ROWS ' . substr($this->sql, 6) . " limit $this->page_offset, $this->page_size";
         global $db;
