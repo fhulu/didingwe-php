@@ -374,7 +374,7 @@ class user
   static function update_role($request)
   {
     $id = $request['id'];
-    $role = $request['role'];
+    $role = $request['r~name'];
     user::audit('update_role', id, $role);
     
     global $db, $session;
@@ -474,7 +474,7 @@ class user
     $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE);
     $table->set_heading("Manage Users");
     $table->set_key('id');
-    $table->set_saver("/?a=user/update");
+    $table->set_saver("/?a=user/update_role");
     $table->set_options($request);
     $table->show($sql);
   }
@@ -484,7 +484,7 @@ class user
     user::verify('track_reg');
     global $session;
     $user_id = $session->user->id;
-    $headings = array('~Time','First Name', 'Last Name', 'Email', 'Action');
+    $headings = array('~Time','~First Name', '~Last Name', '~Email', '~Action');
     $table = new table($headings,table::TITLES | table::ALTROWS | table::FILTERABLE);
     
     $table->set_heading("Registration Status History");
