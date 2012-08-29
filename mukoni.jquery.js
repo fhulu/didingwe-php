@@ -8,27 +8,33 @@ $.fn.hasAttr = function(name)
   return this.attr(name) !== undefined;
 }
 
+$.fn.updateEnableOnSet = function(controls)
+{
+  var self = this;
+  var set = 0;
+  var mandatory = $(controls).filter(':visible').filter(':not([optional])');
+  var total = mandatory.length;
+  mandatory.each(function() {
+    if ($(this).attr('type') == 'radio') {
+      if ($(this).is(':checked')) {
+        var name = $(this).attr('name');
+        total -= mandatory.filter('[name='+name+']').length - 1;
+        ++set;
+      }
+    }
+    else if ($(this).val() != '') ++set;
+  });
+  self.prop('disabled', set < total);
+}
+
 $.fn.enableOnSet = function(controls, events)
 {
-  this.attr('disabled','disabled');
+  this.updateEnableOnSet(controls);
   controls = $(controls).filter('input,select,textarea')
   if (events === undefined) events = '';
   var self = this;
   controls.bind('keyup input cut paste click change '+events, function() {
-    var set = 0;
-    var mandatory = controls.filter(':visible').filter(':not([optional])');
-    var total = mandatory.length;
-    mandatory.each(function() {
-      if ($(this).attr('type') == 'radio') {
-        if ($(this).is(':checked')) {
-          var name = $(this).attr('name');
-          total -= mandatory.filter('[name='+name+']').length - 1;
-          ++set;
-        }
-      }
-      else if ($(this).val() != '') ++set;
-    });
-    self.prop('disabled', set < total);
+    self.updateEnableOnSet(controls);
   });
   return this;
 }
