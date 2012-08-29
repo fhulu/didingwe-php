@@ -459,6 +459,15 @@ class user
     echo select::add_db("select code, name from mukonin_audit.role where code not in('unreg','base')");
   }
   
+    static function delete($request)
+  {
+    $id =  $request[id];
+    //user::audit('manage_questions', $number, "delete");
+    
+    global $db; 
+    $sql = "Update mukonin_audit.user set active=0 where id=$id";
+    $db->exec($sql);
+  }
   static function manage($request)
   {  
     user::verify('manage_users');
@@ -468,13 +477,14 @@ class user
     $sql = "select id, u.create_time, email_address, first_name, last_name, r.name role  
       from mukonin_audit.user u, mukonin_audit.user_role ur, mukonin_audit.role r
       where u.id=ur.user_id and r.code = ur.role_code 
-      and partner_id = $partner_id and r.program_id = ". config::$program_id;    
+      and partner_id = $partner_id and active=1 and r.program_id = ". config::$program_id;    
             
     $titles = array('#id','~Time', '~Email Address|edit','~First Name|edit','~Last Name|edit','Role|edit=list:user/roles');
     $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE);
     $table->set_heading("Manage Users");
     $table->set_key('id');
     $table->set_saver("/?a=user/update_role");
+    $table->set_deleter('/?a=user/delete');
     $table->set_options($request);
     $table->show($sql);
   }
