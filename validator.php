@@ -190,7 +190,7 @@ class validator
     log::debug("VALIDATE $this->name=$this->value ".implode(',',$funcs));
     if ($this->value == '') {
       if (in_array('optional', $funcs)) return true;      
-      return $this->error("!$title must be provided.");
+      return $this->error("!$this->title must be provided.");
     }
     foreach($funcs as $func) {
       if ($func == 'optional') continue;
