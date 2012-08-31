@@ -12,11 +12,13 @@ class validator
   var $title;
   var $value;
   var $error_cb;
+  var $optional;
   function __construct($request=null, $table=null, $conn=null, $error_cb='validator::cout')
   {
     $this->error_cb = $error_cb;
     $this->table = $table;
     $this->request = is_null($request)? $_REQUEST: $request;
+    $this->optional = false;
     
     global $db;
     $this->db = is_null($conn)? $db: $conn;
