@@ -1,6 +1,7 @@
 <?php
 
 require_once('db.php');
+require_once('session.php');
 
 class table_field
 {
@@ -26,6 +27,7 @@ class table
   const EDITABLE = 0x0400;
   const DELETABLE = 0x800;
   const ADDABLE = 0x1000;
+  const EXPORTABLE = 0x2000;
 
   var $fields;
   var $symbols;
@@ -52,6 +54,7 @@ class table
   var $delete_url;
   var $add_url;
   var $actions;
+  var $export_file;
   function __construct($fields=null, $flags=0, $callback=null)
   {
     $this->flags = $flags;
@@ -111,6 +114,7 @@ class table
   {
     $this->key_field = $key;
   }
+ 
   function set_expandable($key=null)
   {
     $this->flags |= self::EXPANDABLE;
@@ -118,6 +122,11 @@ class table
       $this->set_key($key);
   }
   
+  function set_exportable($file_name)
+  {
+    $this->flags |= self::EXPORTABLE;
+    $this->export_file = $file_name;
+  }
   function set_options($request)
   {
     $this->request = $request;
@@ -180,7 +189,11 @@ class table
       if ($this->flags & self::FILTERABLE) $this->show_filter();
     }
     else {
-      if ($this->flags & self::ADDABLE) echo "<div class=adder></div>";
+      if ($this->flags & self::ADDABLE) echo "<div class=adder title='Add'></div>";
+      if ($this->flags & self::EXPORTABLE) {
+        $url = $this->curPageURL(). "&_action=export";
+        echo "<a class=exporter title='Export' href='$url'></a>";
+      }
     }
     if ($this->flags & self::PAGEABLE) $this->show_paging();
     echo"</th></tr>\n";
@@ -198,6 +211,18 @@ class table
         <button nav=next>></button>
       </div>
 HEREDOC;
+  }
+  
+  function curPageURL() {
+    $pageURL = 'http';
+    if ($_SERVER["HTTPS"] == "on") { $pageURL .= "s";}
+    $pageURL .= "://";
+    if ($_SERVER["SERVER_PORT"] != "80") {
+      $pageURL .= $_SERVER["SERVER_NAME"].":".$_SERVER["SERVER_PORT"].$_SERVER["REQUEST_URI"];
+    } else {
+      $pageURL .= $_SERVER["SERVER_NAME"].$_SERVER["REQUEST_URI"];
+    }
+    return $pageURL;
   }
   
   function show_filter()
@@ -385,12 +410,12 @@ HEREDOC;
     if ($conjuctor == "and") $this->sql .= ')';
   }
   
-  
   function show($sql = null)
   {
+    
     if (!is_null($sql)) {
-      $this->sql = $sql;
       if (!is_array($sql)) {
+        $this->sql = $sql;
         if ($this->flags & self::FILTERABLE) 
           $this->set_filters();
         if ($this->flags & self::SORTABLE)  {
@@ -399,6 +424,10 @@ HEREDOC;
           else
             $field = str_replace('~','.',$this->sort_field);
           $this->sql .= " order by $field $this->sort_order";
+          if ($this->request['_action'] == 'export') {
+            $this->export();
+            return $this;
+          }
         }
         if ($this->flags & self::PAGEABLE)
           $this->sql = 'select SQL_CALC_FOUND_ROWS ' . substr($this->sql, 6) . " limit $this->page_offset, $this->page_size";
@@ -443,12 +472,71 @@ HEREDOC;
       foreach($rows as $row) $this->show_row($row, $index++);
     } 
     if ($this->flags & self::TOTALS) $this->show_totals();
-    if ($this->flags & (self::PAGEABLE | self::ADDABLE)) $this->show_headerfooter("footer");
+    if ($this->flags & (self::PAGEABLE | self::ADDABLE | self::EXPORTABLE)) $this->show_headerfooter("footer");
     echo "</tbody>\n</table>\n";
   }
   
-  function load($sql)
+  static function cell_name($col, $row)
   {
+    return chr($col+65).$col;
+  }
+  function export()
+  {
+    require_once '../PHPExcel/Classes/PHPExcel.php';
+    global $db;
+    $rows = $db->exec($this->sql);
+
+    if ($db->result !== true ) {
+      foreach ($db->fields as $field) {
+        $this->field_names[] = $field->table.'~'.$field->orgname;
+      }
+      if (is_null($this->fields)) $this->set_fields($this->field_names);
+    }
+    
+    $excel = new PHPExcel();
+    global $session;
+    $user = $session->user->first_name ." ".$session->user->last_name;
+    $excel->getProperties()->setCreator($user)
+							 ->setLastModifiedBy($user)
+							 ->setTitle($this->heading)
+							 ->setSubject($this->heading)
+							 ->setDescription($this->heading)
+							 ->setKeywords($this->heading)
+							 ->setCategory($this->heading);
+
+    
+    $sheet = $excel->setActiveSheetIndex(0);
+    $col = 0;
+    $fields = $this->fields;
+    foreach($this->symbols as $symbol) {
+      list($key,$cell) = each($fields);
+      if ($symbol == '#' || ($key == 'actions' && sizeof($this->actions) > 0)) continue;
+      $richText = new PHPExcel_RichText();
+      $text = $richText->createTextRun($cell);
+      $text->getFont()->SetBold(true);
+      $sheet->setCellValueByColumnAndRow($col, 1, $richText);
+      ++$col;
+    }
+    $row = 2;
+    while ($db->more_rows(MYSQLI_ASSOC)) {
+      $col = 0;
+      $data = $db->row;
+      foreach($this->symbols as $symbol) {
+        list($key,$cell) = each($data);
+        if ($symbol == '#' || ($key == 'actions' && sizeof($this->actions) > 0)) continue;
+        $sheet->setCellValueByColumnAndRow($col, $row, $cell);
+        ++$col;
+      }
+      ++$row;
+    }
+    if ($this->export_file == '') $this->export_file = $this->heading;
+    // Redirect output to a client’s web browser (Excel5)
+    header('Content-Type: application/vnd.ms-excel');
+    header("Content-Disposition: attachment;filename=\"$this->export_file\".xls");
+    header('Cache-Control: max-age=0');
+
+    $objWriter = PHPExcel_IOFactory::createWriter($excel, 'Excel5');
+    $objWriter->save('php://output');    
   }
 }
 ?>
