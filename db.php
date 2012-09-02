@@ -71,14 +71,14 @@ class db
     $this->result = $this->mysqli->query($q);
     if (!$this->result) throw new db_exception("SQL='$q', ERROR=".$this->mysqli->error);
     if ($this->result !== true)
-     $this->fields = $this->result->fetch_fields();
+      $this->fields = $this->result->fetch_fields();
   }
 
   function send($q) { return $this->exec($q); }
 
   function row_valid() { return $this->row != null; }
 
-  function get_row($fetch_type=MYSQLI_BOTH) { $this->row = $this->result->fetch_array($fetch_type); }
+  function get_row($fetch_type=MYSQLI_BOTH) { return $this->row = $this->result->fetch_array($fetch_type); }
 
   function more_rows($fetch_type=MYSQLI_BOTH)
   {
