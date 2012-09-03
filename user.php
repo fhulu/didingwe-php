@@ -254,7 +254,7 @@ class user
     $headers = "MIME-Version: 1.0\r\n";
     $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
     $headers .= "from: donotreply@fpb.org.za";
-    log::debug("Sending OTP email to $subject");
+    log::debug("Sending OTP email to $email");
     $mail_sent = mail($email, $subject, $message, $headers);
       
   }
@@ -408,11 +408,11 @@ class user
   
   static function verify_internal($request)
   {
-    $email = $request[email];
+   /* $email = $request[email];
     if (config::$program_id == 3 && !preg_match('/@(fpb\.(org|gov)\.za|mukoni\.co\.za)$/i', $email)) {
       echo "!Application not yet released to the public. An announcement will be made soon.";
       return false;
-    }
+    }*/
     return true;
   }
   
