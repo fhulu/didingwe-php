@@ -165,26 +165,22 @@
       });
     },
     
-    _edit_row: function(button)
+    editRow: function(row)
     {
-      var row = button.parent().parent();
-      if (!this.element.trigger('edit', [row])) return this;
-
       this.showEditor(row);
       
       var self = this;
+      var button = row.find(".actions div[title=edit]");
       button.attr('title', 'save').unbind('click');
-      button.click(function() { self._save_row(button); });
+      button.click(function() { self._trigger_action(button); });
     },
     
-    _save_row: function(button)
+    saveRow: function(row)
     {
-      var row = button.parent().parent();
-      if (!this.element.trigger('save', [row])) return this;
-      
       var self = this;
+      var button = row.find(".actions div[title=save]");
       button.attr('title', 'edit').unbind('click');
-      button.click(function() { self._edit_row(button); }); 
+      button.click(function() { self.editRow(row); }); 
       
       var body = self.element.find("tbody");
       var data = { };
@@ -223,7 +219,7 @@
       });
     },
     
-    deleteRow: function(row)
+   deleteRow: function(row)
     {
       var body = this.element.find("tbody");
       var key = body.attr('key');
@@ -264,6 +260,19 @@
       this.showEditor(row);
     },
     
+    _trigger_action: function(button)
+    {
+      var body = this.element.find("tbody");
+      var key = body.attr('key');
+      var row = button.parent().parent();
+      var action = button.attr('title');
+      action = action.replace(' ','_');
+      var data = {};
+      data[key] = row.attr(key);
+      this.element.trigger('action', [action, row, data]);
+      this.element.trigger(action, [row, data]);      
+    },
+    
     _bind_actions: function(adder)
     {
       var self = this;
@@ -273,20 +282,13 @@
       else 
         parent = adder;
  
-      var body = this.element.find("tbody");
-      var key = body.attr('key');
-      parent.find(".actions div").filter(':not([title=edit],[title=save],[title=delete])').click(function() {
-        var row = $(this).parent().parent();
-        var action = $(this).attr('title');
-        action = action.replace(' ','_');
-        var data = {};
-        data[key] = row.attr(key);
-        self.element.trigger('action', [action, row, data]);
-        self.element.trigger(action, [row, data]);
+      parent.find(".actions div[title]").click(function() {
+        self._trigger_action($(this));
       }); 
-      parent.find(".actions div[title=edit]").click(function() { self._edit_row($(this)); });
-      parent.find(".actions div[title=save]").click(function() { self._save_row($(this)); });
-      parent.find(".actions div[title=delete]").click(function() { self.deleteRow($(this).parent().parent()); });
+
+      this.element.on('edit', function(event,row) { self.editRow(row); });
+      this.element.on('save', function(event,row) { self.saveRow(row); });
+      this.element.on('delete', function(event,row) {  self.deleteRow(row); });
     },
 
     
