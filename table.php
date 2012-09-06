@@ -50,8 +50,6 @@ class table
   var $sort_order;
   var $key_field;
   var $request;
-  var $save_url;
-  var $delete_url;
   var $add_url;
   var $actions;
   var $export_file;
@@ -137,11 +135,11 @@ class table
       $this->set_sorting($request['_sort'], $request['_order']);    
   }
    
-  function set_actions($actions)
+  function set_row_actions($actions)
   {
     if (!is_array($actions)) 
-      $this->actions = explode(',',$actions);
-    else $this->actions = $actions;
+      $actions = explode(',',$actions);
+    $this->actions = array_merge($actions, $this->actions);
   }
   
   function set_fields($fields)
@@ -310,7 +308,7 @@ HEREDOC;
     if ($has_subfields) echo "\n</tr>";
   }
  
-  function show_actions($actions)
+  function show_row_actions($actions)
   {
     echo "<td class=actions>\n";
     if (!is_array($actions)) $actions = explode(',',$actions);
@@ -353,7 +351,7 @@ HEREDOC;
       }
       if ($key == 'actions' && sizeof($this->actions) > 0) {
         $actions_shown = true;
-        $this->show_actions($row_data['actions']);
+        $this->show_row_actions($row_data['actions']);
       }
       else 
         echo "<td>$cell</td>";
@@ -532,11 +530,24 @@ HEREDOC;
     if ($this->export_file == '') $this->export_file = $this->heading;
     // Redirect output to a client’s web browser (Excel5)
     header('Content-Type: application/vnd.ms-excel');
-    header("Content-Disposition: attachment;filename=\"$this->export_file\".xls");
+    header("Content-Disposition: attachment;filename=\"$this->export_file.xls");
     header('Cache-Control: max-age=0');
 
     $objWriter = PHPExcel_IOFactory::createWriter($excel, 'Excel5');
     $objWriter->save('php://output');    
+  }
+  
+  static function remove_prefixes($request,$separator='~')
+  {
+    $replace  = $request;
+    foreach ($request as $key=>$value) {
+      list($prefix,$col) = explode($separator,$key);
+      if ($col == '')
+        $replace[$prefix] = $value;
+      else
+        $replace[$col] = $value;
+    }
+    return $replace;
   }
 }
 ?>
