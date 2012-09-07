@@ -104,6 +104,10 @@ class table
     $value = urlencode($value);
     $this->actions[$action] = $value;
   }
+  function set_user_action($action, $value='')
+  {
+    $this->actions[$action] = $value;
+  }
 
   function set_saver($url)
   {
@@ -135,7 +139,7 @@ class table
   
   function set_exportable($file_name)
   {
-    $this->set_action(self::EXPORTABLE, 'export', $file_name);
+    $this->set_action(self::EXPORTABLE, 'export', "$file_name|Export to Excel");
   }
   function set_options($request)
   {
@@ -212,18 +216,15 @@ class table
       if ($this->flags & self::FILTERABLE) $this->show_filter();
     }
     else {
-      echo "<div class=actions>";/*
-      if ($this->flags & self::EXPORTABLE) {
-        $url = $this->curPageURL(). "&_action=export";
-        echo "<a class=exporter title='Export' href='$url'></a>";
-      }*/
-      foreach(array_keys($this->actions) as $action) {
-        echo "<div title='$action' ";
+      echo "<div class=actions>";
+      foreach($this->actions as $action=>$value) {
+        echo "<div action='$action' ";
         if ($action == 'export') {
           $url = $this->curPageURL(). "&_action=export";
           echo "url='$url'";
         }
-        echo "></div>";
+        list($value, $desc) = explode('|', $value);
+        echo " title = '$desc'></div>";
       }
       echo "</div>";
     }
@@ -290,7 +291,7 @@ HEREDOC;
     $display = $this->flags & self::TITLES? '': " style='display: none;'";
     echo "<tr class=titles$display>\n\t";
     if ($this->flags & self::CHECKBOXES) {
-      echo "<th rowspan=$this->title_rowspan><input type='checkbox' name=checkall title='Check all items'/></th>\n";
+      echo "<th rowspan=$this->title_rowspan><input type='checkbox' name=checkall action=checkall title='Check all items'/></th>\n";
     }
 
     $i = 0;    
@@ -350,9 +351,12 @@ HEREDOC;
       $actions = explode(',',$actions);
     else
       $actions = array_keys ($actions);
-    foreach($actions as $action) {
+    foreach($actions as $action=>$value) {
       if ($action[0] == '#') continue;
-      echo "<div title='$action'></div>\n";
+      if (is_numeric($action)) $action = $value;
+      list($value, $desc) = explode('|', $value);
+      if ($desc=='') $desc = $value;
+      echo "<div action='$action' title='$desc'></div>\n";
     }
     echo "</td>\n";
   }
@@ -373,7 +377,7 @@ HEREDOC;
  
     echo "<tr$attr>\n";
     if ($this->flags & self::CHECKBOXES) 
-      echo "\t<td><input type='checkbox' name='checkrow' /></td>";
+      echo "\t<td><input type='checkbox' action='checkrow' /></td>";
     reset($row_data);
     $show_expand = strpos($attr, ' expandable') !== false;
     $actions_shown = false;
@@ -409,7 +413,7 @@ HEREDOC;
     $span = ($this->flags & self::CHECKBOXES)?1:0;
     $title = "Total";
 
-    echo "<tr>\n";
+    echo "<tr class=totals>\n";
 
     foreach($this->symbols as $symbol) {
       if ($symbol == '#') continue;
@@ -496,6 +500,7 @@ HEREDOC;
     
     foreach(array_merge($this->row_actions, $this->actions) as $name=>$value) {
       if($name[0] == '#') $name = substr($name, 1);
+      list($value) = explode('|', $value);
       $options .= " $name='$value'";
     }
     echo "<tbody $options>\n";
