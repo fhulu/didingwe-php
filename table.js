@@ -232,7 +232,7 @@
       row.remove();
     },
     
-    addRow: function(button)
+    addRow: function()
     {
       if (this.editor == null)
         this.editor = this._create_editor('edit', '<td></td>');
@@ -250,16 +250,23 @@
     
       var actions = row.children().last();
       actions.addClass('actions');
-      actions.html("<div edit=on></div><div delete></div>");
+      actions.html("<div title=save></div><div title=delete></div>");
       
+      var button = body.find(".actions div[title=add]");
       if (button !== undefined) 
-        row.insertBefore(button.parent().parent());
+        row.insertBefore(button.parent().parent().parent());
       else
         body.append(row);
       this._bind_actions(row);
       this.showEditor(row);
     },
     
+    exportData: function()
+    {
+      var button = this.element.find('.actions [title=export]');
+      window.location.href = unescape(button.attr('url'));
+    },
+   
     _trigger_action: function(button)
     {
       var body = this.element.find("tbody");
@@ -277,11 +284,11 @@
     {
       var self = this;
       var parent = this.element;
-      if  (adder == undefined) 
+/*      if  (adder == undefined) 
         self.element.find(".adder").click(function() { self.addRow($(this)); });
       else 
         parent = adder;
- 
+ */
       parent.find(".actions div[title]").click(function() {
         self._trigger_action($(this));
       }); 
@@ -289,6 +296,8 @@
       this.element.on('edit', function(event,row) { self.editRow(row); });
       this.element.on('save', function(event,row) { self.saveRow(row); });
       this.element.on('delete', function(event,row) {  self.deleteRow(row); });
+      this.element.on('add', function() { self.addRow(); });
+      this.element.on('export', function() { self.exportData(); });
     },
 
     
