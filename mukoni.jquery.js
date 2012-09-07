@@ -267,7 +267,7 @@ $.fn.setChildren = function(result)
         $(this).attr('href', proto+val);
       }
       else if ($(this).attr('value') === undefined)
-        $(this).text(val);
+        $(this).html(val);
       else
         $(this).val(val);
     });
