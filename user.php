@@ -497,7 +497,7 @@ class user
     $headings = array('~Time','~First Name', '~Last Name', '~Email', '~Action');
     $table = new table($headings,table::TITLES | table::ALTROWS | table::FILTERABLE);
     
-    $table->set_heading("Registration Status History");
+    $table->set_heading("User Registration Status History");
     $table->set_options($request);
     $table->show("select t.create_time,  u.first_name, u.last_name, u.email_address,f.name
       from mukonin_audit.trx t 
