@@ -170,16 +170,16 @@
       this.showEditor(row);
       
       var self = this;
-      var button = row.find(".actions div[title=edit]");
-      button.attr('title', 'save').unbind('click');
+      var button = row.find(".actions div[action=edit]");
+      button.attr('action', 'save').unbind('click');
       button.click(function() { self._trigger_action(button); });
     },
     
     saveRow: function(row)
     {
       var self = this;
-      var button = row.find(".actions div[title=save]");
-      button.attr('title', 'edit').unbind('click');
+      var button = row.find(".actions div[action=save]");
+      button.attr('action', 'edit').unbind('click');
       button.click(function() { self.editRow(row); }); 
       
       var body = self.element.find("tbody");
@@ -207,9 +207,9 @@
       var is_new = row.hasAttr('new');
       // remove delete button if not specified for the form
       if (is_new && !body.hasAttr('save')) 
-          row.find(".actions div[delete]").remove();
+          row.find(".actions div[action=delete]").remove();
  
-      var url = is_new? body.attr('adder'): body.attr('save');
+      var url = is_new? body.attr('add'): body.attr('save');
       if (url == undefined || url == '') return;
       
       $.send(unescape(url), {data: data, method: self.options.method}, function(result) {
@@ -250,9 +250,9 @@
     
       var actions = row.children().last();
       actions.addClass('actions');
-      actions.html("<div title=save></div><div title=delete></div>");
+      actions.html("<div action=save></div><div action=delete></div>");
       
-      var button = body.find(".actions div[title=add]");
+      var button = body.find(".actions div[action=add]");
       if (button !== undefined) 
         row.insertBefore(button.parent().parent().parent());
       else
@@ -263,33 +263,36 @@
     
     exportData: function()
     {
-      var button = this.element.find('.actions [title=export]');
+      var button = this.element.find('.actions [action=export]');
       window.location.href = unescape(button.attr('url'));
     },
    
+    checkAll: function()
+    {
+      var check = this.element.find('[action=checkall]').is(':checked');
+      this.element.find('[action=checkrow]').prop('checked', check);
+    },
+    
     _trigger_action: function(button)
     {
       var body = this.element.find("tbody");
       var key = body.attr('key');
-      var row = button.parent().parent();
-      var action = button.attr('title');
+      var row = button.parents('tr').eq(0);
+      var action = button.attr('action');
       action = action.replace(' ','_');
       var data = {};
-      data[key] = row.attr(key);
+      if (key !== undefined) {
+        key = row.attr(key);
+        data[key] = row.attr(key);
+      }
       this.element.trigger('action', [action, row, data]);
       this.element.trigger(action, [row, data]);      
     },
     
-    _bind_actions: function(adder)
+    _bind_actions: function()
     {
       var self = this;
-      var parent = this.element;
-/*      if  (adder == undefined) 
-        self.element.find(".adder").click(function() { self.addRow($(this)); });
-      else 
-        parent = adder;
- */
-      parent.find(".actions div[title]").click(function() {
+      this.element.find("[action]").click(function() {
         self._trigger_action($(this));
       }); 
 
@@ -298,6 +301,7 @@
       this.element.on('delete', function(event,row) {  self.deleteRow(row); });
       this.element.on('add', function() { self.addRow(); });
       this.element.on('export', function() { self.exportData(); });
+      this.element.on('checkall', function() { self.checkAll(); });
     },
 
     
