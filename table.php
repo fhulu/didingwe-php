@@ -52,6 +52,7 @@ class table
   var $request;
   var $add_url;
   var $actions;
+  var $row_actions;
   var $export_file;
   function __construct($fields=null, $flags=0, $callback=null)
   {
@@ -61,6 +62,7 @@ class table
     if (!is_null($fields)) $this->set_fields($fields);
     $this->row_count = 0;
     $this->page_size = $page_size;
+    $this->row_actions = array();
     $this->actions = array();
   }
   
@@ -72,6 +74,7 @@ class table
   function set_heading($heading)
   {
     $this->heading = $heading;
+    if ($this->flags & self::EXPORTABLE ) $this->set_exportable($heading);
   }
   
   function set_paging($size, $offset)
@@ -88,24 +91,34 @@ class table
     $this->sort_order = $order;
   }
   
+  function set_row_action($flag, $action, $value='')
+  {
+    $this->flags |= $flag;
+    $value = urlencode($value);
+    $this->row_actions[$action] = $value;
+  }
+  
+  function set_action($flag, $action, $value='')
+  {
+    $this->flags |= $flag;
+    $value = urlencode($value);
+    $this->actions[$action] = $value;
+  }
+
   function set_saver($url)
   {
-    $this->flags |= self::EDITABLE;
-    $url = urlencode($url);
-    $this->actions[] = "edit|save='$url'";
+    table::set_row_action(self::EDITABLE, 'edit');
+    table::set_row_action(self::EDITABLE, '#save', $url);
   }
   
   function set_deleter($url)
   {
-    $this->flags |= self::DELETABLE;
-    $url = urlencode($url);
-    $this->actions[] = "delete='$url'";
+    $this->set_row_action(self::DELETABLE, 'delete', $url);
   }
 
   function set_adder($url)
   {
-    $this->flags |= self::ADDABLE;
-    $this->add_url = urlencode($url);
+    $this->set_action(self::ADDABLE, 'add', $url);
   }
   
   function set_key($key)
@@ -122,8 +135,7 @@ class table
   
   function set_exportable($file_name)
   {
-    $this->flags |= self::EXPORTABLE;
-    $this->export_file = $file_name;
+    $this->set_action(self::EXPORTABLE, 'export', $file_name);
   }
   function set_options($request)
   {
@@ -139,7 +151,18 @@ class table
   {
     if (!is_array($actions)) 
       $actions = explode(',',$actions);
-    $this->actions = array_merge($actions, $this->actions);
+    foreach($actions as $action) {
+      $this->row_actions[$action] = '';
+    }
+  }
+  
+  function set_actions($actions)
+  {
+    if (!is_array($actions)) 
+      $actions = explode(',',$actions);
+    foreach($actions as $action) {
+      $this->actions[$action] = '';
+    }
   }
   
   function set_fields($fields)
@@ -178,8 +201,10 @@ class table
   
   function show_headerfooter($type)
   {
-    $colspan=$this->visible_field_count;
-    if ($this->actions != '') 
+    $colspan = $this->visible_field_count;
+    $colspan += ($this->flags & self::CHECKBOXES)?1:0;
+
+    if (sizeof($this->row_actions) > 0) 
       $colspan++;
     echo "<tr class=$type><th colspan=$colspan>";
     if ($type=='header') {
@@ -187,11 +212,20 @@ class table
       if ($this->flags & self::FILTERABLE) $this->show_filter();
     }
     else {
-      if ($this->flags & self::ADDABLE) echo "<div class=adder title='Add'></div>";
+      echo "<div class=actions>";/*
       if ($this->flags & self::EXPORTABLE) {
         $url = $this->curPageURL(). "&_action=export";
         echo "<a class=exporter title='Export' href='$url'></a>";
+      }*/
+      foreach(array_keys($this->actions) as $action) {
+        echo "<div title='$action' ";
+        if ($action == 'export') {
+          $url = $this->curPageURL(). "&_action=export";
+          echo "url='$url'";
+        }
+        echo "></div>";
       }
+      echo "</div>";
     }
     if ($this->flags & self::PAGEABLE) $this->show_paging();
     echo"</th></tr>\n";
@@ -256,7 +290,7 @@ HEREDOC;
     $display = $this->flags & self::TITLES? '': " style='display: none;'";
     echo "<tr class=titles$display>\n\t";
     if ($this->flags & self::CHECKBOXES) {
-      echo "<th rowspan=$this->title_rowspan><input type='checkbox' name='checkall' onclick='checkAll(\"row[]\", this.checked)'/></th>\n";
+      echo "<th rowspan=$this->title_rowspan><input type='checkbox' name=checkall title='Check all items'/></th>\n";
     }
 
     $i = 0;    
@@ -283,11 +317,12 @@ HEREDOC;
       }
       $this->show_title($key, 1, $colspan, $symbol, $this->field_names[$i]);
     }
-    if (sizeof($this->actions) > 1)
+    if (sizeof($this->row_actions) > 1)
       $this->show_title('', $this->title_rowspan);
       
     echo "</tr>\n\t";
     $i = 0;
+    $has_subfields = false;
     foreach ($this->fields as $key=>&$field) {
       if (is_numeric($key) || is_numeric($field)) {
         ++$i;
@@ -311,14 +346,17 @@ HEREDOC;
   function show_row_actions($actions)
   {
     echo "<td class=actions>\n";
-    if (!is_array($actions)) $actions = explode(',',$actions);
+    if (!is_array($actions)) 
+      $actions = explode(',',$actions);
+    else
+      $actions = array_keys ($actions);
     foreach($actions as $action) {
-      list($action) = explode('=', $action);
-      list($action) = explode('|', $action);
+      if ($action[0] == '#') continue;
       echo "<div title='$action'></div>\n";
     }
     echo "</td>\n";
   }
+  
   function show_row($row_data, $index)
   {
     $attr = '';
@@ -334,11 +372,8 @@ HEREDOC;
       return;
  
     echo "<tr$attr>\n";
-    if ($this->flags & self::CHECKBOXES) {
-      $keys = array_keys($row_data);
-      $value = $row_data[$keys[0]];
-      echo "\t<td><input type='checkbox' name='row[]' value='$value' /></td>";
-    }
+    if ($this->flags & self::CHECKBOXES) 
+      echo "\t<td><input type='checkbox' name='checkrow' /></td>";
     reset($row_data);
     $show_expand = strpos($attr, ' expandable') !== false;
     $actions_shown = false;
@@ -349,7 +384,7 @@ HEREDOC;
         $cell = "<div expand=collapsed />$cell";
         $show_expand = false;
       }
-      if ($key == 'actions' && sizeof($this->actions) > 0) {
+      if ($key == 'actions' && sizeof($this->row_actions) > 0) {
         $actions_shown = true;
         $this->show_row_actions($row_data['actions']);
       }
@@ -359,7 +394,7 @@ HEREDOC;
         $this->totals[$key] += $cell;
       }
     }
-    if (sizeof($this->actions) > 0 && !$actions_shown) $this->show_actions($this->actions);
+    if (sizeof($this->row_actions) > 0 && !$actions_shown) $this->show_row_actions($this->row_actions);
     echo "</tr>\n";
   }
   
@@ -367,7 +402,7 @@ HEREDOC;
   {
     $this->flags |= self::TOTALS;
     if (!is_null($this->callback) && 
-      !call_user_func($this->callback, &$this->totals, &$attr)) {
+      !call_user_func($this->callback, &$this->totals)) {
       return;
     }
       
@@ -379,7 +414,7 @@ HEREDOC;
     foreach($this->symbols as $symbol) {
       if ($symbol == '#') continue;
       if ($symbol == '+' || $symbol == '%') {      
-        list($key,$total) = each($this->totals);
+        list(,$total) = each($this->totals);
         if ($symbol == '%') $total = round($total/$this->row_count,1);
         if ($span != 0) {
           echo "<th colspan=$span>$title</th>\n";
@@ -398,14 +433,15 @@ HEREDOC;
   
   function set_filters()
   {
-    $conjuctor .= ' where (';
+    $conjuctor = '';
+    if (strpos($this->sql, "where ") === FALSE)
+       $conjuctor = ' where ';
     foreach($this->request as $key=>$value) {
       $key = str_replace('~', '.', $key);
       if ($key[0] == '_' || $key == 'a' || $key == 'PHPSESSID') continue;
       $this->sql .= " $conjuctor $key like '%$value%'";
       $conjuctor = "and";
     }
-    if ($conjuctor == "and") $this->sql .= ')';
   }
   
   function show($sql = null)
@@ -449,28 +485,27 @@ HEREDOC;
       }
     }
     $options = '';
-    
-    
+        
     echo "<table>\n<thead$options>\n";
     $this->show_titles();
     if ($this->flags & (self::FILTERABLE | self::PAGEABLE)) $this->show_headerfooter("header");
     echo "</thead>\n";
-    if ($this->flags & self::EDITABLE | self::DELETABLE) {
-      if ($this->key_field != '' ) $options .= " key='$this->key_field'";
+
+    if (sizeof($this->row_actions) > 0 && $this->key_field != '') 
+      $options .= " key='$this->key_field'";
+    
+    foreach(array_merge($this->row_actions, $this->actions) as $name=>$value) {
+      if($name[0] == '#') $name = substr($name, 1);
+      $options .= " $name='$value'";
     }
-    foreach($this->actions as $action) {
-      foreach(explode('|',$action) as $option) {
-        $options .= " $option";
-      }
-    }
-    if ($this->flags & self::ADDABLE) $options .= " adder='$this->add_url'";
     echo "<tbody $options>\n";
     $index = 0;
     if (!$empty) {
       foreach($rows as $row) $this->show_row($row, $index++);
     } 
     if ($this->flags & self::TOTALS) $this->show_totals();
-    if ($this->flags & (self::PAGEABLE | self::ADDABLE | self::EXPORTABLE)) $this->show_headerfooter("footer");
+    if ($this->flags & (self::EXPORTABLE | self::ADDABLE) || sizeof($this->actions) > 0) 
+      $this->show_headerfooter("footer");
     echo "</tbody>\n</table>\n";
   }
   
@@ -508,7 +543,7 @@ HEREDOC;
     $fields = $this->fields;
     foreach($this->symbols as $symbol) {
       list($key,$cell) = each($fields);
-      if ($symbol == '#' || ($key == 'actions' && sizeof($this->actions) > 0)) continue;
+      if ($symbol == '#' || ($key == 'actions' && sizeof($this->row_actions) > 0)) continue;
       $richText = new PHPExcel_RichText();
       $text = $richText->createTextRun($cell);
       $text->getFont()->SetBold(true);
@@ -521,7 +556,7 @@ HEREDOC;
       $data = $db->row;
       foreach($this->symbols as $symbol) {
         list($key,$cell) = each($data);
-        if ($symbol == '#' || ($key == 'actions' && sizeof($this->actions) > 0)) continue;
+        if ($symbol == '#' || ($key == 'actions' && sizeof($this->row_actions) > 0)) continue;
         $sheet->setCellValueByColumnAndRow($col, $row, $cell);
         ++$col;
       }
