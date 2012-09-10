@@ -141,9 +141,15 @@
         self.refresh();
       });
   
-      
-      table.find("td div[expand=collapsed]").click(function() { self.expand(this); });        
-      table.find("td div[expand=expanded]").click(function() { self.collapse(this); });
+      var key = table.find('tbody').attr('key');
+      table.find("td div[expand]").click(function() {
+        var row = $(this).parent().parent();
+        var data = {};
+        data[key] = row.attr('key');
+        table.trigger($(this).attr('expand'), [row, data]);
+      });     
+      table.on("expand", function(event, row) { self.expand(row); });        
+      table.on("collapse", function(event, row) { self.collapse(row); });        
     },
     
     
@@ -428,29 +434,17 @@
       this.refresh();
     },    
     
-    expand: function(button)
+    expand: function(row)
     {
-      var row = $(button).parent().parent();
-      $(button).unbind('click').attr("expand","expanded");
-      var self = this; 
-      if (self.element.trigger('expand', [row]) == false) {
-        $(button).attr("expand","collapsed").click(function() { self.expand(button); });
-        return this;
-      }
-      $(button).click( function() { self.collapse(button); });
+      var button = row.find("td div[expand=expand]");
+      $(button).attr("expand","collapse");
       return this;
     },
     
-    collapse: function(button)
+    collapse: function(row)
     {
-      var row = $(button).parent().parent();
-      $(button).unbind('click').attr("expand","collapsed");
-      var self = this; 
-      if (self.element.trigger('collapse', [row]) == false) {
-        $(button).attr("expand","expanded").click(function() { self.collapse(button); });
-        return this;
-      }
-      $(button).click(function() { self.expand(button); });
+      var button = row.find("td div[expand=collapse]");
+      $(button).attr("expand","expand");
       return this;
     }
   });
