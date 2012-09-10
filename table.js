@@ -141,15 +141,6 @@
         self.refresh();
       });
   
-      var key = table.find('tbody').attr('key');
-      table.find("td div[expand]").click(function() {
-        var row = $(this).parent().parent();
-        var data = {};
-        data[key] = row.attr('key');
-        table.trigger($(this).attr('expand'), [row, data]);
-      });     
-      table.on("expand", function(event, row) { self.expand(row); });        
-      table.on("collapse", function(event, row) { self.collapse(row); });        
     },
     
     
@@ -296,16 +287,19 @@
     _bind_actions: function()
     {
       var self = this;
-      this.element.find("[action]").click(function() {
+      var table = this.element;
+      table.find("[action]").click(function() {
         self._trigger_action($(this));
       }); 
 
-      this.element.on('edit', function(event,row) { self.editRow(row); });
-      this.element.on('save', function(event,row) { self.saveRow(row); });
-      this.element.on('delete', function(event,row) {  self.deleteRow(row); });
-      this.element.on('add', function() { self.addRow(); });
-      this.element.on('export', function() { self.exportData(); });
-      this.element.on('checkall', function() { self.checkAll(); });
+      table.on('edit', function(event,row) { self.editRow(row); });
+      table.on('save', function(event,row) { self.saveRow(row); });
+      table.on('delete', function(event,row) {  self.deleteRow(row); });
+      table.on('add', function() { self.addRow(); });
+      table.on('export', function() { self.exportData(); });
+      table.on('checkall', function() { self.checkAll(); });
+      table.on("expand", function(event, row) { self.expand(row); });        
+      table.on("collapse", function(event, row) { self.collapse(row); });        
     },
 
     
@@ -436,15 +430,15 @@
     
     expand: function(row)
     {
-      var button = row.find("td div[expand=expand]");
-      $(button).attr("expand","collapse");
+      var button = row.find("[action=expand]");
+      $(button).attr("action","collapse");
       return this;
     },
     
     collapse: function(row)
     {
-      var button = row.find("td div[expand=collapse]");
-      $(button).attr("expand","expand");
+      var button = row.find("[action=collapse]");
+      $(button).attr("action","expand");
       return this;
     }
   });

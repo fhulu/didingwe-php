@@ -389,7 +389,7 @@ HEREDOC;
       list($key,$cell) = each($row_data);
       if ($symbol == '#') continue;
       if ($show_expand) {
-        $cell = "<div expand=expand />$cell";
+        $cell = "<div action=expand />$cell";
         $show_expand = false;
       }
       if ($key == 'actions' && sizeof($this->row_actions) > 0) {
