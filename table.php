@@ -94,19 +94,22 @@ class table
   function set_row_action($flag, $action, $value='')
   {
     $this->flags |= $flag;
-    $value = urlencode($value);
-    $this->row_actions[$action] = $value;
+    $this->set_user_row_action($action,$value);
   }
   
   function set_action($flag, $action, $value='')
   {
     $this->flags |= $flag;
-    $value = urlencode($value);
-    $this->actions[$action] = $value;
+    $this->set_user_action($action,$value);
   }
+ 
   function set_user_action($action, $value='')
   {
     $this->actions[$action] = $value;
+  }
+  function set_user_row_action($action, $value='')
+  {
+    $this->row_actions[$action] = $value;
   }
 
   function set_saver($url)
@@ -351,11 +354,12 @@ HEREDOC;
       $actions = explode(',',$actions);
     else
       $actions = array_keys ($actions);
-    foreach($actions as $action=>$value) {
+    foreach($actions as $action) {
       if ($action[0] == '#') continue;
-      if (is_numeric($action)) $action = $value;
-      list($value, $desc) = explode('|', $value);
-      if ($desc=='') $desc = $value;
+      //$value = $this->row_actions[$action];
+      //if (is_numeric($action)) $action = $value;
+      list($value, $desc) = explode('|', $this->row_actions[$action]);
+      if ($desc=='') $desc = $action;
       echo "<div action='$action' title='$desc'></div>\n";
     }
     echo "</td>\n";
