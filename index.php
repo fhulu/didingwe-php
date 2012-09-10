@@ -89,6 +89,19 @@ init_div('footer');
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!--[if IE]>
+    <style>
+    .labels>*
+    {
+      padding-top: 3px;
+      padding-top: 3px;
+    }
+    .controls>select
+    {
+      height: 26px;
+    }
+    </style>
+    <![EndIf]-->
 
     <link href="default.style.css" media="screen" rel="stylesheet" type="text/css" />	
     <link href="jquery/smoothness/ui.css" media="screen" rel="stylesheet" type="text/css" />	
