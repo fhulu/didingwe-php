@@ -212,7 +212,7 @@
       var url = is_new? body.attr('add'): body.attr('save');
       if (url == undefined || url == '') return;
       
-      $.send(unescape(url), {data: data, method: self.options.method}, function(result) {
+      $.send(url, {data: data, method: self.options.method}, function(result) {
         if (!row.hasAttr('new') || !body.hasAttr('key')) return true;
         row.attr(key, result);
         row.find("[key]").html(result);
@@ -227,7 +227,7 @@
       if (key != undefined && url != undefined && url != '') {        
         var data = { };
         data[key] = row.attr(key);
-        $.send(unescape(url), {data: data, method: this.options.method});
+        $.send(url, {data: data, method: this.options.method});
       }
       row.remove();
     },
@@ -272,7 +272,7 @@
       var check = this.element.find('[action=checkall]').is(':checked');
       this.element.find('[action=checkrow]').prop('checked', check);
     },
-    
+ 
     _trigger_action: function(button)
     {
       var body = this.element.find("tbody");
@@ -281,10 +281,8 @@
       var action = button.attr('action');
       action = action.replace(' ','_');
       var data = {};
-      if (key !== undefined) {
-        key = row.attr(key);
+      if (key !== undefined) 
         data[key] = row.attr(key);
-      }
       this.element.trigger('action', [action, row, data]);
       this.element.trigger(action, [row, data]);      
     },
