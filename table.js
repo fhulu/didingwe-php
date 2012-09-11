@@ -166,15 +166,7 @@
     {
       var body = this.element.find("tbody");
       var url = body.attr('edit');
-      if (url != '') {
-        var key = body.attr('key');
-        if (key != undefined) {
-          var sep = url.indexOf('?')>=0?'&':'?';
-          url += sep + key+'='+row.attr(key);
-        }
-        window.location.href = url;
-        return this;
-      }
+      if (url != '') return this;
 
       this.showEditor(row);
       
@@ -283,28 +275,45 @@
       this.element.find('[action=checkrow]').prop('checked', check);
     },
  
-    _trigger_action: function(button)
+    _trigger_action: function(button, key)
     {
-      var body = this.element.find("tbody");
-      var key = body.attr('key');
       var row = button.parents('tr').eq(0);
-      var action = button.attr('action');
-      action = action.replace(' ','_');
       var data = {};
       if (key !== undefined) 
         data[key] = row.attr(key);
+      var action = button.attr('action');
+      action = action.replace(' ','_');
       this.element.trigger('action', [action, row, data]);
       this.element.trigger(action, [row, data]);      
     },
     
     _bind_actions: function()
     {
+      var body = this.element.find("tbody");
+      var key = body.attr('key');
+
       var self = this;
       var table = this.element;
       table.find("[action]").click(function() {
-        self._trigger_action($(this));
+        self._trigger_action($(this),key);
       }); 
 
+      table.find("[action]").each(function() {
+        var action = $(this).attr('action');
+        action = action.replace(' ','_');
+        table.on(action, function(event, row) {
+          if (action == 'save' || action=='delete') return true;
+          var url = body.attr(action);
+          if (url == '') return true;
+          if (key != undefined) {
+            var sep = url.indexOf('?')>=0?'&':'?';
+            url += sep + key+'='+row.attr(key);
+          }
+          window.location.href = url;
+          return true;
+        });
+      });
+      
       table.on('edit', function(event,row) { self.editRow(row); });
       table.on('save', function(event,row) { self.saveRow(row); });
       table.on('delete', function(event,row) {  self.deleteRow(row); });
