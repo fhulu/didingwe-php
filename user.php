@@ -475,12 +475,17 @@ class user
     
     global $session;
     $partner_id = $session->user->partner_id;
-    $sql = "select id, u.create_time, email_address, first_name, last_name, r.name role  
+    $user_id = $session->user->id;
+    $sql = "select id, u.create_time, email_address, first_name, last_name, r.name role,
+              case u.id
+              when $user_id then 'edit'
+              else 'delete,edit' 
+            end as actions
       from mukonin_audit.user u, mukonin_audit.user_role ur, mukonin_audit.role r
       where u.id=ur.user_id and r.code = ur.role_code 
       and partner_id = $partner_id and active=1 and r.program_id = ". config::$program_id;    
             
-    $titles = array('#id','~Time', '~Email Address|edit','~First Name|edit','~Last Name|edit','Role|edit=list:user/roles');
+    $titles = array('#id','~Time', '~Email Address|edit','~First Name|edit','~Last Name|edit','Role|edit=list:user/roles','');
     $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE);
     $table->set_heading("Manage Users");
     $table->set_key('id');
