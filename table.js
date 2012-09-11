@@ -166,7 +166,7 @@
     {
       var body = this.element.find("tbody");
       var url = body.attr('edit');
-      if (url !== undefined) {
+      if (url != '') {
         var key = body.attr('key');
         if (key != undefined) {
           var sep = url.indexOf('?')>=0?'&':'?';
