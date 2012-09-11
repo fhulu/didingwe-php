@@ -408,11 +408,11 @@ class user
   
   static function verify_internal($request)
   {
-   /* $email = $request[email];
+    $email = $request[email];
     if (config::$program_id == 3 && !preg_match('/@(fpb\.(org|gov)\.za|mukoni\.co\.za)$/i', $email)) {
       echo "!Application not yet released to the public. An announcement will be made soon.";
       return false;
-    }*/
+    }
     return true;
   }
   
@@ -438,8 +438,9 @@ class user
             from mukonin_audit.user u, mukonin_audit.user_role ur
             where u.id = ur.user_id and partner_id = $partner_id and role_code = 'admin' ");
     
+    $proto = isset($_SERVER['HTTPS'])?'https':'http';
     foreach($emails as $email) {
-      $link = "http://". $_SERVER['SERVER_NAME'] ."/?c=manage_users"; //todo: get right http address for production
+      $link = "$proto://". $_SERVER['SERVER_NAME'] ."/manage_users.html"; //todo: get right http address for production
       $message = "$requestor would like to register as the user. Please click <a href=\"$link\">here</a> to give access to user.";
       $subject = "Approve Registration";
       $headers  = "MIME-Version: 1.0\r\n";
