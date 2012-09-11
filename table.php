@@ -356,8 +356,6 @@ HEREDOC;
       $actions = array_keys ($actions);
     foreach($actions as $action) {
       if ($action[0] == '#') continue;
-      //$value = $this->row_actions[$action];
-      //if (is_numeric($action)) $action = $value;
       list($value, $desc) = explode('|', $this->row_actions[$action]);
       if ($desc=='') $desc = $action;
       echo "<div action='$action' title='$desc'></div>\n";
