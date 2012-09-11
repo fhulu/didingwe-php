@@ -164,12 +164,25 @@
     
     editRow: function(row)
     {
+      var body = this.element.find("tbody");
+      var url = body.attr('edit');
+      if (url !== undefined) {
+        var key = body.attr('key');
+        if (key != undefined) {
+          var sep = url.indexOf('?')>=0?'&':'?';
+          url += sep + key+'='+row.attr(key);
+        }
+        window.location.href = url;
+        return this;
+      }
+
       this.showEditor(row);
       
       var self = this;
       var button = row.find(".actions div[action=edit]");
       button.attr('action', 'save').unbind('click');
       button.click(function() { self._trigger_action(button); });
+      return this;
     },
     
     saveRow: function(row)
