@@ -304,7 +304,7 @@
         table.on(action, function(event, row) {
           if (action == 'save' || action=='delete') return true;
           var url = body.attr(action);
-          if (url == '') return true;
+          if (url == '' || url===undefined) return true;
           if (key != undefined) {
             var sep = url.indexOf('?')>=0?'&':'?';
             url += sep + key+'='+row.attr(key);
