@@ -140,6 +140,11 @@ class validator
     return $this->regex('/(?=^.{'.$min_length.',}$)((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/', $title);
   }
 
+  function extension($ext)
+  {
+    return $this->regex('/\.'.$ext.'/i', "!$this->title must be of type $ext");
+  }
+  
   function in($table)
   {
     if ($table == '') 
