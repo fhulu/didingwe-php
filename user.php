@@ -318,13 +318,14 @@ class user
   
   static function update($request)
   {
+    $request = table::remove_prefixes($request);
     $fields = array('email_address','first_name', 'last_name', 'otp');
     $values = '';
     foreach($request as $key=>$value) {
       if (in_array($key, $fields))
         $values .= ", $key = '$value'";
     }
-    global $db, $session;
+    global $db;
     $id = $request['id'];
     if ($id == $user_id)
       $function = 'update_own_details';
@@ -383,13 +384,12 @@ class user
     global $db, $session;
     $user = &$session->user;
 
-    $partner_id = $user->partner_id;
     $sql = "update mukonin_audit.user_role set role_code='$role' where user_id = $id";
     $db->exec($sql);
     
     $emails = $db->read_column("select email_address 
                 from mukonin_audit.user 
-                  where id =  $id and partner_id=$partner_id");  
+                  where id = $id");  
                    
 
     $username = $db->read_one_value("select Concat( first_name, ' ', last_name ) AS contact_person from mukonin_audit.user where id = $id ");
@@ -398,14 +398,13 @@ class user
       
      //todo: send email and/or sms
     foreach($emails as $email) {
-        $message = "Dear $username, <br> Administrator would like to inform you that you have been registerd and you role is $user_role.";
-        $subject = "Approve Application";
-        $headers = "MIME-Version: 1.0\r\n";
-        $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
-        $headers .= "from:  $admin";
-        $mail_sent = mail($email, $subject, $message, $headers);
-         log::debug("Sending email  from $admin to $email"); 
-      
+      $message = "Dear $username, <br> Administrator would like to inform you that you have been registerd and you role is $user_role.";
+      $subject = "Approve Application";
+      $headers = "MIME-Version: 1.0\r\n";
+      $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
+      $headers .= "from:  $admin";
+      $mail_sent = mail($email, $subject, $message, $headers);
+      log::debug("Sending email  from $admin to $email: Status: $mail_sent");       
     }
   }
   
@@ -440,18 +439,19 @@ class user
     $emails = $db->read_column("select email_address 
             from mukonin_audit.user u, mukonin_audit.user_role ur
             where u.id = ur.user_id and partner_id = $partner_id and role_code = 'admin' ");
+    $link = "$proto://". $_SERVER['SERVER_NAME'] ."/manage_users.html"; //todo: get right http address for production
 
     //todo: use program's main partner
     if (sizeof($emails) == 0) {
       $emails = $db->read("select email_address
         from mukonin_audit.user u, mukonin_audit.user_role r
         where u.partner_id = 3 and r.user_id = u.id and r.role_code = 'admin'");
+      $link = "$proto://". $_SERVER['SERVER_NAME'] ."/manage_all_users.html"; //todo: get right http address for production
     }  
     
     $proto = isset($_SERVER['HTTPS'])?'https':'http';
     foreach($emails as $email) {
-      $link = "$proto://". $_SERVER['SERVER_NAME'] ."/manage_users.html"; //todo: get right http address for production
-      $message = "$requestor would like to register as the user. Please click <a href=\"$link\">here</a> to give access to user.";
+      $message = "$requestor would like to register as a user of the Online Submission System. Please click <a href=\"$link\">here</a> to give access to user.";
       $subject = "Approve Registration";
       $headers  = "MIME-Version: 1.0\r\n";
       $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
@@ -477,7 +477,7 @@ class user
     global $session;
     $partner_id = $session->user->partner_id;
     $user_id = $session->user->id;
-    $sql = "select id, u.create_time, email_address, first_name, last_name, r.name role,
+    $sql = "select id, u.create_time, u.email_address, u.first_name, u.last_name, r.name role,
               case u.id
               when $user_id then 'edit'
               else 'delete,edit' 
@@ -490,7 +490,7 @@ class user
     $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE);
     $table->set_heading("Manage Users");
     $table->set_key('id');
-    $table->set_saver("/?a=user/update_role");
+    $table->set_saver("/?a=user/update");
     $table->set_deleter('/?a=user/deactivate');
     $table->set_options($request);
     $table->show($sql);
@@ -513,10 +513,10 @@ class user
       and active=1 and r.program_id = ". config::$program_id;    
             
     $titles = array('#id','~Time', '~Company', '~Email Address|edit','~First Name|edit','~Last Name|edit','Role|edit=list:user/roles','');
-    $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE);
+    $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE | table::EXPORTABLE);
     $table->set_heading("Manage All Users");
     $table->set_key('id');
-    $table->set_saver("/?a=user/update_role");
+    $table->set_saver("/?a=user/update");
     $table->set_deleter('/?a=user/deactivate');
     $table->set_options($request);
     $table->show($sql);
@@ -528,7 +528,7 @@ class user
     global $session;
     $user_id = $session->user->id;
     $headings = array('~Time','~First Name', '~Last Name', '~Email', '~Action', '~Role');
-    $table = new table($headings,table::TITLES | table::ALTROWS | table::FILTERABLE);
+    $table = new table($headings,table::TITLES | table::ALTROWS | table::FILTERABLE | table::EXPORTABLE);
     
     $table->set_heading("User Registration Status History");
     $table->set_options($request);
