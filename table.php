@@ -440,14 +440,17 @@ HEREDOC;
   function set_filters()
   {
     $conjuctor = '';
-    if (strpos($this->sql, "where ") === FALSE)
-       $conjuctor = ' where ';
+    $where_pos = strpos($this->sql, "where ");
+    $sql = $where_pos === false? 'where ': '';
     foreach($this->request as $key=>$value) {
       $key = str_replace('~', '.', $key);
       if ($key[0] == '_' || $key == 'a' || $key == 'PHPSESSID') continue;
-      $this->sql .= " $conjuctor $key like '%$value%'";
-      $conjuctor = "and";
+      $sql .= "$key like '%$value%' and ";
     }
+    if ($where_pos === false)
+      $this->sql .= substr($sql, 0, strlen($sql)-5);
+    else $this->sql = substr($this->sql, 0, $where_pos + 6) . $sql . substr($this->sql, $where_pos + 6);
+    
   }
   
   function show($sql = null)
@@ -491,7 +494,8 @@ HEREDOC;
       }
     }
     $options = '';
-        
+    
+    if (sizeof($this->actions) > 0) echo "<form>";
     echo "<table>\n<thead$options>\n";
     $this->show_titles();
     if ($this->flags & (self::FILTERABLE | self::PAGEABLE)) $this->show_headerfooter("header");
@@ -514,6 +518,7 @@ HEREDOC;
     if ($this->flags & (self::EXPORTABLE | self::ADDABLE) || sizeof($this->actions) > 0) 
       $this->show_headerfooter("footer");
     echo "</tbody>\n</table>\n";
+    if (sizeof($this->actions) > 0) echo "</form>";
   }
   
   static function cell_name($col, $row)
