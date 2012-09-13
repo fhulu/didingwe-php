@@ -245,6 +245,8 @@ class user
       $user = user::create($partner_id, $email, $password, $first_name, $last_name, $cellphone, $otp);
     }
 
+    $db->insert("insert into mukonin_audit.trx(user_id, function_code, object_id)
+      values($user->id, 'register', $user->id)");
     //todo: send email and/or sms
     $message = "Good day <br><br>Below is your one time password, required to continue with your application.
 				Your One Time Password is <b>$otp</b>.<br><br>
@@ -285,8 +287,9 @@ class user
   
   static function deactivate()
   {
-    global $db;
     $id = $_REQUEST['id'];
+    user::audit('deactivate', $id);
+    global $db;
     $sql = "delete from mukonin_audit.user_role where user_id=$id";
     $db->exec($sql);
     
@@ -375,7 +378,7 @@ class user
   {
     $id = $request['id'];
     $role = $request['r~name'];
-    user::audit('update_role', id, $role);
+    user::audit('update_role', $id, $role);
     
     global $db, $session;
     $user = &$session->user;
@@ -437,6 +440,13 @@ class user
     $emails = $db->read_column("select email_address 
             from mukonin_audit.user u, mukonin_audit.user_role ur
             where u.id = ur.user_id and partner_id = $partner_id and role_code = 'admin' ");
+
+    //todo: use program's main partner
+    if (sizeof($emails) == 0) {
+      $emails = $db->read("select email_address
+        from mukonin_audit.user u, mukonin_audit.user_role r
+        where u.partner_id = 3 and r.user_id = u.id and r.role_code = 'admin'");
+    }  
     
     $proto = isset($_SERVER['HTTPS'])?'https':'http';
     foreach($emails as $email) {
@@ -459,16 +469,7 @@ class user
   {
     echo select::add_db("select code, name from mukonin_audit.role where code not in('unreg','base')");
   }
-  
-    static function delete($request)
-  {
-    $id =  $request[id];
-    //user::audit('manage_questions', $number, "delete");
     
-    global $db; 
-    $sql = "Update mukonin_audit.user set active=0 where id=$id";
-    $db->exec($sql);
-  }
   static function manage($request)
   {  
     user::verify('manage_users');
@@ -490,26 +491,53 @@ class user
     $table->set_heading("Manage Users");
     $table->set_key('id');
     $table->set_saver("/?a=user/update_role");
-    $table->set_deleter('/?a=user/delete');
+    $table->set_deleter('/?a=user/deactivate');
+    $table->set_options($request);
+    $table->show($sql);
+  }
+
+  static function manage_all($request)
+  {  
+    user::verify('manage_all_users');
+    
+    global $session;
+    $partner_id = $session->user->partner_id;
+    $user_id = $session->user->id;
+    $sql = "select u.id, u.create_time, p.full_name, email_address, first_name, last_name, r.name role,
+              case u.id
+              when $user_id then 'edit'
+              else 'delete,edit' 
+            end as actions
+      from mukonin_audit.user u, mukonin_audit.user_role ur, mukonin_audit.role r, mukonin_audit.partner p
+      where u.id=ur.user_id and r.code = ur.role_code and u.partner_id = p.id
+      and active=1 and r.program_id = ". config::$program_id;    
+            
+    $titles = array('#id','~Time', '~Company', '~Email Address|edit','~First Name|edit','~Last Name|edit','Role|edit=list:user/roles','');
+    $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE);
+    $table->set_heading("Manage All Users");
+    $table->set_key('id');
+    $table->set_saver("/?a=user/update_role");
+    $table->set_deleter('/?a=user/deactivate');
     $table->set_options($request);
     $table->show($sql);
   }
   
-   static function track_reg($request)
+  static function track_reg($request)
   {
     user::verify('track_reg');
     global $session;
     $user_id = $session->user->id;
-    $headings = array('~Time','~First Name', '~Last Name', '~Email', '~Action');
+    $headings = array('~Time','~First Name', '~Last Name', '~Email', '~Action', '~Role');
     $table = new table($headings,table::TITLES | table::ALTROWS | table::FILTERABLE);
     
     $table->set_heading("User Registration Status History");
     $table->set_options($request);
-    $table->show("select t.create_time,  u.first_name, u.last_name, u.email_address,f.name
+    $table->show("select t.create_time, u.first_name, u.last_name, u.email_address,f.name action, r.name role
       from mukonin_audit.trx t 
         join mukonin_audit.user o on t.object_id = o.id
         join mukonin_audit.function f on t.function_code = f.code
         join mukonin_audit.user u on t.user_id = u.id
+        left join mukonin_audit.role r on r.code = t.detail
       where o.id = $user_id"); 
   }
 }
