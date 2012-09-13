@@ -335,7 +335,7 @@ class user
     
     $sql = "update mukonin_audit.user set ". substr($values,1). " where id = $id";
     $db->exec($sql);
-    if (!is_null($request['role']))
+    if (!is_null($request['name']))
       user::update_role($request);
   }
 
@@ -377,8 +377,9 @@ class user
   
   static function update_role($request)
   {
+    $request = table::remove_prefixes($request);
     $id = $request['id'];
-    $role = $request['r~name'];
+    $role = $request['name'];
     user::audit('update_role', $id, $role);
     
     global $db, $session;
