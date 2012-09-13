@@ -443,7 +443,7 @@ class user
 
     //todo: use program's main partner
     if (sizeof($emails) == 0) {
-      $emails = $db->read("select email_address
+      $emails = $db->read_column("select email_address
         from mukonin_audit.user u, mukonin_audit.user_role r
         where u.partner_id = 3 and r.user_id = u.id and r.role_code = 'admin'");
       $link = "$proto://". $_SERVER['SERVER_NAME'] ."/manage_all_users.html"; //todo: get right http address for production
