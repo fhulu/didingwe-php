@@ -440,14 +440,17 @@ HEREDOC;
   function set_filters()
   {
     $conjuctor = '';
-    $where_pos = strpos($this->sql, "where ");
+    $where_pos = stripos($this->sql, "where ");
     $sql = $where_pos === false? 'where ': '';
+    $filtered = false;
     foreach($this->request as $key=>$value) {
       $key = str_replace('~', '.', $key);
       if ($key[0] == '_' || $key == 'a' || $key == 'PHPSESSID') continue;
       $sql .= "$key like '%$value%' and ";
+      $filtered = true;
     }
-    if ($where_pos === false)
+    if (!$filtered) return;
+    if ($where_pos === false) 
       $this->sql .= substr($sql, 0, strlen($sql)-5);
     else $this->sql = substr($this->sql, 0, $where_pos + 6) . $sql . substr($this->sql, $where_pos + 6);
     
