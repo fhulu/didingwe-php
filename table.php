@@ -111,7 +111,7 @@ class table
   {
     $this->row_actions[$action] = $value;
   }
-
+  
   function set_saver($url)
   {
     table::set_row_action(self::EDITABLE, 'edit');
@@ -144,6 +144,12 @@ class table
   {
     $this->set_action(self::EXPORTABLE, 'export', "$file_name|Export to Excel");
   }
+  
+  function set_checker($url)
+  {
+    $this->set_action(self::CHECKBOXES, 'checkrow', $url);
+  }
+  
   function set_options($request)
   {
     $this->request = $request;
@@ -355,7 +361,7 @@ HEREDOC;
     else
       $actions = array_keys ($actions);
     foreach($actions as $action) {
-      if ($action[0] == '#') continue;
+      if ($action[0] == '#' || $action == 'checkrow') continue;
       list($value, $desc) = explode('|', $this->row_actions[$action]);
       if ($desc=='') $desc = $action;
       echo "<div action='$action' title='$desc'></div>\n";
