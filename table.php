@@ -133,11 +133,9 @@ class table
     $this->key_field = $key;
   }
  
-  function set_expandable($key=null)
+  function set_expandable($url=null)
   {
-    $this->flags |= self::EXPANDABLE;
-    if (!is_null($key)) 
-      $this->set_key($key);
+    $this->set_row_action(self::EXPANDABLE, 'expand', $url);
   }
   
   function set_exportable($file_name)
@@ -361,7 +359,7 @@ HEREDOC;
     else
       $actions = array_keys ($actions);
     foreach($actions as $action) {
-      if ($action[0] == '#' || $action == 'checkrow') continue;
+      if ($action[0] == '#' || $action == 'checkrow' || $action == 'expand') continue;
       list($value, $desc) = explode('|', $this->row_actions[$action]);
       if ($desc=='') $desc = $action;
       echo "<div action='$action' title='$desc'></div>\n";
