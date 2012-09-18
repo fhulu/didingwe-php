@@ -275,13 +275,21 @@
       this.element.find('[action=checkrow]').prop('checked', check);
     },
  
-    get: function(action)
+    get_body: function(attr)
     {
       var body = this.element.find("tbody");
-      var key = body.attr('key');
-      return body.attr(action);
+      return body.attr(attr);
     },
     
+    get_key: function()
+    {
+      var data = {};
+      var key = this.get_body('key');
+      if (key !== undefined) 
+        data[key] = row.attr(key);
+      return data;
+    },
+
     checkRow: function(row)
     {
       var url = this.get('checkrow');
@@ -317,8 +325,8 @@
       table.find("[action]").each(function() {
         var action = $(this).attr('action');
         action = action.replace(' ','_');
-        table.on(action, function(event, row) {
-          if (action == 'save' || action=='delete' || action == 'checkrow') return true;
+        table.on(action, function(e, row) {
+          if (action == 'save' || action=='delete' || action == 'checkrow' || action == 'expand' || action == 'collapse') return true;
           var url = body.attr(action);
           if (url == '' || url===undefined) return true;
           if (key != undefined) {
@@ -471,6 +479,11 @@
     {
       var button = row.find("[action=expand]");
       $(button).attr("action","collapse");
+      row.after("<tr class=expanded><td colspan="+row.children().length+"></td></tr>");
+      row = row.next();
+      var url = this.get_body('expand');
+      if (url !== undefined) 
+        row.find('td').loadHtml(url, {data: this.get_key()} );
       return this;
     },
     
@@ -478,6 +491,8 @@
     {
       var button = row.find("[action=collapse]");
       $(button).attr("action","expand");
+      var next = row.next();
+      if (next.attr('class') == 'expanded') next.hide();
       return this;
     }
   });
