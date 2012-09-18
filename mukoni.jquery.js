@@ -282,8 +282,8 @@ $.fn.loadChildren = function(url, data, callback)
   $.getJSON(url, data, function(data) {
     self.setChildren(data);
     result = data;
+    if (callback != undefined) callback(result);
   });
-  if (callback != undefined && result != undefined) callback(result);
   return this;
 }
 
