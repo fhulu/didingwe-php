@@ -77,22 +77,6 @@ table .paging button
   border-radius: 3px;
 }
 
-/*
-table  [nav=prev]
-{
-  text-align: right;
-  background-repeat:no-repeat;
-  background-image:url('prev16.png');
-  background-position:left center; 
-}
-
-table [nav=next]
-{
-  text-align: left;
-  background-image:url('next16.png');
-  background-position: right center; 
-}
-*/
 table th>div,
 table td>div
 {
@@ -207,3 +191,12 @@ table .adder:hover, .exporter:hover
 {
   border: 1px solid blue;
 }
+
+table tr.expanded,
+table tr.expanded td,
+table tr.expanded:hover,
+table tr.expanded:hover td
+{
+  background-color: #FEFED8;
+}
+
