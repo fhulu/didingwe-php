@@ -275,6 +275,22 @@
       this.element.find('[action=checkrow]').prop('checked', check);
     },
  
+    get: function(action)
+    {
+      var body = this.element.find("tbody");
+      var key = body.attr('key');
+      return body.attr(action);
+    },
+    
+    checkRow: function(row)
+    {
+      var url = this.get('checkrow');
+      if (url === undefined || url == '') return; 
+      var id = row.attr('id');
+      var status = row.find('[action=checkrow]').is(':checked')?1:0;
+      $.post(url+'&id='+id+'&status='+status);
+    },
+    
     _trigger_action: function(button, key)
     {
       var row = button.parents('tr').eq(0);
@@ -302,7 +318,7 @@
         var action = $(this).attr('action');
         action = action.replace(' ','_');
         table.on(action, function(event, row) {
-          if (action == 'save' || action=='delete') return true;
+          if (action == 'save' || action=='delete' || action == 'checkrow') return true;
           var url = body.attr(action);
           if (url == '' || url===undefined) return true;
           if (key != undefined) {
@@ -314,14 +330,15 @@
         });
       });
       
-      table.on('edit', function(event,row) { self.editRow(row); });
-      table.on('save', function(event,row) { self.saveRow(row); });
-      table.on('delete', function(event,row) {  self.deleteRow(row); });
+      table.on('edit', function(e,row) { self.editRow(row); });
+      table.on('save', function(e,row) { self.saveRow(row); });
+      table.on('delete', function(e,row) {  self.deleteRow(row); });
       table.on('add', function() { self.addRow(); });
       table.on('export', function() { self.exportData(); });
       table.on('checkall', function() { self.checkAll(); });
-      table.on("expand", function(event, row) { self.expand(row); });        
-      table.on("collapse", function(event, row) { self.collapse(row); });        
+      table.on("expand", function(e, row) { self.expand(row); });        
+      table.on("collapse", function(e, row) { self.collapse(row); }); 
+      table.on("checkrow", function(e, row) { self.checkRow(row); }); 
     },
 
     
