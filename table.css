@@ -192,11 +192,4 @@ table .adder:hover, .exporter:hover
   border: 1px solid blue;
 }
 
-table tr.expanded,
-table tr.expanded td,
-table tr.expanded:hover,
-table tr.expanded:hover td
-{
-  background-color: #FEFED8;
-}
 
