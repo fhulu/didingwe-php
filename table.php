@@ -445,7 +445,7 @@ HEREDOC;
   {
     $conjuctor = '';
     $where_pos = stripos($this->sql, "where ");
-    $sql = $where_pos === false? 'where ': '';
+    $sql = $where_pos === false? ' where ': '';
     $filtered = false;
     foreach($this->request as $key=>$value) {
       $key = str_replace('~', '.', $key);
