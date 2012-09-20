@@ -292,7 +292,7 @@
 
     checkRow: function(row)
     {
-      var url = this.get('checkrow');
+      var url = this.get_body('checkrow');
       if (url === undefined || url == '') return; 
       var id = row.attr('id');
       var status = row.find('[action=checkrow]').is(':checked')?1:0;
