@@ -169,11 +169,12 @@ class validator
     return $this->in($this->table);
   }
 
-  function unique()
+  function unique($table)
   {
     $cb = $this->error_cb;
+    if (is_null($table)) $table = $this->table;
     $this->error_cb = null;
-    if (!$this->exist()) {
+    if (!$this->in($table)) {
       $this->error_cb = $cb;
       return true;
     }
