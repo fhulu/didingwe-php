@@ -281,7 +281,7 @@
       return body.attr(attr);
     },
     
-    get_key: function()
+    get_key: function(row)
     {
       var data = {};
       var key = this.get_body('key');
@@ -480,10 +480,11 @@
       var button = row.find("[action=expand]");
       $(button).attr("action","collapse");
       row.after("<tr class=expanded><td colspan="+row.children().length+"></td></tr>");
+      var data = this.get_key(row);
       row = row.next();
       var url = this.get_body('expand');
       if (url !== undefined) 
-        row.find('td').loadHtml(url, {data: this.get_key()} );
+        row.find('td').loadHtml(url, {method: this.options.method, data: data} );
       return this;
     },
     
