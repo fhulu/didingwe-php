@@ -296,24 +296,17 @@ class user
     $sql = "update  mukonin_audit.user set active=0 where id=$id";
     $db->exec($sql);
    
-   $emails = $db->read_column("select email_address 
-                                from mukonin_audit.user 
-                                where id =  $id and partner_id=$partner_id");  
-                   
-    $username = $db->read_one_value("select Concat( first_name, ' ', last_name ) AS contact_person from mukonin_audit.user where id = $id ");
+    list($email,$username) = $db->read_one_value("select email_address, Concat( first_name, ' ', last_name ) AS contact_person from mukonin_audit.user where id = $id ");
     $admin = "$user->first_name $user->last_name <$user->email>";
     
       
-     //todo: send email and/or sms
-    foreach($emails as $email) {
-        $message = "Dear $username <br> Administrator would like to inform you that your application have been rejected";
-        $subject = "Approve Application";
-        $headers = "MIME-Version: 1.0\r\n";
-        $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
-        $headers .= "from:  $admin";
-        $mail_sent = mail($email, $subject, $message, $headers);
-        log::debug("Sending email to $email");  
-    }       
+    $message = "Dear $username <br> Administrator would like to inform you that your application have been rejected";
+    $subject = "Approve Application";
+    $headers = "MIME-Version: 1.0\r\n";
+    $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
+    $headers .= "from:  $admin";
+    $mail_sent = mail($email, $subject, $message, $headers);
+    log::debug("Sending email to $email: $mail_sent");  
   }
   
   static function update($request)
