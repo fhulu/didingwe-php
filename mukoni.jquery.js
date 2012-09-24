@@ -196,9 +196,11 @@ $.fn.confirm = function(url, options, callback)
   }
   options.async = false;
   var result;
-  this.send(url, options, function(data) { result = data; });
-  if (callback != undefined)
-    callback(result);
+  this.send(url, options, function(data) {
+    if (callback != undefined)
+      callback(data);
+    result = data;
+  });
   if (result === false) return false;
   if (result === undefined) return this;
   result = $.trim(result);
