@@ -26,7 +26,7 @@
     {
       this.row = null;
       this.row_count = 0;
-      this.data = { _offset: 0, _size: 0 } ;
+      this.data = {_offset: 0, _size: 0} ;
       this.result = null;
       this.filter = null;
       this.editor = null;
@@ -173,7 +173,7 @@
       var self = this;
       var button = row.find(".actions div[action=edit]");
       button.attr('action', 'save').unbind('click');
-      button.click(function() { self._trigger_action(button); });
+      button.click(function() {self.trigger_action(button);});
       return this;
     },
     
@@ -182,7 +182,7 @@
       var self = this;
       var button = row.find(".actions div[action=save]");
       button.attr('action', 'edit').unbind('click');
-      button.click(function() { self.editRow(row); }); 
+      button.click(function() {self.editRow(row);}); 
       
       var body = self.element.find("tbody");
       var data = { };
@@ -273,6 +273,17 @@
     {
       var check = this.element.find('[action=checkall]').is(':checked');
       this.element.find('[action=checkrow]').prop('checked', check);
+      var url = this.get_body('checkall');
+      if (url != '') {
+        var key = this.get_body('key');
+        var data = { check: check, keys:''};
+        this.element.find('[action=checkrow]').each(function(){
+          var row = $(this).parents('tr').eq(0);
+          data.keys += ',' + row.attr(key);
+        });
+        data.keys = data.keys.substr(1);
+        $.send(url, {method: 'post', data: data} );
+      }
     },
  
     get_body: function(attr)
@@ -326,7 +337,7 @@
         var action = $(this).attr('action');
         action = action.replace(' ','_');
         table.on(action, function(e, row) {
-          if (action == 'save' || action=='delete' || action == 'checkrow' || action == 'expand' || action == 'collapse') return true;
+          if (action == 'save' || action=='delete' || action == 'checkrow' || action == 'checkall' || action == 'expand' || action == 'collapse') return true;
           var url = body.attr(action);
           if (url == '' || url===undefined) return true;
           if (key != undefined) {
@@ -338,15 +349,15 @@
         });
       });
       
-      table.on('edit', function(e,row) { self.editRow(row); });
-      table.on('save', function(e,row) { self.saveRow(row); });
-      table.on('delete', function(e,row) {  self.deleteRow(row); });
-      table.on('add', function() { self.addRow(); });
-      table.on('export', function() { self.exportData(); });
-      table.on('checkall', function() { self.checkAll(); });
-      table.on("expand", function(e, row) { self.expand(row); });        
-      table.on("collapse", function(e, row) { self.collapse(row); }); 
-      table.on("checkrow", function(e, row) { self.checkRow(row); }); 
+      table.on('edit', function(e,row) {self.editRow(row);});
+      table.on('save', function(e,row) {self.saveRow(row);});
+      table.on('delete', function(e,row) {self.deleteRow(row);});
+      table.on('add', function() {self.addRow();});
+      table.on('export', function() {self.exportData();});
+      table.on('checkall', function() {self.checkAll();});
+      table.on("expand", function(e, row) {self.expand(row);});        
+      table.on("collapse", function(e, row) {self.collapse(row);}); 
+      table.on("checkrow", function(e, row) {self.checkRow(row);}); 
     },
 
     
@@ -471,7 +482,7 @@
     {
       this.filter.hide();
       this.element.find(".filtering").removeAttr('on');
-      this.data = { _offset: 0 };
+      this.data = {_offset: 0};
       this.refresh();
     },    
     
