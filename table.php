@@ -143,9 +143,10 @@ class table
     $this->set_action(self::EXPORTABLE, 'export', "$file_name|Export to Excel");
   }
   
-  function set_checker($url)
+  function set_checker($url, $all_url=null)
   {
     $this->set_action(self::CHECKBOXES, 'checkrow', $url);
+    $this->set_user_action('checkall',$all_url);
   }
   
   function set_options($request)
@@ -225,6 +226,7 @@ class table
     else {
       echo "<div class=actions>";
       foreach($this->actions as $action=>$value) {
+        if ($action == 'checkrow' || $action == 'checkall') continue;
         echo "<div action='$action' ";
         if ($action == 'export') {
           $url = $this->curPageURL(). "&_action=export";
@@ -508,7 +510,7 @@ HEREDOC;
     if ($this->flags & (self::FILTERABLE | self::PAGEABLE)) $this->show_headerfooter("header");
     echo "</thead>\n";
 
-    if (sizeof($this->row_actions) > 0 && $this->key_field != '') 
+    if ($this->key_field != '') 
       $options .= " key='$this->key_field'";
     
     foreach(array_merge($this->row_actions, $this->actions) as $name=>$value) {
