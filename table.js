@@ -167,8 +167,7 @@
       
       var self = this;
       var button = row.find(".actions div[action=edit]");
-      button.attr('action', 'save').unbind('click');
-      button.click(function() {self.trigger_action(button);});
+      button.attr('action', 'save');
       return this;
     },
     
@@ -176,8 +175,7 @@
     {
       var self = this;
       var button = row.find(".actions div[action=save]");
-      button.attr('action', 'edit').unbind('click');
-      button.click(function() {self.editRow(row);}); 
+      button.attr('action', 'edit'); 
       
       var body = self.element.find("tbody");
       var data = { };
