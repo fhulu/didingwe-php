@@ -45,11 +45,6 @@
       return this;
     },
 
-    refresh_header: function(table)
-    {
-      var body_pos = html.indexOf("<tbody");
-      var thead = html.substring(html.indexOf('<thead'));
-    },
     
     update: function(selector, parent)
     {
@@ -223,6 +218,7 @@
     
    deleteRow: function(row)
     {
+      if (!confirm('Are you sure?')) return this;
       var body = this.element.find("tbody");
       var key = body.attr('key');
       var url = body.attr('delete');
@@ -232,6 +228,7 @@
         $.send(url, {data: data, method: this.options.method});
       }
       row.remove();
+      return this;
     },
     
     addRow: function()
