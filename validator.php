@@ -69,7 +69,7 @@ class validator
   
   function za_tax_ref()
   {
-    return $this->regex('/^\d{9}$/');
+    return $this->regex('/^\d{10}$/');
   }
   
   function za_vat()
