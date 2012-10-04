@@ -368,6 +368,22 @@ class user
       values($user->id, '$function', $object_id, $object_code, '$detail')");
   }
   
+  
+  static function audit_trail($request)
+  {
+    user::verify('audit_trail');
+    $headings = array('~Time','~Organisation','~First Name', '~Last Name', '~Email', '~Action', '~Detail');
+    $table = new table($headings,table::TITLES | table::ALTROWS | table::FILTERABLE| table::EXPORTABLE);
+    
+    $table->set_heading("Audit Trail");
+    $table->set_options($request);
+    $table->show("select t.create_time, p.full_name, u.first_name, u.last_name,
+      u.email_address, f.name, t.detail
+      from mukonin_audit.trx t 
+        join mukonin_audit.function f on t.function_code = f.code
+        join mukonin_audit.user u on t.user_id = u.id
+        join mukonin_audit.partner p on u.partner_id = p.id");
+  }   
   static function update_role($request)
   {
     $request = table::remove_prefixes($request);
@@ -429,7 +445,8 @@ class user
     
     $requestor = "$user->first_name $user->last_name <$user->email>";
 
-
+    $proto = isset($_SERVER['HTTPS'])?'https':'http';
+    
     $emails = $db->read_column("select email_address 
             from mukonin_audit.user u, mukonin_audit.user_role ur
             where u.id = ur.user_id and partner_id = $partner_id and role_code = 'admin' ");
@@ -443,7 +460,7 @@ class user
       $link = "$proto://". $_SERVER['SERVER_NAME'] ."/manage_all_users.html"; //todo: get right http address for production
     }  
     
-    $proto = isset($_SERVER['HTTPS'])?'https':'http';
+    
     foreach($emails as $email) {
       $message = "$requestor would like to register as a user of the Online Submission System. Please click <a href=\"$link\">here</a> to give access to user.";
       $subject = "Approve Registration";
