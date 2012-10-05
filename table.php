@@ -446,7 +446,7 @@ HEREDOC;
   function set_filters()
   {
     $conjuctor = '';
-    $where_pos = stripos($this->sql, "where ");
+    $where_pos = strripos($this->sql, "where ");
     $sql = $where_pos === false? ' where ': '';
     $filtered = false;
     foreach($this->request as $key=>$value) {
