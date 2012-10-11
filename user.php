@@ -417,7 +417,7 @@ class user
       For more information please log on to <a href='$proto://submit.fpb.org.za/'>submit.fpb.org.za</a> or call 012 661 0051.<br><br>
         Regards<br>
         $requestor";
-      $subject = "Approve Application";
+      $subject = "Approve Registration";
       $headers = "MIME-Version: 1.0\r\n";
       $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
       $headers .= "from:  $admin";
