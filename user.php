@@ -288,7 +288,8 @@ class user
   static function deactivate()
   {
     $id = $_REQUEST['id'];
-    user::audit('deactivate', $id);
+    list($email,$username) = $db->read_one_value("select email_address, Concat( first_name, ' ', last_name ) from mukonin_audit.user where id = $id ");
+    user::audit('deactivate', $id, "$username($email)");
     global $db;
     $sql = "delete from mukonin_audit.user_role where user_id=$id";
     $db->exec($sql);
@@ -296,11 +297,11 @@ class user
     $sql = "update  mukonin_audit.user set active=0 where id=$id";
     $db->exec($sql);
    
-    list($email,$username) = $db->read_one_value("select email_address, Concat( first_name, ' ', last_name ) AS contact_person from mukonin_audit.user where id = $id ");
+    global $session;
+    $user = $session->user;
     $admin = "$user->first_name $user->last_name <$user->email>";
-    
       
-    $message = "Dear $username <br> Administrator would like to inform you that your application have been rejected <br>For more information please log on to <a href='$proto://submit.fpb.org.za/'>submit.fpb.org.za</a> to track the status of your application or call 012 661 0051.<br><br>
+    $message = "Dear $username <br> Administrator would like to inform you that you have been deactivated <br>For more information please log on to <a href='$proto://submit.fpb.org.za/'>submit.fpb.org.za</a> to track the status of your application or call 012 661 0051.<br><br>
         Regards<br>
         Customer Operations";
     $subject = "Rejected Application";
