@@ -389,6 +389,7 @@ class user
   static function update_role($request)
   {
     global $db, $session;
+    $user = &$session->user;
     $requestor = "$user->first_name $user->last_name <$user->email>";
     $request = table::remove_prefixes($request);
     $id = $request['id'];
@@ -412,8 +413,8 @@ class user
       
      //todo: send email and/or sms
     foreach($emails as $email) {
-      $message = "Dear $username, <br><br> Administrator would like to inform you that you have been registered and you role is $user_role. <br>
-      For more information please log on to <a href='$proto://submit.fpb.org.za/'>submit.fpb.org.za</a> to track the status of your application or call 012 661 0051.<br><br>
+      $message = "Dear $username <br><br> Administrator would like to inform you that you have been registered and you role is $user_role. <br>
+      For more information please log on to <a href='$proto://submit.fpb.org.za/'>submit.fpb.org.za</a> or call 012 661 0051.<br><br>
         Regards<br>
         $requestor";
       $subject = "Approve Application";
