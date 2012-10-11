@@ -323,7 +323,6 @@
         action = action.replace(' ','_');
         var row = $(this).parents('tr').eq(0);
         row.on(action, function() {
-          alert('triggered ' + action);
           if (action == 'save' || action=='delete' || action == 'checkrow' || action == 'checkall' || action == 'expand' || action == 'collapse') return true;
           var url = body.attr(action);
           if (url == '' || url===undefined) return true;
