@@ -45,6 +45,10 @@
       return this;
     },
 
+    ajax: function(url, data, callback)
+    {
+      $.send(url, {data: data, method: this.options.method}, callback);
+    },
     
     update: function(selector, parent)
     {
@@ -165,22 +169,19 @@
 
       this.showEditor(row);
       
-      var self = this;
       var button = row.find(".actions div[action=edit]");
       button.attr('action', 'save');
       return this;
     },
     
-    saveRow: function(row)
+    saveRow: function(row, data)
     {
       var self = this;
-      var button = row.find(".actions div[action=save]");
+      var button = row.find("[action=save]");
       button.attr('action', 'edit'); 
       
       var body = self.element.find("tbody");
-      var data = { };
       var key = body.attr('key');
-      if (key != undefined) data[key] = row.attr(key);
       
       row.children('[edit]').each(function() {
         var name = $(this).attr('edit');
@@ -207,24 +208,19 @@
       var url = is_new? body.attr('add'): body.attr('save');
       if (url == undefined || url == '') return;
       
-      $.send(url, {data: data, method: self.options.method}, function(result) {
-        if (!row.hasAttr('new') || !body.hasAttr('key')) return true;
+      this.ajax(url, data, function(result) {
+        if (!row.hasAttr('new') || key===undefined) return true;
         row.attr(key, result);
         row.find("[key]").html(result);
       });
     },
     
-   deleteRow: function(row)
+   deleteRow: function(row, data)
     {
       if (!confirm('Are you sure?')) return this;
       var body = this.element.find("tbody");
-      var key = body.attr('key');
       var url = body.attr('delete');
-      if (key != undefined && url != undefined && url != '') {        
-        var data = { };
-        data[key] = row.attr(key);
-        $.send(url, {data: data, method: this.options.method});
-      }
+      if (url != undefined && url != '') this.ajax(url, data); 
       row.remove();
       return this;
     },
@@ -277,7 +273,7 @@
           data.keys += ',' + row.attr(key);
         });
         data.keys = data.keys.substr(1);
-        $.send(url, {method: 'post', data: data} );
+        this.ajax(url, data);
       }
     },
  
@@ -296,25 +292,12 @@
       return data;
     },
 
-    checkRow: function(row)
+    checkRow: function(row, data)
     {
       var url = this.get_body('checkrow');
       if (url === undefined || url == '') return; 
-      var id = row.attr('id');
-      var status = row.find('[action=checkrow]').is(':checked')?1:0;
-      $.post(url+'&id='+id+'&status='+status);
-    },
-    
-    _trigger_action: function(button, key)
-    {
-      var row = button.parents('tr').eq(0);
-      var data = {};
-      if (key !== undefined) 
-        data[key] = row.attr(key);
-      var action = button.attr('action');
-      action = action.replace(' ','_');
-      this.element.trigger('action', [action, row, data]);
-      this.element.trigger(action, [row, data]);      
+      data['status'] = row.find('[action=checkrow]').is(':checked')?1:0;
+      this.ajax(url, data);
     },
     
     _bind_actions: function()
@@ -324,14 +307,23 @@
 
       var self = this;
       var table = this.element;
-      table.find("[action]").click(function() {
-        self._trigger_action($(this),key);
-      }); 
-
-      table.find("[action]").each(function() {
+      body.find("tr [action]")
+      .click(function() {
+        var row = $(this).parents('tr').eq(0);
+        var data = {};
+        if (key !== undefined) 
+          data[key] = row.attr(key);
         var action = $(this).attr('action');
         action = action.replace(' ','_');
-        table.on(action, function(e, row) {
+        row.trigger('action', [action, data]);
+        row.trigger(action, [data]);      
+      }) 
+      .each(function() {
+        var action = $(this).attr('action');
+        action = action.replace(' ','_');
+        var row = $(this).parents('tr').eq(0);
+        row.on(action, function() {
+          alert('triggered ' + action);
           if (action == 'save' || action=='delete' || action == 'checkrow' || action == 'checkall' || action == 'expand' || action == 'collapse') return true;
           var url = body.attr(action);
           if (url == '' || url===undefined) return true;
@@ -342,17 +334,18 @@
           window.location.href = url;
           return true;
         });
-      });
+      }); 
       
-      table.on('edit', function(e,row) {self.editRow(row);});
-      table.on('save', function(e,row) {self.saveRow(row);});
-      table.on('delete', function(e,row) {self.deleteRow(row);});
+      body.find('tr')
+        .on('edit', function(e, data) {self.editRow($(this),data);})
+        .on('save', function(e, data) {self.saveRow($(this),data);})
+        .on('delete', function(e, data) {self.deleteRow($(this),data);})
+        .on("expand", function(e, data) {self.expand($(this),data);})        
+        .on("collapse", function(e, data) {self.collapse($(this),data);}) 
+        .on("checkrow", function(e, data) {self.checkRow($(this),data);}); 
       table.on('add', function() {self.addRow();});
       table.on('export', function() {self.exportData();});
       table.on('checkall', function() {self.checkAll();});
-      table.on("expand", function(e, row) {self.expand(row);});        
-      table.on("collapse", function(e, row) {self.collapse(row);}); 
-      table.on("checkrow", function(e, row) {self.checkRow(row);}); 
     },
 
     
@@ -392,7 +385,7 @@
       };
 
       var self = this;
-      $.send(this.options.url, {data: this.data, method: self.options.method}, function(data) {
+      this.ajax(this.options.url, this.data, function(data) {
         self.result = $(data);
         self.show_header();
         self.update('tbody'); 
