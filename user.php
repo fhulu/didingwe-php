@@ -300,8 +300,10 @@ class user
     $admin = "$user->first_name $user->last_name <$user->email>";
     
       
-    $message = "Dear $username <br> Administrator would like to inform you that your application have been rejected";
-    $subject = "Approve Application";
+    $message = "Dear $username <br> Administrator would like to inform you that your application have been rejected <br>For more information please log on to <a href='$proto://submit.fpb.org.za/'>submit.fpb.org.za</a> to track the status of your application or call 012 661 0051.<br><br>
+        Regards<br>
+        Customer Operations";
+    $subject = "Rejected Application";
     $headers = "MIME-Version: 1.0\r\n";
     $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
     $headers .= "from:  $admin";
@@ -372,7 +374,7 @@ class user
   static function audit_trail($request)
   {
     user::verify('audit_trail');
-    $headings = array('~Time','~Organisation','~First Name', '~Last Name', '~Email', '~Action', '~Detail');
+    $headings = array('~Time','~Organisation','~First Name', '~Last Name', '~Email', 'Action', 'Detail');
     $table = new table($headings,table::TITLES | table::ALTROWS | table::FILTERABLE| table::EXPORTABLE);
     
     $table->set_heading("Audit Trail");
@@ -386,6 +388,8 @@ class user
   }   
   static function update_role($request)
   {
+    global $db, $session;
+    $requestor = "$user->first_name $user->last_name <$user->email>";
     $request = table::remove_prefixes($request);
     $id = $request['id'];
     $role = $request['name'];
@@ -408,7 +412,10 @@ class user
       
      //todo: send email and/or sms
     foreach($emails as $email) {
-      $message = "Dear $username, <br> Administrator would like to inform you that you have been registerd and you role is $user_role.";
+      $message = "Dear $username, <br><br> Administrator would like to inform you that you have been registered and you role is $user_role. <br>
+      For more information please log on to <a href='$proto://submit.fpb.org.za/'>submit.fpb.org.za</a> to track the status of your application or call 012 661 0051.<br><br>
+        Regards<br>
+        $requestor";
       $subject = "Approve Application";
       $headers = "MIME-Version: 1.0\r\n";
       $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
@@ -459,6 +466,7 @@ class user
         where u.partner_id = 3 and r.user_id = u.id and r.role_code = 'admin'");
       $link = "$proto://". $_SERVER['SERVER_NAME'] ."/manage_all_users.html"; //todo: get right http address for production
     }  
+    
     
     
     foreach($emails as $email) {
