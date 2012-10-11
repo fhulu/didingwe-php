@@ -170,15 +170,15 @@
       this.showEditor(row);
       
       var button = row.find(".actions div[action=edit]");
-      button.attr('action', 'save');
+      button.attr('action', 'save').attr('title','save');
       return this;
     },
     
     saveRow: function(row, data)
     {
       var self = this;
-      var button = row.find("[action=save]");
-      button.attr('action', 'edit'); 
+      var button = row.find(".actions div[action=save]");
+      button.attr('action', 'edit').attr('title','edit');; 
       
       var body = self.element.find("tbody");
       var key = body.attr('key');
