@@ -375,7 +375,7 @@ class user
   static function audit_trail($request)
   {
     user::verify('audit_trail');
-    $headings = array('~Time','~Organisation','~First Name', '~Last Name', '~Email', 'Action', 'Detail');
+    $headings = array('~Time','~Organisation','~First Name', '~Last Name', '~Email', '~Action', '~Detail');
     $table = new table($headings,table::TITLES | table::ALTROWS | table::FILTERABLE| table::EXPORTABLE);
     
     $table->set_heading("Audit Trail");
