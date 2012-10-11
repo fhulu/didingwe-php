@@ -416,7 +416,7 @@ class user
       $message = "Dear $username <br><br> Administrator would like to inform you that you have been registered and you role is $user_role. <br>
       For more information please log on to <a href='$proto://submit.fpb.org.za/'>submit.fpb.org.za</a> or call 012 661 0051.<br><br>
         Regards<br>
-        $requestor";
+        Administrator";
       $subject = "Approve Registration";
       $headers = "MIME-Version: 1.0\r\n";
       $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
