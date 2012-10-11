@@ -19,7 +19,7 @@
       sortField: null,
       sortOrder: 'asc',
       url: null,
-      method: 'get'
+      method: 'post'
     },
     
     _create: function() 
@@ -307,7 +307,7 @@
 
       var self = this;
       var table = this.element;
-      body.find("tr [action]")
+      table.find("[action]")
       .click(function() {
         var row = $(this).parents('tr').eq(0);
         var data = {};
@@ -335,16 +335,16 @@
         });
       }); 
       
-      body.find('tr')
+      table.find('tr')
         .on('edit', function(e, data) {self.editRow($(this),data);})
         .on('save', function(e, data) {self.saveRow($(this),data);})
         .on('delete', function(e, data) {self.deleteRow($(this),data);})
         .on("expand", function(e, data) {self.expand($(this),data);})        
         .on("collapse", function(e, data) {self.collapse($(this),data);}) 
-        .on("checkrow", function(e, data) {self.checkRow($(this),data);}); 
-      table.on('add', function() {self.addRow();});
-      table.on('export', function() {self.exportData();});
-      table.on('checkall', function() {self.checkAll();});
+        .on("checkrow", function(e, data) {self.checkRow($(this),data);})
+        .on('add', function() {self.addRow();})
+        .on('export', function() {self.exportData();})
+        .on('checkall', function() {self.checkAll();});
     },
 
     
@@ -459,7 +459,10 @@
           delete self.data[name];
         else
           self.data[name] = val;
+        var prev_method = self.options.method;
+        self.options.method = 'get';
         self.refresh();
+        self.options.method = 'post';
       }); 
       
       this.element.find(".filtering").attr('on','');
