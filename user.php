@@ -192,14 +192,15 @@ class user
     return false;
   }
   
-  static function create($partner_id, $email, $password, $first_name, $last_name, $cellphone, $otp)
+  static function create($partner_id, $email, $password,$title, $first_name, $last_name, $cellphone, $otp)
   {
     $program_id = config::$program_id;   
     $password = addslashes($password);
     $first_name = addslashes($first_name);
     $last_name = addslashes($last_name);
-    $sql = "insert into mukonin_audit.user(program_id, partner_id, email_address, password, first_name,last_name, cellphone, otp, otp_time)
-      values($program_id,$partner_id, '$email',password('$password'), '$first_name','$last_name','$cellphone', '$otp', now())";
+    $title = addslashes($title);
+    $sql = "insert into mukonin_audit.user(program_id, partner_id, email_address, password,title, first_name,last_name, cellphone, otp, otp_time)
+      values($program_id,$partner_id, '$email',password('$password'),'$title', '$first_name','$last_name','$cellphone', '$otp', now())";
     
     global $db;
     $id = $db->insert($sql);
@@ -209,7 +210,7 @@ class user
     $password = stripslashes($password);
     $first_name = stripslashes($first_name);
     $last_name = stripslashes($last_name);
-    return new user(array($id, $partner_id, $email, $first_name, $last_name, $cellphone, $otp, $partner_id));
+    return new user(array($id, $partner_id, $email,$title, $first_name, $last_name, $cellphone, $otp, $partner_id));
   }
   
   static function register($request)
@@ -218,6 +219,7 @@ class user
 
     if (!user::check($request)) return;
     $request = db::quote($request);
+    $title = $request[title];
     $first_name = $request[first_name];
     $last_name = $request[last_name];
     $email = $request[email];
@@ -230,7 +232,7 @@ class user
     // First check if email already exists
     global $db;
     if (user::exists($email, 0, false)) {
-      $sql = "update mukonin_audit.user set password=password('$password'), first_name = '$first_name',last_name= '$last_name', cellphone='$cellphone',
+      $sql = "update mukonin_audit.user set password=password('$password'), first_name = '$first_name',last_name= '$last_name',title= '$title', cellphone='$cellphone',
         otp=$otp, otp_time = now(), partner_id = $partner_id where email_address='$email' and program_id = $program_id";
       $db->exec($sql);
       $id = $db->read_one_value("select id from mukonin_audit.user where email_address = '$email' and program_id = $program_id");
@@ -239,10 +241,10 @@ class user
       $password = stripslashes($password);
       $first_name = stripslashes($first_name);
       $last_name = stripslashes($last_name);
-      $user = new user(array($id, $partner_id, $email, $first_name, $last_name, $cellphone, $otp));
+      $user = new user(array($id, $partner_id, $email,$title, $first_name, $last_name, $cellphone, $otp));
     }
     else {
-      $user = user::create($partner_id, $email, $password, $first_name, $last_name, $cellphone, $otp);
+      $user = user::create($partner_id, $email, $password, $title,$first_name, $last_name, $cellphone, $otp);
     }
 
     $db->insert("insert into mukonin_audit.trx(user_id, function_code, object_id)
