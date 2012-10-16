@@ -21,10 +21,11 @@ class user
   var $cellphone;
   var $otp;
   var $roles;
+  var $title;
   var $functions;
   function __construct($data)
   {
-    list($this->id, $this->partner_id, $this->email, $this->first_name, $this->last_name, $this->cellphone) = $data;
+    list($this->id, $this->partner_id, $this->email,$this->title, $this->first_name, $this->last_name, $this->cellphone) = $data;
     $this->reload();
   }
 
@@ -168,7 +169,7 @@ class user
   static function authenticate($email, $passwd)
   {
     $passwd = addslashes($passwd);
-    $sql = "select id, partner_id, email_address, first_name, last_name,attempts from mukonin_audit.user
+    $sql = "select id, partner_id, email_address,title, first_name, last_name,attempts from mukonin_audit.user
      where email_address='$email' and password=password('$passwd') and active=1 and program_id = ". config::$program_id;         
     
     global $db;
@@ -208,6 +209,7 @@ class user
       values($id,'reg')";
     $db->exec($sql);
     $password = stripslashes($password);
+    $title = stripslashes($title);
     $first_name = stripslashes($first_name);
     $last_name = stripslashes($last_name);
     return new user(array($id, $partner_id, $email,$title, $first_name, $last_name, $cellphone, $otp, $partner_id));
