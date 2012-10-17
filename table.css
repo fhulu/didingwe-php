@@ -39,8 +39,8 @@ table tr.alt td
 }
 
 table tr:hover td
-{
-  background-color: #4380d3;
+{/*;#4380d3 */
+  background-color:99cccc;
 } 
 
 
