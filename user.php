@@ -105,9 +105,11 @@ class user
     
     $db->exec("update mukonin_audit.user set otp = '$otp', otp_time = now()
       where email_address='$email' and program_id = " . config::$program_id);
-    $message = "You are currently trying to reset your password. 
-      If you have not requested this, please inform the System Adminstrator.<br><br>
-      Your One Time Password is : <br><b>$otp</b>. ";
+    $message = "Good day<br><br>You are currently trying to reset your password. 
+				If you have not requested this, please inform the System Adminstrator.<br><br>
+				Your One Time Password is : <br><b>$otp</b>. <br><br>
+				Regards<br>
+				Customer Operations";
     $subject = "One Time Password";
     $headers = "from: donotreply@fpb.org.za\r\n";
     $headers .= "MIME-Version: 1.0\r\n";
@@ -476,7 +478,9 @@ class user
     
     
     foreach($emails as $email) {
-      $message = "$requestor would like to register as a user of the Online Submission System. Please click <a href=\"$link\">here</a> to give access to user.";
+      $message = "Good day<br><br>$requestor would like to register as a user of the Online Submission System. Please click <a href=\"$link\">here</a> to give access to user.<br><br>
+				Regards<br>
+				Customer Operations";
       $subject = "Approve Registration";
       $headers  = "MIME-Version: 1.0\r\n";
       $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
