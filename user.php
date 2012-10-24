@@ -434,12 +434,12 @@ class user
   }
   
   static function verify_internal($request)
-  {/*
+  {
     $email = $request[email];
     if (config::$program_id == 3 && !preg_match('/@(fpb\.(org|gov)\.za|mukoni\.co\.za)$/i', $email)) {
       echo "!Application not yet released to the public. An announcement will be made soon.";
       return false;
-    }*/
+    }
     return true;
   }
   
