@@ -184,8 +184,10 @@ class validator
   
   function check($name, $title=null)
   {
-    if (is_null($title)) 
+    if (is_null($title)) {
       $title = str_replace('_', ' ', $name);
+      $title = strtoupper($title[0]).substr($title, 1);
+    }
     $this->name = $name;
     $this->title = $title;
     $this->value = $this->request[$name];
