@@ -317,12 +317,14 @@ class user
     $db->exec("update mukonin_audit.user set active = 1 where id = $id");
   }
   
-  static function deactivate()
+  static function deactivate($request)
   {
-    $id = $_REQUEST['id'];
-    list($email,$username) = $db->read_one_value("select email_address, Concat( first_name, ' ', last_name ) from mukonin_audit.user where id = $id ");
-    user::audit('deactivate', $id, "$username($email)");
     global $db;
+    $id = $request[id];
+    
+    list($email,$username) = $db->read_one("select email_address, Concat( first_name, ' ', last_name ) from mukonin_audit.user where id = $id ");
+    user::audit('deactivate', $id, "$username($email)");
+    
     $sql = "delete from mukonin_audit.user_role where user_id=$id";
     $db->exec($sql);
     
