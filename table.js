@@ -19,7 +19,8 @@
       sortField: null,
       sortOrder: 'asc',
       url: null,
-      method: 'post'
+      method: 'post',
+      data: {}
     },
     
     _create: function() 
@@ -47,7 +48,7 @@
 
     ajax: function(url, data, callback)
     {
-      $.send(url, {data: data, method: this.options.method}, callback);
+      $.send(url, {data: $.extend(this.options.data,data), method: this.options.method}, callback);
     },
     
     update: function(selector, parent)
