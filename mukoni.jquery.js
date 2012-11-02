@@ -126,7 +126,7 @@ $.send = function(url, options, callback)
           progress.box.html('')
             .append(p)
             .show();
-          var timeout = setTimeout(function() { progress.box.fadeOut(2000); }, 8000);
+          var timeout = setTimeout(function() {progress.box.fadeOut(2000);}, 8000);
                    
         }
         else if (progress.box !== undefined) 
@@ -151,7 +151,7 @@ $.fn.send = function(url, options, callback)
   if (options !== undefined)
     options.data = $.extend($(this).values(), options.data);
   else
-    options = { data : $(this).values() };
+    options = {data : $(this).values()};
   return $.send(url, options, callback);  
 }
 
@@ -161,6 +161,7 @@ $.fn.sendOnSet = function(controls, url, options, callback)
   if (options instanceof Function) {
     callback = options;
     options = undefined;
+    this.enableOnSet(controls);
   }
   else if (options !== undefined && options.optional !== undefined)
     this.enableOnSet(controls).filter(':not('+options.optional+')');
@@ -306,3 +307,30 @@ $(function(){
         }
     });
 });
+
+$.urlParam = function(name){
+    var results = new RegExp('[\\?&]' + name + '=([^&#]*)').exec(window.location.href);
+    return results[1] || 0;
+}
+
+$.fn.insertAtCursor = function(myValue) 
+{ 
+  var pos = this.getCursorPosition();
+  var val = this.val();
+  this.val(val.substr(0, pos)+ ' ' +myValue+ ' '+val.substr(pos));
+}
+
+$.fn.getCursorPosition = function() {
+    var el = $(this).get(0);
+    var pos = 0;
+    if('selectionStart' in el) {
+        pos = el.selectionStart;
+    } else if('selection' in document) {
+        el.focus();
+        var Sel = document.selection.createRange();
+        var SelLength = document.selection.createRange().text.length;
+        Sel.moveStart('character', -el.value.length);
+        pos = Sel.text.length - SelLength;
+    }
+    return pos;
+}
