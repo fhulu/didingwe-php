@@ -547,8 +547,8 @@ HEREDOC;
       if (is_null($this->fields)) $this->set_fields($this->field_names);
     }
     
-    $excel = new PHPExcel();
-    global $session;
+    $excel = new PHPExcel();   
+    global $session; 
     $user = $session->user->first_name ." ".$session->user->last_name;
     $excel->getProperties()->setCreator($user)
 							 ->setLastModifiedBy($user)
