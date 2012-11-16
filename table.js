@@ -397,18 +397,22 @@
       }); 
       return this;
     },
-    
-    _create_sub_table: function(col, attr)
+
+   _create_list: function(col, attr)
     {
-    
-    },
-    
-    _create_list: function(col, attr)
-    {
-      var url = '/?a='+attr.substr(attr.indexOf(':')+1);
+      var list = attr.substr(attr.indexOf(':')+1);
       var select = $("<select></select>");
-      select.html(jq_submit(url));
-      col.append(select);
+      var values = list.split(',');
+      if (values.length == 1) {
+        var url = '/?a='+attr.substr(attr.indexOf(':')+1);
+        select.html(jq_submit(url));
+      }
+      else {
+        for (var i=0; i<values.length; ++i) {
+          select.append("<option>"+values[i]+"</option>")
+        }
+      } 
+      col.append(select);      
     },
    
     _create_editor: function(type, col_text)
