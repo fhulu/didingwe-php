@@ -543,7 +543,7 @@ class user
       where u.id=ur.user_id and r.code = ur.role_code 
       and partner_id = $partner_id and active=1 and r.program_id = ". config::$program_id;    
             
-    $titles = array('#id','~Time', '~Email Address|edit','~First Name|edit','~Last Name|edit','Role|edit=list:user/roles','');
+    $titles = array('#id','~Time', '~Email Address','~First Name','~Last Name','Role|edit=list:user/roles','');
     $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE);
     $table->set_heading("Manage Users");
     $table->set_key('id');
