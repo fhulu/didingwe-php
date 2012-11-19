@@ -149,7 +149,7 @@
       if (this.editor == null)
         this.editor = this._create_editor('edit', '<td></td>');
 
-      this.editor.children().each(function(i) {
+      this.editor.find('td').each(function(i) {
         if (!$(this).hasAttr('edit')) return true;
         var td = row.children().eq(i);
         var val = td.html();
@@ -208,9 +208,10 @@
  
       var url = is_new? body.attr('add'): body.attr('save');
       if (url == undefined || url == '') return;
-      
+      if (is_new) data[key] = '';
       this.ajax(url, data, function(result) {
         if (!row.hasAttr('new') || key===undefined) return true;
+        row.removeAttr('new');
         row.attr(key, result);
         row.find("[key]").html(result);
       });
@@ -234,7 +235,7 @@
       var body = this.element.find("tbody");
       var key = body.attr('key');
       var row = $("<tr new></tr>");
-      this.editor.children().each(function() {
+      this.editor.find('td').each(function() {
         var name = $(this).attr('edit');
         if (key != undefined && name == key)
           row.append("<td key></td");
@@ -251,8 +252,8 @@
         row.insertBefore(button.parent().parent().parent());
       else
         body.append(row);
-      this._bind_actions(row);
       this.showEditor(row);
+      this._bind_actions(row);
     },
     
     exportData: function()
@@ -301,14 +302,15 @@
       this.ajax(url, data);
     },
     
-    _bind_actions: function()
+    _bind_actions: function(row)
     {
+      if (row == undefined) 
+        row = this.element.find('tr');
       var body = this.element.find("tbody");
       var key = body.attr('key');
 
       var self = this;
-      var table = this.element;
-      table.find("[action]")
+      row.find("[action]")
       .click(function() {
         var row = $(this).parents('tr').eq(0);
         var data = {};
@@ -334,9 +336,9 @@
           window.location.href = url;
           return true;
         });
-      }); 
+      });
       
-      table.find('tr')
+      row
         .on('edit', function(e, data) {self.editRow($(this),data);})
         .on('save', function(e, data) {self.saveRow($(this),data);})
         .on('delete', function(e, data) {self.deleteRow($(this),data);})
@@ -484,20 +486,38 @@
     expand: function(row)
     {
       var button = row.find("[action=expand]");
-      $(button).attr("action","collapse");
+      if (button !== undefined)
+        $(button).attr("action","collapse");
+      var key = this.get_body('key');
+      var key_value = row.attr(key);
       row.after("<tr class=expanded><td colspan="+row.children().length+"></td></tr>");
-      var data = this.get_key(row);
       row = row.next();
       var url = this.get_body('expand');
-      if (url !== undefined) 
-        row.find('td').loadHtml(url, {method: this.options.method, data: data} );
-      return this;
+      if (url !== undefined) {
+        if (url.indexOf('#') == -1) { 
+          var data = {};
+          data[key] = key_value;
+          row.find('td').loadHtml(url, {method: this.options.method, data: data} );
+          return row;
+        }
+        var detail = $(url).clone();
+        row.find('td').html(detail.html());
+        row.find('input[id]').each(function() {
+          $(this).attr('id', $(this).attr('id')+'_'+key_value);
+        });
+        row.find('input[name]').each(function() {
+          $(this).attr('name', $(this).attr('name')+'_'+key_value);
+        });
+        return row;
+      }
+      return null;
     },
     
     collapse: function(row)
     {
       var button = row.find("[action=collapse]");
-      $(button).attr("action","expand");
+      if (button !== undefined)
+        $(button).attr("action","expand");
       var next = row.next();
       if (next.attr('class') == 'expanded') next.hide();
       return this;
