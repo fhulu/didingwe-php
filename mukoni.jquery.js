@@ -212,11 +212,6 @@ $.fn.confirm = function(url, options, callback)
     }
     return true;
   }
-  else if (result[0] == '!') {
-    alert(result.substr(1));
-    return false;
-  }
-  return this;
 }
 
 $.fn.confirmOnSet = function(controls,url, options, callback)
