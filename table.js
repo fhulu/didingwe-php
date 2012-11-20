@@ -494,20 +494,25 @@
       row = row.next();
       var url = this.get_body('expand');
       if (url !== undefined) {
-        if (url.indexOf('#') == -1) { 
+        if (url.indexOf('#') != 0) { 
           var data = {};
           data[key] = key_value;
           row.find('td').loadHtml(url, {method: this.options.method, data: data} );
           return row;
         }
-        var detail = $(url).clone();
+        var id_sep = url.split(',');
+        var id = id_sep[0];
+        var detail = $(id).clone();
         row.find('td').html(detail.html());
-        row.find('input[id]').each(function() {
-          $(this).attr('id', $(this).attr('id')+'_'+key_value);
-        });
-        row.find('input[name]').each(function() {
-          $(this).attr('name', $(this).attr('name')+'_'+key_value);
-        });
+        if (id_sep.length > 1) {
+          var sep = id_sep[1];
+          row.find('input[id],select[id],textarea[id]').each(function() {
+            $(this).attr('id', $(this).attr('id')+sep+key_value);
+          });
+          row.find('input[name],select[name],textarea[name]').each(function() {
+            $(this).attr('name', $(this).attr('name')+sep+key_value);
+          });
+        }
         return row;
       }
       return null;
