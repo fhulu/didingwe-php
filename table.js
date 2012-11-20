@@ -18,7 +18,7 @@
       pageSize: 0,
       sortField: null,
       sortOrder: 'asc',
-      url: null,
+      url: null, 
       method: 'post',
       data: {}
     },
@@ -160,7 +160,7 @@
           if ($(this).text() == val) $(this).attr("selected","selected");
         });
       });
-    },
+    }, 
     
     editRow: function(row)
     {
