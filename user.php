@@ -348,14 +348,14 @@ class user
   
   static function update($request)
   {
-    $request = table::remove_prefixes($request);
+   /* $request = table::remove_prefixes($request);
     $fields = array('email_address','first_name', 'last_name', 'otp');
     $values = '';
     foreach($request as $key=>$value) {
       if (in_array($key, $fields))
         $values .= ", $key = '$value'";
     }
-    global $db;
+    global $db, $session;
     $id = $request['id'];
     if ($id == $user_id)
       $function = 'update_own_details';
@@ -365,8 +365,8 @@ class user
     
     $sql = "update mukonin_audit.user set ". substr($values,1). " where id = $id";
     $db->exec($sql);
-    if (!is_null($request['name']))
-      user::update_role($request);
+    if (!is_null($request['name']))*/
+      //user::update_role($request);
   }
 
   static function verify($function, $private=true)
@@ -524,7 +524,7 @@ class user
      
   static function roles($request)
   {
-    echo select::add_db("select code, name from mukonin_audit.role where code not in('unreg','base')");
+    echo select::add_db("select code, name from mukonin_audit.role where code not in('unreg','base') and program_id=3");
   }
     
   static function manage($request)
@@ -547,7 +547,7 @@ class user
     $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE);
     $table->set_heading("Manage Users");
     $table->set_key('id');
-    $table->set_saver("/?a=user/update");
+    $table->set_saver("/?a=user/update_role");
     $table->set_deleter('/?a=user/deactivate');
     $table->set_options($request);
     $table->show($sql);
@@ -569,11 +569,11 @@ class user
       where u.id=ur.user_id and r.code = ur.role_code and u.partner_id = p.id
       and active=1 and r.program_id = ". config::$program_id;    
             
-    $titles = array('#id','~Time', '~Company', '~Email Address|edit','~First Name|edit','~Last Name|edit','Role|edit=list:user/roles','');
+    $titles = array('#id','~Time', '~Company', '~Email Address','~First Name','~Last Name','Role|edit=list:user/roles','');
     $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE | table::EXPORTABLE);
     $table->set_heading("Manage All Users");
     $table->set_key('id');
-    $table->set_saver("/?a=user/update");
+    $table->set_saver("/?a=user/update_role");
     $table->set_deleter('/?a=user/deactivate');
     $table->set_options($request);
     $table->show($sql);
