@@ -216,6 +216,11 @@ class db
     $this->lineage($values, $key, $parent_key, $table);
   }
   
+  function listing($sql, $separator=',')
+  {
+    return implode($separator, $this->read_column($sql));
+  }
+  
   static function addslashes($array)
   {
     $output = array();
