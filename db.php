@@ -220,6 +220,16 @@ class db
   {
     return implode($separator, $this->read_column($sql));
   }
+  function encode_listing($sql, $separator=',')
+  {
+    $list = $db->read_column($sql);
+    $result = '';
+    foreach($list as $val) {
+      if ($result != '') $result = $result.',';
+      $result .= rawurlencode($val);
+    }
+    return $result;
+  }
   
   static function addslashes($array)
   {
