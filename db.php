@@ -222,7 +222,7 @@ class db
   }
   function encode_listing($sql, $separator=',')
   {
-    $list = $db->read_column($sql);
+    $list = $this->read_column($sql);
     $result = '';
     foreach($list as $val) {
       if ($result != '') $result = $result.',';
