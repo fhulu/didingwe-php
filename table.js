@@ -48,7 +48,7 @@
 
     ajax: function(url, data, callback)
     {
-      $.send(url, {data: $.extend(this.options.data,data), method: this.options.method}, callback);
+      $.send(url, {data: $.extend({}, this.options.data, this.data, data), method: this.options.method}, callback);
     },
     
     update: function(selector, parent)
@@ -71,6 +71,8 @@
         thead = $('<thead></thead>').appendTo(table);;
 
       this.update('.header', thead);
+      if (document.title == '' ) 
+        document.title = table.find('.heading').text();
       
       if (this.filter != null && this.filter.is(':visible')) 
          table.find('.filtering').attr('on','');
@@ -152,7 +154,7 @@
       this.editor.find('td').each(function(i) {
         if (!$(this).hasAttr('edit')) return true;
         var td = row.children().eq(i);
-        var val = td.html();
+        var val = td.text();
         td.replaceWith($(this).clone());
         td = row.children().eq(i);
         td.children().val(val);
@@ -209,11 +211,8 @@
       var url = is_new? body.attr('add'): body.attr('save');
       if (url == undefined || url == '') return;
       if (is_new) data[key] = '';
-      this.ajax(url, data, function(result) {
-        if (!row.hasAttr('new') || key===undefined) return true;
-        row.removeAttr('new');
-        row.attr(key, result);
-        row.find("[key]").html(result);
+      this.ajax(url, data, function() {
+        self.refresh();
       });
     },
     
@@ -246,7 +245,7 @@
       var actions = row.children().last();
       actions.addClass('actions');
       actions.html("<div action=save></div><div action=delete></div>");
-      
+       //row.append(actions);
       var button = body.find(".actions div[action=add]");
       if (button !== undefined) 
         row.insertBefore(button.parent().parent().parent());
@@ -404,12 +403,12 @@
     {
       var list = attr.substr(attr.indexOf(':')+1);
       var select = $("<select></select>");
-      var values = list.split(',');
-      if (values.length == 1) {
-        var url = '/?a='+attr.substr(attr.indexOf(':')+1);
-        select.html(jq_submit(url));
+      if (list[0] == '?') {
+        var url = '/?a='+list.substr(1);
+        select.loadHtml(url);
       }
       else {
+        var values = list.split(',');
         for (var i=0; i<values.length; ++i) {
           select.append("<option>"+values[i]+"</option>")
         }
@@ -492,6 +491,7 @@
       var key_value = row.attr(key);
       row.after("<tr class=expanded><td colspan="+row.children().length+"></td></tr>");
       row = row.next();
+      row.attr(key, key_value);
       var url = this.get_body('expand');
       if (url !== undefined) {
         if (url.indexOf('#') != 0) { 
@@ -506,10 +506,10 @@
         row.find('td').html(detail.html());
         if (id_sep.length > 1) {
           var sep = id_sep[1];
-          row.find('input[id],select[id],textarea[id]').each(function() {
+          row.find('[id]').each(function() {
             $(this).attr('id', $(this).attr('id')+sep+key_value);
           });
-          row.find('input[name],select[name],textarea[name]').each(function() {
+          row.find('[name]').each(function() {
             $(this).attr('name', $(this).attr('name')+sep+key_value);
           });
         }
