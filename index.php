@@ -50,8 +50,8 @@ function load_div($div)
   echo "<div id='$div'>";
   if (strpos($page, '?') === false && file_exists($page)) {
     try {
-    require_once($page);
-  }
+      require_once($page);
+    }
     catch (user_exception $exception) {
       log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
       require_once('breach.php');

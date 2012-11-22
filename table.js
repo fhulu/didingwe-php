@@ -401,7 +401,7 @@
 
    _create_list: function(col, attr)
     {
-      var list = attr.substr(attr.indexOf(':')+1);
+      var list = decodeURIComponent(attr.substr(attr.indexOf(':')+1));
       var select = $("<select></select>");
       if (list[0] == '?') {
         var url = '/?a='+list.substr(1);

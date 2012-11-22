@@ -7,7 +7,6 @@ if (!is_null($method)) {
   log::init($class, log::DEBUG);
 }
 foreach($_ENV as $key=>$env) $_SESSION[$key] = $env;
-$client_id = $_SESSION[client_id];
 try {
   echo call_user_func_array($argv[1], array_slice($argv, 2));
 }
