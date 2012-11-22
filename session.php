@@ -113,6 +113,7 @@ class session
 }
 
 if (!$daemon_mode) {
+  global $session;
   $session = unserialize($_SESSION['instance']);
 }
 
