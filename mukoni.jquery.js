@@ -68,6 +68,7 @@ $.send = function(url, options, callback)
     invoker: undefined,
     eval: true,
     data: {},
+    dataType: undefined,
     error: undefined,
     event: undefined
   }, options);
@@ -103,8 +104,11 @@ $.send = function(url, options, callback)
     data: options.data,
     async: options.async,
     error: options.error,
+    dataType: options.dataType,
     success: function(data) {
-      var script = data.match(/<script[^>]+>(.+)<\/script>/);
+      var script = null;
+      if (options.dataType != 'json')
+        script = data.match(/<script[^>]+>(.+)<\/script>/);
       if (options.eval && script != null && script.length > 1) {
         eval(script[1]);
       }
@@ -255,6 +259,39 @@ $.fn.load = function(url, options, callback)
 $.fn.loadOptions = function(url, options, callback)
 {
   this.html('<option>loading...</option>').loadHtml(url, options, callback);
+  return this;
+}
+
+$.json = function(url, options, callback) 
+{
+  if (options instanceof Function) {
+    callback = options;
+    options = {dataType: 'json'};
+  } 
+  else options = $.extend(options, {dataType: 'json'});
+  return $.send(url, options, callback);
+}
+
+$.fn.jsonLoadOptions = function(url, options, callback)
+{
+  this.html('<option>loading...</option>');
+  var self = this;
+  $.json(url, options, function(result) {
+    var index = 0;
+    self.html('');
+    console.log(result);
+    var code;
+    $.each(result, function(key, row) {
+      var code = null;
+      $.each(row, function(key, val) {
+        if (code == null) 
+          code = val;
+        else {
+          self.append('<option value='+code+'>'+val+'<option>');
+        }
+      });
+    });
+  });
   return this;
 }
 
