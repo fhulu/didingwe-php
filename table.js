@@ -405,7 +405,7 @@
       var select = $("<select></select>");
       if (list[0] == '?') {
         var url = '/?a='+list.substr(1);
-        select.loadHtml(url);
+        select.loadHtml(url, { async: false});
       }
       else {
         var values = list.split(',');
