@@ -61,14 +61,16 @@ class user
     $roles = implode("','", $this->roles);
     global $db;
     
+    $program_id = config::$program_id;
     $groups = $db->read_column("select group_code from mukonin_audit.group_partner where partner_id = $this->partner_id");
-    $db->lineage($groups, "code", "parent_code", "mukonin_audit.partner_group", "and program_id=".config::$program_id);
+    $db->lineage($groups, "code", "parent_code", "mukonin_audit.partner_group", "and program_id=$program_id");
     $groups = implode("','", $groups);
     $functions = $db->read_column(
       "select distinct function_code from mukonin_audit.role_function where role_code in('$roles') 
           and function_code in 
-          (select distinct function_code from mukonin_audit.partner_group_function where group_code in ('$groups'))");
-    $base_functions = $db->read_column("select distinct function_code from mukonin_audit.role_function where role_code = 'base'"); 
+          (select distinct function_code from mukonin_audit.partner_group_function where group_code in ('$groups') and program_id = $program_id)");
+    $base_functions = $db->read_column("select distinct function_code from mukonin_audit.role_function where role_code = 'base'
+      and program_id=$program_id"); 
     $this->functions = array_merge($functions, $base_functions);
   }
   
