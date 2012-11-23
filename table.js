@@ -403,10 +403,10 @@
     {
       var list = decodeURIComponent(attr.substr(attr.indexOf(':')+1));
       var select = $("<select></select>");
-      if (list[0] == '?') {
-        var url = '/?a='+list.substr(1);
-        select.loadHtml(url, { async: false});
-      }
+      if (list[0] == '?') 
+        select.loadHtml('/?a='+list.substr(1), { async: false});
+      else if (list[0]=='#') 
+        select.jsonLoadOptions('/?a='+list.substr(1), {async: false});
       else {
         var values = list.split(',');
         for (var i=0; i<values.length; ++i) {
