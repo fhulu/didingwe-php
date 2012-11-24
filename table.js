@@ -434,7 +434,7 @@
         if (attr.indexOf('list:') == 0) 
           self._create_list(col, attr);
         else if (attr == '')
-          col.append("<input type='text' style='width:"+width+";'></input>");
+          col.append("<input type='text' size="+width/10+" style='width:"+width+";'></input>");
       });
       
       return editor;
