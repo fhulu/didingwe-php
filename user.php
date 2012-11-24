@@ -85,15 +85,21 @@ class user
   }
   
   
-   static function change_email($request)
-  {    
-    if (!user::verify_internal($request)) return false;
+  static function change_email($request)
+  {        
+    global $db, $session;
+    $email = addslashes($request[email]);
+    if($email != $session->user->email 
+        && $db->exists("select first_name from mukonin_audit.user where email_address= '$email'")) {
+      echo "!This email address already exist. Please try another email address";
+      return;
+    }
+     
     $validator = new validator($request);
-    if (!$validator->check('email')->is('email')) return false;
+    if (!$validator->check('email')->is('email')) return;
+            
     $otp = rand(10042,99999);
     $email = $request['email'];
-    
-    global $db, $session;
     
     $user_id = $session->user->id;
     $db->exec("update mukonin_audit.user set otp = '$otp', otp_time = now()
@@ -466,11 +472,11 @@ class user
   
   static function verify_internal($request)
   {
-    $email = $request[email];
+    /*$email = $request[email];
     if (config::$program_id == 3 && !preg_match('/@(fpb\.(org|gov)\.za|mukoni\.co\.za)$/i', $email)) {
       echo "!Application not yet released to the public. An announcement will be made soon.";
       return false;
-    }
+    }*/
     return true;
   }
   
@@ -525,7 +531,7 @@ class user
   
   }
      
-  static function roles($request)
+  static function roles()
   {
     echo select::add_db("select code, name from mukonin_audit.role where code not in('unreg','base') and program_id=3");
   }
@@ -546,7 +552,7 @@ class user
       where u.id=ur.user_id and r.code = ur.role_code 
       and partner_id = $partner_id and active=1 and r.program_id = ". config::$program_id;    
             
-    $titles = array('#id','~Time', '~Email Address','~First Name','~Last Name','Role|edit=list:user/roles','');
+    $titles = array('#id','~Time', '~Email Address','~First Name','~Last Name','Role|edit=list:?user/roles','Actions');
     $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE);
     $table->set_heading("Manage Users");
     $table->set_key('id');
@@ -572,7 +578,7 @@ class user
       where u.id=ur.user_id and r.code = ur.role_code and u.partner_id = p.id
       and active=1 and r.program_id = ". config::$program_id;    
             
-    $titles = array('#id','~Time', '~Company', '~Email Address','~First Name','~Last Name','Role|edit=list:user/roles','');
+    $titles = array('#id','~Time', '~Company', '~Email Address','~First Name','~Last Name','Role|edit=list:?user/roles','');
     $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE | table::EXPORTABLE);
     $table->set_heading("Manage All Users");
     $table->set_key('id');
