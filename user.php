@@ -66,9 +66,10 @@ class user
     $db->lineage($groups, "code", "parent_code", "mukonin_audit.partner_group", "and program_id=$program_id");
     $groups = implode("','", $groups);
     $functions = $db->read_column(
-      "select distinct function_code from mukonin_audit.role_function where role_code in('$roles') 
-          and function_code in 
-          (select distinct function_code from mukonin_audit.partner_group_function where group_code in ('$groups') and program_id = $program_id)");
+      "select distinct function_code from mukonin_audit.role_function where role_code in('$roles')
+        and program_id = $program_id
+        and function_code in 
+        (select distinct function_code from mukonin_audit.partner_group_function where group_code in ('$groups') and program_id = $program_id)");
     $base_functions = $db->read_column("select distinct function_code from mukonin_audit.role_function where role_code = 'base'
       and program_id=$program_id"); 
     $this->functions = array_merge($functions, $base_functions);
