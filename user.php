@@ -7,6 +7,7 @@ require_once('table.php');
 require_once('select.php');
 require_once('validator.php');
 require_once('select.php');
+require_once('curl.php');
 
 
 class user_exception extends Exception {};
@@ -124,19 +125,19 @@ class user
     if (!$validator->check('email')->is('email')) return false;
     $otp = rand(10042,99999);
     $email = $request['email'];
-    $sql = "select attempts from mukonin_audit.user where email_address='$email' and program_id = " . config::$program_id; 
+    $sql = "select cellphone,partner_id, id,attempts from mukonin_audit.user where email_address='$email' and program_id = " . config::$program_id; 
     global $db;
-    if (!$db->exists($sql)) {
+    list($cellphone,$partner_id,$user_id,$attempts) = $db->read_one($sql);
+    if ($user_id == '') {
       echo "!We do not have a user with email address '$email' registered on the system";
       return false;
     }
-    
-    $attempts = $db->row[0];
-    
+        
     if($attempts>3){
       echo "!Account locked. Please contact FPB on (012)345-6789";
       return false;
     }
+    user::sms_otp($cellphone,$partner_id, $user_id, $otp);
     
     $db->exec("update mukonin_audit.user set otp = '$otp', otp_time = now()
       where email_address='$email' and program_id = " . config::$program_id);
@@ -230,6 +231,18 @@ class user
     return false;
   }
   
+  static function sms_otp($cellphone,$partner_id, $user_id, $otp)
+  {
+    global $db;
+    $program_id = config::$program_id;
+    $program  = $db->read_one_value("select description from mukonin_audit.program where id = $program_id");
+    $sms  = urlencode("Your One Time Password for $program is $otp");
+    $reference = "$program_id-$partner_id-$user_id";
+    $url = "http://iweb.itouchnet.co.za/Submit?UserId=MUKONIHTTP&Password=SDMRWRKC&PhoneNumber=$cellphone&Reference=$reference&MessageText=$sms";
+    $curl = new curl();
+    $result = $curl->read($url);  
+    log::debug("CURL RESULT: $result");
+  }
   static function create($partner_id, $email, $password,$title, $first_name, $last_name, $cellphone, $otp)
   {
     $program_id = config::$program_id;   
@@ -285,6 +298,7 @@ class user
     else {
       $user = user::create($partner_id, $email, $password, $title,$first_name, $last_name, $cellphone, $otp);
     }
+    user::sms_otp($partner_id, $user->id, $otp);
 
     $db->insert("insert into mukonin_audit.trx(user_id, function_code, object_id)
       values($user->id, 'register', $user->id)");
