@@ -370,3 +370,24 @@ $.fn.getCursorPosition = function() {
     }
     return pos;
 }
+
+/**
+* @param scope Object :  The scope in which to execute the delegated function.
+* @param func Function : The function to execute
+* @param data Object or Array : The data to pass to the function. If the function is also passed arguments, the data is appended to the arguments list. If the data is an Array, each item is appended as a new argument.
+* @param isTimeout Boolean : Indicates if the delegate is being executed as part of timeout/interval method or not. This is required for Mozilla/Gecko based browsers when you are passing in extra arguments. This is not needed if you are not passing extra data in.
+*/
+function delegate(scope, func, data, isTimeout)
+{
+    return function()
+    {
+        var args = Array.prototype.slice.apply(arguments).concat(data);
+        //Mozilla/Gecko passes a extra arg to indicate the "lateness" of the interval
+        //this needs to be removed otherwise your handler receives more arguments than you expected.
+                //NOTE : This uses jQuery for browser detection, you can add whatever browser detection you like and replace the below.
+        if (isTimeout && $.browser.mozilla)
+            args.shift();  
+ 
+        func.apply(scope, args);
+    }
+}
