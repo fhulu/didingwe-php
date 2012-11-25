@@ -476,10 +476,10 @@ HEREDOC;
           else
             $field = str_replace('~','.',$this->sort_field);
           $this->sql .= " order by $field $this->sort_order";
-          if ($this->request['_action'] == 'export') {
-            $this->export();
-            return $this;
-          }
+        }
+        if ($this->request['_action'] == 'export') {
+          $this->export();
+          return $this;
         }
         if ($this->flags & self::PAGEABLE)
           $this->sql = 'select SQL_CALC_FOUND_ROWS ' . substr($this->sql, 6) . " limit $this->page_offset, $this->page_size";
@@ -564,6 +564,7 @@ HEREDOC;
     $fields = $this->fields;
     foreach($this->symbols as $symbol) {
       list($key,$cell) = each($fields);
+      list($cell) = explode('|',$cell);
       if ($symbol == '#' || ($key == 'actions' && sizeof($this->row_actions) > 0)) continue;
       $richText = new PHPExcel_RichText();
       $text = $richText->createTextRun($cell);
