@@ -298,7 +298,7 @@ class user
     else {
       $user = user::create($partner_id, $email, $password, $title,$first_name, $last_name, $cellphone, $otp);
     }
-    user::sms_otp($partner_id, $user->id, $otp);
+    user::sms_otp($cellphone, $partner_id, $user->id, $otp);
 
     $db->insert("insert into mukonin_audit.trx(user_id, function_code, object_id)
       values($user->id, 'register', $user->id)");
@@ -409,12 +409,12 @@ class user
       throw new user_exception("Unauthorised access to function $function from $email");
   }
   
-  static function audit($function, $object='', $detail='')
+  static function audit($function, $object='', $detail='',$type='')
   {
     user::verify($function);
     global $db, $session;
     $user = $session->user;
-    log::info("FUNCTION: $function USER: $user->id OBJECT: $object DETAIL: $detail");
+    log::info("FUNCTION: $function USER: $user->id OBJECT: $object TYPE: $type DETAIL: $detail");
     if (is_numeric($object)) {
       $object_id = $object; 
       $object_code = 'null';
@@ -424,8 +424,8 @@ class user
       $object_id = 'null';
     }
     $detail = addslashes($detail);
-    $db->insert("insert into mukonin_audit.trx(user_id, function_code, object_id, object_code, detail)
-      values($user->id, '$function', $object_id, $object_code, '$detail')");
+    $db->insert("insert into mukonin_audit.trx(user_id, function_code, object_id, object_code, detail, $type)
+      values($user->id, '$function', $object_id, $object_code, '$detail', '$type')");
   }
   
   
@@ -437,13 +437,35 @@ class user
     
     $table->set_heading("Audit Trail");
     $table->set_options($request);
+    $program_id = config::$program_id;
     $table->show("select t.create_time, p.full_name, u.first_name, u.last_name,
       u.email_address, f.name, t.detail
       from mukonin_audit.trx t 
         join mukonin_audit.function f on t.function_code = f.code
         join mukonin_audit.user u on t.user_id = u.id
-        join mukonin_audit.partner p on u.partner_id = p.id");
-  }   
+        join mukonin_audit.partner p on u.partner_id = p.id and u.program_id = $program_id");
+  }
+
+  static function partner_audit_trail($request)
+  {
+    user::verify('partner_audit_trail');
+    $headings = array('~Time','~Organisation','~First Name', '~Last Name', '~Email', '~Action', '~Detail');
+    $table = new table($headings,table::TITLES | table::ALTROWS | table::FILTERABLE| table::EXPORTABLE);
+    
+    $table->set_heading("Audit Trail");
+    $table->set_options($request);
+    $program_id = config::$program_id;
+    global $session;
+    $partner_id = $session->user->partner_id;
+    $table->show("select t.create_time, p.full_name, u.first_name, u.last_name,
+      u.email_address, f.name, t.detail
+      from mukonin_audit.trx t 
+        join mukonin_audit.function f on t.function_code = f.code
+        join mukonin_audit.user u on t.user_id = u.id
+        join mukonin_audit.partner p on u.partner_id = p.id and (u.partner_id = $partner_id or t.object_id = $partner_id and t.object_type = 'partner')
+and u.program_id = $program_id");
+  }
+   
   static function update_role($request)
   {
     global $db, $session;
