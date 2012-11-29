@@ -35,7 +35,8 @@ class user
     global $db;
     
     return $db->read_column("select distinct function_code from mukonin_audit.role_function
-    where role_code in ('base', 'unreg')");
+    where role_code in ('base', 'unreg') 
+    and program_id=" .config::$program_id);
   }
   
   function reload()
@@ -569,7 +570,9 @@ and u.program_id = $program_id");
      
   static function roles()
   {
-    echo select::add_db("select code, name from mukonin_audit.role where code not in('unreg','base') and program_id=3");
+    global $session;
+    $program_id = $session->user->program_id;
+    echo select::add_db("select code, name from mukonin_audit.role where code not in('unreg','base') and program_id=$program_id");
   }
     
   static function manage($request)
@@ -581,7 +584,7 @@ and u.program_id = $program_id");
     $user_id = $session->user->id;
     $sql = "select id, u.create_time, u.email_address, u.first_name, u.last_name, r.name role,
               case u.id
-              when $user_id then 'edit'
+              when $user_id then ''
               else 'delete,edit' 
             end as actions
       from mukonin_audit.user u, mukonin_audit.user_role ur, mukonin_audit.role r
