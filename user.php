@@ -591,7 +591,7 @@ and u.program_id = $program_id");
       where u.id=ur.user_id and r.code = ur.role_code 
       and partner_id = $partner_id and active=1 and r.program_id = ". config::$program_id;    
             
-    $titles = array('#id','~Time', '~Email Address','~First Name','~Last Name','Role|edit=list:?user/roles','Actions');
+    $titles = array('#id','~Time', '~Email Address','~First Name','~Last Name','Role|edit=list:user/roles','Actions');
     $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE);
     $table->set_heading("Manage Users");
     $table->set_key('id');
@@ -617,7 +617,7 @@ and u.program_id = $program_id");
       where u.id=ur.user_id and r.code = ur.role_code and u.partner_id = p.id
       and active=1 and r.program_id = ". config::$program_id;    
             
-    $titles = array('#id','~Time', '~Company', '~Email Address','~First Name','~Last Name','Role|edit=list:?user/roles','');
+    $titles = array('#id','~Time', '~Company', '~Email Address','~First Name','~Last Name','Role|edit=list:user/roles','');
     $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE | table::EXPORTABLE);
     $table->set_heading("Manage All Users");
     $table->set_key('id');
