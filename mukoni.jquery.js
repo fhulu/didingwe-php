@@ -48,11 +48,11 @@ $.fn.values = function()
     var name = ctrl.hasAttr('name')? ctrl.attr('name'): ctrl.attr('id');
     if (name === undefined) return true;
     var type = ctrl.attr('type');
-    if ((type == 'radio' || type != 'checkbox') && !ctrl.is(':checked')) return true;
-    if (data.name === undefined)
-      data[name] = ctrl.val();
-    else 
+    if ((type == 'radio' || type == 'checkbox') && !ctrl.is(':checked')) return true;
+    if (data[name] !== undefined)
       data[name] = data[name] + ',' + ctrl.val();
+    else 
+      data[name] = ctrl.val();
   });
   return data;
 }
