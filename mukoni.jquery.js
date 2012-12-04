@@ -45,10 +45,14 @@ $.fn.values = function()
   var data = {};
   this.filter('input,textarea,select').each(function() {
     var ctrl = $(this);
-    var name = ctrl.hasAttr('id')? ctrl.attr('id'): ctrl.attr('name');
+    var name = ctrl.hasAttr('name')? ctrl.attr('name'): ctrl.attr('id');
     if (name === undefined) return true;
-    if (ctrl.attr('type') == 'radio' && !ctrl.is(':checked')) return true;
-    data[name] = ctrl.val();
+    var type = ctrl.attr('type');
+    if ((type == 'radio' || type != 'checkbox') && !ctrl.is(':checked')) return true;
+    if (data.name === undefined)
+      data[name] = ctrl.val();
+    else 
+      data[name] = data[name] + ',' + ctrl.val();
   });
   return data;
 }
