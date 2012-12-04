@@ -372,9 +372,11 @@ HEREDOC;
   function show_row($row_data, $index)
   {
     $attr = '';
-    if (!is_null($this->key_field))
-      $attr = " $this->key_field='". $row_data[$this->key_field] . "'";
-   
+    if (!is_null($this->key_field)) {
+      $key_field = $this->key_field;
+      $key_value = $row_data[$this->key_field];
+      $attr = "$key_field = '$key_value'";
+    }
     if ($this->flags & self::ALTROWS)
       $attr .= ($index % 2)?'':" class='alt'";
     if ($this->flags & self::EXPANDABLE)
@@ -385,7 +387,7 @@ HEREDOC;
  
     echo "<tr$attr>\n";
     if ($this->flags & self::CHECKBOXES) 
-      echo "\t<td><input type='checkbox' action='checkrow' /></td>";
+      echo "\t<td><input type='checkbox' action='checkrow' name='$key_field' value='$key_value'/></td>";
     reset($row_data);
     $show_expand = strpos($attr, ' expandable') !== false;
     $actions_shown = false;
