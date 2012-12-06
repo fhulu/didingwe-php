@@ -571,7 +571,7 @@ and u.program_id = $program_id");
   static function roles()
   {
     global $session;
-    $program_id = $session->user->program_id;
+    $program_id = config::$program_id;
     echo select::add_db("select code, name from mukonin_audit.role where code not in('unreg','base') and program_id=$program_id");
   }
     
@@ -615,7 +615,7 @@ and u.program_id = $program_id");
             end as actions
       from mukonin_audit.user u, mukonin_audit.user_role ur, mukonin_audit.role r, mukonin_audit.partner p
       where u.id=ur.user_id and r.code = ur.role_code and u.partner_id = p.id
-      and active=1 and r.program_id = ". config::$program_id . ") tmp where 1=1";    
+      and u.active=1 and r.program_id = ". config::$program_id . ") tmp where 1=1";    
             
     $titles = array('#id','~Time', '~Company', '~Email Address|edit','~First Name|edit','~Last Name|edit','~Role|edit=list:?user/roles','');
     $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE | table::EXPORTABLE);
