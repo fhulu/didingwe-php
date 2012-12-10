@@ -474,7 +474,7 @@ and u.program_id = $program_id");
     $requestor = "$user->first_name $user->last_name <$user->email>";
     $request = table::remove_prefixes($request);
     $id = $request['id'];
-    $role = $request['tmp~role'];
+    $role = $request['role'];
     user::audit('update_role', $id, $role);
     
     global $db, $session;
