@@ -589,7 +589,7 @@ and u.program_id = $program_id");
             end as actions
       from mukonin_audit.user u, mukonin_audit.user_role ur, mukonin_audit.role r
       where u.id=ur.user_id and r.code = ur.role_code 
-      and partner_id = $partner_id and active=1 and r.program_id = ". config::$program_id;    
+      and partner_id = $partner_id and u.active=1 and r.program_id = ". config::$program_id;    
             
     $titles = array('#id','~Time', '~Email Address|edit','~First Name|edit','~Last Name|edit','Role|edit=list:?user/roles','Actions');
     $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE);
