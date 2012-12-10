@@ -250,6 +250,21 @@ $.fn.loadHtml = function(url, options, callback)
   return this;
 }
 
+$.fn.loadHtmlByValues = function(url, values, options, callback)
+{
+  if (options instanceof Function) {
+    callback = options;
+    options = {};
+  }
+  options = $.extend(options, {data: $(values).values()});
+  var self = this;
+  $.send(url, options, function(result) {
+    self.html(result);
+    if (callback) callback(result);
+  });
+  return this;
+}
+
 $.fn.load = function(url, options, callback)
 {
   var self = this;
