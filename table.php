@@ -375,7 +375,7 @@ HEREDOC;
     if (!is_null($this->key_field)) {
       $key_field = $this->key_field;
       $key_value = $row_data[$this->key_field];
-      $attr = "$key_field = '$key_value'";
+      $attr .= "$key_field = '$key_value' ";
     }
     if ($this->flags & self::ALTROWS)
       $attr .= ($index % 2)?'':" class='alt'";
@@ -385,7 +385,7 @@ HEREDOC;
     if ($this->callback && call_user_func($this->callback, &$row_data, $index, &$attr) === false) 
       return;
  
-    echo "<tr$attr>\n";
+    echo "<tr $attr>\n";
     if ($this->flags & self::CHECKBOXES) 
       echo "\t<td><input type='checkbox' action='checkrow' name='$key_field' value='$key_value'/></td>";
     reset($row_data);
