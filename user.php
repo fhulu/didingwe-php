@@ -582,14 +582,17 @@ and u.program_id = $program_id");
     global $session;
     $partner_id = $session->user->partner_id;
     $user_id = $session->user->id;
-    $sql = "select id, u.create_time, u.email_address, u.first_name, u.last_name, r.name role,
+    $sql = "select * from (select id, u.create_time, u.email_address, u.first_name, u.last_name, r.name role,
               case u.id
-              when $user_id then ''
+              when $user_id then 'edit'
               else 'delete,edit' 
             end as actions
       from mukonin_audit.user u, mukonin_audit.user_role ur, mukonin_audit.role r
       where u.id=ur.user_id and r.code = ur.role_code 
-      and partner_id = $partner_id and u.active=1 and r.program_id = ". config::$program_id;    
+
+      and partner_id = $partner_id and u.active=1 and r.program_id = ". config::$program_id . ") tmp where 1=1";    
+
+
             
     $titles = array('#id','~Time', '~Email Address|edit','~First Name|edit','~Last Name|edit','Role|edit=list:?user/roles','Actions');
     $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE);
