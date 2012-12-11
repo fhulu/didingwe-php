@@ -624,7 +624,7 @@ and u.program_id = $program_id");
     $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE | table::EXPORTABLE);
     $table->set_heading("Manage All Users");
     $table->set_key('id');
-    $table->set_saver("/?a=user/update_role");
+    $table->set_saver("/?a=user/update");
     $table->set_deleter('/?a=user/deactivate');
     $table->set_options($request);
     $table->show($sql);
