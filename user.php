@@ -372,7 +372,7 @@ class user
   
   static function update($request)
   {
-   /* $request = table::remove_prefixes($request);
+    $request = table::remove_prefixes($request);
     $fields = array('email_address','first_name', 'last_name', 'otp');
     $values = '';
     foreach($request as $key=>$value) {
@@ -389,8 +389,8 @@ class user
     
     $sql = "update mukonin_audit.user set ". substr($values,1). " where id = $id";
     $db->exec($sql);
-    if (!is_null($request['name']))*/
-      //user::update_role($request);
+    if (!is_null($request['name']))
+      user::update_role($request);
   }
 
   static function verify($function, $private=true)
@@ -598,7 +598,7 @@ and u.program_id = $program_id");
     $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE);
     $table->set_heading("Manage Users");
     $table->set_key('id');
-    $table->set_saver("/?a=user/update_role");
+    $table->set_saver("/?a=user/update");
     $table->set_deleter('/?a=user/deactivate');
     $table->set_options($request);
     $table->show($sql);
