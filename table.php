@@ -416,7 +416,7 @@ HEREDOC;
   {
     $this->flags |= self::TOTALS;
     if (!is_null($this->callback) && 
-      !call_user_func($this->callback, &$this->totals)) {
+      !call_user_func($this->callback, &$this->totals, $this->row_count, null)) {
       return;
     }
       
