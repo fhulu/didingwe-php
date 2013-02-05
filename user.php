@@ -389,7 +389,7 @@ class user
     
     $sql = "update mukonin_audit.user set ". substr($values,1). " where id = $id";
     $db->exec($sql);
-    if (!is_null($request['name']))
+    if (!is_null($request['role']))
       user::update_role($request);
   }
 
