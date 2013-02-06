@@ -293,25 +293,37 @@ $.json = function(url, options, callback)
 
 $.fn.jsonLoadOptions = function(url, options, callback)
 {
-  this.html('<option>loading...</option>');
-  var self = this;
-  $.json(url, options, function(result) {
-    var index = 0;
-    self.html('');
-    console.log(result);
-    var code;
-    $.each(result, function(key, row) {
-      var code = null;
-      $.each(row, function(key, val) {
-        if (code == null) 
-          code = val;
-        else {
-          self.append('<option value='+code+'>'+val+'<option>');
-        }
+  if (options instanceof Function) {
+    callback = options;
+    options = {};
+  } 
+  return this.each(function() {
+    var self = $(this);
+    self.html('<option>loading...</option>');
+    var thisUrl = url === undefined? "/?a=select/jsonLoad&params="+self.attr('table'): url;
+    $.json(thisUrl, options, function(result) {
+      self.html('');
+      var code;
+      $.each(result, function(key, row) {
+        var code = null;
+        $.each(row, function(key, val) {
+          if (code == null) 
+            code = val;
+          else {
+            self.append('<option value='+code+'>'+val+'<option>');
+          }
+        });
       });
+      var def = self.attr('default');
+      if (def !== undefined) {
+        var selected = self.find("[value='"+def+"']");
+        if (selected.length == 0) 
+          selected = $('<option>'+def+'</option>').prependTo(self);
+        selected.prop('selected', true);
+      }
+      if (callback !== undefined) callback(result);
     });
   });
-  return this;
 }
 
 $.fn.setChildren = function(result)
