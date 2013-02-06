@@ -1,4 +1,6 @@
 <?php 
+require_once "db.php";
+
 class select
 {
   static function option($value, $text, $selected=false)
@@ -55,5 +57,23 @@ class select
     }
   }
   
+  static function jsonLoad($request)
+  {
+    $params = $request['params'];
+    log::debug("PARAMS $params");
+    list($table, $code, $value, $filter) = explode(',', $params);
+    if ($code == '') {
+      $sql = "select * from $table";
+    }
+    else {
+      if ($value == '') $value = $code;
+      $sql = "select $code, $value from $table";
+      if ($filter != '') $sql .= " where value like '$filter%'";
+      $sql .= " order by $value";
+    }
+    
+    global $db;
+    echo $db->json($sql);
+  }
 }
 ?>
