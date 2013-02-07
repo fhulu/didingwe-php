@@ -71,7 +71,7 @@ class select
       $filter = array_slice($params, 3);
       if (sizeof($filter) > 0) {
         $filter = implode(',', $filter);
-        $sql .= " where code $filter";
+        $sql .= " where $filter";
       }
       $sql .= " order by $value";
     }
