@@ -59,16 +59,20 @@ class select
   
   static function jsonLoad($request)
   {
-    $params = $request['params'];
+    $params = explode(',', $request['params']);
     log::debug("PARAMS $params");
-    list($table, $code, $value, $filter) = explode(',', $params);
+    list($table, $code, $value) = $params;
     if ($code == '') {
       $sql = "select * from $table";
     }
     else {
       if ($value == '') $value = $code;
-      $sql = "select $code, $value from $table";
-      if ($filter != '') $sql .= " where value like '$filter%'";
+      $sql = "select distinct $code, $value from $table";
+      $filter = array_slice($params, 3);
+      if (sizeof($filter) > 0) {
+        $filter = implode(',', $filter);
+        $sql .= " where code $filter";
+      }
       $sql .= " order by $value";
     }
     
