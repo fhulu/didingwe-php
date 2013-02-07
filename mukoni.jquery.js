@@ -303,16 +303,15 @@ $.fn.jsonLoadOptions = function(url, options, callback)
     var thisUrl = url === undefined? "/?a=select/jsonLoad&params="+self.attr('table'): url;
     $.json(thisUrl, options, function(result) {
       self.html('');
-      var code;
+      var code = null;
       $.each(result, function(key, row) {
-        var code = null;
         $.each(row, function(key, val) {
           if (code == null) 
             code = val;
-          else {
-            self.append('<option value='+code+'>'+val+'<option>');
-          }
+          else
+            self.append('<option f=t value='+code+'>'+val+'</option>');
         });
+        code = null;
       });
       var def = self.attr('default');
       if (def !== undefined) {
