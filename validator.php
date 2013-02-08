@@ -13,6 +13,7 @@ class validator
   var $value;
   var $error_cb;
   var $optional;
+  var $errors;
   function __construct($request=null, $table=null, $conn=null, $error_cb='validator::cout')
   {
     $this->error_cb = $error_cb;
@@ -26,10 +27,16 @@ class validator
   
   function error($msg)
   {
-    if (is_null($this->error_cb)) return false;
     if ($this->title[0] == '!') $msg = $this->title;
     log::warn($msg);
-    return call_user_func($this->error_cb, $msg);
+    $this->errors[$this->name] = substr($msg, 1);
+    if (is_null($this->error_cb)) return false;
+    return call_user_func($this->error_cb, $msg, $this->name);
+  }
+  
+  function set_callback($callback)
+  {
+    $this->error_cb = $callback;
   }
   
   static function cout($msg)
@@ -237,6 +244,13 @@ class validator
     if ($type == 'past' && $this->value >= $today)
       return $this->error("!$this->title must be in the past");    
     return true;      
+  }
+  
+  function json($type='errors')
+  {
+    if (sizeof($this->errors) == 0) return json_encode(array());
+    $result = array($type=>$this->errors);
+    return json_encode($result);
   }
  
 }
