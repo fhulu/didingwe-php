@@ -116,7 +116,7 @@ $.send = function(url, options, callback)
       if (options.eval && script != null && script.length > 1) {
         eval(script[1]);
       }
-      else {
+      else if (data != null) {
         if ((options.showResult === true && data != '') || data[0] == '!') {
           if (progress.timeout !== undefined) clearTimeout(progress.timeout);
           
@@ -163,6 +163,19 @@ $.fn.send = function(url, options, callback)
   return $.send(url, options, callback);  
 }
 
+$.fn.json = function(url, options, callback)
+{
+  if (options instanceof Function) {
+    callback = options;
+    options = undefined;
+  }
+  if (options !== undefined)
+    options.data = $.extend($(this).values(), options.data);
+  else
+    options = {data : $(this).values()};
+  return $.json(url, options, callback);  
+}
+
 $.fn.sendOnSet = function(controls, url, options, callback)
 {
   var self = this;
@@ -206,7 +219,7 @@ $.fn.confirm = function(url, options, callback)
   options.async = false;
   var result;
   this.send(url, options, function(data) {
-    if (callback != undefined)
+    if (callback !== undefined)
       callback(data);
     result = data;
   });
@@ -237,6 +250,35 @@ $.fn.confirmOnSet = function(controls,url, options, callback)
     var result = $(controls).confirm(url, params);
     if (callback !== undefined)
       callback(result);
+  });
+}
+
+$.fn.checkOnClick = function(controls,url, options, callback)
+{
+  if (options instanceof Function) {
+    callback = options;
+    options = {};
+  }
+
+  var self = this;
+  
+  this.click(function(event) {
+    var params = $.extend({invoker: self, event: event}, options);
+    var has_errors = false;
+    $(controls).siblings(".error").remove();
+    $(controls).json(url, params, function(result) {
+      $.each(result, function(key, row) {
+        if (key == 'errors') {
+          has_errors = true
+          $.each(row, function(field, error) {
+            $('#'+field+",[name='"+field+"']").after("<div class=error>"+error+"</div>");
+          });
+        }
+        event.stopImmediatePropagation();
+      });
+      if (callback !== undefined)
+        callback(result);      
+    });
   });
 }
 
