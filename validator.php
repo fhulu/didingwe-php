@@ -193,7 +193,7 @@ class validator
   {
     if (is_null($title)) {
       $title = str_replace('_', ' ', $name);
-      $title = strtoupper($title[0]).substr($title, 1);
+      $title = ucwords($title);
     }
     $this->name = $name;
     $this->title = $title;
@@ -251,6 +251,13 @@ class validator
     if (sizeof($this->errors) == 0) return json_encode(array());
     $result = array($type=>$this->errors);
     return json_encode($result);
+  }
+  
+  function valid($report_errors=false)
+  {
+    if ($report_errors)
+      echo $this->json();
+    return sizeof($this->errors) == 0;
   }
  
 }
