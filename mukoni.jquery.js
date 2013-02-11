@@ -271,7 +271,12 @@ $.fn.checkOnClick = function(controls,url, options, callback)
         if (key == 'errors') {
           has_errors = true
           $.each(row, function(field, error) {
-            $('#'+field+",[name='"+field+"']").after("<div class=error>"+error+"</div>");
+            var sibling = $('#'+field+",[name='"+field+"']").parent('a');
+            if (sibling.length == 0)
+              sibling = $('#'+field+",[name='"+field+"']");
+            var box = $("<div class=error>"+error+"</div>");
+            sibling.after(box);
+            box.fadeIn('slow');
           });
         }
         event.stopImmediatePropagation();
