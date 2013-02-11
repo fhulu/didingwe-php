@@ -283,6 +283,7 @@ $.fn.checkOnClick = function(controls,url, options, callback)
         callback(result);      
     });
   });
+  return this;
 }
 
 $.fn.loadHtml = function(url, options, callback)
