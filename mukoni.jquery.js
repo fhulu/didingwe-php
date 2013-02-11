@@ -264,12 +264,10 @@ $.fn.checkOnClick = function(controls,url, options, callback)
   
   this.click(function(event) {
     var params = $.extend({invoker: self, event: event}, options);
-    var has_errors = false;
     $(controls).siblings(".error").remove();
     $(controls).json(url, params, function(result) {
       $.each(result, function(key, row) {
         if (key == 'errors') {
-          has_errors = true
           $.each(row, function(field, error) {
             var sibling = $('#'+field+",[name='"+field+"']").parent('a');
             if (sibling.length == 0)
@@ -278,8 +276,8 @@ $.fn.checkOnClick = function(controls,url, options, callback)
             sibling.after(box);
             box.fadeIn('slow');
           });
+          event.stopImmediatePropagation();
         }
-        event.stopImmediatePropagation();
       });
       if (callback !== undefined)
         callback(result);      
