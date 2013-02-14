@@ -1,5 +1,6 @@
 <?php
 require_once('db.php');
+require_once 'errors.php';
 
 class validator_exception extends Exception {};
 class validator
@@ -13,37 +14,26 @@ class validator
   var $value;
   var $error_cb;
   var $optional;
-  var $errors;
-  function __construct($request=null, $table=null, $conn=null, $error_cb='validator::cout')
+  var $has_errors;
+  function __construct($request=null, $table=null, $conn=null)
   {
-    $this->error_cb = $error_cb;
     $this->table = $table;
     $this->request = is_null($request)? $_REQUEST: $request;
     $this->optional = false;
-    
+    $this->has_errors = false;
     global $db;
     $this->db = is_null($conn)? $db: $conn;
   }
-  
+ 
   function error($msg)
   {
+    $this->has_errors = true;
     if ($this->title[0] == '!') $msg = $this->title;
     log::warn($msg);
-    $this->errors[$this->name] = substr($msg, 1);
-    if (is_null($this->error_cb)) return false;
-    return call_user_func($this->error_cb, $msg, $this->name);
+    global $errors;
+    return $errors->add($this->name, substr($msg, 1));
   }
   
-  function set_callback($callback)
-  {
-    $this->error_cb = $callback;
-  }
-  
-  static function cout($msg)
-  {
-    echo $msg;
-    return false;
-  }
 
   function regex($regex, $title=null)
   {
@@ -152,10 +142,13 @@ class validator
     return $this->regex('/\.'.$ext.'/i', "!$this->title must be of type $ext");
   }
   
-  function in($table)
+  function find_in($table)
   {
-    if ($table == '') 
-      throw new validator_exception('checking for existance with no db table supplied');
+    if ($table == '') {
+      $table = $this->table;
+      if ($table == '')
+        throw new validator_exception('checking for existence with no db table supplied');
+    }
    
     $pos = strrpos($table, '.');
     if ($pos === false) {
@@ -167,26 +160,26 @@ class validator
     }
     $db = $this->db;
     $value = addslashes($this->value);
-    if ($db->exists("select $field from $table where $field = '$value'")) return true;
-    return $this->error("!No such $this->title found.");
+    return $db->exists("select $field from $table where $field = '$value'");
   }
 
-  function exist()
+  function in($table=null)
   {
-    return $this->in($this->table);
+    if (!$this->find_in($table))
+      return $this->error("!No such $this->title found.");
+    return true; 
+  }
+  
+  function exist($table=null)
+  {
+    return $this->in();
   }
 
-  function unique($table)
+  function unique($table=null)
   {
-    $cb = $this->error_cb;
-    if (is_null($table)) $table = $this->table;
-    $this->error_cb = null;
-    if (!$this->in($table)) {
-      $this->error_cb = $cb;
-      return true;
-    }
-    $this->error_cb = $cb;
-    return $this->error("!$this->title already exist.");
+    if ($this->find_in($table))
+      return $this->error("!$this->title already exist.");
+    return true; 
   }
   
   function check($name, $title=null)
@@ -246,19 +239,12 @@ class validator
     return true;      
   }
   
-  function json($type='errors')
-  {
-    if (sizeof($this->errors) == 0) return json_encode(array());
-    $result = array($type=>$this->errors);
-    return json_encode($result);
-  }
   
-  function valid($report_errors=false)
+  function valid()
   {
-    if ($report_errors)
-      echo $this->json();
-    return sizeof($this->errors) == 0;
+    return !$this->has_errors;
   }
- 
-}
+   
+};
+
 ?>
