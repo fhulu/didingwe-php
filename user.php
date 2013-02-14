@@ -8,6 +8,7 @@ require_once('select.php');
 require_once('validator.php');
 require_once('select.php');
 require_once('curl.php');
+require_once('errors.php');
 
 
 class user_exception extends Exception {};
@@ -186,25 +187,26 @@ class user
   static function exists($email, $active = 1, $echo=true)
   {
     $program_id = config::$program_id;
-    global $db;
+    global $db, $errors;
     if (!$db->exists("select id from mukonin_audit.user where email_address = '$email' 
         and program_id = $program_id and active = $active")) return false;
-    if ($echo) echo "!The email address already exists"; 
+    if ($echo) $errors->add('email', "The email address already exists"); 
     return true;
   }
   
   static function check($request, $check_email=true)
   {
-    if (!user::verify_internal($request)) return false;
+    user::verify_internal($request);
     $v = new validator($request); 
-    return $v->check('first_name')->is(2)
-      && $v->check('last_name')->is(2)
-      && $v->check('email')->is('email')
-      && (!$check_email || !user::exists($request['email'], 1))
-      && $v->check('password', 'Passwords')->is('match(password2)', 'password(6)')
-      && $v->check('cellphone')->is('int_tel');
+    $v->check('first_name')->is(2);
+    $v->check('last_name')->is(2);
+    $v->check('email')->is('email');
+    if(!$check_email || !user::exists($request['email'], 1)){
+      $v->check('password', 'Passwords')->is('match(password2)', 'password(6)');
+      $v->check('cellphone')->is('int_tel');
+    }
+    return $v->valid();
   }
-
   static function authenticate($email, $passwd)
   {
     $passwd = addslashes($passwd);
@@ -241,7 +243,7 @@ class user
     $reference = "$program_id-$partner_id-$user_id";
     $url = "http://iweb.itouchnet.co.za/Submit?UserId=MUKONIHTTP&Password=SDMRWRKC&PhoneNumber=$cellphone&Reference=$reference&MessageText=$sms";
     $curl = new curl();
-    $result = $curl->read($url);  
+    //$result = $curl->read($url);  
     log::debug("CURL RESULT: $result");
   }
   static function create($partner_id, $email, $password,$title, $first_name, $last_name, $cellphone, $otp)
@@ -268,9 +270,7 @@ class user
   
   static function register($request)
   {    
-    if (!user::verify_internal($request)) return;
-
-    if (!user::check($request)) return;
+    if (!(user::verify_internal($request) | user::check($request))) return;
     $request = db::quote($request);
     $title = $request[title];
     $first_name = $request[first_name];
@@ -511,8 +511,8 @@ and u.program_id = $program_id");
   {
     $email = $request[email];
     if (config::$program_id == 3 && !preg_match('/@(fpb\.(org|gov)\.za|mukoni\.co\.za|microsoft\.com|ea\.com)$/i', $email)) {
-      echo "!Application not yet released to the public. An announcement will be made soon.";
-      return false;
+      global $errors;
+      return $errors->add('email', "Application not yet released to the public. An announcement will be made soon.");
     }
     return true;
   }
