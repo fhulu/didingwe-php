@@ -23,6 +23,7 @@ class validator
     $this->has_errors = false;
     global $db;
     $this->db = is_null($conn)? $db: $conn;
+    errors::init();
   }
  
   function error($msg)
