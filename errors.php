@@ -50,7 +50,13 @@ class errors {
     if ($how == null) $how = $this->how;
     call_user_func($how, $this->list);
   }
+  
+  static function init()
+  {
+    global $errors;
+    if (is_null($errors)) $errors = new errors();
+  }
 }
 
-$errors = new errors();
+$errors = null;
 ?>
