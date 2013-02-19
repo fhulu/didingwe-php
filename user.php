@@ -244,7 +244,7 @@ class user
     $reference = "$program_id-$partner_id-$user_id";
     $url = "http://iweb.itouchnet.co.za/Submit?UserId=MUKONIHTTP&Password=SDMRWRKC&PhoneNumber=$cellphone&Reference=$reference&MessageText=$sms";
     $curl = new curl();
-   // $result = $curl->read($url);  
+    $result = $curl->read($url);  
     log::debug("CURL RESULT: $result");
   }
   static function create($partner_id, $email, $password,$title, $first_name, $last_name, $cellphone, $otp)
