@@ -246,6 +246,11 @@ class validator
     return !$this->has_errors;
   }
    
+  function report($name, $message)
+  {
+    $this->check($name);
+    return $this->error($message);
+  }
 };
 
 ?>
