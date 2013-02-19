@@ -201,10 +201,11 @@ class user
     $v->check('first_name')->is(2);
     $v->check('last_name')->is(2);
     $v->check('email')->is('email');
-    if(!$check_email || !user::exists($request['email'], 1)){
-      $v->check('password', 'Passwords')->is('match(password2)', 'password(6)');
-      $v->check('cellphone')->is('int_tel');
-    }
+    if($check_email && user::exists($request['email'], 1))
+      $v->report('email', '!Email address already exists');
+    
+    $v->check('password', 'Passwords')->is('match(password2)', 'password(6)');
+    $v->check('cellphone')->is('int_tel');
     return $v->valid();
   }
   static function authenticate($email, $passwd)
@@ -243,7 +244,7 @@ class user
     $reference = "$program_id-$partner_id-$user_id";
     $url = "http://iweb.itouchnet.co.za/Submit?UserId=MUKONIHTTP&Password=SDMRWRKC&PhoneNumber=$cellphone&Reference=$reference&MessageText=$sms";
     $curl = new curl();
-    $result = $curl->read($url);  
+   // $result = $curl->read($url);  
     log::debug("CURL RESULT: $result");
   }
   static function create($partner_id, $email, $password,$title, $first_name, $last_name, $cellphone, $otp)
@@ -270,7 +271,7 @@ class user
   
   static function register($request)
   {    
-    if (!(user::verify_internal($request) | user::check($request))) return;
+    if (!(user::verify_internal($request) & user::check($request))) return;
     $request = db::quote($request);
     $title = $request[title];
     $first_name = $request[first_name];
