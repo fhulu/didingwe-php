@@ -55,6 +55,12 @@ class errors {
   {
     global $errors;
     if (is_null($errors)) $errors = new errors();
+    return $errors;
+  }
+  
+  static function q($name, $error)
+  {
+    return errors::init()->add($name, $error);
   }
 }
 
