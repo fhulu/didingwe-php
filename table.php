@@ -589,7 +589,7 @@ HEREDOC;
     if ($this->export_file == '') $this->export_file = $this->heading;
     // Redirect output to a client’s web browser (Excel5)
     header('Content-Type: application/vnd.ms-excel');
-    header("Content-Disposition: attachment;filename=\"$this->export_file.xls");
+    header("Content-Disposition: attachment;filename=\"".$this->export_file.".xls\"");
     header('Cache-Control: max-age=0');
 
     $objWriter = PHPExcel_IOFactory::createWriter($excel, 'Excel5');
