@@ -388,8 +388,19 @@ class user
       $function = 'update_details';
     user::audit($function, $id, $values);
     
+    $email= $request['email_address'];
+    $program_id = config::$program_id;
+    list($old_id, $old_partner_id) = $db->read_one("select id, partner_id from mukonin_audit.user 
+      where email_address = '$email' and program_id = $program_id");
+    if ($old_partner_id != 0 && $old_id != $id) {
+      echo '!Email Address already exists';
+      return;
+    }
+    if ($old_id != '')
+      $db->exec("update mukonin_audit.user set email_address = 'overwritten-$email' where id = $old_id");
+    
     $sql = "update mukonin_audit.user set ". substr($values,1). " where id = $id";
-    $db->exec($sql);
+    $db->exec($sql);    
     if (!is_null($request['role']))
       user::update_role($request);
   }
