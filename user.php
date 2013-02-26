@@ -108,7 +108,7 @@ class user
     $user_id = $session->user->id;
     $db->exec("update mukonin_audit.user set otp = '$otp', otp_time = now()
       where id='$user_id' and program_id = " . config::$program_id);
-    $message = "Good day<br><br>You are currently trying to chage your email address. 
+    $message = "Good day<br><br>You are currently trying to change your email address. 
 				If you have not requested this, please inform the System Adminstrator.<br><br>
 				Your One Time Password is : <b>$otp</b>. <br><br>
 				Regards<br>
