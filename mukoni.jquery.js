@@ -173,7 +173,10 @@ $.fn.json = function(url, options, callback)
     options.data = $.extend($(this).values(), options.data);
   else
     options = {data : $(this).values()};
-  return $.json(url, options, callback);  
+  $.json(url, options, function(result){
+    callback(result);
+  });  
+  return this;
 }
 
 $.fn.sendOnSet = function(controls, url, options, callback)
@@ -253,6 +256,43 @@ $.fn.confirmOnSet = function(controls,url, options, callback)
   });
 }
 
+$.reportError = function(field, error)
+{
+  var sibling = $('#'+field+",[name='"+field+"']").parent('a');
+  if (sibling.length == 0)
+    sibling = $('#'+field+",[name='"+field+"']");
+  var box = $("<div class=error>"+error+"</div>");
+  sibling.after(box);
+  box.fadeIn('slow');
+}
+
+$.reportFirstError = function(event, result)
+{
+  $.each(result, function(key, row) {
+    if (key == 'errors') {
+      $.each(row, function(field, error) {
+        $.reportError(field, error);
+        event.stopImmediatePropagation();
+        return false;
+      });
+      return false;
+    }
+  });
+}
+
+$.reportAllErrors = function(event, result)
+{
+  $.each(result, function(key, row) {
+    if (key == 'errors') {
+      $.each(row, function(field, error) {
+        $.reportError(field, error);
+      });
+      event.stopImmediatePropagation();
+    }
+  });
+}
+
+
 $.fn.checkOnClick = function(controls,url, options, callback)
 {
   if (options instanceof Function) {
@@ -266,19 +306,7 @@ $.fn.checkOnClick = function(controls,url, options, callback)
     var params = $.extend({invoker: self, event: event}, options);
     $(controls).siblings(".error").remove();
     $(controls).json(url, params, function(result) {
-      $.each(result, function(key, row) {
-        if (key == 'errors') {
-          $.each(row, function(field, error) {
-            var sibling = $('#'+field+",[name='"+field+"']").parent('a');
-            if (sibling.length == 0)
-              sibling = $('#'+field+",[name='"+field+"']");
-            var box = $("<div class=error>"+error+"</div>");
-            sibling.after(box);
-            box.fadeIn('slow');
-          });
-          event.stopImmediatePropagation();
-        }
-      });
+      $.reportAllErrors(event, result);
       if (callback !== undefined)
         callback(result);      
     });
