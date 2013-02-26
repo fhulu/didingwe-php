@@ -45,6 +45,7 @@ class user
     $this->load_roles();
     $this->load_functions();
     session::register($this);
+    $this->force_audit('login');
   }
   function load_roles()
   {
@@ -217,14 +218,15 @@ class user
     global $db;
     $success = $db->exists($sql);
     $tries = $db->row[5];
-    if($tries >3){
-      echo "!Account locked. Please contact FPB on (012)345-6789";
+    if ($success) 
+      $attempts = 0;
+    else {
+      if($tries >3) echo "!Account locked. ";
+      $attempts = 'attempts+1';
     }
-    
-    $attempts = $success? '0': 'attempts+1';
     $db->exec("update mukonin_audit.user set attempts = $attempts
      where email_address='$email' and active=1 and program_id = ". config::$program_id);
-      
+  
     return $success? $db->row: false;
   }
   
@@ -421,10 +423,9 @@ class user
     if (!in_array($function, $functions)) 
       throw new user_exception("Unauthorised access to function $function from $email");
   }
-  
-  static function audit($function, $object='', $detail='',$type='')
+
+  static function force_audit($function, $object='', $detail='',$type='')
   {
-    //user::verify($function);
     global $db, $session;
     $user = $session->user;
     log::info("FUNCTION: $function USER: $user->id OBJECT: $object TYPE: $type DETAIL: $detail");
@@ -441,7 +442,11 @@ class user
       values($user->id, '$function', $object_id, $object_code, '$detail', '$type')");
   }
   
-  
+  static function audit($function, $object='', $detail='',$type='')
+  {
+    user::verify($function);
+    user::force_audit($function, $object, $detail, $type);
+  }
   static function audit_trail($request)
   {
     user::verify('audit_trail');
@@ -451,7 +456,7 @@ class user
     $table->set_heading("Audit Trail");
     $table->set_options($request);
     $program_id = config::$program_id;
-    $table->show("select t.create_time, p.full_name, u.first_name, u.last_name,
+    $table->show("select distinct t.create_time, p.full_name, u.first_name, u.last_name,
       u.email_address, f.name, t.detail
       from mukonin_audit.trx t 
         join mukonin_audit.function f on t.function_code = f.code
@@ -470,7 +475,7 @@ class user
     $program_id = config::$program_id;
     global $session;
     $partner_id = $session->user->partner_id;
-    $table->show("select t.create_time, p.full_name, u.first_name, u.last_name,
+    $table->show("select distinct t.create_time, p.full_name, u.first_name, u.last_name,
       u.email_address, f.name, t.detail
       from mukonin_audit.trx t 
         join mukonin_audit.function f on t.function_code = f.code
