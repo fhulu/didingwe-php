@@ -1,7 +1,7 @@
 table
 {
   position: relative;
-  border: 2px solid #b0b0b0;
+  border: 1px solid #b0b0b0;
   border-radius: 5px;
   border-collapse: collapse;
   font-size: 11px;
@@ -11,6 +11,9 @@ table
   margin-top: 5px;
   margin-bottom: 5px;
   width:99%;
+  -moz-box-shadow: 3px 3px 4px #0f0f0f;
+  -webkit-box-shadow: 3px 3px 4px #0f0f0f;
+  box-shadow: 3px 3px 4px #0f0f0f;
 }
 
 table tr
@@ -34,19 +37,19 @@ table td
 {
   padding: 3px;
   vertical-align: center;
-  background-color: FFFFF0;
+  background-color: #FFFFF0;
   background-repeat:no-repeat;
   background-position: center; 
 }
 
 table tr.alt td
 {
-  background-color: FFFFE0;
+  background-color: #FFFFE0;
 }
 
 table tr:hover td
 {/*;#4380d3 */
-  background-color:99cccc;
+  background-color:#99cccc;
 } 
 
 
