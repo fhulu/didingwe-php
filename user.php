@@ -393,13 +393,13 @@ class user
     
     $email= $request['email_address'];
     $program_id = config::$program_id;
-    list($old_id, $old_partner_id) = $db->read_one("select id, partner_id from mukonin_audit.user 
+    list($old_id, $old_partner_id, $active) = $db->read_one("select id, partner_id,active from mukonin_audit.user 
       where email_address = '$email' and program_id = $program_id");
-    if ($old_partner_id != 0 && $old_id != $id) {
+    if ($old_partner_id != 0 && $old_id != $id && $active != 0)  {
       echo '!Email Address already exists';
       return;
     }
-    if ($old_id != '')
+    if ($old_id != '' || $active != 0) 
       $db->exec("update mukonin_audit.user set email_address = 'overwritten-$email' where id = $old_id");
     
     $sql = "update mukonin_audit.user set ". substr($values,1). " where id = $id";
