@@ -570,7 +570,7 @@ and u.program_id = $program_id");
     
     
     foreach($emails as $email) {
-      $message = "Good day<br><br>$requestor would like to register as a user of the Online Submission System. Please click <a href=\"$link\">here</a> to give access to user.<br><br>
+      $message = "Good day<br><br>$requestor would like to register as a user of the FPB Online. Please click <a href=\"$link\">here</a> to give access to user.<br><br>
 				Regards<br>
 				Customer Operations";
       $subject = "Approve Registration";
