@@ -8,27 +8,32 @@ class document
   static function upload($control, $type)
   {
     session::ensure_not_expired();
-    log::debug("about to upload $control of $type");
     $file_name = addslashes($_FILES[$control]["name"]);
+    log::debug("about to upload $file_name from $control of $type");
     if ($file_name == '') return;
     
     global $session;
     $user_id = $session->user->id;
+
     
-    $sql = "INSERT INTO document(partner_id,user_id,filename,type) 
-            select partner_id,$user_id,'$file_name','$type' from mukonin_audit.user where id = $user_id";
+    $sql = "INSERT INTO document(partner_id,user_id,session_id,filename,type) 
+            select partner_id,$user_id,'$session->id','$file_name','$type' from mukonin_audit.user where id = $user_id";
     
     global $db;
     $id = $db->insert($sql);
     $file_name = str_replace("/[\' \s]'/", '-', $_FILES[$control]["name"]);
     $path = "../uploads/$id-$file_name";
     log::debug("Uploading file $path");
-    if (!is_uploaded_file($_FILES[$control]['tmp_name']))
+    $temp_file = $_FILES[$control]['tmp_name'];
+    if (!is_uploaded_file($temp_file)) {
+      $db->exec("update document set status = 'inva' where id = $id");
+      throw new document_exception("File $temp_file cannot be uploaded. Perhaps the file is too large.");
+    }      
+    if (!move_uploaded_file($_FILES[$control]["tmp_name"], $path)) {
+      $db->exec("update document set status = 'perm' where id = $id");
       throw new document_exception("File $path not moved to destination folder. Check permissions");
-      
-    if (!move_uploaded_file($_FILES[$control]["tmp_name"], $path))
-      throw new document_exception("File $path not moved to destination folder. Check permissions");
-      
+    }
+    $db->exec("update document set status = 'done' where id = $id");
     log::debug("File uploaded $path");
     return $id;
   }
