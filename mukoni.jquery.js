@@ -407,7 +407,10 @@ $.fn.setChildren = function(result)
     self.find(filter).each(function() {
       if ($(this).is("a")) {
         var proto = $(this).attr('proto')==undefined? '': $(this).attr('proto');
-        $(this).attr('href', proto+val);
+        if (val == null)
+          $(this).attr('href', '');
+       else
+          $(this).attr('href', proto+val);
       }
       else if ($(this).attr('value') === undefined)
         $(this).html(val);
