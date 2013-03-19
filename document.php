@@ -51,7 +51,8 @@ class document
       return;
     }
     $size = filesize($file_name);
-    header("Content-Disposition: attachment; filename=\"$desc\"");
+    $ext = document::extension($file_name);
+    header("Content-Disposition: attachment; filename=\"$desc.$ext\"");
     header("Content-length: ". $size);
     // --- get mime type end --
     header("Content-type: ". document::mimetype($file_name));
