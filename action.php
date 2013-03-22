@@ -1,5 +1,6 @@
 <?php 
 require_once('log.php');
+require_once 'session.php';
 
 //
 // this may be method call
