@@ -59,8 +59,10 @@ class select
   
   static function jsonLoad($request)
   {
-    $params = explode(',', $request['params']);
+    $params = $request['params'];
     log::debug("PARAMS $params");
+    $separator = strpos($params, '|')===false?',':'|';
+    $params = explode($separator, $params);
     list($table, $code, $value) = $params;
     if ($code == '') {
       $sql = "select * from $table";
