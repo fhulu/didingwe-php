@@ -137,16 +137,16 @@ table .filtering
 {
   float: left;
   width: 33%;
-  height: 100%;
+  height: 150%;
   cursor: pointer;
   background-position:center;
   background-repeat:no-repeat;
-  background-image:url('filter_add16.png');
+  background-image:url('filter_add32.png');
 }
 
 table .filtering[on]
 {
-  background-image:url('filter_del16.png');
+  background-image:url('filter_del32.png');
 }
 
 table .filter input
@@ -164,8 +164,8 @@ table .actions div
 {
   background-repeat:no-repeat;
   background-position: center; 
-  width: 16px;
-  height: 16px;
+  width: 32px;
+  height: 32px;
   padding-right: 3px;
   cursor: pointer;
   display: inline-block;
@@ -193,7 +193,8 @@ table .actions div[action=add]
 
 table .actions div[action=export]
 {
-  background-image:url('excel16.png');
+  background-image:url('excel32.png');
+  
 }
 
 table .adder:hover, .exporter:hover
