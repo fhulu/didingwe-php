@@ -367,7 +367,12 @@ $.json = function(url, options, callback)
 
 $.fn.jsonLoadOptions = function(url, options, callback)
 {
-  if (options instanceof Function) {
+  if (url instanceof Function) {
+    callback = url;
+    url = undefined;
+    options = {};
+  } 
+  else if (options instanceof Function) {
     callback = options;
     options = {};
   } 
