@@ -10,7 +10,7 @@ function get_page_file($page)
   static $extensions = array('','.php','.htm','.html');
   foreach ($extensions as $ext) {
     $file_name = $name . $ext;
-    if (file_exists($file_name))
+    if (file_exists($file_name) && filetype($file_name) != 'dir')
       return $file_name;
   }
   return null;
