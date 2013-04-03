@@ -527,11 +527,12 @@ and u.program_id = $program_id");
   
   static function verify_internal($request)
   {
+/*
     $email = $request[email];
-    if (config::$program_id == 3 && !preg_match('/@(fpb\.(org|gov)\.za|mukoni\.co\.za|microsoft\.com|ea\.com|absa\.co\.za)$/i', $email)) {
+    if (config::$program_id == 3 && !preg_match('/@(fpb\.(org|gov)\.za|mukoni\.co\.za|microsoft\.com|ea\.com|absa\.co\.za)$/i', $email)) { 
       global $errors;
       return $errors->add('email', "Application not yet released to the public. An announcement will be made soon.");
-    }
+    } */
     return true;
   }
   
