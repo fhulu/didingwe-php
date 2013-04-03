@@ -106,7 +106,7 @@ class session
       $sql = "update mukonin_audit.session set status='C', end_time=now() where id = '$session->id'";
       $db->send($sql);
     }
-    user::audit('logout');
+    user::force_audit('logout');
     session_destroy();
     session::redirect("/?c=home");
   }
