@@ -28,6 +28,7 @@ class table
   const DELETABLE = 0x800;
   const ADDABLE = 0x1000;
   const EXPORTABLE = 0x2000;
+  const SEARCHABLE = 0x4000;
 
   var $fields;
   var $symbols;
@@ -123,9 +124,11 @@ class table
     $this->set_row_action(self::DELETABLE, 'delete', $url);
   }
 
-  function set_adder($url)
+  function set_adder($url, $search=null)
   {
     $this->set_action(self::ADDABLE, 'add', $url);
+    if (!is_null($search))
+      $this->set_action(self::SEARCHABLE, 'search', $search);
   }
   
   function set_key($key)
@@ -607,6 +610,48 @@ HEREDOC;
         $replace[$col] = $value;
     }
     return $replace;
+  }
+  
+  static function search($request, $sql)
+  {
+    $term = $request['term'];
+    $start = $request['changed']==0?$request['start']:0;
+    $like = "like '%$term%'";
+    $max_rows = 10;
+    $result = array();
+   
+    $fields = explode(',', substr($sql, strpos($sql, ',')+1));
+    $filter = "";
+    $pattern = "/([\w\.]+)(?:[\w ]*)?/";
+
+    foreach($fields as $field) {
+      if (strpos($field, "'") !== false || strpos($field, "(") !== false) continue;
+      $matches = array();
+      preg_match($pattern, $field, $matches);
+      $field = $matches[1];
+      $filter .= "$field $like or ";
+    }
+    if ($filter != '')
+      $sql .= "and (". substr($filter, 0, strlen($filter)-4) . ")";
+    $sql = substr($sql, 0, 7) . "'$term' term, " . substr($sql, 7);
+    global $db;
+    $result =$db->page_names($sql, $max_rows, $start);
+
+    if ($start > 0) $nav['prev'] = $start - $max_rows;
+    
+    if (sizeof($result) > $max_rows) {
+      array_pop($result);
+      $nav['next'] = $start + $max_rows;
+    }
+    else if (sizeof($result)==0) {
+      $result[] = array("type"=>"error", "label"=>"No match for found");
+    }
+
+    if (is_array($nav)) {
+      $nav['type'] = 'nav';
+      $result[] = $nav;
+    }
+   echo json_encode($result);
   }
 }
 ?>

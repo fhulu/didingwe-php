@@ -226,12 +226,81 @@
       return this;
     },
     
+    
+    searchRow: function(url)
+    {
+      var row = $("<tr new></tr>");
+      var input = $("<input class='search' value=''></input>");
+      row.append(input).appendTo(this.element.find("tbody"));
+      input
+        .addClass('fullwidth') 
+        .autocomplete({
+          start: 0,
+          source: url,
+          prevTerm: '',
+          select: function( event, ui ) {
+            var row = $(this).parent().parent();
+            var item = ui.item;
+            var prev = row.siblings('[key="'+item.id+'"][type="'+item.type+'"]');
+            row.parent().add($(this).parent(), ui.item)
+            return false;
+          },
+          search: function () {
+            var start = input.autocomplete('option', 'start');
+            var changed = 0;
+            var val = $(this).val();
+            if (val != input.autocomplete('option', 'prevTerm')) {
+              changed = 1;
+              input.autocomplete('option', 'prevTerm', val);
+            }
+            input.autocomplete('option','source', url+'&start='+start+'&changed='+changed);
+          }
+        })
+        .data( "autocomplete" )._renderItem = function( ul, item ) {
+          input.autocomplete('option', 'changed', 0);
+          var text='';
+          if (item.id != undefined) {
+            $.each(item, function(key, val) {
+              if (val != undefined && key != 'term' && key != 'id')
+                text += ' ' + val;
+            });
+            if (text.length > 50) text = text.substr(0, 50) + '...';
+            text = "<a>" + text.replace(new RegExp("("+preg_quote(item.term)+")", "gi"),"<b>$1</b>")+"</a>";
+          }
+          else {
+            if (item.type == 'nav') {
+              if (item.next != undefined) 
+                text += "<button style='float:right' nav=next>>></button>";
+                
+              if (item.prev != undefined)
+                text += "<button style='float:left' nav=prev><<</button>";
+            }
+            else text = item.label;
+          }
+          var li = $( "<li></li>" )
+            .data( "item.autocomplete", item )
+            .append( text )
+            .appendTo( ul );
+          $("li>button[nav]").click(function(){
+            input
+              .autocomplete('option','start', item[$(this).attr('nav')])
+              .autocomplete('search');
+          });
+          return li;
+        };
+    },
+    
     addRow: function()
     {
+      var body = this.element.find("tbody");
+      var search = body.attr('search');
+      if (search !== undefined) {
+        this.searchRow(search);
+        return;
+      }
       if (this.editor == null)
         this.editor = this._create_editor('edit', '<td></td>');
       
-      var body = this.element.find("tbody");
       var key = body.attr('key');
       var row = $("<tr new></tr>");
       this.editor.find('td').each(function() {
@@ -347,9 +416,9 @@
         .on('add', function() {self.addRow();})
         .on('export', function() {self.exportData();})
         .on('checkall', function() {self.checkAll();});
+        
     },
 
-    
     _adjust_actions_width: function()
     {
       var width = 0;
