@@ -541,9 +541,11 @@ HEREDOC;
   }
   function export()
   {
+    
+    ini_set('memory_limit', '512M');
     require_once '../PHPExcel/Classes/PHPExcel.php';
     global $db;
-    $rows = $db->exec($this->sql);
+    $db->exec($this->sql, 1);
 
     if ($db->result !== true ) {
       foreach ($db->fields as $field) {
@@ -578,17 +580,20 @@ HEREDOC;
       ++$col;
     }
     $row = 2;
-    while ($db->more_rows(MYSQLI_ASSOC)) {
+    //while ($db->more_rows(MYSQLI_ASSOC)) {
+    $symbols = $this->symbols;
+    $has_row_actions = sizeof($this->row_actions) > 0;
+    $db->page_through_names($this->sql, 1000, function($data, $pagenum, $index) use($symbols, $has_row_actions, $sheet) {
+      $row = 2 + $pagenum * 1000 + $index;
       $col = 0;
-      $data = $db->row;
-      foreach($this->symbols as $symbol) {
+      foreach($symbols as $symbol) {
         list($key,$cell) = each($data);
-        if ($symbol == '#' || ($key == 'actions' && sizeof($this->row_actions) > 0)) continue;
+        if ($symbol == '#' || ($key == 'actions' && $has_row_actions)) continue;
         $sheet->setCellValueByColumnAndRow($col, $row, $cell);
         ++$col;
       }
-      ++$row;
-    }
+      return true;
+    });
     if ($this->export_file == '') $this->export_file = $this->heading;
     // Redirect output to a client’s web browser (Excel5)
     header('Content-Type: application/vnd.ms-excel');
