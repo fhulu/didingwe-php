@@ -178,6 +178,24 @@ class db
     $options['fetch'] = MYSQLI_ROW;
     return $this->page($sql, $size, $start, $callback, $options);
   }
+  function page_through_names($sql, $size, $callback=null, $options=null)
+  {
+    $options['fetch'] = MYSQLI_ASSOC;
+    $options['size'] = $size;
+    $options['start'] = $start;
+    $pagenum = 0;   
+    do {
+      $paged = false;
+      $last_row_index = 0;
+      $this->each($sql, function($index, $row) use (&$paged, &$callback, &$pagenum, &$last_row_index) {
+        $paged = true;
+        $last_row_index = $index;
+        return is_null($callback)? true: $callback($row, $pagenum, $index);
+      }, $options);
+      $options['start']  += $size;
+      ++$pagenum;
+    } while ($paged && $last_row_index == $size-1);
+  }
 
 
   function read_column($sql, $column_idx=0)
