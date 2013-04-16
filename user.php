@@ -213,6 +213,7 @@ class user
   static function authenticate($email, $passwd)
   {
     $passwd = addslashes($passwd);
+    $email = addslashes($email);
     $sql = "select id, partner_id, email_address,title, first_name, last_name,attempts from mukonin_audit.user
      where email_address='$email' and password=password('$passwd') and active=1 and program_id = ". config::$program_id;         
     
