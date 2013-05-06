@@ -110,13 +110,10 @@ $.send = function(url, options, callback)
     error: options.error,
     dataType: options.dataType,
     success: function(data) {
-      var script = null;
-      if (options.dataType != 'json')
-        script = data.match(/<script[^>]+>(.+)<\/script>/);
-      if (options.eval && script != null && script.length > 1) {
-        eval(script[1]);
-      }
-      else if (data != null) {
+      if (data != null) {
+        if (data.script !== undefined && options.eval) {
+          eval(data.script);
+        }
         if ((options.showResult === true && data != '') || data[0] == '!') {
           if (progress.timeout !== undefined) clearTimeout(progress.timeout);
           
@@ -306,7 +303,8 @@ $.fn.checkOnClick = function(controls,url, options, callback)
     var params = $.extend({invoker: self, event: event}, options);
     $(controls).siblings(".error").remove();
     $(controls).json(url, params, function(result) {
-      $.reportAllErrors(event, result);
+      if (result != null)
+        $.reportAllErrors(event, result);
       if (callback !== undefined)
         callback(result);      
     });
