@@ -12,7 +12,7 @@ class record_format extends format_delimited
     $this->delimiter = $delimiter;
     $this->quote = $quote;
     $formats = is_array($format_string)? $format_string: explode("|", $format_string);
-    record_format::parse(&$formats, &$this->fields, &$this->positions);
+    record_format::parse($formats, $this->fields, $this->positions);
   }
   
   
@@ -29,7 +29,7 @@ class record_format extends format_delimited
 
       if ($param_count > 1 && $params[1] == "prev") {
         $use_previous = true;
-        array_splice(&$params, 1, 1);
+        array_splice($params, 1, 1);
         --$param_count;
       }
       else $use_previous = false;
@@ -56,7 +56,7 @@ class record_format extends format_delimited
         $field = new format_record;
         $field_count = (int)$params[2];
         $record_formats = array_slice($formats, $column_idx+1, $field_count);
-        record_format::parse(&$record_formats, &$field->fields, &$field->positions);
+        record_format::parse($record_formats, $field->fields, $field->positions);
         $column_idx += $field_count;
         $repeat_count = $param_count>3? $params[3]:1;
       }
@@ -69,7 +69,7 @@ class record_format extends format_delimited
         $field_formats = $params[2] . "." . implode(".", array_slice($params, 3));
         $field_formats = explode($field->delimiter, $field_formats);
         array_shift($field_formats);
-        record_format::parse(&$field_formats, &$field->fields, &$field->positions);
+        record_format::parse($field_formats, $field->fields, $field->positions);
         $repeat_count = 1;
       }
       else {
@@ -158,16 +158,16 @@ class record_format extends format_delimited
         $value = trim($line[$line_idx++]);
         break;
       case FORMAT_COMPOSITE:
-        $value = record_format::read_composite(&$field, &$line, &$line_idx);
+        $value = record_format::read_composite($field, $line, $line_idx);
         break;
       case FORMAT_RECORD:
         $value = array();
-        record_format::read_line($field->positions, &$field->fields, &$line, &$line_idx, &$value);
+        record_format::read_line($field->positions, $field->fields, $line, $line_idx, $value);
         break;
       case FORMAT_DELIMITED:
         $value = array();
-        $my_line = explode(&$field->delimiter, $line[$line_idx++]);
-        record_format::read_line($field->positions, &$field->fields, &$my_line, 0, &$value);
+        $my_line = explode($field->delimiter, $line[$line_idx++]);
+        record_format::read_line($field->positions, $field->fields, $my_line, 0, $value);
         break;
       }
     }    
@@ -183,7 +183,7 @@ class record_format extends format_delimited
       else if ($this->quote != '') {
         $pattern = '/((?:(?:"[^"]+")|(?:[^'.$delimiter.']+))+)/';
         $matches = array();
-        preg_match_all($pattern, $line, &$matches);
+        preg_match_all($pattern, $line, $matches);
         if (strpos($line, $delimiter) === 0)
           $line = array_merge(array(''), $matches[0]);
         else
@@ -195,7 +195,7 @@ class record_format extends format_delimited
       else 
         $line = explode($delimiter, trim($line));
     }
-    record_format::read_line(&$this->positions, &$this->fields, &$line, 0, &$values);
+    record_format::read_line($this->positions, $this->fields, $line, 0, $values);
 
   }    
 
@@ -208,7 +208,7 @@ class record_format extends format_delimited
     else {
       $file = fopen($file_path, "rb");
       if (!$file) 
-        throw record_format_exception("Unable to load file '$file_path'");
+        throw new record_format_exception("Unable to load file '$file_path'");
 
       $line_index = 0;
     }
@@ -217,8 +217,8 @@ class record_format extends format_delimited
       $line = fgets($file);
       if ($line == "") continue;
       $values = null;
-      $format->read($line, &$values);
-      if ($callback($line, $line_index, &$values) === false) break;
+      $format->read($line, $values);
+      if ($callback($line, $line_index, $values) === false) break;
       ++$line_index;
     }
     
@@ -229,7 +229,7 @@ class record_format extends format_delimited
   {
    	$file = fopen($file_path, "rb");
     if (!$file) 
-      throw record_format_exception("Unable to load file '$file_path'");
+      throw new record_format_exception("Unable to load file '$file_path'");
     $line = fgets($file);
     if ($delim[0] == '/')
       $tags = preg_split($delim, trim($line));
