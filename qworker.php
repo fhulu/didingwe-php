@@ -62,14 +62,14 @@ class qworker extends qworker_info
       log::debug("Waiting for work");
       $error_code = 0;
 
-      if (!msg_receive($this->msg_handle, 1, &$type, $this->max_msg_size, &$msg, true, 0, &$error_code)) {
+      if (!msg_receive($this->msg_handle, 1, $type, $this->max_msg_size, $msg, true, 0, $error_code)) {
         //log::error("Failed to receive message with error $error_code");
         pcntl_signal_dispatch();
         continue;
       }
       log::debug("Received $msg->method(" . implode(',',$msg->arguments) . ')');
   
-      $load = $msg->arguments[2];
+      $msg->arguments[2] = min($msg->arguments, $this->capacity);
       if ($msg->method == 'restart')
         ;//todo: fork to restart
       else if ($msg->method == 'stop') {
@@ -78,7 +78,7 @@ class qworker extends qworker_info
       }
       else {
         call_user_func_array($callback, $msg->arguments);
-        qmanager::completed($type, $this->id, $load);
+        call_user_func_array('qmanager::complete', $msg->arguments);
       }
     } 
     
