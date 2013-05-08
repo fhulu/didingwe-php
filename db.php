@@ -43,7 +43,7 @@ class db
 
   function disconnect()
   {
-    $this->mysqli->close();
+    if ($this->mysqli != null) $this->mysqli->close();
     $this->mysqli = null;
     log::debug("User $this->user disconnected to MySQL on $this->hostname");
   }
@@ -150,7 +150,7 @@ class db
     $index = 0;
     
     while (($row = $this->result->fetch_array( $fetch))) {
-      if ($callback($index, &$row)===false) break;
+      if ($callback($index, $row)===false) break;
       ++$index;
     }
   }
