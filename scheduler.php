@@ -110,8 +110,8 @@ class schedule_mgr extends qworker
       $item->type = $work_type;
       $item->size = $size;
       $item->time = $options['time'];
-      $item->rate = isset($options['rate']? $options['rate']: $size;
-      $item->seconds = isset($options['seconds']? $options['seconds']: 1;
+      $item->rate = isset($options['rate'])? $options['rate']: $size;
+      $item->seconds = isset($options['seconds'])? $options['seconds']: 1;
       $arguments = array_slice(func_get_args(),6);
       array_walk($arguments, function(&$value, $index) { $value = urlencode($value); });
       $item->arguments = implode(' ',$arguments);
