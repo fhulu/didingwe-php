@@ -50,13 +50,13 @@ class said
 
   static function match($subject, $matches) 
   {
-    return preg_match_all(SAID_PATTERN, $subject, &$matches);
+    return preg_match_all(SAID_PATTERN, $subject, $matches);
   }
    
   static function get_dob($id)
   {
     $matches = array();
-    if (!preg_match(DOB_PATTERN, $id, &$matches)) return '';
+    if (!preg_match(DOB_PATTERN, $id, $matches)) return '';
     //note: only works for people born before 2000
     return strlen($matches[0])==6? '19'.$matches[0]: $matches[0];
   }
