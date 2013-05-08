@@ -18,7 +18,7 @@ class ifind
   
   static function get_dest_key(&$fields)
   {
-    foreach($fields as &$field) {
+    foreach($fields as $field) {
       if ($field[0] == '#') {
         $field = substr($field, 1);
         return $field;
@@ -85,7 +85,7 @@ EOT;
     $ifind->max_rows = (int)$db->read_one_value("select count(1) from $ifind->table $where"); 
     //todo: use faster found_rows() instead of count(1)
     $ifind->max_page = (int)ceil($ifind->max_rows / self::PAGESIZE) - 1;
-    table::display($sql,null, table::TOTALS, 'dropdown', 0, 'ifind::set_attr', null, &$ifind);
+    table::display($sql,null, table::TOTALS, 'dropdown', 0, 'ifind::set_attr', null, $ifind);
   }
 
   static function set_attr($ifind, &$row_data, $row_num, &$attr)
