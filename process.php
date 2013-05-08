@@ -62,7 +62,7 @@ class process
     log::info("Queued $method");
     $msg->arguments = $arguments;
     if (!msg_send(process::get_handle(), 1, $msg))
-      throw process_exception("Unable to queue message. Process daemon may not be running.");
+      throw new process_exception("Unable to queue message. Process daemon may not be running.");
   }
   
   static function q($method)
@@ -129,7 +129,7 @@ class process
       $msg = new process_entry();
       $type = 1;
       $error_code = 0;
-      if (!msg_receive($this->handle, 1, &$type, 2048, &$msg, true, 0, &$error_code)) {
+      if (!msg_receive($this->handle, 1, $type, 2048, $msg, true, 0, $error_code)) {
         log::error("Failed to receive message with error $error_code");
         continue;
       }
