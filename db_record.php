@@ -42,12 +42,12 @@ class db_record
         $key_names = array_diff(is_null($data)?$db_fields:$data_fields, $value_names);
     }
     if (is_null($data))  {
-      db_record::reset_data(&$this->keys, null, $key_names); 
-      db_record::reset_data(&$this->values, null, $value_names); 
+      db_record::reset_data($this->keys, null, $key_names); 
+      db_record::reset_data($this->values, null, $value_names); 
     } 
     else {
-      db_record::set_data(&$this->keys, $data, $key_names); 
-      db_record::set_data(&$this->values, $data, $value_names); 
+      db_record::set_data($this->keys, $data, $key_names); 
+      db_record::set_data($this->values, $data, $value_names); 
     }
   }
   
@@ -99,17 +99,17 @@ class db_record
 
   function set_keys($data, $field_names=null)
   {
-    db_record::set_data(&$this->keys, $data, $field_names);
+    db_record::set_data($this->keys, $data, $field_names);
   }
 
   function set_values($data, $field_names=null)
   {
-    db_record::set_data(&$this->values, $data, $field_names);
+    db_record::set_data($this->values, $data, $field_names);
   }
 
   function reset_values($data, $field_names=null)
   {
-    db_record::reset_data(&$this->values, $data, $field_names);
+    db_record::reset_data($this->values, $data, $field_names);
   }
 
   function reset_keys($data, $field_names=null)
@@ -136,7 +136,7 @@ class db_record
   
   function update($values=null)
   {
-    if (is_null($values)) $values = &$this->values;
+    if (is_null($values)) $values = $this->values;
     $sql = "update $this->table set " . db_record::get_name_value_pairs($values) . db_record::get_sql_where($this->keys);
     $this->db->exec($sql);
   }  
@@ -213,7 +213,7 @@ class db_record
   static function create_with_data($db, $table, $key_names, $value_names, $data, $updatable=true)
   {
     if ($updatable) {
-      db_record::set_data(&$keys, $key_names, $data);
+      db_record::set_data($keys, $key_names, $data);
       $record = create_from_db($db, $table, $keys, $value_names);
     }
     
@@ -233,8 +233,8 @@ class db_record
       $key_names = array_keys($keys);
     }
     else {     
-      db_record::set_data(&$keys, $this->keys, $key_names); 
-      db_record::set_data(&$keys, $this->values, $key_names); 
+      db_record::set_data($keys, $this->keys, $key_names); 
+      db_record::set_data($keys, $this->values, $key_names); 
     }
     return $keys;
   }
@@ -245,7 +245,7 @@ class db_record
     $sql = "select " . implode(',', array_keys($this->keys))
     . " from $this->table " . db_record::get_sql_where($keys);
     if (!$this->db->exists($sql)) return false;
-    db_record::set_data(&$this->keys, $this->db->row);
+    db_record::set_data($this->keys, $this->db->row);
     return true;
   }    
   
@@ -275,7 +275,7 @@ class db_record
  
   function remove($keys)
   {
-    if (is_null($keys)) $keys = &$this->keys;
+    if (is_null($keys)) $keys = $this->keys;
     $sql = "delete $this->table ". db_record::get_sql_where($keys);
     $this->db->exec($sql);
     echo $sql .  "\n";
@@ -313,7 +313,7 @@ class db_record
     if ($keys_custom || $key_columns != $columns) {
       $sql = " select $key_columns from $this->table $where";
       $db->exists($sql);
-      db_record::set_data(&$this->keys, $this->db->row);
+      db_record::set_data($this->keys, $this->db->row);
     }
   }
 
