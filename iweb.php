@@ -89,7 +89,9 @@ class iweb extends qworker
         $status = 'err';
       }
     }
-    $this->db_update->exec("update mukonin_sms.outq set status='$status',attempts=$attempts,esme_reference='$value' where id = $id");
+    
+    global $db;
+    $db->exec("update mukonin_sms.outq set status='$status',attempts=$attempts,esme_reference='$value' where id = $id");
   }
  
   function start()
@@ -99,20 +101,23 @@ class iweb extends qworker
     //todo: process pending item on queue before listening
     
     global $db;
-    $this->db_read = $db;
-    $this->db_update = $db->dup();
+//    $this->db_read = $db;
+ //   $this->db_update = $db->dup();
     $self = &$this;
-    parent::listen(function($provider_id, $type, $start, $load, $key_name, $key_value) use (&$self)  {
+    parent::listen(function($provider_id, $type, $load, $callback, $key_name, $key_value) use (&$self)  {
       if ($key_name == '' && $key_value == '') {
         log::error("No keys given for iweb work");
         return;
       }
+      global $db;
       $sql = "select id,msisdn, message, reference1 from mukonin_sms.outq 
-        where $key_name = $key_value and status = 'pnd' limit $start, $load";
-      $self->db_read->each($sql, function($index, $row) use (&$self) {
+        where $key_name = $key_value and status = 'pnd' limit $load";
+      $rows = $db->read($sql);
+//      $self->db_read->each($sql, function($index, $row) use (&$self) {
+      foreach($rows as $row) {
         list($id, $msisdn, $message) = $row;
         $self->submit($id, $msisdn, $message);
-      });
+      };
     });
   }
 } 
