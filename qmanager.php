@@ -13,7 +13,7 @@ class qmessage
   var $arguments;
 }
 
-class provider_info
+class qworker_info
 {
   var $name;
   var $type;
@@ -21,25 +21,8 @@ class provider_info
   var $provider_id;
   var $msg_handle;
   var $capacity;
-  var $workers;
-}
-
-class qworker_info extends provider_info
-{
-  var $pid;
-  var $start_time;
-  var $last_time;
   var $load;
   var $completed;
-}
-
-
-class qworkers
-{
-  var $type;
-  var $msg_key;
-  var $max_instances;
-  var $workers;
 }
 
 class qmanager_exception extends Exception {};
@@ -56,6 +39,7 @@ class qmanager
     msg_remove_queue($this->handle);
     $this->handle = qmanager::get_handle();
     $this->workers = array();
+    $this->worker_ids = array();
   }
 
   static function start_daemon()
@@ -70,7 +54,7 @@ class qmanager
  
   static function get_handle()
   {
-    return msg_get_queue(1000,0660);
+    return msg_get_queue(1000,0666);
   }
   static function init($log_level = log::INFO)
   {
@@ -88,10 +72,11 @@ class qmanager
     $msg->session = serialize($session);
     $msg->method = $method;
     $msg->options = $options;
-    log::info("Queued $method(" . implode(',',$arguments) . ')');
+    log::debug("Queing $method(" . implode(',',$arguments) . ')');
     $msg->arguments = $arguments;
     if (!msg_send(qmanager::get_handle(), 1, $msg))
-      throw process_exception("Unable to queue message. qmanager daemon may not be running.");
+      throw new qmanager_exception("Unable to queue message. qmanager daemon may not be running.");
+    log::info("Queued $method(" . implode(',',$arguments) . ')');
   }
   
   static function q($method)
@@ -119,6 +104,7 @@ class qmanager
   static function get_provider($user_id, $type)
   {
     global $db;
+    db::connect_default();
     $provider_id  = $db->read_one_value(
       "select pr.id from mukonin_process.provider pr, mukonin_process.group_provider gp
         ,mukonin_audit.partner pa,mukonin_audit.user u 
@@ -131,6 +117,10 @@ class qmanager
 
   static function daemon_work($user_id, $type, $load, $parameters )
   {
+    $provider_id  = qmanager::get_provider($user_id, $type);  
+    if (is_null($provider_id)) return false;
+    $arguments = func_get_args();
+    $arguments[0] = $provider_id;
     qmanager::send('work', $arguments, 'q');
     return true;
   }
@@ -138,28 +128,25 @@ class qmanager
   static function work($type, $load, $parameters )
   {
     global $session;
-    $arguments = array_merge(array($session->user_id),func_get_args());
+    $provider_id  = qmanager::get_provider($session->user->id, $type);  
+    if (is_null($provider_id)) return false;
+    $arguments = array_merge(array($provider_id),func_get_args());
     qmanager::send('work', $arguments, 'q');
     return true;
     
   }
   
-  // e.g. options, 'sms', size, etc)//
-  static function schedule($options, $type, $size, $etc )
+  // e.g. schedule_time, options, 'sms', size, etc)//
+  static function schedule($schedule_time, $options, $type, $size, $etc )
   {
     global $db, $session;
     $user = $session->user;
     call_user_func_array('qmanager::work', array_merge(array('schedule', 1, $user->id), func_get_args()));
   }
   
-  static function daemon_schedule($user_id, $options, $type, $size, $etc )
+  static function complete($type, $load, $parameters)
   {
-    call_user_func_array('qmanager::work', array_merge(array('schedule', 1, $user_id), func_get_args()));
-  }
-
-  static function report($type, $provider_id, $pid, $time, $load)
-  {
-    qmanager::send('report', func_get_args(), 'q');
+    qmanager::send('complete', func_get_args(), 'q');
   }
   
   function listen()
@@ -171,7 +158,7 @@ class qmanager
       $error_code = 0;
       $wait_status = 0;
       pcntl_wait($status, WNOHANG|WUNTRACED);
-      if (!msg_receive($this->handle, 1, &$type, 2048, &$msg, true, 0, &$error_code)) {
+      if (!msg_receive($this->handle, 1, $type, 2048, $msg, true, 0, $error_code)) {
         log::error("Failed to receive message with error $error_code");
         continue;
       }
@@ -179,14 +166,17 @@ class qmanager
       if ($msg->method == 'start') {
         $this->started($msg);
       }
-      else if ($msg->method == 'report') {
-        $this->reported($msg);
+      else if ($msg->method == 'register') {
+        $this->registered($msg);
       }
       else if ($msg->method == 'work') {
         $this->distribute($msg);
       }
       else if ($msg->method == 'stop') {
         $this->stopped($msg);
+      }
+      else if ($msg->method == 'complete') {
+        $this->completed($msg);
       }
       else {
         global $db;
@@ -202,30 +192,34 @@ class qmanager
     return $msg;
   }
   
+  
   function dispatch($msg)
   {
     global $session;
     $session = unserialize($msg->session);
     $user = $session->user;
     log::debug("DISPATCH: method: $msg->method user: $user->id partner: $user->partner_id");      
-    $method = $msg->method;
-    list($class, $function) = explode('::', $method);
     db::connect_default();
     try {
-      require_once($class.'.php');
-      if (!is_callable($method)) throw process_exception('Unable to call method $method');
-      call_user_func_array($method, $msg->arguments);
+     qmanager::call($msg->method, $msg->arguments);
     } 
     catch (Exception $e) {
       log::error("UNCAUGHT EXCEPTION: " . $e->getMessage() );
     } 
   } 
 
+  static function call($function, $arguments)
+  {
+    list($class, $method) = explode('::', $function);
+    require_once($class.'.php');
+    if (!is_callable($function)) throw new qmanager_exception("Unable to call method $function");
+    call_user_func_array($function, $arguments);
+  }
+  
   static function get_control_sql($msg)
   {
-    db::connect_default();
     list($option, $filter) = $msg->arguments;
-    $sql = "select w.id, p.id, w.type, w.name, p.program, w.allocation, p.max_instances 
+    $sql = "select w.id, p.id, w.type, w.name, p.program, w.allocation 
           from mukonin_process.worker w, mukonin_process.provider p
           where w.provider_id = p.id and w.enabled = 1 and p.enabled = 1";
     if ($option == '-p')
@@ -242,51 +236,29 @@ class qmanager
     //todo: allow for multiple number of the same worker type
     //todo: check that we don't exceed number of instances allowed
     list($option, $filter) = $msg->arguments;
+    db::connect_default();
     global $db;   
     $sql = qmanager::get_control_sql($msg);   
     
     $self = $this;
     $db->each($sql, function($index, $row) use (&$self) {
-      list($id, $provider_id, $type, $name, $program, $capacity, $max_instances) = $row;
-      if (isset($self->providers[$type]) && isset($self->providers[$type][$provider_id]) 
-        && sizeof($self->providers[$type][$provider_id]) >= $max_instances) {
-        log::warn("Cannot have more than $max_instances of type $type");
+      $info = new qworker_info;
+      list($info->id, $info->provider_id, $info->type, $info->name, $program, $info->capacity) = $row;
+      if (isset($self->workers[$info->type][$info->id])) {
+        log::warn("Worker $info->name($program) already started");
         return;
       }
-      
-      if (!isset($self->providers[$type])) $self->providers[$type] = array();
-      if (!isset($self->providers[$type][$provider_id])) {
-        $info = new provider_info;
-        $info->provider_id = $provider_id;
-        $info->capacity = $capacity;
-        $info->id = $id;
-        $info->type = $type;
-        $info->name = $name;
-        $info->max_instances = $max_instances;
         $info->msg_handle = msg_get_queue($info->id, 0660);
-        $info->workers = array();
-        $self->providers[$type][$provider_id] = $info;
-      }
-      log::info("Starting $info->program $info->name $info->id $provider_id $info->capacity");
-      exec("$info->program $info->name $info->id $provider_id >/dev/null 2>&1 &");
+      $self->workers[$info->type][$info->id] = $info;
+      log::info("Starting $program $info->name $info->id $info->provider_id $info->capacity");
+      exec("$program $info->name $info->id $info->provider_id >/dev/null 2>&1 &");
       //todo: use signal handler to test when executed program dies
     });    
     
   }
   
-  function reported($msg)
+  function registered($msg)
   {
-    list($type, $provider_id, $pid, $time, $load) = $msg->arguments;
-    $providers = &$this->workers[$type][$provider_id];
-    if (!isset($providers->workers[$pid])) {  //todo: ensure we don't register more than max instances
-      $worker = new qworker_info();
-      $worker->start_time = $time;
-      $workers[$pid] = $worker;
-    }
-   
-    $worker = &$workers[$pid]; 
-    $worker->load = $load;
-    $worker->last_time = $time;
   }
   
   function stopped($msg)
@@ -295,16 +267,16 @@ class qmanager
     db::connect_default();
     global $db;
     $sql = qmanager::get_control_sql($msg);
-    $self = &$this;
+    $self = $this;
     $db->each($sql, function($index, $row) use (&$self, $msg) {
-      list($id, $provider_id, $type, $name, $program, $capacity, $max_instances) = $row;
-      if (!isset($self->providers[$type])) return;
-      if (!isset($self->providers[$type][$provider_id])) return;
+      $info = new qworker_info;
+      list($info->id, $info->provider_id, $info->type, $info->name, $program) = $row;
+      if (!isset($self->workers[$info->type][$info->id])) return;
      
-      $provider = $self->providers[$type][$provider_id];
-      log::info("Stopping $program $name $id");
-      unset($self->providers[$type][$provider_id]);
-      if (!msg_send($provider->msg_handle, 1, $msg))
+      log::info("Stopping $program $info->name");
+      unset($self->workers[$info->type][$info->id]);
+      $info->msg_handle = msg_get_queue($info->id, 0660);
+      if (!msg_send($info->msg_handle, 1, $msg))
         log::error("Unable to send message to $info->name");
     });
   
@@ -313,38 +285,40 @@ class qmanager
 
   function distribute($msg)
   {
-    list($user_id, $type, $required, $arguments) = $msg->arguments;
-    $provider_id = qmanager::get_provider($user_id);
+    list($provider_id, $type, $required, $arguments) = $msg->arguments;
     do {
       $most_available = 0;
       $best_info = null;
-      $provider = &$this->providers[$type][$provider_id];
-      
-      // first find if there is a worker with no load
-      $found_free = false;
-      foreach($provider->workers as $worker) {
-        if ($worker->load == 0) {
-          $found_free = true;
-          break;
+      foreach($this->workers[$type] as $info) {
+        if ($info->provider_id != $provider_id ) continue;
+        $available = $info->capacity - $info->load;
+        if ($available >= $most_available) {
+          $best_info = $info;
+          $most_available = $available;
         }
       }
       
-      if (!$found_free) {
-        if (sizeof($provider->workers) < $provider->max_instances) {
-          log::warn("No worker of type $type available to process the work, please reconfigure to allow for additional workers");
-          //todo: schedule message to go after 5 minutes
-          //qmanager::schedule(
-        }
-        else {
-          qmanager::start($provider->name);
-          qmanager::work($msg);  // re-send msg to queue, there are more workers now
-        }
+      if ($best_info === null) {
+        //todo: process unprocessed items when worker becomes available
+        log::error("No worker of type $type available to process the work, please dispatch additional workers");
         break;
       }
       $load = min($required, $most_available);
-      msg_send($provider->msg_handle, 1, $msg);
+      $msg->arguments[2] = $load;
+      $handle = msg_get_queue($best_info->id, 0660);
+      msg_send($handle, 1, $msg);
       $required -= $load;
     } while ($required > 0);
+  }
+  
+  function completed($msg)
+  {
+    list($id, $type, $load, $callback) = $msg->arguments;
+    log::debug("Completed TYPE $type ID $id LOAD $load CALLBACK $callback: Arguments $msg->arguments");
+    $info = $this->workers[$type][$id];
+    $info->load -= $load;
+    qmanager::q($callback, array_slice($msg->arguments,4));
+    
   }
   
 }
