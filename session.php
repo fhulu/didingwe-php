@@ -63,25 +63,20 @@ class session
         
   static function login()
   {
-    try {        
-      $email = $_REQUEST['email'];
-      $passwd = $_REQUEST['password'];
-      log::debug("LOGIN: $email PROGRAM: $session->program_id REFERRER: $session->referrer");
-      
-      if (!user::verify_internal($_REQUEST)) return; 
-      
-      $user = user::restore($_REQUEST['email'], $_REQUEST['password']);
-      if (!$user)
-        throw new session_exception("Invalid username/password for ". $_REQUEST[email]);
+    $email = $_REQUEST['email'];
+    $passwd = $_REQUEST['password'];
+    log::debug("LOGIN: $email PROGRAM: $session->program_id REFERRER: $session->referrer");
 
-     global $session;
-     if ($_REQUEST['a'] == 'session/login' || !isset($_SERVER['HTTP_X_REQUESTED_WITH'])) 
-       $session->restore();
-    }
-    catch (Exception $e) {
-      $_SESSION[last_error] = $e->getMessage();
-      log::error("EXCEPTION: ". $e->getMessage());
-      echo "!".$e->getMessage();
+    if (!user::verify_internal($_REQUEST)) return; 
+
+    $user = user::restore($_REQUEST['email'], $_REQUEST['password']);
+    if (!$user) {
+      $v = new validator($_REQUEST);
+      return $v->report("email", "Invalid username/password for '$email'");
+    } 
+    if ($_REQUEST['a'] == 'session/login' || !isset($_SERVER['HTTP_X_REQUESTED_WITH'])) {
+      global $session;
+      $session->restore();
     }
   }
   
@@ -95,7 +90,8 @@ class session
   static function redirect($url)
   {
     log::debug("REDIRECT: $url");
-    echo "<script language='javascript'>location.replace('$url');</script>\n";
+    echo json_encode(array("script"=>"location.replace('$url');\n"));
+    
   }
     
 
