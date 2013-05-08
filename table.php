@@ -29,6 +29,7 @@ class table
   const ADDABLE = 0x1000;
   const EXPORTABLE = 0x2000;
   const SEARCHABLE = 0x4000;
+  const SEARCHADDABLE = 0x8000;
 
   var $fields;
   var $symbols;
@@ -124,11 +125,13 @@ class table
     $this->set_row_action(self::DELETABLE, 'delete', $url);
   }
 
-  function set_adder($url, $search=null)
+  function set_adder($url, $search=null, $search_adder=null)
   {
     $this->set_action(self::ADDABLE, 'add', $url);
-    if (!is_null($search))
+    if (!is_null($search)) {
       $this->set_action(self::SEARCHABLE, 'search', $search);
+      $this->set_action(self::SEARCHADDABLE, 'searchadd', $search_adder);
+    }
   }
   
   function set_key($key)
@@ -188,7 +191,7 @@ class table
     $this->title_rowspan = 1;
     foreach($this->fields as $key=>&$field) {
       if (is_numeric($key)) {
-        $this->add_symbol(&$field);
+        $this->add_symbol($field);
         continue;
       }
       if (is_numeric($field)) {
@@ -198,7 +201,7 @@ class table
       }
          
       foreach($field as &$sub_field) {
-        $this->add_symbol(&$sub_field, $key[0]=='#');
+        $this->add_symbol($sub_field, $key[0]=='#');
       }
       $this->title_rowspan = 2;
     }
@@ -385,7 +388,7 @@ HEREDOC;
     if ($this->flags & self::EXPANDABLE)
       $attr .= " expandable";
    
-    if ($this->callback && call_user_func($this->callback, &$row_data, $index, &$attr) === false) 
+    if ($this->callback && call_user_func($this->callback, $row_data, $index, $attr) === false) 
       return;
  
     echo "<tr $attr>\n";
@@ -419,7 +422,7 @@ HEREDOC;
   {
     $this->flags |= self::TOTALS;
     if (!is_null($this->callback) && 
-      !call_user_func($this->callback, &$this->totals, $this->row_count, null)) {
+      !call_user_func($this->callback, $this->totals, $this->row_count, null)) {
       return;
     }
       
