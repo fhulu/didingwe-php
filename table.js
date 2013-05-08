@@ -229,9 +229,20 @@
     
     searchRow: function(url)
     {
+      var self = this;
+      var table = this.element;
+      var body = table.find("tbody");
+      var key = body.attr('key');      
       var row = $("<tr new></tr>");
+      var button = body.find(".actions div[action=add]");
+      if (button !== undefined) 
+        row.insertBefore(button.parent().parent().parent());
+      else
+        body.append(row);
+
       var input = $("<input class='search' value=''></input>");
-      row.append(input).appendTo(this.element.find("tbody"));
+      row.append(input);
+
       input
         .addClass('fullwidth') 
         .autocomplete({
@@ -239,11 +250,23 @@
           source: url,
           prevTerm: '',
           select: function( event, ui ) {
-            var row = $(this).parent().parent();
-            var item = ui.item;
-            var prev = row.siblings('[key="'+item.id+'"][type="'+item.type+'"]');
-            row.parent().add($(this).parent(), ui.item)
-            return false;
+            console.log(ui.item);
+            var titles = table.find("thead .titles th");
+            row.children().remove('*');
+            var data = {};
+            titles.each(function() {
+              var name = $(this).attr('name'); 
+              var text = ui.item[name];
+              if (text === undefined) text = '';
+              row.append($("<td>"+text+"</td>"));
+              data[name] = text;
+            });
+            data['parent_id'] = table.parent().parent().attr('id');
+            data['child_id'] = ui.item.id;
+            $.send(body.attr('searchadd'), {data: data}, function(){
+              self.refresh();
+            });
+            
           },
           search: function () {
             var start = input.autocomplete('option', 'start');
@@ -254,17 +277,17 @@
               input.autocomplete('option', 'prevTerm', val);
             }
             input.autocomplete('option','source', url+'&start='+start+'&changed='+changed);
+            
           }
         })
         .data( "autocomplete" )._renderItem = function( ul, item ) {
-          input.autocomplete('option', 'changed', 0);
           var text='';
           if (item.id != undefined) {
             $.each(item, function(key, val) {
               if (val != undefined && key != 'term' && key != 'id')
                 text += ' ' + val;
             });
-            if (text.length > 50) text = text.substr(0, 50) + '...';
+            //if (text.length > 50) text = text.substr(0, 50) + '...';
             text = "<a>" + text.replace(new RegExp("("+preg_quote(item.term)+")", "gi"),"<b>$1</b>")+"</a>";
           }
           else {
