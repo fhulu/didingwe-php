@@ -75,7 +75,7 @@ class iweb extends qworker
     }
     if ($values[0] == 'Success') {
       ++$this->successes;
-      $status = 'sub';
+      $status = 'submitted';
       $value = $values['MessageReference'];
     }
     else {
@@ -86,12 +86,13 @@ class iweb extends qworker
         return $this->submit($id, $msisdn, $message, ++$attempts, false);
       }
       else {
-        $status = 'err';
+        $status = 'error';
       }
     }
     
     global $db;
     $db->exec("update mukonin_sms.outq set status='$status',attempts=$attempts,esme_reference='$value' where id = $id");
+    return $status;
   }
  
   function start()
@@ -110,13 +111,14 @@ class iweb extends qworker
         return;
       }
       global $db;
-      $sql = "select id,msisdn, message, reference1 from mukonin_sms.outq 
+      $sql = "select id,msisdn, message, intref2 from mukonin_sms.outq 
         where $key_name = $key_value and status = 'pnd' limit $load";
       $rows = $db->read($sql);
 //      $self->db_read->each($sql, function($index, $row) use (&$self) {
       foreach($rows as $row) {
-        list($id, $msisdn, $message) = $row;
-        $self->submit($id, $msisdn, $message);
+        list($id, $msisdn, $message,$intref) = $row;
+        $status = $self->submit($id, $msisdn, $message);
+        qmanager::call($callback,array($key_value, $intref, $status));
       };
     });
   }
