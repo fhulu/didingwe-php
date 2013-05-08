@@ -78,7 +78,7 @@ class qworker extends qworker_info
       }
       else {
         call_user_func_array($callback, $msg->arguments);
-        call_user_func_array('qmanager::complete', $msg->arguments);
+//        call_user_func_array('qmanager::complete', $msg->arguments);
       }
     } 
     
