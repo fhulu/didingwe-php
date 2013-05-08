@@ -315,8 +315,6 @@ class qmanager
   {
     list($id, $type, $load, $callback) = $msg->arguments;
     log::debug("Completed TYPE $type ID $id LOAD $load CALLBACK $callback: Arguments $msg->arguments");
-    $info = $this->workers[$type][$id];
-    $info->load -= $load;
     qmanager::q($callback, array_slice($msg->arguments,4));
     
   }
