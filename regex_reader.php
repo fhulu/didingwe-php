@@ -24,7 +24,7 @@ class regex_reader
   {
     if (!$this->multi_line) {
       $this->matches = array();
-      if (!preg_match($this->regex, $line, &$this->matches)) return null;
+      if (!preg_match($this->regex, $line, $this->matches)) return null;
       if ($this->delimiter=='') 
         array_shift($this->matches);
       else
@@ -35,7 +35,7 @@ class regex_reader
     $line = str_replace("\n", '',$line);
     $this->line .= str_replace("\r", '',$line);
     $this->matches = array();
-    if (!preg_match($this->regex, $this->line, &$this->matches)) return null;
+    if (!preg_match($this->regex, $this->line, $this->matches)) return null;
     $this->line = '';
     if ($this->delimiter=='') 
       array_shift($this->matches);

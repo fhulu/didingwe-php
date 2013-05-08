@@ -42,12 +42,12 @@ class telephone extends db_record
 
     $mask = implode("|", $mask);
     $mask = "/\b($mask)[0-9]+/";
-    return preg_match_all($mask, $number, &$matches);
+    return preg_match_all($mask, $number, $matches);
   } 
 
   static function match_msisdn($number, $matches) 
   {
-    return telephone::match($number, telephone::$msisdn_masks, &$matches); 
+    return telephone::match($number, telephone::$msisdn_masks, $matches); 
   }
 
 
@@ -110,7 +110,7 @@ class telephone extends db_record
 
   static function commit($db, $values, $type)
   {
-    if(!telephone::set_number(&$values, $type)) return;
+    if(!telephone::set_number($values, $type)) return;
     $tel = new telephone($db, $values);
     $tel->save();
     $number = $tel->keys['number'];
@@ -142,7 +142,7 @@ class telephone extends db_record
           $record[source_id] = $source_id;
           $record[date_washed] = $date_washed;
           $record[id_number] = $id_number;
-          telephone::commit($db, &$record, $type);
+          telephone::commit($db, $record, $type);
         }
       }
       else {
@@ -150,7 +150,7 @@ class telephone extends db_record
         $record[source_id] = $source_id;
         $record[date_washed] = $date_washed;
         $record[id_number] = $id_number;
-        telephone::commit($db, &$record, $type);
+        telephone::commit($db, $record, $type);
       }   
     }
   }
