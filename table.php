@@ -388,7 +388,8 @@ HEREDOC;
     if ($this->flags & self::EXPANDABLE)
       $attr .= " expandable";
    
-    if ($this->callback && call_user_func($this->callback, $row_data, $index, $attr) === false) 
+    $callback = $this->callback;
+    if ($callback && $callback($row_data, $index, $attr) === false) 
       return;
  
     echo "<tr $attr>\n";
