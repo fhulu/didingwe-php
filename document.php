@@ -61,10 +61,11 @@ class document
     fclose($file);
     echo $data;
   }
-  
+ 
   static function extension($file) 
   { 
-    return array_pop(explode('.',$file));
+    $pos = strrpos($file, '.');
+    return $pos===FALSE? '': substr($file, $pos+1);
   }
    
   static function mimetype($value) {
