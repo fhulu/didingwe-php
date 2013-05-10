@@ -27,7 +27,7 @@
     {
       this.row = null;
       this.row_count = 0;
-      this.data = {_offset: 0, _size: 0} ;
+      this.data = {_offset: 0, _size: 0, _checked: '' } ;
       this.result = null;
       this.filter = null;
       this.editor = null;
@@ -363,7 +363,7 @@
         var data = { check: check, keys:''};
         this.element.find('[action=checkrow]').each(function(){
           var row = $(this).parents('tr').eq(0);
-          data.keys += ',' + row.attr(key);
+          data.keys += '|' + row.attr(key);
         });
         data.keys = data.keys.substr(1);
         this.ajax(url, data);
@@ -414,6 +414,7 @@
       }) 
       .each(function() {
         var action = $(this).attr('action');
+        var target = $(this).attr('target');
         action = action.replace(' ','_');
         var row = $(this).parents('tr').eq(0);
         row.on(action, function() {
@@ -424,7 +425,19 @@
             var sep = url.indexOf('?')>=0?'&':'?';
             url += sep + key+'='+row.attr(key);
           }
-          window.location.href = url;
+          if (target == 'ajax') {
+            self.data._checked = '';
+            self.element.find('[action=checkrow]:checked').each(function(){
+              var row = $(this).parent().parent();
+              if (row.attr(key) !== undefined)
+                self.data._checked += '|' + row.attr(key);
+            })
+            self.data._checked = self.data._checked.substr(1);
+            self.ajax(url);
+            self.refresh();
+          }
+          else
+            window.location.href = url;
           return true;
         });
       });
