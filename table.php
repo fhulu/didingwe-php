@@ -233,12 +233,12 @@ class table
       echo "<div class=actions>";
       foreach($this->actions as $action=>$value) {
         if ($action == 'checkrow' || $action == 'checkall') continue;
-        echo "<div action='$action' ";
+        list($value, $desc, $target) = explode('|', $value);
+        echo "<div action='$action' target='$target' ";
         if ($action == 'export') {
           $url = $this->curPageURL(). "&_action=export";
           echo "url='$url'";
         }
-        list($value, $desc) = explode('|', $value);
         echo " title = '$desc'></div>";
       }
       echo "</div>";
