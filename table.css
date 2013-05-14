@@ -196,6 +196,11 @@ table .actions div[action=export]
   background-image:url('excel32.png');
   
 }
+table .actions div[action=clear_selected]
+{
+  background-image:url('clear_all32.png');
+  margin-right: 10px;
+}
 
 table .adder:hover, .exporter:hover
 {
