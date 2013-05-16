@@ -189,7 +189,7 @@ class table
     $this->symbols = array();
     $this->fields = $fields;
     $this->title_rowspan = 1;
-    foreach($this->fields as $key=>&$field) {
+    foreach($this->fields as $key=>$field) {
       if (is_numeric($key)) {
         $this->add_symbol($field);
         continue;
