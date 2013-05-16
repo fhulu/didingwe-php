@@ -158,7 +158,7 @@ class qmanager
       $error_code = 0;
       $wait_status = 0;
       pcntl_wait($status, WNOHANG|WUNTRACED);
-      if (!msg_receive($this->handle, 1, $type, 2048, $msg, true, 0, $error_code)) {
+      if (!msg_receive($this->handle, 1, $type, 10240, $msg, true, 0, $error_code)) {
         log::error("Failed to receive message with error $error_code");
         continue;
       }
