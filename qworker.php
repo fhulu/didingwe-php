@@ -9,7 +9,7 @@ class qworker extends qworker_info
   var $errors;
   var $successes;
   var $params;
-  function __construct($max_msg_size=2048) 
+  function __construct($max_msg_size=10240) 
   {   
     $this->load = $this->completed = 0;
     
