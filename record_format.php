@@ -17,7 +17,7 @@ class record_format extends format_delimited
   
   
 
-  static function parse($formats, $fields, $positions)
+  static function parse(&$formats, &$fields, &$positions)
   {
     $column_count = sizeof($formats);
     for($column_idx = 0; $column_idx < $column_count; ++$column_idx) {
@@ -97,7 +97,7 @@ class record_format extends format_delimited
    }
   }
 
-  static function read_composite($field, $line, $line_idx)
+  static function read_composite($field, &$line, &$line_idx)
   {
     if ($field->num_fields  > 0)  {
       $last_idx = $line_idx + $field->num_fields;
@@ -116,7 +116,7 @@ class record_format extends format_delimited
     return $value;
   }
 
-  static function read_line($positions, $fields, $line, $line_idx, $values)
+  static function read_line($positions, &$fields, &$line, &$line_idx, &$values)
   {
     $line_col_count = sizeof($line);
     $position_count = sizeof($positions);
@@ -195,7 +195,8 @@ class record_format extends format_delimited
       else 
         $line = explode($delimiter, trim($line));
     }
-    record_format::read_line($this->positions, $this->fields, $line, 0, $values);
+    $idx = 0;
+    record_format::read_line($this->positions, $this->fields, $line, $idx, $values);
 
   }    
 
