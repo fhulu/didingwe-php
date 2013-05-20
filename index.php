@@ -112,6 +112,28 @@ init_div('footer');
     <script type="text/javascript" src="common/ajax.js"></script> 
     <script type="text/javascript" src='common/mukoni.jquery.js'></script> 
     <script type="text/javascript" src='common/mukoni.jquery-ui.js'></script> 
+    <?php
+      if ($_GET['c'] != 'logout') { 
+        require_once('session.php');
+        global $session;
+        if ($session->user != null) { ?>
+      <script>
+        $(function(){
+          var timer = null;
+          var time=1000*60*10
+          var checker = function(){
+              if(timer){clearTimeout(timer);} // cancels the countdown.
+              timer=setTimeout(function() {
+                  window.location.href="/?c=logout&event=timeout";
+              },time); // reinitiates the countdown.
+          };
+          checker(); // initiates the countdown.
+          // bind the checker function to user events.
+      $(document).bind("mousemove keypress click", checker);
+      });
+    </script>
+   <?php }
+   }  ?>
  </head>
   
   <body>
