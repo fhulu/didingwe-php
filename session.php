@@ -72,7 +72,7 @@ class session
     $user = user::restore($_REQUEST['email'], $_REQUEST['password']);
     if (!$user) {
       $v = new validator($_REQUEST);
-      return $v->report("email", "Invalid username/password for '$email'");
+      return $v->report("email", "!Invalid username/password for '$email'");
     } 
     if ($_REQUEST['a'] == 'session/login' || !isset($_SERVER['HTTP_X_REQUESTED_WITH'])) {
       global $session;
