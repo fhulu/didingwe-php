@@ -57,7 +57,9 @@ class db_record
       return db_record::$field_names[$table_name];
       
 
-      $db->exec("show columns from $table_name");
+    $db->exec("show columns from $table_name");
+    
+    $field_names = array();
     while ($db->more_rows()) {
       $field_names[] = $db->row['Field'];
     }
@@ -65,7 +67,7 @@ class db_record
     return $field_names;
   }
 
-  static function set_data($fields, $data, $field_names=null)
+  static function set_data(&$fields, $data, $field_names=null)
   {
     if (is_null($field_names)) $field_names = array_keys($fields);
     if (is_null($field_names)) return;
@@ -73,7 +75,7 @@ class db_record
       $fields[$name] = $data[$name];
   }
 
-  static function reset_data($fields, $data, $field_names=null)
+  static function reset_data(&$fields, $data, $field_names=null)
   {
     if (is_null($field_names)) $field_names = array_keys($fields);
     if (is_null($field_names)) return;
@@ -136,7 +138,7 @@ class db_record
   
   function update($values=null)
   {
-    if (is_null($values)) $values = $this->values;
+    if (is_null($values)) $values = &$this->values;
     $sql = "update $this->table set " . db_record::get_name_value_pairs($values) . db_record::get_sql_where($this->keys);
     $this->db->exec($sql);
   }  
@@ -275,7 +277,7 @@ class db_record
  
   function remove($keys)
   {
-    if (is_null($keys)) $keys = $this->keys;
+    if (is_null($keys)) $keys = &$this->keys;
     $sql = "delete $this->table ". db_record::get_sql_where($keys);
     $this->db->exec($sql);
     echo $sql .  "\n";
