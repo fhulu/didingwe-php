@@ -20,6 +20,7 @@
       sortOrder: 'asc',
       url: null, 
       method: 'post',
+      refreshesEvery: 0,
       data: {}
     },
     
@@ -31,7 +32,11 @@
       this.result = null;
       this.filter = null;
       this.editor = null;
+      this.timer = null;
       this.refresh();
+      var self = this;
+      if (this.options.refreshesEvery > 0)
+        setInterval(function() { self.refresh(); }, this.options.refreshesEvery);
     },
   
     _readPageSize: function()
