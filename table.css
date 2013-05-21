@@ -198,7 +198,7 @@ table .actions div[action=export]
 }
 table .actions div[action=clear_selected]
 {
-  background-image:url('clear_all32.png');
+  background-image:url('remove16.png');
   margin-right: 10px;
 }
 
