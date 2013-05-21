@@ -248,7 +248,7 @@ class user
     $reference = "$program_id-$partner_id-$user_id";
     $url = "http://iweb.itouchnet.co.za/Submit?UserId=MUKONIHTTP&Password=SDMRWRKC&PhoneNumber=$cellphone&Reference=$reference&MessageText=$sms";
     $curl = new curl();
-    $result = $curl->read($url);  
+   // $result = $curl->read($url);  
     log::debug("CURL RESULT: $result");
   }
   static function create($partner_id, $email, $password,$title, $first_name, $last_name, $cellphone, $otp)
@@ -483,7 +483,7 @@ class user
         join mukonin_audit.function f on t.function_code = f.code
         join mukonin_audit.user u on t.user_id = u.id
         join mukonin_audit.partner p on u.partner_id = p.id and (u.partner_id = $partner_id or t.object_id = $partner_id and t.object_type = 'partner')
-and u.program_id = $program_id");
+      and u.program_id = $program_id");
   }
    
   static function update_role($request)
@@ -512,19 +512,38 @@ and u.program_id = $program_id");
     $user_role = $db->read_one_value("select name from mukonin_audit.role where code = '$role'"); 
       
      //todo: send email and/or sms
-    foreach($emails as $email) {
-      $message = "Dear $username <br><br> Administrator would like to inform you that you have been registered and you role is $user_role. <br>
-      For more information please log on to <a href='$proto://submit.fpb.org.za/'>submit.fpb.org.za</a> or call 012 661 0051.<br><br>
-        Regards<br>
-        Administrator";
-      $subject = "Approve Registration";
-      $headers = "MIME-Version: 1.0\r\n";
-      $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
-      $headers .= "from:  $admin";
-      $mail_sent = mail($email, $subject, $message, $headers);
-      log::debug("Sending email  from $admin to $email: Status: $mail_sent");       
-    }
-  }
+    $program_id = config::$program_id;
+    if($program_id==3){
+      foreach($emails as $email) {
+        $message = "Dear $username <br><br> Administrator would like to inform you that you have been registered and you role is $user_role. <br>
+        For more information please log on to <a href='$proto://submit.fpb.org.za/'>submit.fpb.org.za</a> or call 012 661 0051.<br><br>
+          Regards<br>
+          Administrator";
+        $subject = "Approve Registration";
+        $headers = "MIME-Version: 1.0\r\n";
+        $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
+        $headers .= "from:  $admin";
+        $mail_sent = mail($email, $subject, $message, $headers);
+        log::debug("Sending email  from $admin to $email: Status: $mail_sent");       
+      }
+   }
+   else{
+     foreach($emails as $email) {
+        $message = "Dear $username <br><br> Administrator would like to inform you that you have been registered and you role is $user_role. <br>
+        For more information please log on to <a href='http://mampo.qmessenger.mukoni.net'>mampo.qmessenger.mukoni.net</a> or call 021 661 0051.<br><br>
+          Regards<br>
+          Administrator";
+        $subject = "Approve Registration";
+        $headers = "MIME-Version: 1.0\r\n";
+        $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
+        $headers .= "from:  $admin";
+        $mail_sent = mail($email, $subject, $message, $headers);
+        log::debug("Sending email  from $admin to $email: Status: $mail_sent");       
+      }
+     
+   }
+   
+ }
   
   static function verify_internal($request)
   {
