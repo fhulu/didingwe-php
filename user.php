@@ -378,7 +378,7 @@ class user
   static function update($request)
   {
     $request = table::remove_prefixes($request);
-    $fields = array('email_address','first_name', 'last_name', 'otp');
+    $fields = array('email_address','first_name', 'last_name', 'cellphone','otp');
     $values = '';
     foreach($request as $key=>$value) {
       if (in_array($key, $fields))
@@ -400,8 +400,10 @@ class user
       echo '!Email Address already exists';
       return;
     }
-    if ($old_id != '' || $active != 0) 
-      $db->exec("update mukonin_audit.user set email_address = 'overwritten-$email' where id = $old_id");
+    if ($old_id != '' || $active != 0) { 
+      $time = time();
+      $db->exec("update mukonin_audit.user set email_address = 'overwritten-$time-$email' where id = $old_id");
+    }
     
     $sql = "update mukonin_audit.user set ". substr($values,1). " where id = $id";
     $db->exec($sql);    
@@ -632,7 +634,7 @@ class user
 
 
             
-    $titles = array('#id','~Time', '~Email Address|edit','~First Name|edit','~Last Name|edit','Role|edit=list:?user/roles','Actions');
+    $titles = array('#id','~Time', '~Email Address|edit','~First Name|edit','~Last Name|edit','Cellphone|edit','Role|edit=list:?user/roles','Actions');
     $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE);
     $table->set_heading("Manage Users");
     $table->set_key('id');
