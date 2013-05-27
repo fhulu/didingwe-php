@@ -660,7 +660,7 @@ class user
       where u.id=ur.user_id and r.code = ur.role_code and u.partner_id = p.id
       and u.active=1 and r.program_id = ". config::$program_id . ") tmp where 1=1";    
             
-    $titles = array('#id','~Time', '~Company', '~Email Address|edit','~First Name|edit','~Last Name|edit','~Role|edit=list:?user/roles','');
+    $titles = array('#id','~Time', '~Company', '~Email Address|edit','~First Name|edit','~Last Name|edit','Cellphone|edit','~Role|edit=list:?user/roles','');
     $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE | table::EXPORTABLE);
     $table->set_heading("Manage All Users");
     $table->set_key('id');
