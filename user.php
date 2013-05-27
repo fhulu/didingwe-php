@@ -622,7 +622,7 @@ class user
     
     global $session;
     $user = $session->user;
-    $sql = "select * from (select id, u.create_time, u.email_address, u.first_name, u.last_name, r.name role,
+    $sql = "select * from (select id, u.create_time, u.email_address, u.first_name, u.last_name,cellphone, r.name role,
               case u.id
               when $user->id then 'edit'
               else 'delete,edit' 
