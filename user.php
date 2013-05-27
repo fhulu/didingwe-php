@@ -651,7 +651,7 @@ class user
     global $session;
     $partner_id = $session->user->partner_id;
     $user_id = $session->user->id;
-    $sql = "select * from (select u.id, u.create_time, p.full_name, email_address, first_name, last_name, r.name role,
+    $sql = "select * from (select u.id, u.create_time, p.full_name, email_address, first_name, last_name,cellphone, r.name role,
               case u.id
               when $user_id then 'edit'
               else 'delete,edit' 
