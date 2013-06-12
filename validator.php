@@ -77,7 +77,7 @@ class validator
 
   function za_id()
   {
-    return $this->regex('/^\d{2}((0[1-9])|(1[0-2]))(([012][1-9])|(3[01]))\d{7}$/');
+    return $this->regex('/^\d{2}((0[1-9])|(1[0-2]))(([012][0-9])|(3[01]))\d{7}$/');
   }
   
   function email()
