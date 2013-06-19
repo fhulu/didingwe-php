@@ -180,13 +180,17 @@ class record_format extends format_delimited
       $pattern = <<<EOP
 /("[^"]+"$delimiter)|('[^']+'$delimiter)|([^$delimiter]+$delimiter)|(^$delimiter)/
 EOP;
-      $values = preg_split($delimiter, trim($line));
-      if (!is_null($values)) {
-        foreach($values as &$value) {
+      $pattern = trim($pattern);
+      $line = preg_split($pattern, trim($line), -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
+      if (!is_null($line)) {
+        foreach($line as &$value) {
           $value = preg_replace("/(^['\"])|(['\"],?$)|(,$)/",'',$value);
-          $value = trim($value);
+          $value = trim($value); 
+//          $len = strlen($value);
+  //        if ($value[len-1] == $delimiter) $value = substr($value, 0, $len-1);
         }
       }
+      log::debug("PATTERN: $pattern LINE: ". implode("~", $line), '.');
     }
     $idx = 0;
     record_format::read_line($this->positions, $this->fields, $line, $idx, $values);
@@ -205,6 +209,7 @@ EOP;
 
       $line_index = 0;
     }
+    log::debug("FIELDS: ". implode(",", $fields) . ".");
     $format = new record_format($delimiter, $fields, '"');
     while(!feof($file)) {
       $line = fgets($file);
@@ -234,4 +239,6 @@ EOP;
     return array($file, $tags);
   }
 }
+
+
 ?>
