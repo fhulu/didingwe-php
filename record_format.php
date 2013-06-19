@@ -184,6 +184,7 @@ EOP;
       if (!is_null($values)) {
         foreach($values as &$value) {
           $value = preg_replace("/(^['\"])|(['\"],?$)|(,$)/",'',$value);
+          $value = trim($value);
         }
       }
     }
