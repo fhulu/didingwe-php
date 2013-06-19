@@ -177,27 +177,16 @@ class record_format extends format_delimited
   {
     if (!is_array($line)) {
       $delimiter = $this->delimiter==''?' ':$this->delimiter;
-      if ($delimiter[0] == '/') {
-        $line = preg_split($delimiter, trim($line));
+      $pattern = <<<EOP
+/("[^"]+"$delimiter)|('[^']+'$delimiter)|([^$delimiter]+$delimiter)/
+EOP;
+      $values = preg_split($delimiter, trim($line));
+      foreach($values as &$value) {
+        $value = preg_replace("/(^['\"])|(['\"],?$)|(,$)/",'',$value);
       }
-      else if ($this->quote != '') {
-        $pattern = '/((?:(?:"[^"]+")|(?:[^'.$delimiter.']+))+)/';
-        $matches = array();
-        preg_match_all($pattern, $line, $matches);
-        if (strpos($line, $delimiter) === 0)
-          $line = array_merge(array(''), $matches[0]);
-        else
-          $line = $matches[0];
-        foreach($line as &$value) {
-          $value= str_replace($this->quote, '', $value);
-        }
-      }
-      else 
-        $line = explode($delimiter, trim($line));
     }
     $idx = 0;
     record_format::read_line($this->positions, $this->fields, $line, $idx, $values);
-
   }    
 
   static function load_delimited_file($file_path, $delimiter, $fields, $callback)
