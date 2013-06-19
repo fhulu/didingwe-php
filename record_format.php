@@ -181,8 +181,10 @@ class record_format extends format_delimited
 /("[^"]+"$delimiter)|('[^']+'$delimiter)|([^$delimiter]+$delimiter)|(^$delimiter)/
 EOP;
       $values = preg_split($delimiter, trim($line));
-      foreach($values as &$value) {
-        $value = preg_replace("/(^['\"])|(['\"],?$)|(,$)/",'',$value);
+      if (!is_null($values)) {
+        foreach($values as &$value) {
+          $value = preg_replace("/(^['\"])|(['\"],?$)|(,$)/",'',$value);
+        }
       }
     }
     $idx = 0;
