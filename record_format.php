@@ -178,7 +178,7 @@ class record_format extends format_delimited
     if (!is_array($line)) {
       $delimiter = $this->delimiter==''?' ':$this->delimiter;
       $pattern = <<<EOP
-/("[^"]+"$delimiter)|('[^']+'$delimiter)|([^$delimiter]+$delimiter)/
+/("[^"]+"$delimiter)|('[^']+'$delimiter)|([^$delimiter]+$delimiter)|(^$delimiter)/
 EOP;
       $values = preg_split($delimiter, trim($line));
       foreach($values as &$value) {
