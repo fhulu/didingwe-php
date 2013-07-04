@@ -258,6 +258,7 @@ class user
     $first_name = addslashes($first_name);
     $last_name = addslashes($last_name);
     $title = addslashes($title);
+    $partner_id = $user->partner_id;
     $sql = "insert into mukonin_audit.user(program_id, partner_id, email_address, password,title, first_name,last_name, cellphone, otp, otp_time)
       values($program_id,$partner_id, '$email',password('$password'),'$title', '$first_name','$last_name','$cellphone', '$otp', now())";
     
@@ -562,6 +563,44 @@ class user
   {
     return user::verify_internal($request) && user::check_otp($request); 
   }
+  
+    static function add_user($request)
+  {
+    global $db, $session;
+    $user = &$session->user;
+    $requestor = "$user->first_name $user->last_name";
+    $partner_id=$user->partner_id;
+    $request = table::remove_prefixes($request);
+    $email = $request['email_address'];
+    $first_name= $request['first_name'];
+    $last_name= $request['last_name'];
+    $cellphone= $request['cellphone'];
+    $code= $request['role'];
+    $password='Account321';
+    $program_id = config::$program_id;
+      
+    global $db, $session;
+    $user = &$session->user;
+
+    $sql = "insert into mukonin_audit.user(program_id, partner_id, email_address, first_name,last_name, cellphone,password,active)
+      values($program_id,$partner_id, '$email', '$first_name','$last_name','$cellphone',password('$password'),1)";
+     $user_id=$db->insert($sql);
+    
+     
+     $sql = "insert into mukonin_audit.user_role(user_id, role_code)
+      values($user_id,'$code')";
+    $db->exec($sql);
+     
+ 
+      $message = "Good day<br><br>$requestor has added you as a user to Qmessenger system and your password is<b>$password</b>.";
+      $subject = "Added to the system";
+      $headers  = "MIME-Version: 1.0\r\n";
+      $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
+      $headers .= "from: $student";
+      $mail_sent = mail($email, $subject, $message, $headers);
+      log::debug("Sent email from $requestor to $email, $password: Result: $mail_sent");
+   
+ }
 
   static function start_approval($request)
   {     
@@ -622,6 +661,8 @@ class user
     
     global $session;
     $user = $session->user;
+   $program_id = config::$program_id;
+   if($program_id==4){
     $sql = "select * from (select id, u.create_time, u.email_address, u.first_name, u.last_name,cellphone, r.name role,
               case u.id
               when $user->id then 'edit'
@@ -639,9 +680,31 @@ class user
     $table->set_heading("Manage Users");
     $table->set_key('id');
     $table->set_saver("/?a=user/update");
+    $table->set_adder('/?a=user/add_user');
     $table->set_deleter('/?a=user/deactivate');
     $table->set_options($request);
     $table->show($sql);
+    
+    }
+    else{
+      $sql = "select * from (select id, u.create_time, u.email_address, u.first_name, u.last_name,cellphone, r.name role,
+              case u.id
+              when $user->id then 'edit'
+              else 'delete,edit' 
+            end as actions
+      from mukonin_audit.user u, mukonin_audit.user_role ur, mukonin_audit.role r
+      where u.id=ur.user_id and r.code = ur.role_code and partner_id = $user->partner_id and u.active=1 and r.program_id = ". config::$program_id . ") tmp where 1=1";    
+    
+    $titles = array('#id','~Time', '~Email Address|edit','~First Name|edit','~Last Name|edit','Cellphone|edit','Role|edit=list:?user/roles','Actions');
+    $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE);
+    $table->set_heading("Manage Users");
+    $table->set_key('id');
+    $table->set_saver("/?a=user/update");
+    $table->set_deleter('/?a=user/deactivate');
+    $table->set_options($request);
+    $table->show($sql);
+      
+    }
   }
 
   static function manage_all($request)
