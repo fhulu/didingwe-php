@@ -588,11 +588,13 @@ class user
     
      
      $sql = "insert into mukonin_audit.user_role(user_id, role_code)
-      values($user_id,'$code')";
-    $db->exec($sql);
+              values($user_id,'$code')";
+     $db->exec($sql);
      
- 
-      $message = "Good day<br><br>$requestor has added you as a user to Qmessenger system and your password is<b>$password</b>.";
+     $proto = isset($_SERVER['HTTPS'])?'https':'http';
+      $link = "$proto://". $_SERVER['SERVER_NAME'] ."/change_password.html&user_id=$user_id"; 
+      //$message = "Good day<br><br>$student would like to apply for admission. Please click <a href=\"$link\">here</a> to give access to user.";
+      $message = "Good day<br><br>$requestor has added you as a user to Qmessenger system and your password is<b>$password</b>.  Please click <a href=\"$link\">here</a> to change your password .";
       $subject = "Added to the system";
       $headers  = "MIME-Version: 1.0\r\n";
       $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
