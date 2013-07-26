@@ -162,7 +162,7 @@ class user
     if (!user::verify_internal($request)) return false;
     $validator = new validator($request);
     if (!$validator->check('email')->is('email')
-      || !$validator->check('password')->is('password', 'match(password2)')) return false;
+      || !$validator->check('password')->is('password', 'match(password2)')) return $validator->valid();
 
     $email = $request['email'];
     $otp = $request['otp'];
@@ -180,9 +180,10 @@ class user
     $db->exec("update mukonin_audit.user set password = password('$password')
     where email_address='$email' and program_id = " . config::$program_id);
     
-    session::redirect('/?c=home');
+    //location.href = "home.html";
+    //session::redirect('/?c=home');
     global $session;
-    $session->restore();
+    //$session->restore();
 }
 
   
@@ -407,8 +408,9 @@ class user
     
     $sql = "update mukonin_audit.user set ". substr($values,1). " where id = $id";
     $db->exec($sql);    
-    if (!is_null($request['role']))
+    if (!is_null($request['role'])){
       user::update_role($request);
+    }
   }
 
   static function verify($function, $private=true)
@@ -634,12 +636,13 @@ class user
 
 
             
-    $titles = array('#id','~Time', '~Email Address|edit','~First Name|edit','~Last Name|edit','Cellphone|edit','Role|edit=list:?user/roles','Actions');
+    $titles = array('#id','~Time', '~Email Address|edit','~First Name|edit','~Last Name|edit','Cellphone|edit','Role|edit=list:?user/roles','Action');
     $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE);
     $table->set_heading("Manage Users");
     $table->set_key('id');
-    $table->set_saver("/?a=user/update");
-    $table->set_deleter('/?a=user/deactivate');
+    $table->set_row_actions('Appeal','AddPlatform');
+    //$table->set_saver("/?a=user/update");
+    //$table->set_deleter('/?a=user/deactivate');
     $table->set_options($request);
     $table->show($sql);
   }
