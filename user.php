@@ -624,7 +624,7 @@ class user
     
     global $session;
     $user = $session->user;
-    $sql = "select * from (select id, u.create_time, u.email_address, u.first_name, u.last_name, r.name role,
+    $sql = "select * from (select id, u.create_time, u.email_address, u.first_name, u.last_name,u.cellphone, r.name role,
               case u.id
               when $user->id then 'edit'
               else 'delete,edit' 
@@ -634,15 +634,12 @@ class user
 
       and partner_id = $user->partner_id and u.active=1 and r.program_id = ". config::$program_id . ") tmp where 1=1";    
 
-
-            
-    $titles = array('#id','~Time', '~Email Address|edit','~First Name|edit','~Last Name|edit','Cellphone|edit','Role|edit=list:?user/roles','Action');
+    $titles = array('#id','~Time', '~Email Address|edit','~First Name|edit','~Last Name|edit','Cellphone|edit','Role|edit=list:?user/roles','Actions');
     $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE);
     $table->set_heading("Manage Users");
     $table->set_key('id');
-    $table->set_row_actions('Appeal','AddPlatform');
-    //$table->set_saver("/?a=user/update");
-    //$table->set_deleter('/?a=user/deactivate');
+    $table->set_saver("/?a=user/update");
+    $table->set_deleter('/?a=user/deactivate');
     $table->set_options($request);
     $table->show($sql);
   }
