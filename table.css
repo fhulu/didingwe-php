@@ -24,7 +24,7 @@ table tr
 
 table th
 {
-  background-color: #D6D6D6;
+  background-color: #DDCEAA;
   background-repeat:no-repeat;
   background-position: center; 
   vertical-align: bottom;
@@ -37,19 +37,19 @@ table td
 {
   padding: 3px;
   vertical-align: center;
-  background-color: #FFFFF0;
+  background-color: lightgoldenrodyellow;
   background-repeat:no-repeat;
   background-position: center; 
 }
 
 table tr.alt td
 {
-  background-color: #FFFFE0;
+  background-color: #99ff99;
 }
 
 table tr:hover td
 {/*;#4380d3 */
-  background-color:#99cccc;
+  background-color: #ffff33;
 } 
 
 
@@ -66,6 +66,7 @@ table .paging
   font-weight: normal;
   font-size: 11px;
   float: right;
+  color: black;
 }
 
 table .paging input[type='text']
