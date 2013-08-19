@@ -110,10 +110,10 @@ class user
     $db->exec("update mukonin_audit.user set otp = '$otp', otp_time = now()
       where id='$user_id' and program_id = " . config::$program_id);
     $message = "Good day<br><br>You are currently trying to change your email address. 
-				If you have not requested this, please inform the System Adminstrator.<br><br>
-				Your One Time Password is : <b>$otp</b>. <br><br>
-				Regards<br>
-				Customer Operations";
+                                                                If you have not requested this, please inform the System Adminstrator.<br><br>
+                                                                Your One Time Password is : <b>$otp</b>. <br><br>
+                                                                Regards<br>
+                                                                Customer Operations";
     $subject = "One Time Password";
     $headers = "from: donotreply@fpb.org.za\r\n";
     $headers .= "MIME-Version: 1.0\r\n";
@@ -146,10 +146,10 @@ class user
     $db->exec("update mukonin_audit.user set otp = '$otp', otp_time = now()
       where email_address='$email' and program_id = " . config::$program_id);
     $message = "Good day<br><br>You are currently trying to reset your password. 
-				If you have not requested this, please inform the System Adminstrator.<br><br>
-				Your One Time Password is : <br><b>$otp</b>. <br><br>
-				Regards<br>
-				Customer Operations";
+                                                                If you have not requested this, please inform the System Adminstrator.<br><br>
+                                                                Your One Time Password is : <br><b>$otp</b>. <br><br>
+                                                                Regards<br>
+                                                                Customer Operations";
     $subject = "One Time Password";
     $headers = "from: donotreply@fpb.org.za\r\n";
     $headers .= "MIME-Version: 1.0\r\n";
@@ -311,9 +311,9 @@ class user
       values($user->id, 'register', $user->id)");
     //todo: send email and/or sms
     $message = "Good day <br><br>Below is your one time password, required to continue with your application.
-				Your One Time Password is <b>$otp</b>.<br><br>
-				Regards<br>
-				Customer Operations";
+                                                                Your One Time Password is <b>$otp</b>.<br><br>
+                                                                Regards<br>
+                                                                Customer Operations";
     $subject = "One Time Password";
     $headers = "MIME-Version: 1.0\r\n";
     $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
@@ -596,8 +596,8 @@ class user
     
     foreach($emails as $email) {
       $message = "Good day<br><br>$requestor would like to register as a user of the FPB Online. Please click <a href=\"$link\">here</a> to give access to user.<br><br>
-				Regards<br>
-				Customer Operations";
+                                                                Regards<br>
+                                                                Customer Operations";
       $subject = "Approve Registration";
       $headers  = "MIME-Version: 1.0\r\n";
       $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
@@ -617,7 +617,7 @@ class user
     $program_id = config::$program_id;
     echo select::add_db("select code, name from mukonin_audit.role where code not in('unreg','base') and program_id=$program_id");
   }
-   static function add_user($request)
+  static function add_user($request)
   {
     global $db, $session;
     $user = &$session->user;
@@ -754,3 +754,10 @@ class user
   }
 }
 ?>
+
+		
+
+				
+
+
+
