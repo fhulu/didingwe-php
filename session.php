@@ -61,6 +61,7 @@ class session
     $_SESSION['instance'] = serialize($session);
   }
         
+ 
   static function login()
   {
     $email = $_REQUEST['email'];
@@ -80,6 +81,20 @@ class session
     }
   }
   
+  static function check_login()
+  {
+    $email = $_REQUEST['email'];
+    $passwd = $_REQUEST['password'];
+    log::debug("LOGIN: $email PROGRAM: $session->program_id REFERRER: $session->referrer");
+
+    $user = user::restore($_REQUEST['email'], $_REQUEST['password']);
+    $v = new validator($_REQUEST);
+    if (!$user) {
+      return $v->report("email", "!Invalid username/password for '$email'");
+    } 
+  }
+
+  
   function restore()
   {
     $_SESSION[last_error] = '';
@@ -91,7 +106,7 @@ class session
   {
     log::debug("REDIRECT: $url");
     echo json_encode(array("script"=>"location.replace('$url');\n"));
-    
+
   }
     
  
