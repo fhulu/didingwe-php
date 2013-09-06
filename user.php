@@ -330,9 +330,11 @@ class user
     
     global $db, $session;
     $id = $session->user->id;
+    $v = new validator($request); 
+
     if (!$db->exists("select id from mukonin_audit.user 
       where id = $id and otp='$otp' and timestampdiff(minute, otp_time, now()) <= 30")) {
-        echo "!Invalid OTP or OTP has expired";
+        $v->report("otp", "!Invalid OTP or OTP has expired");
         return false;
     }
     return true;
