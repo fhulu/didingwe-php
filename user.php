@@ -249,7 +249,7 @@ class user
     $reference = "$program_id-$partner_id-$user_id";
     $url = "http://iweb.itouchnet.co.za/Submit?UserId=MUKONIHTTP&Password=SDMRWRKC&PhoneNumber=$cellphone&Reference=$reference&MessageText=$sms";
     $curl = new curl();
-   // $result = $curl->read($url);  
+    $result = $curl->read($url);  
     log::debug("CURL RESULT: $result");
   }
   static function create($partner_id, $email, $password,$title, $first_name, $last_name, $cellphone, $otp)
@@ -317,7 +317,12 @@ class user
     $subject = "One Time Password";
     $headers = "MIME-Version: 1.0\r\n";
     $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
-    $headers .= "from: donotreply@fpb.org.za";
+    if ($program_id == 3){
+      $headers .= "from: donotreply@fpb.org.za";
+    }
+    else if ($program_id == 8){
+      $headers .= "from: donotreply@ktnsikazi.com";
+    }
     log::debug("Sending OTP email to $email");
     $mail_sent = mail($email, $subject, $message, $headers);
       
