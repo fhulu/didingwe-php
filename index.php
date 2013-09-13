@@ -1,6 +1,6 @@
 <?php
 session_start(); 
-require_once('log.php');
+require_once('../common/log.php');
 log::init('index', log::DEBUG);
 
 
@@ -38,7 +38,7 @@ function init_div($div, $default=null)
     
     $page .= $params;
 
-    $_SESSION[$div] = "/?a=$page";
+    $_SESSION[$div] = "?a=$page";
   }
   else
     $_SESSION[$div] = $file_name;
