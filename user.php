@@ -211,12 +211,15 @@ class user
     $v->check('cellphone')->is('int_tel');
     return $v->valid();
   }
-  static function authenticate($email, $passwd)
+  static function authenticate($email, $passwd, $is_passwd_plain=true)
   {
-    $passwd = addslashes($passwd);
+    if ($is_passwd_plain)
+      $passwd = "password('".addslashes($passwd)."')";
+    else
+      $passwd = "'$passwd'";
     $email = addslashes($email);
     $sql = "select id, partner_id, email_address,title, first_name, last_name,attempts from mukonin_audit.user
-     where email_address='$email' and password=password('$passwd') and active=1 and program_id = ". config::$program_id;         
+     where email_address='$email' and password=$passwd and active=1 and program_id = ". config::$program_id;         
     
     global $db;
     $success = $db->exists($sql);
@@ -233,7 +236,7 @@ class user
     return $success? $db->row: false;
   }
   
-  static function restore($email, $password)
+  static function restore($email, $password, $is_password_plain=true)
   {
     if (($data = user::authenticate($email, $password)) !== false)
       return new user($data);

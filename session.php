@@ -60,12 +60,10 @@ class session
     $db->insert($sql);
     $_SESSION['instance'] = serialize($session);
   }
-        
+       
  
-  static function login()
+  static function do_login($email, $passwd, $is_paswd_plain=true) 
   {
-    $email = $_REQUEST['email'];
-    $passwd = $_REQUEST['password'];
     log::debug("LOGIN: $email PROGRAM: $session->program_id REFERRER: $session->referrer");
 
     if (!user::verify_internal($_REQUEST)) return; 
@@ -80,6 +78,13 @@ class session
       $session->restore();
     }
   }
+  
+  static function login()
+  {
+    $email = $_REQUEST['email'];
+    $passwd = $_REQUEST['password'];
+    session::do_login($email, $passwd);
+  } 
   
   static function check_login()
   {
@@ -105,8 +110,7 @@ class session
   static function redirect($url)
   {
     log::debug("REDIRECT: $url");
-    echo json_encode(array("script"=>"location.replace('$url');\n"));
-
+     echo "<meta http-equiv=\"refresh\" content=\"0;url=$url\">";
   }
     
  
