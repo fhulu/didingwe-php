@@ -124,7 +124,7 @@ init_div('footer');
           var checker = function(){
               if(timer){clearTimeout(timer);} // cancels the countdown.
               timer=setTimeout(function() {
-                  window.location.href="/?c=logout&event=timeout";
+                  window.location.href="?c=logout&event=timeout";
               },time); // reinitiates the countdown.
           };
           checker(); // initiates the countdown.
