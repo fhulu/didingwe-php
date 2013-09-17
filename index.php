@@ -2,6 +2,11 @@
 session_start(); 
 require_once('../common/log.php');
 log::init('index', log::DEBUG);
+log::debug($_SERVER['QUERY_STRING']);
+if (isset($_GET['a'])) {
+  require_once('action.php');
+  return;
+}
 
 
 function get_page_file($page)
@@ -71,10 +76,6 @@ function set_div($div)
   $page = $_SESSION[$div];
   if (strpos($page, '?') !== false) 
     echo "ajax_inner('$div', '$page', true);\n";
-}
-if (isset($_GET['a'])) {
-  require_once('action.php');
-  return;
 }
 init_div('content', 'home');
 init_div('banner');
