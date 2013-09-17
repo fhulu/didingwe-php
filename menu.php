@@ -58,7 +58,7 @@ class menu
       if ($protected && !in_array($function, $functions)) continue;
       $url = $item['url'];
       if ($url == '') 
-        $url = "/$function.html";
+        $url = "$function.html";
       $name = $item['display'];
       if ($name == '') $name = $item['function'];
       $title = $item['description'];
