@@ -170,7 +170,9 @@ class table
     if (!is_array($actions)) 
       $actions = explode(',',$actions);
     foreach($actions as $action) {
-      $this->row_actions[$action] = '';
+      $array = explode('|', $action);
+      $action = array_shift($array);
+      $this->row_actions[$action] = implode('|',$array);
     }
   }
   
