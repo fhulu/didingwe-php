@@ -255,6 +255,20 @@ class user
     $result = $curl->read($url);  
     log::debug("CURL RESULT: $result");
   }
+  
+    static function send_message($cellphone,$partner_id, $user_id, $message)
+  {
+    global $db;
+    $program_id = config::$program_id;
+    $program  = $db->read_one_value("select description from mukonin_audit.program where id = $program_id");
+    $sms  = urlencode("$message");
+    $reference = "$program_id-$partner_id-$user_id";
+    $url = "http://iweb.itouchnet.co.za/Submit?UserId=MUKONIHTTP&Password=SDMRWRKC&PhoneNumber=$cellphone&Reference=$reference&MessageText=$sms";
+    $curl = new curl();
+    $result = $curl->read($url);  
+    log::debug("CURL RESULT: $result");
+  }
+  
   static function create($partner_id, $email, $password,$title, $first_name, $last_name, $cellphone, $otp)
   {
     $program_id = config::$program_id;   
