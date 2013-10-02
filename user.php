@@ -28,7 +28,6 @@ class user
   function __construct($data)
   {
     list($this->id, $this->partner_id, $this->email,$this->title, $this->first_name, $this->last_name, $this->cellphone) = $data;
-    $this->reload();
   }
 
   static function default_functions()
@@ -238,9 +237,11 @@ class user
   
   static function restore($email, $password, $is_password_plain=true)
   {
-    if (($data = user::authenticate($email, $password)) !== false)
-      return new user($data);
-    return false;
+    if (($data = user::authenticate($email, $password)) === false) return false;
+    
+    $user = new user($data);
+    $user->reload();
+    return $user;
   }
   
   static function sms_otp($cellphone,$partner_id, $user_id, $otp)
