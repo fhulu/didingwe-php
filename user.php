@@ -654,7 +654,7 @@ class user
     $last_name= $request['last_name'];
     $cellphone= $request['cellphone'];
     $code= $request['role'];
-    $password='Account321';
+    $password=$request['password'];
     $program_id = config::$program_id;
       
     global $db, $session;
@@ -703,7 +703,7 @@ class user
 
 
       $titles = array('#id','~Time', '~Email Address|edit','~First Name|edit','~Last Name|edit','Cellphone|edit','Role|edit=list:?user/roles','Actions');
-      $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE);
+      $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE | table::ADDABLE);
       $table->set_heading("Manage Users");
       $table->set_key('id');
       $table->set_saver("/?a=user/update");
@@ -713,7 +713,7 @@ class user
       $table->show($sql);
     }
     else{
-      $sql = "select * from (select id, u.create_time, u.email_address, u.first_name, u.last_name,u.cellphone, r.name role,
+      $sql = "select * from (select id, u.create_time, u.email_address, u.first_name, u.last_name,u.cellphone,'**********', r.name role,
                 case u.id
                 when $user->id then 'edit'
                 else 'delete,edit' 
@@ -723,11 +723,12 @@ class user
 
         and partner_id = $user->partner_id and u.active=1 and r.program_id = ". config::$program_id . ") tmp where 1=1";    
 
-      $titles = array('#id','~Time', '~Email Address|edit','~First Name|edit','~Last Name|edit','Cellphone|edit','Role|edit=list:?user/roles','Actions');
-      $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE);
+      $titles = array('#id','~Time', '~Email Address|edit','~First Name|edit','~Last Name|edit','Cellphone|edit','~Password|edit name=password','Role|edit=list:?user/roles','Actions');
+      $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE | table::ADDABLE | table::EXPORTABLE);
       $table->set_heading("Manage Users");
       $table->set_key('id');
       $table->set_saver("/?a=user/update");
+      $table->set_adder("/?a=user/add_user");
       $table->set_deleter('/?a=user/deactivate');
       $table->set_options($request);
       $table->show($sql);
