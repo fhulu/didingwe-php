@@ -28,6 +28,7 @@ class user
   function __construct($data)
   {
     list($this->id, $this->partner_id, $this->email,$this->title, $this->first_name, $this->last_name, $this->cellphone) = $data;
+    $this->reload();
   }
 
   static function default_functions()
@@ -65,7 +66,7 @@ class user
     global $db;
     
     $program_id = config::$program_id;
-    $groups = $db->read_column("select group_code from mukonin_audit.group_partner where partner_id = $this->partner_id");
+    $groups = $db->read_column("select group_code from mukonin_audit.group_partner where partner_id = $this->partner_id and program_id=$program_id");
     $db->lineage($groups, "code", "parent_code", "mukonin_audit.partner_group", "and program_id=$program_id");
     $groups = implode("','", $groups);
     $functions = $db->read_column(
@@ -186,6 +187,23 @@ class user
 }
 
   
+  static function change_password($request)
+  {
+    global $session,$db;
+    $user = &$session->user;
+    $user_id = $user->id; 
+    
+    
+    $validator = new validator($request);
+    if (!$validator->check('email')->is('email')
+      || !$validator->check('password')->is('password', 'match(password2)')) return $validator->valid();
+    
+    $password = $request['password'];
+    log::debug('Password is'.$password);
+    $db->exec("update mukonin_audit.user set password = password('$password')
+    where id='$user_id' and program_id = " . config::$program_id);
+    
+  }
   static function exists($email, $active = 1, $echo=true)
   {
     $program_id = config::$program_id;
@@ -277,9 +295,16 @@ class user
     $first_name = addslashes($first_name);
     $last_name = addslashes($last_name);
     $title = addslashes($title);
-    $sql = "insert into mukonin_audit.user(program_id, partner_id, email_address, password,title, first_name,last_name, cellphone, otp, otp_time)
+    if($program_id==7){
+      
+      $sql = "insert into mukonin_audit.user(program_id, partner_id, email_address, password,title, first_name,last_name, cellphone,active, otp, otp_time)
+      values($program_id,$partner_id, '$email',password('$password'),'$title', '$first_name','$last_name','$cellphone',1, '$otp', now())";
+    }
+    else
+    {
+      $sql = "insert into mukonin_audit.user(program_id, partner_id, email_address, password,title, first_name,last_name, cellphone, otp, otp_time)
       values($program_id,$partner_id, '$email',password('$password'),'$title', '$first_name','$last_name','$cellphone', '$otp', now())";
-    
+    }
     global $db;
     $id = $db->insert($sql);
     $sql = "insert into mukonin_audit.user_role(user_id,role_code)
@@ -329,9 +354,9 @@ class user
       values($user->id, 'register', $user->id)");
     //todo: send email and/or sms
     $message = "Good day <br><br>Below is your one time password, required to continue with your application.
-                                                                Your One Time Password is <b>$otp</b>.<br><br>
-                                                                Regards<br>
-                                                                Customer Operations";
+                Your One Time Password is <b>$otp</b>.<br><br>
+                Regards<br>
+                Customer Operations";
     $subject = "One Time Password";
     $headers = "MIME-Version: 1.0\r\n";
     $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
@@ -404,7 +429,7 @@ class user
   static function update($request)
   {
     $request = table::remove_prefixes($request);
-    $fields = array('email_address','first_name', 'last_name', 'cellphone','otp');
+    $fields = array('email_address','first_name', 'last_name','title', 'cellphone','otp');
     $values = '';
     foreach($request as $key=>$value) {
       if (in_array($key, $fields))
@@ -636,7 +661,11 @@ class user
   
   }
      
-  static function roles()
+  static function titles()
+  {
+    echo select::add_items(",--Select Title--|Mr.|Mrs.|Ms|Miss|Dr|Prof|Sir|Madam",'');
+  }
+   static function roles()
   {
     global $session;
     $program_id = config::$program_id;
@@ -653,33 +682,57 @@ class user
     $first_name= $request['first_name'];
     $last_name= $request['last_name'];
     $cellphone= $request['cellphone'];
+    $title= $request['title'];
     $code= $request['role'];
     $password=$request['password'];
     $program_id = config::$program_id;
       
     global $db, $session;
     $user = &$session->user;
-
-    $sql = "insert into mukonin_audit.user(program_id, partner_id, email_address, first_name,last_name, cellphone,password,active)
-      values($program_id,$partner_id, '$email', '$first_name','$last_name','$cellphone',password('$password'),1)";
-     $user_id=$db->insert($sql);
     
-     
-     $sql = "insert into mukonin_audit.user_role(user_id, role_code)
-      values($user_id,'$code')";
-    $db->exec($sql);
-     
-      $proto = isset($_SERVER['HTTPS'])?'https':'http';
-      $message = "Good day<br><br>$requestor has added you as a user to Qmessenger system. Your username is <b>$email</b> and password is<b>$password</b>.  
-                  Please reset your password immediately by logging on to <a href='$proto://www.qmessenger.co.za/login.html'>Change My Password</a>";
-      $subject = "Added to the system";
-      $headers  = "MIME-Version: 1.0\r\n";
-      $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
-      $headers .= "from: $requestor";
-      $mail_sent = mail($email, $subject, $message, $headers);
+    if($program_id==4){
+        $sql = "insert into mukonin_audit.user(program_id, partner_id, email_address, first_name,last_name, cellphone,password,active)
+          values($program_id,$partner_id, '$email','$title', '$first_name','$last_name','$cellphone',password('$password'),1)";
+        $user_id=$db->insert($sql);
+
+
+        $sql = "insert into mukonin_audit.user_role(user_id, role_code)
+          values($user_id,'$code')";
+        $db->exec($sql);
+
+        $proto = isset($_SERVER['HTTPS'])?'https':'http';
+        $message = "Good day<br><br>$requestor has added you as a user to Qmessenger system. Your username is <b>$email</b> and password is<b>$password</b>.  
+                    Please reset your password immediately by logging on to <a href='$proto://www.qmessenger.co.za/login.html'>Change My Password</a>";
+        $subject = "Added to the system";
+        $headers  = "MIME-Version: 1.0\r\n";
+        $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
+        $headers .= "from: $requestor";
+        $mail_sent = mail($email, $subject, $message, $headers);
+        log::debug("Sent email from $requestor to $email, $password: Result: $mail_sent");
+    }
+    else{
+       $partner_id=$db->read_one_value("select id from mukonin_audit.partner  where full_name='FPB Classifiers'");
+       log::debug('Ipartner id is '.$partner_id);
+       $sql = "insert into mukonin_audit.user(program_id, partner_id, email_address,title, first_name,last_name, cellphone,password,active)
+          values($program_id,$partner_id, '$email','$title', '$first_name','$last_name','$cellphone',password('$password'),1)";
+       $user_id=$db->insert($sql);
+
+
+       $sql = "insert into mukonin_audit.user_role(user_id, role_code)
+          values($user_id,'$code')";
+       $db->exec($sql);
+
+       $proto = isset($_SERVER['HTTPS'])?'https':'http';
+       $message = "Good day<br><br>$requestor has added you as a Classifier to FPB Online system. Your username is <b>$email</b> and password is<b>$password</b>.  
+                  Please reset your password immediately by logging on to <a href='$proto://submit.fpb.gov.za/login.html'>Change My Password</a>";
+       $subject = "Added to the system";
+       $headers  = "MIME-Version: 1.0\r\n";
+       $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
+       $headers .= "from: $requestor";
+       $mail_sent = mail($email, $subject, $message, $headers);
       log::debug("Sent email from $requestor to $email, $password: Result: $mail_sent");
-   
- }  
+    } 
+  }  
   static function manage($request)
   {  
     user::verify('manage_users');
@@ -778,5 +831,8 @@ class user
         left join mukonin_audit.role r on r.code = t.detail
       where o.id = $user_id"); 
   }
+  
+  
+  
 }
 ?>
