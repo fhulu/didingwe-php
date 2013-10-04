@@ -28,7 +28,7 @@ class user
   function __construct($data)
   {
     list($this->id, $this->partner_id, $this->email,$this->title, $this->first_name, $this->last_name, $this->cellphone) = $data;
-    $this->reload();
+   
   }
 
   static function default_functions()
@@ -348,6 +348,7 @@ class user
     else {
       $user = user::create($partner_id, $email, $password, $title,$first_name, $last_name, $cellphone, $otp);
     }
+    $user->reload();
     user::sms_otp($cellphone, $partner_id, $user->id, $otp);
 
     $db->insert("insert into mukonin_audit.trx(user_id, function_code, object_id)
