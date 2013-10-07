@@ -677,7 +677,6 @@ class user
     global $db, $session;
     $user = &$session->user;
     $requestor = "$user->first_name $user->last_name";
-    $partner_id=$user->partner_id;
     $request = table::remove_prefixes($request);
     $email = $request['email_address'];
     $first_name= $request['first_name'];
@@ -686,34 +685,14 @@ class user
     $title= $request['title'];
     $code= $request['role'];
     $password=$request['password'];
+    $partner_id = $request['parnter_id'];
+    if ($partner_id == '')
+      $partner_id=$user->partner_id;
     $program_id = config::$program_id;
-      
-    global $db, $session;
-    $user = &$session->user;
-    
-    if($program_id==4){
-        $sql = "insert into mukonin_audit.user(program_id, partner_id, email_address, first_name,last_name, cellphone,password,active)
-          values($program_id,$partner_id, '$email','$title', '$first_name','$last_name','$cellphone',password('$password'),1)";
-        $user_id=$db->insert($sql);
-
-
-        $sql = "insert into mukonin_audit.user_role(user_id, role_code)
-          values($user_id,'$code')";
-        $db->exec($sql);
-
-        $proto = isset($_SERVER['HTTPS'])?'https':'http';
-        $message = "Good day<br><br>$requestor has added you as a user to Qmessenger system. Your username is <b>$email</b> and password is<b>$password</b>.  
-                    Please reset your password immediately by logging on to <a href='$proto://www.qmessenger.co.za/login.html'>Change My Password</a>";
-        $subject = "Added to the system";
-        $headers  = "MIME-Version: 1.0\r\n";
-        $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
-        $headers .= "from: $requestor";
-        $mail_sent = mail($email, $subject, $message, $headers);
-        log::debug("Sent email from $requestor to $email, $password: Result: $mail_sent");
-    }
-    else{
-       $partner_id=$db->read_one_value("select id from mukonin_audit.partner  where full_name='FPB Classifiers'");
-       log::debug('Ipartner id is '.$partner_id);
+       
+    $role = $db->read_one_value("select name from mukonin_audit.role where code ='$role' and program_id = $program_id" );
+    $program_name = $db->read_one_value("select description from mukonin_audit.program where id = $program_id");
+     log::debug('partner id is '.$partner_id);
        $sql = "insert into mukonin_audit.user(program_id, partner_id, email_address,title, first_name,last_name, cellphone,password,active)
           values($program_id,$partner_id, '$email','$title', '$first_name','$last_name','$cellphone',password('$password'),1)";
        $user_id=$db->insert($sql);
@@ -723,50 +702,24 @@ class user
           values($user_id,'$code')";
        $db->exec($sql);
 
-       $proto = isset($_SERVER['HTTPS'])?'https':'http';
-       $message = "Good day<br><br>$requestor has added you as a Classifier to FPB Online system. Your username is <b>$email</b> and password is<b>$password</b>.  
-                  Please reset your password immediately by logging on to <a href='$proto://submit.fpb.gov.za/login.html'>Change My Password</a>";
+       $message = "Good day<br><br>$requestor has added you as $role on $program_name. Your username is <b>$email</b> and password is<b>$password</b>.";  
        $subject = "Added to the system";
        $headers  = "MIME-Version: 1.0\r\n";
        $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
        $headers .= "from: $requestor";
        $mail_sent = mail($email, $subject, $message, $headers);
       log::debug("Sent email from $requestor to $email, $password: Result: $mail_sent");
-    } 
-  }  
+  } 
+
   static function manage($request)
   {  
     user::verify('manage_users');
     
     global $session;
     $user = $session->user;
-     $user = $session->user;
     $program_id = config::$program_id;
-    if($program_id == 4)
-    {
-      $sql = "select * from (select id, u.create_time, u.email_address, u.first_name, u.last_name, u.cellphone, r.name role,
-                case u.id
-                when $user->id then 'edit'
-                else 'delete,edit' 
-              end as actions
-        from mukonin_audit.user u, mukonin_audit.user_role ur, mukonin_audit.role r
-        where u.id=ur.user_id and r.code = ur.role_code 
-
-        and partner_id = $user->partner_id and u.active=1 and r.program_id = ". config::$program_id . ") tmp where 1=1";    
-
-
-
-      $titles = array('#id','~Time', '~Email Address|edit','~First Name|edit','~Last Name|edit','Cellphone|edit','Role|edit=list:?user/roles','Actions');
-      $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE | table::ADDABLE);
-      $table->set_heading("Manage Users");
-      $table->set_key('id');
-      $table->set_saver("/?a=user/update");
-      $table->set_adder('/?a=user/add_user');
-      $table->set_deleter('/?a=user/deactivate');
-      $table->set_options($request);
-      $table->show($sql);
-    }
-    else{
+    $partner_id = $request['partner_id'];
+    if ($partner_id == '') $partner_id = $user->partner_id;
       $sql = "select * from (select id, u.create_time, u.email_address, u.first_name, u.last_name,u.cellphone,'**********', r.name role,
                 case u.id
                 when $user->id then 'edit'
@@ -775,18 +728,17 @@ class user
         from mukonin_audit.user u, mukonin_audit.user_role ur, mukonin_audit.role r
         where u.id=ur.user_id and r.code = ur.role_code 
 
-        and partner_id = $user->partner_id and u.active=1 and r.program_id = ". config::$program_id . ") tmp where 1=1";    
+        and partner_id = $partner_id and u.active=1 and r.program_id = ". config::$program_id . ") tmp where 1=1";    
 
-      $titles = array('#id','~Time', '~Email Address|edit','~First Name|edit','~Last Name|edit','Cellphone|edit','~Password|edit name=password','Role|edit=list:?user/roles','Actions');
-      $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE | table::ADDABLE | table::EXPORTABLE);
+      $titles = array('#id','~Time', '~Email Address|edit','~First Name|edit','~Last Name|edit','Cellphone|edit','~Password|edit|name=password','Role|edit=list:?user/roles','Actions');
+      $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE | table::EXPORTABLE);
       $table->set_heading("Manage Users");
       $table->set_key('id');
       $table->set_saver("/?a=user/update");
-      $table->set_adder("/?a=user/add_user");
+      $table->set_adder("/?a=user/add_user&partner_id=$partner_id");
       $table->set_deleter('/?a=user/deactivate');
       $table->set_options($request);
       $table->show($sql);
-    }
   }
   static function manage_all($request)
   {  
