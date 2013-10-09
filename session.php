@@ -39,11 +39,11 @@ class session
 
   static function ensure_logged_in()
   {
-    session::validate('/?c=login');
+    session::validate('index.php?c=login');
   }
   static function ensure_not_expired()
   {
-    session::validate('/?c=home');
+    session::validate('index.php?c=home');
   }
 
   
@@ -103,7 +103,7 @@ class session
   function restore()
   {
     $_SESSION[last_error] = '';
-    if ($this->referrer == '') $this->referrer = '/?c=home';
+    if ($this->referrer == '') $this->referrer = 'index.php?c=home';
     $this->redirect($this->referrer);
   }
   
