@@ -348,9 +348,10 @@ class user
     else {
       $user = user::create($partner_id, $email, $password, $title,$first_name, $last_name, $cellphone, $otp);
     }
-    $user->reload();
-    user::sms_otp($cellphone, $partner_id, $user->id, $otp);
 
+
+    user::sms_otp($cellphone, $partner_id, $user->id, $otp);
+    $user->reload();
     $db->insert("insert into mukonin_audit.trx(user_id, function_code, object_id)
       values($user->id, 'register', $user->id)");
     //todo: send email and/or sms
