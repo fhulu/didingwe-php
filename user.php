@@ -317,20 +317,22 @@ class user
     return new user(array($id, $partner_id, $email,$title, $first_name, $last_name, $cellphone, $otp, $partner_id));
   }
   
-  static function register($request)
+  static function register($request, $is_admin=false)
   {    
-    if (!(user::verify_internal($request) & user::check($request))) return;
+    if (!$is_admin && !user::check($request)) return;
     $request = db::quote($request);
     $title = $request[title];
     $first_name = $request[first_name];
     $last_name = $request[last_name];
     $email = $request[email];
+    if ($email  == '') $email = $request['email_address'];
     $password = $request[password];
     $cellphone = $request[cellphone];
     $otp = rand(10042,99999);
     $program_id = config::$program_id;
     $partner_id = (int)$request['partner_id'];
-    
+    $role = $request['role'];
+    if ($role == '') $role = 'reg';
     // First check if email already exists
     global $db;
     if (user::exists($email, 0, false)) {
@@ -348,6 +350,7 @@ class user
     else {
       $user = user::create($partner_id, $email, $password, $title,$first_name, $last_name, $cellphone, $otp);
     }
+    if ($is_admin) return;
 
 
     user::sms_otp($cellphone, $partner_id, $user->id, $otp);
@@ -463,6 +466,9 @@ class user
     if (!is_null($request['role'])){
       user::update_role($request);
     }
+    $passwd = $request['password'];
+    if ($passwd != '**********')
+      $db->exec("update mukonin_audit.user set password = password('$passwd') where id = $id");
   }
 
   static function verify($function, $private=true)
@@ -671,14 +677,14 @@ class user
   {
     global $session;
     $program_id = config::$program_id;
-    echo select::add_db("select code, name from mukonin_audit.role where code not in('unreg','base') and program_id=$program_id");
+    echo select::add_db("select code, name from mukonin_audit.role where code not in('unreg','base') and program_id=$program_id order by name desc");
   }
   static function add_user($request)
   {
+    $request = table::remove_prefixes($request);
     global $db, $session;
     $user = &$session->user;
     $requestor = "$user->first_name $user->last_name";
-    $request = table::remove_prefixes($request);
     $email = $request['email_address'];
     $first_name= $request['first_name'];
     $last_name= $request['last_name'];
@@ -686,7 +692,7 @@ class user
     $title= $request['title'];
     $code= $request['role'];
     $password=$request['password'];
-    $partner_id = $request['parnter_id'];
+    $partner_id = $request['partner_id'];
     if ($partner_id == '')
       $partner_id=$user->partner_id;
     $program_id = config::$program_id;
@@ -728,10 +734,9 @@ class user
               end as actions
         from mukonin_audit.user u, mukonin_audit.user_role ur, mukonin_audit.role r
         where u.id=ur.user_id and r.code = ur.role_code 
-
         and partner_id = $partner_id and u.active=1 and r.program_id = ". config::$program_id . ") tmp where 1=1";    
 
-      $titles = array('#id','~Time', '~Email Address|edit','~First Name|edit','~Last Name|edit','Cellphone|edit','~Password|edit|name=password','Role|edit=list:?user/roles','Actions');
+      $titles = array('#id','~Time', '~Email Address|edit','~First Name|edit','~Last Name|edit','Cellphone|edit','~Password|edit|name=password','Role|edit=list:?user/roles','');
       $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE | table::EXPORTABLE);
       $table->set_heading("Manage Users");
       $table->set_key('id');
@@ -748,7 +753,7 @@ class user
     global $session;
     $partner_id = $session->user->partner_id;
     $user_id = $session->user->id;
-    $sql = "select * from (select u.id, u.create_time, p.full_name, email_address, first_name, last_name, r.name role,
+    $sql = "select * from (select u.id, u.create_time, p.full_name, email_address, u.first_name, u.last_name, u.cellphone, '**********', r.name role,
               case u.id
               when $user_id then 'edit'
               else 'delete,edit' 
@@ -757,7 +762,7 @@ class user
       where u.id=ur.user_id and r.code = ur.role_code and u.partner_id = p.id
       and u.active=1 and r.program_id = ". config::$program_id . ") tmp where 1=1";    
             
-    $titles = array('#id','~Time', '~Company', '~Email Address|edit','~First Name|edit','~Last Name|edit','~Role|edit=list:?user/roles','');
+    $titles = array('#id','~Time', '~Company', '~Email Address|edit','~First Name|edit','~Last Name|edit','~Cellphone|edit','~Password|edit|name=password','~Role|edit=list:?user/roles','');
     $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE | table::EXPORTABLE);
     $table->set_heading("Manage All Users");
     $table->set_key('id');
