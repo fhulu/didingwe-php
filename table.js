@@ -1,4 +1,4 @@
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+///~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 // Author     : Fhulu Lidzhade
 // Date       : 17/06/2012   20:39
 // Description:
@@ -200,7 +200,11 @@
           text = option.text();
           val = option.val();
         }
-        else {
+        else if (type.indexOf('multi:')==0) {
+          var select = $(this).find('select');
+          val = select.val().join();
+          text = select.text().join();
+        } else {
           var input = $(this).children().eq(0);
           text = val = input.val();
         }
@@ -244,9 +248,13 @@
         row.insertBefore(button.parent().parent().parent());
       else
         body.append(row);
-
+      var colspan = table.find('tr.titles').children().length;
+      console.log('colspan=',colspan);
+      var td = $("<td colspan="+colspan+"></td>");
       var input = $("<input class='search' value=''></input>");
-      row.append(input);
+      td.append(input);
+      td.append($('<i> <-- type the first few letters of the item you want to add here </i>'));
+      row.append(td);
 
       input
         .addClass('fullwidth') 
@@ -266,8 +274,8 @@
               row.append($("<td>"+text+"</td>"));
               data[name] = text;
             });
-            data['parent_id'] = table.parent().parent().attr('id');
-            data['child_id'] = ui.item.id;
+          //  data['parent_id'] = table.parent().parent().attr('id');
+            data['id'] = ui.item[key];
             $.send(body.attr('searchadd'), {data: data}, function(){
               self.refresh();
             });
@@ -318,9 +326,9 @@
         };
     },
     
-    addRow: function()
+    addRow: function(row)
     {
-      var body = this.element.find("tbody");
+      var body = this.element.children("tbody").eq(0);
       var search = body.attr('search');
       if (search !== undefined) {
         this.searchRow(search);
@@ -338,18 +346,17 @@
         else
           row.append("<td></td");
       });
-    
+   
       var actions = row.children().last();
       actions.addClass('actions');
-      actions.html("<div action=save></div><div action=delete></div>");
-       //row.append(actions);
-      var button = body.find(".actions div[action=add]");
-      if (button !== undefined) 
-        row.insertBefore(button.parent().parent().parent());
-      else
-        body.append(row);
-      this.showEditor(row);
-      this._bind_actions(row);
+      actions.html("<div action=save></div><div action=delete></div>")   
+     var footer = body.children(".footer");
+     if (footer !== undefined) 
+       row.insertBefore(footer);
+     else
+       body.append(row);
+     this.showEditor(row);
+     this._bind_actions(row);
     },
     
     exportData: function()
@@ -454,7 +461,7 @@
         .on("expand", function(e, data) {self.expand($(this),data);})        
         .on("collapse", function(e, data) {self.collapse($(this),data);}) 
         .on("checkrow", function(e, data) {self.checkRow($(this),data);})
-        .on('add', function() {self.addRow();})
+        .on('add', function() {self.addRow($(this));})
         .on('export', function() {self.exportData();})
         .on('checkall', function() {self.checkAll();});
         
@@ -523,13 +530,22 @@
           select.append("<option>"+values[i]+"</option>")
         }
       } 
-      col.append(select);      
+      col.append(select);
     },
    
+    _create_multi: function(col, attr)
+    {
+      this._create_list(col, attr);
+      var select = col.children('select');
+      select.attr('multiple','multiple');
+      select.multiselect();
+    },
+
     _create_editor: function(type, col_text)
     {
       var table = this.element;
-      var titles = table.find(".titles");
+      var thead = table.children("thead");
+      var titles = thead.children(".titles").eq(0);
       var editor = $("<tr class="+type+"></tr>");
       var self = this;
       titles.find("th").each(function() {
@@ -543,6 +559,8 @@
         var width = parseInt($(this).css('width')) * 0.8;
         if (attr.indexOf('list:') == 0) 
           self._create_list(col, attr);
+        else if (attr.indexOf('multi:') == 0)
+          self._create_multi(col, attr);
         else if (attr == '')
           col.append("<input type='text' size="+width/10+" style='width:"+width+";'></input>");
       });
@@ -599,14 +617,25 @@
         $(button).attr("action","collapse");
       var key = this.get_body('key');
       var key_value = row.attr(key);
-      row.after("<tr class=expanded><td colspan="+row.children().length+"></td></tr>");
+      row.after("<tr class=expanded></tr>");
       row = row.next();
+      var td = $("<td colspan="+row.children().length+"></td>");
+      row.append(td);
       row.attr(key, key_value);
       var url = this.get_body('expand');
-      if (url !== undefined) {
+      console.log(url);
+      if (url === undefined) return row;
+      var expand_type = this.get_body('expand_type');
+      var data = {};
+      data[key] = key_value;
+      if (expand_type == 'table') {
+        var table = $("<table class='expanded'></table>");
+        table.table({url: url, data: data, method: 'get'} );
+        td.append(table);
+        return row;
+      }
+  
         if (url.indexOf('#') != 0) { 
-          var data = {};
-          data[key] = key_value;
           row.find('td').loadHtml(url, {method: this.options.method, data: data} );
           return row;
         }
@@ -624,8 +653,6 @@
           });
         }
         return row;
-      }
-      return null;
     },
     
     collapse: function(row)
