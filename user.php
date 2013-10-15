@@ -406,7 +406,7 @@ class user
   {
     global $db;
     $id = $request[id];
-    
+    $request = table::remove_prefixes($request); 
     list($email,$username) = $db->read_one("select email_address, Concat( first_name, ' ', last_name ) from mukonin_audit.user where id = $id ");
     user::audit('deactivate', $id, "$username($email)");
     
@@ -675,11 +675,18 @@ class user
   }
    static function roles()
   {
-    global $session;
     $program_id = config::$program_id;
     echo select::add_db("select code, name from mukonin_audit.role where code not in('unreg','base') and program_id=$program_id order by name desc");
   }
-  static function add_user($request)
+
+  static function groups()
+  {
+    global $session;
+    $user = &$session->user;
+    echo select::add_db("select id, name from mukonin_audit.user_group where partner_id = $user->partner_id and active=1");
+  }
+
+  static function add($request)
   {
     $request = table::remove_prefixes($request);
     global $db, $session;
@@ -696,7 +703,6 @@ class user
     if ($partner_id == '')
       $partner_id=$user->partner_id;
     $program_id = config::$program_id;
-       
     $role = $db->read_one_value("select name from mukonin_audit.role where code ='$role' and program_id = $program_id" );
     $program_name = $db->read_one_value("select description from mukonin_audit.program where id = $program_id");
      log::debug('partner id is '.$partner_id);
@@ -709,15 +715,19 @@ class user
           values($user_id,'$code')";
        $db->exec($sql);
 
-       $message = "Good day<br><br>$requestor has added you as $role on $program_name. Your username is <b>$email</b> and password is<b>$password</b>.";  
+       $message = "Good day<br><br>$requestor has added you as $role on $program_name. Your username is <b>$email</b> and password is <b>$password</b>.";  
        $subject = "Added to the system";
        $headers  = "MIME-Version: 1.0\r\n";
        $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
-       $headers .= "from: $requestor";
+       $headers .= "from: $requestor<$user->email>";
        $mail_sent = mail($email, $subject, $message, $headers);
       log::debug("Sent email from $requestor to $email, $password: Result: $mail_sent");
   } 
 
+  static function add_user($request)
+  {
+    return user::add($request);
+  }
   static function manage($request)
   {  
     user::verify('manage_users');
@@ -727,25 +737,138 @@ class user
     $program_id = config::$program_id;
     $partner_id = $request['partner_id'];
     if ($partner_id == '') $partner_id = $user->partner_id;
-      $sql = "select * from (select id, u.create_time, u.email_address, u.first_name, u.last_name,u.cellphone,'**********', r.name role,
+    $show_groups = $request['show_groups'];
+    $sql = "select * from (select u.id, u.create_time, u.email_address, u.first_name, u.last_name,u.cellphone,'**********', r.name role";
+    if ($show_groups == 1) 
+      $sql .=", (select group_concat(ug.name) from mukonin_audit.user_group ug join mukonin_audit.group_users gu on ug.id = gu.group_id where gu.user_id = u.id and ug.active=1) groups ";
+    $sql .= ",
                 case u.id
                 when $user->id then 'edit'
                 else 'delete,edit' 
               end as actions
-        from mukonin_audit.user u, mukonin_audit.user_role ur, mukonin_audit.role r
-        where u.id=ur.user_id and r.code = ur.role_code 
-        and partner_id = $partner_id and u.active=1 and r.program_id = ". config::$program_id . ") tmp where 1=1";    
+        from mukonin_audit.user u left join mukonin_audit.user_role ur on u.id = ur.user_id 
+             left join mukonin_audit.role r on r.code = ur.role_code
+        where u.partner_id = $partner_id and u.active=1 and r.program_id = ". config::$program_id . ") tmp where 1=1";    
 
-      $titles = array('#id','~Time', '~Email Address|edit','~First Name|edit','~Last Name|edit','Cellphone|edit','~Password|edit|name=password','Role|edit=list:?user/roles','');
+      $titles = array('#id','~Time', '~Email Address|name=email_address|edit','~First Name|name=first_name|edit','~Last Name|name=last_name|edit','Cellphone|name=cellphone|edit','~Password|edit|name=password','Role|name=role|edit=list:?user/roles');
+      if ($show_groups==1) $titles[] = '~Group(s)';//|name=groups|edit=multi:?user/groups';
       $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE | table::EXPORTABLE);
       $table->set_heading("Manage Users");
       $table->set_key('id');
-      $table->set_saver("/?a=user/update");
-      $table->set_adder("/?a=user/add_user&partner_id=$partner_id");
-      $table->set_deleter('/?a=user/deactivate');
+      $table->set_saver("index.php?a=user/update");
+      $table->set_adder("index.php?a=user/add&partner_id=$partner_id");
+      $table->set_deleter('index.php?a=user/deactivate');
+      unset($request['show_groups']);
+      unset($request['partner_id']);
       $table->set_options($request);
       $table->show($sql);
   }
+
+  static function members($request)
+  {
+    user::verify('manage_users');
+
+    $program_id = config::$program_id;
+    $group_id = $request['group_id'];
+    $sql = "select * from (select u.id, u.email_address, u.first_name, u.last_name,u.cellphone,r.name role, gu.create_time, 'delete' actions
+        from mukonin_audit.user u 
+           join mukonin_audit.group_users gu on u.id = gu.user_id and group_id = $group_id 
+           left join mukonin_audit.user_role ur on u.id = ur.user_id 
+           left join mukonin_audit.role r on r.code = ur.role_code and r.program_id = $program_id
+        where u.active = 1
+         ) tmp where 1=1";    
+
+      $titles = array('#id', '~Email Address|name=email_address|edit','~First Name','Last Name','Cellphone','~Role','~Time Added','');
+      $table = new table($titles, table::TITLES | table::ALTROWS );
+      $table->set_key('id');
+      $table->set_searcher("index.php?a=user/search&group_id=$group_id", "/?a=user/attach&group_id=$group_id");
+      $table->set_deleter("index.php?a=user/detach&group_id=$group_id");
+      unset($request['group_id']);
+      $table->set_options($request);
+      $table->show($sql);
+  }
+
+
+  static function search($request)
+  { 
+    $request = table::remove_prefixes($request);
+    global $session;
+    $user = $session->user;
+    $group_id = $request['group_id'];
+    $sql = "select id, email_address,first_name, last_name,cellphone
+        from mukonin_audit.user u 
+        where id not in (select user_id from mukonin_audit.group_users where group_id = $group_id) and partner_id = $user->partner_id and active=1";
+    table::search($request, $sql); 
+  }
+  static function manage_groups($request)
+  {
+    user::verify('manage_user_groups');
+
+    global $session;
+    $user = $session->user;
+    $program_id = config::$program_id;
+    $partner_id = $request['partner_id'];
+    if ($partner_id == '') $partner_id = $user->partner_id;
+    $titles = array('#group_id','~Time','~Name|name=name|edit','Size');
+    $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE | table::EXPORTABLE);
+    $table->set_heading("Manage User Groups");
+    $table->set_key('group_id');
+    $table->set_saver("index.php?a=user/rename_group");
+    $table->set_adder("index.php?a=user/add_group&partner_id=$partner_id");
+    $table->set_deleter('index.php?a=user/deactivate_group');
+    $table->set_expandable('index.php?a=user/members','table');
+    unset($request['partner_id']);
+    $table->set_options($request);
+    $sql = "select * from (select id group_id, create_time, name, (select count(1) from mukonin_audit.group_users where group_id = g.id) size 
+         from mukonin_audit.user_group g where partner_id = $partner_id and active = 1) tmp where 1=1";
+    $table->show($sql);
+  }
+ 
+  static function attach($request)
+  {
+    $request = table::remove_prefixes($request);
+    $user_id = $request['id'];
+    $group_id = $request['group_id'];
+    global $db;
+    $db->exec("insert mukonin_audit.group_users(user_id,group_id) values( $user_id, $group_id)");
+  }
+
+
+  static function detach($request)
+  {
+    $request = table::remove_prefixes($request);
+    $user_id = $request['id'];
+    $group_id = $request['group_id'];
+    global $db;
+    $db->exec("delete from mukonin_audit.group_users where user_id = $user_id and group_id = $group_id");
+  }
+
+  static function add_group($request)
+  {
+    $request = table::remove_prefixes($request);
+    $name = $request['name'];
+    $partner_id = $request['partner_id'];
+    global $db;
+    $db->exec("insert into mukonin_audit.user_group(name, partner_id) values('$name', $partner_id)");
+  } 
+
+  static function rename_group($request)
+  {
+    $request = table::remove_prefixes($request);
+    $group = $request['name'];
+    $id = $request['group_id'];
+    global $db;
+    $db->exec("update mukonin_audit.user_group set name = '$name' where id = $id");
+  }
+
+  static function deactivate_group($request)
+  {
+    $request = table::remove_prefixes($request);
+    $id = $request['group_id'];
+    global $db;
+    $db->exec("update mukonin_audit.user_group set active = 0, name=concat(name,'-deleted')  where id = $id");
+  }
+
   static function manage_all($request)
   {  
     user::verify('manage_all_users');
