@@ -125,6 +125,13 @@ class table
     $this->set_row_action(self::DELETABLE, 'delete', $url);
   }
 
+  function set_searcher($search, $search_adder)
+  {
+    $this->set_action(self::ADDABLE, 'add',$search_adder);
+    $this->set_action(self::SEARCHABLE, 'search', $search);
+    $this->set_action(self::SEARCHADDABLE, 'searchadd', $search_adder);
+  }
+
   function set_adder($url, $search=null, $search_adder=null)
   {
     $this->set_action(self::ADDABLE, 'add', $url);
@@ -132,16 +139,16 @@ class table
       $this->set_action(self::SEARCHABLE, 'search', $search);
       $this->set_action(self::SEARCHADDABLE, 'searchadd', $search_adder);
     }
-  }
-  
+  } 
   function set_key($key)
   {
     $this->key_field = $key;
   }
  
-  function set_expandable($url=null)
+  function set_expandable($url=null,$type=null)
   {
     $this->set_row_action(self::EXPANDABLE, 'expand', $url);
+    if(!is_null($type)) $this->set_action(self::EXPANDABLE,'expand_type',$type);
   }
   
   function set_exportable($file_name)
@@ -170,9 +177,7 @@ class table
     if (!is_array($actions)) 
       $actions = explode(',',$actions);
     foreach($actions as $action) {
-      $array = explode('|', $action);
-      $action = array_shift($array);
-      $this->row_actions[$action] = implode('|',$array);
+      $this->row_actions[$action] = '';
     }
   }
   
@@ -191,7 +196,7 @@ class table
     $this->symbols = array();
     $this->fields = $fields;
     $this->title_rowspan = 1;
-    foreach($this->fields as $key=>$field) {
+    foreach($this->fields as $key=>&$field) {
       if (is_numeric($key)) {
         $this->add_symbol($field);
         continue;
@@ -234,7 +239,7 @@ class table
     else {
       echo "<div class=actions>";
       foreach($this->actions as $action=>$value) {
-        if ($action == 'checkrow' || $action == 'checkall') continue;
+        if (in_array($action, array('checkrow', 'checkall', 'search','searchadd','expand_type'))) continue;
         list($value, $desc, $target) = explode('|', $value);
         echo "<div action='$action' target='$target' ";
         if ($action == 'export') {
@@ -643,7 +648,7 @@ HEREDOC;
       $filter .= "$field $like or ";
     }
     if ($filter != '')
-      $sql .= "and (". substr($filter, 0, strlen($filter)-4) . ")";
+      $sql .= " and (". substr($filter, 0, strlen($filter)-4) . ")";
     $sql = substr($sql, 0, 7) . "'$term' term, " . substr($sql, 7);
     global $db;
     $result =$db->page_names($sql, $max_rows, $start);
