@@ -623,7 +623,6 @@
       row.append(td);
       row.attr(key, key_value);
       var url = this.get_body('expand');
-      console.log(url);
       if (url === undefined) return row;
       var expand_type = this.get_body('expand_type');
       var data = {};
