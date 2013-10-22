@@ -25,6 +25,7 @@ class user
   var $roles;
   var $title;
   var $functions;
+  var $groups;
   function __construct($data)
   {
     list($this->id, $this->partner_id, $this->email,$this->title, $this->first_name, $this->last_name, $this->cellphone) = $data;
@@ -42,11 +43,20 @@ class user
   
   function reload()
   {
+    $this->load_groups();
     $this->load_roles();
     $this->load_functions();
     session::register($this);
     $this->force_audit('login');
   }
+
+  function load_groups()
+  {
+    global $db;
+    $this->groups = $db->read_column("select group_id from mukonin_audit.group_users where user_id = $this->id");
+    //todo: take care of group hierachy
+  }
+
   function load_roles()
   {
     global $db;
@@ -913,8 +923,25 @@ class user
         left join mukonin_audit.role r on r.code = t.detail
       where o.id = $user_id"); 
   }
+
+  static function access_list()
+  {
+    echo select::add_items("u,Private(Only owner have access)|g,My Groups(Everyone in the same group as owner))|p,Everyone (Everyone in the organisation)");
+  }
   
-  
+  function get_access_filter_sql($table,$conjuctor='and')
+  {
+    if (in_array('admin', $this->roles)) return null;
+    $groups = implode(',',$this->groups);
+    $sql .= " $conjuctor ($table.access = 'p' or $table.user_id = $this->id";
+    if ($groups != '')
+      $sql .= " or ($table.access = 'g' and $table.user_id in (select gu.user_id from mukonin_audit.group_users gu where gu.group_id in ($groups)))";
+
+    return $sql .= ')';
+ 
+  }  
+
+
   
 }
 ?>
