@@ -858,7 +858,7 @@ class user
     $group = $request['name'];
     $id = $request['group_id'];
     global $db;
-    $db->exec("update mukonin_audit.user_group set name = '$name' where id = $id");
+    $db->exec("update mukonin_audit.user_group set name = '$group' where id = $id");
   }
 
   static function deactivate_group($request)
