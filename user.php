@@ -837,7 +837,7 @@ class user
     $table->set_expandable('index.php?a=user/members','table');
     unset($request['partner_id']);
     $table->set_options($request);
-    $sql = "select * from (select id group_id, create_time, name, (select count(1) from mukonin_audit.group_users where group_id = g.id) size 
+    $sql = "select * from (select id group_id, create_time, name, (select count(1) from mukonin_audit.group_users gu, mukonin_audit.user u where group_id = g.id and u.id = gu.user_id and u.active=1) size 
          from mukonin_audit.user_group g where partner_id = $partner_id and active = 1) tmp where 1=1";
     $table->show($sql);
   }
