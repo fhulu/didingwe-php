@@ -455,6 +455,7 @@ HEREDOC;
         ++$span;
       }
     }
+    if (sizeof($this->row_actions) > 0) ++$span; 
     if ($span != 0) echo "<th colspan=$span></th>\n";
     echo "</tr>\n";
   }
@@ -617,7 +618,6 @@ HEREDOC;
   
   static function remove_prefixes($request,$separator='~')
   {
-    $replace  = $request;
     foreach ($request as $key=>$value) {
       list($prefix,$col) = explode($separator,$key);
       if ($col == '')
@@ -628,14 +628,11 @@ HEREDOC;
     return $replace;
   }
   
-  static function search($request, $sql)
+  static function get_search_result($request, $sql, $start, $max_rows)
   {
     $term = $request['term'];
-    $start = $request['changed']==0?$request['start']:0;
     $like = "like '%$term%'";
-    $max_rows = 10;
-    $result = array();
-   
+
     $fields = explode(',', substr($sql, strpos($sql, ',')+1));
     $filter = "";
     $pattern = "/([\w\.]+)(?:[\w ]*)?/";
@@ -651,10 +648,22 @@ HEREDOC;
       $sql .= " and (". substr($filter, 0, strlen($filter)-4) . ")";
     $sql = substr($sql, 0, 7) . "'$term' term, " . substr($sql, 7);
     global $db;
-    $result =$db->page_names($sql, $max_rows, $start);
+    return $db->page_names($sql, $max_rows, $start);
+  }
 
-    if ($start > 0) $nav['prev'] = $start - $max_rows;
+  static function search($request, $sql1, $sql2=null)
+  { 
+    $start = $request['changed']==0?$request['start']:0;
+    $max_rows = 10;
+    $result = table::get_search_result($request, $sql1, $start, $max_rows);
+   
     
+    if ($start > 0) $nav['prev'] = $start - $max_rows;
+   
+    $first_result_size = sizeof($result);
+    if ($first_result_size < $max_rows && !is_null($sql2))
+       $result = array_merge($result, table::get_search_result($request, $sql2, $first_result_size == 0? $start: 0, $max_rows-$first_result_size));   
+ 
     if (sizeof($result) > $max_rows) {
       array_pop($result);
       $nav['next'] = $start + $max_rows;
