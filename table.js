@@ -249,7 +249,6 @@
       else
         body.append(row);
       var colspan = table.find('tr.titles').children().length;
-      console.log('colspan=',colspan);
       var td = $("<td colspan="+colspan+"></td>");
       var input = $("<input class='search' value=''></input>");
       td.append(input);
@@ -263,7 +262,6 @@
           source: url,
           prevTerm: '',
           select: function( event, ui ) {
-            console.log(ui.item);
             var titles = table.find("thead .titles th");
             row.children().remove('*');
             var data = {};
@@ -274,9 +272,8 @@
               row.append($("<td>"+text+"</td>"));
               data[name] = text;
             });
-          //  data['parent_id'] = table.parent().parent().attr('id');
-            data['id'] = ui.item[key];
-            $.send(body.attr('searchadd'), {data: data}, function(){
+            data[key] = ui.item[key];
+            $.send(body.attr('searchadd'), {data: data, method: 'get'}, function(){
               self.refresh();
             });
             
