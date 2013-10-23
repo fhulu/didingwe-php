@@ -804,11 +804,19 @@ class user
     $request = table::remove_prefixes($request);
     global $session;
     $user = $session->user;
-    $group_id = $request['group_id'];
-    $sql = "select id, email_address,first_name, last_name,cellphone
+    $user_sql = "select id, email_address,first_name, last_name,cellphone
         from mukonin_audit.user u 
-        where id not in (select user_id from mukonin_audit.group_users where group_id = $group_id) and partner_id = $user->partner_id and active=1";
-    table::search($request, $sql); 
+        where partner_id = $user->partner_id and active=1";
+    $group_id = $request['group_id'];
+    if ($group_id != '') 
+      $user_sql .= " and id not in (select user_id from mukonin_audit.group_users where group_id = $group_id)";
+    if (isset($request['groups'])) {
+      $group_sql = "select id, name `group` from mukonin_audit.user_group where partner_id = $user->partner_id and active = 1";
+      table::search($request, $group_sql, $user_sql); 
+    } 
+    else
+      table::search($request, $user_sql); 
+	
   }
   static function manage_groups($request)
   {
