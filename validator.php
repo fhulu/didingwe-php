@@ -1,6 +1,7 @@
 <?php
 require_once('db.php');
 require_once 'errors.php';
+require_once 'curl.php';
 
 class validator_exception extends Exception {};
 class validator
@@ -85,6 +86,17 @@ class validator
     return $this->regex('/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i');
   }
 
+   function url($option)
+  {
+    if (!$this->regex('/^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/')) return false;
+    
+    if ($option == 'visitable') {
+      $curl = new curl();
+      if (!$curl->read($this->value)) return $this->error("!$this->title $this->value is not accessible.");
+    }
+    return true;
+  }
+  
   function int_tel()
   {
     return $this->at_least(10) && $this->regex('/^\+\d+$/',"!Please use international format for $this->title, e.g. +27821234567");
