@@ -112,7 +112,14 @@ class session
     log::debug("REDIRECT: $url");
      echo "<meta http-equiv=\"refresh\" content=\"0;url=$url\">";
   }
-    
+
+  static function force_logout($user_id)
+  {
+    global $db;
+    $sql = "update mukonin_audit.session set status='C', end_time=now() where user_id = $user_id";
+    $db->exec($sql);
+  }
+  
  
   static function logout()
   {
@@ -125,6 +132,16 @@ class session
     session_destroy();
   }
   
+  static function verify()
+  {
+    global $session,$db;
+    if (is_null($session) || $session->id == '') return false;
+    
+    $status = $db->read_one_value("select status from mukonin_audit.session where id = '$session->id' ");
+    if ($status != 'C') return true;
+    session::logout ();
+    return false;
+  }
 }
 
 if (!$daemon_mode) {
