@@ -502,6 +502,8 @@ class user
   {
     global $db, $session;
     $user = $session->user;
+    $detail = stripslashes($detail);
+    $type = stripslashes($type);
     log::info("FUNCTION: $function USER: $user->id OBJECT: $object TYPE: $type DETAIL: $detail");
     if (is_numeric($object)) {
       $object_id = $object; 
@@ -894,6 +896,7 @@ class user
     global $session;
     $partner_id = $session->user->partner_id;
     $user_id = $session->user->id;
+    $program_id = config::$program_id;
     $sql = "select * from (select u.id, u.create_time, p.full_name, email_address, u.first_name, u.last_name, u.cellphone, '**********', r.name role,
               case u.id
               when $user_id then 'edit'
@@ -901,7 +904,7 @@ class user
             end as actions
       from mukonin_audit.user u, mukonin_audit.user_role ur, mukonin_audit.role r, mukonin_audit.partner p
       where u.id=ur.user_id and r.code = ur.role_code and u.partner_id = p.id
-      and u.active=1 and r.program_id = ". config::$program_id . ") tmp where 1=1";    
+      and u.active=1 and u.program_id = $program_id and r.program_id = $program_id ) tmp where 1=1";    
             
     $titles = array('#id','~Time', '~Company', '~Email Address|edit','~First Name|edit','~Last Name|edit','~Cellphone|edit','~Password|edit|name=password','~Role|edit=list:?user/roles','');
     $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE | table::EXPORTABLE);
