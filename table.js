@@ -615,8 +615,8 @@
       var key = this.get_body('key');
       var key_value = row.attr(key);
       row.after("<tr class=expanded></tr>");
-      row = row.next();
       var td = $("<td colspan="+row.children().length+"></td>");
+      row = row.next();
       row.append(td);
       row.attr(key, key_value);
       var url = this.get_body('expand');
