@@ -285,7 +285,7 @@ class user
     log::debug("CURL RESULT: $result");
   }
   
-    static function send_message($cellphone,$partner_id, $user_id, $message)
+  static function send_message($cellphone,$partner_id, $user_id, $message)
   {
     global $db;
     $program_id = config::$program_id;
@@ -296,6 +296,19 @@ class user
     $curl = new curl();
     $result = $curl->read($url);  
     log::debug("CURL RESULT: $result");
+  }
+  
+  static function send_email($message, $subject,$header, $email)
+  {
+    global $db;
+    $program_id = config::$program_id;
+    $message = $message;
+    $subject = $subject;
+    $headers = "MIME-Version: 1.0\r\n";
+    $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
+    $headers .= $header;
+    log::debug("Sending email to $email");
+    $mail_sent = mail($email, $subject, $message, $headers);
   }
   
   static function create($partner_id, $email, $password,$title, $first_name, $last_name, $cellphone, $otp)
