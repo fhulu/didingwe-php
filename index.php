@@ -103,13 +103,6 @@ init_div('footer');
     }
     </style>
     <![EndIf]-->
-    <link rel ="stylesheet" href ="main.css" />
-<link rel ="stylesheet" href ="css/bootstrap-theme.css" />
-<link rel ="stylesheet" href ="css/bootstrap-theme.min.css" />
-<link rel ="stylesheet" href ="css/bootstrap.css" />
-<link rel ="stylesheet" href ="css/bootstrap.min.css" />
-<script src="js/bootstrap.js" type="text/javascript"></script>
-<script src="js/bootstrap.min.js" type="text/javascript"></script>
 
     <link href="default.style.css" media="screen" rel="stylesheet" type="text/css" />	
     <link href="jquery/smoothness/ui.css" media="screen" rel="stylesheet" type="text/css" />	
