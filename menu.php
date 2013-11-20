@@ -10,14 +10,7 @@ class menu
   var $level0;
   var $flags;
   
-  
-  function __construct($name, $level0='', $flags=null)
-  {
-    $this->name = $name;
-    $this->level0 = $level0;
-    $this->flags = is_null($flags)? self::SUBMENU | self::LINKS: $flags;
-  }
-  
+
   function show()
   {
     global $session;

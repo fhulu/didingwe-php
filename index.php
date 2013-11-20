@@ -12,7 +12,7 @@ if (isset($_GET['a'])) {
 function get_page_file($page)
 {
   list($name, $params) = explode('?', $page);
-  static $extensions = array('','.php','.htm','.html');
+  static $extensions = array('','.htm','.html','.php');
   foreach ($extensions as $ext) {
     $file_name = $name . $ext;
     if (file_exists($file_name) && filetype($file_name) != 'dir')
@@ -86,7 +86,7 @@ init_div('footer');
 
 ?>
 <!DOCTYPE html>
-<html>
+<html >
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -103,6 +103,13 @@ init_div('footer');
     }
     </style>
     <![EndIf]-->
+    <link rel ="stylesheet" href ="main.css" />
+<link rel ="stylesheet" href ="css/bootstrap-theme.css" />
+<link rel ="stylesheet" href ="css/bootstrap-theme.min.css" />
+<link rel ="stylesheet" href ="css/bootstrap.css" />
+<link rel ="stylesheet" href ="css/bootstrap.min.css" />
+<script src="js/bootstrap.js" type="text/javascript"></script>
+<script src="js/bootstrap.min.js" type="text/javascript"></script>
 
     <link href="default.style.css" media="screen" rel="stylesheet" type="text/css" />	
     <link href="jquery/smoothness/ui.css" media="screen" rel="stylesheet" type="text/css" />	
@@ -138,17 +145,22 @@ init_div('footer');
  </head>
   
   <body>
-    <div id='frame'>
+    <div id='frame' class='row'>
+      <div class='span12'>
       <div id='header'>
         <?php load_div('banner'); ?>
         <?php load_div('menu'); ?>
       </div>
-      <div id='body'>
+      <div id='body' class='row'>
+        <div class='span10'>
+          <div id>
         <?php load_div('left-nav'); ?>
         <?php load_div('content'); ?>
         <?php load_div('right-nav'); ?>
+        </div>
       </div>
       <?php load_div('footer'); ?>
+      </div>
    </div>
   </body>
 </html>
