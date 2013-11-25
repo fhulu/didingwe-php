@@ -76,7 +76,6 @@ $.send = function(url, options, callback)
     error: undefined,
     event: undefined
   }, options);
-  if (options.event !== undefined) options.async = false;
   var ret = this;
   if (options.invoker !== undefined) 
     options.invoker.prop('disabled', true);
@@ -300,7 +299,7 @@ $.fn.checkOnClick = function(controls,url, options, callback)
   var self = this;
   
   this.click(function(event) {
-    var params = $.extend({invoker: self, event: event}, options);
+    var params = $.extend({invoker: self, event: event, async: false }, options);
     $(controls).siblings(".error").remove();
     $(controls).json(url, params, function(result) {
       if (result != null)
@@ -310,6 +309,16 @@ $.fn.checkOnClick = function(controls,url, options, callback)
     });
   });
   return this;
+}
+
+$.fn.asyncCheckOnClick = function(controls,url, options, callback)
+{
+  if (options instanceof Function) {
+    callback = options;
+    options = {};
+  }
+  options.async = false;
+  return this.checkOnClick(controls, url, options, callback);
 }
 
 $.fn.loadHtml = function(url, options, callback)
