@@ -71,7 +71,7 @@ $.send = function(url, options, callback)
     showResult: false,
     invoker: undefined,
     eval: true,
-    data: {},
+    data: {_fakeDataToAvoidCache: new Date() },
     dataType: undefined,
     error: undefined,
     event: undefined
@@ -107,6 +107,7 @@ $.send = function(url, options, callback)
     data: options.data,
     async: options.async,
     error: options.error,
+    cache: false,
     dataType: options.dataType,
     success: function(data) {
       if (data != null) {
@@ -317,7 +318,7 @@ $.fn.asyncCheckOnClick = function(controls,url, options, callback)
     callback = options;
     options = {};
   }
-  options.async = false;
+  options.async = true;
   return this.checkOnClick(controls, url, options, callback);
 }
 
