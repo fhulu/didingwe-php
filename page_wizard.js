@@ -15,13 +15,14 @@
         var page = $(this);
         page.hide();
         var bar = $("<div class='page-wizard-bar ui-dialog-titlebar ui-widget-header ui-corner-all ui-helper-clearfix'></div>");
+        //var bar = $("<div class='page-wizard-bar'></div>");
         var add_button = function(caption) {
           var name = caption.toLowerCase();
           var text = page.attr(name);
           if (text == undefined) return;
           if (text == '') text = caption;
           var button = $("<button wizard="+name+" class='page-wizard-button page-wizard-"+name+"'>"+text+"</button>");
-          button.button();
+          //button.button();
           bar.append(button);
         }        
         add_button('Back');
