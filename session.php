@@ -73,10 +73,6 @@ class session
       $v = new validator($_REQUEST);
       return $v->report("email", "!Invalid username/password for '$email'");
     } 
-    if ($_REQUEST['a'] == 'session/login' || !isset($_SERVER['HTTP_X_REQUESTED_WITH'])) {
-      global $session;
-      $session->restore();
-    }
   }
   
   static function login()
@@ -103,7 +99,7 @@ class session
   function restore()
   {
     $_SESSION[last_error] = '';
-    if ($this->referrer == '') $this->referrer = 'index.php?c=home';
+    if ($this->referrer == '') $this->referrer = 'home.html';
     $this->redirect($this->referrer);
   }
   
