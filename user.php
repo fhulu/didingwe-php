@@ -136,7 +136,7 @@ class user
   {    
     if (!user::verify_internal($request)) return false;
     $validator = new validator($request);
-    if (!$validator->check('email')->is('email')) return false;
+    if (!$validator->check('email')->is('email')) return $validator->valid();
     $otp = rand(10042,99999);
     $email = $request['email'];
     $sql = "select cellphone,partner_id, id,attempts from mukonin_audit.user where email_address='$email' and program_id = " . config::$program_id; 
@@ -245,12 +245,12 @@ class user
     else
       $passwd = "'$passwd'";
     $email = addslashes($email);
-    $sql = "select id, partner_id, email_address,title, first_name, last_name,attempts from mukonin_audit.user
+    $sql = "select id, partner_id, email_address,title, first_name, last_name,cellphone,attempts from mukonin_audit.user
      where email_address='$email' and password=$passwd and active=1 and program_id = ". config::$program_id;         
     
     global $db;
     $success = $db->exists($sql);
-    $tries = $db->row[5];
+    $tries = $db->row[6];
     if ($success) 
       $attempts = 0;
     else {
@@ -272,43 +272,36 @@ class user
     return $user;
   }
   
-  static function sms_otp($cellphone,$partner_id, $user_id, $otp)
+  static function sms($cellphone,$partner_id, $user_id, $message)
   {
-    global $db;
-    $program_id = config::$program_id;
-    $program  = $db->read_one_value("select description from mukonin_audit.program where id = $program_id");
-    $sms  = urlencode("Your One Time Password for $program is $otp");
-    $reference = "$program_id-$partner_id-$user_id";
+    $program_name = config::$program_name;
+    $sms  = urlencode("$message");
+    $reference = "$program_name-$partner_id-$user_id";
     $url = "http://iweb.itouchnet.co.za/Submit?UserId=MUKONIHTTP&Password=SDMRWRKC&PhoneNumber=$cellphone&Reference=$reference&MessageText=$sms";
     $curl = new curl();
     $result = $curl->read($url);  
     log::debug("CURL RESULT: $result");
   }
+
+  static function sms_otp($cellphone,$partner_id, $user_id, $otp)
+  {
+    user::sms($cellphone, $partner_id, $user_id, "Your One Time Password for $program_name is $otp");
+  }
+  
   
   static function send_message($cellphone,$partner_id, $user_id, $message)
   {
-    global $db;
-    $program_id = config::$program_id;
-    $program  = $db->read_one_value("select description from mukonin_audit.program where id = $program_id");
-    $sms  = urlencode("$message");
-    $reference = "$program_id-$partner_id-$user_id";
-    $url = "http://iweb.itouchnet.co.za/Submit?UserId=MUKONIHTTP&Password=SDMRWRKC&PhoneNumber=$cellphone&Reference=$reference&MessageText=$sms";
-    $curl = new curl();
-    $result = $curl->read($url);  
-    log::debug("CURL RESULT: $result");
+    user::sms($cellphone, $partner_id, $user_id, $message);
   }
   
   static function send_email($message, $subject,$header, $email)
   {
-    global $db;
-    $program_id = config::$program_id;
-    $message = $message;
     $subject = $subject;
     $headers = "MIME-Version: 1.0\r\n";
     $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
     $headers .= $header;
     log::debug("Sending email to $email");
-    $mail_sent = mail($email, $subject, $message, $headers);
+    mail($email, $subject, $message, $headers);
   }
   
   static function create($partner_id, $email, $password,$title, $first_name, $last_name, $cellphone, $otp)
@@ -388,17 +381,24 @@ class user
     $subject = "One Time Password";
     $headers = "MIME-Version: 1.0\r\n";
     $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
-    if ($program_id == 3){
-      $headers .= "from: donotreply@fpb.org.za";
-    }
-    else if ($program_id == 8){
-      $headers .= "from: donotreply@ktnsikazi.com";
-    }
+    $headers .= "from: ".config::$support_email;
     log::debug("Sending OTP email to $email");
     $mail_sent = mail($email, $subject, $message, $headers);
       
   }
     
+  static function info()
+  {
+    global $session;
+    $user = $session->user;
+    echo json_encode(array(
+      'email'=>$user->email,
+      'title'=>$user->title, 
+      'first_name'=>$user->first_name,
+      'last_name'=>$user->last_name, 
+      'cellphone'=>$user->cellphone            
+    ));
+  }
   static function check_otp($request)
   {
 
