@@ -12,7 +12,7 @@ $(function(){
   var wizard = $('#wizard').pageWizard().data('pageWizard');
   $('.info_next').sendOnClick('#email', '/?a=user/start_reset_pw');
   $('.change_next').checkOnClick('#email,#change *', '/?a=user/reset_pw');
-  wizard.start(2); 
+  wizard.start(); 
 });
 </script>
 <div id="wizard" >
