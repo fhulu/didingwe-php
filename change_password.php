@@ -31,9 +31,9 @@ $(function(){
     <p>Please enter the One Time Password (OTP) that you received on <b id="cellphone"></b>.
       If you have not received the OTP, please ask your System Administrator to reset the password for you.</p>
     <div class="form">
-      <p>One Time Password:</p><input change type="text" id="otp"/>
-      <p>New Password</p><input login type="password" id="password"/>
-      <p>Confirm New Password</p><input change type="password" id="password2"/>
+      <p>One Time Password:</p><a><input change type="text" id="otp"/><span>The OTP that you received on your cellphone</span></a>
+      <p>New Password</p><a><input login type="password" id="password"/><span>The new password that you will use from now one</span></a>
+      <p>Confirm New Password</p><a><input change type="password" id="password2"/><span>Same password as the one you entered above. </span></a>
     </div>
   </div>
   <div id=success caption="Thank you">
