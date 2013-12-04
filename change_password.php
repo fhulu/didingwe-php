@@ -22,6 +22,7 @@ $(function(){
       the system will send you a One Time Password (OTP) to <b id="cellphone"></b>. </p>
     <p>If you think this number is incorrect, please ask your System Administrator to 
       update your details on the system with the correct cellphone number. </p>
+    <p>You may also receive an email with the OTP on the email specified below:</p>
     <div class="form">
       <p>* Email:</p><a><input type='text' id='email' readonly /><span>Your e-mail address for e-mail notification's.</span></a>
     </div>
