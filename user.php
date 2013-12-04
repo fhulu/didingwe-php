@@ -170,9 +170,11 @@ class user
   static function reset_pw($request)
   {
     if (!user::verify_internal($request)) return false;
-    $validator = new validator($request);
-    if (!$validator->check('email')->is('email')
-      || !$validator->check('password')->is('password', 'match(password2)')) return $validator->valid();
+    $v = new validator($request);
+    $v->check('otp','OTP')->is(5);
+    $v->check('email')->is('email');
+    $v->check('password')->is('password', 'match(password2)');
+   if (!$v->valid()) return false;
 
     $email = $request['email'];
     $otp = $request['otp'];
