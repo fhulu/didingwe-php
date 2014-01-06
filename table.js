@@ -171,8 +171,8 @@
     
     editRow: function(row)
     {
-      var body = this.element.find("tbody");
-      var url = body.attr('edit');
+      var args = this.get_body('edit').split('|');
+      var url = args[0];
       if (url != '') return this;
 
       this.showEditor(row);
@@ -382,7 +382,7 @@
     get_body: function(attr)
     {
       var body = this.element.find("tbody");
-      return body.attr(attr);
+      return attr===undefined?body: body.attr(attr);
     },
     
     get_key: function(row)
@@ -402,53 +402,58 @@
       this.ajax(url, data);
     },
     
-    _bind_actions: function(row)
+    _bind_action: function(row, button)
     {
-      if (row == undefined) 
-        row = this.element.find('tr');
       var body = this.element.find("tbody");
       var key = body.attr('key');
-
-      var self = this;
-      row.find("[action]")
-      .click(function() {
+      var action = button.attr('action');
+      action = action.replace(' ','_');
+      button.click(function() {
         var row = $(this).parents('tr').eq(0);
         var data = {};
         if (key !== undefined) 
           data[key] = row.attr(key);
-        var action = $(this).attr('action');
-        action = action.replace(' ','_');
         row.trigger('action', [action, data]);
         row.trigger(action, [data]);      
-      }) 
-      .each(function() {
-        var action = $(this).attr('action');
-        var target = $(this).attr('target');
-        action = action.replace(' ','_');
-        var row = $(this).parents('tr').eq(0);
-        row.on(action, function() {
-          if (action == 'add' || action == 'save' || action=='delete' || action == 'checkrow' || action == 'checkall' || action == 'expand' || action == 'collapse') return true;
-          var url = body.attr(action);
-          if (url == '' || url===undefined) return true;
-          if (key != undefined) {
-            var sep = url.indexOf('?')>=0?'&':'?';
-            url += sep + key+'='+row.attr(key);
-          }
-          if (target == 'ajax') {
-            self.data._checked = '';
-            self.element.find('[action=checkrow]:checked').each(function(){
-              var row = $(this).parent().parent();
-              if (row.attr(key) !== undefined)
-                self.data._checked += '|' + row.attr(key);
-            })
-            self.data._checked = self.data._checked.substr(1);
-            self.ajax(url);
-            self.refresh();
-          }
-          else
-            window.location.href = url;
-          return true;
-        });
+      }); 
+      if (action == 'add' || action == 'save' || action=='delete' || action == 'checkrow' || action == 'checkall' || action == 'expand' || action == 'collapse' || action=='slide') return true;
+      var self = this;
+      row.on(action, function() {
+        var args = body.attr(action);
+        var target, url;
+        if (args !== undefined) {
+          args = args.split('|');
+          url = args[0];
+          target = args[2];
+        }
+        if (url == '' || url===undefined) return true;
+        if (key != undefined) {
+          var sep = url.indexOf('?')>=0?'&':'?';
+          url += sep + key+'='+row.attr(key);
+        }
+        if (target == 'ajax') {
+          self.data._checked = '';
+          self.element.find('[action=checkrow]:checked').each(function(){
+            var row = $(this).parent().parent();
+            if (row.attr(key) !== undefined)
+              self.data._checked += '|' + row.attr(key);
+          })
+          self.data._checked = self.data._checked.substr(1);
+          self.ajax(url, {}, function(){ self.refresh(); });
+        }
+        else
+          window.location.href = url;
+     });
+
+    },
+    
+    _bind_actions: function(row)
+    {
+      if (row == undefined) 
+        row = this.element.find('tr');
+      var self = this;
+      row.find("[action]").each(function() {
+        self._bind_action(row, $(this));
       });
       
       row
@@ -458,13 +463,15 @@
         .on("expand", function(e, data) {self.expand($(this),data);})        
         .on("collapse", function(e, data) {self.collapse($(this),data);}) 
         .on("checkrow", function(e, data) {self.checkRow($(this),data);})
+        .on("slide", function(e, data) {self.slide($(this),data);})
+        .on("slideoff", function() { self.slideOff($(this));})
         .on('add', function() {self.addRow($(this));})
         .on('export', function() {self.exportData();})
         .on('checkall', function() {self.checkAll();});
         
     },
 
-    _adjust_actions_width: function()
+    _adjust_actions_size: function()
     {
       var width = 0;
       this.element.find("tbody tr:first-child td.action").children().each(function() {
@@ -474,6 +481,12 @@
       })   
       if (width > 0)        
         this.element.find(".titles th:last-child").css('width', width);
+      
+      this.element.find("tbody tr").each(function() {
+        var row = $(this);
+        var height = row.height();
+        row.find('[action=slide]').height(height).css('line-height', height.toString()+'px');
+      })
     },
 
     post: function(url, data, callback)
@@ -507,7 +520,7 @@
         self._bind_paging(); 
         self._bind_titles(); 
         self._bind_actions(); 
-        self._adjust_actions_width(); 
+        self._adjust_actions_size(); 
         self.element.trigger('refresh'); 
       }); 
       return this;
@@ -659,6 +672,49 @@
       var next = row.next();
       if (next.attr('class') == 'expanded') next.hide();
       return this;
+    },
+    
+    slide: function(row, data)
+    {
+      var buttons = row.find(".slide");
+      if (!buttons.exists()) {
+        var body = this.get_body();
+        buttons = $('<div class=slide></div>');
+        var height = row.height();
+        buttons.height(height);
+        buttons.css('line-height', height.toString() + 'px');
+        buttons.hide();
+        row.append(buttons);
+        var actions = row.find('[slides]').attr('slides').split(',');
+        actions.splice(0,0,'>');
+        var self = this;
+        $.each(actions, function(i, action)
+        {
+          var link = $("<div></div>");
+          if (action === '>') {
+            link.attr('action', 'slideoff');
+          }
+          else {
+            var args = body.attr(action).split('|');
+            link.attr('title', args[1]);
+            link.attr('action', action);
+          }
+          link.text(action);
+          link.css('line-height', height.toString() + 'px');
+          link.height(height);
+          buttons.append(link);
+          self._bind_action(row, link);
+        });
+      }
+      buttons.animate({width:'toggle'}, 300);
+    },
+    
+    slideOff: function(row)
+    {
+      var buttons = row.find(".slide");
+      buttons.animate({width: 'toggle' }, 300, function() {
+        buttons.hide();
+      });
     }
   });
 }) (jQuery);
