@@ -228,8 +228,7 @@
    deleteRow: function(row, data)
     {
       if (!confirm('Are you sure?')) return this;
-      var body = this.element.find("tbody");
-      var url = body.attr('delete');
+      var url = this.get_url('delete');
       if (url != undefined && url != '') this.ajax(url, data); 
       row.remove();
       return this;
@@ -326,7 +325,8 @@
     addRow: function(row)
     {
       var body = this.element.children("tbody").eq(0);
-      var search = body.attr('search');
+      var args = body.attr('search');
+      var search = args[0];
       if (search !== undefined) {
         this.searchRow(search);
         return;
@@ -361,12 +361,18 @@
       var button = this.element.find('.actions [action=export]');
       window.location.href = unescape(button.attr('url'));
     },
-   
+  
+    get_url: function(name)
+    {
+      var args = this.get_body(name);
+      return args[0];
+    },
+ 
     checkAll: function()
     {
       var check = this.element.find('[action=checkall]').is(':checked');
       this.element.find('[action=checkrow]').prop('checked', check);
-      var url = this.get_body('checkall');
+      var url = this.get_url('checkall');
       if (url != '') {
         var key = this.get_body('key');
         var data = { check: check, keys:''};
@@ -396,7 +402,7 @@
 
     checkRow: function(row, data)
     {
-      var url = this.get_body('checkrow');
+      var url = this.get_url('checkrow');
       if (url === undefined || url == '') return; 
       data['status'] = row.find('[action=checkrow]').is(':checked')?1:0;
       this.ajax(url, data);
@@ -632,7 +638,9 @@
       row = row.next();
       row.append(td);
       row.attr(key, key_value);
-      var url = this.get_body('expand');
+      var args = this.get_body('expand').split('|');
+      var url = args[0];
+     
       if (url === undefined) return row;
       var expand_type = this.get_body('expand_type');
       var data = {};
