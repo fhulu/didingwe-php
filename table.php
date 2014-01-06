@@ -183,6 +183,12 @@ class table
     }
   }
   
+  function set_slide_actions($action_args)
+  {
+    $args = func_get_args();
+    $this->set_row_actions(array_merge(array("slide|>,".implode(',',$args)), $args));
+  }
+  
   function set_actions($actions)
   {
     if (!is_array($actions)) 
@@ -378,6 +384,12 @@ HEREDOC;
     foreach($actions as $action) {
       if ($action[0] == '#' || $action == 'checkrow' || $action == 'expand') continue;
       list($value, $desc) = explode('|', $this->row_actions[$action]);
+      if ($action == 'slide') {
+        $pos = array_search($action, $actions);
+        $slides = implode(',',array_slice($actions, $pos+1));
+        echo "<div action='$action' title='More Options...' slides='$slides'><</div>\n";
+        return;
+      }
       if ($desc=='') $desc = $action;
       echo "<div action='$action' title='$desc'></div>\n";
     }
@@ -533,8 +545,8 @@ HEREDOC;
     
     foreach(array_merge($this->row_actions, $this->actions) as $name=>$value) {
       if($name[0] == '#') $name = substr($name, 1);
-      list($value) = explode('|', $value);
-      $options .= " $name='$value'";
+      list($value,$desc,$target) = explode('|', $value);
+      $options .= " $name='$value|$desc|$target' ";
     }
     echo "<tbody $options>\n";
     $index = 0;
