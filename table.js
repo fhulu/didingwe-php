@@ -171,14 +171,15 @@
     
     editRow: function(row)
     {
-      var args = this.get_body('edit').split('|');
-      var url = args[0];
+      var url = this.get_url('edit');
       if (url != '') return this;
 
       this.showEditor(row);
       
       var button = row.find(".actions div[action=edit]");
       button.attr('action', 'save').attr('title','save');
+      button.unbind('click');
+      this._bind_action(row, button);
       return this;
     },
     
@@ -217,7 +218,7 @@
       if (is_new && !body.hasAttr('save')) 
           row.find(".actions div[action=delete]").remove();
  
-      var url = is_new? body.attr('add'): body.attr('save');
+      var url = is_new? this.get_url('add'): this.get_url('save');
       if (url == undefined || url == '') return;
       if (is_new) data[key] = '';
       this.ajax(url, data, function() {
@@ -364,7 +365,7 @@
   
     get_url: function(name)
     {
-      var args = this.get_body(name);
+      var args = this.get_body(name).split('|');
       return args[0];
     },
  
@@ -638,9 +639,7 @@
       row = row.next();
       row.append(td);
       row.attr(key, key_value);
-      var args = this.get_body('expand').split('|');
-      var url = args[0];
-     
+      var url = this.get_url('expand');
       if (url === undefined) return row;
       var expand_type = this.get_body('expand_type');
       var data = {};
