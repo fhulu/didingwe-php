@@ -326,8 +326,7 @@
     addRow: function(row)
     {
       var body = this.element.children("tbody").eq(0);
-      var args = body.attr('search');
-      var search = args[0];
+      var search = body.attr('search');
       if (search !== undefined) {
         this.searchRow(search);
         return;
