@@ -10,7 +10,14 @@ class menu
   var $level0;
   var $flags;
   
-
+  
+  function __construct($name, $level0='', $flags=null)
+  {
+    $this->name = $name;
+    $this->level0 = $level0;
+    $this->flags = is_null($flags)? self::SUBMENU | self::LINKS: $flags;
+  }
+  
   function show()
   {
     global $session;
@@ -37,9 +44,9 @@ class menu
   {
   
     $sql = "select function_code, m.id, f.name function, m.name display, url, description, protected 
-      from mukonin_audit.menu m join mukonin_audit.function f on f.code = m.function_code and f.program_id = m.program_id
-      where parent_id = $parent_id and f.program_id = ". config::$program_id;
-    $sql .= " order by position"; 
+            from mukonin_audit.menu m join mukonin_audit.function f on f.code = m.function_code and f.program_id = m.program_id
+            where parent_id = $parent_id and f.program_id = ". config::$program_id;
+            $sql .= " order by position"; 
     
     global $db;
     $items = $db->read($sql);
