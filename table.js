@@ -629,8 +629,10 @@
     expand: function(row)
     {
       var button = row.find("[action=expand]");
-      if (button !== undefined)
-        $(button).attr("action","collapse");
+      if (button !== undefined) {
+        $(button).attr("action","collapse").unbind('click');
+        this._bind_action(row, button);
+      }
       var key = this.get_body('key');
       var key_value = row.attr(key);
       row.after("<tr class=expanded></tr>");
@@ -650,31 +652,33 @@
         return row;
       }
   
-        if (url.indexOf('#') != 0) { 
-          row.find('td').loadHtml(url, {method: this.options.method, data: data} );
-          return row;
-        }
-        var id_sep = url.split(',');
-        var id = id_sep[0];
-        var detail = $(id).clone();
-        row.find('td').html(detail.html());
-        if (id_sep.length > 1) {
-          var sep = id_sep[1];
-          row.find('[id]').each(function() {
-            $(this).attr('id', $(this).attr('id')+sep+key_value);
-          });
-          row.find('[name]').each(function() {
-            $(this).attr('name', $(this).attr('name')+sep+key_value);
-          });
-        }
+      if (url.indexOf('#') != 0) { 
+        row.find('td').loadHtml(url, {method: this.options.method, data: data} );
         return row;
+      }
+      var id_sep = url.split(',');
+      var id = id_sep[0];
+      var detail = $(id).clone();
+      row.find('td').html(detail.html());
+      if (id_sep.length > 1) {
+        var sep = id_sep[1];
+        row.find('[id]').each(function() {
+          $(this).attr('id', $(this).attr('id')+sep+key_value);
+        });
+        row.find('[name]').each(function() {
+          $(this).attr('name', $(this).attr('name')+sep+key_value);
+        });
+      }
+      return row;
     },
     
     collapse: function(row)
     {
       var button = row.find("[action=collapse]");
-      if (button !== undefined)
-        $(button).attr("action","expand");
+      if (button !== undefined) {
+        $(button).attr("action","expand").unbind('click');
+        this._bind_action(row, button);
+      }
       var next = row.next();
       if (next.attr('class') == 'expanded') next.hide();
       return this;
