@@ -261,7 +261,10 @@ class validator
         errors::unq($this->name);
         if ($this->value != '') continue;
       }
-      else if (!method_exists($this, $func)) 
+      else if (!$this->provided()) 
+        return false;
+      
+      if (!method_exists($this, $func)) 
         throw new validator_exception("validator method $func does not exists!");
         
       $arg1 = $matches[2];
