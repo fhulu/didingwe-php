@@ -68,10 +68,11 @@ class session
 
     if (!user::verify_internal($_REQUEST)) return; 
 
-    $user = user::restore($_REQUEST['email'], $_REQUEST['password']);
+    $v = new validator();
+    if (!$v->check('email')->is('email')) return false;
+    $user = user::restore($email, $passwd);
     if (!$user) {
-      $v = new validator($_REQUEST);
-      return $v->report("email", "!Invalid username/password for '$email'");
+      return errors::q("email", "Invalid username/password for '$email'");
     } 
   }
   
