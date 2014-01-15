@@ -17,6 +17,9 @@ function get_page_file($page)
     $file_name = $name . $ext;
     if (file_exists($file_name) && filetype($file_name) != 'dir')
       return $file_name;
+    $file_name = '../common/'.$file_name;
+    if (file_exists($file_name) && filetype($file_name) != 'dir')
+      return $file_name;
   }
   return null;
 }
@@ -52,10 +55,14 @@ function init_div($div, $default=null)
 function load_div($div)
 {
   $page = $_SESSION[$div];
+  $common_page = "../common/$page";
   echo "<div id='$div'>";
-  if (strpos($page, '?') === false && file_exists($page)) {
+  if (strpos($page, '?') === false && file_exists($page) || file_exists($common_page)) {
     try {
-      require_once($page);
+      if (file_exists($page))
+        require_once($page);
+      else
+        require_once($common_page);
     }
     catch (user_exception $exception) {
       log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
@@ -103,6 +110,13 @@ init_div('footer');
     }
     </style>
     <![EndIf]-->
+    <link rel ="stylesheet" href ="main.css" />
+<link rel ="stylesheet" href ="css/bootstrap-theme.css" />
+<link rel ="stylesheet" href ="css/bootstrap-theme.min.css" />
+<link rel ="stylesheet" href ="css/bootstrap.css" />
+<link rel ="stylesheet" href ="css/bootstrap.min.css" />
+<script src="js/bootstrap.js" type="text/javascript"></script>
+<script src="js/bootstrap.min.js" type="text/javascript"></script>
 
     <link href="default.style.css" media="screen" rel="stylesheet" type="text/css" />	
     <link href="jquery/smoothness/ui.css" media="screen" rel="stylesheet" type="text/css" />	
