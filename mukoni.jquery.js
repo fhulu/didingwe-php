@@ -279,6 +279,7 @@ $.reportFirstError = function(event, result)
 
 $.reportAllErrors = function(event, result)
 {
+  $('.error').remove();
   $.each(result, function(key, row) {
     if (key == 'errors') {
       $.each(row, function(field, error) {
