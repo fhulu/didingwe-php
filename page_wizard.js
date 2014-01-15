@@ -1,7 +1,9 @@
 (function( $ ) {
   $.widget( "ui.pageWizard", {
     options: {
-      url: '/'
+      url: '/',
+      startPage: 0,
+      autoStart: true
     },
 
     _create: function() 
@@ -46,6 +48,7 @@
       });
       var self = this;
       setTimeout(function() { self.bindActions(); }, 1000);      
+      if (self.options.autoStart) self.start(self.options.startPage);
     },
     
     bindActions: function()
