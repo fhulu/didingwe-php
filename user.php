@@ -131,71 +131,100 @@ class user
     mail($email, $subject, $message, $headers);
   }
   
+  static function update_otp($email)
+  {
+    global $db;
+    $otp = rand(10042,99999);
+    $db->exec("update mukonin_audit.user set otp = '$otp', otp_time = now()
+      where email_address='$email' and program_id = " . config::$program_id);
+    
+    return $otp;
+  }
+  static function send_otp($email, $otp)
+  {
+    if (in_array('sms', config::$otp_methods)) user::sms_otp($email,$otp);
+    if (in_array('email', config::$otp_methods)) user::email_otp($email, $otp);
+  }
   
+  static function email_otp($email, $otp)
+  {
+    $program_name = config::$program_name;
+    $message = "Good day<br><br>You are currently trying to reset your password for $program_name. 
+                                                                If you have not requested this, please inform the System Adminstrator.<br><br>
+                                                                Your One Time Pin is : <br><b>$otp</b> <br><br>
+                                                                Regards<br>
+                                                                Customer Operations";
+    user::send_email($email, "$program_name: One Time Pin", $message);
+  }
+  
+  static function update_attempts($email)
+  {
+    global $db;
+    $db->exec("update mukonin_audit.user set attempts=attempts+1
+    where email_address='$email' and program_id = " . config::$program_id);    
+  }
+  
+  static function unlocked($email)
+  {
+    global $db;
+    list($attempts, $contact_person, $contact_email) = $db->read_one("select attempts, contact_person, contact_tel"
+            . " from mukonin_audit.partner p, mukonin_audit.user u "
+            . " where u.partner_id = p.id and u.email_address = '$email' and u.program_id = ".config::$program_id);
+    if ($attempts < 3) return true;
+    if ($contact_person == '') $contact_person = config::$support_company;
+    if ($contact_tel == '') $contact_tel = config::$support_tel;
+    return errors::q('email', "!Account locked. Please contact $contact_person on $contact_tel.");
+ 
+  }
   static function start_reset_pw($request)
   {    
     if (!user::verify_internal($request)) return false;
-    $validator = new validator($request);
-    if (!$validator->check('email')->is('email')) return $validator->valid();
-    $otp = rand(10042,99999);
-    $email = $request['email'];
-    $sql = "select cellphone,partner_id, id,attempts from mukonin_audit.user where email_address='$email' and program_id = " . config::$program_id; 
-    global $db;
-    list($cellphone,$partner_id,$user_id,$attempts) = $db->read_one($sql);
-    if ($user_id == '') {
-      echo "!We do not have a user with email address '$email' registered on the system";
-      return false;
-    }
-        
-    if($attempts>3){
-      echo "!Account locked. Please contact FPB on (012)345-6789";
-      return false;
-    }
-    user::sms_otp($cellphone,$partner_id, $user_id, $otp);
+    $v = new validator($request);
+    $v->check('email')->is('optional(cellphone)','email');
+    $v->check('cellphone')->is('optional(email)','telephone');
+    if (!$v->valid()) return false;
     
-    $db->exec("update mukonin_audit.user set otp = '$otp', otp_time = now()
-      where email_address='$email' and program_id = " . config::$program_id);
-    $message = "Good day<br><br>You are currently trying to reset your password. 
-                                                                If you have not requested this, please inform the System Adminstrator.<br><br>
-                                                                Your One Time Password is : <br><b>$otp</b>. <br><br>
-                                                                Regards<br>
-                                                                Customer Operations";
-    $subject = "One Time Password";
-    $headers = "from: donotreply@fpb.org.za\r\n";
-    $headers .= "MIME-Version: 1.0\r\n";
-    $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
-    mail($email, $subject, $message, $headers);
+    $cellphone = addslashes($request['cellphone']);
+    $email = addslashes($request['email']);
+    global $db;
+    $email = $db->read_one_value("select email_address, cellphone from mukonin_audit.user "
+            . "where (email_address='$email' or cellphone = '$cellphone') and program_id = " . config::$program_id);
+    if ($email == '') 
+      return $v->report('email', "!We do not have a user with supplied details registered on the system");
+        
+    if (!user::unlocked($email)) return false;
+    $otp = user::update_otp($email);
+    user::send_otp($email, $otp);
   }
   
   static function reset_pw($request)
   {
     if (!user::verify_internal($request)) return false;
     $v = new validator($request);
-    $v->check('otp','OTP')->is(5);
+    $v->check('otp')->titled('OTP')->is('numeric','at_least(5,digits)');
     $v->check('email')->is('email');
     $v->check('password')->is('password', 'match(password2)');
-   if (!$v->valid()) return false;
-
-    $email = $request['email'];
-    $otp = $request['otp'];
+    if (!$v->valid()) return false;
+    $email = addslashes($request['email']);
         
-    $sql = "select id, partner_id, email_address, first_name, last_name from mukonin_audit.user
-     where email_address='$email' and otp = $otp and active=1 and program_id = ". config::$program_id; 
+    if (!user::unlocked($email)) return false;
+
     global $db;
-    if (!$db->exists($sql)) {
-      echo '!Invalid OTP or OTP has expired';
-      return false;
-    }
-    $user = new user($db->row); 
+    list($email,$otp, $otp_time) = $db->read_one("select email_address, otp,timestampdiff(minute, otp_time, now()) from mukonin_audit.user
+     where email_address='$email' and active=1 and program_id = ". config::$program_id);
+    if ($email == '') 
+      return errors::q('email', "!We do not have a user with supplied details registered on the system");
+    
+    if ($otp != $request['otp']) { 
+      user::update_attempts($email);
+      return errors::q('otp', 'Incorrect OTP');
+    }   
+    if ($otp_time < config::$otp_expiry)  
+      return $errors->q('otp', 'OTP has expired. Please go back and request a new PIN');  
     
     $password = addslashes($request['password']);
-    $db->exec("update mukonin_audit.user set password = password('$password')
+    $db->exec("update mukonin_audit.user set password = password('$password'), attempts=0
     where email_address='$email' and program_id = " . config::$program_id);
-    
-    //location.href = "home.html";
-    //session::redirect('/?c=home');
-    global $session;
-    //$session->restore();
 }
 
   
@@ -207,8 +236,9 @@ class user
     
     
     $validator = new validator($request);
-    if (!$validator->check('email')->is('email')
-      || !$validator->check('password')->is('password', 'match(password2)')) return $validator->valid();
+    $validator->check('email')->is('email');
+    $validator->check('password')->is('password', 'match(password2)');
+    if ($validator->valid()) return false;
     
     $password = $request['password'];
     log::debug('Password is'.$password);
@@ -285,23 +315,21 @@ class user
     log::debug("CURL RESULT: $result");
   }
 
-  static function sms_otp($cellphone,$partner_id, $user_id, $otp)
+  static function sms_otp($email, $otp)
   {
-    user::sms($cellphone, $partner_id, $user_id, "Your One Time Password for $program_name is $otp");
+    $program_name = config::$program_name;
+    global $db;
+    list($cellphone, $parnter_id, $user_id) = $db->read_one("select cellphone, partner_id, id"
+            . " from mukonin_audit.user where email_address = '$email')");
+    user::sms($cellphone, $partner_id, $user_id, "Your One Time Pin for $program_name is $otp");
   }
-  
-  
-  static function send_message($cellphone,$partner_id, $user_id, $message)
+   
+  static function send_email($email, $subject, $message, $from=null)
   {
-    user::sms($cellphone, $partner_id, $user_id, $message);
-  }
-  
-  static function send_email($message, $subject,$header, $email)
-  {
-    $subject = $subject;
     $headers = "MIME-Version: 1.0\r\n";
     $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
-    $headers .= $header;
+    if(is_null($from)) $from = config::$support_email;
+    $headers .= "from: $from";
     log::debug("Sending email to $email");
     mail($email, $subject, $message, $headers);
   }
