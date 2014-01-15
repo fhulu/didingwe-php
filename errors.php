@@ -32,6 +32,12 @@ class errors {
     return false;
   }
   
+  function remove($name)
+  {
+    unset($this->list[$name]);
+    return this;
+  }
+
   function json()
   {
     return json_encode($this->list);
@@ -61,6 +67,10 @@ class errors {
   static function q($name, $error)
   {
     return errors::init()->add($name, $error);
+  }
+  static function unq($name)
+  {
+    return errors::init()->remove($name);
   }
 }
 
