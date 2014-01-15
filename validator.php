@@ -99,18 +99,39 @@ class validator
   
   function int_tel()
   {
-    return $this->at_least(10) && $this->regex('/^\+\d+$/',"!Please use international format for $this->title, e.g. +27821234567");
+    return $this->at_least(12,'digits') && $this->regex('/^\+\d+$/',"!Please use international format for $this->title, e.g. +27821234567");
   }
   
   function national_tel()
   {
-    return $this->at_least(8) && $this->regex('/^0\d+$/', "!Please use national format for $this->title, e.g. 0821234567");
+    return $this->at_least(10,'digits') && $this->regex('/^0\d+$/', "!Please use national format for $this->title, e.g. 0821234567");
   }
 
-  function at_least($length)
+  function telephone()
   {
+    return $this->at_least(10, 'digits') && $this->regex('/^[\+0]\d+$/');
+  }
+  
+  function provided()
+  {
+    if ($this->value != '') return true;
+    return $this->error("!$this->title must be provided.");
+  }
+  
+  function optional($option, $option_title)
+  {
+    if ($this->value != '') return true;
+    if ($option == '') return true;
+    if ($this->request[$option] != '') return true;
+    if ($option_title == '') $option_title = validator::title($option);
+    return $this->error("!Either $this->title or $option_title must be provided");
+  }
+  
+  function at_least($length, $units='characters')
+  {
+    if (!$this->provided()) return false;
     if (strlen($this->value) >= $length) return true;
-    return $this->error("!$this->title must contain at least $length characters.");
+    return $this->error("!$this->title must contain at least $length $units.");
   }
   
   function numeric()
@@ -195,28 +216,33 @@ class validator
     return true; 
   }
   
+  static function title($name)
+  {
+    return ucwords(str_replace('_', ' ', $name));
+  }
+  
   function check($name, $title=null)
   {
-    if (is_null($title)) {
-      $title = str_replace('_', ' ', $name);
-      $title = ucwords($title);
-    }
+    if (is_null($title)) $title = validator::title($name);
     $this->name = $name;
     $this->title = $title;
     $this->value = $this->request[$name];
     return $this;
   }
   
+  function titled($title)
+  {
+    $this->title = $title;
+    return $this;
+  }
   function is()
   {
-    $funcs = func_get_args();
-    log::debug("VALIDATE $this->name=$this->value ".implode(',',$funcs));
-    if ($this->value == '') {
-      if (in_array('optional', $funcs)) return true;      
-      return $this->error("!$this->title must be provided.");
-    }
-    foreach($funcs as $func) {
-      if ($func == 'optional') continue;
+   $funcs = func_get_args();
+   
+   log::debug("VALIDATE $this->name=$this->value FUNCTIONS:".implode(',',$funcs));
+   
+   // validate each argument
+   foreach($funcs as $func) {
       if (is_numeric($func)) {
         if (!$this->at_least($func)) return false;
         continue;
@@ -225,17 +251,25 @@ class validator
         if (!$this->regex($func)) return false;
         continue;
       } 
-      $matches = array();
-      if (!preg_match('/^([a-z_]+)(?:\((.*)\))*$/i', $func, $matches)) 
+      $matches = array(); 
+      log::debug("VALIDATE FUNC $func");
+      if (!preg_match('/^([a-z_]+)(?:\(([^,]+)(?:,([^,]+))?(?:,([^,]+))?\))*$/i', $func, $matches)) 
         throw new validator_exception("Invalid validator expression $func!");
 
       $func = $matches[1];
-      $arg = $matches[2];
-     
-      if (!method_exists($this, $func)) 
+      if ($func == 'optional') {
+        errors::unq($this->name);
+        if ($this->value != '') continue;
+      }
+      else if (!method_exists($this, $func)) 
         throw new validator_exception("validator method $func does not exists!");
         
-      if (!$this->{$func}($arg)) return false;
+      $arg1 = $matches[2];
+      $arg2 = $matches[3];
+      $arg3 = $matches[4];
+      
+      $valid = $this->{$func}($arg1, $arg2, $arg3);
+      if (!$valid || $func == 'optional') return $valid;
     }
     return true;
   }
