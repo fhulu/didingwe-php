@@ -153,21 +153,16 @@ init_div('footer');
   
   <body>
     <div id='frame' class='row'>
-      <div class='span12'>
       <div id='header'>
         <?php load_div('banner'); ?>
         <?php load_div('menu'); ?>
       </div>
       <div id='body' class='row'>
-        <div class='span10'>
-          <div id>
         <?php load_div('left-nav'); ?>
         <?php load_div('content'); ?>
         <?php load_div('right-nav'); ?>
-        </div>
       </div>
       <?php load_div('footer'); ?>
-      </div>
    </div>
   </body>
 </html>
