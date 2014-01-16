@@ -167,13 +167,14 @@ class user
   static function unlocked($email)
   {
     global $db;
-    list($attempts, $contact_person, $contact_email) = $db->read_one("select attempts, contact_person, contact_tel"
+    list($attempts, $contact_person, $contact_email, $contact_tel) = $db->read_one("select attempts, contact_person, contact_email, contact_tel"
             . " from mukonin_audit.partner p, mukonin_audit.user u "
             . " where u.partner_id = p.id and u.email_address = '$email' and u.program_id = ".config::$program_id);
-    if ($attempts < 3) return true;
+    if ($attempts=='' || $attempts < 3) return true;
     if ($contact_person == '') $contact_person = config::$support_company;
+    if ($contact_email == '') $contact_email = config::$support_email;
     if ($contact_tel == '') $contact_tel = config::$support_tel;
-    return errors::q('email', "!Account locked. Please contact $contact_person on $contact_tel.");
+    return errors::q('email', "Account locked. Please contact $contact_person ($contact_email) on $contact_tel.");
  
   }
   static function start_reset_pw($request)
@@ -188,7 +189,7 @@ class user
     $email = addslashes($request['email']);
     global $db;
     $email = $db->read_one_value("select email_address, cellphone from mukonin_audit.user "
-            . "where (email_address='$email' or cellphone = '$cellphone') and program_id = " . config::$program_id);
+            . "where (email_address='$email' or cellphone = '$cellphone' and cellphone != '') and program_id = " . config::$program_id);
     if ($email == '') 
       return $v->report('email', "!We do not have a user with supplied details registered on the system");
         
@@ -213,14 +214,14 @@ class user
     list($email,$otp, $otp_time) = $db->read_one("select email_address, otp,timestampdiff(minute, otp_time, now()) from mukonin_audit.user
      where email_address='$email' and active=1 and program_id = ". config::$program_id);
     if ($email == '') 
-      return errors::q('email', "!We do not have a user with supplied details registered on the system");
+      return errors::q('email', "We do not have a user with supplied details registered on the system");
     
     if ($otp != $request['otp']) { 
       user::update_attempts($email);
       return errors::q('otp', 'Incorrect OTP');
     }   
-    if ($otp_time < config::$otp_expiry)  
-      return $errors->q('otp', 'OTP has expired. Please go back and request a new PIN');  
+    if ($otp_time > config::$otp_expiry)  
+      return errors::q('otp', 'OTP has expired. Please go back and request a new PIN');  
     
     $password = addslashes($request['password']);
     $db->exec("update mukonin_audit.user set password = password('$password'), attempts=0
@@ -282,11 +283,11 @@ class user
     
     global $db;
     $success = $db->exists($sql);
-    $tries = $db->row[6];
+    $tries = $db->row[7];
     if ($success) 
       $attempts = 0;
     else {
-      if($tries >3) echo "!Account locked. ";
+      if($tries >3) errors::q('email', "Account locked. ");
       $attempts = 'attempts+1';
     }
     $db->exec("update mukonin_audit.user set attempts = $attempts
@@ -320,7 +321,7 @@ class user
     $program_name = config::$program_name;
     global $db;
     list($cellphone, $parnter_id, $user_id) = $db->read_one("select cellphone, partner_id, id"
-            . " from mukonin_audit.user where email_address = '$email')");
+            . " from mukonin_audit.user where email_address = '$email'");
     user::sms($cellphone, $partner_id, $user_id, "Your One Time Pin for $program_name is $otp");
   }
    
@@ -506,8 +507,7 @@ class user
     list($old_id, $old_partner_id, $active) = $db->read_one("select id, partner_id,active from mukonin_audit.user 
       where email_address = '$email' and program_id = $program_id");
     if ($old_partner_id != 0 && $old_id != $id && $active != 0)  {
-      echo '!Email Address already exists';
-      return;
+      return errors::q('email_address','Email Address already exists');
     }
     if ($old_id != '' || $active != 0) { 
       $time = time();
@@ -985,7 +985,9 @@ class user
   
   function get_access_filter_sql($table,$conjuctor='and')
   {
-    if (in_array('admin', $this->roles)) return null;
+    $sql .= " $conjuctor $table.partner_id = $this->partner_id";
+    if (in_array('admin', $this->roles)) return $sql;
+
     $groups = implode(',',$this->groups);
     $sql .= " $conjuctor ($table.access = 'p' or $table.user_id = $this->id";
     if ($groups != '')
