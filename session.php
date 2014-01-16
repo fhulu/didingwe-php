@@ -34,7 +34,6 @@ class session
   
     $_SESSION['referrer'] = $_SERVER[REQUEST_URI];
     session::redirect($fallback_url);
-    exit(0);
   }
 
   static function ensure_logged_in()
@@ -68,12 +67,14 @@ class session
 
     if (!user::verify_internal($_REQUEST)) return; 
 
+    errors::init();
     $v = new validator();
     if (!$v->check('email')->is('email')) return false;
     $user = user::restore($email, $passwd);
     if (!$user) {
       return errors::q("email", "Invalid username/password for '$email'");
-    } 
+    }
+    session::redirect('home.html');    
   }
   
   static function login()
@@ -85,15 +86,7 @@ class session
   
   static function check_login()
   {
-    $email = $_REQUEST['email'];
-    $passwd = $_REQUEST['password'];
-    log::debug("LOGIN: $email PROGRAM: $session->program_id REFERRER: $session->referrer");
-
-    $user = user::restore($_REQUEST['email'], $_REQUEST['password']);
-    $v = new validator($_REQUEST);
-    if (!$user) {
-      return $v->report("email", "!Invalid username/password for '$email'");
-    } 
+    session::login();
   }
 
   
@@ -101,13 +94,14 @@ class session
   {
     $_SESSION[last_error] = '';
     if ($this->referrer == '') $this->referrer = 'home.html';
-    $this->redirect($this->referrer);
+    session::redirect($this->referrer);
   }
   
   static function redirect($url)
   {
     log::debug("REDIRECT: $url");
-     echo "<meta http-equiv=\"refresh\" content=\"0;url=$url\">";
+    //echo "<meta http-equiv=\"refresh\" content=\"0;url=$url\">";
+    echo json_encode(array("script"=>"location.href = '$url';"));
   }
 
   static function force_logout($user_id)
