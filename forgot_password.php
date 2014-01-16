@@ -16,7 +16,7 @@
 <script>
 $(function() {
   $('#forgot').pageWizard();
-  $('.id_next').checkOnClick('#id *', '/?a=user/start_reset_pw', {method: 'get'} );
+  $('.id_next').checkOnClick('#id *', '/?a=user/start_reset_pw' );
   $('.reset_next').checkOnClick('#forgot *', '/?a=user/reset_pw' );
 });
 </script>
