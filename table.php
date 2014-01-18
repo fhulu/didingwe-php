@@ -479,11 +479,13 @@ HEREDOC;
     $where_pos = strripos($this->sql, "where ");
     $sql = $where_pos === false? ' where ': '';
     $filtered = false;
-    foreach($this->request as $key=>$value) {
-      $key = str_replace('~', '.', $key);
-      if ($key[0] == '_' || $key == 'a' || $key == 'PHPSESSID') continue;
-      $sql .= "$key like '%$value%' and ";
-      $filtered = true;
+    if ($this->request != null) {
+      foreach($this->request as $key=>$value) {
+        $key = str_replace('~', '.', $key);
+        if ($key[0] == '_' || $key == 'a' || $key == 'PHPSESSID') continue;
+        $sql .= "$key like '%$value%' and ";
+        $filtered = true;
+      }
     }
     if (!$filtered) return;
     if ($where_pos === false) 

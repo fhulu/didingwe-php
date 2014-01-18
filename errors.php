@@ -45,9 +45,9 @@ class errors {
   
   static function json_out($list)
   {
-    if (sizeof($list) == 0) 
-      echo json_encode($list);
-    else
+    if (sizeof($list) == 0) return; 
+    //  echo json_encode($list);
+    //else
       echo json_encode(array("errors"=>$list));
   }
   
