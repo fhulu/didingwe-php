@@ -152,12 +152,12 @@ init_div('footer');
  </head>
   
   <body>
-    <div id='frame' class='row'>
+    <div id='frame'>
       <div id='header'>
         <?php load_div('banner'); ?>
         <?php load_div('menu'); ?>
       </div>
-      <div id='body' class='row'>
+      <div id='body'>
         <?php load_div('left-nav'); ?>
         <?php load_div('content'); ?>
         <?php load_div('right-nav'); ?>
