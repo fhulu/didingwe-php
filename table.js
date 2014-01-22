@@ -362,19 +362,24 @@
       window.location.href = unescape(button.attr('url'));
     },
   
-    get_url: function(name)
+    get_attr: function(name)
     {
       var args = this.get_body(name).split('|');
       return args[0];
     },
  
+    get_url: function(name)
+    {
+      return get_attr(name);
+    },
+    
     checkAll: function()
     {
       var check = this.element.find('[action=checkall]').is(':checked');
       this.element.find('[action=checkrow]').prop('checked', check);
       var url = this.get_url('checkall');
       if (url != '') {
-        var key = this.get_body('key');
+        var key = this.get_attr('key');
         var data = { check: check, keys:''};
         this.element.find('[action=checkrow]').each(function(){
           var row = $(this).parents('tr').eq(0);
@@ -394,7 +399,7 @@
     get_key: function(row)
     {
       var data = {};
-      var key = this.get_body('key');
+      var key = this.get_attr('key');
       if (key !== undefined) 
         data[key] = row.attr(key);
       return data;
@@ -633,7 +638,7 @@
         $(button).attr("action","collapse").unbind('click');
         this._bind_action(row, button);
       }
-      var key = this.get_body('key');
+      var key = this.get_attr('key');
       var key_value = row.attr(key);
       row.after("<tr class=expanded></tr>");
       var td = $("<td colspan="+row.children().length+"></td>");
@@ -642,7 +647,7 @@
       row.attr(key, key_value);
       var url = this.get_url('expand');
       if (url === undefined) return row;
-      var expand_type = this.get_body('expand_type');
+      var expand_type = this.get_attr('expand_type');
       var data = {};
       data[key] = key_value;
       if (expand_type == 'table') {
