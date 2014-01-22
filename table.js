@@ -364,7 +364,9 @@
   
     get_attr: function(name)
     {
-      var args = this.get_body(name).split('|');
+      var args = this.get_body(name);
+      if (args === undefined) return undefined;
+      args = args.split('|');
       return args[0];
     },
  
