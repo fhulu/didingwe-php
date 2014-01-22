@@ -370,7 +370,7 @@
  
     get_url: function(name)
     {
-      return get_attr(name);
+      return this.get_attr(name);
     },
     
     checkAll: function()
