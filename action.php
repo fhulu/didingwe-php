@@ -2,10 +2,15 @@
 require_once('log.php');
 require_once 'session.php';
 
+$args = explode('/', $_GET['a']);
+if (in_array($args[0], array('json','select'))) { 
+  $encode = $args[0];
+  array_shift($args);
+} 
 //
 // this may be method call
 //
-list($page, $function) = explode('/', $_GET['a']);
+list($page, $function) = $args;
 if ($page=='') {
   echo "No page supplied";
   return;
@@ -39,7 +44,7 @@ try {
     $value = str_replace('\"', '"', $value);
   }
 
-  call_user_func($function, $_REQUEST);
+ call_user_func($function, $_REQUEST);
 }
 catch (user_exception $exception) {
   log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
