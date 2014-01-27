@@ -51,12 +51,12 @@ class ref
       return;
     }
     if ($encode == 'select') {
-      $name = ucwords(str_replace('_', ' ', $request['name']));
+      $list = ucwords(str_replace('_', ' ', $request['list']));
       $selected = $request['selected'];
       if ($selected == '')
-        echo "<option selected>--Select $name--</option>\n";
+        echo "<option selected>--Select $list--</option>\n";
       else 
-        echo "<option selected>--Select $name--</option>\n";
+        echo "<option selected>--Select $list--</option>\n";
       $rows = $db->read($sql, MYSQL_NUM);
       foreach($rows as $row) {
         $key = $row[0];
