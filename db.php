@@ -65,6 +65,7 @@ class db
 
   function exec($q, $max_rows=0, $start=0)
   {
+    $q = str_replace('$pid', config::$program_id, $q);
     if ($start=='') $start = 0;
     if ($max_rows > 0) $q .= " limit $start, $max_rows";
     log::debug("SQL: $q");
