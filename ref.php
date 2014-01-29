@@ -19,7 +19,8 @@ class ref
     $list = addslashes($request['list']);    
     $sql = "select item_code, item_name, item_desc from mukonin_audit.ref_list "
             . "where list_name = '$list'"
-            . " and program_id = \$pid";
+            . " and program_id in (0,\$pid) "
+            . " order by item_name";
     return ref::encode_sql($request, $sql);
   }
   
