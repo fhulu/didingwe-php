@@ -388,18 +388,11 @@ $.fn.jsonLoadOptions = function(url, options, callback)
   return this.each(function() {
     var self = $(this);
     self.html('<option>loading...</option>');
-    var thisUrl = url === undefined? "/?a=select/jsonLoad&params="+self.attr('table'): url;
+    var thisUrl = url === undefined? "/?a=json/ref/items&list="+self.attr('list'): url;
     $.json(thisUrl, options, function(result) {
       self.html('');
-      var code = null;
       $.each(result, function(key, row) {
-        $.each(row, function(key, val) {
-          if (code == null) 
-            code = val;
-          else
-            self.append('<option f=t value='+code+'>'+val+'</option>');
-        });
-        code = null;
+        self.append('<option f=t value='+row.item_code+'>'+row.item_name+'</option>');
       });
       var def = self.attr('default');
       if (def !== undefined) {
