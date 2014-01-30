@@ -182,7 +182,7 @@ class table
       $this->row_actions[$action] = implode('|',$array);
     }
   }
-  
+
   function set_slide_actions($action_args)
   {
     $args = func_get_args();
@@ -443,8 +443,10 @@ HEREDOC;
   function show_totals()
   {
     $this->flags |= self::TOTALS;
-    if (!is_null($this->callback) && 
-      !call_user_func($this->callback, $this->totals, $this->row_count, null)) {
+    $callback = $this->callback;
+    $attr = null;
+    if (!is_null($callback) && 
+      !$callback($this->totals, $this->row_count, $attr)) {
       return;
     }
       
