@@ -86,19 +86,13 @@ class ref
     $list = addslashes($request['list']);
     $code = addslashes($request['code']);
     
-    $sql = "select result.item_code, result.item_name, result.item_desc "
-            . " from mukonin_audit.ref_assoc assoc "
-            . " join mukonin_audit.ref_list vars on "
-            .   " assoc.program_id = vars.program_id "
-            .   " and assoc.name = vars.list_name "
-            .   " and assoc.program_id = \$pid"
-            .   " and assoc.name = '$name'"
-            .   " and assoc.$search_code = '$code' "
-            .   " and vars.item_code = '$result_list' "             
-            . " join mukonin_audit.ref_list result on "
-            .    " assoc.program_id = result.program_id "
-            .    " and vars.item_name = result.list_name "
-            .    " and result.item_code = assoc.$result_code";
+    $sql = "select a.$result_code item_code, l.item_name, l.item_desc "
+            . "from mukonin_audit.ref_assoc a "
+            . "join mukonin_audit.ref_list l "
+            . " on a.$result_list = l.list_name"
+            . " and l.item_code = a.$result_code "
+            . " and a.name = '$name' and a.$result_list = '$list'"
+            . " and a.$search_code = '$code'";
     
     return ref::encode_sql($request, $sql);
   }
