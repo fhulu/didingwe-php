@@ -309,7 +309,7 @@ class user
   {
     $program_name = config::$program_name;
     $sms  = urlencode("$message");
-    $reference = "$program_name-$partner_id-$user_id";
+    $reference = urlencode("$program_name-$partner_id-$user_id");
     $url = "http://iweb.itouchnet.co.za/Submit?UserId=MUKONIHTTP&Password=SDMRWRKC&PhoneNumber=$cellphone&Reference=$reference&MessageText=$sms";
     $curl = new curl();
     $result = $curl->read($url);  
@@ -321,7 +321,7 @@ class user
     $program_name = config::$program_name;
     global $db;
     list($cellphone, $parnter_id, $user_id) = $db->read_one("select cellphone, partner_id, id"
-            . " from mukonin_audit.user where email_address = '$email'");
+            . " from mukonin_audit.user where email_address = '$email' and program_id = \$pid ");
     user::sms($cellphone, $partner_id, $user_id, "Your One Time Pin for $program_name is $otp");
   }
    
@@ -400,7 +400,7 @@ class user
     if ($is_admin) return;
 
 
-    user::sms_otp($cellphone, $partner_id, $user->id, $otp);
+    user::sms_otp($email, $otp);
     $user->reload();
     $db->insert("insert into mukonin_audit.trx(user_id, function_code, object_id)
       values($user->id, 'register', $user->id)");
