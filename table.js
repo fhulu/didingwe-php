@@ -636,7 +636,7 @@
     expand: function(row)
     {
       var button = row.find("[action=expand]");
-      if (button !== undefined) {
+      if (button.exists()) {
         $(button).attr("action","collapse").unbind('click');
         this._bind_action(row, button);
       }
@@ -682,7 +682,7 @@
     collapse: function(row)
     {
       var button = row.find("[action=collapse]");
-      if (button !== undefined) {
+      if (button.exists()) {
         $(button).attr("action","expand").unbind('click');
         this._bind_action(row, button);
       }
