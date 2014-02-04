@@ -442,12 +442,12 @@
         if (url == '' || url===undefined) return true;
         if (key != undefined) {
           var sep = url.indexOf('?')>=0?'&':'?';
-          url += sep + key+'='+row.attr(key);
+          url += sep + key+'='+$(this).attr(key);
         }
         if (target == 'ajax') {
           self.data._checked = '';
+          var row = $(this);
           self.element.find('[action=checkrow]:checked').each(function(){
-            var row = $(this).parent().parent();
             if (row.attr(key) !== undefined)
               self.data._checked += '|' + row.attr(key);
           })
