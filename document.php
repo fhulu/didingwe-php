@@ -36,7 +36,7 @@ class document
     }
     $db->exec("update mukonin_audit.document set status = 'done' where id = $id");
     log::debug("File uploaded $path");
-    return $path;
+    return $id;
   }
   
   static function view($request)
