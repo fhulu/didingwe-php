@@ -78,7 +78,7 @@ class validator
 
   function za_id()
   {
-    return $this->regex('/^\d{2}((0[1-9])|(1[0-2]))(([012][0-9])|(3[01]))\d{7}$/');
+    return $this->regex('/^\d{2}((0[1-9])|(1[0-2]))((0[1-9])|([12][0-9])|(3[01]))\d{7}$/');
   }
   
   function email()
@@ -240,9 +240,11 @@ class validator
    $funcs = func_get_args();
    
    log::debug("VALIDATE $this->name=$this->value FUNCTIONS:".implode(',',$funcs));
-   
+  
+   if ($this->value == '' && in_array('optional', $funcs)) return true;
    // validate each argument
    foreach($funcs as $func) {
+      if ($func == 'optional') continue;
       if (is_numeric($func)) {
         if (!$this->at_least($func)) return false;
         continue;
@@ -257,13 +259,7 @@ class validator
         throw new validator_exception("Invalid validator expression $func!");
 
       $func = $matches[1];
-      if ($func == 'optional') {
-        errors::unq($this->name);
-        if ($this->value != '') continue;
-      }
-      else if (!$this->provided()) 
-        return false;
-      
+      if (!$this->provided()) return false;    
       if (!method_exists($this, $func)) 
         throw new validator_exception("validator method $func does not exists!");
         
