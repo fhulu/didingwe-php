@@ -170,11 +170,11 @@ class user
     list($attempts, $contact_person, $contact_email, $contact_tel) = $db->read_one("select attempts, contact_person, contact_email, contact_tel"
             . " from mukonin_audit.partner p, mukonin_audit.user u "
             . " where u.partner_id = p.id and u.email_address = '$email' and u.program_id = ".config::$program_id);
-    if ($attempts=='' || $attempts < 3) return true;
+    if ($attempts=='' || $attempts < 5) return true;
     if ($contact_person == '') $contact_person = config::$support_company;
     if ($contact_email == '') $contact_email = config::$support_email;
     if ($contact_tel == '') $contact_tel = config::$support_tel;
-    return errors::q('email', "Account locked. Please contact $contact_person ($contact_email) on $contact_tel.");
+    return errors::q('password', "Account locked because of too many incorrect OTP or password attempts. Please contact $contact_person ($contact_email) on $contact_tel.");
  
   }
   static function start_reset_pw($request)
@@ -189,7 +189,8 @@ class user
     $email = addslashes($request['email']);
     global $db;
     $email = $db->read_one_value("select email_address, cellphone from mukonin_audit.user "
-            . "where (email_address='$email' or cellphone = '$cellphone' and cellphone != '') and program_id = " . config::$program_id);
+            . "where (email_address='$email' and cellphone = '$cellphone' or '$email' = '' and cellphone = '$cellphone' or email_address='$email' and '$cellphone' = '') and program_id = " . config::$program_id);
+
     if ($email == '') 
       return $v->report('email', "!We do not have a user with supplied details registered on the system");
         
