@@ -71,10 +71,10 @@ class session
     $v = new validator();
     if (!$v->check('email')->is('email')) return false;
     $user = user::restore($email, $passwd);
-    if (!$user) {
-      return errors::q("email", "Invalid username/password for '$email'");
-    }
-    session::redirect('home.html');    
+    if (!$user) 
+      $v->report("email", "!Invalid username/password for '$email'");
+    else
+      session::redirect('home.html');    
   }
   
   static function login()
