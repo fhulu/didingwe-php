@@ -92,7 +92,7 @@ class validator
     
     if ($option == 'visitable') {
       $curl = new curl();
-      if (!$curl->read($this->value)) return $this->error("!$this->title $this->value is not accessible.");
+      if (!$curl->read($this->value,512)) return $this->error("!$this->title $this->value is not accessible.");
     }
     return true;
   }
