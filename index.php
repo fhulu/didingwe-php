@@ -84,15 +84,18 @@ function set_div($div)
   if (strpos($page, '?') !== false) 
     echo "ajax_inner('$div', '$page', true);\n";
 }
+header('Cache-Control: no-cache, no-store, must-revalidate'); // HTTP 1.1.
+header('Pragma: no-cache'); // HTTP 1.0.
+header('Expires: 0'); // Proxies.
 init_div('content', 'home');
 init_div('banner');
 init_div('menu');
 init_div('left-nav');
 init_div('right-nav');
 init_div('footer');
-
 ?>
 <!DOCTYPE html>
+
 <html >
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
@@ -110,21 +113,19 @@ init_div('footer');
     }
     </style>
     <![EndIf]-->
-    <link rel ="stylesheet" href ="main.css" />
+<!--
 <link rel ="stylesheet" href ="css/bootstrap-theme.css" />
 <link rel ="stylesheet" href ="css/bootstrap-theme.min.css" />
 <link rel ="stylesheet" href ="css/bootstrap.css" />
 <link rel ="stylesheet" href ="css/bootstrap.min.css" />
 <script src="js/bootstrap.js" type="text/javascript"></script>
 <script src="js/bootstrap.min.js" type="text/javascript"></script>
-
+-->
     <link href="default.style.css" media="screen" rel="stylesheet" type="text/css" />	
     <link href="jquery/smoothness/ui.css" media="screen" rel="stylesheet" type="text/css" />	
 
     <script type='text/javascript' src='jquery/min.js'></script>
     <script type='text/javascript' src='jquery/ui-min.js'></script>
-    <script type='text/javascript' src='common/dom.js'></script>
-    <script type="text/javascript" src="common/ajax.js"></script> 
     <script type="text/javascript" src='common/mukoni.jquery.js'></script> 
     <script type="text/javascript" src='common/mukoni.jquery-ui.js'></script> 
     <?php
@@ -135,11 +136,11 @@ init_div('footer');
       <script>
         $(function(){
           var timer = null;
-          var time=1000*60*10
+          var time=1000*60*60
           var checker = function(){
               if(timer){clearTimeout(timer);} // cancels the countdown.
               timer=setTimeout(function() {
-                  window.location.href="?c=logout&event=timeout";
+                  window.location.href="logout.html?&event=timeout";
               },time); // reinitiates the countdown.
           };
           checker(); // initiates the countdown.
