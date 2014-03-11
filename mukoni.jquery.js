@@ -321,7 +321,9 @@ $.fn.asyncCheckOnClick = function(controls,url, options, callback)
   if (options instanceof Function) {
     callback = options;
     options = {};
-  }
+  } 
+  else if (options=== undefined)
+    options = {};
   options.async = true;
   return this.checkOnClick(controls, url, options, callback);
 }
