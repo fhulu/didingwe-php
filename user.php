@@ -16,7 +16,8 @@ class user
 {
   var $id;
   var $partner_id;
-  
+  var $other_id;
+  var $other_partner_id;
   var $email;
   var $first_name;
   var $last_name;
@@ -28,6 +29,7 @@ class user
   var $groups;
   function __construct($data)
   {
+    $this->other_partner_id = $this->partner_id;
     list($this->id, $this->partner_id, $this->email,$this->title, $this->first_name, $this->last_name, $this->cellphone) = $data;
    
   }
@@ -309,7 +311,8 @@ class user
   static function sms($cellphone,$partner_id, $user_id, $message)
   {
     $program_name = config::$program_name;
-    $sms  = urlencode("$message");
+    $cellphone = urlencode($cellphone);
+    $sms  = urlencode($message);
     $reference = urlencode("$program_name-$partner_id-$user_id");
     $url = "http://iweb.itouchnet.co.za/Submit?UserId=MUKONIHTTP&Password=SDMRWRKC&PhoneNumber=$cellphone&Reference=$reference&MessageText=$sms";
     $curl = new curl();
@@ -334,6 +337,14 @@ class user
     $headers .= "from: $from";
     log::debug("Sending email to $email");
     mail($email, $subject, $message, $headers);
+  }
+  
+  static function send_message($user_id, $message, $subject, $from)
+  {
+    global $db;
+    list($partner_id, $cellphone, $email) = $db->read_one("select partner_id, cellphone, email_address from mukonin_audit.user where id = $user_id");
+    if (in_array('sms', config::$msg_methods)) user::sms($cellphone,$partner_id, $user_id, $message);
+    if (in_array('email', config::$msg_methods)) user::send_email($email, $subject, $message, $from);
   }
   
   static function create($partner_id, $email, $password,$title, $first_name, $last_name, $cellphone, $otp)
@@ -759,11 +770,13 @@ class user
     if ($partner_id == '')
       $partner_id=$user->partner_id;
     $program_id = config::$program_id;
+    $selected_program_id = $request['program_id'];
+    if ($selected_program_id == '') $selected_program_id = $program_id;
     $role = $db->read_one_value("select name from mukonin_audit.role where code ='$role' and program_id = $program_id" );
     $program_name = $db->read_one_value("select description from mukonin_audit.program where id = $program_id");
      log::debug('partner id is '.$partner_id);
        $sql = "insert into mukonin_audit.user(program_id, partner_id, email_address,title, first_name,last_name, cellphone,password,active)
-          values($program_id,$partner_id, '$email','$title', '$first_name','$last_name','$cellphone',password('$password'),1)";
+          values($selected_program_id,$partner_id, '$email','$title', '$first_name','$last_name','$cellphone',password('$password'),1)";
        $user_id=$db->insert($sql);
 
 
@@ -791,22 +804,33 @@ class user
     global $session;
     $user = $session->user;
     $program_id = config::$program_id;
+    $selected_program_id = $request['program_id'];
+    if ($selected_program_id == '') $selected_program_id = $program_id;
     $partner_id = $request['partner_id'];
     if ($partner_id == '') $partner_id = $user->partner_id;
     $show_groups = $request['show_groups'];
-    $sql = "select * from (select u.id, u.create_time, u.email_address, u.first_name, u.last_name,u.cellphone,'**********', r.name role";
-    if ($show_groups == 1) 
-      $sql .=", (select group_concat(ug.name) from mukonin_audit.user_group ug join mukonin_audit.group_users gu on ug.id = gu.group_id where gu.user_id = u.id and ug.active=1) groups ";
+    $show_partner = $request['show_partner'];
+    $sql = "select * from (select u.id, u.create_time, "; 
+    if ($show_partner == 1) $sql .= "(select full_name from mukonin_audit.partner where id = u.partner_id) partner,";
+    $sql .= "u.email_address, u.first_name, u.last_name,u.cellphone,'**********', r.name role";
+    
+    if ($show_groups == 1) {
+      $sql .=", (select group_concat(ug.name) from mukonin_audit.user_group ug 
+        join mukonin_audit.group_users gu on ug.id = gu.group_id where gu.user_id = u.id and ug.active=1) groups ";
+    }
     $sql .= ",
-                case u.id
-                when $user->id then 'edit'
-                else 'delete,edit' 
-              end as actions
-        from mukonin_audit.user u left join mukonin_audit.user_role ur on u.id = ur.user_id 
-             left join mukonin_audit.role r on r.code = ur.role_code
-        where u.partner_id = $partner_id and u.active=1 and r.program_id = ". config::$program_id . ") tmp where 1=1";    
+              case u.id
+              when $user->id then 'edit'
+              else 'delete,edit' 
+            end as actions
+      from mukonin_audit.user u left join mukonin_audit.user_role ur on u.id = ur.user_id
+      left join mukonin_audit.role r on r.code = ur.role_code and u.program_id = r.program_id
+      where u.active=1 and r.program_id = $selected_program_id ";
+    if ($show_partner != 1) $sql .= " and u.partner_id = $partner_id";
+    $sql .= ") tmp where 1=1";    
 
       $titles = array('#id','~Time', '~Email Address|name=email_address|edit','~First Name|name=first_name|edit','~Last Name|name=last_name|edit','Cellphone|name=cellphone|edit','~Password|edit|name=password','Role|name=role|edit=list:?user/roles');
+      if ($show_partner ==1 ) array_splice($titles, 2, 0, '~Partner|name=partner|edit=list:?partner/listing');
       if ($show_groups==1) $titles[] = '~Group(s)';//|name=groups|edit=multi:?user/groups';
       $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE | table::EXPORTABLE);
       $table->set_heading("Manage Users");
@@ -815,7 +839,9 @@ class user
       $table->set_adder("index.php?a=user/add&partner_id=$partner_id");
       $table->set_deleter('index.php?a=user/deactivate');
       unset($request['show_groups']);
+      unset($request['show_partner']);
       unset($request['partner_id']);
+      unset($request['program_id']);
       $table->set_options($request);
       $table->show($sql);
   }
@@ -996,7 +1022,21 @@ class user
 
     return $sql .= ')';
  
-  }  
+  }
+   
+  static function right_check($request)
+  {
+    global $db,$session;
+    
+    $user_id = $session->user->id;
+    $role = $db->read_one_value("select distinct name from mukonin_audit.role 
+                               join mukonin_audit.user_role on role_code=code where user_id=$user_id ");
+     if ($role == "Administrator") return;
+
+     echo "Access denied.You do not have permission to this function ";
+
+     return false;
+  }
 
 
   
