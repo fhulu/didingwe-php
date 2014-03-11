@@ -54,7 +54,7 @@ $.fn.values = function()
       data[name] = data[name] + ',' + val;
     else 
       data[name] = val===undefined? ctrl.text(): val;
-    console.log(name+'='+data[name]);
+    
     ctrl.val();
   });
   return data;
