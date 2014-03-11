@@ -5,7 +5,7 @@ require_once('session.php');
 class document_exception extends Exception {};
 class document
 {
-  static function upload($control, $type)
+  static function upload($control, $type, $partner_id)
   {
     session::ensure_not_expired();
     $file_name = addslashes($_FILES[$control]["name"]);
@@ -18,8 +18,9 @@ class document
     
     $db->exec("update mukonin_audit.document set status='reset' where session_id = '$session->id' and status = 'busy'");
     
+    //if (is_null($partner_id)) $partner_id = 0;
     $sql = "INSERT INTO mukonin_audit.document(partner_id,user_id,session_id,filename,type) 
-            select partner_id,$user_id,'$session->id','$file_name','$type' from mukonin_audit.user where id = $user_id";
+            values($partner_id,$user_id,'$session->id','$file_name','$type')";
     
     $id = $db->insert($sql);
     $file_name = str_replace("/[\' \s]'/", '-', $_FILES[$control]["name"]);
