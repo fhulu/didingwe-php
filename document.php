@@ -29,11 +29,13 @@ class document
     $temp_file = $_FILES[$control]['tmp_name'];
     if (!is_uploaded_file($temp_file)) {
       $db->exec("update mukonin_audit.document set status = 'inva' where id = $id");
-      throw new document_exception("File $temp_file cannot be uploaded. Perhaps the file is too large.");
+      return $id;
+      //throw new document_exception("File $temp_file cannot be uploaded. Perhaps the file is too large.");
     }      
     if (!move_uploaded_file($_FILES[$control]["tmp_name"], $path)) {
       $db->exec("update mukonin_audit.document set status = 'perm' where id = $id");
-      throw new document_exception("File $path not moved to destination folder. Check permissions");
+      return $id;
+     // throw new document_exception("File $path not moved to destination folder. Check permissions");
     }
     $db->exec("update mukonin_audit.document set status = 'done' where id = $id");
     log::debug("File uploaded $path");
