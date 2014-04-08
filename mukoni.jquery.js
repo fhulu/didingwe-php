@@ -160,6 +160,7 @@ $.fn.send = function(url, options, callback)
     options.data = $.extend($(this).values(), options.data);
   else
     options = {data : $(this).values()};
+  console.dir(data)
   return $.send(url, options, callback);  
 }
 
@@ -261,6 +262,10 @@ $.reportError = function(field, error)
   var sibling = $('#'+field+",[name='"+field+"']").parent('a');
   if (sibling.length == 0)
     sibling = $('#'+field+",[name='"+field+"']");
+  if (sibling.length == 0) {
+    if (field == "alert") alert(error);
+    return;
+  }
   var box = $("<div class=error>"+error+"</div>");
   sibling.after(box);
   box.fadeIn('slow');
