@@ -49,13 +49,17 @@ $.fn.values = function()
     if (name === undefined) return true;
     var type = ctrl.attr('type');
     var val = ctrl.val();
-    if ((type == 'radio' || type == 'checkbox') && !ctrl.is(':checked')) return true;
-    if (data[name] !== undefined)
-      data[name] = data[name] + ',' + val;
-    else 
-      data[name] = val===undefined? ctrl.text(): val;
-    
-    ctrl.val();
+    if ((type === 'radio' || type === 'checkbox') && !ctrl.is(':checked')) return true;
+    if (type === 'checkbox') {
+      if (data[name] !== undefined) 
+        data[name] = data[name] + ',' + val;
+      else
+        data[name] = val;
+    }
+    else if (val === undefined)
+      data[name] = ctrl.text();
+    else
+      data[name] = val;
   });
   return data;
 }
@@ -160,7 +164,6 @@ $.fn.send = function(url, options, callback)
     options.data = $.extend($(this).values(), options.data);
   else
     options = {data : $(this).values()};
-  console.dir(data)
   return $.send(url, options, callback);  
 }
 
@@ -205,7 +208,7 @@ $.fn.sendOnClick = function(controls, url, options, callback)
     callback = options;
     options = undefined;
   }
-  this.click(function(e) {
+  $(this).click(function(e) {
     return $(controls).send(url, $.extend({invoker: self, event: e}, options), callback);
   });
   return this;
