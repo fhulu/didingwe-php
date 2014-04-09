@@ -21,6 +21,7 @@
       url: null, 
       method: 'post',
       refreshesEvery: 0,
+      slideSpeed: 300,
       data: {}
     },
     
@@ -723,13 +724,13 @@
           self._bind_action(row, link);
         });
       }
-      buttons.animate({width:'toggle'}, 300);
+      buttons.animate({width:'toggle'}, this.options.slideSpeed);
     },
     
     slideOff: function(row)
     {
       var buttons = row.find(".slide");
-      buttons.animate({width: 'toggle' }, 300, function() {
+      buttons.animate({width: 'toggle' }, this.options.slideSpeed, function() {
         buttons.hide();
       });
     }
