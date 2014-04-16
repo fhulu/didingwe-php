@@ -83,6 +83,7 @@ $.send = function(url, options, callback)
     error: undefined,
     event: undefined
   }, options);
+  if (options.event !== undefined) options.async = false;
   var ret = this;
   if (options.invoker !== undefined) 
     options.invoker.prop('disabled', true);
