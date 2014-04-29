@@ -9,7 +9,7 @@ require_once('validator.php');
 require_once('select.php');
 require_once('curl.php');
 require_once('errors.php');
-
+////require_once('telephone.php');
 
 class user_exception extends Exception {};
 class user
@@ -184,7 +184,7 @@ class user
     if (!user::verify_internal($request)) return false;
     $v = new validator($request);
     $v->check('email')->is('optional(cellphone)','email');
-    $v->check('cellphone')->is('optional(email)','telephone');
+   // $v->check('cellphone')->is('optional(email)','telephone');
     if (!$v->valid()) return false;
     
     $cellphone = addslashes($request['cellphone']);
@@ -310,11 +310,18 @@ class user
   
   static function sms($cellphone,$partner_id, $user_id, $message)
   {
+    
+    if (!preg_match('/^(\+27|0)[678]\d{8}/', $cellphone)) {
+      log::error("Invalid Cellphone $cellphone");
+      return;
+    } 
     $program_name = config::$program_name;
     $cellphone = urlencode($cellphone);
     $sms  = urlencode($message);
     $reference = urlencode("$program_name-$partner_id-$user_id");
-    $url = "http://iweb.itouchnet.co.za/Submit?UserId=MUKONIHTTP&Password=SDMRWRKC&PhoneNumber=$cellphone&Reference=$reference&MessageText=$sms";
+    $sms_user = config::$sms_user;
+    $sms_pw = config::$sms_pw;
+    $url = "http://www.qmessenger.co.za/web2sms/submit?uid=$sms_user&pw=$sms_pw&da=$cellphone&ref=$reference&sms=$sms";
     $curl = new curl();
     $result = $curl->read($url);  
     log::debug("CURL RESULT: $result");
@@ -324,8 +331,9 @@ class user
   {
     $program_name = config::$program_name;
     global $db;
-    list($cellphone, $parnter_id, $user_id) = $db->read_one("select cellphone, partner_id, id"
+    list($cellphone, $partner_id, $user_id) = $db->read_one("select cellphone, partner_id, id"
             . " from mukonin_audit.user where email_address = '$email' and program_id = \$pid ");
+    user::force_audit('sms_otp', '', "$email - $cellphone");
     user::sms($cellphone, $partner_id, $user_id, "Your One Time Pin for $program_name is $otp");
   }
    
@@ -570,7 +578,7 @@ class user
     }
     $detail = addslashes($detail);
     $db->insert("insert into mukonin_audit.trx(user_id, function_code, object_id, object_code, detail, object_type)
-      values($user->id, '$function', $object_id, $object_code, '$detail', '$type')");
+      select if('$user->id' in ('',0),(select default_user_id from mukonin_audit.function where code='$function' and program_id = \$pid), '$user->id'), '$function', '$object_id', $object_code, '$detail', '$type'");
   }
   
   static function audit($function, $object='', $detail='',$type='')
@@ -1041,4 +1049,3 @@ class user
 
   
 }
-?>
