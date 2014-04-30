@@ -531,3 +531,38 @@ function delegate(scope, func, data, isTimeout)
         func.apply(scope, args);
     }
 }
+
+$.fn.loadForm = function()
+{
+  var self = $(this);
+  var code = self.attr('code');
+  if (code === undefined) code = self.attr('id');
+  $.json('/?a=form/load&code='+code, function(data) {
+    var attr = data.attributes;
+    var title = attr.title;
+    document.title = attr.program + ' - ' + title;
+    self.addClass(attr.class);
+    self.append($('<p class=title>'+title+'</p>'));
+    self.append($('<p class=desc>'+attr.desc+'</p>'));
+    self.append($('<span class=ajax_result></span>'));
+    var fields = $('<div></div>');
+    fields.addClass(attr.fields_class);
+    $.each(data.fields, function(field, prop) {
+      var label = $('<p></p>');
+      if (prop.optional == 0) prop.name = '* ' + prop.name;
+      label.text(prop.name);
+      fields.append(label);
+      var anchor = $('<a></a>');
+      var input;
+      if (prop.input == "text" || prop.input == "password") 
+        input = $('<input type='+prop.input+'></input>');
+      else if (prop.input == 'dropdown')
+        input = $('<select></select>');
+      input.attr(attr.method === 'post'?'name':'id', field);
+      anchor.append(input);
+      anchor.append($('<span>'+prop.desc+'</span>'));
+      fields.append(anchor);
+    });
+    self.append(fields);
+  });
+}
