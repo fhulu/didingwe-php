@@ -567,8 +567,11 @@ $.fn.loadForm = function()
         if (attr.label_position == 'inplace')
           input.attr('placeholder', prop.name);
       }
-      else if (prop.input == 'dropdown')
+      else if (prop.input == 'dropdown') {
         input = $('<select></select>');
+        input.attr('list', prop.reference);
+        input.jsonLoadOptions();
+      }
       input.attr(attr.method === 'post'?'name':'id', field);
       anchor.append(input);
       anchor.append($('<span>'+prop.desc+'</span>'));
