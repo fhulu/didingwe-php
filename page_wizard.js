@@ -3,7 +3,8 @@
     options: {
       url: '/',
       startPage: 0,
-      autoStart: true
+      autoStart: true,
+      title: ''
     },
 
     _create: function() 
@@ -82,6 +83,8 @@
       this.stack.push(index);
       this.index = index;
       this.pages.eq(index).show();
+      var page = this.currentPage();
+      document.title = this.options.title + ' - ' + page.attr('caption');
       return this;
     },
     
@@ -91,7 +94,9 @@
       this.stack.push(steps);
       this.currentPage().hide();
       this.index += steps;
-      this.currentPage().show();
+      var page = this.currentPage();
+      page.show();
+      document.title = this.options.title + ' - ' + page.attr('caption');
       return this;
     },
     
