@@ -548,6 +548,7 @@ $.fn.loadForm = function(key)
     var title = attr.title;
     document.title = attr.program + ' - ' + title;
     self.addClass(attr.class);
+    self.addClass(attr.label_position);
     self.append($('<p class=title>'+title+'</p>'));
     self.append($('<p class=desc>'+attr.desc+'</p>'));
     self.append($('<span class=ajax_result></span>'));
@@ -602,9 +603,15 @@ $.fn.loadForm = function(key)
     self.append(fields);
     var lists = fields.find('select[list]');
     var lists_loaded = 0;
+    if (key === undefined) key = location.href.substr(location.href.indexOf("&"));
+    if (key === undefined) key = '';
+    var url = attr.data_url != null? attr.data_url+key: null;
     lists.jsonLoadOptions(function() {
-      if (++lists_loaded == lists.length && attr.data_url != null) 
-        self.loadChildren(attr.data_url+(key===undefined?'':key));
+      if (++lists_loaded == lists.length && url != null) {
+        self.loadChildren(url);
+      }
     });
+    if (lists_loaded > 0 && url != null)
+      self.loadChildren(url);
   });
 }
