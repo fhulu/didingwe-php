@@ -536,7 +536,13 @@ $.fn.loadForm = function()
 {
   var self = $(this);
   var code = self.attr('code');
-  if (code === undefined) code = self.attr('id');
+  var selector;
+  if (code === undefined) {
+    code = self.attr('id');
+    selector = '#'+code+' *';
+  }
+  else
+    selector = '[code="'+code+'"] *';
   $.json('/?a=form/load&code='+code, function(data) {
     var attr = data.attributes;
     var title = attr.title;
@@ -545,24 +551,51 @@ $.fn.loadForm = function()
     self.append($('<p class=title>'+title+'</p>'));
     self.append($('<p class=desc>'+attr.desc+'</p>'));
     self.append($('<span class=ajax_result></span>'));
+    
     var fields = $('<div></div>');
     fields.addClass(attr.fields_class);
     $.each(data.fields, function(field, prop) {
       var label = $('<p></p>');
-      if (prop.optional == 0) prop.name = '* ' + prop.name;
-      label.text(prop.name);
+      if (attr.label_position !='inplace') label.text(prop.name);
+      if (prop.optional == 0) label.text('* ' + label.text());
       fields.append(label);
+      
       var anchor = $('<a></a>');
       var input;
-      if (prop.input == "text" || prop.input == "password") 
+      if (prop.input == "text" || prop.input == "password") {
         input = $('<input type='+prop.input+'></input>');
+        if (attr.label_position == 'inplace')
+          input.attr('placeholder', prop.name);
+      }
       else if (prop.input == 'dropdown')
         input = $('<select></select>');
       input.attr(attr.method === 'post'?'name':'id', field);
       anchor.append(input);
       anchor.append($('<span>'+prop.desc+'</span>'));
+      if (prop.visible == 0) {
+        label.hide();
+        anchor.hide();
+      }
       fields.append(anchor);
     });
+    
+    var actions = $('<div class=actions></div>');
+    $.each(data.actions, function(action, prop) {
+      var input;
+      if (prop.input == "button") {
+        input = $('<button></button>'); 
+        input.checkOnClick(selector, prop.reference);
+      }
+      else if (prop.input == 'link')
+        input = $("<a href='"+prop.reference+"'></a>");
+      input.attr('title',prop.desc);
+      input.attr('id', action);
+      input.text(prop.name);
+      if (prop.visible == 0) input.hide();
+      actions.append(input);
+    });
+    fields.append($('<p></p>'));
+    fields.append(actions);
     self.append(fields);
   });
 }
