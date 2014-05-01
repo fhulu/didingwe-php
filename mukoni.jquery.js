@@ -588,7 +588,10 @@ $.fn.loadForm = function(key)
       var input;
       if (prop.input == "button") {
         input = $('<button></button>'); 
-        input.checkOnClick(selector, prop.reference);
+        if (prop.method == "check")
+          input.checkOnClick(selector, prop.reference);
+        else if (prop.method = 'link')
+          input.click(function() { location.href = prop.reference; })
       }
       else if (prop.input == 'link')
         input = $("<a href='"+prop.reference+"'></a>");
@@ -603,7 +606,11 @@ $.fn.loadForm = function(key)
     self.append(fields);
     var lists = fields.find('select[list]');
     var lists_loaded = 0;
-    if (key === undefined) key = location.href.substr(location.href.indexOf("&"));
+    if (key === undefined) {
+      var index = location.href.indexOf("&");
+      if (index >= 0)
+        key = location.href.substr(index+1);
+    }
     if (key === undefined) key = '';
     var url = attr.data_url != null? attr.data_url+key: null;
     lists.jsonLoadOptions(function() {
