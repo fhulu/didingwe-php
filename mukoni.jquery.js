@@ -532,7 +532,7 @@ function delegate(scope, func, data, isTimeout)
     }
 }
 
-$.fn.loadForm = function()
+$.fn.loadForm = function(key)
 {
   var self = $(this);
   var code = self.attr('code');
@@ -570,7 +570,7 @@ $.fn.loadForm = function()
       else if (prop.input == 'dropdown') {
         input = $('<select></select>');
         input.attr('list', prop.reference);
-        input.jsonLoadOptions();
+        input.attr('default', '--Select '+prop.name+'--');
       }
       input.attr(attr.method === 'post'?'name':'id', field);
       anchor.append(input);
@@ -600,5 +600,11 @@ $.fn.loadForm = function()
     fields.append($('<p></p>'));
     fields.append(actions);
     self.append(fields);
+    var lists = fields.find('select[list]');
+    var lists_loaded = 0;
+    lists.jsonLoadOptions(function() {
+      if (++lists_loaded == lists.length && attr.data_url != null) 
+        self.loadChildren(attr.data_url+(key===undefined?'':key));
+    });
   });
 }
