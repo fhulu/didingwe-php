@@ -55,7 +55,7 @@ class form {
             . ", ifnull(ff.my_input,f.input) input"
             . ", ifnull(ff.my_reference, f.reference) reference"
             . " from mukonin_form.field f join mukonin_form.form_field ff"
-            . " on f.program_id = ff.program_id and f.program_id in ('\$pid', '_generic')"
+            . " on f.program_id in ('\$pid', '_generic')"
             . " and f.code = ff.field_code and ff.form_code = '$code'"
             . " order by ff.program_id desc, ff.position asc");
     
@@ -65,7 +65,7 @@ class form {
             . ", ifnull(fa.my_input,f.input) input"
             . ", ifnull(fa.my_reference, f.reference) reference"
             . " from mukonin_form.field f join mukonin_form.form_action fa"
-            . " on f.program_id = fa.program_id and f.program_id in ('\$pid', '_generic')"
+            . " on f.program_id in ('\$pid', '_generic')"
             . " and f.code = fa.field_code and fa.form_code = '$code'"
             . " order by fa.program_id desc, fa.position asc");
     echo json_encode(array(
@@ -91,7 +91,9 @@ class form {
   
   static function test()
   {
-    echo json_encode(array("za_city"=>"7100"));
+    echo json_encode(
+      array("za_city"=>"7100",
+        "otp"=>12345));
   }
   //put your code here
 }
