@@ -1,7 +1,8 @@
 <link type="text/css" rel="stylesheet" href="<?=$_GET['_code']; ?>_form.css"></link>
 <script>
 $(function() {
-  $("[code=<?=$_GET['_code']; ?>]").loadForm();
+  $("#<?=$_GET['_code']; ?>").loadForm();
 });
 </script>
-<div code="<?=$_GET['_code']; ?>"></div>
+<script type='text/javascript' src="<?=$_GET['_code']; ?>_form.js"></script>
+<div id="<?=$_GET['_code']; ?>"></div>
