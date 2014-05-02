@@ -577,6 +577,9 @@ function delegate(scope, func, data, isTimeout)
         input = $('<textarea></textarea');
         input.height(prop.size);
       }
+      else {
+        input = $("<label></label>");
+      }
       input.attr(attr.method === 'post'?'name':'id', field);
       anchor.append(input);
       anchor.append($('<span></span>').text(prop.desc));
