@@ -532,7 +532,7 @@ function delegate(scope, func, data, isTimeout)
     }
 }
 
-$.fn.loadForm = function(key)
+  $.fn.loadForm = function(callback)
 {
   var self = $(this);
   var code = self.attr('code');
@@ -547,10 +547,10 @@ $.fn.loadForm = function(key)
     var attr = data.attributes;
     var title = attr.title;
     document.title = attr.program + ' - ' + title;
+    self.append($('<p class=title></p>').text(title));
     self.addClass(attr.class);
     self.addClass(attr.label_position);
-    self.append($('<p class=title>'+title+'</p>'));
-    self.append($('<p class=desc>'+attr.desc+'</p>'));
+    self.append($('<p class=desc></p>').text(attr.desc));
     self.append($('<span class=ajax_result></span>'));
     
     var fields = $('<div></div>');
@@ -575,7 +575,7 @@ $.fn.loadForm = function(key)
       }
       input.attr(attr.method === 'post'?'name':'id', field);
       anchor.append(input);
-      anchor.append($('<span>'+prop.desc+'</span>'));
+      anchor.append($('<span></span>').text(prop.desc));
       if (prop.visible == 0) {
         label.hide();
         anchor.hide();
@@ -584,8 +584,9 @@ $.fn.loadForm = function(key)
     });
     
     var actions = $('<div class=actions></div>');
+    var input;
     $.each(data.actions, function(action, prop) {
-      var input;
+      console.log(action, prop.input, prop.method)
       if (prop.input == "button") {
         input = $('<button></button>'); 
         if (prop.method == "check")
@@ -601,24 +602,56 @@ $.fn.loadForm = function(key)
       if (prop.visible == 0) input.hide();
       actions.append(input);
     });
-    fields.append($('<p></p>'));
-    fields.append(actions);
+    if (input != undefined) {
+      fields.append($('<p></p>'));
+      fields.append(actions);
+    }
     self.append(fields);
     var lists = fields.find('select[list]');
     var lists_loaded = 0;
-    if (key === undefined) {
-      var index = location.href.indexOf("&");
-      if (index >= 0)
-        key = location.href.substr(index+1);
-    }
-    if (key === undefined) key = '';
+    var index = location.href.indexOf("&");
+    var key = index >= 0? location.href.substr(index+1): '';
     var url = attr.data_url != null? attr.data_url+key: null;
     lists.jsonLoadOptions(function() {
-      if (++lists_loaded == lists.length && url != null) {
-        self.loadChildren(url);
+      if (++lists_loaded == lists.length) {
+        if (url != null) self.loadChildren(url);
+        if (callback !== undefined) callback();
       }
     });
-    if (lists_loaded > 0 && url != null)
-      self.loadChildren(url);
+    if (lists.length == 0) {
+      if (url != null) self.loadChildren(url);
+      if (callback !== undefined) callback();
+    }
+      
+  });
+}
+
+$.fn.loadWizard = function()
+{
+  var self = $(this);
+  var id = self.attr('id');
+  var selector = '#'+id;
+  $.json('/?a=form/load_wizard&code='+id, function(data) {
+    var index = 0;
+    var done = 0;
+    $.each(data.forms, function(id, form) {
+      var div = $('<div></div>');
+      div.attr('caption', form.title);
+      div.attr('id', id);
+      if (index > 1 && form.show_back == 1) div.attr('back','');
+      if (++index < data.size && form.show_next == 1) div.attr('next','');
+      self.append(div); //todo: order may be broken if an earlier form takes longer than a later one
+      div.loadForm(function() {
+        if (++done != data.size) return;
+        
+        self.pageWizard({title: data.program});
+        $.each(data.forms, function(id, form) {
+          if (form.next_action != null) 
+            $('.'+id+'_next').checkOnClick(selector+' *', form.next_action);
+        });
+        $(selector+ ' .title').hide();
+      });
+    });
+    
   });
 }
