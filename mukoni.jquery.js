@@ -573,6 +573,10 @@ function delegate(scope, func, data, isTimeout)
         input.attr('list', prop.reference);
         input.attr('default', '--Select '+prop.name+'--');
       }
+      else if (prop.input == 'paragraph') {
+        input = $('<textarea></textarea');
+        input.height(prop.size);
+      }
       input.attr(attr.method === 'post'?'name':'id', field);
       anchor.append(input);
       anchor.append($('<span></span>').text(prop.desc));
@@ -586,7 +590,6 @@ function delegate(scope, func, data, isTimeout)
     var actions = $('<div class=actions></div>');
     var input;
     $.each(data.actions, function(action, prop) {
-      console.log(action, prop.input, prop.method)
       if (prop.input == "button") {
         input = $('<button></button>'); 
         if (prop.method == "check")
