@@ -577,6 +577,9 @@ function delegate(scope, func, data, isTimeout)
         input = $('<textarea></textarea');
         input.height(prop.size);
       }
+      else if (prop.input == 'date') {
+        input = $('<input type=text></input>');
+      }
       else {
         input = $("<label></label>");
       }
@@ -628,7 +631,25 @@ function delegate(scope, func, data, isTimeout)
       if (url != null) self.loadChildren(url);
       if (callback !== undefined) callback();
     }
-      
+    
+    // load date picker after form is loaded 
+    // bug on date picker that doesn't allow it to be loaded when form has not completed loading 
+    self.find('.datepicker').datepicker();
+    $.each(data.fields, function(field, prop) {
+      if (prop.input != 'date') return;
+      input = $('#'+field);
+      if (prop.reference == null) {
+        input.datepicker();
+        return;
+      }
+      var params = prop.reference.split(',');
+      console.log(params.length)
+      if (params.length == 1) 
+        input.datepicker({range: params[0]});
+      else if (params.length == 2) 
+        input.datepicker({range: params[0], beforeShowDay: $.datepicker[params[1]]});
+    });
+    
   });
 }
 
