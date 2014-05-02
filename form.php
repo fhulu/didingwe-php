@@ -49,24 +49,30 @@ class form {
     
     $attributes = form::read_attributes($code);
     
-    $fields = form::get_fields("select distinct f.code"
-            . ", ifnull(ff.my_name, f.name) name, f.length, ff.parent_field parent, ff.visible, ff.optional"
+    $fields = form::get_fields("select distinct ff.field_code code"
+            . ", ifnull(ff.my_name, f.name) name"
+            . ", ifnull(ff.my_size, f.size) size"
+            . ", ff.parent_field parent, ff.visible, ff.optional"
             . ", replace(ifnull(ff.my_description, f.description), '\$program', '$program_name') 'desc'"
             . ", ifnull(ff.my_input,f.input) input"
             . ", ifnull(ff.my_reference, f.reference) reference"
-            . " from mukonin_form.field f join mukonin_form.form_field ff"
+            . " from mukonin_form.form_field ff left join mukonin_form.field f"
             . " on f.program_id in ('\$pid', '_generic')"
-            . " and f.code = ff.field_code and ff.form_code = '$code'"
+            . " and f.code = ff.field_code"
+            . " where ff.program_id in ('\$pid', '_generic')"
+            . " and ff.form_code = '$code'"
             . " order by ff.program_id desc, ff.position asc");
     
-    $actions = form::get_fields("select distinct f.code, fa.method"
+    $actions = form::get_fields("select distinct fa.field_code code, fa.method"
             . ",  ifnull(fa.my_name,f.name) name, fa.visible"
             . ", replace(ifnull(fa.my_description, f.description), '\$program', '$program_name') 'desc'"
             . ", ifnull(fa.my_input,f.input) input"
             . ", ifnull(fa.my_reference, f.reference) reference"
-            . " from mukonin_form.field f join mukonin_form.form_action fa"
+            . " from mukonin_form.form_action fa left join mukonin_form.field f"
             . " on f.program_id in ('\$pid', '_generic')"
-            . " and f.code = fa.field_code and fa.form_code = '$code'"
+            . " and f.code = fa.field_code"
+            . " where fa.program_id in ('\$pid', '_generic')"
+            . " and fa.form_code = '$code'"
             . " order by fa.program_id desc, fa.position asc");
     echo json_encode(array(
         'attributes'=>$attributes,
@@ -79,10 +85,11 @@ class form {
     $code = $request['code'];
     $forms = form::get_fields("select f.code, f.title, wf.nav_position, wf.show_back, wf.show_next, wf.next_action"
             . " from mukonin_form.wizard_form wf join mukonin_form.form f "
-            . " on f.program_id = wf.program_id and f.program_id in ('\$pid', '_generic')"
+            . " on f.program_id in ('\$pid', '_generic')"
+            . " and wf.program_id in ('\$pid', '_generic')"
             . " and f.code = wf.form_code"
             . " and wf.wizard_code = '$code'"
-            . " order by wf.program_id, wf.position asc");
+            . " order by wf.program_id desc, wf.position asc");
     echo json_encode(array(
         "program"=>config::$program_name,
         "size"=>sizeof($forms), 
