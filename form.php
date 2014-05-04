@@ -46,6 +46,21 @@ class form {
     global $db;
     $code = $request['code'];
     $program_name = config::$program_name;
+
+    $forms = form::get_fields("select f.code, f.title, wf.nav_position, wf.show_back, wf.show_next, wf.next_action"
+            . " from mukonin_form.wizard_form wf join mukonin_form.form f "
+            . " on f.program_id in ('\$pid', '_generic')"
+            . " and wf.program_id in ('\$pid', '_generic')"
+            . " and f.code = wf.form_code"
+            . " and wf.wizard_code = '$code'"
+            . " order by wf.program_id desc, wf.position asc");
+    if (sizeof($forms) != 0) {
+      echo json_encode(array(
+          "program"=>config::$program_name,
+          "size"=>sizeof($forms), 
+          "forms"=>$forms));
+      return;
+    }
     
     $attributes = form::read_attributes($code);
     
