@@ -21,7 +21,7 @@ function get_page_file($page)
     if (file_exists($file_name) && filetype($file_name) != 'dir')
       return $file_name;
   }
-  return null;
+  return $name;
 }
 
 function init_div($div, $default=null)
@@ -57,12 +57,16 @@ function load_div($div)
   $page = $_SESSION[$div];
   $common_page = "../common/$page";
   echo "<div id='$div'>";
-  if (strpos($page, '?') === false && file_exists($page) || file_exists($common_page)) {
+  if (strpos($page, '?') === false) {
     try {
       if (file_exists($page))
         require_once($page);
-      else
+      else if (file_exists($common_page))
         require_once($common_page);
+      else {
+        $_GET['_code'] = $page;
+        include('../common/show_form.php');
+      }
     }
     catch (user_exception $exception) {
       log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
