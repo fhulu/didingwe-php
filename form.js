@@ -28,6 +28,11 @@ $.fn.form = function(options)
     read: function(data) 
     {
       form.data = data;
+      if (data.forms != null) {
+        form.load_wizard(data);
+        return this;
+      }
+      if (data.attributes == null) return this;
       form.attr = data.attributes;
       var attr = form.attr;
       var title = attr.title;
@@ -47,9 +52,9 @@ $.fn.form = function(options)
       }
       if (form.inputs.children().length != 0) {
         obj.append(form.inputs);
-        form.load_lists();
         form.update_dates();
       }
+      form.load_lists();
     },
     
     add_field: function(field, prop)
@@ -146,6 +151,31 @@ $.fn.form = function(options)
           input.datepicker({range: params[0]});
         else if (params.length == 2) 
           input.datepicker({range: params[0], beforeShowDay: $.datepicker[params[1]]});
+      });
+    },
+    
+    load_wizard: function(data)
+    {
+      var index = 0;
+      var done = 0;
+      var parent = form;
+      $.each(data.forms, function(id, form) {
+        var div = $('<div></div>');
+        div.attr('caption', form.title);
+        div.attr('id', id);
+        if (index > 1 && form.show_back == 1) div.attr('back','');
+        if (++index < data.size && form.show_next == 1) div.attr('next','');
+        obj.append(div); //todo: order may be broken if an earlier form takes longer than a later one
+        div.form({success: function() {
+          if (++done != data.size) return;
+
+          obj.pageWizard({title: data.program} );
+          $.each(data.forms, function(id, form) {
+            if (form.next_action != null) 
+              $('.'+id+'_next').checkOnClick(selector+' *', form.next_action);
+          });
+          $(selector+ ' .title').hide();
+        }});
       });
     }
   };
