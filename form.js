@@ -12,6 +12,10 @@ $.fn.form = function(options)
     success: function() {}
   }, options);
   
+  options.done = function() {
+    $(this).formLoaded();
+    options.success();
+  }
   var form = {
     object: obj,
     form: this,
@@ -130,12 +134,12 @@ $.fn.form = function(options)
       lists.jsonLoadOptions(function() {
         if (++lists_loaded == lists.length) {
           if (url != null) obj.loadChildren(url);
-          form.options.success();
+          form.options.done();
         }
       });
       if (lists.length == 0) {
         if (url != null) obj.loadChildren(url);
-        form.options.success();
+        form.options.done();
       }
     },
 
@@ -186,4 +190,11 @@ $.fn.form = function(options)
   };
   if (options.autoLoad) form.load();
   return form;
+}
+
+
+
+$.fn.formLoaded = function(callback)
+{
+  callback();
 }
