@@ -66,6 +66,7 @@ class form {
     
     $fields = form::get_fields("select distinct ff.field_code code, ff.enabled"
             . ", ifnull(ff.my_name, f.name) name"
+            . ", ifnull(ff.my_initial_value, f.initial_value) initial"
             . ", ifnull(ff.my_size, f.size) size"
             . ", ff.parent_field parent, ff.visible, ff.optional"
             . ", replace(ifnull(ff.my_description, f.description), '\$program', '$program_name') 'desc'"
@@ -93,22 +94,6 @@ class form {
         'attributes'=>$attributes,
         'fields'=>$fields,
         'actions'=>$actions));
-  }
-  
-  static function load_wizard($request)
-  {
-    $code = $request['code'];
-    $forms = form::get_fields("select f.code, f.title, wf.nav_position, wf.show_back, wf.show_next, wf.next_action"
-            . " from mukonin_form.wizard_form wf join mukonin_form.form f "
-            . " on f.program_id in ('\$pid', '_generic')"
-            . " and wf.program_id in ('\$pid', '_generic')"
-            . " and f.code = wf.form_code"
-            . " and wf.wizard_code = '$code'"
-            . " order by wf.program_id desc, wf.position asc");
-    echo json_encode(array(
-        "program"=>config::$program_name,
-        "size"=>sizeof($forms), 
-        "forms"=>$forms));
   }
   
   static function test()
