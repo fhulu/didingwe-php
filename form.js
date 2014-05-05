@@ -62,6 +62,7 @@ $.fn.form = function(options)
       var label = $('<p></p>');
       if (form.attr.label_position !='inplace') label.text(prop.name);
       if (prop.optional == 0) label.text('* ' + label.text());
+      if (form.attr.label_suffix != '') label.text(label.text()+form.attr.label_suffix);
       form.inputs.append(label);
 
       var anchor = $('<a></a>');

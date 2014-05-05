@@ -35,7 +35,7 @@ class form {
     $program_name = config::$program_name;
     return $db->read_one("select '$program_name' program, function_code, title, method, class"
             . ", replace(description, '\$program', '$program_name') 'desc'"
-            . ", class, fields_class, label_position, data_url"
+            . ", class, fields_class, label_suffix, label_position, data_url"
             . " from mukonin_form.form "
             . " where program_id in ('\$pid', '_generic') and code = '$code'"
             . " order by program_id desc", MYSQLI_ASSOC);
