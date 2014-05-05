@@ -93,6 +93,9 @@ $.fn.form = function(options)
       else {
         input = $("<label></label>");
       }
+      
+      if (prop.initial != null) input.val(prop.initial).text(prop.initial);
+      
       input.attr(form.attr.method === 'post'?'name':'id', field);
       if (prop.enabled == 0) input.attr('disabled','disabled');
       anchor.append(input);
