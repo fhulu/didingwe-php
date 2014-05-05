@@ -64,7 +64,8 @@ class form {
     
     $attributes = form::read_attributes($code);
     
-    $fields = form::get_fields("select distinct ff.field_code code, ff.enabled"
+    $fields = form::get_fields("select distinct ff.enabled"
+            . ", ifnull(ff.my_field_code, f.field_code) code"
             . ", ifnull(ff.my_name, f.name) name"
             . ", ifnull(ff.my_initial_value, f.initial_value) initial"
             . ", ifnull(ff.my_size, f.size) size"
