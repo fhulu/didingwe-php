@@ -60,9 +60,11 @@ $.fn.form = function(options)
     add_field: function(field, prop)
     {
       var label = $('<p></p>');
-      if (form.attr.label_position !='inplace') label.text(prop.name);
-      if (prop.optional == 0) label.text('* ' + label.text());
-      if (form.attr.label_suffix != '') label.text(label.text()+form.attr.label_suffix);
+      if (form.attr.label_position !='inplace') {
+        label.text(prop.name);
+        if (prop.optional == 0) label.text('* ' + label.text());
+        if (form.attr.label_suffix != '') label.text(label.text()+form.attr.label_suffix);
+      }
       form.inputs.append(label);
 
       var anchor = $('<a></a>');
@@ -88,12 +90,14 @@ $.fn.form = function(options)
         input = $("<label></label>");
       }
       input.attr(form.attr.method === 'post'?'name':'id', field);
+      if (prop.enabled == 0) input.attr('disabled','disabled');
       anchor.append(input);
       anchor.append($('<span></span>').text(prop.desc));
       if (prop.visible == 0) {
         label.hide();
         anchor.hide();
       }
+     
       form.inputs.append(anchor);
     },
     
