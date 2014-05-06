@@ -16,7 +16,23 @@ class ref
   
   static function items($request)
   {
-    $list = $request['list'];   
+    $list = $request['list']; 
+    list($class,$method) = explode('::', $list);
+    if (!is_null($method)) return call_user_func($list, $request);
+    
+    if (strpos($list, '|') !== false) return ref::inline($list);
+   
+    $matches = array();
+    if (preg_match('/([^:]+):(.+)/', $list, $matches)) {
+      $type = strtolower($matches[1]);
+      switch($type) {
+        case 'sql':  return ref::encode_sql($matches[2]);
+        default: 
+          log::warn("Unknown type $type");
+          return;
+      }
+    }
+    
     list($code,$name,$table)= explode(',', $list);
     if (isset($name)) {
       $sql = "select $code item_code, $name item_name from $table order by $name";
@@ -29,6 +45,19 @@ class ref
               . " order by item_name";
     }
     return ref::encode_sql($request, $sql);
+  }
+  
+  static function inline($list)
+  {
+    $values = explode('|', $list);
+    $result = array();
+    foreach($values as $value) {
+      list($code, $value) = explode(',', $value);
+      $row['item_code'] = $code;
+      $row['item_name'] = $value;
+      $result[] = $row;
+    }
+    echo json_encode($result);
   }
   
   static function get_sql_extension($request)
