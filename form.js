@@ -176,7 +176,7 @@ $.fn.form = function(options)
         var div = $('<div></div>');
         div.attr('caption', form.title);
         div.attr('id', id);
-        if (index > 1 && form.show_back == 1) div.attr('back','');
+        if (index > 0 && form.show_back == 1) div.attr('back','');
         if (++index < data.size && form.show_next == 1) div.attr('next','');
         obj.append(div); //todo: order may be broken if an earlier form takes longer than a later one
         div.form({success: function() {
