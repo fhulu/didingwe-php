@@ -184,13 +184,13 @@ class validator
         throw new validator_exception('checking for existence with no db table supplied');
     }
    
-    $pos = strrpos($table, '.');
-    if ($pos === false) {
-      $field = $this->name;
+    list($dbname, $table, $field) = explode('.', $table);
+    if ($field == '') {
+      $field = $table;
+      $table = $dbname;
     }
     else {
-      $field = substr($table,$pos+1);
-      $table = substr($table,0, $pos);
+      $table = "$dbname.$table";
     }
     $db = $this->db;
     $value = addslashes($this->value);
@@ -206,8 +206,14 @@ class validator
   
   function exist($table=null)
   {
-    return $this->in();
+    return $this->in($table);
+
+    }
+  function exists($table=null)
+  {
+    return $this->in($table);
   }
+
 
   function unique($table=null)
   {
