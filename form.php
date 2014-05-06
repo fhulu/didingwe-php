@@ -13,6 +13,7 @@
  */
 
 require_once 'db.php';
+require_once 'validator.php';
 class form {
 
   static function get_fields($sql, $key='code')
@@ -80,8 +81,8 @@ class form {
             . " and ff.form_code = '$code'"
             . " order by ff.program_id desc, ff.position asc");
     
-    $actions = form::get_fields("select distinct fa.field_code code, fa.method"
-            . ",  ifnull(fa.my_name,f.name) name, fa.visible"
+    $actions = form::get_fields("select distinct fa.field_code code, fa.method, fa.validator"
+            . ", ifnull(fa.my_name,f.name) name, fa.visible"
             . ", replace(ifnull(fa.my_description, f.description), '\$program', '$program_name') 'desc'"
             . ", ifnull(fa.my_input,f.input) input"
             . ", ifnull(fa.my_reference, f.reference) reference"
@@ -96,6 +97,46 @@ class form {
         'fields'=>$fields,
         'actions'=>$actions));
   }
+  
+  static function validate($request)
+  {
+    global $db;
+    $code = $request['code'];
+    $rows = $db->read("select distinct ff.optional"
+            . ", ifnull(ff.my_field_code, f.code) code"
+            . ", ifnull(ff.my_validation, f.validation) validation"
+            . ", ifnull(ff.my_name, f.name) name"
+            . ", ifnull(ff.my_size, f.size) size"
+            . ", ifnull(ff.my_min_length, f.min_length) min_length"
+            . ", ff.optional"
+            . ", ifnull(ff.my_reference, f.reference) reference"
+            . " from mukonin_form.form_field ff left join mukonin_form.field f"
+            . " on f.program_id in ('\$pid', '_generic')"
+            . " and f.code = ff.field_code"
+            . " where ff.program_id in ('\$pid', '_generic')"
+            . " and ff.form_code = '$code'"
+            . " order by ff.program_id desc, ff.position asc", MYSQLI_ASSOC);
+    
+    
+    $v = new validator($request);
+    
+    foreach ($rows as $row) {
+      $code = $row['code'];
+      $name = $row['name'];
+      if ($row['optional'] != 0 && !$v->check($code, $name)->provided()) continue;
+      
+      $min_length = $row['min_length'];
+      if ($min_length != 0) 
+        $v->check($code, $name)->at_least($min_length);
+      
+      $validator = $row['validation'];
+      if ($validator != '')
+        $v->check($code, $name)->is($validator);
+    }
+    
+    return $v->valid();
+  }
+ 
   
   static function test()
   {

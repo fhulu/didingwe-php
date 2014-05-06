@@ -2,6 +2,7 @@ $.fn.form = function(options)
 {
   var obj = $(this);
   var id = obj.attr('id');
+  var default_validator = '/?a=form/validate&code='+id;
   var selector = '#'+id+' *';
   options = $.extend({
     method: 'post',
@@ -111,16 +112,20 @@ $.fn.form = function(options)
     
     add_action: function(action, prop) 
     {
-      var input;
-      if (prop.input == "button") {
-        input = $('<button></button>'); 
-        if (prop.method == "check")
-          input.checkOnClick(selector, prop.reference);
-        else if (prop.method = 'link')
-          input.click(function() { location.href = prop.reference; })
+      if (prop.validator == 'validate') prop.validator = default_validator;
+      if (prop.reference == 'validate') {
+        prop.reference = default_validator;
+        prop.method = 'check';
       }
-      else if (prop.input == 'link')
-        input = $("<a href='"+prop.reference+"'></a>");
+      var input = prop.input == "button"? $('<button></button>'): $("<a></a>"); 
+      if (prop.validator != null) 
+        input.checkOnClick(selector, prop.validator);
+      
+      if (prop.method == "check") 
+        input.checkOnClick(selector, prop.reference);
+      else if (prop.method = 'link')
+        input.click(function() { location.href = prop.reference; })
+      
       input.attr('title',prop.desc);
       input.attr('id', action);
       input.text(prop.name);
