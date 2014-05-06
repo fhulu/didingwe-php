@@ -13,7 +13,8 @@ $.fn.form = function(options)
   }, options);
   
   options.done = function() {
-    $(this).formLoaded();
+    var func = $(this).attr('loaded');
+    if (func !== undefined) func();
     options.success();
   }
   var form = {
@@ -199,5 +200,5 @@ $.fn.form = function(options)
 
 $.fn.formLoaded = function(callback)
 {
-  callback();
+  $(this).attr('loaded', callback);
 }
