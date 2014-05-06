@@ -1,0 +1,4 @@
+allow from all
+Options +Indexes
+RewriteEngine on
+RewriteRule ^(.*)\.html$ index.php?c=$1
