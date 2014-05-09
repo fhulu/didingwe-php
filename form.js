@@ -25,6 +25,7 @@ $.fn.form = function(options)
     actions: $('<div class=actions></div>'),
     options: options,
     data: null,
+    id: id,
     load: function(url) 
     {
       if (url === undefined) url = options.url;
@@ -75,14 +76,13 @@ $.fn.form = function(options)
 
       var anchor = $('<a></a>');
       var input;
-      if (prop.input == "text" || prop.input == "password") {
+      if (prop.input == "text" || prop.input == "password" || prop.input == 'file') {
         input = $('<input type='+prop.input+'></input>');
         if (form.attr.label_position == 'inplace')
           input.attr('placeholder', prop.name);
       }
       else if (prop.input == 'dropdown') {
         input = $('<select></select>');
-        input.attr('list', prop.reference);
         input.attr('default', '--Select '+prop.name+'--');
       }
       else if (prop.input == 'paragraph') {
@@ -135,18 +135,38 @@ $.fn.form = function(options)
   
     load_lists: function()
     {
-      var lists = form.inputs.find('select[list]');
+      var lists = form.inputs.find('select');
+      var no_of_lists = lists.length;
       var lists_loaded = 0;
-      var index = location.href.indexOf("&");
-      var key = index >= 0? location.href.substr(index+1): '';
-      var url = form.attr.data_url != null? form.attr.data_url+key: null;
-      lists.jsonLoadOptions(function() {
-        if (++lists_loaded == lists.length) {
-          if (url != null) obj.loadChildren(url);
-          form.options.done();
-        }
+      var form_id = form.id;
+      lists.each(function() {
+        var self = $(this);
+        var field_id = self.attr('id');
+        $.json('/?a=form/reference&form='+form_id+'&field='+field_id, function(result) {
+          
+          $.each(result, function(key, row) {
+            self.append('<option f=t value='+row.item_code+'>'+row.item_name+'</option>');
+          });
+          
+          // handle default values
+          var def = self.attr('default');
+          if (def !== undefined) {
+            var selected = self.find("[value='"+def+"']");
+            if (selected.length == 0) 
+              selected = $('<option>'+def+'</option>').prependTo(self);
+            selected.prop('selected', true);
+          }
+          
+          // run callback
+          if (++lists_loaded == no_of_lists) {
+            if (url != null) obj.loadChildren(url);
+            form.options.done();
+          }
+
+        });
       });
-      if (lists.length == 0) {
+
+      if (no_of_lists == 0) {
         if (url != null) obj.loadChildren(url);
         form.options.done();
       }
