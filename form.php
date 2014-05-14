@@ -14,6 +14,8 @@
 
 require_once 'db.php';
 require_once 'validator.php';
+require_once 'ref.php';
+
 class form {
 
   static function get_fields($sql, $key='code')
@@ -138,11 +140,42 @@ class form {
   }
  
   
-  static function test()
+  static function reference()
   {
-    echo json_encode(
-      array("za_city"=>"7100",
-        "otp"=>12345));
+    $request = db::addslashes($request);
+    $field = $request['field'];
+    $form = $request['form'];
+    global $db;
+    $reference = $db->read_one_value("select ifnull(my_reference,f.reference) "
+      . " from mukonin_form.form_field ff left join mukonin_form.field f"
+      . " on ff.field_code = f.code"
+      . " where ff.form_code = '$form' and ff.field_code = '$field'");
+    
+    
+    $matches = array();
+    preg_match('/(.+): (.+)/', $reference, $matches);
+    $type = $matches[1];
+    $list = $matches[2];
+    
+    if ($type == 'inline') {
+      $values = explode('|', $list);
+      $result = array();
+      foreach($values as $pair) {
+        list($code) = explode(',', $pair);
+        $value['item_code'] = $code;
+        $value['item_name'] = substr($pair, strlen($code)+1);
+        $result[] = $value;
+      }
+      echo json_encode($result);
+      return;
+    }
+    if ($type == 'sql') {
+      $rows = $db->read($list);
+      echo json_encode($rows);
+    }
+    
+    $request['list'] = $reference;
+    return ref::items($request);
   }
-  //put your code here
+  
 }
