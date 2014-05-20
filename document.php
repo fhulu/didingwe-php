@@ -16,11 +16,12 @@ class document
     $user_id = $session->user->id;
 
     
-    $db->exec("update mukonin_audit.document set status='reset' where session_id = '$session->id' and status = 'busy'");
+    $pid = getmypid();
+    $db->exec("update mukonin_audit.document set status='reset' where session_id = '$pid' and status = 'busy'");
     
     //if (is_null($partner_id)) $partner_id = 0;
     $sql = "INSERT INTO mukonin_audit.document(partner_id,user_id,session_id,filename,type) 
-            values($partner_id,$user_id,'$session->id','$file_name','$type')";
+            values($partner_id,$user_id,'$pid','$file_name','$type')";
     
     $id = $db->insert($sql);
     $file_name = str_replace("/[\' \s]'/", '-', $_FILES[$control]["name"]);
