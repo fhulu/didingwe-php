@@ -140,7 +140,7 @@ class form {
   }
  
   
-  static function reference()
+  static function reference($request)
   {
     $request = db::addslashes($request);
     $field = $request['field'];
@@ -172,6 +172,7 @@ class form {
     if ($type == 'sql') {
       $rows = $db->read($list);
       echo json_encode($rows);
+      return;
     }
     
     $request['list'] = $reference;
