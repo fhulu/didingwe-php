@@ -220,9 +220,9 @@ class db
     return $row[0];
   }
 
-  function json($sql, $max_rows=0) 
+  function json($sql, $max_rows=0, $fetch_type=MYSQLI_ASSOC) 
   {
-    return json_encode($this->read($sql, MYSQLI_ASSOC, $max_rows));
+    return json_encode($this->read($sql, $fetch_type, $max_rows));
   }
   
   function lineage(&$values, $key, $parent_key, $table, $other='')
