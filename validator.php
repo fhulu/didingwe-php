@@ -182,15 +182,17 @@ class validator
       $table = $this->table;
       if ($table == '')
         throw new validator_exception('checking for existence with no db table supplied');
-    }
-   
-    list($dbname, $table, $field) = explode('.', $table);
-    if ($field == '') {
-      $field = $table;
-      $table = $dbname;
+      $field = $this->name;
     }
     else {
-      $table = "$dbname.$table";
+      list($dbname, $table, $field) = explode('.', $table);
+      if ($field == '') {
+        $field = $table;
+        $table = $dbname;
+      }
+      else {
+        $table = "$dbname.$table";
+      }
     }
     $db = $this->db;
     $value = addslashes($this->value);
