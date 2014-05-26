@@ -145,7 +145,7 @@ $.fn.form = function(options)
         $.json('/?a=form/reference&form='+form_id+'&field='+field_id, function(result) {
           
           $.each(result, function(key, row) {
-            self.append('<option f=t value='+row.item_code+'>'+row.item_name+'</option>');
+            self.append('<option f=t value="'+row.item_code+'">'+row.item_name+'</option>');
           });
           
           // handle default values
