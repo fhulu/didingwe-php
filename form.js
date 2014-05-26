@@ -44,7 +44,6 @@ $.fn.form = function(options)
       var attr = form.attr;
       var title = attr.title;
       document.title = attr.program + ' - ' + title;
-      obj.append($('<p class=title></p>').text(title));
       obj.addClass(attr.class);
       obj.addClass(attr.label_position);
       obj.append($('<p class=desc></p>').text(attr.desc));
