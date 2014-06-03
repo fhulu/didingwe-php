@@ -64,21 +64,33 @@ class feedback
   
   static function manage_feedback($request)
   {
-    //user::verify('manage_features');
-
-    global $session;
-    $user = $session->user;
-    $program_id = config::$program_id;
-    $partner_id = $request['partner_id'];
-    if ($partner_id == '') $partner_id = $user->partner_id;
-    $titles = array('#id','Time','~Company','~Requestor','~Request ','~Reason','~Type','Action');
+    //user::verify('manage_feedbacks');
+    $titles = array('#id','Time','~Requestor','~Request ','~Reason','~Type');
     $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE | table::EXPORTABLE);
     $table->set_heading("Manage Feedbacks");
     $table->set_options($request);$table->set_key('id');
 //    $table->set_row_actions('edit,Approve,Reject');
 //    $table->set_saver('/?a=feature/update_priority');
     $table->set_options($request);
-    $sql = "select * from (select fr.id,fr.create_time,full_name,concat(first_name,' ',last_name) requestor,fr.title,fr.description,pr.description type
+    $sql = "select * from (select fr.id,fr.create_time,concat(first_name,' ',last_name) requestor,fr.title,fr.description,pr.description type
+            from mukonin_audit.feedback fr
+            join mukonin_audit.user u on u.id = fr.user_id
+            join mukonin_audit.feedback_type pr on pr.code = fr.type
+      
+            join mukonin_audit.partner p on p.id = fr.partner_id) tmp where 1=1";
+    $table->show($sql);
+  }
+  static function view_feedback($request)
+  {
+    //user::verify('manage_feedbacks');
+    $titles = array('#id','Time','~Requestor','~Request ','~Reason','~Type');
+    $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE | table::EXPORTABLE);
+    $table->set_heading("Manage Feedbacks");
+    $table->set_options($request);$table->set_key('id');
+//    $table->set_row_actions('edit,Approve,Reject');
+    $table->set_expandable('/?a=fpb_dist_detail');
+    $table->set_options($request);
+    $sql = "select * from (select fr.id,fr.create_time,concat(first_name,' ',last_name) requestor,fr.title,fr.description,pr.description type
             from mukonin_audit.feedback fr
             join mukonin_audit.user u on u.id = fr.user_id
             join mukonin_audit.feedback_type pr on pr.code = fr.type

@@ -1,13 +1,10 @@
 <?php
 require_once('session.php');
-
 require_once('db.php');
 require_once('config.php');
 require_once('table.php'); 
-require_once('select.php');
 require_once('validator.php');
 require_once('select.php');
-require_once('curl.php');
 require_once('errors.php');
 
 
@@ -41,7 +38,8 @@ class feature
     $partner_id= $session->user->partner_id;
     $title = $request[title];;
     $description = $request[description];  
-    $program_id = config::$program_id;
+    $program_id = config::$program_id; 
+    $program_owner = config::$program_owner;
       
     $sql = "INSERT into mukonin_audit.feature_request(program_id,user_id,partner_id,title,description,priority,status_code)
             VALUES($program_id,$user_id,$partner_id,'$title','$description','med','pend')";
@@ -50,7 +48,7 @@ class feature
     list($email_address,$requestor)= $db->read_one("SELECT email_address,concat(first_name,' ' ,last_name) user from mukonin_audit.user  
                                    where id=$user_id");
     $rows = $db->read("select email_address from mukonin_audit.user u, mukonin_audit.partner p, mukonin_audit.user_role r
-    where u.partner_id = p.id and r.user_id = u.id and r.role_code='admin' and short_name='FPB'");
+    where u.partner_id = p.id and r.user_id = u.id and r.role_code='admin' and short_name='$program_owner'");
 
    
     foreach($rows as $row)
@@ -94,11 +92,10 @@ class feature
   {
     //user::verify('manage_features');
    $program_id = config::$program_id;
-    $titles = array('#id','Time','~Company','~Requestor','~Request','~Reason','~Priority|name=priority|edit=list:?feature/priorities','~Status|name=status|edit=list:?feature/status','~Status Reason','Action');
+    $titles = array('#id','Time','~Company','~Requestor','~Request','~Reason','~Priority|name=priority|edit=list:?feature/priorities','~Status|name=status|edit=list:?feature/status','~Reject Reason','Action');
     $table = new table($titles, table::TITLES | table::ALTROWS | table::FILTERABLE | table::EXPORTABLE);
     $table->set_heading("Manage Feature Request");
     $table->set_options($request);$table->set_key('id');
-    
     $table->set_expandable('/?a=request_comment');
     $table->set_row_actions('edit,Decline,Comment');
     $table->set_saver('/?a=feature/update_priority');
@@ -138,7 +135,7 @@ class feature
             join mukonin_audit.user u on u.id = fc.user_id
             WHERE feature_id= $id and fc.program_id=$program_id";
      
-    $headings = array('#id|name=id','Date', 'Comments','User','#hi');
+    $headings = array('#id|name=id','Date', 'Comments','User');
     $table = new table($headings,table::TITLES | table::ALTROWS);
     unset($request['id']);
     $table->set_options($request);
@@ -182,9 +179,29 @@ class feature
     $comment= $request[comments];
     
     $sql = "INSERT into mukonin_audit.feature_comment(program_id,feature_id,user_id,comment)
-            VALUES($program_id,$id,$user_id,'$comment')";
+           VALUES($program_id,$id,$user_id,'$comment')";
     $db->exec($sql);
+    
+    $rows = $db->read("select email_address,fr.title from mukonin_audit.user u, mukonin_audit.feature_request fr
+            where u.id=fr.user_id and u.program_id=fr.program_id  and fr.id = $id");
+    foreach($rows as $row)
+    { 
+      $title = $row['title'];
+      $email = $row['email_address'];
+      $message = "Good day<br><br>
+				  Hello World.<br>
+				  $comment.<br><br>
+				  Regards<br>
+				  Customer Operations";
+      $subject = "";
+      $headers = "MIME-Version: 1.0\r\n";
+      $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
+      $headers .= "from:  donotreply@fpb.org.za";
+      $mail_sent = mail($email, $subject, $message, $headers);
+      log::debug("Sending email to $username<$email>");    
     }
+  }
+   
   static function approve($request)
   {
     global $db;   
@@ -221,23 +238,7 @@ class feature
       log::debug("Sending email to $username");
     }
   }
-  
-    static function ask($request)
-  {
-    //user::verify('rate_game');
-    $titles = array('#No.','Please tick the appropriate feedback type','');
-    $table = new table($titles, table::TITLES | table::ALTROWS);
-    $table->set_key('number');
-    $table->set_options($request);
-    $table->set_callback(function(&$row, $index, &$attr) {  
-      $code = $row['code'];    
-      $input = "input name='type' type=radio value=";
-      $row['yes'] = "<$input$code>";
-   
-    });
-    $table->show("select code,description, '' yes
-      from mukonin_audit.feedback_type");
-  }
+
   static function reject($request)
   { 
     
