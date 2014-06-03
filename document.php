@@ -17,10 +17,10 @@ class document
 
     
     $pid = getmypid();
-    $db->exec("update mukonin_audit.document set status='reset' where session_id = '$pid' and status = 'busy'");
+    $db->exec("update document set status='reset' where session_id = '$pid' and status = 'busy'");
     
     //if (is_null($partner_id)) $partner_id = 0;
-    $sql = "INSERT INTO mukonin_audit.document(partner_id,user_id,session_id,filename,type) 
+    $sql = "INSERT INTO document(partner_id,user_id,session_id,filename,type) 
             values($partner_id,$user_id,'$pid','$file_name','$type')";
     
     $id = $db->insert($sql);
@@ -29,16 +29,16 @@ class document
     log::debug("Uploading file $path");
     $temp_file = $_FILES[$control]['tmp_name'];
     if (!is_uploaded_file($temp_file)) {
-      $db->exec("update mukonin_audit.document set status = 'inva' where id = $id");
+      $db->exec("update document set status = 'inva' where id = $id");
       return $id;
       //throw new document_exception("File $temp_file cannot be uploaded. Perhaps the file is too large.");
     }      
     if (!move_uploaded_file($_FILES[$control]["tmp_name"], $path)) {
-      $db->exec("update mukonin_audit.document set status = 'perm' where id = $id");
+      $db->exec("update document set status = 'perm' where id = $id");
       return $id;
      // throw new document_exception("File $path not moved to destination folder. Check permissions");
     }
-    $db->exec("update mukonin_audit.document set status = 'done' where id = $id");
+    $db->exec("update document set status = 'done' where id = $id");
     log::debug("File uploaded $path");
     return $id;
   }
@@ -48,7 +48,7 @@ class document
     $id = $request['id'];
     user::verify("view_doc");
     global $db;
-    list($file_name, $desc) = $db->read_one("select filename, description from mukonin_audit.document d, mukonin_audit.document_type dt
+    list($file_name, $desc) = $db->read_one("select filename, description from document d, document_type dt
       where d.type = dt.code and d.id = $id");
     $file_name = "../uploads/$id-$file_name";
     if (!file_exists($file_name)) {
@@ -147,21 +147,21 @@ class document
   {
     global $db, $session;
     $result = array();
-    $statuses = $db->read_column("select status from mukonin_audit.document where session_id = '$session->id' and status != 'rese'");
+    $statuses = $db->read_column("select status from document where session_id = '$session->id' and status != 'rese'");
     if (sizeof($statuses) == 0) {
       $result['status'] = 'busy';
     }
-    else if ($db->exists("select id from mukonin_audit.document where session_id = '$session->id' and status = 'busy'")) {
+    else if ($db->exists("select id from document where session_id = '$session->id' and status = 'busy'")) {
       $result['status'] = 'busy';
     }
     else {  
-      $row = $db->read_one("select filename, status from mukonin_audit.document
+      $row = $db->read_one("select filename, status from document
               where session_id = '$session->id' and status in ('inva','perm')");
       if ($row == null) {
         $result['status'] = 'done';
       }
       else {
-        $db->exec("update mukonin_audit.document set status='reset' where session_id = '$session->id'");
+        $db->exec("update document set status='reset' where session_id = '$session->id'");
         $result['status'] = $row[0];
         $result['file'] = $row[1];
       }
