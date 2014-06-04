@@ -33,11 +33,14 @@ class document
     $temp_file = $_FILES[$control]['tmp_name'];
     if (!is_uploaded_file($temp_file)) {
       $db->exec("update document set status = 'inva' where id = $id");
+      echo "Error uploading document. File may be too large.";
       return $id;
       //throw new document_exception("File $temp_file cannot be uploaded. Perhaps the file is too large.");
     }      
     if (!move_uploaded_file($_FILES[$control]["tmp_name"], $path)) {
+      
       $db->exec("update document set status = 'perm' where id = $id");
+      echo "Error uploading document of type $type. File may be too large";
       return $id;
      // throw new document_exception("File $path not moved to destination folder. Check permissions");
     }
