@@ -10,7 +10,10 @@ class document
     session::ensure_not_expired();
     $file_name = addslashes($_FILES[$control]["name"]);
     log::debug("about to upload $file_name from $control of $type");
-    if ($file_name == '') return;
+    if ($file_name == '') {
+      echo "Error uploading document of type $type. File may be too large";
+      return;
+    }
     
     global $db,$session;
     $user_id = $session->user->id;
