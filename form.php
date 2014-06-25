@@ -39,7 +39,7 @@ class form {
     return $db->read_one("select '$program_name' program, function_code, title, method, class"
             . ", replace(description, '\$program', '$program_name') 'desc'"
             . ", class, fields_class, label_suffix, label_position, data_url"
-            . " from mukonin_form.form "
+            . " from form "
             . " where program_id in ('\$pid', '_generic') and code = '$code'"
             . " order by program_id desc", MYSQLI_ASSOC);
     
@@ -51,7 +51,7 @@ class form {
     $program_name = config::$program_name;
 
     $forms = form::get_fields("select f.code, f.title, wf.nav_position, wf.show_back, wf.show_next, wf.next_action"
-            . " from mukonin_form.wizard_form wf join mukonin_form.form f "
+            . " from wizard_form wf join form f "
             . " on f.program_id in ('\$pid', '_generic')"
             . " and wf.program_id in ('\$pid', '_generic')"
             . " and f.code = wf.form_code"
@@ -76,7 +76,7 @@ class form {
             . ", replace(ifnull(ff.my_description, f.description), '\$program', '$program_name') 'desc'"
             . ", ifnull(ff.my_input,f.input) input"
             . ", ifnull(ff.my_reference, f.reference) reference"
-            . " from mukonin_form.form_field ff left join mukonin_form.field f"
+            . " from form_field ff left join field f"
             . " on f.program_id in ('\$pid', '_generic')"
             . " and f.code = ff.field_code"
             . " where ff.program_id in ('\$pid', '_generic')"
@@ -88,7 +88,7 @@ class form {
             . ", replace(ifnull(fa.my_description, f.description), '\$program', '$program_name') 'desc'"
             . ", ifnull(fa.my_input,f.input) input"
             . ", ifnull(fa.my_reference, f.reference) reference"
-            . " from mukonin_form.form_action fa left join mukonin_form.field f"
+            . " from form_action fa left join field f"
             . " on f.program_id in ('\$pid', '_generic')"
             . " and f.code = fa.field_code"
             . " where fa.program_id in ('\$pid', '_generic')"
@@ -112,7 +112,7 @@ class form {
             . ", ifnull(ff.my_min_length, f.min_length) min_length"
             . ", ff.optional"
             . ", ifnull(ff.my_reference, f.reference) reference"
-            . " from mukonin_form.form_field ff left join mukonin_form.field f"
+            . " from form_field ff left join field f"
             . " on f.program_id in ('\$pid', '_generic')"
             . " and f.code = ff.field_code"
             . " where ff.program_id in ('\$pid', '_generic')"
@@ -147,7 +147,7 @@ class form {
     $form = $request['form'];
     global $db;
     $reference = $db->read_one_value("select ifnull(my_reference,f.reference) "
-      . " from mukonin_form.form_field ff left join mukonin_form.field f"
+      . " from form_field ff left join field f"
       . " on ff.field_code = f.code"
       . " where ff.form_code = '$form' and ff.field_code = '$field'");
     

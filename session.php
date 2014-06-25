@@ -53,7 +53,7 @@ class session
     $session->referrer = $_SESSION['referrer'];
     $session->user = $user;
     $session->id = sprintf("%08x%04x%04x%08x",rand(0,0xffffffff),$user->partner_id,$user->id,time());
-    $sql = "insert mukonin_audit.session (id, user_id) values ('$session->id','$user->id')";
+    $sql = "insert session (id, user_id) values ('$session->id','$user->id')";
     
     global $db;
     $db->insert($sql);
@@ -107,7 +107,7 @@ class session
   static function force_logout($user_id)
   {
     global $db;
-    $sql = "update mukonin_audit.session set status='C', end_time=now() where user_id = $user_id";
+    $sql = "update session set status='C', end_time=now() where user_id = $user_id";
     $db->exec($sql);
   }
   
@@ -116,7 +116,7 @@ class session
   {
     global $db, $session;
     if (isset($db)) {
-      $sql = "update mukonin_audit.session set status='C', end_time=now() where id = '$session->id'";
+      $sql = "update session set status='C', end_time=now() where id = '$session->id'";
       $db->send($sql);
     }
 
@@ -128,7 +128,7 @@ class session
     global $session,$db;
     if (is_null($session) || $session->id == '') return false;
     
-    $status = $db->read_one_value("select status from mukonin_audit.session where id = '$session->id' ");
+    $status = $db->read_one_value("select status from session where id = '$session->id' ");
     if ($status != 'C') return true;
     session::logout ();
     return false;

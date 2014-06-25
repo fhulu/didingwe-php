@@ -17,7 +17,7 @@ class menu
     $this->level0 = $level0;
     $this->flags = is_null($flags)? self::SUBMENU | self::LINKS: $flags;
   }
-  
+   
   function show()
   {
     global $session;
@@ -34,7 +34,7 @@ class menu
     log::debug("functions are ". implode(',', $functions));
     
     global $db;
-    $parent_id = $db->read_one_value("select id from mukonin_audit.menu where name = '$this->name' and program_id = ".config::$program_id );
+    $parent_id = $db->read_one_value("select id from menu where name = '$this->name' and program_id = ".config::$program_id );
     if ($parent_id == '') return;
     
     menu::show_subitems($parent_id, $functions, 0);
@@ -44,7 +44,7 @@ class menu
   {
   
     $sql = "select function_code, m.id, f.name function, m.name display, url, description, protected 
-            from mukonin_audit.menu m join mukonin_audit.function f on f.code = m.function_code and f.program_id = m.program_id
+            from menu m join function f on f.code = m.function_code and f.program_id = m.program_id
             where parent_id = $parent_id and f.program_id = ". config::$program_id;
             $sql .= " order by position"; 
     
