@@ -39,7 +39,7 @@ class ref
     }
     else {
       $list = addslashes($list);   
-      $sql = "select item_code, item_name, item_desc from mukonin_audit.ref_list "
+      $sql = "select item_code, item_name, item_desc from ref_list "
               . "where list_name = '$list'"
               . " and program_id in (0,\$pid) "
               . " order by item_name";
@@ -81,6 +81,9 @@ class ref
   {
     global $db;
     $rows = $db->read($sql, MYSQL_ASSOC);
+    array_walk_recursive($rows, function(&$item, $key) {
+      $item = utf8_encode($item);
+    });
     echo json_encode ($rows);
   }
   
@@ -109,8 +112,7 @@ class ref
     list($encode) = explode('/', $_GET['a']);
     $callback = "ref::encode_$encode";
     if (!is_callable($callback)) {
-      log::warn("Encoding type not specified");
-      return;
+      $callback = "ref::encode_json";
     }
     
     return call_user_func($callback, $request, $sql);
@@ -123,8 +125,8 @@ class ref
     $code = addslashes($request['code']);
     
     $sql = "select a.$result_code item_code, l.item_name, l.item_desc "
-            . "from mukonin_audit.ref_assoc a "
-            . "join mukonin_audit.ref_list l "
+            . "from ref_assoc a "
+            . "join ref_list l "
             . " on a.$result_list = l.list_name"
             . " and l.item_code = a.$result_code "
             . " and a.name = '$name' and a.$result_list = '$list'"
@@ -151,7 +153,7 @@ class ref
     $name = addslashes($request['name']);
     $desc = addslashes($request['desc']);
 
-    $sql = "insert into mukonin_audit.ref_list(program_id, list_name, item_code, item_name, item_desc)"
+    $sql = "insert into ref_list(program_id, list_name, item_code, item_name, item_desc)"
             . "values (\$pid, '$list', '$code', '$name', '$desc')";
     
     global $db;
@@ -163,7 +165,7 @@ class ref
     $list = addslashes($request['list']);
     $code = addslashes($request['code']);
 
-    $sql = "delete from mukonin_audit.ref_list"
+    $sql = "delete from ref_list"
             . "where program_id = \$pid and  list_name = '$list', item_code='$code'";
    
     global $db;
@@ -186,12 +188,12 @@ class ref
     $code = addslashes($request['code1']);
 
     global $db;
-    $db->exec("insert ignore mukonin_audit.ref_list(program_id, list_name, item_code, item_name, item_desc)"
+    $db->exec("insert ignore ref_list(program_id, list_name, item_code, item_name, item_desc)"
             . "values(\$pid, '$name', '$list', '$code', '$desc')");
     
     $desc = addslashes($request['list2_desc']);
     $code = addslashes($request['code2']);
-    $db->exec("insert ignore mukonin_audit.ref_list(program_id, list_name, item_code, item_name, item_desc)"
+    $db->exec("insert ignore ref_list(program_id, list_name, item_code, item_name, item_desc)"
             . "values(\$pid, '$name', '$list', '$code', '$desc')");
   }
 }
