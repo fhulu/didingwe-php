@@ -257,15 +257,15 @@ class user
     if (!$db->exists("select id from user where email_address = '$email' 
         and program_id = $program_id and active = $active")) return false;
     if ($echo) $errors->add('email', "The email address already exists"); 
-    return true;
+    return true; 
   }
   
   static function check($request, $check_email=true)
   {
     user::verify_internal($request);
     $v = new validator($request); 
-    $v->check('first_name')->is(2);
-    $v->check('last_name')->is(2);
+    $v->check('first_name')->is('alphabetic',2);
+    $v->check('last_name')->is('alphabetic',2);
     $v->check('email')->is('email');
     if($check_email && user::exists($request['email'], 1))
       $v->report('email', '!Email address already exists');
