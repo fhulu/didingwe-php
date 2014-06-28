@@ -232,7 +232,7 @@ class db
     $value = $this->read_one_value($sql);
     if ($value == null) return;
     $values[] = $value;
-    $this->lineage($values, $key, $parent_key, $table);
+    $this->lineage($values, $key, $parent_key, $table, $other);
   }
   
   function listing($sql, $separator=',')
