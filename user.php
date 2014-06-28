@@ -494,7 +494,7 @@ class user
     $user = $session->user;
     $admin = "$user->first_name $user->last_name <$user->email>";
       
-    $message = "Dear $username <br> Administrator would like to inform you that you have been deactivated <br>For more information please log on to <a href='$proto://submit.fpb.org.za/'>submit.fpb.org.za</a> to track the status of your application or call 012 661 0051.<br><br>
+    $message = "Dear $username <br> Administrator would like to inform you that you have been deactivated..<br><br>
         Regards<br>
         Customer Operations";
     $subject = "Rejected Application";
