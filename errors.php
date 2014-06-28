@@ -10,6 +10,8 @@
  *
  * @author Mampo
  */
+
+$json = array();
 class errors {
   var $list;
   var $reported;
@@ -45,10 +47,10 @@ class errors {
   
   static function json_out($list)
   {
-    if (sizeof($list) == 0) return; 
-    //  echo json_encode($list);
-    //else
-      echo json_encode(array("errors"=>$list));
+    global $json;
+    
+    if (sizeof($list) != 0) $json["errors"] = $list; 
+    echo json_encode($json);
   }
   
   function report($how = null)
