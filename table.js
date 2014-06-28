@@ -221,7 +221,7 @@
  
       var url = is_new? this.get_url('add'): this.get_url('save');
       if (url == undefined || url == '') return;
-      if (is_new) data[key] = '';
+      //if (is_new) data[key] = '';
       this.ajax(url, data, function() {
         self.refresh();
       });
