@@ -49,6 +49,12 @@ class document
     return $id;
   }
   
+  static function optional_upload($control, $type, $partner_id)
+  {
+    if ($_FILES[$control]["name"] != '') 
+      document::upload ($control, $type, $partner_id);
+  }
+  
   static function view($request)
   {
     $id = $request['id'];
