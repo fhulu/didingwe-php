@@ -160,6 +160,34 @@ class validator
     return $this->error("!$this->title do not match.");
   }
   
+  function less($name, $title=null)
+  {
+    if ($this->value < $this->request[$name]) return true;
+    if (is_null($title)) $title = $this->title($name);
+    return $this->error("!$this->title must be less than $title");
+  }
+  
+  function less_equal($name, $title=null)
+  {
+    if ($this->value < $this->request[$name]) return true;
+    if (is_null($title)) $title = $this->title($name);
+    return $this->error("!$this->title must be less or equal to  $title");
+  }
+  
+  function greater($name, $title=null)
+  {
+    if ($this->value > $this->request[$name]) return true;
+    if (is_null($title)) $title = $this->title($name);
+    return $this->error("!$this->title must be greater than $title");
+  }
+  
+  function greater_equal($name, $title=null)
+  {
+    if ($this->value > $this->request[$name]) return true;
+    if (is_null($title)) $title = $this->title($name);
+    return $this->error("!$this->title must be greater or equal to $title");
+  }
+  
   function password($min_length)
   {
     if ($min_length == 0) $min_length=6;
