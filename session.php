@@ -100,8 +100,8 @@ class session
   static function redirect($url)
   {
     log::debug("REDIRECT: $url");
-    //echo "<meta http-equiv=\"refresh\" content=\"0;url=$url\">";
-    echo json_encode(array("script"=>"location.href = '$url';"));
+    global $json;
+    $json["script"] = "location.href='$url';";
   }
 
   static function force_logout($user_id)
