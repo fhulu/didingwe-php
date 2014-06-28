@@ -1039,7 +1039,7 @@ class user
     $user_id = $session->user->id;
     $role = $db->read_one_value("select distinct name from role 
                                join user_role on role_code=code where user_id=$user_id ");
-     if ($role == "Administrator") return;
+     if ($role == "Administrator") return true;
 
      echo "Access denied.You do not have permission to this function ";
 
