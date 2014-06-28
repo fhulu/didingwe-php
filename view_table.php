@@ -1,8 +1,12 @@
 <?php 
 require_once('../common/user.php'); 
-user::verify($function);
+if (is_null($function))
+  log::warn ("Possible SECURITY flaw: Unverified access");
+else
+  user::verify($function);
 if (is_null($sortField)) $sortField = 'null';
 if (is_null($sortOrder)) $sortOrder = 'asc';
+if (is_null($pageSize)) $pageSize = 100;
 ?>
 <link type="text/css" rel="stylesheet" href="table.css"></link>
 <link type="text/css" rel="stylesheet" href="bootstrap.min.css"></link>
@@ -14,7 +18,7 @@ $(function(){
   var table = $('#table').table({
     sortField: "<?=$sortField;?>",
     sortOrder: "<?=$sortOrder;?>",
-    pageSize: 100,
+    pageSize: "<?=$pageSize;?>",
     url:"<?=$url;?>"
   }).data('table');
 });
