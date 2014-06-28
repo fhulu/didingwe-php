@@ -158,7 +158,7 @@ $.fn.form = function(options)
           
           // run callback
           if (++lists_loaded == no_of_lists) {
-            if (url != null) obj.loadChildren(url);
+            if (form.options.url != null) obj.loadChildren(form.options.url);
             form.options.done();
           }
 
@@ -166,7 +166,7 @@ $.fn.form = function(options)
       });
 
       if (no_of_lists == 0) {
-        if (url != null) obj.loadChildren(url);
+        if (form.options.url != null) obj.loadChildren(form.options.url);
         form.options.done();
       }
     },
@@ -212,6 +212,7 @@ $.fn.form = function(options)
               $('.'+id+'_next').checkOnClick(selector+' *', form.next_action);
           });
           $(selector+ ' .title').hide();
+          parent.options.success();
         }});
       });
     }
