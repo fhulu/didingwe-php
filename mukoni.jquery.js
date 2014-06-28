@@ -319,7 +319,7 @@ $.fn.checkOnClick = function(controls,url, options, callback)
       if (result != null)
         $.reportAllErrors(event, result);
       if (callback !== undefined)
-        callback(result);      
+        callback(result, event);      
     });
   });
   return this;
@@ -399,25 +399,24 @@ $.fn.jsonLoadOptions = function(url, options, callback)
     callback = options;
     options = {};
   } 
-  return this.each(function() {
-    var self = $(this);
-    self.html('<option>loading...</option>');
-    var thisUrl = url === undefined? "/?a=json/ref/items&list="+self.attr('list'): url;
-    $.json(thisUrl, options, function(result) {
-      self.html('');
-      $.each(result, function(key, row) {
-        self.append('<option f=t value='+row.item_code+'>'+row.item_name+'</option>');
-      });
-      var def = self.attr('default');
-      if (def !== undefined) {
-        var selected = self.find("[value='"+def+"']");
-        if (selected.length == 0) 
-          selected = $('<option>'+def+'</option>').prependTo(self);
-        selected.prop('selected', true);
-      }
-      if (callback !== undefined) callback(result);
+  var self = $(this);
+  self.html('<option>loading...</option>');
+  var thisUrl = url === undefined? "/?a=json/ref/items&list="+self.attr('list'): url;
+  $.json(thisUrl, options, function(result) {
+    self.html('');
+    $.each(result, function(key, row) {
+      self.append('<option f=t value='+row.item_code+'>'+row.item_name+'</option>');
     });
+    var def = self.attr('default');
+    if (def !== undefined) {
+      var selected = self.find("[value='"+def+"']");
+      if (selected.length == 0) 
+        selected = $('<option>'+def+'</option>').prependTo(self);
+      selected.prop('selected', true);
+    }
+    if (callback !== undefined) callback(result);
   });
+  return this;
 }
 
 $.fn.setChildren = function(result)
