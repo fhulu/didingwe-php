@@ -16,9 +16,10 @@ $.fn.form = function(options)
   options.done = function() {
     var func = $(this).attr('loaded');
     if (func !== undefined) func();
+      if (options.data_url != '') obj.loadChildren(options.data_url);
     options.success();
-  }
-  var form = {
+  };
+  var form  = {
     object: obj,
     form: this,
     inputs: $('<div></div>'),
@@ -42,6 +43,7 @@ $.fn.form = function(options)
       if (data.attributes == null) return this;
       form.attr = data.attributes;
       var attr = form.attr;
+      options.data_url = attr.data_url;
       var title = attr.title;
       document.title = attr.program + ' - ' + title;
       obj.addClass(attr.class);
@@ -157,18 +159,12 @@ $.fn.form = function(options)
           }
           
           // run callback
-          if (++lists_loaded == no_of_lists) {
-            if (form.options.url != null) obj.loadChildren(form.options.url);
-            form.options.done();
-          }
-
+          if (++lists_loaded == no_of_lists) form.options.done();
         });
       });
 
-      if (no_of_lists == 0) {
-        if (form.options.url != null) obj.loadChildren(form.options.url);
-        form.options.done();
-      }
+      if (no_of_lists == 0) form.options.done();
+      
     },
 
     update_dates: function()
