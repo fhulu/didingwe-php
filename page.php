@@ -31,17 +31,31 @@ class page {
     }
   }
   
+  
+  static function read_child_template(&$data)
+  {
+    $template = $data['template'];
+    if (is_null($template)) return;
+    
+    global $db;
+    $template =  $db->read_one_value("select html from template where code = '$template'");
+    if (isset($template))
+      $data['template'] = $template; 
+    else
+      unset($data['template']);
+  }
+  
   static function read_children(&$data)
   {
-    global $db;
+    page::read_child_template($data);
+    
     $children = $data['children'];
-    if (is_null($children)) {
-      unset($data['children']);
-      return;
-    }
+    if (is_null($children)) return;
     
     $code = $data['code'];
     $children = implode('","', explode(',',$children));
+
+    global $db;
     $rows =  $db->read("select f.code, f.type, f.name, f.initial_value value"
                   .",f.options, f.description 'desc', ft.html"
                   .", cf.options overridden_options"
@@ -62,10 +76,8 @@ class page {
     $data['children'] = $children;
   }
   
-  
   static function read($request)
   {
-    global $db;
     $code = $request['code'];
 
     global $db;
