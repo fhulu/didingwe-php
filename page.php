@@ -81,7 +81,8 @@ class page {
     $code = $request['code'];
 
     global $db;
-    $row =  $db->read_one("select f.code,type, f.name, f.description 'desc'"
+    $program = config::$program_name;
+    $row =  $db->read_one("select '$program' program, f.code,type, f.name, f.description 'desc'"
             . ", initial_value value, html, options"
             . " from field f join field_type ft on f.type = ft.code"
             . " where f.code = '$code'", MYSQLI_ASSOC);
