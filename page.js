@@ -26,18 +26,24 @@ $.fn.page = function(options, callback)
       $.json(url, this.read);
     },
    
-    expand_field: function(parent,data)
+    expand_value: function(values,value)
+    {
+      $.each(values, function(code, subst) {
+        if (typeof subst === 'string') 
+          value = value.replace('$'+code, subst);
+      });
+      return value;
+    },
+    
+    expand_fields: function(parent,data)
     {
       $.each(data, function(field, value) {
-        if (typeof value === 'string') {
-          data[field] = data[field].replace('$code', parent);
-          $.each(data, function($field, $value) {
-            if (typeof $value === 'string') 
-              data[field] = data[field].replace('$'+$field, $value);
-          });
+        if (typeof value === 'string' && field !== 'template') {
+          value = value.replace('$code', parent);
+          data[field] = page.expand_value(data, value);
         }
         else if ($.isPlainObject(value)) {
-          data[field] = page.expand_field(field,value);
+          data[field] = page.expand_fields(field,value);
         }
       });
       return data;
@@ -48,16 +54,20 @@ $.fn.page = function(options, callback)
       if (data.children === undefined) return data.html;
   
       var html = "";
-      $.each(data.children, function(field, value) {
-        html += ' ' + value.html.replace('$children', page.expand_children(value));
+      $.each(data.children, function(f, object) {
+        var val = object.html;
+        if (data.template !== undefined) {
+          var template  = page.expand_value(object, data.template);
+          val = template.replace('$field',val);
+        }
+        html += ' ' + val.replace('$children', page.expand_children(object));
       });
       return html;
     },
     
     read: function(data)
     {
-      data = page.expand_field(id,data);
-      console.log(data);
+      data = page.expand_fields(id,data);
       data.html = data.html.replace('$children', page.expand_children(data));
       obj.replaceWith(data.html);
       return;
