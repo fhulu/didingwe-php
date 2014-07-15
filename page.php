@@ -18,42 +18,48 @@ require_once 'ref.php';
 
 class page {
   
-  static function expand(&$row, $field)
+  static function expand_options(&$row, $field)
   {
-    $extras = explode('~',$row[$field]);
-    foreach($extras as $attr) {
-      $attr = explode('=>',$attr);
-      $row[$attr[0]] = $attr[1];
-    }
+    $options = $row[$field];
     unset($row[$field]);
-    $html = &$row['html'];
-    foreach($row as $key=>&$value) {
-      $value = str_replace('$program', config::$program_name, $value);
-      $html = str_replace("\$$key", $value, $html);
+    if (is_null($options)) return;
+    
+    $options = explode('~',$options);
+    foreach($options as $option) {
+      list($name,$value) = explode('=>',$option);
+      $row[$name] = $value;
     }
   }
   
-  static function read_children($code)
+  static function read_children(&$data)
   {
     global $db;
-    $rows =  $db->read("select f.code, f.type, cf.enabled, cf.visible, ft.html,
-                cf.optional,f.name, f.initial_value value, f.description 'desc',
-                f.custom, cf.custom overridden_custom
-                from container_field cf join field f on cf.field_code = f.code 
-                join field_type ft on f.type = ft.code
-                where cf.parent_field_code = '$code'
-                order by cf.position asc", MYSQLI_ASSOC);
+    $children = $data['children'];
+    if (is_null($children)) {
+      unset($data['children']);
+      return;
+    }
+    
+    $code = $data['code'];
+    $children = implode('","', explode(',',$children));
+    $rows =  $db->read("select f.code, f.type, f.name, f.initial_value value"
+                  .",f.options, f.description 'desc', ft.html"
+                  .", cf.options overridden_options"
+                ." from field f join field_type ft on f.type = ft.code"
+                  ." left join container_field_options cf on cf.field_code = f.code"
+                   ." and cf.parent_field_code = '$code'"
+                ." where f.code in (\"$children\")"
+                  . "order by field(f.code,\"$children\")", MYSQLI_ASSOC);
     $children = array();
-    foreach($rows as &$row) {
+    foreach($rows as $row) {
       $code = $row['code'];
-      page::expand($row, 'overridden_custom');
-      page::expand($row, 'custom');
+      page::expand_options($row, 'overridden_options');
+      page::expand_options($row, 'options');
+      page::read_children($row);
       unset($row['code']);
-      if (in_array($row['type'], array('page','container','form'))) 
-        $row['children'] = page::read_children($code);
       $children[$code] = $row;
     }
-    return $children;
+    $data['children'] = $children;
   }
   
   
@@ -63,13 +69,13 @@ class page {
     $code = $request['code'];
 
     global $db;
-    $row =  $db->read_one("select f.code,type, f.name, f.description 'desc', initial_value value, html, custom"
+    $row =  $db->read_one("select f.code,type, f.name, f.description 'desc'"
+            . ", initial_value value, html, options"
             . " from field f join field_type ft on f.type = ft.code"
             . " where f.code = '$code'", MYSQLI_ASSOC);
     
-    page::expand($row, 'custom');
-    if (in_array($row['type'], array('page','container','form','input_page'))) 
-      $row['children'] = page::read_children($code);
+    page::expand_options($row, 'options');
+    page::read_children($row);
     
     echo json_encode($row);
   }
