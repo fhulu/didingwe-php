@@ -18,7 +18,7 @@ require_once 'ref.php';
 
 class page {
   
-  static function expand_options(&$row, $field)
+  static function expand_options(&$row, $field='options')
   {
     $options = $row[$field];
     unset($row[$field]);
@@ -38,11 +38,13 @@ class page {
     if (is_null($template)) return;
     
     global $db;
-    $template =  $db->read_one_value("select html from template where code = '$template'");
-    if (isset($template))
-      $data['template'] = $template; 
-    else
+    $row =  $db->read_one("select html template,options from template where code = '$template'",MYSQLI_ASSOC);
+    if (!isset($row['template'])) {
       unset($data['template']);
+      return;
+    }
+    page::expand_options($row);
+    $data = array_merge ($data, $row);
   }
   
   static function read_children(&$data)
@@ -56,9 +58,8 @@ class page {
     $children = implode('","', explode(',',$children));
 
     global $db;
-    $rows =  $db->read("select f.code, f.type, f.name, f.initial_value value"
-                  .",f.options, f.description 'desc', ft.html"
-                  .", cf.options overridden_options"
+    $rows =  $db->read("select f.code, f.type, f.name, f.description 'desc', ft.html"
+                  .", ft.options type_options, f.options field_options, cf.options page_options"
                 ." from field f join field_type ft on f.type = ft.code"
                   ." left join container_field_options cf on cf.field_code = f.code"
                    ." and cf.parent_field_code = '$code'"
@@ -67,8 +68,9 @@ class page {
     $children = array();
     foreach($rows as $row) {
       $code = $row['code'];
-      page::expand_options($row, 'overridden_options');
-      page::expand_options($row, 'options');
+      page::expand_options($row, 'type_options');
+      page::expand_options($row, 'field_options');
+      page::expand_options($row, 'page_options');
       page::read_children($row);
       unset($row['code']);
       $children[$code] = $row;
@@ -83,11 +85,12 @@ class page {
     global $db;
     $program = config::$program_name;
     $row =  $db->read_one("select '$program' program, f.code,type, f.name, f.description 'desc'"
-            . ", initial_value value, html, options"
+            . ", html, ft.options type_options, f.options field_options"
             . " from field f join field_type ft on f.type = ft.code"
             . " where f.code = '$code'", MYSQLI_ASSOC);
     
-    page::expand_options($row, 'options');
+    page::expand_options($row, 'field_options');
+    page::expand_options($row, 'type_options');
     page::read_children($row);
     
     echo json_encode($row);
