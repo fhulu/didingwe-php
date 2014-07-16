@@ -51,18 +51,20 @@ $.fn.page = function(options, callback)
       return data;
     },
     
-    expand_children: function(data)
+    expand_children: function(data, values)
     {
       if (data.children === undefined) return data.html;
   
       var html = "";
+      $.extend(values, data);
       $.each(data.children, function(f, object) {
         var val = object.html;
+        $.extend(values, object);
         if (data.template !== undefined) {
-          var template  = page.expand_value(object, data.template);
+          var template  = page.expand_value(values, data.template);
           val = template.replace('$field',val);
         }
-        html += ' ' + val.replace('$children', page.expand_children(object));
+        html += ' ' + val.replace('$children', page.expand_children(object, values));
       });
       return html;
     },
@@ -70,7 +72,7 @@ $.fn.page = function(options, callback)
     read: function(data)
     {
       data = page.expand_fields(id,data,{});
-      data.html = data.html.replace('$children', page.expand_children(data));
+      data.html = data.html.replace('$children', page.expand_children(data, {}));
       obj.replaceWith(data.html);
       return;
       if (data.children !== undefined)
