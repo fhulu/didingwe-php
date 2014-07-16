@@ -89,8 +89,8 @@ class page {
             . " from field f join field_type ft on f.type = ft.code"
             . " where f.code = '$code'", MYSQLI_ASSOC);
     
-    page::expand_options($row, 'field_options');
     page::expand_options($row, 'type_options');
+    page::expand_options($row, 'field_options');
     page::read_children($row);
     
     echo json_encode($row);
