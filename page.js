@@ -35,15 +35,17 @@ $.fn.page = function(options, callback)
       return value;
     },
     
-    expand_fields: function(parent,data)
+    expand_fields: function(parent_name, data, values)
     {
+      $.extend(values, data);
       $.each(data, function(field, value) {
-        if (typeof value === 'string' && field !== 'template') {
-          value = value.replace('$code', parent);
-          data[field] = page.expand_value(data, value);
+        if (typeof value === 'string' && value.indexOf('$') >= 0 && field !== 'template') {
+          value = value.replace('$code', parent_name);
+          data[field] = page.expand_value(values, value);
+          $.extend(values, data);
         }
         else if ($.isPlainObject(value)) {
-          data[field] = page.expand_fields(field,value);
+          data[field] = page.expand_fields(field, value, values);
         }
       });
       return data;
@@ -67,7 +69,7 @@ $.fn.page = function(options, callback)
     
     read: function(data)
     {
-      data = page.expand_fields(id,data);
+      data = page.expand_fields(id,data,{});
       data.html = data.html.replace('$children', page.expand_children(data));
       obj.replaceWith(data.html);
       return;
