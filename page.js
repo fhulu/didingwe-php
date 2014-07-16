@@ -39,7 +39,7 @@ $.fn.page = function(options, callback)
     {
       $.extend(values, data);
       $.each(data, function(field, value) {
-        if (typeof value === 'string' && value.indexOf('$') >= 0 && field !== 'template') {
+        if (typeof value === 'string' && value.indexOf('$') >= 0 && field !== 'template' && field != 'attr') {
           value = value.replace('$code', parent_name);
           data[field] = page.expand_value(values, value);
           $.extend(values, data);
@@ -61,6 +61,10 @@ $.fn.page = function(options, callback)
         var val = object.html;
         $.extend(values, object);
         if (data.template !== undefined) {
+          if (data.attr !== undefined) {
+            var attr = page.expand_value(values, data.attr);
+            val = val.replace(/^<(\w+) ?/,'<$1 '+attr);
+          }
           var template  = page.expand_value(values, data.template);
           val = template.replace('$field',val);
         }
