@@ -37,6 +37,7 @@ $.fn.page = function(options, callback)
     
     expand_fields: function(parent_name, data, values)
     {
+      if (values === undefined) values = {};
       $.extend(values, data);
       $.each(data, function(field, value) {
         if (typeof value === 'string' && value.indexOf('$') >= 0 && field !== 'template' && field != 'attr') {
@@ -52,16 +53,15 @@ $.fn.page = function(options, callback)
     },
     
     
-    expand_children: function(dom, data, values)
+    expand_children: function(data, values)
     {
-      if (data.children === undefined) return data.html;
-  
-      var parent = dom.find(':contains($children)');
-      if (parent.length === 0) parent = dom;
-      parent.html(parent.html().replace('$children',''));
+      if (data.children === undefined) return;
+      if (values === undefined) values = {};
+      
       $.extend(values, data);
+      var html = "";
       $.each(data.children, function(f, object) {
-        var val = object.html;
+        var val = object.html == undefined? "": object.html;
         $.extend(values, object);
         if (data.template !== undefined) {
           if (data.attr !== undefined) {
@@ -74,17 +74,18 @@ $.fn.page = function(options, callback)
         if (obj.has_data !== undefined) {
           val = val.replace(/^<(\w+) ?/,'<$1 has_data');
         }
-        var child = $(val);
-        parent.append(child);
-        page.expand_children(child, object, values);
+        object.html = val;
+        page.expand_children(object, values);
+        html += ' ' + object.html;
       });
+      data.html = data.html.replace('$children', html);
     },
     
     read: function(data)
     {
-      data = page.expand_fields(id,data,{});
+      data = page.expand_fields(id,data);
+      page.expand_children(data);
       $(selector).replaceWith($(data.html));
-      page.expand_children($(selector),data, {});
       page.set_data(data,$(selector));
     },
     
@@ -116,9 +117,10 @@ $.fn.page = function(options, callback)
           if (child.attr('has_data') !== undefined) {
             var field_id = child.attr('id');
             var params = {page: id, field:field_id};
-            child.json('/?a=page/data', {data:params}, function(result) {
-              var config = page.get_config(data, field_id);
-              page.expand_children(child, result, config)
+            $.json('/?a=page/data', {data:params}, function(result) {
+              result.html = child.html();
+              page.expand_children(result);
+              child.html(result.html);
               if (++done === count && callback !== undefined) callback();
             });
           }
