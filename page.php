@@ -47,6 +47,13 @@ class page {
     $data = array_merge ($data, $row);
   }
   
+  static function set_data_flag(&$data)
+  {
+    if (!isset($data['data'])) return;
+    unset($data['data']);
+    $data['has_data'] = "";
+  }
+
   static function read_children(&$data)
   {
     page::read_child_template($data);
@@ -72,6 +79,7 @@ class page {
       page::expand_options($row, 'field_options');
       page::expand_options($row, 'page_options');
       page::read_children($row);
+      page::set_data_flag($row);
       unset($row['code']);
       $children[$code] = $row;
     }
@@ -92,7 +100,7 @@ class page {
     page::expand_options($row, 'type_options');
     page::expand_options($row, 'field_options');
     page::read_children($row);
-    
+    page::set_data_flag($row);
     echo json_encode($row);
   }
   
@@ -136,20 +144,27 @@ class page {
   }
  
   
-  static function reference($request)
+  static function data($request)
   {
-    $request = db::addslashes($request);
     $field = $request['field'];
-    $form = $request['form'];
-    global $db;
-    $reference = $db->read_one_value("select ifnull(my_reference,f.reference) "
-      . " from form_field ff left join field f"
-      . " on ff.field_code = f.code"
-      . " where ff.form_code = '$form' and ff.field_code = '$field'");
+    $page = $request['page'];
+    $sql = "select  ft.options type_options, f.options field_options, cf.options page_options"
+              ." from field f join field_type ft on f.type = ft.code"
+                ." left join container_field_options cf on cf.field_code = f.code"
+                 ." and cf.parent_field_code = '$page'"
+              ." where f.code = '$field'";
     
+    global $db;
+    $row =  $db->read_one($sql, MYSQLI_ASSOC);
+    
+    page::expand_options($row, 'type_options');
+    page::expand_options($row, 'field_options');
+    page::expand_options($row, 'page_options');
+
+    $data = $row['data'];    
     
     $matches = array();
-    preg_match('/(.+): (.+)/', $reference, $matches);
+    preg_match('/^([^:]+): ?(.+)/', $data, $matches);
     $type = $matches[1];
     $list = $matches[2];
     
@@ -166,7 +181,7 @@ class page {
       return;
     }
     if ($type == 'sql') {
-      $rows = $db->read($list);
+      $rows = $db->read($list, MYSQLI_ASSOC);
       echo json_encode($rows);
       return;
     }
