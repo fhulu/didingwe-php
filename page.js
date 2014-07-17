@@ -51,11 +51,14 @@ $.fn.page = function(options, callback)
       return data;
     },
     
-    expand_children: function(data, values)
+    
+    expand_children: function(dom, data, values)
     {
       if (data.children === undefined) return data.html;
   
-      var html = "";
+      var parent = dom.find(':contains($children)');
+      if (parent.length === 0) parent = dom;
+      parent.html(parent.html().replace('$children',''));
       $.extend(values, data);
       $.each(data.children, function(f, object) {
         var val = object.html;
@@ -71,25 +74,30 @@ $.fn.page = function(options, callback)
         if (obj.has_data !== undefined) {
           val = val.replace(/^<(\w+) ?/,'<$1 has_data');
         }
-        html += ' ' + val.replace('$children', page.expand_children(object, values));
+        var child = $(val);
+        parent.append(child);
+        page.expand_children(child, object, values);
       });
-      return html;
     },
     
     read: function(data)
     {
       data = page.expand_fields(id,data,{});
-      data.html = data.html.replace('$children', page.expand_children(data, {}));
       $(selector).replaceWith($(data.html));
+      page.expand_children($(selector),data, {});
       page.set_data(data,$(selector));
     },
     
     get_config: function(config, domid)
     {
-      console.log("searching", domid,config);
+      var found;
       $.each(config.children, function(id, obj) {
-        if (id === domid) { console.log("found", obj); return obj; }
+        if (id === domid) {
+          found = obj;
+          return;
+        }
       });
+      if (found) return found;
       
       $.each(config.children, function(id, obj) {
         var found = page.get_config(obj, domid);
@@ -109,11 +117,8 @@ $.fn.page = function(options, callback)
             var field_id = child.attr('id');
             var params = {page: id, field:field_id};
             child.json('/?a=page/data', {data:params}, function(result) {
-              console.log(result);
-              $.each(result.data, function(i, values) {
-                var html = page.expand_value(values, result.template);
-                child.append(html);
-              });
+              var config = page.get_config(data, field_id);
+              page.expand_children(child, result, config)
               if (++done === count && callback !== undefined) callback();
             });
           }
@@ -168,7 +173,7 @@ $.fn.page = function(options, callback)
       });
     }
   };
-  page.load();
+  if (options.autoLoad) page.load();
   return page;
 }
 
