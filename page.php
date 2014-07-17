@@ -160,8 +160,10 @@ class page {
     page::expand_options($row, 'type_options');
     page::expand_options($row, 'field_options');
     page::expand_options($row, 'page_options');
-
+    page::read_child_template($row);
+    
     $data = $row['data'];    
+    $template = $row['template'];
     
     $matches = array();
     preg_match('/^([^:]+): ?(.+)/', $data, $matches);
@@ -170,24 +172,19 @@ class page {
     
     if ($type == 'inline') {
       $values = explode('|', $list);
-      $result = array();
+      $rows = array();
       foreach($values as $pair) {
         list($code) = explode(',', $pair);
         $value['item_code'] = $code;
         $value['item_name'] = substr($pair, strlen($code)+1);
-        $result[] = $value;
+        $rows[] = $value;
       }
-      echo json_encode($result);
-      return;
+      
     }
-    if ($type == 'sql') {
+    else if ($type == 'sql') {
       $rows = $db->read($list, MYSQLI_ASSOC);
-      echo json_encode($rows);
-      return;
     }
-    
-    $request['list'] = $reference;
-    return ref::items($request);
+    echo json_encode(array("template"=>$template, "data"=>$rows));
   }
   
 }

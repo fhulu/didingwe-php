@@ -84,44 +84,36 @@ $.fn.page = function(options, callback)
       page.set_data(data,$(selector));
     },
     
-     expand_values: function(data,values)
+    get_config: function(config, domid)
     {
-      if (data.children === undefined) return data.html;
-  
-      var html = "";
-      $.extend(values, data);
-      $.each(data.children, function(f, object) {
-        var val = object.html;
-        $.extend(values, object);
-        if (data.template !== undefined) {
-          if (data.attr !== undefined) {
-            var attr = page.expand_value(values, data.attr);
-            val = val.replace(/^<(\w+) ?/,'<$1 '+attr);
-          }
-          var template  = page.expand_value(values, data.template);
-          val = template.replace('$field',val);
-        }
-        if (obj.has_data !== undefined) {
-          val = val.replace(/^<(\w+) ?/,'<$1 has_data');
-        }
-        val = val.replace('$children', page.expand_children(object, values));
-        if (val.indexof('$children')<0) val = val.replace('$children', '');
-        html += ' ' + val;
+      console.log("searching", domid,config);
+      $.each(config.children, function(id, obj) {
+        if (id === domid) { console.log("found", obj); return obj; }
       });
-      return html;
+      
+      $.each(config.children, function(id, obj) {
+        var found = page.get_config(obj, domid);
+        if (found !== null) return found;
+      });
+      return null;
     },
    
-    set_data: function(data, parent, callback) 
+    set_data: function(data, parent,callback) 
     {
       var count = parent.children('[has_data]').length;
       var done = 0;
       parent.children().each(function() {
         var child = $(this);
-        page.set_data(child, function() {
+        page.set_data(data,child, function() {
           if (child.attr('has_data') !== undefined) {
-            var data = {page: id, field:child.attr('id')};
-            child.json('/?a=page/data', {data:data}, function(result) {
-              //page.expand_values(child,result)
+            var field_id = child.attr('id');
+            var params = {page: id, field:field_id};
+            child.json('/?a=page/data', {data:params}, function(result) {
+              console.log(result);
+              $.each(result.data, function(i, values) {
+                var html = page.expand_value(values, result.template);
+                child.append(html);
+              });
               if (++done === count && callback !== undefined) callback();
             });
           }
