@@ -184,7 +184,7 @@ class page {
     else if ($type == 'sql') {
       $rows = $db->read($list, MYSQLI_ASSOC);
     }
-    echo json_encode(array("template"=>$template, "data"=>$rows));
+    echo json_encode(array("template"=>$template, "children"=>$rows));
   }
   
 }
