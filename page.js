@@ -63,16 +63,18 @@ $.fn.page = function(options, callback)
       $.each(data.children, function(f, object) {
         var val = object.html == undefined? "": object.html;
         $.extend(values, object);
+        if (object.attr !== undefined) {
+          console.log("obj.attr", object.attr, val);
+          var attr = page.expand_value(values, object.attr);
+          val = val.replace(/^<(\w+) ?/,'<$1 '+attr + ' ');
+          console.log("attr", attr, val);
+        }
         if (data.template !== undefined) {
-          if (data.attr !== undefined) {
-            var attr = page.expand_value(values, data.attr);
-            val = val.replace(/^<(\w+) ?/,'<$1 '+attr);
-          }
           var template  = page.expand_value(values, data.template);
           val = template.replace('$field',val);
         }
         if (obj.has_data !== undefined) {
-          val = val.replace(/^<(\w+) ?/,'<$1 has_data');
+          val = val.replace(/^<(\w+) ?/,'<$1 has_data ');
         }
         object.html = val;
         page.expand_children(object, values);
@@ -86,7 +88,9 @@ $.fn.page = function(options, callback)
       data = page.expand_fields(id,data);
       page.expand_children(data);
       $(selector).replaceWith($(data.html));
-      page.set_data(data,$(selector));
+      page.set_data(data,$(selector), function() {
+        page.assign_handlers(data);
+      });
     },
     
     get_config: function(config, domid)
@@ -129,6 +133,19 @@ $.fn.page = function(options, callback)
       if (count===0 && callback !== undefined) callback();
     },
 
+    assign_handlers: function(data)
+    {
+      if (data.children === undefined) return;
+      $.each(data.children, function(id, child) {
+        var obj = $('#'+id);
+        if (child.check !== undefined) 
+          obj.checkOnClick(selector + ' ' + child.check, child.url);
+        else if (child.url !== undefined)
+          obj.click(function() { location.href = child.url; });
+        page.assign_handlers(child);
+      });
+    },
+    
     update_dates: function()
     {
       // load date picker after form is loaded 
