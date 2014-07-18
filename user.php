@@ -1046,6 +1046,30 @@ class user
      return false;
   }
 
+  static function menu($request, $name)
+  {
+    global $session;
+    if ($_SESSION[instance] == '' || $_SESSION[last_error] != '') {
+      require_once('user.php');
+      $functions =  user::default_functions();
+    }
+    else {
+      global $session;
+      require_once("user.php");
+      $user = $session->user;
+      $functions = $user->partner_id? $user->functions: user::default_functions();
+    }
+    
+    $functions = implode("','", $functions);
+    global $db;
+    $parent_id = $db->read_one_value("select id mukonin_fpb. from menu where name = '$name' and program_id = ".config::$program_id );
 
+    $sql = "select ifnull(url,concat(f.code,'.html')) href, description title, ifnull(m.name,f.name) name
+            from menu m join function f on f.code = m.function_code and f.program_id = m.program_id
+            where parent_id = 20 and f.program_id = 3 and f.code in ('$functions')
+            order by position";
+    
+    return $db->read($sql, MYSQLI_ASSOC);
+ }
   
 }
