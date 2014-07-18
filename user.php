@@ -1062,7 +1062,7 @@ class user
     
     $functions = implode("','", $functions);
     global $db;
-    $parent_id = $db->read_one_value("select id mukonin_fpb. from menu where name = '$name' and program_id = ".config::$program_id );
+    $parent_id = $db->read_one_value("select id from menu where name = '$name' and program_id = ".config::$program_id );
 
     $sql = "select ifnull(url,concat(f.code,'.html')) href, description title, ifnull(m.name,f.name) name
             from menu m join function f on f.code = m.function_code and f.program_id = m.program_id
