@@ -181,11 +181,17 @@ class page {
         $value['item_name'] = substr($pair, strlen($code)+1);
         $rows[] = $value;
       }
-      
     }
     else if ($type == 'sql') {
       $rows = $db->read($list, MYSQLI_ASSOC);
     }
+    else if ($type == 'function') {
+      $params = array();
+      preg_match('/^([^\(]+)\(([^\)]+)\)/', $list, $params);
+      log::debug("FUNCTION ".$params[1]." PARAMS:".$params[2]);
+      $rows = call_user_func($params[1], $request, $params[2]);
+    }
+    
     echo json_encode(array("template"=>$template, "children"=>$rows));
   }
   
