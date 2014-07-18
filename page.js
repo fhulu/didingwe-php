@@ -52,6 +52,12 @@ $.fn.page = function(options, callback)
       return data;
     },
     
+    expand_attr: function(html, values, attr)
+    {
+      if (attr === undefined) return html;
+      attr = page.expand_value(values, attr);
+      return html.replace(/^<(\w+) ?/,'<$1 '+attr + ' ');
+    },
     
     expand_children: function(data, values)
     {
@@ -63,13 +69,9 @@ $.fn.page = function(options, callback)
       $.each(data.children, function(f, object) {
         var val = object.html == undefined? "": object.html;
         $.extend(values, object);
-        if (object.attr !== undefined) {
-          console.log("obj.attr", object.attr, val);
-          var attr = page.expand_value(values, object.attr);
-          val = val.replace(/^<(\w+) ?/,'<$1 '+attr + ' ');
-          console.log("attr", attr, val);
-        }
+        val = page.expand_attr(val, values, object.attr);
         if (data.template !== undefined) {
+          val = page.expand_attr(val, values, values.attr);
           var template  = page.expand_value(values, data.template);
           val = template.replace('$field',val);
         }
