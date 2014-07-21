@@ -128,16 +128,15 @@ $.fn.page = function(options, callback)
       parent.children().each(function() {
         var child = $(this);
         page.set_data(data,child, function() {
-          if (child.attr('has_data') !== undefined) {
-            var field_id = child.attr('id');
-            var params = {page: id, field:field_id};
-            $.json('/?a=page/data', {data:params}, function(result) {
-              result.html = child.html();
-              page.expand_objects(result);
-              child.html(result.html);
-              if (++done === count && callback !== undefined) callback();
-            });
-          }
+          if (child.attr('has_data') === undefined) return;
+          var field_id = child.attr('id');
+          var params = {page: id, field:field_id};
+          $.json('/?a=page/data', {data:params}, function(result) {
+            result.html = child.html();
+            page.expand_objects(result);
+            child.html(result.html);
+            if (++done === count && callback !== undefined) callback();
+          });
         });
       });
       if (count===0 && callback !== undefined) callback();
