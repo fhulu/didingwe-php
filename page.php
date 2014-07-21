@@ -55,7 +55,7 @@ class page {
     unset($data['data']);
     $data['has_data'] = "";
   }
-
+  
   static function read_children(&$data)
   {
     page::read_child_template($data);
@@ -86,24 +86,42 @@ class page {
       $children[$code] = $row;
     }
     $data['children'] = $children;
+    unset($row['code']);
+  }
+ 
+  static function read_field($field, &$row)
+  {
+    global $db;
+    $data =  $db->read_one("select f.code,type, f.name, f.description 'desc'"
+            . ", html, ft.options type_options, f.options field_options"
+            . " from field f join field_type ft on f.type = ft.code"
+            . " where f.code = '$field'", MYSQLI_ASSOC);
+    
+    if (sizeof($data) == 0) return;
+    $row = array_merge($row,$data);
+    page::expand_options($row, 'type_options');
+    page::expand_options($row, 'field_options');
+    page::set_data_flag($row);
+    // check if all variables in html can be expanded/sustituted
+    $matches = array();
+    if (!preg_match_all('/\$([\w]+)/', $row['html'], $matches)) return;
+    
+    $vars = array_diff($matches[1], array('code', 'children'));
+    foreach($vars as $var) {
+      if (array_key_exists($var, $row)) continue;
+      $values = array();
+      page::read_field($var, $values);
+      $row[$var] = $values;
+    }
+    page::read_children($row);
   }
   
   static function read($request)
   {
-    $code = $request['code'];
-
-    global $db;
-    $program = config::$program_name;
-    $row =  $db->read_one("select '$program' program, f.code,type, f.name, f.description 'desc'"
-            . ", html, ft.options type_options, f.options field_options"
-            . " from field f join field_type ft on f.type = ft.code"
-            . " where f.code = '$code'", MYSQLI_ASSOC);
-    
-    page::expand_options($row, 'type_options');
-    page::expand_options($row, 'field_options');
-    page::read_children($row);
-    page::set_data_flag($row);
+    $row = array("program" => config::$program_name);
+    page::read_field($request['code'], $row);
     echo json_encode($row);
+
   }
   
   static function validate($request)

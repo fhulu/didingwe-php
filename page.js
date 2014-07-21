@@ -59,36 +59,44 @@ $.fn.page = function(options, callback)
       return html.replace(/^<(\w+) ?/,'<$1 '+attr + ' ');
     },
     
-    expand_children: function(data, values)
+    expand_objects: function(objects, orig_values)
     {
-      if (data.children === undefined) return;
-      if (values === undefined) values = {};
+      if (orig_values === undefined) orig_values = {};
       
-      $.extend(values, data);
-      var html = "";
-      $.each(data.children, function(f, object) {
-        var val = object.html == undefined? "": object.html;
-        $.extend(values, object);
-        val = page.expand_attr(val, values, object.attr);
-        if (data.template !== undefined) {
-          val = page.expand_attr(val, values, values.attr);
-          var template  = page.expand_value(values, data.template);
-          val = template.replace('$field',val);
-        }
-        if (obj.has_data !== undefined) {
-          val = val.replace(/^<(\w+) ?/,'<$1 has_data ');
-        }
-        object.html = val;
-        page.expand_children(object, values);
-        html += ' ' + object.html;
+      $.extend(orig_values, objects);
+
+      $.each(objects, function(field, data) {
+        if (!$.isPlainObject(data) && !$.isArray(data)) return;
+        var values = $.isArray(data)? orig_values: $.extend({}, orig_values, data);
+        var my_html = "";
+        $.each(data, function(f, object) {
+          if (object === null) return;
+          if (!$.isPlainObject(object) && !$.isArray(object)) return;
+          var val = object.html == undefined? "": object.html;
+          $.extend(values, object);
+          val = page.expand_attr(val, values, object.attr);
+          if (objects.template !== undefined) {
+            val = page.expand_attr(val, values, values.attr);
+            var template  = page.expand_value(values, objects.template);
+            val = template.replace('$field',val);
+          }
+          if (obj.has_data !== undefined) {
+            val = val.replace(/^<(\w+) ?/,'<$1 has_data ');
+          }
+          object.html = val;
+          page.expand_objects(object, values);
+          my_html += object.html;
+        });
+        if (my_html == '') my_html = data.html;
+        if (objects.html !== undefined) 
+          objects.html = objects.html.replace('$'+field, my_html);
       });
-      data.html = data.html.replace('$children', html);
     },
     
     read: function(data)
     {
       data = page.expand_fields(id,data);
-      page.expand_children(data);
+      page.expand_objects(data);
       $(selector).replaceWith($(data.html));
       page.set_data(data,$(selector), function() {
         page.assign_handlers(data);
@@ -125,7 +133,7 @@ $.fn.page = function(options, callback)
             var params = {page: id, field:field_id};
             $.json('/?a=page/data', {data:params}, function(result) {
               result.html = child.html();
-              page.expand_children(result);
+              page.expand_objects(result);
               child.html(result.html);
               if (++done === count && callback !== undefined) callback();
             });
