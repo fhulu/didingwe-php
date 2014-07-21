@@ -203,9 +203,9 @@ class page {
     else if ($type == 'sql') {
       $rows = $db->read($list, MYSQLI_ASSOC);
     }
-    else if ($type == 'function') {
+    else {
       $params = array();
-      preg_match('/^([^\(]+)\(([^\)]+)\)/', $list, $params);
+      preg_match('/^([^\(]+)\(([^\)]+)\)/', $data, $params);
       log::debug("FUNCTION ".$params[1]." PARAMS:".$params[2]);
       $rows = call_user_func($params[1], $request, $params[2]);
     }
