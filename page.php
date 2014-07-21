@@ -56,11 +56,11 @@ class page {
     $data['has_data'] = "";
   }
   
-  static function read_children(&$data)
+  static function read_children(&$data, $field='children')
   {
     page::read_child_template($data);
     
-    $children = $data['children'];
+    $children = $data[$field];
     if (is_null($children)) return;
     
     $code = $data['code'];
@@ -82,10 +82,11 @@ class page {
       page::expand_options($row, 'page_options');
       page::read_children($row);
       page::set_data_flag($row);
+      page::expand_variables($row);
       unset($row['code']);
       $children[$code] = $row;
-    }
-    $data['children'] = $children;
+      }
+    $data[$field] = $children;
     unset($row['code']);
   }
  
@@ -97,11 +98,16 @@ class page {
             . " from field f join field_type ft on f.type = ft.code"
             . " where f.code = '$field'", MYSQLI_ASSOC);
     
-    if (sizeof($data) == 0) return;
-    $row = array_merge($row,$data);
+    $row = array_merge($row, $data);
     page::expand_options($row, 'type_options');
     page::expand_options($row, 'field_options');
     page::set_data_flag($row);
+    page::expand_variables($row);
+    page::read_children($row);
+  }
+  
+  static function expand_variables(&$row)
+  {
     // check if all variables in html can be expanded/sustituted
     $matches = array();
     if (!preg_match_all('/\$([\w]+)/', $row['html'], $matches)) return;
@@ -109,17 +115,19 @@ class page {
     $vars = array_diff($matches[1], array('code', 'children'));
     foreach($vars as $var) {
       if (array_key_exists($var, $row)) continue;
-      $values = array();
+      log::debug("EXPANDING $var");
+      $values = array_diff($row, array('code', 'children', 'template', 'html'));
       page::read_field($var, $values);
       $row[$var] = $values;
     }
-    page::read_children($row);
   }
   
   static function read($request)
   {
-    $row = array("program" => config::$program_name);
-    page::read_field($request['code'], $row);
+    global $db;
+    $field = $request['code'];
+    $row['program'] = config::$program_name;
+    page::read_field($field, $row);
     echo json_encode($row);
 
   }
@@ -189,7 +197,6 @@ class page {
     preg_match('/^([^:]+): ?(.+)/', $data, $matches);
     $type = $matches[1];
     $list = $matches[2];
-    
     if ($type == 'inline') {
       $values = explode('|', $list);
       $rows = array();
@@ -203,11 +210,9 @@ class page {
     else if ($type == 'sql') {
       $rows = $db->read($list, MYSQLI_ASSOC);
     }
-    else {
-      $params = array();
-      preg_match('/^([^\(]+)\(([^\)]+)\)/', $data, $params);
-      log::debug("FUNCTION ".$params[1]." PARAMS:".$params[2]);
-      $rows = call_user_func($params[1], $request, $params[2]);
+    else if (preg_match('/^([^\(]+)\(([^\)]+)\)/', $data, $matches) ) {
+      log::debug("FUNCTION ".$matches[1]." PARAMS:".$matches[2]);
+      $rows = call_user_func($matches[1], $request, $matches[2]);
     }
     
     echo json_encode(array("template"=>$template, "children"=>$rows));
