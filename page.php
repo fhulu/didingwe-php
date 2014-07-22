@@ -85,27 +85,12 @@ class page {
       page::expand_variables($row);
       unset($row['code']);
       $children[$code] = $row;
-      }
+    }
     $data[$field] = $children;
     unset($row['code']);
   }
  
-  static function read_field($field, &$row)
-  {
-    global $db;
-    $data =  $db->read_one("select f.code,type, f.name, f.description 'desc'"
-            . ", html, ft.options type_options, f.options field_options"
-            . " from field f join field_type ft on f.type = ft.code"
-            . " where f.code = '$field'", MYSQLI_ASSOC);
-    
-    $row = array_merge($row, $data);
-    page::expand_options($row, 'type_options');
-    page::expand_options($row, 'field_options');
-    page::set_data_flag($row);
-    page::expand_variables($row);
-    page::read_children($row);
-  }
-  
+ 
   static function expand_variables(&$row)
   {
     // check if all variables in html can be expanded/sustituted
@@ -116,9 +101,10 @@ class page {
     foreach($vars as $var) {
       if (array_key_exists($var, $row)) continue;
       log::debug("EXPANDING $var");
-      $values = array_diff($row, array('code', 'children', 'template', 'html'));
-      page::read_field($var, $values);
-      $row[$var] = $values;
+      $values = array_diff($row, array('children', 'template', 'html'));
+      $values['children'] = $var;
+      page::read_children($values);
+      $row[$var] = $values['children'][$var];
     }
   }
   
@@ -126,8 +112,11 @@ class page {
   {
     global $db;
     $field = $request['code'];
+    $row['code'] = $request['parent'];
+    $field = $row['children'] = $request['code'];
+    page::read_children($row);
+    $row = $row['children'][$field];
     $row['program'] = config::$program_name;
-    page::read_field($field, $row);
     echo json_encode($row);
 
   }
