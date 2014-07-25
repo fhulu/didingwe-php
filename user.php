@@ -182,17 +182,12 @@ class user
   static function start_reset_pw($request)
   {    
     if (!user::verify_internal($request)) return false;
-    $v = new validator($request);
-    $v->check('email')->is('optional(cellphone)','email');
-   // $v->check('cellphone')->is('optional(email)','telephone');
-    if (!$v->valid()) return false;
-    
-    $cellphone = addslashes($request['cellphone']);
     $email = addslashes($request['email']);
     global $db;
     $email = $db->read_one_value("select email_address, cellphone from user "
-            . "where (email_address='$email' and cellphone = '$cellphone' or '$email' = '' and cellphone = '$cellphone' or email_address='$email' and '$cellphone' = '') and program_id = " . config::$program_id);
+            . "where email_address='$email' and program_id = " . config::$program_id);
 
+    $v = new validator($request);
     if ($email == '') 
       return $v->report('email', "!We do not have a user with supplied details registered on the system");
         
@@ -768,8 +763,8 @@ class user
     $user = &$session->user;
     $requestor = "$user->first_name $user->last_name";
     $email = $request['email_address'];
-    $first_name= $request['first_name'];
-    $last_name= $request['last_name'];
+    $first_name= addslashes($request['first_name']);
+    $last_name= addslashes($request['last_name']);
     $cellphone= $request['cellphone'];
     $title= $request['title'];
     $code= $request['role'];
