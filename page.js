@@ -72,12 +72,13 @@ $.fn.page = function(options, callback)
         $.each(data, function(f, object) {
           if (object === null) return;
           if (!$.isPlainObject(object) && !$.isArray(object)) return;
-          var val = object.html == undefined? "": object.html;
+          var val = object.html;
           $.extend(values, object);
           val = page.expand_attr(val, values, object.attr);
           if (objects.template !== undefined) {
             val = page.expand_attr(val, values, values.attr);
             var template  = page.expand_value(values, objects.template);
+            template = template.replace('$code', f);
             val = template.replace('$field',val);
           }
           if (obj.has_data !== undefined) {
@@ -98,7 +99,7 @@ $.fn.page = function(options, callback)
       data = page.expand_fields(id,data);
       page.expand_objects(data);
       $(selector).replaceWith($(data.html));
-      page.set_data(data,$(selector), function() {
+      page.set_data(data,$(selector).parent(), function() {
         page.assign_handlers(data);
       });
     },
@@ -120,7 +121,7 @@ $.fn.page = function(options, callback)
       });
       return null;
     },
-   
+    
     set_data: function(data, parent,callback) 
     {
       var count = parent.children('[has_data]').length;
@@ -128,14 +129,17 @@ $.fn.page = function(options, callback)
       parent.children().each(function() {
         var child = $(this);
         page.set_data(data,child, function() {
-          if (child.attr('has_data') === undefined) return;
+          var has_data = child.attr('has_data');
+          if (has_data === undefined) return;
+          child.removeAttr('has_data');
           var field_id = child.attr('id');
-          var params = {page: id, field:field_id};
+          var params = {page: id, field:field_id, data: has_data };
           $.json('/?a=page/data', {data:params}, function(result) {
             result.html = child.html();
+            result = page.expand_fields(field_id, result);
             page.expand_objects(result);
             child.html(result.html);
-            if (++done === count && callback !== undefined) callback();
+            if (++done === count) page.set_data(data, parent, callback);
           });
         });
       });

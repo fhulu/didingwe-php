@@ -32,7 +32,7 @@ class page {
   }
   
   
-  static function read_child_template(&$data)
+  static function read_child_template(&$data, $children='children')
   {
     $template = $data['template'];
     if (is_null($template)) return;
@@ -41,12 +41,23 @@ class page {
     $row =  $db->read_one("select html template,options from template where code = '$template'"
             . " union"
             . " select html template, options from field_type where code = '$template'",MYSQLI_ASSOC);
-    if (!isset($row['template'])) {
+    $template = $row['template'];
+    if (!isset($template)) {
       unset($data['template']);
       return;
     }
     page::expand_options($row);
     $data = array_merge ($data, $row);
+    $children_template = $data['children_template'];
+    if (!isset($children_template)) return;
+    
+    unset($data['children_template']);
+    $children = &$data[$children];
+    log::debug("template $template children $children_template");
+    if (!is_null($children_template) && !is_null($children)) {
+      $children['template'] = $children_template;
+      page::read_child_template($children);
+    }
   }
   
   static function set_data_flag(&$data)
@@ -58,7 +69,6 @@ class page {
   
   static function read_children(&$data, $field='children')
   {
-    page::read_child_template($data);
     
     $children = $data[$field];
     if (is_null($children)) return;
@@ -88,6 +98,7 @@ class page {
     }
     $data[$field] = $children;
     unset($row['code']);
+    page::read_child_template($data);
   }
  
  
@@ -105,6 +116,17 @@ class page {
       $values['children'] = $var;
       page::read_children($values);
       $row[$var] = $values['children'][$var];
+    }
+  }
+
+  static function expand_values(&$row, $exclusions=array())
+  {
+
+    foreach($row as $key1=>&$value1) {
+      if (in_array($key1, $exclusions)) continue;
+      foreach ($row as $key2=>$value2) {
+        $value1 = preg_replace('/\$'.$key2.'([^\w]*)/', "$value2\$1", $value1);
+      }
     }
   }
   
@@ -160,25 +182,42 @@ class page {
     return $v->valid();
   }
  
+  static function recode(&$rows, $field='code')
+  {
+    $result = array();
+    foreach($rows as $row)
+    {
+      $code = $row[$field];
+      unset($row[$field]);
+      $result[$code] = $row; 
+    }
+    $rows = $result;
+  }
   
+  static function expand_templates(&$data) 
+  {
+    foreach($data as $key=>&$value) {
+      if (isset($value['children'])) page::read_child_template($value);
+    }
+  }
   static function data($request)
   {
     $field = $request['field'];
     $page = $request['page'];
-    $sql = "select  ft.options type_options, f.options field_options, cf.options page_options"
+    $sql = "select f.code, ft.options type_options, f.options field_options, cf.options page_options"
               ." from field f join field_type ft on f.type = ft.code"
                 ." left join container_field_options cf on cf.field_code = f.code"
                  ." and cf.parent_field_code = '$page'"
               ." where f.code = '$field'";
-    
+
     global $db;
     $row =  $db->read_one($sql, MYSQLI_ASSOC);
-    
+
     page::expand_options($row, 'type_options');
     page::expand_options($row, 'field_options');
     page::expand_options($row, 'page_options');
     page::read_child_template($row);
-    
+    page::expand_values($row, array('template'));
     $data = $row['data'];    
     $template = $row['template'];
     
@@ -200,10 +239,14 @@ class page {
       $rows = $db->read($list, MYSQLI_ASSOC);
     }
     else if (preg_match('/^([^\(]+)\(([^\)]+)\)/', $data, $matches) ) {
-      log::debug("FUNCTION ".$matches[1]." PARAMS:".$matches[2]);
-      $rows = call_user_func($matches[1], $request, $matches[2]);
+      $function = $matches[1];
+      log::debug("FUNCTION $function PARAMS:".$matches[2]);
+      list($class, $method) = explode('::', $function);
+      if (isset($method)) require_once("$class.php");
+      $rows = call_user_func($function, $request, $matches[2]);
     }
-    
+
+    page::expand_templates($rows);    
     echo json_encode(array("template"=>$template, "children"=>$rows));
   }
   
