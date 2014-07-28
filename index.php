@@ -70,7 +70,7 @@ function load_div($div)
     }
     catch (user_exception $exception) {
       log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
-      require_once('breach.php');
+      echo "<script>location.href='login.html';</script>";
     }
     catch (Exception $exception)
     {
