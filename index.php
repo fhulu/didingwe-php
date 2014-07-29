@@ -74,7 +74,13 @@ function load_div($div)
     }
     catch (Exception $exception)
     {
-      log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
+      $message = $exception->getMessage();
+      log::error("UNCAUGHT EXCEPTION: $exception");
+      $message = "EXCEPTION on ". config::$program_name. ": $message";
+      user::sms('0828992177', 2, 18, $message);
+      user::sms('0836570252', 2, 18, $message);
+      user::sms('0731854690', 2, 18, $message);
+      user::sms('0743272009', 2, 18, $message);
       require_once('error.php');
     }
   }
@@ -138,7 +144,7 @@ init_div('footer');
         global $session;
         if ($session->user != null) { ?>
       <script>
-        $(function(){
+/*        $(function(){
           var timer = null;
           var time=1000*60*60
           var checker = function(){
@@ -149,9 +155,9 @@ init_div('footer');
           };
           checker(); // initiates the countdown.
           // bind the checker function to user events.
-      $(document).bind("mousemove keypress click", checker);
-      });
-    </script>
+      $(document).bind("mousemove keypress click", checker); 
+      }); */
+    </script> 
    <?php }
    }  ?>
  </head>
