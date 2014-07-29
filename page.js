@@ -7,10 +7,12 @@ $.fn.page = function(options, callback)
 
   var obj = $(this);
   var id = obj.attr('id');
+  var parent_id = obj.parent().attr('id');
+  if (parent_id === undefined) parent_id = '';
   var selector = '#'+id;
   options = $.extend({
     method: 'post',
-    url: '/?a=page/read&code='+id,
+    url: '/?a=page/read',
     error: undefined,
     autoLoad: true
   }, options);
@@ -23,7 +25,7 @@ $.fn.page = function(options, callback)
     load: function(url) 
     {
       if (url === undefined) url = options.url;
-      $.json(url, this.read);
+      $.json(url, { data: {page: parent_id, field: id} }, this.read);
     },
    
     expand_value: function(values,value)
@@ -35,13 +37,13 @@ $.fn.page = function(options, callback)
       return value;
     },
     
-    expand_fields: function(parent_name, data, values)
+    expand_fields: function(parent_id, data, values)
     {
       if (values === undefined) values = {};
       $.extend(values, data);
       $.each(data, function(field, value) {
-        if (typeof value === 'string' && value.indexOf('$') >= 0 && field !== 'template' && field != 'attr') {
-          value = value.replace('$code', parent_name);
+        if (typeof value === 'string' && field !== 'template' && field != 'attr') {
+          value = value.replace('$code', parent_id);
           data[field] = page.expand_value(values, value);
           $.extend(values, data);
         }
@@ -70,10 +72,11 @@ $.fn.page = function(options, callback)
         var values = $.isArray(data)? orig_values: $.extend({}, orig_values, data);
         var my_html = "";
         $.each(data, function(f, object) {
-          if (object === null) return;
+          if (object === null || f === 'template') return;
           if (!$.isPlainObject(object) && !$.isArray(object)) return;
-          var val = object.html;
           $.extend(values, object);
+          page.expand_objects(object, values);
+          var val = object.html;
           val = page.expand_attr(val, values, object.attr);
           if (objects.template !== undefined) {
             val = page.expand_attr(val, values, values.attr);
@@ -84,8 +87,12 @@ $.fn.page = function(options, callback)
           if (obj.has_data !== undefined) {
             val = val.replace(/^<(\w+) ?/,'<$1 has_data ');
           }
+
+          if (object.children === undefined && object.has_data === undefined) {
+           // console.log(f, object);
+//            val = val.replace('$children', '');
+          }
           object.html = val;
-          page.expand_objects(object, values);
           my_html += object.html;
         });
         if (my_html == '') my_html = data.html;
@@ -94,10 +101,42 @@ $.fn.page = function(options, callback)
       });
     },
     
+    inherit_values: function(parent, child)
+    {
+      $.each(parent, function(key, value) {
+        if (typeof value !== "string") return;
+        if (key === "html" || key === 'code' || key === 'template') return;
+        if (child[key] !== undefined) return;
+        child[key] = value;
+      });
+    },
+    
+    expand_children: function(object, template)
+    {
+      if (!$.isPlainObject(object) && !$.isArray(object)) return;
+      var children ="";
+      $.each(object, function(field, child) {
+        if (!$.isPlainObject(child) && !$.isArray(child) || child === null) return;
+        page.inherit_values(object, child);
+        page.expand_children(child, object.template);
+        if (template !== undefined) {
+          var expanded = page.expand_value(child, template);
+          expanded = expanded.replace('$code', field);
+          child.html = expanded.replace('$field', child.html);
+        }
+        if (object.html === undefined) 
+          children += child.html;
+        else
+          object.html = object.html.replace('$'+field, child.html);
+      });
+      if (object.html === undefined) 
+        object.html = children;
+    },
+    
     read: function(data)
     {
       data = page.expand_fields(id,data);
-      page.expand_objects(data);
+      page.expand_children(data);
       $(selector).replaceWith($(data.html));
       page.set_data(data,$(selector).parent(), function() {
         page.assign_handlers(data);
@@ -136,8 +175,7 @@ $.fn.page = function(options, callback)
           var params = {page: id, field:field_id, data: has_data };
           $.json('/?a=page/data', {data:params}, function(result) {
             result.html = child.html();
-            result = page.expand_fields(field_id, result);
-            page.expand_objects(result);
+            page.expand_children(result);
             child.html(result.html);
             if (++done === count) page.set_data(data, parent, callback);
           });

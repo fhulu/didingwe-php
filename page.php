@@ -17,47 +17,44 @@ require_once 'validator.php';
 require_once 'ref.php';
 
 class page {
-  
-  static function expand_options(&$row, $field='options')
+    
+  static function expand_options(&$data, $field='options')
   {
-    $options = $row[$field];
-    unset($row[$field]);
+    $options = $data[$field];
+    unset($data[$field]);
     if (is_null($options)) return;
     
     $options = explode('~',$options);
     foreach($options as $option) {
-      list($name,$value) = explode('=>',$option);
-      $row[$name] = $value;
+      $matches = array();
+      if (!preg_match('/^(\w+)(?:([:\$]|=>?)(.*))?/', $option, $matches)) continue;
+      list($name, $separator, $value) = array_slice($matches, 1);
+      if (!preg_match('/^{(.*)}$/', $value, $matches)) {
+        $data[$name] = $value;
+        continue;
+      }
+
+      $data[$name] = array();
+      page::read_children($data[$name], $name, $matches[1]);
     }
   }
   
   
-  static function read_child_template(&$data, $children='children')
+  static function read_child_template(&$data)
   {
     $template = $data['template'];
     if (is_null($template)) return;
-    
+
+    unset($data['template']);
     global $db;
     $row =  $db->read_one("select html template,options from template where code = '$template'"
             . " union"
             . " select html template, options from field_type where code = '$template'",MYSQLI_ASSOC);
     $template = $row['template'];
-    if (!isset($template)) {
-      unset($data['template']);
-      return;
-    }
+    if (!isset($template)) return;
+
     page::expand_options($row);
     $data = array_merge ($data, $row);
-    $children_template = $data['children_template'];
-    if (!isset($children_template)) return;
-    
-    unset($data['children_template']);
-    $children = &$data[$children];
-    log::debug("template $template children $children_template");
-    if (!is_null($children_template) && !is_null($children)) {
-      $children['template'] = $children_template;
-      page::read_child_template($children);
-    }
   }
   
   static function set_data_flag(&$data)
@@ -67,55 +64,77 @@ class page {
     $data['has_data'] = "";
   }
   
-  static function read_children(&$data, $field='children')
+  
+  static function read_children(&$data, $parent, $value)
   {
-    
-    $children = $data[$field];
-    if (is_null($children)) return;
-    
-    $code = $data['code'];
-    $children = implode('","', explode(',',$children));
-
-    global $db;
-    $rows =  $db->read("select f.code, f.type, f.name, f.description 'desc', ft.html"
-                  .", ft.options type_options, f.options field_options, cf.options page_options"
-                ." from field f join field_type ft on f.type = ft.code"
-                  ." left join container_field_options cf on cf.field_code = f.code"
-                   ." and cf.parent_field_code = '$code'"
-                ." where f.code in (\"$children\")"
-                  . "order by field(f.code,\"$children\")", MYSQLI_ASSOC);
-    $children = array();
-    foreach($rows as $row) {
-      $code = $row['code'];
-      page::expand_options($row, 'type_options');
-      page::expand_options($row, 'field_options');
-      page::expand_options($row, 'page_options');
-      page::read_children($row);
-      page::set_data_flag($row);
-      page::expand_variables($row);
-      unset($row['code']);
-      $children[$code] = $row;
+    $matches = array();
+    log::debug("matching $value");
+    if (!preg_match_all('/(\w+:{.*}|[^,]+)/', $value, $matches)) {
+      log::error("read_children() Unable to match value $value");
+      return;
     }
-    $data[$field] = $children;
-    unset($row['code']);
-    page::read_child_template($data);
+    foreach ($matches[0] as $child) {
+      $match = array();
+      if (!preg_match('/^(\w+)(?::{(.*)})?$/', $child, $match)) {
+        log::error("read_children() unable to match child $child");
+        return;
+      }
+      $field = $match[1];
+      $child = array('page'=>$parent,'field'=>$field);
+      page::read_field($child); 
+      $grand_children = $match[2];
+      if ($grand_children != '') {
+        page::read_children ($child, $field, $grand_children);
+      }
+      $data[$field] = $child;
+    }
+    return;
   }
  
+  static function expand(&$data)
+  {
+    page::expand_options($data, 'type_options');
+    page::expand_options($data, 'field_options');
+    page::expand_options($data, 'page_options');
+    page::expand_variables($row);
+    page::read_child_template($data);
+    page::set_data_flag($data);
+  }
  
+  static function read_field(&$data)
+  {
+    $page = $data['page'];
+    $field = $data['field'];
+    unset($data['field']);
+
+    global $db;
+    $row =  $db->read_one(
+      "select f.code, f.name, f.description 'desc', ft.html, ft.options type_options, f.options field_options, cf.options page_options "
+      . " from field f join field_type ft on f.type = ft.code"
+      . " left join container_field_options cf on cf.field_code = f.code and cf.parent_field_code = '$page'"
+      . " where f.code = '$field'", MYSQLI_ASSOC);
+    
+    if (sizeof($row) == 0) {
+      $data['name'] = $data['desc'] = '';
+      return;
+    }
+    $data = array_merge($data, $row);
+    page::expand($data);
+  }
+
   static function expand_variables(&$row)
   {
-    // check if all variables in html can be expanded/sustituted
     $matches = array();
     if (!preg_match_all('/\$([\w]+)/', $row['html'], $matches)) return;
     
-    $vars = array_diff($matches[1], array('code', 'children'));
+    $vars = array_diff($matches[1], array('code'));
+    $page = $row['code'];
     foreach($vars as $var) {
       if (array_key_exists($var, $row)) continue;
-      log::debug("EXPANDING $var");
-      $values = array_diff($row, array('children', 'template', 'html'));
-      $values['children'] = $var;
-      page::read_children($values);
-      $row[$var] = $values['children'][$var];
+      $values = array_diff($row, array('template', 'html'));
+      $data = array('field'=>$var,'page'=>$page);
+      page::read_field($data);
+      $row[$var] = $data;
     }
   }
 
@@ -132,14 +151,12 @@ class page {
   
   static function read($request)
   {
-    global $db;
-    $field = $request['code'];
-    $row['code'] = $request['parent'];
-    $field = $row['children'] = $request['code'];
-    page::read_children($row);
-    $row = $row['children'][$field];
-    $row['program'] = config::$program_name;
-    echo json_encode($row);
+    $data = array();
+    $data['field'] = $request['field'];
+    $data['page'] = $request['parent'];
+    $data['program'] = config::$program_name;
+    page::read_field($data);
+    echo json_encode($data);
 
   }
   
@@ -197,7 +214,7 @@ class page {
   static function expand_templates(&$data) 
   {
     foreach($data as $key=>&$value) {
-      if (isset($value['children'])) page::read_child_template($value);
+      page::read_child_template($value);
     }
   }
   static function data($request)
