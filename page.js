@@ -61,46 +61,6 @@ $.fn.page = function(options, callback)
       return html.replace(/^<(\w+) ?/,'<$1 '+attr + ' ');
     },
     
-    expand_objects: function(objects, orig_values)
-    {
-      if (orig_values === undefined) orig_values = {};
-      
-      $.extend(orig_values, objects);
-
-      $.each(objects, function(field, data) {
-        if (!$.isPlainObject(data) && !$.isArray(data)) return;
-        var values = $.isArray(data)? orig_values: $.extend({}, orig_values, data);
-        var my_html = "";
-        $.each(data, function(f, object) {
-          if (object === null || f === 'template') return;
-          if (!$.isPlainObject(object) && !$.isArray(object)) return;
-          $.extend(values, object);
-          page.expand_objects(object, values);
-          var val = object.html;
-          val = page.expand_attr(val, values, object.attr);
-          if (objects.template !== undefined) {
-            val = page.expand_attr(val, values, values.attr);
-            var template  = page.expand_value(values, objects.template);
-            template = template.replace('$code', f);
-            val = template.replace('$field',val);
-          }
-          if (obj.has_data !== undefined) {
-            val = val.replace(/^<(\w+) ?/,'<$1 has_data ');
-          }
-
-          if (object.children === undefined && object.has_data === undefined) {
-           // console.log(f, object);
-//            val = val.replace('$children', '');
-          }
-          object.html = val;
-          my_html += object.html;
-        });
-        if (my_html == '') my_html = data.html;
-        if (objects.html !== undefined) 
-          objects.html = objects.html.replace('$'+field, my_html);
-      });
-    },
-    
     inherit_values: function(parent, child)
     {
       $.each(parent, function(key, value) {
@@ -111,26 +71,38 @@ $.fn.page = function(options, callback)
       });
     },
     
-    expand_children: function(object, template)
+    expand_template: function(field, child, template)
+    {
+      if (template === undefined) return false;
+      var expanded = page.expand_value(child, template);
+      expanded = expanded.replace('$code', field);
+      if (child.html === undefined) {
+        if (expanded.indexOf('$field') >= 0) return false;
+        child.html = expanded;
+      }
+      else 
+        child.html = expanded.replace('$field', child.html);
+      return true;
+    },
+    
+    expand_children: function(object)
     {
       if (!$.isPlainObject(object) && !$.isArray(object)) return;
-      var children ="";
+      if (object.html === undefined) {
+        object.html = "";
+        if (object.template === undefined) object.template = "$field";
+      }
       $.each(object, function(field, child) {
         if (!$.isPlainObject(child) && !$.isArray(child) || child === null) return;
         page.inherit_values(object, child);
-        page.expand_children(child, object.template);
-        if (template !== undefined) {
-          var expanded = page.expand_value(child, template);
-          expanded = expanded.replace('$code', field);
-          child.html = expanded.replace('$field', child.html);
-        }
-        if (object.html === undefined) 
-          children += child.html;
-        else
-          object.html = object.html.replace('$'+field, child.html);
+        var expanded = page.expand_template(field, child, object.template);
+        page.expand_children(child); 
+        if (!expanded)
+          page.expand_template(field, child, object.template);
+        object.html = object.html.replace('$'+field, child.html);
+        if (object.template !== undefined)
+          object.html += child.html;
       });
-      if (object.html === undefined) 
-        object.html = children;
     },
     
     read: function(data)

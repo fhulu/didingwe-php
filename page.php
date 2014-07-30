@@ -75,6 +75,11 @@ class page {
     }
     foreach ($matches[0] as $child) {
       $match = array();
+      if (preg_match('/^template:(.*)$/', $child, $match)) {
+        $data['template'] = $match[1];
+        page::read_child_template($data);
+        continue;
+      }
       if (!preg_match('/^(\w+)(?::{(.*)})?$/', $child, $match)) {
         log::error("read_children() unable to match child $child");
         return;
@@ -214,7 +219,9 @@ class page {
   static function expand_templates(&$data) 
   {
     foreach($data as $key=>&$value) {
+      if (!is_array($value)) continue;
       page::read_child_template($value);
+      page::expand_templates($value);
     }
   }
   static function data($request)
@@ -235,7 +242,7 @@ class page {
     page::expand_options($row, 'page_options');
     page::read_child_template($row);
     page::expand_values($row, array('template'));
-    $data = $row['data'];    
+    $data = $row['data'];
     $template = $row['template'];
     
     $matches = array();
@@ -263,8 +270,9 @@ class page {
       $rows = call_user_func($function, $request, $matches[2]);
     }
 
-    page::expand_templates($rows);    
-    echo json_encode(array("template"=>$template, "children"=>$rows));
+    if (isset($template)) $rows['template'] = $template;  
+    page::expand_templates($rows);  
+    echo json_encode($rows);
   }
   
 }
