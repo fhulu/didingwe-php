@@ -34,8 +34,12 @@ class page {
         continue;
       }
 
-      $data[$name] = array();
-      page::read_children($data[$name], $name, $matches[1]);
+      $children = array();
+      page::read_children($children, $name, $matches[1]);
+      if (is_array($data[$name]))
+        $data[$name] = array_merge($data[$name], $children);
+      else
+        $data[$name] = $children;
     }
   }
   
@@ -85,13 +89,13 @@ class page {
         return;
       }
       $field = $match[1];
-      $child = array('page'=>$parent,'field'=>$field);
+      $child = array('field'=>$field);
       page::read_field($child); 
       $grand_children = $match[2];
       if ($grand_children != '') {
         page::read_children ($child, $field, $grand_children);
       }
-      $data[$field] = $child;
+      $data[$field] =$child;
     }
     return;
   }
