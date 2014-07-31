@@ -72,15 +72,14 @@ class page {
   static function read_children(&$data, $parent, $value)
   {
     $matches = array();
-    log::debug("matching $value");
     if (!preg_match_all('/(\w+:{.*}|[^,]+)/', $value, $matches)) {
       log::error("read_children() Unable to match value $value");
       return;
     }
     foreach ($matches[0] as $child) {
       $match = array();
-      if (preg_match('/^template:(.*)$/', $child, $match)) {
-        $data['template'] = $match[1];
+      if (preg_match('/^(\w+):([^{].*)$/', $child, $match)) {
+        $data[$match[1]] = $match[2];
         page::read_child_template($data);
         continue;
       }
