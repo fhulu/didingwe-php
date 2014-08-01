@@ -69,17 +69,19 @@ $.fn.page = function(options, callback)
       });
     },
     
-    expand_template: function(field, child, template)
+    expand_template: function(field, child, object)
     {
-      if (template === undefined) return false;
-      var expanded = page.expand_value(child, template);
+      if (object.template === undefined) return false;
+      var expanded = page.expand_value(child, object.template);
       expanded = expanded.replace('$code', field);
       if (child.html === undefined) {
         if (expanded.indexOf('$field') >= 0) return false;
         child.html = expanded;
       }
-      else 
+      else {
+        child.html = page.expand_attr(child.html, child, object.attr);
         child.html = expanded.replace('$field', child.html);
+      }
       return true;
     },
     
@@ -93,10 +95,10 @@ $.fn.page = function(options, callback)
       $.each(object, function(field, child) {
         if (!$.isPlainObject(child) && !$.isArray(child) || child === null) return;
         page.inherit_values(object, child);
-        var expanded = page.expand_template(field, child, object.template);
+        var expanded = page.expand_template(field, child, object);
         page.expand_children(child); 
         if (!expanded)
-          page.expand_template(field, child, object.template);
+          page.expand_template(field, child, object);
         object.html = object.html.replace('$'+field, child.html);
         if (object.template !== undefined)
           object.html += child.html;
