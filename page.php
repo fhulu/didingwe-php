@@ -103,13 +103,11 @@ class page {
   {
     page::expand_options($data, 'type_options');
     page::expand_options($data, 'field_options');
-    page::expand_options($data, 'page_options');
-    page::expand_variables($row);
     page::read_child_template($data);
     page::set_data_flag($data);
   }
  
-  static function read_field(&$data)
+  static function read_field(&$data, $known = array())
   {
     $page = $data['page'];
     $field = $data['field'];
@@ -117,9 +115,8 @@ class page {
 
     global $db;
     $row =  $db->read_one(
-      "select f.code, f.name, f.description 'desc', ft.html, ft.options type_options, f.options field_options, cf.options page_options "
+      "select f.code, f.name, f.description 'desc', ft.html, ft.options type_options, f.options field_options"
       . " from field f join field_type ft on f.type = ft.code"
-      . " left join container_field_options cf on cf.field_code = f.code and cf.parent_field_code = '$page'"
       . " where f.code = '$field'", MYSQLI_ASSOC);
     
     if (sizeof($row) == 0) {
@@ -128,21 +125,26 @@ class page {
     }
     $data = array_merge($data, $row);
     page::expand($data);
+    page::expand_variables($data, $known);
+    foreach($data as $key=>$value) {
+      if (is_null($value)) unset ($data[$key]);
+    }
   }
 
-  static function expand_variables(&$row)
+  static function expand_variables(&$data, $known = array())
   {
+    if (isset($data['has_data'])) return;
     $matches = array();
-    if (!preg_match_all('/\$([\w]+)/', $row['html'], $matches)) return;
+    if (!preg_match_all('/\$([\w]+)/', $data['html'], $matches)) return;
     
+    $known = array_merge($known, $data);
     $vars = array_diff($matches[1], array('code'));
-    $page = $row['code'];
+    $page = $data['code'];
     foreach($vars as $var) {
-      if (array_key_exists($var, $row)) continue;
-      $values = array_diff($row, array('template', 'html'));
-      $data = array('field'=>$var,'page'=>$page);
-      page::read_field($data);
-      $row[$var] = $data;
+      if (array_key_exists($var, $known)) continue;
+      $values = array('field'=>$var,'page'=>$page);
+      page::read_field($values, $known);
+      $data[$var] = $values;
     }
   }
 
@@ -230,11 +232,8 @@ class page {
   static function data($request)
   {
     $field = $request['field'];
-    $page = $request['page'];
-    $sql = "select f.code, ft.options type_options, f.options field_options, cf.options page_options"
+    $sql = "select f.code, ft.options type_options, f.options field_options"
               ." from field f join field_type ft on f.type = ft.code"
-                ." left join container_field_options cf on cf.field_code = f.code"
-                 ." and cf.parent_field_code = '$page'"
               ." where f.code = '$field'";
 
     global $db;
@@ -242,7 +241,6 @@ class page {
 
     page::expand_options($row, 'type_options');
     page::expand_options($row, 'field_options');
-    page::expand_options($row, 'page_options');
     page::read_child_template($row);
     page::expand_values($row, array('template'));
     $data = $row['data'];
