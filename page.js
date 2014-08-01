@@ -25,7 +25,8 @@ $.fn.page = function(options, callback)
     load: function(url) 
     {
       if (url === undefined) url = options.url;
-      $.json(url, { data: {page: parent_id, field: id} }, this.read);
+      var data = $.extend({page:id}, getQueryParams(location.search));
+      $.json(url, { data: data }, this.read);
     },
    
     expand_value: function(values,value)
