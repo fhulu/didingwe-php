@@ -78,6 +78,9 @@ class page {
     }
     foreach ($matches[0] as $child) {
       $match = array();
+      if ($child[0]=='$') {
+        $child = $_REQUEST[substr($child,1)];
+      }
       if (preg_match('/^(\w+):([^{].*)$/', $child, $match)) {
         $data[$match[1]] = $match[2];
         page::read_child_template($data);
@@ -109,7 +112,6 @@ class page {
  
   static function read_field(&$data, $known = array())
   {
-    $page = $data['page'];
     $field = $data['field'];
     unset($data['field']);
 
@@ -162,8 +164,7 @@ class page {
   static function read($request)
   {
     $data = array();
-    $data['field'] = $request['field'];
-    $data['page'] = $request['parent'];
+    $data['field'] = $request['page'];
     $data['program'] = config::$program_name;
     page::read_field($data);
     echo json_encode($data);
@@ -229,6 +230,8 @@ class page {
       page::expand_templates($value);
     }
   }
+  
+  
   static function data($request)
   {
     $field = $request['field'];
