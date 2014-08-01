@@ -25,7 +25,7 @@ $.fn.page = function(options, callback)
     load: function(url) 
     {
       if (url === undefined) url = options.url;
-      var data = $.extend({page:id}, getQueryParams(location.search));
+      var data = $.extend({page:id}, options.data);
       $.json(url, { data: data }, this.read);
     },
    
