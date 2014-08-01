@@ -37,18 +37,16 @@ $.fn.page = function(options, callback)
       return value;
     },
     
-    expand_fields: function(parent_id, data, values)
+    expand_fields: function(parent_id, data)
     {
-      if (values === undefined) values = {};
-      $.extend(values, data);
       $.each(data, function(field, value) {
-        if (typeof value === 'string' && field !== 'template' && field != 'attr') {
+        if (typeof value === 'string' && value.indexOf('$') >= 0 && field !== 'template' && field != 'attr') {
           value = value.replace('$code', parent_id);
-          data[field] = page.expand_value(values, value);
-          $.extend(values, data);
+          data[field] = page.expand_value(data, value);
         }
         else if ($.isPlainObject(value)) {
-          data[field] = page.expand_fields(field, value, values);
+          page.inherit_values(data, value);
+          data[field] = page.expand_fields(field, value);
         }
       });
       return data;
