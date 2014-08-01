@@ -27,7 +27,7 @@ class page {
     $options = explode('~',$options);
     foreach($options as $option) {
       $matches = array();
-      if (!preg_match('/^(\w+)(?:([:\$]|=>?)(.*))?/', $option, $matches)) continue;
+      if (!preg_match('/^(\w+)(?:([:\$]|=>?)(.*))?/s', $option, $matches)) continue;
       list($name, $separator, $value) = array_slice($matches, 1);
       if (!preg_match('/^{(.*)}$/', $value, $matches)) {
         $data[$name] = $value;
@@ -116,26 +116,26 @@ class page {
     global $db;
     $row =  $db->read_one(
       "select f.code, f.name, f.description 'desc', ft.html, ft.options type_options, f.options field_options"
-      . " from field f join field_type ft on f.type = ft.code"
+      . " from field f left join field_type ft on f.type = ft.code"
       . " where f.code = '$field'", MYSQLI_ASSOC);
     
     if (sizeof($row) == 0) {
       $data['name'] = $data['desc'] = '';
       return;
     }
+    foreach($row as $key=>$value) {
+      if (is_null($value)) unset ($row[$key]);
+    }
     $data = array_merge($data, $row);
     page::expand($data);
     page::expand_variables($data, $known);
-    foreach($data as $key=>$value) {
-      if (is_null($value)) unset ($data[$key]);
-    }
   }
 
   static function expand_variables(&$data, $known = array())
   {
     if (isset($data['has_data'])) return;
     $matches = array();
-    if (!preg_match_all('/\$([\w]+)/', $data['html'], $matches)) return;
+    if (!preg_match_all('/\$(\w+)/', $data['html'], $matches)) return;
     
     $known = array_merge($known, $data);
     $vars = array_diff($matches[1], array('code'));
@@ -233,7 +233,7 @@ class page {
   {
     $field = $request['field'];
     $sql = "select f.code, ft.options type_options, f.options field_options"
-              ." from field f join field_type ft on f.type = ft.code"
+              ." from field f left join field_type ft on f.type = ft.code"
               ." where f.code = '$field'";
 
     global $db;
