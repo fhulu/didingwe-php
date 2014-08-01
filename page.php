@@ -51,9 +51,7 @@ class page {
 
     unset($data['template']);
     global $db;
-    $row =  $db->read_one("select html template,options from template where code = '$template'"
-            . " union"
-            . " select html template, options from field_type where code = '$template'",MYSQLI_ASSOC);
+    $row =  $db->read_one("select html template, options from field_type where code = '$template'",MYSQLI_ASSOC);
     $template = $row['template'];
     if (!isset($template)) return;
 
