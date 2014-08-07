@@ -143,8 +143,9 @@ $.fn.form = function(options)
       lists.each(function() {
         var self = $(this);
         var field_id = self.attr('id');
+        self.html('<option>loading...</option>');        
         $.json('/?a=form/reference&form='+form_id+'&field='+field_id, function(result) {
-          
+          self.html('');
           $.each(result, function(key, row) {
             self.append('<option f=t value="'+row.item_code+'">'+row.item_name+'</option>');
           });
