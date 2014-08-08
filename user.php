@@ -774,7 +774,7 @@ class user
     $program_id = config::$program_id;
     $is_fpb = $session->user->partner_id == config::$program_partner_id;
     if(!$is_fpb)
-      echo select::add_db("select code, name from role where code not in('unreg','base','qa','csr','fin','opsman') and program_id=$program_id order by name desc");
+      echo select::add_db("select code, name from role where code not in('unreg','base','qa','csr','fin','opsman','asmcsr') and program_id=$program_id order by name desc");
     else
       echo select::add_db("select code, name from role where code not in('unreg','base') and program_id=$program_id order by name desc");
   }
