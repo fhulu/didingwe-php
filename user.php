@@ -37,8 +37,7 @@ class user
   static function default_functions()
   {
     global $db;
-    
-    return $db->read_column("select distinct function_code from role_function
+    return $db->read_column("select distinct function_code from \$audit_db.role_function
     where role_code in ('base', 'unreg') 
     and program_id=" .config::$program_id);
   }
@@ -55,18 +54,18 @@ class user
   function load_groups()
   {
     global $db;
-    $this->groups = $db->read_column("select group_id from group_users where user_id = $this->id");
+    $this->groups = $db->read_column("select group_id from \$audit_db.group_users where user_id = $this->id");
     //todo: take care of group hierachy
   }
 
   function load_roles()
   {
     global $db;
-    $assigned_roles = $db->read_column("select role_code from user_role where user_id = $this->id");
+    $assigned_roles = $db->read_column("select role_code from \$audit_db.user_role where user_id = $this->id");
     $this->roles = array();
     foreach ($assigned_roles as $role) {
       $roles = array($role);
-      $db->lineage($roles, "code", "base_code", "role", " and program_id = \$pid");
+      $db->lineage($roles, "code", "base_code", "\$audit_db.role", " and program_id = \$pid");
       $this->roles = array_merge($this->roles, $roles);
     }
   }
@@ -78,15 +77,15 @@ class user
     global $db;
     
     $program_id = config::$program_id;
-    $groups = $db->read_column("select group_code from group_partner where partner_id = $this->partner_id and program_id=$program_id");
-    $db->lineage($groups, "code", "parent_code", "partner_group", "and program_id=$program_id");
+    $groups = $db->read_column("select group_code from \$audit_db.group_partner where partner_id = $this->partner_id and program_id=$program_id");
+    $db->lineage($groups, "code", "parent_code", "\$audit_db.partner_group", "and program_id=\$pid");
     $groups = implode("','", $groups);
     $functions = $db->read_column(
-      "select distinct function_code from role_function where role_code in('$roles')
+      "select distinct function_code from \$audit_db.role_function where role_code in('$roles')
         and program_id = $program_id
         and function_code in 
-        (select distinct function_code from partner_group_function where group_code in ('$groups') and program_id = $program_id)");
-    $base_functions = $db->read_column("select distinct function_code from role_function where role_code = 'base'
+        (select distinct function_code from \$audit_db.partner_group_function where group_code in ('$groups') and program_id = $program_id)");
+    $base_functions = $db->read_column("select distinct function_code from \$audit_db.role_function where role_code = 'base'
       and program_id=$program_id"); 
     $this->functions = array_merge($functions, $base_functions);
   }
@@ -106,7 +105,7 @@ class user
     global $db, $session,$errors;
     $email = addslashes($request[email]);
     if($email != $session->user->email 
-       && $db->exists("select first_name from user where email_address= '$email'")) {
+       && $db->exists("select first_name from \$audit_db.user where email_address= '$email'")) {
      echo "!This email address already exist. Please try another email address";
       return;
      
@@ -127,7 +126,7 @@ class user
                                                                 Regards<br>
                                                                 Customer Operations";
     $subject = "One Time Password";
-    $headers = "from: donotreply@fpb.org.za\r\n";
+    $headers = "from: ".config::$support_email."\r\n";
     $headers .= "MIME-Version: 1.0\r\n";
     $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
     mail($email, $subject, $message, $headers);
@@ -137,7 +136,7 @@ class user
   {
     global $db;
     $otp = rand(10042,99999);
-    $db->exec("update user set otp = '$otp', otp_time = now()
+    $db->exec("update \$audit_db.user set otp = '$otp', otp_time = now()
       where email_address='$email' and program_id = " . config::$program_id);
     
     return $otp;
@@ -162,7 +161,7 @@ class user
   static function update_attempts($email)
   {
     global $db;
-    $db->exec("update user set attempts=attempts+1
+    $db->exec("update \$audit_db.user set attempts=attempts+1
     where email_address='$email' and program_id = " . config::$program_id);    
   }
   
@@ -170,7 +169,7 @@ class user
   {
     global $db;
     list($attempts, $contact_person, $contact_email, $contact_tel) = $db->read_one("select attempts, contact_person, contact_email, contact_tel"
-            . " from partner p, user u "
+            . " from \$audit_db.partner p, \$audit_db.user u "
             . " where u.partner_id = p.id and u.email_address = '$email' and u.program_id = ".config::$program_id);
     if ($attempts=='' || $attempts < 5) return true;
     if ($contact_person == '') $contact_person = config::$support_company;
@@ -209,7 +208,7 @@ class user
     if (!user::unlocked($email)) return false;
 
     global $db;
-    list($email,$otp, $otp_time) = $db->read_one("select email_address, otp,timestampdiff(minute, otp_time, now()) from user
+    list($email,$otp, $otp_time) = $db->read_one("select email_address, otp,timestampdiff(minute, otp_time, now()) from \$audit_db.user
      where email_address='$email' and active=1 and program_id = ". config::$program_id);
     if ($email == '') 
       return errors::q('email', "We do not have a user with supplied details registered on the system");
@@ -222,7 +221,7 @@ class user
       return errors::q('otp', 'OTP has expired. Please go back and request a new PIN');  
     
     $password = addslashes($request['password']);
-    $db->exec("update user set password = password('$password'), attempts=0
+    $db->exec("update \$audit_db.user set password = password('$password'), attempts=0
     where email_address='$email' and program_id = " . config::$program_id);
 }
 
@@ -241,7 +240,7 @@ class user
     
     $password = $request['password'];
     log::debug('Password is'.$password);
-    $db->exec("update user set password = password('$password')
+    $db->exec("update \$audit_db.user set password = password('$password')
     where id='$user_id' and program_id = " . config::$program_id);
     
   }
@@ -276,20 +275,21 @@ class user
     else
       $passwd = "'$passwd'";
     $email = addslashes($email);
-    $sql = "select id, partner_id, email_address,title, first_name, last_name,cellphone,attempts from user
+    $sql = "select id, partner_id, email_address,title, first_name, last_name,cellphone,attempts from \$audit_db.user
      where email_address='$email' and password=$passwd and active=1 and program_id = ". config::$program_id;         
     
     global $db;
     $success = $db->exists($sql);
     $tries = $db->row[7];
-    if ($success) 
+    if ($success) {
       $attempts = 0;
+    }
     else {
       if($tries >3) errors::q('email', "Account locked. ");
       $attempts = 'attempts+1';
     }
-    $db->exec("update user set attempts = $attempts
-     where email_address='$email' and active=1 and program_id = ". config::$program_id);
+    $db->exec("update \$audit_db.user set attempts = $attempts
+     where email_address='$email' and active=1 and program_id = \$pid");
   
     return $success? $db->row: false;
   }
@@ -357,7 +357,7 @@ class user
     
     $user=$session->user;
     
-    $rows = $db->read("select first_name,last_name,cellphone from user u, user_role ur
+    $rows = $db->read("select first_name,last_name,cellphone from user u, \$audit_db.user_role ur
                                   where role_code='$role' and u.id= user_id ");
     foreach($rows as $row) {
       list($fname,$lname, $cellphone) = $row; 
@@ -376,17 +376,17 @@ class user
     $title = addslashes($title);
     if($program_id==7){
       
-      $sql = "insert into user(program_id, partner_id, email_address, password,title, first_name,last_name, cellphone,active, otp, otp_time)
+      $sql = "insert into \$audit_db.user(program_id, partner_id, email_address, password,title, first_name,last_name, cellphone,active, otp, otp_time)
       values($program_id,$partner_id, '$email',password('$password'),'$title', '$first_name','$last_name','$cellphone',1, '$otp', now())";
     }
     else
     {
-      $sql = "insert into user(program_id, partner_id, email_address, password,title, first_name,last_name, cellphone, otp, otp_time)
+      $sql = "insert into \$audit_db.user(program_id, partner_id, email_address, password,title, first_name,last_name, cellphone, otp, otp_time)
       values($program_id,$partner_id, '$email',password('$password'),'$title', '$first_name','$last_name','$cellphone', '$otp', now())";
     }
     global $db;
     $id = $db->insert($sql);
-    $sql = "insert into user_role(user_id,role_code)
+    $sql = "insert into $\audit_db.user_role(user_id,role_code)
       values($id,'reg')";
     $db->exec($sql);
     $password = stripslashes($password);
@@ -415,12 +415,12 @@ class user
     // First check if email already exists
     global $db;
     if (user::exists($email, 0, false)) {
-      $sql = "update user set password=password('$password'), first_name = '$first_name',last_name= '$last_name',title= '$title', cellphone='$cellphone',
+      $sql = "update \$audit_db.user set password=password('$password'), first_name = '$first_name',last_name= '$last_name',title= '$title', cellphone='$cellphone',
         otp=$otp, otp_time = now(), partner_id = $partner_id where email_address='$email' and program_id = $program_id";
       $db->exec($sql);
       $id = $db->read_one_value("select id from user where email_address = '$email' and program_id = $program_id");
-      $db->exec("delete from user_role where user_id = $id");
-      $db->exec("insert into user_role(user_id,role_code) values($id,'reg')");
+      $db->exec("delete from \$audit_db.user_role where user_id = $id");
+      $db->exec("insert into \$audit_db.user_role(user_id,role_code) values($id,'reg')");
       $password = stripslashes($password);
       $first_name = stripslashes($first_name);
       $last_name = stripslashes($last_name);
@@ -434,7 +434,7 @@ class user
 
     user::sms_otp($email, $otp);
     $user->reload();
-    $db->insert("insert into trx(user_id, function_code, object_id)
+    $db->insert("insert into \$audit_db.trx(user_id, function_code, object_id)
       values($user->id, 'register', $user->id)");
     //todo: send email and/or sms
     $message = "Good day <br><br>Below is your one time password, required to continue with your application.
@@ -471,7 +471,7 @@ class user
     $id = $session->user->id;
     $v = new validator($request); 
 
-    if (!$db->exists("select id from user 
+    if (!$db->exists("select id from \$audit_db.user 
       where id = $id and otp='$otp' and timestampdiff(minute, otp_time, now()) <= 30")) {
         $v->report("otp", "!Invalid OTP or OTP has expired");
         return false;
@@ -496,10 +496,10 @@ class user
     list($email,$username) = $db->read_one("select email_address, Concat( first_name, ' ', last_name ) from user where id = $id ");
     user::audit('deactivate', $id, "$username($email)");
     
-    $sql = "delete from user_role where user_id=$id";
+    $sql = "delete from \$audit_db.user_role where user_id=$id";
     $db->exec($sql);
     
-    $sql = "update  user set active=0 where id=$id";
+    $sql = "update  \$audit_db.user set active=0 where id=$id";
     $db->exec($sql);
    
     global $session;
@@ -536,24 +536,24 @@ class user
     
     $email= $request['email_address'];
     $program_id = config::$program_id;
-    list($old_id, $old_partner_id, $active) = $db->read_one("select id, partner_id,active from user 
+    list($old_id, $old_partner_id, $active) = $db->read_one("select id, partner_id,active from \$audit_db.user 
       where email_address = '$email' and program_id = $program_id");
     if ($old_partner_id != 0 && $old_id != $id && $active != 0)  {
       return errors::q('email_address','Email Address already exists');
     }
     if ($old_id != '' || $active != 0) { 
       $time = time();
-      $db->exec("update user set email_address = 'overwritten-$time-$email' where id = $old_id");
+      $db->exec("update \$audit_db.user set email_address = 'overwritten-$time-$email' where id = $old_id");
     }
     
-    $sql = "update user set ". substr($values,1). " where id = $id";
+    $sql = "update \$audit_db.user set ". substr($values,1). " where id = $id";
     $db->exec($sql);    
     if (!is_null($request['role'])){
       user::update_role($request);
     }
     $passwd = $request['password'];
     if ($passwd != '**********')
-      $db->exec("update user set password = password('$passwd') where id = $id");
+      $db->exec("update \$audit_db.user set password = password('$passwd') where id = $id");
   }
 
   static function verify($function, $private=true)
@@ -589,8 +589,8 @@ class user
       $object_id = 'null';
     }
     $detail = addslashes($detail);
-    $db->insert("insert into trx(user_id, function_code, object_id, object_code, detail, object_type)
-      select if('$user->id' in ('',0),(select default_user_id from function where code='$function' and program_id = \$pid), '$user->id'), '$function', '$object_id', $object_code, '$detail', '$type'");
+    $db->insert("insert into \$audit_db.trx(user_id, function_code, object_id, object_code, detail, object_type)
+      select if('$user->id' in ('',0),(select default_user_id from \$audit_db.function where code='$function' and program_id = \$pid), '$user->id'), '$function', '$object_id', $object_code, '$detail', '$type'");
   }
   
   static function audit($function, $object='', $detail='',$type='')
@@ -609,10 +609,10 @@ class user
     $program_id = config::$program_id;
     $table->show("select distinct t.create_time, p.full_name, u.first_name, u.last_name,
       u.email_address, f.name, t.detail
-      from trx t 
-        join function f on t.function_code = f.code
-        join user u on t.user_id = u.id
-        join partner p on u.partner_id = p.id and u.program_id = $program_id");
+      from \$audit_db.trx t 
+        join \$audit_db.function f on t.function_code = f.code
+        join \$audit_db.user u on t.user_id = u.id
+        join \$audit_db.partner p on u.partner_id = p.id and u.program_id = $program_id");
   }
 
   static function partner_audit_trail($request)
@@ -628,10 +628,10 @@ class user
     $partner_id = $session->user->partner_id;
     $table->show("select distinct t.create_time, p.full_name, u.first_name, u.last_name,
       u.email_address, f.name, t.detail
-      from trx t 
-        join function f on t.function_code = f.code
-        join user u on t.user_id = u.id
-        join partner p on u.partner_id = p.id and (u.partner_id = $partner_id or t.object_id = $partner_id and t.object_type = 'partner')
+      from \$audit_db.trx t 
+        join \$audit_db.function f on t.function_code = f.code
+        join \$audit_db.user u on t.user_id = u.id
+        join \$audit_db.partner p on u.partner_id = p.id and (u.partner_id = $partner_id or t.object_id = $partner_id and t.object_type = 'partner')
       and u.program_id = $program_id");
   }
    
@@ -648,17 +648,17 @@ class user
     global $db, $session;
     $user = &$session->user;
 
-    $sql = "update user_role set role_code='$role' where user_id = $id";
+    $sql = "update \$audit_db.user_role set role_code='$role' where user_id = $id";
     $db->exec($sql);
     
     $emails = $db->read_column("select email_address 
-                from user 
+                from \$audit_db.user 
                   where id = $id");  
                    
 
-    $username = $db->read_one_value("select Concat( first_name, ' ', last_name ) AS contact_person from user where id = $id ");
+    $username = $db->read_one_value("select Concat( first_name, ' ', last_name ) AS contact_person from \$audit_db.user where id = $id ");
     $admin = "$user->first_name $user->last_name <$user->email>";
-    $user_role = $db->read_one_value("select name from role where code = '$role'"); 
+    $user_role = $db->read_one_value("select name from \$audit_db.role where code = '$role'"); 
       
      //todo: send email and/or sms
     $program_id = config::$program_id;
@@ -725,14 +725,14 @@ class user
     $proto = isset($_SERVER['HTTPS'])?'https':'http';
     
     $emails = $db->read_column("select email_address 
-            from user u, user_role ur
+            from \$audit_db.user u, \$audit_db.user_role ur
             where u.id = ur.user_id and partner_id = $partner_id and role_code = 'admin' ");
     $link = "$proto://". $_SERVER['SERVER_NAME'] ."/manage_users.html"; //todo: get right http address for production
 
     //todo: use program's main partner
     if (sizeof($emails) == 0) {
       $emails = $db->read_column("select email_address
-        from user u, user_role r
+        from \$audit_db.user u, \$audit_db.user_role r
         where u.partner_id = 3 and r.user_id = u.id and r.role_code = 'admin'");
       $link = "$proto://". $_SERVER['SERVER_NAME'] ."/manage_all_users.html"; //todo: get right http address for production
     }  
@@ -760,7 +760,7 @@ class user
       user::send_role_sms('asmcsr', 'sms_external_registration',"Good day I would like to register as a user of the FPB Online.Regards $full_name");
     }
     $id = $session->user->id;
-    $db->exec("update user set active = 1 where id = $id");
+    $db->exec("update \$audit_db.user set active = 1 where id = $id");
   
   }
      
@@ -774,16 +774,16 @@ class user
     $program_id = config::$program_id;
     $is_fpb = $session->user->partner_id == config::$program_partner_id;
     if(!$is_fpb)
-      echo select::add_db("select code, name from role where code not in('unreg','base','qa','csr','fin','opsman','asmcsr') and program_id=$program_id order by name desc");
+      echo select::add_db("select code, name from \$audit_db.role where code not in('unreg','base','qa','csr','fin','opsman','asmcsr') and program_id=$program_id order by name desc");
     else
-      echo select::add_db("select code, name from role where code not in('unreg','base') and program_id=$program_id order by name desc");
+      echo select::add_db("select code, name from \$audit_db.role where code not in('unreg','base') and program_id=$program_id order by name desc");
   }
 
   static function groups()
   {
     global $session;
     $user = &$session->user;
-    echo select::add_db("select id, name from user_group where partner_id = $user->partner_id and active=1");
+    echo select::add_db("select id, name from \$audit_db.user_group where partner_id = $user->partner_id and active=1");
   }
 
   static function add($request)
@@ -805,15 +805,15 @@ class user
     $program_id = config::$program_id;
     $selected_program_id = $request['program_id'];
     if ($selected_program_id == '') $selected_program_id = $program_id;
-    $role = $db->read_one_value("select name from role where code ='$role' and program_id = $program_id" );
-    $program_name = $db->read_one_value("select description from program where id = $program_id");
+    $role = $db->read_one_value("select name from \$audit_db.role where code ='$role' and program_id = $program_id" );
+    $program_name = $db->read_one_value("select description from \$audit_db.program where id = $program_id");
      log::debug('partner id is '.$partner_id);
-       $sql = "insert into user(program_id, partner_id, email_address,title, first_name,last_name, cellphone,password,active)
+       $sql = "insert into \$audit_db.user(program_id, partner_id, email_address,title, first_name,last_name, cellphone,password,active)
           values($selected_program_id,$partner_id, '$email','$title', '$first_name','$last_name','$cellphone',password('$password'),1)";
        $user_id=$db->insert($sql);
 
 
-       $sql = "insert into user_role(user_id, role_code)
+       $sql = "insert into \$audit_db.user_role(user_id, role_code)
           values($user_id,'$code')";
        $db->exec($sql);
 
@@ -844,19 +844,19 @@ class user
     $show_groups = $request['show_groups'];
     $show_partner = $request['show_partner'];
     $sql = "select * from (select u.id, u.create_time, "; 
-    if ($show_partner == 1) $sql .= "(select full_name from partner where id = u.partner_id) partner,";
+    if ($show_partner == 1) $sql .= "(select full_name from partner where id = u.partner_id) \$audit_db.partner,";
     $sql .= "u.email_address, u.first_name, u.last_name,u.cellphone,'**********', r.name role";
     
     if ($show_groups == 1) {
-      $sql .=", (select group_concat(ug.name) from user_group ug 
-        join group_users gu on ug.id = gu.group_id where gu.user_id = u.id and ug.active=1) groups ";
+      $sql .=", (select group_concat(ug.name) from \$audit_db.user_group ug 
+        join \$audit_db.group_users gu on ug.id = gu.group_id where gu.user_id = u.id and ug.active=1) groups ";
     }
     $sql .= ",
               case u.id
               when $user->id then 'edit'
               else 'delete,edit' 
             end as actions
-      from user u left join user_role ur on u.id = ur.user_id
+      from \$audit_db.user u left join \$audit_db.user_role ur on u.id = ur.user_id
       left join role r on r.code = ur.role_code and u.program_id = r.program_id
       where u.active=1 and r.program_id = $selected_program_id ";
     if ($show_partner != 1) $sql .= " and u.partner_id = $partner_id";
@@ -886,10 +886,10 @@ class user
     $program_id = config::$program_id;
     $group_id = $request['group_id'];
     $sql = "select * from (select u.id, u.email_address, u.first_name, u.last_name,u.cellphone,r.name role, gu.create_time, 'delete' actions
-        from user u 
-           join group_users gu on u.id = gu.user_id and group_id = $group_id 
-           left join user_role ur on u.id = ur.user_id 
-           left join role r on r.code = ur.role_code and r.program_id = $program_id
+        from \$audit_db.user u 
+           join \$audit_db.group_users gu on u.id = gu.user_id and group_id = $group_id 
+           left join \$audit_db.user_role ur on u.id = ur.user_id 
+           left join \$audit_db.role r on r.code = ur.role_code and r.program_id = $program_id
         where u.active = 1
          ) tmp where 1=1";    
 
@@ -910,13 +910,13 @@ class user
     global $session;
     $user = $session->user;
     $user_sql = "select id, email_address,first_name, last_name,cellphone
-        from user u 
+        from \$audit_db.user u 
         where partner_id = $user->partner_id and active=1";
     $group_id = $request['group_id'];
     if ($group_id != '') 
-      $user_sql .= " and id not in (select user_id from group_users where group_id = $group_id)";
+      $user_sql .= " and id not in (select user_id from \$audit_db.group_users where group_id = $group_id)";
     if (isset($request['groups'])) {
-      $group_sql = "select id, name `group` from user_group where partner_id = $user->partner_id and active = 1";
+      $group_sql = "select id, name `group` from \$audit_db.user_group where partner_id = $user->partner_id and active = 1";
       table::search($request, $group_sql, $user_sql); 
     } 
     else
@@ -942,8 +942,8 @@ class user
     $table->set_expandable('index.php?a=user/members','table');
     unset($request['partner_id']);
     $table->set_options($request);
-    $sql = "select * from (select id group_id, create_time, name, (select count(1) from group_users gu, user u where group_id = g.id and u.id = gu.user_id and u.active=1) size 
-         from user_group g where partner_id = $partner_id and active = 1) tmp where 1=1";
+    $sql = "select * from (select id group_id, create_time, name, (select count(1) from \$audit_db.group_users gu, \$audit_db.user u where group_id = g.id and u.id = gu.user_id and u.active=1) size 
+         from \$audit_db.user_group g where partner_id = $partner_id and active = 1) tmp where 1=1";
     $table->show($sql);
   }
  
@@ -972,7 +972,7 @@ class user
     $name = $request['name'];
     $partner_id = $request['partner_id'];
     global $db;
-    $db->exec("insert into user_group(name, partner_id) values('$name', $partner_id)");
+    $db->exec("insert into \$audit_db.user_group(name, partner_id) values('$name', $partner_id)");
   } 
 
   static function rename_group($request)
@@ -981,7 +981,7 @@ class user
     $group = $request['name'];
     $id = $request['group_id'];
     global $db;
-    $db->exec("update user_group set name = '$group' where id = $id");
+    $db->exec("update \$audit_db.user_group set name = '$group' where id = $id");
   }
 
   static function deactivate_group($request)
@@ -989,7 +989,7 @@ class user
     $request = table::remove_prefixes($request);
     $id = $request['group_id'];
     global $db;
-    $db->exec("update user_group set active = 0, name=concat(name,'-deleted')  where id = $id");
+    $db->exec("update \$audit_db.user_group set active = 0, name=concat(name,'-deleted')  where id = $id");
   }
 
   static function manage_all($request)
@@ -1005,7 +1005,7 @@ class user
               when $user_id then 'edit'
               else 'delete,edit' 
             end as actions
-      from user u, user_role ur, role r, partner p
+      from \$audit_db.user u, \$audit_db.user_role ur, \$audit_db.role r, \$audit_db.partner p
       where u.id=ur.user_id and r.code = ur.role_code and u.partner_id = p.id
       and u.active=1 and u.program_id = $program_id and r.program_id = $program_id ) tmp where 1=1";    
             
@@ -1030,11 +1030,11 @@ class user
     $table->set_heading("User Registration Status History");
     $table->set_options($request);
     $table->show("select t.create_time, u.first_name, u.last_name, u.email_address,f.name action, r.name role
-      from trx t 
-        join user o on t.object_id = o.id
-        join function f on t.function_code = f.code
-        join user u on t.user_id = u.id
-        left join role r on r.code = t.detail
+      from \$audit_db.trx t 
+        join \$audit_db.user o on t.object_id = o.id
+        join \$audit_db.function f on t.function_code = f.code
+        join \$audit_db.user u on t.user_id = u.id
+        left join \$audit_db.role r on r.code = t.detail
       where o.id = $user_id"); 
   }
 
@@ -1051,7 +1051,7 @@ class user
     $groups = implode(',',$this->groups);
     $sql .= " $conjuctor ($table.access = 'p' or $table.user_id = $this->id";
     if ($groups != '')
-      $sql .= " or ($table.access = 'g' and $table.user_id in (select gu.user_id from group_users gu where gu.group_id in ($groups)))";
+      $sql .= " or ($table.access = 'g' and $table.user_id in (select gu.user_id from \$audit_db.group_users gu where gu.group_id in ($groups)))";
 
     return $sql .= ')';
  
@@ -1062,8 +1062,8 @@ class user
     global $db,$session;
     
     $user_id = $session->user->id;
-    $role = $db->read_one_value("select distinct name from role 
-                               join user_role on role_code=code where user_id=$user_id ");
+    $role = $db->read_one_value("select distinct name from \$audit_db.role 
+                               join \$audit_db.user_role on role_code=code where user_id=$user_id ");
      if ($role == "Administrator") return true;
 
      echo "Access denied.You do not have permission to this function ";
@@ -1089,9 +1089,9 @@ class user
     global $db;
     $parent_id = $db->read_one_value("select id from menu where name = '$name' and program_id = ".config::$program_id );
 
-    $sql = "select ifnull(url,concat(f.code,'.html')) href, description title, ifnull(m.name,f.name) name
-            from menu m join function f on f.code = m.function_code and f.program_id = m.program_id
-            where parent_id = 20 and f.program_id = 3 and f.code in ('$functions')
+    $sql = "select f.code,ifnull(url,concat(f.code,'.html')) href, description title, ifnull(m.name,f.name) name
+            from \$audit_db.menu m join \$audit_db.function f on f.code = m.function_code and f.program_id = m.program_id
+            where parent_id = $parent_id and f.program_id = 3 and f.code in ('$functions')
             order by position";
     
     return $db->read($sql, MYSQLI_ASSOC);
