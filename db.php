@@ -5,7 +5,7 @@ require_once('log.php');
 class db_exception extends Exception {
    public function __construct($message, $code = 0)//, Exception $previous = null)
    {
-	parent::__construct($message, $code);//, $previous);
+	    parent::__construct($message, $code);//, $previous);
    }
 };
 
@@ -73,7 +73,7 @@ class db
     if (!$this->result) throw new db_exception("SQL='$q', ERROR=".$this->mysqli->error);
     if ($this->result !== true)
       $this->fields = $this->result->fetch_fields();
-  }
+   }
 
   function send($q) { return $this->exec($q); }
 
@@ -161,9 +161,11 @@ class db
     $options['start'] = $start;
     $options['size'] = $size+1;
     $rows = array();
-    $this->each($sql, function($index, $row) use (&$rows) {
-      $rows[] = $row;
-      return !$callback || !$callback($index, $row);
+    $this->each($sql, function($index, $row) use (&$rows,$callback) {
+      if ($callback) 
+        $callback($index, $row);
+      else
+        $rows[] = $row;
     }, $options);
     return $rows;
   }
@@ -176,14 +178,13 @@ class db
   
   function page_indices($sql, $size, $start=0, $callback=null, $options=null)
   {
-    $options['fetch'] = MYSQLI_ROW;
+    $options['fetch'] = MYSQLI_NUM;
     return $this->page($sql, $size, $start, $callback, $options);
   }
-  function page_through_names($sql, $size, $callback=null, $options=null)
+  function page_through($sql, $size, $callback=null, $options=null)
   {
-    $options['fetch'] = MYSQLI_ASSOC;
     $options['size'] = $size;
-    $options['start'] = $start;
+    $options['start'] = 0;
     $pagenum = 0;   
     do {
       $paged = false;
@@ -198,7 +199,18 @@ class db
     } while ($paged && $last_row_index == $size-1);
   }
 
+  function page_through_names($sql, $size, $callback=null, $options=null)
+  {
+    $options['fetch'] = MYSQLI_ASSOC;
+    return $this->page_through($sql, $size, $callback, $options);
+  }
 
+  function page_through_indices($sql, $size, $callback=null, $options=null)
+  {
+    $options['fetch'] = MYSQLI_NUM;
+    return $this->page_through($sql, $size, $callback, $options);
+  }
+  
   function read_column($sql, $column_idx=0)
   {
     $this->exec($sql);
