@@ -350,6 +350,23 @@ class user
     if (in_array('email', config::$msg_methods)) user::send_email($email, $subject, $message, $from);
   }
   
+   static function send_role_sms($role,$function,$message)
+  {
+    $program_name = config::$program_name;
+    global $db,$session;
+    
+    $user=$session->user;
+    
+    $rows = $db->read("select first_name,last_name,cellphone from user u, user_role ur
+                                  where role_code='$role' and u.id= user_id ");
+    foreach($rows as $row) {
+      list($fname,$lname, $cellphone) = $row; 
+      user::force_audit($function, '', "Sms sent to $fname $lname $cellphone");
+      user::sms($cellphone, $user->partner_id, $user->id, $message);
+     
+    }
+
+  }
   static function create($partner_id, $email, $password,$title, $first_name, $last_name, $cellphone, $otp)
   {
     $program_id = config::$program_id;   
@@ -704,7 +721,7 @@ class user
     if ($partner_id == 0) throw new user_exception("Trying to approve a user without a partner id");
     
     $requestor = "$user->first_name $user->last_name <$user->email>";
-
+    $full_name="$user->first_name $user->last_name";
     $proto = isset($_SERVER['HTTPS'])?'https':'http';
     
     $emails = $db->read_column("select email_address 
@@ -734,6 +751,14 @@ class user
       $mail_sent = mail($email, $subject, $message, $headers);
       
     }
+    
+    $is_fpb = $user->partner_id == config::$program_partner_id;
+   
+    
+    if (!$is_fpb) { 
+     
+      user::send_role_sms('asmcsr', 'sms_external_registration',"Good day I would like to register as a user of the FPB Online.Regards $full_name");
+    }
     $id = $session->user->id;
     $db->exec("update user set active = 1 where id = $id");
   
@@ -745,8 +770,13 @@ class user
   }
    static function roles()
   {
+     global $session;
     $program_id = config::$program_id;
-    echo select::add_db("select code, name from role where code not in('unreg','base') and program_id=$program_id order by name desc");
+    $is_fpb = $session->user->partner_id == config::$program_partner_id;
+    if(!$is_fpb)
+      echo select::add_db("select code, name from role where code not in('unreg','base','qa','csr','fin','opsman') and program_id=$program_id order by name desc");
+    else
+      echo select::add_db("select code, name from role where code not in('unreg','base') and program_id=$program_id order by name desc");
   }
 
   static function groups()
