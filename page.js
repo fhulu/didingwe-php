@@ -32,8 +32,10 @@ $.fn.page = function(options, callback)
     expand_value: function(values,value)
     {
       $.each(values, function(code, subst) {
-        if (typeof subst === 'string') 
+        if (typeof subst === 'string') {
           value = value.replace('$'+code, subst);
+          if (value.indexOf('$') < 0) return;
+        }
       });
       return value;
     },
@@ -103,6 +105,7 @@ $.fn.page = function(options, callback)
         object.html = object.html.replace('$'+field, child.html);
         if (object.template !== undefined)
           object.html += child.html;
+        object.html = page.expand_value(object, object.html);
       });
     },
     
