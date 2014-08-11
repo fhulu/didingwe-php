@@ -34,7 +34,7 @@ class menu
     log::debug("functions are ". implode(',', $functions));
     
     global $db;
-    $parent_id = $db->read_one_value("select id from menu where name = '$this->name' and program_id = ".config::$program_id );
+    $parent_id = $db->read_one_value("select id from \$audit_db.menu where name = '$this->name' and program_id = ".config::$program_id );
     if ($parent_id == '') return;
     
     menu::show_subitems($parent_id, $functions, 0);
@@ -43,7 +43,7 @@ class menu
   function show_subitems($parent_id, $functions, $level)
   {    
     $sql = "select function_code, m.id, f.name function, m.name display, url, description, protected 
-            from menu m join function f on f.code = m.function_code and f.program_id = m.program_id
+            from \$audit_db.menu m join \$audit_db.function f on f.code = m.function_code and f.program_id = m.program_id
             where parent_id = $parent_id and f.code in ('$functions') order by position"; 
     
     
