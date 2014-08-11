@@ -107,6 +107,14 @@ $.fn.page = function(options, callback)
           object.html += child.html;
         object.html = page.expand_value(object, object.html);
       });
+      if (object.css !== undefined) {
+        if (object.css === null) object.css = object.code + ".css";
+        var ref=document.createElement("link")
+        ref.setAttribute("rel", "stylesheet");
+        ref.setAttribute("type", "text/css");
+        ref.setAttribute("href", object.css);        
+        document.getElementsByTagName("head")[0].appendChild(ref);
+      }
     },
     
     read: function(data)
