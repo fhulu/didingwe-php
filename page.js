@@ -98,6 +98,8 @@ $.fn.page = function(options, callback)
       $.each(object, function(field, child) {
         if (!$.isPlainObject(child) && !$.isArray(child) || child === null) return;
         page.inherit_values(object, child);
+        if (child.html !== undefined)
+          child.html = page.expand_attr(child.html, child, child.attr);
         var expanded = page.expand_template(field, child, object);
         page.expand_children(child); 
         if (!expanded)
