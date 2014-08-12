@@ -721,6 +721,7 @@ class user
     if ($partner_id == 0) throw new user_exception("Trying to approve a user without a partner id");
     
     $requestor = "$user->first_name $user->last_name <$user->email>";
+    $co_name=$db->read_one_value("select full_name from partner where id=$partner_id");
     $full_name="$user->first_name $user->last_name";
     $proto = isset($_SERVER['HTTPS'])?'https':'http';
     
@@ -757,7 +758,7 @@ class user
     
     if (!$is_fpb) { 
      
-      user::send_role_sms('asmcsr', 'sms_external_registration',"Good day I would like to register as a user of the FPB Online.Regards $full_name");
+      user::send_role_sms('asmcsr', 'sms_external_registration',"Good day $full_name from $co_name would like to register as a user of the FPB Online. Regards $full_name");
     }
     $id = $session->user->id;
     $db->exec("update \$audit_db.user set active = 1 where id = $id");
