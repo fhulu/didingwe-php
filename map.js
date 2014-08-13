@@ -1,37 +1,64 @@
-/* 
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
-
-(function( $ ) {
-  $.widget( "ui.map", {
-    options: {
-      latitude: -33.884322,
-      longitude: 18.632458,
-      zoom: 8,
-      pin: null,
-      value: null,
-      data: {}
-    },
-    
+(function($) {
+$.fn.mapper = function(options)
+{
+  if (options === undefined) options = {};
+  options = $.extend({
+     latitude: -33.884322,
+     longitude: 18.632458,
+     zoom: 8,
+     pin: null,
+     value: null
+   }, options );
+   
+  
+  options.zoom = parseInt(options.zoom);
+  var obj = $(this);
+  var map = {
+    options: options,
+    data:  {},
     _create: function() 
     {
-      this.position = new google.maps.LatLng(this.options.latitude, this.options.longitude);
+      this.location(options.latitude, options.longitude);
+    },
+    
+    show: function()
+    {
       var props = {
           center: this.position,
-          zoom: this.zoom,
+          zoom: options.zoom,
           mapTypeId: google.maps.MapTypeId.ROADMAP
         };
-      this.map = new google.maps.Map(document.getElementById(this.element.attr('id')), props);
-      this.map.setZoom(this.options.zoom);
-      this.marker = new google.maps.Marker({
+      this.map = new google.maps.Map(document.getElementById(obj.attr('id')), props);
+      this.map.setZoom(options.zoom);
+      this.marker(google.maps.Animation.DROP);
+    },
+    
+    location: function(latitude, longitude, show)
+    {
+      this.position = new google.maps.LatLng(latitude, longitude);
+      if (show === undefined || show === true) this.show();
+    },
+    
+    val: function(value)
+    {
+      if (value === undefined) {
+        return join([this.position.lat(), this.position.lng()]);
+      }
+      var position = value.split(',');
+      this.location(position[0], position[1]);
+    },
+    
+    marker: function(value)
+    {
+      if (value === undefined) return this.marker;
+      this.data.marker = new google.maps.Marker({
           map: this.map,
           position: this.position,
-          animation: google.maps.Animation.Drop
+          animation: value
         });
-
     }
-  })
-}) (jQuery);
+  }
+  map._create();
+  return map;
+}
+})(jQuery);
