@@ -22,6 +22,7 @@ $.fn.page = function(options, callback)
     options: options,
     data: null,
     id: id,
+    creation: null,
     load: function(url) 
     {
       if (url === undefined) url = options.url;
@@ -127,21 +128,22 @@ $.fn.page = function(options, callback)
       });
       
       if (object.create !== undefined) {
-        $('#'+object.code)[object.create](object);
+        var id = object.create;
+        object.creation = $('#'+object.code)[id](object).data(id);
       }      
     },
-    
     read: function(data)
     {
       data = page.expand_fields(id,data);
       page.expand_children(data);
-      $(selector).replaceWith($(data.html));
+      var html = $(data.html);
+      $(selector).html(html.html());
       page.set_data(data,$(selector).parent(), function() {
         page.assign_handlers(data);
       });
       page.custom_create(data);
+      $(selector).trigger('loaded', [data]);
     },
-    
     get_config: function(config, domid)
     {
       var found;
