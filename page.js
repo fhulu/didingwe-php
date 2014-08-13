@@ -118,6 +118,18 @@ $.fn.page = function(options, callback)
         document.getElementsByTagName("head")[0].appendChild(ref);
       }
     },
+
+    custom_create: function(object)
+    {
+      $.each(object, function(field, child) {
+        if (!$.isPlainObject(child) && child.create === undefined) return;
+        page.custom_create(child);
+      });
+      
+      if (object.create !== undefined) {
+        $('#'+object.code)[object.create](object);
+      }      
+    },
     
     read: function(data)
     {
@@ -127,6 +139,7 @@ $.fn.page = function(options, callback)
       page.set_data(data,$(selector).parent(), function() {
         page.assign_handlers(data);
       });
+      page.custom_create(data);
     },
     
     get_config: function(config, domid)
