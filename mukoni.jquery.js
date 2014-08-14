@@ -561,3 +561,31 @@ function getQueryParams(qs) {
 
     return params;
 }
+
+function loadFile(file,type)
+{
+  if (type === 'css') type = 'link'
+  var ref=document.createElement(type);
+  if (type === 'link') {
+    ref=document.createElement("link")
+    ref.setAttribute("rel", "stylesheet");
+    ref.setAttribute("type", "text/css");
+    ref.setAttribute("href", file);
+  }
+  else if (type === 'script') {
+    ref=document.createElement('script');
+    ref.setAttribute("type","text/javascript");
+    ref.setAttribute("src", filename);
+  }
+  document.getElementsByTagName("head")[0].appendChild(ref);
+}
+ 
+ function loadCSS(file)
+ {
+   loadFile(file,'link');
+ }
+ 
+ function loadScript(file)
+ {
+   loadFile(file,'script');
+ }
