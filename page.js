@@ -193,7 +193,8 @@ $.fn.page = function(options, callback)
         if (!$.isPlainObject(child)) return;
         var obj = $('#'+field);
         var data = {_page: id, _field: field };
-        if (child.validate !== undefined || child.action !== undefined)  {
+        if (child.validate !== undefined || child.action !== undefined && obj.attr('action')===undefined)  {
+          obj.attr('action','');
           child.action = child.validate = undefined;
           var selector = child.selector;
           if (selector !== undefined) {
