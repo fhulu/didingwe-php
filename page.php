@@ -183,40 +183,38 @@ class page {
 
   }
   
-  static function validate($request)
+  static function validate($request, $page_options)
   {
-    global $db;
-    $code = $request['code'];
-    $rows = $db->read("select distinct ff.optional"
-            . ", ifnull(ff.my_field_code, f.code) code"
-            . ", ifnull(ff.my_validation, f.validation) validation"
-            . ", ifnull(ff.my_name, f.name) name"
-            . ", ifnull(ff.my_size, f.size) size"
-            . ", ifnull(ff.my_min_length, f.min_length) min_length"
-            . ", ff.optional"
-            . ", ifnull(ff.my_reference, f.reference) reference"
-            . " from form_field ff left join field f"
-            . " on f.program_id in ('\$pid', '_generic')"
-            . " and f.code = ff.field_code"
-            . " where ff.program_id in ('\$pid', '_generic')"
-            . " and ff.form_code = '$code'"
-            . " order by ff.program_id desc, ff.position asc", MYSQLI_ASSOC);
+    $fields = array_keys($request);
+    $fields = array_diff($fields, array('a','_page','_field'));
+    if (sizeof($fields) == 0) return false;
     
+    $fields = implode("','", $fields);
+    global $db;
+    $rows =  $db->read(
+      "select f.code, f.name, ft.options type_options, f.options field_options"
+      . " from field f left join field_type ft on f.type = ft.code"
+      . " where f.code in ('$fields')", MYSQLI_ASSOC);
+    
+    
+    if (sizeof($rows) == 0) return false;
     
     $v = new validator($request);
     
     foreach ($rows as $row) {
+      page::expand_options($row, 'type_options');
+      page::expand_options($row, 'field_options');
       $code = $row['code'];
       $name = $row['name'];
-      if ($row['optional'] != 0 && !$v->check($code, $name)->provided()) continue;
-      
-      $min_length = $row['min_length'];
-      if ($min_length != 0) 
-        $v->check($code, $name)->at_least($min_length);
-      
-      $validator = $row['validation'];
-      if ($validator != '')
+      $field_validator = $row['valid'];
+      $page_validator = $page_optins[$code]['valid'];
+      $validators = $page_validator==null?$field_validator:$page_validator;
+      if (is_null($validators)) continue;
+      $validators = explode(',',$validators);
+      foreach($validators as $validator) {
+        if ($validator == 'optional' && !$v->check($code, $name)->provided()) continue;
         $v->check($code, $name)->is($validator);
+      }
     }
     
     return $v->valid();
@@ -296,14 +294,13 @@ class page {
   static function action($request)
   {
     $options = page::read_page_field_options($request);
-
-    // page::expand_values($field_options);
-    $validate = $options['validate'];
-    if (isset($validate)) {
-      //page::validate($request);
-    }
+    page::expand_values($options);
+    if (array_key_exists('validate', $options) && !page::validate($request, $options))
+      return;
     
     $action = $options['action'];
+    if (!isset($action)) return;
+    
     log::debug("action=$action");
     
     $rows = array();
