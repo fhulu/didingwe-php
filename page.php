@@ -108,16 +108,29 @@ class page {
     page::set_data_flag($data);
   }
  
-  static function read_field(&$data, $known = array())
+  static function read_field_options($field)
   {
-    $field = $data['field'];
-    unset($data['field']);
-
     global $db;
     $row =  $db->read_one(
       "select f.code, f.name, f.description 'desc', ft.html, ft.options type_options, f.options field_options"
       . " from field f left join field_type ft on f.type = ft.code"
       . " where f.code = '$field'", MYSQLI_ASSOC);
+    
+    if (is_null($row)) return null;
+    
+    foreach($row as $key=>$value) {
+      if (is_null($value)) unset ($row[$key]);
+    }
+    page::expand_options($row, 'type_options');
+    page::expand_options($row, 'field_options');
+    return $row;
+}
+  
+  static function read_field(&$data, $known = array())
+  {
+    $field = $data['field'];
+    unset($data['field']);
+    $row = page::read_field_options($field);
     
     if (sizeof($row) == 0) {
       $data['name'] = $data['desc'] = '';
@@ -127,7 +140,8 @@ class page {
       if (is_null($value)) unset ($row[$key]);
     }
     $data = array_merge($data, $row);
-    page::expand($data);
+    page::read_child_template($data);
+    page::set_data_flag($data);
     page::expand_variables($data, $known);
   }
 
@@ -229,21 +243,22 @@ class page {
     }
   }
   
+  static function read_page_field_options($request)
+  {
+    $page = $request['_page'];
+    $page_options = page::read_field_options($page);
+    $field = $request['_field'];
+    $options = page::read_field_options($field);
+    if (isset($page_options[$field]))
+      $options = array_merge($options, $page_options[$field]);
+    return $options;
+  }
   
   static function data($request)
   {
-    $field = $request['field'];
-    $sql = "select f.code, ft.options type_options, f.options field_options"
-              ." from field f left join field_type ft on f.type = ft.code"
-              ." where f.code = '$field'";
-
-    global $db;
-    $row =  $db->read_one($sql, MYSQLI_ASSOC);
-
-    page::expand_options($row, 'type_options');
-    page::expand_options($row, 'field_options');
+    $row = page::read_page_field_options($request);
     page::read_child_template($row);
-    page::expand_values($row, array('template'));
+    page::expand_values($row, array('template','html'));
     $data = $row['data'];
     $template = $row['template'];
     
@@ -262,6 +277,7 @@ class page {
       }
     }
     else if ($type == 'sql') {
+      global $db;
       $rows = $db->read($list, MYSQLI_ASSOC);
     }
     else if (preg_match('/^([^\(]+)\(([^\)]+)\)/', $data, $matches) ) {
@@ -275,6 +291,38 @@ class page {
     if (isset($template)) $rows['template'] = $template;  
     page::expand_templates($rows);  
     echo json_encode($rows);
+  }
+  
+  static function action($request)
+  {
+    $options = page::read_page_field_options($request);
+
+    // page::expand_values($field_options);
+    $validate = $options['validate'];
+    if (isset($validate)) {
+      //page::validate($request);
+    }
+    
+    $action = $options['action'];
+    log::debug("action=$action");
+    
+    $rows = array();
+    $matches = array();
+    preg_match('/^([^:]+): ?(.+)/', $action, $matches);
+    $type = $matches[1];
+    $list = $matches[2];
+    if ($type == 'sql') {
+      global $db;
+      $rows = $db->read($list, MYSQLI_ASSOC);
+      echo json_encode($rows);
+    }
+    else if (preg_match('/^([^\(]+)\(([^\)]*)\)/', $action, $matches) ) {
+      $function = $matches[1];
+      log::debug("FUNCTION $function PARAMS:".$matches[2]);
+      list($class, $method) = explode('::', $function);
+      if (isset($method)) require_once("$class.php");
+      call_user_func($function, $request, $matches[2]);
+    }
   }
   
 }
