@@ -122,9 +122,8 @@ $.fn.page = function(options, callback)
 
     custom_create: function(object)
     {
-      $.each(object, function(field, child) {
-        if (!$.isPlainObject(child) && child.create === undefined) return;
-        page.custom_create(child);
+      $.each(object, function(f, child) {
+        if ($.isPlainObject(child)) page.custom_create(child);
       });
       
       if (object.create !== undefined) {
@@ -132,18 +131,22 @@ $.fn.page = function(options, callback)
         object.creation = $('#'+object.code)[id](object).data(id);
       }      
     },
+    
     read: function(data)
     {
       data = page.expand_fields(id,data);
       page.expand_children(data);
       var html = $(data.html);
-      $(selector).html(html.html());
-      page.set_data(data,$(selector).parent(), function() {
+      
+      obj.html(html.html());
+      obj.on('loaded', function() {
+        page.custom_create(data);
         page.assign_handlers(data);
+        obj.trigger('read', [data]);
       });
-      page.custom_create(data);
-      $(selector).trigger('loaded', [data]);
+      page.load_data(obj.parent());
     },
+    
     get_config: function(config, domid)
     {
       var found;
@@ -162,38 +165,52 @@ $.fn.page = function(options, callback)
       return null;
     },
     
-    set_data: function(data, parent,callback) 
+    load_data: function(parent) 
     {
-      var count = parent.children('[has_data]').length;
-      var done = 0;
-      parent.children().each(function() {
-        var child = $(this);
-        page.set_data(data,child, function() {
-          var has_data = child.attr('has_data');
-          if (has_data === undefined) return;
-          child.removeAttr('has_data');
-          var field_id = child.attr('id');
-          var params = {page: id, field:field_id, data: has_data };
-          $.json('/?a=page/data', {data:params}, function(result) {
-            result.html = child.html();
-            page.expand_children(result);
-            child.html(result.html);
-            if (++done === count) page.set_data(data, parent, callback);
-          });
+
+      parent.find('*').each(function() {
+        var object = $(this);
+        if (object.attr('has_data') === undefined) {
+          object.trigger('loaded');
+          return;
+        }
+
+        object.removeAttr('has_data');
+        var field_id = object.attr('id');
+        var params = {_page: id, _field:field_id};
+        $.json('/?a=page/data', {data:params}, function(result) {
+          result.html = object.html();
+          page.expand_children(result);
+          object.html(result.html);
+          object.trigger('loaded', result);
         });
       });
-      if (count===0 && callback !== undefined) callback();
     },
 
-    assign_handlers: function(data)
+    assign_handlers: function(object)
     {
-      if (data.children === undefined) return;
-      $.each(data.children, function(id, child) {
-        var obj = $('#'+id);
-        if (child.check !== undefined) 
-          obj.checkOnClick(selector + ' ' + child.check, child.url);
-        else if (child.url !== undefined)
+      $.each(object, function(field, child) {
+        if (!$.isPlainObject(child)) return;
+        var obj = $('#'+field);
+        var data = {_page: id, _field: field };
+        if (child.validate !== undefined || child.action !== undefined)  {
+          child.action = child.validate = undefined;
+          var selector = child.selector;
+          if (selector !== undefined) {
+            selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+id+"$2");
+            obj.checkOnClick(selector, '/?a=page/action', {data: data }, function(result) {
+              obj.trigger('processed', [result]);
+            });
+          }
+          else obj.click(function() {
+            $.json('/?a=page/action', {data: data}, function(result) {
+              obj.trigger('processed', [result]);
+            });
+          });
+        }
+        else if (child.url !== undefined) {
           obj.click(function() { location.href = child.url; });
+        }
         page.assign_handlers(child);
       });
     },
