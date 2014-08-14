@@ -23,6 +23,7 @@ $.fn.page = function(options, callback)
     data: null,
     id: id,
     creation: null,
+    links: "",
     load: function(url) 
     {
       if (url === undefined) url = options.url;
@@ -127,9 +128,51 @@ $.fn.page = function(options, callback)
       });
       
       if (object.create !== undefined) {
-        var id = object.create;
-        object.creation = $('#'+object.code)[id](object).data(id);
+        var create = object.create;
+        object.create = undefined;
+        console.log(object.code, create);
+        object.creation = $('#'+object.code)[create](object).data(create);
       }      
+    },
+    
+    load_link: function(link,type, callback)
+    {
+      if (page.links.indexOf("["+link+"]")>=0) return;
+
+      if (type == 'css') {
+        $('<link>').attr('ref','stylesheet')
+                .attr('type','text/css')
+                .attr('href', link)
+                .appendTo('head');
+      }
+      else if (type === 'script') {
+        var script = $('<script></script>').attr('type','text/javascript').attr('src', link);
+        if (callback !== undefined) {
+          script.onreadystatechange = callback;
+          script.onload = callback;
+        }
+        script.appendTo('head');
+      }
+      page.links +="["+link+"]"
+    },
+    
+    load_links: function(object, type, callback)
+    {
+      if (object[type] !== undefined) {
+        var links = object[type].split(',');
+        object[type] = undefined;
+        var loaded = 0;
+        $.each(links, function(i, link) {
+          page.load_link(link,type, function() {
+            console.log('loading', link, loaded)
+            if (++loaded == links.length && callback !== undefined)
+              callback();
+          });
+        });
+      }      
+      $.each(object, function(f, child) {
+        if ($.isPlainObject(child)) page.load_links(child, type);
+      });      
     },
     
     read: function(data)
@@ -140,6 +183,10 @@ $.fn.page = function(options, callback)
       
       obj.html(html.html());
       obj.on('loaded', function() {
+        page.load_links(data,'css');
+        page.load_links(data,'script', function() {
+          //page.custom_create(data);
+        });
         page.custom_create(data);
         page.assign_handlers(data);
         obj.trigger('read', [data]);
