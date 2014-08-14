@@ -240,10 +240,10 @@ $.fn.page = function(options, callback)
         if (!$.isPlainObject(child)) return;
         var obj = $('#'+field);
         var data = {_page: id, _field: field };
-        if (child.validate !== undefined || child.action !== undefined && obj.attr('action')===undefined)  {
+        if (child.selector !== undefined || child.action !== undefined && obj.attr('action')===undefined)  {
           obj.attr('action','');
-          child.action = child.validate = undefined;
           var selector = child.selector;
+          child.action = child.selector = undefined;
           if (selector !== undefined) {
             selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+id+"$2");
             obj.checkOnClick(selector, '/?a=page/action', {data: data }, function(result) {
