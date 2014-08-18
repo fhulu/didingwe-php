@@ -562,30 +562,28 @@ function getQueryParams(qs) {
     return params;
 }
 
-function loadFile(file,type)
+function loadLink(link,type)
 {
-  if (type === 'css') type = 'link'
+  if (type === 'css') type = 'link';
   var ref=document.createElement(type);
   if (type === 'link') {
-    ref=document.createElement("link")
     ref.setAttribute("rel", "stylesheet");
     ref.setAttribute("type", "text/css");
     ref.setAttribute("href", file);
   }
   else if (type === 'script') {
-    ref=document.createElement('script');
     ref.setAttribute("type","text/javascript");
-    ref.setAttribute("src", filename);
+    ref.setAttribute("src", link);
   }
   document.getElementsByTagName("head")[0].appendChild(ref);
 }
  
- function loadCSS(file)
+ function loadCSS(link)
  {
-   loadFile(file,'link');
+   loadFile(link,'link');
  }
  
- function loadScript(file)
+ function loadScript(link)
  {
-   loadFile(file,'script');
+   loadFile(link,'script');
  }
