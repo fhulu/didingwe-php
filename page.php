@@ -321,5 +321,36 @@ class page {
       call_user_func($function, $request, $matches[2]);
     }
   }
+
+  static function load($request)
+  {
+    $options = page::read_field_options($request['page']);
+    page::expand_values($options);
+
+    $key = $request['key'];
+    if (!isset($key))  {
+      log::warn("No key provided");
+      return;
+    }
+    log::debug("key=$key, $options=".json_encode($options));
+    $rows = array();
+    $matches = array();
+    preg_match('/^([^:]+): ?(.+)/', $options['load'], $matches);
+    $type = $matches[1];
+    $list = $matches[2];
+    if ($type == 'sql') {
+      global $db;
+      $sql = str_replace('$key', addslashes($key), $list);
+      $rows = $db->read_one($sql, MYSQLI_ASSOC);
+      echo json_encode($rows);
+    }
+    else if (preg_match('/^([^\(]+)\(([^\)]*)\)/', $action, $matches) ) {
+      $function = $matches[1];
+      log::debug("FUNCTION $function PARAMS:".$matches[2]);
+      list($class, $method) = explode('::', $function);
+      if (isset($method)) require_once("$class.php");
+      call_user_func($function, $request, $matches[2]);
+    }
+  }
   
 }
