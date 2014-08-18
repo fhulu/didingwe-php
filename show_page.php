@@ -12,21 +12,27 @@ log::debug("loading $page");
     <script type='text/javascript' src='jquery/ui-min.js'></script>
     <script type="text/javascript" src='common/mukoni.jquery.js'></script> 
     <script type="text/javascript" src='common/mukoni.jquery-ui.js'></script> 
-<link type="text/css" rel="stylesheet" href="page_wizard.css"></link>
 <?php
-if (file_exists("$page.css")) { 
-  echo "<link type='text/css' rel='stylesheet' href='$page.css'></link>";
-} 
+function pre_load_custom($page)
+{
+  if (file_exists("pre-$page.php")) {
+    require_once "pre-$page.php";
+  } 
+  if (file_exists("$page.css")) { 
+    echo "<link type='text/css' rel='stylesheet' href='$page.css'></link>";
+  } 
+  if (file_exists("$page.js")) { 
+    echo "<script type='text/javascript' src='$page.js'></script>";
+  }
+}
 ?>
 <script type='text/javascript' src="common/page.js"></script>
-<script type='text/javascript' src="common/page_wizard.js"></script>
 <script>
 $(function() {
   $("#<?=$page; ?>").page();
 });
 </script>
 <?php 
-if (file_exists("$page.js")) { 
-  echo "<script type='text/javascript' src='$page.js'></script>";
-}
 echo "<div id='$page'></div>";
+pre_load_custom($page);
+if (isset($_REQUEST['content']))   pre_load_custom($_REQUEST['content']);
