@@ -214,7 +214,11 @@ class validator
     }
     else {
       list($dbname, $table, $field) = explode('.', $table);
-      if ($field == '') {
+      if (!isset($table)) {
+        $table = $dbname;
+        $field = $this->name;
+      }
+      else if (!isset($field)) {
         $field = $table;
         $table = $dbname;
       }
@@ -248,7 +252,7 @@ class validator
   function unique($table=null)
   {
     if ($this->find_in($table))
-      return $this->error("!$this->title already exist.");
+      return $this->error("!$this->title already exists.");
     return true; 
   }
   
