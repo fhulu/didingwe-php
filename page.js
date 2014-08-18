@@ -4,7 +4,6 @@ $.fn.page = function(options, callback)
     callback = options;
     options = {method: 'post'};
   } 
-
   var obj = $(this);
   var id = obj.attr('id');
   var parent_id = obj.parent().attr('id');
@@ -111,14 +110,6 @@ $.fn.page = function(options, callback)
           object.html += child.html;
         object.html = page.expand_value(object, object.html);
       });
-      if (object.css !== undefined) {
-        if (object.css === null) object.css = object.code + ".css";
-        var ref=document.createElement("link")
-        ref.setAttribute("rel", "stylesheet");
-        ref.setAttribute("type", "text/css");
-        ref.setAttribute("href", object.css);        
-        document.getElementsByTagName("head")[0].appendChild(ref);
-      }
     },
 
     custom_create: function(object)
@@ -130,7 +121,6 @@ $.fn.page = function(options, callback)
       if (object.create !== undefined) {
         var create = object.create;
         object.create = undefined;
-        console.log(object.code, create);
         object.creation = $('#'+object.code)[create](object).data(create);
       }      
     },
@@ -175,6 +165,13 @@ $.fn.page = function(options, callback)
       });      
     },
     
+    load_values: function(object)
+    {
+      var params = getQueryParams(location.search);
+      if (params.load === undefined) return;
+      object.loadChildren('/?a=page/load', {data:params});
+    },
+    
     read: function(data)
     {
       data = page.expand_fields(id,data);
@@ -182,7 +179,9 @@ $.fn.page = function(options, callback)
       var html = $(data.html);
       
       obj.html(html.html());
-      obj.on('loaded', function() {
+      var count=0;
+      var parent = obj.parent();
+      parent.on('loaded', function() {
         page.load_links(data,'css');
         page.load_links(data,'script', function() {
           //page.custom_create(data);
@@ -190,8 +189,9 @@ $.fn.page = function(options, callback)
         page.custom_create(data);
         page.assign_handlers(data);
         obj.trigger('read', [data]);
+        page.load_values(obj);
       });
-      page.load_data(obj.parent());
+      page.load_data(parent);
     },
     
     get_config: function(config, domid)
@@ -214,14 +214,16 @@ $.fn.page = function(options, callback)
     
     load_data: function(parent) 
     {
-
-      parent.find('*').each(function() {
+      var children = parent.find('[has_data]');
+      var count = children.length;
+      console.log('children count', count)
+      if (!count) {
+        parent.trigger('loaded');
+        return;
+      }
+      var loaded = 0;
+      children.each(function() {
         var object = $(this);
-        if (object.attr('has_data') === undefined) {
-          object.trigger('loaded');
-          return;
-        }
-
         object.removeAttr('has_data');
         var field_id = object.attr('id');
         var params = {_page: id, _field:field_id};
@@ -229,7 +231,8 @@ $.fn.page = function(options, callback)
           result.html = object.html();
           page.expand_children(result);
           object.html(result.html);
-          object.trigger('loaded', result);
+          if (++loaded == count) 
+            parent.trigger('loaded', result);
         });
       });
     },
@@ -261,52 +264,6 @@ $.fn.page = function(options, callback)
         }
         page.assign_handlers(child);
       });
-    },
-    
-    update_dates: function()
-    {
-      // load date picker after form is loaded 
-      // bug on date picker that doesn't allow it to be loaded when form has not completed loading 
-      obj.find('.datepicker').datepicker();
-      $.each(form.data.fields, function(field, prop) {
-        if (prop.input != 'date') return;
-        var input = $('#'+field);
-        if (prop.reference == null) {
-          input.datepicker();
-          return;
-        }
-        var params = prop.reference.split(',');
-        if (params.length == 1) 
-          input.datepicker({range: params[0]});
-        else if (params.length == 2) 
-          input.datepicker({range: params[0], beforeShowDay: $.datepicker[params[1]]});
-      });
-    },
-    
-    load_wizard: function(data)
-    {
-      var index = 0;
-      var done = 0;
-      var parent = form;
-      $.each(data.forms, function(id, form) {
-        var div = $('<div></div>');
-        div.attr('caption', form.title);
-        div.attr('id', id);
-        if (index > 0 && form.show_back == 1) div.attr('back','');
-        if (++index < data.size && form.show_next == 1) div.attr('next','');
-        obj.append(div); //todo: order may be broken if an earlier form takes longer than a later one
-        div.form({success: function() {
-          if (++done != data.size) return;
-
-          obj.pageWizard({title: data.program} );
-          $.each(data.forms, function(id, form) {
-            if (form.next_action != null) 
-              $('.'+id+'_next').checkOnClick(selector+' *', form.next_action);
-          });
-          $(selector+ ' .title').hide();
-          parent.options.success();
-        }});
-      });
     }
   };
   if (options.autoLoad) page.load();
@@ -314,8 +271,3 @@ $.fn.page = function(options, callback)
 }
 
 
-
-$.fn.formLoaded = function(callback)
-{
-  $(this).attr('loaded', callback);
-}
