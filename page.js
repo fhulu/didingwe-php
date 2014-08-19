@@ -112,22 +112,13 @@ $.fn.page = function(options, callback)
       });
     },
 
-    custom_create: function(object)
-    {
-      $.each(object, function(f, child) {
-        if ($.isPlainObject(child)) page.custom_create(child);
-      });
-      
-      if (object.create !== undefined) {
-        var create = object.create;
-        object.create = undefined;
-        object.creation = $('#'+object.code)[create](object).data(create);
-      }      
-    },
     
     load_link: function(link,type, callback)
     {
-      if (page.links.indexOf("["+link+"]")>=0) return;
+      if (page.links.indexOf("["+link+"]")>=0)  {
+        callback();
+        return;
+      }
 
       if (type == 'css') {
         $('<link>').attr('ref','stylesheet')
@@ -136,40 +127,58 @@ $.fn.page = function(options, callback)
                 .appendTo('head');
       }
       else if (type === 'script') {
-        var script = $('<script></script>').attr('type','text/javascript').attr('src', link);
-        if (callback !== undefined) {
-          script.onreadystatechange = callback;
-          script.onload = callback;
+        var script = document.createElement('script');
+        var loaded = false;
+        script.src =  link;
+        script.type = 'text/javascript';
+        if (callback !== undefined) script.onreadystatechange = script.onload = function() {
+          if (!loaded) callback();
+          loaded = true;
         }
-        script.appendTo('head');
+        var head = document.getElementsByTagName('head')[0];
+        head.appendChild(script);
       }
-      page.links +="["+link+"]"
+      page.links +="["+link+"]";
     },
     
-    load_links: function(object, type, callback)
+    load_links: function(object, type, options, callback)
     {
-      if (object[type] !== undefined) {
-        var links = object[type].split(',');
-        object[type] = undefined;
-        var loaded = 0;
-        $.each(links, function(i, link) {
-          page.load_link(link,type, function() {
-            console.log('loading', link, loaded)
-            if (++loaded == links.length && callback !== undefined)
-              callback();
-          });
+      var links = options[type];
+      if (links === undefined) {
+        if (callback !== undefined) callback();
+        return;
+      }
+      links = links.split(',');
+      var loaded = 0;
+      $.each(links, function(i, link) {
+        page.load_link(link,type, function() {
+          if (callback !== undefined && ++loaded == links.length) {
+            callback();
+          }
         });
-      }      
-      $.each(object, function(f, child) {
-        if ($.isPlainObject(child)) page.load_links(child, type);
       });      
     },
     
     load_values: function(object)
     {
-      var params = getQueryParams(location.search);
-      if (params.load === undefined) return;
-      object.loadChildren('/?a=page/load', {data:params});
+      if (options.data.load === undefined) return;
+      object.loadChildren('/?a=page/load', {data:options.data});
+    },
+    
+    
+    set_options: function(options)
+    {
+      $.each(options, function(f, option) {
+        if ($.isPlainObject(option)) page.set_options(option);
+      });
+      
+      var object = $('#'+options.code);
+      if (!object.exists()) return;
+      
+      page.load_links(object, 'css', options);
+      page.load_links(object, 'script', options, function() {
+        object.customCreate(options);
+      });      
     },
     
     read: function(data)
@@ -182,11 +191,7 @@ $.fn.page = function(options, callback)
       var count=0;
       var parent = obj.parent();
       parent.on('loaded', function() {
-        page.load_links(data,'css');
-        page.load_links(data,'script', function() {
-          //page.custom_create(data);
-        });
-        page.custom_create(data);
+        page.set_options(data);
         page.assign_handlers(data);
         obj.trigger('read', [data]);
         page.load_values(obj);
@@ -194,29 +199,10 @@ $.fn.page = function(options, callback)
       page.load_data(parent);
     },
     
-    get_config: function(config, domid)
-    {
-      var found;
-      $.each(config.children, function(id, obj) {
-        if (id === domid) {
-          found = obj;
-          return;
-        }
-      });
-      if (found) return found;
-      
-      $.each(config.children, function(id, obj) {
-        var found = page.get_config(obj, domid);
-        if (found !== null) return found;
-      });
-      return null;
-    },
-    
     load_data: function(parent) 
     {
       var children = parent.find('[has_data]');
       var count = children.length;
-      console.log('children count', count)
       if (!count) {
         parent.trigger('loaded');
         return;
