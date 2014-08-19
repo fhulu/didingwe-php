@@ -1,7 +1,7 @@
 <?php
 require_once ('log.php');
 $page = $_REQUEST['page'];
-log::debug("loading $page");
+$params = json_encode($_GET);
 ?>
     <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -29,7 +29,7 @@ function pre_load_custom($page)
 <script type='text/javascript' src="common/page.js"></script>
 <script>
 $(function() {
-  $("#<?=$page; ?>").page();
+  $("#<?=$page; ?>").page({data: <?=$params;?>});
 });
 </script>
 <?php 
