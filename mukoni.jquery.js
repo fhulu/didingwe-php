@@ -518,10 +518,9 @@ $.fn.bookmarkOnClick = function() {
 
 $.fn.customCreate = function(options)
 {
-  var create = this.attr('create');
+  var create = options.create;
   if (create === undefined) return;
-  this.removeAttr('create');
-  this.creation = $(this)[create](options).data(create);
+  this.creation = this[create](options).data(create);
 }
 
 /**
