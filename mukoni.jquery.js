@@ -515,6 +515,15 @@ $.fn.bookmarkOnClick = function() {
     }
   });
 }
+
+$.fn.customCreate = function(options)
+{
+  var create = this.attr('create');
+  if (create === undefined) return;
+  this.removeAttr('create');
+  this.creation = $(this)[create](options).data(create);
+}
+
 /**
 * @param scope Object :  The scope in which to execute the delegated function.
 * @param func Function : The function to execute
