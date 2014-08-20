@@ -35,15 +35,16 @@ class page {
       }
 
       $children = array();
-      if ($value[0] == '{') {
-        page::read_children($children, $name, $matches[1]);
+      $grouper = $value[0];
+      $value = substr($value, 1, strlen($value)-2);
+      if ($grouper == '{') {
+        page::read_children($children, $name, $value);
         if (is_array($data[$name]))
           $data[$name] = array_merge($data[$name], $children);
         else
           $data[$name] = $children;
       }
       else {
-        $value = substr($value, 1, strlen($value)-2);
         $data[$name] = explode(',', $value);
       }
     }
@@ -328,9 +329,9 @@ class page {
     }
   }
 
-  static function load($request)
-  {
-    $options = page::read_field_options($request['page']);
+  static function load($request)   
+  {  
+    $options = page::read_field_options($request['table']);
     page::expand_values($options);
 
     $key = $request['key'];
@@ -361,8 +362,35 @@ class page {
   
   static function table($request)
   {
-    $options = page::read_field_options($request['page']);
+    $options = page::read_field_options($request['field']);
     
+    page::expand_values($options);
+    
+    $data = $options['data'];
+    if (!isset($data)) return;
+    
+    $rows = array();
+    $matches = array();
+    preg_match('/^([^:]+): ?(.+)/', $data, $matches);
+    $type = $matches[1];
+    $list = $matches[2];
+    if ($type == 'sql') {
+      global $db;
+      $rows = $db->read($list, MYSQLI_NUM);
+      echo json_encode($rows);
+    }
+    else if (preg_match('/^([^\(]+)\(([^\)]*)\)/', $action, $matches) ) {
+      $function = $matches[1];
+      log::debug("FUNCTION $function PARAMS:".$matches[2]);
+      list($class, $method) = explode('::', $function);
+      if (isset($method)) require_once("$class.php");
+      call_user_func($function, $request, $matches[2]);
+    }
   }
   
+  static function test($req)
+  {
+    log::debug(json_encode($req));
+    echo json_encode($req);
+  }
 }
