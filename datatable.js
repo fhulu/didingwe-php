@@ -25,8 +25,10 @@
       expandable: null,
       actions: null,
       row_actions: null,
+      url: '/?a=page/read&page=mytable
       rows: null*/
       heading: 'We didnt define heading',
+      row_actions: {},
       slideSpeed: 300
     },
     
@@ -36,17 +38,19 @@
        {'slide': ['<', 'Show more options...'],
         'slideoff': ['>', 'Hide options']
       })
-      this.showHeader();
-      this.showTitles();
+      if (this.hasHeader) this.showHeader();
+      if (this.options.titles !== undefined) this.showTitles();
       this.showData();
     },
     
-    showHeader: function()
+    hasHeader: function()
     {
       var opts = this.options;
-      if (opts.titles === undefined && opts.heading === undefined && opts.page_size === undefined ) 
-        return;
-      
+      return opts.titles !== undefined || opts.heading !== undefined && opts.page_size !== undefined;
+    },
+    
+    showHeader: function()
+    {      
       var head = this.element.find('thead');
       if (!head.exists()) 
         head = $('<thead></thead>').prependTo(this.element);
@@ -71,9 +75,7 @@
     
     
     showTitles: function(titles)
-    {
-      if (this.options.titles === undefined) return;
-      
+    {      
       var head = this.element.find('thead');
       if (titles === undefined) titles = this.options.titles;
       var tr = $('<tr class=titles></tr>').appendTo(head);
@@ -89,9 +91,11 @@
       if (data === undefined) data = this.options.rows;
       $.each(data, function(i, row) {
         var tr = $('<tr></tr>').appendTo(body);
+        tr.attr('_key', row[0]);
         if (i % 2 === 0) tr.addClass('alt');
         var last = row.length-1;
         $.each(row, function(j, cell) {
+          if (j===0 && self.options.show_key === undefined) return;
           var td = $('<td></td>').appendTo(tr);
           if (j != last) {
             td.html(cell);
@@ -109,6 +113,7 @@
       var self = this;
       td.addClass('actions');
       var parent = td;
+      var height = tr.height();
       $.each(actions, function(k, action) {
         var row_actions = self.options.row_actions[action];
         var div = $('<div></div>');
@@ -116,28 +121,44 @@
         div.attr('title', row_actions[1]);
         div.attr('action', action);
         div.click(function() {
-          tr.trigger('action',[action]);
-          tr.trigger(action);
+          tr.trigger('action',[div,action]);
+          tr.trigger(action, [div]);
         });
         div.appendTo(parent);
-        
         if (action === 'slide') {
           parent = $('<div class=slide></div>').toggle(false).appendTo(tr);
-          tr.on('slide', function() {
-            div.toggle(false);
-            parent.animate({width:'toggle'}, self.options.slideSpeed);
-          });
-          tr.on('slideoff', function() {
-            parent.animate({width:'toggle'}, self.options.slideSpeed);
-            div.toggle(true);
-          })
+          parent.find('div')
+                  .height(height)
+                  .css('line-height', height.toString() + 'px');
         }
       });
+      this.bind_actions(tr);
     },
     
-    bind_action: function(tr, actions) 
+    bind_actions: function(tr) 
     {
+      var self = this;
+      tr.on('slide', function(event, button) {
+        button.toggle();
+        tr.find('.slide').animate({width:'toggle'}, self.options.slideSpeed);
+      });
+      tr.on('slideoff', function(event, button) {
+        tr.find('.slide').animate({width:'toggle'}, self.options.slideSpeed);
+        tr.find('[action=slide]').toggle();
+      })
+
+      var data = {_page: self.element.attr('id'), _key: tr.attr('_key')};
       
+      tr.on('delete', function() {
+        $.json('/?a=page/action', {data: $.extend({}, data, {_field: 'delete'}) }, function(result) {
+          tr.trigger('deleted', [result]);
+        });
+      })
+      
+      tr.on('deleted', function(result) {
+        tr.remove();
+//        alert('deleted successfullyy ' + JSON.toString(result));
+      });
     }
   })
 }) (jQuery);
