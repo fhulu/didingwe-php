@@ -29,17 +29,23 @@ class page {
       $matches = array();
       if (!preg_match('/^(\w+)(?:([:\$]|=>?)(.*))?/s', $option, $matches)) continue;
       list($name, $separator, $value) = array_slice($matches, 1);
-      if (!preg_match('/^{(.*)}$/', $value, $matches)) {
+      if (!preg_match('/^({.*}|\[.*\])$/', $value, $matches)) {
         $data[$name] = $value;
         continue;
       }
 
       $children = array();
-      page::read_children($children, $name, $matches[1]);
-      if (is_array($data[$name]))
-        $data[$name] = array_merge($data[$name], $children);
-      else
-        $data[$name] = $children;
+      if ($value[0] == '{') {
+        page::read_children($children, $name, $matches[1]);
+        if (is_array($data[$name]))
+          $data[$name] = array_merge($data[$name], $children);
+        else
+          $data[$name] = $children;
+      }
+      else {
+        $value = substr($value, 1, strlen($value)-2);
+        $data[$name] = explode(',', $value);
+      }
     }
   }
   
@@ -351,6 +357,12 @@ class page {
       if (isset($method)) require_once("$class.php");
       call_user_func($function, $request, $matches[2]);
     }
+  }
+  
+  static function table($request)
+  {
+    $options = page::read_field_options($request['page']);
+    
   }
   
 }
