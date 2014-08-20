@@ -1,35 +1,29 @@
-(function($) {
-$.fn.mapper = function(options)
-{
-  if (options === undefined) options = {};
-  options = $.extend({
+(function( $ ) {
+  $.widget( "ui.mapper", {
+  options: {
      latitude: -33.884322,
      longitude: 18.632458,
      zoom: 8,
      pin: null,
-     value: null
-   }, options );
-   
-  
-  options.zoom = parseInt(options.zoom);
-  var obj = $(this);
-  var map = {
-    options: options,
-    data:  {},
+     value: null,
+     marker: null,
+   },
+     
     _create: function() 
     {
-      this.location(options.latitude, options.longitude);
+      this.location(this.options.latitude, this.options.longitude);
     },
     
     show: function()
     {
+      this.options.zoom = parseInt(this.options.zoom);
       var props = {
           center: this.position,
-          zoom: options.zoom,
+          zoom: this.options.zoom,
           mapTypeId: google.maps.MapTypeId.ROADMAP
         };
-      this.map = new google.maps.Map(document.getElementById(obj.attr('id')), props);
-      this.map.setZoom(options.zoom);
+      this.map = new google.maps.Map(document.getElementById(this.element.attr('id')), props);
+      this.map.setZoom(this.options.zoom);
       this.marker(google.maps.Animation.DROP);
     },
     
@@ -51,14 +45,11 @@ $.fn.mapper = function(options)
     marker: function(value)
     {
       if (value === undefined) return this.marker;
-      this.data.marker = new google.maps.Marker({
+      this.options.marker = new google.maps.Marker({
           map: this.map,
           position: this.position,
           animation: value
         });
     }
-  }
-  map._create();
-  return map;
-}
+  })
 })(jQuery);
