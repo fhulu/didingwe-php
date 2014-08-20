@@ -26,11 +26,16 @@
       actions: null,
       row_actions: null,
       rows: null*/
-      heading: 'We didnt define heading'
+      heading: 'We didnt define heading',
+      slideSpeed: 300
     },
     
     _create: function()
     {
+      $.extend(this.options.row_actions, 
+       {'slide': ['<', 'Show more options...'],
+        'slideoff': ['>', 'Hide options']
+      })
       this.showHeader();
       this.showTitles();
       this.showData();
@@ -82,29 +87,57 @@
       var self = this;
       var body = this.element.find('tbody');
       if (data === undefined) data = this.options.rows;
-      var row_actions = this.options.row_actions;
       $.each(data, function(i, row) {
         var tr = $('<tr></tr>').appendTo(body);
+        if (i % 2 === 0) tr.addClass('alt');
         var last = row.length-1;
         $.each(row, function(j, cell) {
-          var td = $('<td></td>');
+          var td = $('<td></td>').appendTo(tr);
           if (j != last) {
             td.html(cell);
           }
           else {
-            td.addClass('actions');
-            $.each(cell, function(k, action) {
-              var actions = self.options.row_actions[action];
-              $('<div></div>')
-                      .attr('action',action)
-                      .attr('title', actions[1])
-                      .html(actions[0])
-                      .appendTo(td);
-            });
+            self.set_actions(tr, td, cell)
           }
-          td.appendTo(tr);
         });
       });
+    },
+    
+    set_actions: function(tr, td, actions)
+    {
+      if (actions[0] === 'slide') actions.insert(1, 'slideoff');
+      var self = this;
+      td.addClass('actions');
+      var parent = td;
+      $.each(actions, function(k, action) {
+        var row_actions = self.options.row_actions[action];
+        var div = $('<div></div>');
+        div.html(row_actions[0]);
+        div.attr('title', row_actions[1]);
+        div.attr('action', action);
+        div.click(function() {
+          tr.trigger('action',[action]);
+          tr.trigger(action);
+        });
+        div.appendTo(parent);
+        
+        if (action === 'slide') {
+          parent = $('<div class=slide></div>').toggle(false).appendTo(tr);
+          tr.on('slide', function() {
+            div.toggle(false);
+            parent.animate({width:'toggle'}, self.options.slideSpeed);
+          });
+          tr.on('slideoff', function() {
+            parent.animate({width:'toggle'}, self.options.slideSpeed);
+            div.toggle(true);
+          })
+        }
+      });
+    },
+    
+    bind_action: function(tr, actions) 
+    {
+      
     }
   })
 }) (jQuery);
