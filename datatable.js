@@ -27,26 +27,33 @@
       row_actions: null,
       url: '/?a=page/read&page=mytable
       rows: null*/
-      heading: 'We didnt define heading',
-      row_actions: {},
+      name: 'We didnt define heading',
+      show_titles: true,
       slideSpeed: 300
     },
     
     _create: function()
     {
-      $.extend(this.options.row_actions, 
-       {'slide': ['<', 'Show more options...'],
-        'slideoff': ['>', 'Hide options']
-      })
-      if (this.hasHeader) this.showHeader();
-      if (this.options.titles !== undefined) this.showTitles();
-      this.showData();
+      /*
+      $.extend(this.options.actions, 
+       { slide: {name: '<', desc: 'Show more options...'},
+         slideoff: {name: '>', desc: 'Hide options'}
+      })*/
+      var self = this;
+      if (this.hasHeader()) this.showHeader();
+      if (this.options.fields !== undefined) this.showTitles();
+      if (this.options.rows !== undefined)
+        this.showData(this.options.row);
+      else
+        $.json('/?a=page/table', {data: {field: this.element.attr('id')} }, function(rows) {
+          self.showData(rows);
+        })
     },
     
     hasHeader: function()
     {
       var opts = this.options;
-      return opts.titles !== undefined || opts.heading !== undefined && opts.page_size !== undefined;
+      return opts.name !== undefined && opts.page_size !== undefined;
     },
     
     showHeader: function()
@@ -57,9 +64,10 @@
       else
         head.html('');
       var tr = $('<tr class=header></tr>').appendTo(head);
-      var th = $('<th></th>').attr('colspan', this.options.titles.length).appendTo(tr);
-      if (this.options.heading !== undefined)
-        $('<div class=heading></div>').html(this.options.heading).appendTo(th);
+      var num_fields = $.jsonSize(this.options.fields)-2; // ignore template and html
+      var th = $('<th></th>').attr('colspan', num_fields).appendTo(tr);
+      if (this.options.name !== undefined)
+        $('<div class=heading></div>').html(this.options.name).appendTo(th);
       
       if (this.options.filter !== undefined)
         $('<div class=filtering title="Filter/Search"></div>').appendTo(th);
@@ -74,13 +82,14 @@
     },
     
     
-    showTitles: function(titles)
+    showTitles: function(fields)
     {      
       var head = this.element.find('thead');
-      if (titles === undefined) titles = this.options.titles;
+      if (fields === undefined) fields = this.options.fields;
       var tr = $('<tr class=titles></tr>').appendTo(head);
-      $.each(titles, function(i, title) {
-        $('<th></th>').html(title).appendTo(tr);
+      $.each(fields, function(code, props) {
+        if (code=='html' || code == 'template' ) return;
+        $('<th></th>').html(props.name).appendTo(tr);
       });
     },
     
@@ -88,7 +97,6 @@
     {
       var self = this;
       var body = this.element.find('tbody');
-      if (data === undefined) data = this.options.rows;
       $.each(data, function(i, row) {
         var tr = $('<tr></tr>').appendTo(body);
         tr.attr('_key', row[0]);
@@ -105,20 +113,21 @@
           }
         });
       });
+      this.adjust_actions_height();
     },
     
     set_actions: function(tr, td, actions)
     {
+      if (!$.isArray(actions)) actions = actions.split(',');
       if (actions[0] === 'slide') actions.insert(1, 'slideoff');
       var self = this;
       td.addClass('actions');
-      var parent = td;
-      var height = tr.height();
-      $.each(actions, function(k, action) {
-        var row_actions = self.options.row_actions[action];
-        var div = $('<div></div>');
-        div.html(row_actions[0]);
-        div.attr('title', row_actions[1]);
+      var parent = tr;
+      $.each(actions, function(k, action) {        
+        var props = self.options.actions[action];
+        var div = $('<span>');
+        div.html(props.name);
+        div.attr('title', props.desc);
         div.attr('action', action);
         div.click(function() {
           tr.trigger('action',[div,action]);
@@ -126,10 +135,7 @@
         });
         div.appendTo(parent);
         if (action === 'slide') {
-          parent = $('<div class=slide></div>').toggle(false).appendTo(tr);
-          parent.find('div')
-                  .height(height)
-                  .css('line-height', height.toString() + 'px');
+          parent = $('<span class=slide>').toggle(false).appendTo(tr);
         }
       });
       this.bind_actions(tr);
@@ -142,10 +148,10 @@
         button.toggle();
         tr.find('.slide').animate({width:'toggle'}, self.options.slideSpeed);
       });
-      tr.on('slideoff', function(event, button) {
+      tr.on('slideoff', function() {
         tr.find('.slide').animate({width:'toggle'}, self.options.slideSpeed);
         tr.find('[action=slide]').toggle();
-      })
+      });
 
       var data = {_page: self.element.attr('id'), _key: tr.attr('_key')};
       
@@ -158,6 +164,15 @@
       tr.on('deleted', function(result) {
         tr.remove();
 //        alert('deleted successfullyy ' + JSON.toString(result));
+      });
+    },
+    
+    adjust_actions_height: function()
+    {
+      this.element.find("tbody tr").each(function() {
+        var row = $(this);
+        var height = row.height()*0.98;
+        row.find('.slide,[action]').height(height).css('line-height', height.toString()+'px');
       });
     }
   })
