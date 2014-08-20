@@ -27,7 +27,7 @@ $.fn.page = function(options, callback)
     {
       if (url === undefined) url = options.url;
       var data = $.extend({page:id}, options.data);
-      $.json(url, { data: data }, this.read);
+      $.json(url, { data: data }, this.show);
     },
    
     expand_value: function(values,value)
@@ -49,7 +49,7 @@ $.fn.page = function(options, callback)
           data[field] = page.expand_value(data, value);
         }
         else if ($.isPlainObject(value)) {
-          page.inherit_values(data, value);
+          //page.inherit_values(data, value);
           data[field] = page.expand_fields(field, value);
         }
       });
@@ -98,7 +98,7 @@ $.fn.page = function(options, callback)
       }
       $.each(object, function(field, child) {
         if (!$.isPlainObject(child) && !$.isArray(child) || child === null) return;
-        page.inherit_values(object, child);
+        //page.inherit_values(object, child);
         if (child.html !== undefined)
           child.html = page.expand_attr(child.html, child, child.attr);
         var expanded = page.expand_template(field, child, object);
@@ -120,24 +120,30 @@ $.fn.page = function(options, callback)
         return;
       }
 
+      var element;
       if (type == 'css') {
-        $('<link>').attr('ref','stylesheet')
-                .attr('type','text/css')
-                .attr('href', link)
-                .appendTo('head');
+        element = document.createElement('link');
+        element.rel = 'stylesheet';
+        element.type = 'text/css';
+        element.media = 'screen';
+        element.href = link;
       }
       else if (type === 'script') {
-        var script = document.createElement('script');
-        var loaded = false;
-        script.src =  link;
-        script.type = 'text/javascript';
-        if (callback !== undefined) script.onreadystatechange = script.onload = function() {
-          if (!loaded) callback();
-          loaded = true;
-        }
-        var head = document.getElementsByTagName('head')[0];
-        head.appendChild(script);
+        element = document.createElement('script');
+        element.src =  link;
+        element.type = 'text/javascript';
       }
+      if (element === undefined) {
+        console.log('Error loading ', link);
+        return;
+      }
+      var loaded = false;
+      if (callback !== undefined) element.onreadystatechange = element.onload = function() {
+        if (!loaded) callback();
+        loaded = true;
+      }
+      var head = document.getElementsByTagName('head')[0];
+      head.appendChild(element);
       page.links +="["+link+"]";
     },
     
@@ -181,7 +187,7 @@ $.fn.page = function(options, callback)
       });      
     },
     
-    read: function(data)
+    show: function(data)
     {
       data = page.expand_fields(id,data);
       page.expand_children(data);
