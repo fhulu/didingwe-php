@@ -377,7 +377,11 @@ class page {
     if ($type == 'sql') {
       global $db;
       $rows = $db->read($list, MYSQLI_NUM);
-      echo json_encode($rows);
+      $fields = array();
+      foreach($db->field_names as $name) {
+        $fields[$name] = page::read_field_options($name);
+      }
+      echo json_encode(array('fields'=>$fields, 'rows'=>$rows));
     }
     else if (preg_match('/^([^\(]+)\(([^\)]*)\)/', $action, $matches) ) {
       $function = $matches[1];
