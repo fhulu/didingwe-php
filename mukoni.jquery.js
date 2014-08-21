@@ -119,9 +119,6 @@ $.send = function(url, options, callback)
     dataType: options.dataType,
     success: function(data) {
       if (data != null) {
-        if (data.script !== undefined && options.eval) {
-          eval(data.script);
-        }
         if ((options.showResult === true && data != '') || data[0] == '!') {
           if (progress.timeout !== undefined) clearTimeout(progress.timeout);
           
