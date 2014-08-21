@@ -595,3 +595,14 @@ function loadLink(link,type)
  {
    loadFile(link,'script');
  }
+ 
+ Array.prototype.insert = function (index, item) {
+  this.splice(index, 0, item);
+};
+
+$.jsonSize = function(object)
+{
+  var i=0;
+  $.each(object, function() {++i});
+  return i;
+}
