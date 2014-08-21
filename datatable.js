@@ -45,9 +45,10 @@
       if (this.options.rows !== undefined)
         this.showData(this.options.row);
       else
-        $.json('/?a=page/table', {data: {field: this.element.attr('id')} }, function(rows) {
-          self.showData(rows);
-        })
+        $.json('/?a=page/table', {data: {field: this.element.attr('id')} }, function(data) {
+          self.showTitles(data.fields);
+          self.showData(data.rows);
+       })
     },
     
     hasHeader: function()
@@ -64,8 +65,7 @@
       else
         head.html('');
       var tr = $('<tr class=header></tr>').appendTo(head);
-      var num_fields = $.jsonSize(this.options.fields)-2; // ignore template and html
-      var th = $('<th></th>').attr('colspan', num_fields).appendTo(tr);
+      var th = $('<th></th>').appendTo(tr);
       if (this.options.name !== undefined)
         $('<div class=heading></div>').html(this.options.name).appendTo(th);
       
@@ -87,10 +87,13 @@
       var head = this.element.find('thead');
       if (fields === undefined) fields = this.options.fields;
       var tr = $('<tr class=titles></tr>').appendTo(head);
+      var count = 1;
       $.each(fields, function(code, props) {
-        if (code=='html' || code == 'template' ) return;
+        if (code=='html' || code == 'template' || code == 'actions' ) return;
         $('<th></th>').html(props.name).appendTo(tr);
+        ++count;
       });
+      head.find('tr.header th').attr('colspan', count);
     },
     
     showData: function(data)
