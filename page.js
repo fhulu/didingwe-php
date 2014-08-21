@@ -191,11 +191,10 @@ $.fn.page = function(options, callback)
     {
       data = page.expand_fields(id,data);
       page.expand_children(data);
-      var html = $(data.html);
-      
-      obj.html(html.html());
-      var count=0;
       var parent = obj.parent();
+      var newer = $(data.html).insertAfter('#'+id);
+      obj.remove();
+      obj = newer;
       parent.on('loaded', function() {
         page.set_options(data);
         page.assign_handlers(data);
