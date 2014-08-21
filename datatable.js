@@ -28,7 +28,7 @@
       url: '/?a=page/read&page=mytable
       rows: null*/
       name: 'We didnt define heading',
-      show_titles: true,
+      flags: [],
       slideSpeed: 300
     },
     
@@ -40,15 +40,20 @@
          slideoff: {name: '>', desc: 'Hide options'}
       })*/
       var self = this;
-      if (this.hasHeader()) this.showHeader();
-      if (this.options.fields !== undefined) this.showTitles();
+      if (this.hasFlag('show_header')) this.showHeader();
+      if (this.options.fields !== undefined && this.hasFlag('show_titles') !== undefined) this.showTitles();
       if (this.options.rows !== undefined)
         this.showData(this.options.row);
       else
         $.json('/?a=page/table', {data: {field: this.element.attr('id')} }, function(data) {
-          self.showTitles(data.fields);
+          if (self.hasFlag('show_titles')) self.showTitles(data.fields);
           self.showData(data.rows);
        })
+    },
+    
+    hasFlag: function(flag)
+    {
+      return this.options.flags.indexOf(flag) >= 0;
     },
     
     hasHeader: function()
@@ -93,20 +98,20 @@
         $('<th></th>').html(props.name).appendTo(tr);
         ++count;
       });
-      head.find('tr.header th').attr('colspan', count);
     },
     
     showData: function(data)
     {
       var self = this;
       var body = this.element.find('tbody');
+      var show_key = this.hasFlag('show_key');
       $.each(data, function(i, row) {
         var tr = $('<tr></tr>').appendTo(body);
         tr.attr('_key', row[0]);
         if (i % 2 === 0) tr.addClass('alt');
         var last = row.length-1;
         $.each(row, function(j, cell) {
-          if (j===0 && self.options.show_key === undefined) return;
+          if (j===0 && !show_key) return;
           var td = $('<td></td>').appendTo(tr);
           if (j != last) {
             td.html(cell);
@@ -116,6 +121,8 @@
           }
         });
       });
+      var column_count = body.find('tr:first-child td').length;
+      this.element.find('tr.header th').attr('colspan', column_count);
       this.adjust_actions_height();
     },
     
