@@ -30,23 +30,27 @@ class page {
       if (!preg_match('/^(\w+)(?:([:\$]|=>?)(.*))?/s', $option, $matches)) continue;
       list($name, $separator, $value) = array_slice($matches, 1);
       if (!preg_match('/^({.*}|\[.*\])$/', $value, $matches)) {
-        $data[$name] = $value;
+        $data[$name] = is_null($value)? page::read_field($name):$value;
         continue;
       }
 
-      $children = array();
+      $my_options = page::read_field($name);
+      if (sizeof($my_options)> 0)
+        $data[$name] = is_array($data[$name])? array_merge($data[$name], $my_options): $my_options;
+
       $grouper = $value[0];
       $value = substr($value, 1, strlen($value)-2);
-      if ($grouper == '{') {
-        page::read_children($children, $name, $value);
-        if (is_array($data[$name]))
-          $data[$name] = array_merge($data[$name], $children);
-        else
-          $data[$name] = $children;
+      if ($grouper == '[') {
+         $data[$name] = explode(',', $value);
+         continue;
       }
-      else {
-        $data[$name] = explode(',', $value);
-      }
+
+      $children = array();
+      page::read_children($children, $name, $value);
+      if (is_array($data[$name]))
+        $data[$name] = array_merge($data[$name], $children);
+      else
+        $data[$name] = $children;
     }
   }
   
@@ -76,6 +80,7 @@ class page {
   
   static function read_children(&$data, $parent, $value)
   {
+    //todo: extend children
     $matches = array();
     if (!preg_match_all('/(\w+:{.*}|[^,]+)/', $value, $matches)) {
       log::error("read_children() Unable to match value $value");
@@ -96,8 +101,7 @@ class page {
         return;
       }
       $field = $match[1];
-      $child = array('field'=>$field);
-      page::read_field($child); 
+      $child = page::read_field($field); 
       $grand_children = $match[2];
       if ($grand_children != '') {
         page::read_children ($child, $field, $grand_children);
@@ -133,39 +137,33 @@ class page {
     return $row;
 }
   
-  static function read_field(&$data, $known = array())
+  static function read_field($field)
   {
-    $field = $data['field'];
-    unset($data['field']);
-    $row = page::read_field_options($field);
+    $data = page::read_field_options($field);
     
-    if (sizeof($row) == 0) {
-      $data['name'] = $data['desc'] = '';
-      return;
+    if (sizeof($data) == 0) return $data;
+
+    foreach($data as $key=>$value) {
+      if (is_null($value)) unset ($data[$key]);
     }
-    foreach($row as $key=>$value) {
-      if (is_null($value)) unset ($row[$key]);
-    }
-    $data = array_merge($data, $row);
     page::read_child_template($data);
     page::set_data_flag($data);
-    page::expand_variables($data, $known);
+    page::expand_variables($data);
+    return $data;
   }
 
-  static function expand_variables(&$data, $known = array())
+  static function expand_variables(&$data)
   {
     if (isset($data['has_data'])) return;
     $matches = array();
     if (!preg_match_all('/\$(\w+)/', $data['html'], $matches)) return;
     
-    $known = array_merge($known, $data);
     $vars = array_diff($matches[1], array('code'));
     $page = $data['code'];
     foreach($vars as $var) {
-      if (array_key_exists($var, $known)) continue;
-      $values = array('field'=>$var,'page'=>$page);
-      page::read_field($values, $known);
-      $data[$var] = $values;
+      $value = page::read_field($var);
+      if (is_null($value)) continue;
+      $data[$var] = is_array($data[$var])? array_merge($data[$var], $value): $value;
     }
   }
 
@@ -182,10 +180,8 @@ class page {
   
   static function read($request)
   {
-    $data = array();
-    $data['field'] = $request['page'];
+    $data = page::read_field($request['page']);
     $data['program'] = config::$program_name;
-    page::read_field($data);
     echo json_encode($data);
 
   }
@@ -331,7 +327,7 @@ class page {
 
   static function load($request)   
   {  
-    $options = page::read_field_options($request['table']);
+    $options = page::read_field_options($request['page']);
     page::expand_values($options);
 
     $key = $request['key'];
@@ -383,7 +379,7 @@ class page {
       }
       echo json_encode(array('fields'=>$fields, 'rows'=>$rows));
     }
-    else if (preg_match('/^([^\(]+)\(([^\)]*)\)/', $action, $matches) ) {
+    else if (preg_match('/^([^\(]+)\(([^\)]*)\)/', $data, $matches) ) {
       $function = $matches[1];
       log::debug("FUNCTION $function PARAMS:".$matches[2]);
       list($class, $method) = explode('::', $function);
