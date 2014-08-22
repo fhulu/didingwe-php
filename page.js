@@ -49,7 +49,7 @@ $.fn.page = function(options, callback)
           data[field] = page.expand_value(data, value);
         }
         else if ($.isPlainObject(value)) {
-          //page.inherit_values(data, value);
+          page.inherit_values(data, value);
           data[field] = page.expand_fields(field, value);
         }
       });
@@ -65,9 +65,9 @@ $.fn.page = function(options, callback)
     
     inherit_values: function(parent, child)
     {
+      var reserved = ['html','code','template','create','css','script'];
       $.each(parent, function(key, value) {
-        if (typeof value !== "string") return;
-        if (key === "html" || key === 'code' || key === 'template') return;
+        if (typeof value !== "string" || reserved.indexOf(key)>=0) return;
         if (child[key] !== undefined) return;
         child[key] = value;
       });
@@ -98,7 +98,7 @@ $.fn.page = function(options, callback)
       }
       $.each(object, function(field, child) {
         if (!$.isPlainObject(child) && !$.isArray(child) || child === null) return;
-        //page.inherit_values(object, child);
+        page.inherit_values(object, child);
         if (child.html !== undefined)
           child.html = page.expand_attr(child.html, child, child.attr);
         var expanded = page.expand_template(field, child, object);
