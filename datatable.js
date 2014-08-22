@@ -140,8 +140,8 @@
         div.attr('title', props.desc);
         div.attr('action', action);
         div.click(function() {
-          tr.trigger('action',[div,action]);
-          tr.trigger(action, [div]);
+          tr.trigger('action',[div,action,props.action]);
+          tr.trigger(action, [div,props.action]);
         });
         div.appendTo(parent);
         if (action === 'slide') {
@@ -165,13 +165,21 @@
 
       var data = {_page: self.element.attr('id'), _key: tr.attr('_key')};
       
-      tr.on('delete', function() {
-        $.json('/?a=page/action', {data: $.extend({}, data, {_field: 'delete'}) }, function(result) {
-          tr.trigger('deleted', [result]);
+      tr.on('action', function(event, button, name, value) {
+        if (value === undefined) return;
+        if (value.indexOf('dialog:') === 0) {
+          var div = $('<div></div>').attr('id', value.substr(7));
+          div = div.page();
+          div.on('read', function(event, options) {
+            div.dialog($.extend({modal:true}, options));
+          });
+        }
+        else $.json('/?a=page/action', {data: $.extend({}, data, {_field: name}) }, function(result) {
+          tr.trigger('processed_'+name, [result]);
         });
       })
       
-      tr.on('deleted', function(result) {
+      tr.on('processed_delete', function(result) {
         tr.remove();
 //        alert('deleted successfullyy ' + JSON.toString(result));
       });
