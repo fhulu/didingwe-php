@@ -167,23 +167,37 @@ $.fn.page = function(options, callback)
     
     load_values: function(object)
     {
-      if (options.data.load === undefined) return;
+      if (options.data === undefined || options.data.load === undefined) return;
       object.loadChildren('/?a=page/load', {data:options.data});
     },
     
-    
-    set_options: function(options)
+
+    set_option: function(parent, options, callback)
     {
-      $.each(options, function(f, option) {
-        if ($.isPlainObject(option)) page.set_options(option);
-      });
-      
-      var object = $('#'+options.code);
-      if (!object.exists()) return;
+      var object = parent.find('#'+options.code);
+      if (!object.exists()) {
+        if (callback !== undefined) callback();
+        return;
+      }
       
       page.load_links(object, 'css', options);
       page.load_links(object, 'script', options, function() {
         object.customCreate(options);
+        if (callback !== undefined) callback();
+      });      
+    },
+    
+    set_options: function(parent, options, callback)
+    {
+      var count = $.jsonSize(options);
+      var set = 0;
+      $.each(options, function(f, option) {
+        if (!$.isPlainObject(option)) {
+          if (++set === count) page.set_option(parent,options, callback);
+        }
+        else page.set_options(parent,option, function() {
+          if (++set === count) page.set_option(parent,options, callback);
+        });
       });      
     },
     
@@ -192,16 +206,15 @@ $.fn.page = function(options, callback)
       data = page.expand_fields(id,data);
       page.expand_children(data);
       var parent = obj.parent();
-      var newer = $(data.html).insertAfter('#'+id);
-      obj.remove();
-      obj = newer;
-      parent.on('loaded', function() {
-        page.set_options(data);
-        page.assign_handlers(data);
-        obj.trigger('read', [data]);
-        page.load_values(obj);
+      obj.html($(data.html).html());
+      obj.on('loaded', function() {
+        page.set_options(obj, data,function(){
+          page.assign_handlers(obj,data);
+          obj.trigger('read', [data]);
+          page.load_values(obj);
+        });
       });
-      page.load_data(parent);
+      page.load_data(obj);
     },
     
     load_data: function(parent) 
@@ -228,24 +241,34 @@ $.fn.page = function(options, callback)
       });
     },
 
-    assign_handlers: function(object)
+    assign_handlers: function(parent,object)
     {
       $.each(object, function(field, child) {
         if (!$.isPlainObject(child)) return;
-        var obj = $('#'+field);
+        var obj = parent.find('#'+field);
         var data = {_page: id, _field: field };
         if (child.selector !== undefined || child.action !== undefined && obj.attr('action')===undefined)  {
           obj.attr('action','');
           var selector = child.selector;
+          var action = child.action;
           child.action = child.selector = undefined;
-          if (selector !== undefined) {
+          var is_dialog = action !== undefined && action.indexOf('dialog:') === 0;
+          if (!is_dialog && selector !== undefined) {
             selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+id+"$2");
             obj.checkOnClick(selector, '/?a=page/action', {data: data }, function(result) {
               obj.trigger('processed', [result]);
             });
           }
           else obj.click(function() {
-            $.json('/?a=page/action', {data: data}, function(result) {
+            if (is_dialog) {
+              var div = $('<div></div>');
+              div.attr('id', action.substr(7));
+              div = div.page();
+              div.on('read', function(event, options) {
+                div.dialog($.extend({modal:true}, options));
+              });
+            }
+            else $.json('/?a=page/action', {data: data}, function(result) {
               obj.trigger('processed', [result]);
             });
           });
@@ -253,12 +276,12 @@ $.fn.page = function(options, callback)
         else if (child.url !== undefined) {
           obj.click(function() { location.href = child.url; });
         }
-        page.assign_handlers(child);
+        page.assign_handlers(parent, child);
       });
     }
   };
   if (options.autoLoad) page.load();
-  return page;
+  return obj;
 }
 
 
