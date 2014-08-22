@@ -134,7 +134,7 @@
       td.addClass('actions');
       var parent = tr;
       $.each(actions, function(k, action) {        
-        var props = self.options.actions[action];
+        var props = self.options[action];
         var div = $('<span>');
         div.html(props.name);
         div.attr('title', props.desc);
@@ -163,20 +163,25 @@
         tr.find('[action=slide]').toggle();
       });
 
-      var data = {_page: self.element.attr('id'), _key: tr.attr('_key')};
+      var key = tr.attr('_key');
       
       tr.on('action', function(event, button, name, value) {
         if (value === undefined) return;
         if (value.indexOf('dialog:') === 0) {
-          var div = $('<div></div>').attr('id', value.substr(7));
-          div = div.page();
+         
+          var data = {page: value.substr(7), key: key, load:""};
+          var div = $('<div></div>').attr('id', data.page);
+          div = div.page({data:data});
           div.on('read', function(event, options) {
             div.dialog($.extend({modal:true}, options));
           });
         }
-        else $.json('/?a=page/action', {data: $.extend({}, data, {_field: name}) }, function(result) {
-          tr.trigger('processed_'+name, [result]);
-        });
+        else {
+          var data = {_page: self.element.attr('id'), _key: key,  _field: name};
+          $.json('/?a=page/action', {data: data}, function(result) {
+            tr.trigger('processed_'+name, [result]);
+          });
+        }
       })
       
       tr.on('processed_delete', function(result) {
