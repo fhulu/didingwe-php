@@ -95,7 +95,8 @@
       var count = 1;
       $.each(fields, function(code, props) {
         if (code=='html' || code == 'template' || code == 'actions' ) return;
-        $('<th></th>').html(props.name).appendTo(tr);
+        var name = props===null? code: props.name;
+        $('<th></th>').html(name).appendTo(tr);
         ++count;
       });
     },
