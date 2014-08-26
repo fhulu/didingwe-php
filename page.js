@@ -208,7 +208,7 @@ $.fn.page = function(options, callback)
       var parent = obj.parent();
       obj.html($(data.html).html());
       obj.on('loaded', function() {
-        page.set_options(obj, data,function(){
+        page.set_options(parent, data,function(){
           page.assign_handlers(obj,data);
           obj.trigger('read', [data]);
           page.load_values(obj);
