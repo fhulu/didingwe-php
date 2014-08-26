@@ -1,6 +1,7 @@
 <?php
 require_once ('log.php');
 $page = $_REQUEST['page'];
+$tag = $_REQUEST['tag'];
 $params = json_encode($_GET);
 ?>
     <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
@@ -11,7 +12,7 @@ $params = json_encode($_GET);
     <script type='text/javascript' src='jquery/min.js'></script>
     <script type='text/javascript' src='jquery/ui-min.js'></script>
     <script type="text/javascript" src='common/mukoni.jquery.js'></script> 
-    <script type="text/javascript" src='common/mukoni.jquery-ui.js'></script> 
+    <!--<script type="text/javascript" src='common/mukoni.jquery-ui.js'></script>--> 
 <?php
 function pre_load_custom($page)
 {
@@ -33,6 +34,7 @@ $(function() {
 });
 </script>
 <?php 
-echo "<div id='$page'></div>";
+if (!isset($tag)) $tag = 'div';
+echo "<$tag id='$page'></$tag>";
 pre_load_custom($page);
 if (isset($_REQUEST['content']))   pre_load_custom($_REQUEST['content']);
