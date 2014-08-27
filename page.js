@@ -256,6 +256,8 @@ $.fn.page = function(options, callback)
           if (!is_dialog && selector !== undefined) {
             selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+id+"$2");
             obj.checkOnClick(selector, '/?a=page/action', {data: data }, function(result) {
+              if (result.url !== undefined)
+                document.location = result.url;
               obj.trigger('processed', [result]);
             });
           }
