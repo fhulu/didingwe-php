@@ -206,7 +206,7 @@ $.fn.page = function(options, callback)
       data = page.expand_fields(id,data);
       page.expand_children(data);
       var parent = obj.parent();
-      obj.html($(data.html).html());
+      obj.html(data.html);
       obj.on('loaded', function() {
         page.set_options(parent, data,function(){
           page.assign_handlers(obj,data);
