@@ -92,12 +92,13 @@
       var head = this.element.find('thead');
       if (fields === undefined) fields = this.options.fields;
       var tr = $('<tr class=titles></tr>').appendTo(head);
-      var count = 1;
+      var count = 0;
+      var self = this;
       $.each(fields, function(code, props) {
+        if (++count == 1 && !self.hasFlag('show_key')) return;
         if (code=='html' || code == 'template' || code == 'actions' ) return;
         var name = props===null? code: props.name;
         $('<th></th>').html(name).appendTo(tr);
-        ++count;
       });
     },
     
