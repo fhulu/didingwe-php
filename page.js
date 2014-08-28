@@ -101,10 +101,12 @@ $.fn.page = function(options, callback)
         page.inherit_values(object, child);
         if (child.html !== undefined)
           child.html = page.expand_attr(child.html, child, child.attr);
-        var expanded = page.expand_template(field, child, object);
-        page.expand_children(child); 
-        if (!expanded)
-          page.expand_template(field, child, object);
+        if (child.hidden === undefined) {
+          var expanded = page.expand_template(field, child, object);
+          page.expand_children(child); 
+          if (!expanded)
+            page.expand_template(field, child, object);
+        }
         object.html = object.html.replace('$'+field, child.html);
         if (object.template !== undefined)
           object.html += child.html;
@@ -247,32 +249,35 @@ $.fn.page = function(options, callback)
         if (!$.isPlainObject(child)) return;
         var obj = parent.find('#'+field);
         var data = {_page: id, _field: field };
-        if (child.selector !== undefined || child.action !== undefined && obj.attr('action')===undefined)  {
+        if ((child.selector !== undefined || child.action !== undefined) && obj.attr('action')===undefined)  {
           obj.attr('action','');
           var selector = child.selector;
           var action = child.action;
           child.action = child.selector = undefined;
-          var is_dialog = action !== undefined && action.indexOf('dialog:') === 0;
-          if (!is_dialog && selector !== undefined) {
-            selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+id+"$2");
-            obj.checkOnClick(selector, '/?a=page/action', {data: data }, function(result) {
-              if (result.url !== undefined)
-                document.location = result.url;
-              obj.trigger('processed', [result]);
-            });
-          }
-          else obj.click(function() {
-            if (is_dialog) {
+          if (action === undefined) action = '';
+          if (action.indexOf('dialog:') === 0) {
+            obj.click(function() {
+              alert('what')
               var div = $('<div></div>');
               div.attr('id', action.substr(7));
               div = div.page();
               div.on('read', function(event, options) {
                 div.dialog($.extend({modal:true}, options));
               });
-            }
-            else $.json('/?a=page/action', {data: data}, function(result) {
-              obj.trigger('processed', [result]);
             });
+          }
+          else if (action.indexOf('url:') === 0) {
+            obj.click(function() { document.location = action.substr(4); });
+          }
+          else if (selector !== undefined) {
+            selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+id+"$2");
+            obj.checkOnClick(selector, '/?a=page/action', {data: data }, function(result) {
+              obj.trigger('processed', [result]);
+              if (result.url !== undefined) document.location = result.url;
+            });
+          }
+          else $.json('/?a=page/action', {data: data}, function(result) {
+             obj.trigger('processed', [result]);
           });
         }
         else if (child.url !== undefined) {
