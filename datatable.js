@@ -177,6 +177,9 @@
             div.dialog($.extend({modal:true}, options));
           });
         }
+        else if (value.indexOf('url:') === 0) {
+          document.location = value.substr(4).replace('$key', key);
+        }
         else {
           var data = {_page: self.element.attr('id'), _key: key,  _field: name};
           $.json('/?a=page/action', {data: data}, function(result) {
