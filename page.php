@@ -28,7 +28,7 @@ class page {
   }
   
   
-  static function decode_db_options(&$fields, $field, &$scope)
+  static function decode_db_options(&$fields, $field, $scope)
   {
     if (isset($fields[$field])) return $fields[$field];
 
@@ -107,7 +107,6 @@ class page {
         continue;
       }
       
-     
       $prefix = $value[0];
       if ($prefix == '"') {
         $scope[$name] = $parent[$name] = substr($value,1,strlen($value)-2);
@@ -189,6 +188,7 @@ class page {
   }
   static function read($request)
   {
+    log::debug("page::read ".json_encode($request));
     $data = page::read_field_options($request['page']);
     $data['program'] = config::$program_name;
     echo json_encode($data);
@@ -356,6 +356,7 @@ class page {
   
   static function table($request)
   {
+    log::debug(json_encode($request));
     $options = page::read_field_options($request['field']);
     
     page::expand_values($options);
@@ -370,6 +371,13 @@ class page {
     $list = $matches[2];
     if ($type == 'sql') {
       global $db;
+      $sql = $list;
+      $matches = array();
+      if (preg_match_all('/(\$\w+)/', $sql, $matches)) foreach($matches as $match) {
+        $var = $match[1];
+        $val = $request[$var];
+        if (isset($val)) $sql = str_replace('$'.$var, $val, $sql);
+      }
       $rows = $db->read($list, MYSQLI_NUM);
       $fields = array();
       foreach($db->field_names as $name) {
