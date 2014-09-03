@@ -40,12 +40,17 @@
          slideoff: {name: '>', desc: 'Hide options'}
       })*/
       var self = this;
+      var id = this.element.attr('id');
       if (this.hasFlag('show_header')) this.showHeader();
       if (this.options.fields !== undefined && this.hasFlag('show_titles') !== undefined) this.showTitles();
       if (this.options.rows !== undefined)
         this.showData(this.options.row);
       else
-        $.json('/?a=page/table', {data: {field: this.element.attr('id')} }, function(data) {
+        $.json('/?a=page/table', {data: {field: id}}, function(data) {
+          if (data === undefined || data === null) {
+            console.log('No table data for table:', id);
+            return;
+          }
           if (self.hasFlag('show_titles')) self.showTitles(data.fields);
           self.showData(data.rows);
        })
@@ -170,12 +175,11 @@
       tr.on('action', function(event, button, name, value) {
         if (value === undefined) return;
         if (value.indexOf('dialog:') === 0) {
-         
-          var data = {page: value.substr(7), key: key, load:""};
-          var div = $('<div></div>').attr('id', data.page);
-          div = div.page({data:data});
-          div.on('read', function(event, options) {
-            div.dialog($.extend({modal:true}, options));
+          var page = value.substr(7);
+          var data = {page: page, key: key, load:""};
+          var tmp = $('<div></div>').page({data:data});
+          tmp.on('read_'+page, function(event, object, options) {
+            object.dialog($.extend({modal:true}, options));
           });
         }
         else if (value.indexOf('url:') === 0) {
