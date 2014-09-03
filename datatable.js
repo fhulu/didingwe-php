@@ -44,7 +44,6 @@
       if (this.hasFlag('show_titles') || this.hasFlag('show_header')) {
         $('<thead></thead>').prependTo(this.element);
         if (this.hasFlag('show_header')) this.showHeader();
-        if (this.hasFlag('show_titles')) this.showTitles();
       }
       if (this.options.rows !== undefined)
         this.showData(this.options.row);
