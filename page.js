@@ -4,11 +4,8 @@ $.fn.page = function(options, callback)
     callback = options;
     options = {method: 'post'};
   } 
-  var obj = $(this);
-  var id = obj.attr('id');
-  var parent_id = obj.parent().attr('id');
-  if (parent_id === undefined) parent_id = '';
-  var selector = '#'+id;
+  var self = this;
+  var object;
   options = $.extend({
     method: 'post',
     url: '/?a=page/read',
@@ -17,17 +14,15 @@ $.fn.page = function(options, callback)
   }, options);
   
   var page  = {
-    object: obj,
+    object: self,
     options: options,
     data: null,
-    id: id,
     creation: null,
     links: "",
     load: function(url) 
     {
       if (url === undefined) url = options.url;
-      var data = $.extend({page:id}, options.data);
-      $.json(url, { data: data }, this.show);
+      $.json(url, { data: options.data }, this.show);
     },
    
     expand_value: function(values,value)
@@ -149,7 +144,7 @@ $.fn.page = function(options, callback)
       page.links +="["+link+"]";
     },
     
-    load_links: function(object, type, options, callback)
+    load_links: function(type, options, callback)
     {
       var links = options[type];
       if (links === undefined) {
@@ -174,53 +169,54 @@ $.fn.page = function(options, callback)
     },
     
 
-    set_option: function(parent, options, callback)
+    set_option: function(parent, id, options, callback)
     {
-      var object = parent.find('#'+options.code);
+      var object = parent.find('#'+id);
       if (!object.exists()) {
         if (callback !== undefined) callback();
         return;
       }
       
-      page.load_links(object, 'css', options);
-      page.load_links(object, 'script', options, function() {
+      page.load_links('css', options);
+      page.load_links('script', options, function() {
         object.customCreate(options);
         if (callback !== undefined) callback();
       });      
     },
     
-    set_options: function(parent, options, callback)
+    set_options: function(parent, id, options, callback)
     {
       var count = $.jsonSize(options);
       var set = 0;
-      $.each(options, function(f, option) {
+      $.each(options, function(key, option) {
         if (!$.isPlainObject(option)) {
-          if (++set === count) page.set_option(parent,options, callback);
+          if (++set === count) page.set_option(parent, id, options, callback);
         }
-        else page.set_options(parent,option, function() {
-          if (++set === count) page.set_option(parent,options, callback);
+        else page.set_options(parent, key, option, function() {
+          if (++set === count) page.set_option(parent, id, options, callback);
         });
       });      
     },
     
     show: function(data)
     {
-      data = page.expand_fields(id,data);
+      data = page.expand_fields(options.data.page,data);
       page.expand_children(data);
-      var parent = obj.parent();
-      obj.html(data.html);
-      obj.on('loaded', function() {
-        page.set_options(parent, data,function(){
-          page.assign_handlers(obj,data);
-          obj.trigger('read', [data]);
-          page.load_values(obj);
+      var parent = page.object;
+      var object = $(data.html).appendTo(parent);
+      object.on('loaded', function() {
+        page.set_options(parent, options.data.page, data,function(){
+          page.assign_handlers(object,data);
+          page.load_values(object);
+          object.trigger('read', [data]);
         });
       });
-      page.load_data(obj);
+      page.load_data(object);
     },
     
     load_data: function(parent) 
     {
+      var id = parent.attr('id');
       var children = parent.find('[has_data]');
       var count = children.length;
       if (!count) {
@@ -243,9 +239,10 @@ $.fn.page = function(options, callback)
       });
     },
 
-    assign_handlers: function(parent,object)
+    assign_handlers: function(parent,data)
     {
-      $.each(object, function(field, child) {
+     var id = parent.attr('id');
+      $.each(data, function(field, child) {
         if (!$.isPlainObject(child)) return;
         var obj = parent.find('#'+field);
         var data = {_page: id, _field: field };
@@ -273,7 +270,7 @@ $.fn.page = function(options, callback)
             selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+id+"$2");
             obj.checkOnClick(selector, '/?a=page/action', {data: data }, function(result) {
               obj.trigger('processed', [result]);
-              if (result.url !== undefined) document.location = result.url;
+              if (result.url !== undefined) location.href = result.url;
             });
           }
           else $.json('/?a=page/action', {data: data}, function(result) {
@@ -288,7 +285,7 @@ $.fn.page = function(options, callback)
     }
   };
   if (options.autoLoad) page.load();
-  return obj;
+  return object;
 }
 
 
