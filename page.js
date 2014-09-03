@@ -5,7 +5,6 @@ $.fn.page = function(options, callback)
     options = {method: 'post'};
   } 
   var self = this;
-  var object;
   options = $.extend({
     method: 'post',
     url: '/?a=page/read',
@@ -14,7 +13,8 @@ $.fn.page = function(options, callback)
   }, options);
   
   var page  = {
-    object: self,
+    parent: self,
+    object: null,
     options: options,
     data: null,
     creation: null,
@@ -200,15 +200,16 @@ $.fn.page = function(options, callback)
     
     show: function(data)
     {
+      var id = options.data.page;
       data = page.expand_fields(options.data.page,data);
       page.expand_children(data);
-      var parent = page.object;
+      var parent = page.parent;
       var object = $(data.html).appendTo(parent);
       object.on('loaded', function() {
         page.set_options(parent, options.data.page, data,function(){
           page.assign_handlers(object,data);
           page.load_values(object);
-          object.trigger('read', [data]);
+          parent.trigger('read_'+id, [object,data]);
         });
       });
       page.load_data(object);
@@ -230,6 +231,10 @@ $.fn.page = function(options, callback)
         var field_id = object.attr('id');
         var params = {_page: id, _field:field_id};
         $.json('/?a=page/data', {data:params}, function(result) {
+          if (result === undefined || result === null) {
+            console.log('No page data result for page: ', id, ' field: ', field_id);
+            return;
+          }
           result.html = object.html();
           page.expand_children(result);
           object.html(result.html);
@@ -285,7 +290,7 @@ $.fn.page = function(options, callback)
     }
   };
   if (options.autoLoad) page.load();
-  return object;
+  return this;
 }
 
 
