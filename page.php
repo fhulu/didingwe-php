@@ -169,7 +169,7 @@ class page {
     $matches = array();
     if (!preg_match_all('/\$(\w+)/', $data['html'], $matches)) return;
     
-    $vars = array_diff($matches[1], array('code'));
+    $vars = array_diff($matches[1], array('code','name','desc'));
     foreach($vars as $var) {
       $value = page::decode_db_options($db_fields, $var, $scope);
       if (is_null($value)) continue;
@@ -249,6 +249,7 @@ class page {
   
   static function data($request)
   {
+    log::debug('page::data '.$request['_page']. ' '.$request['_field']);
     $row = page::read_page_field_options($request);    
     page::expand_values($row, array('template','html'));    
     $data = $row['data'];
@@ -281,7 +282,6 @@ class page {
     }
 
     if (isset($template)) $rows['template'] = $template;  
-    page::expand_templates($rows);  
     echo json_encode($rows);
   }
   
