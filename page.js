@@ -259,12 +259,10 @@ $.fn.page = function(options, callback)
           if (action === undefined) action = '';
           if (action.indexOf('dialog:') === 0) {
             obj.click(function() {
-              alert('what')
-              var div = $('<div></div>');
-              div.attr('id', action.substr(7));
-              div = div.page();
-              div.on('read', function(event, options) {
-                div.dialog($.extend({modal:true}, options));
+              var dialog = action.substr(7);
+              var tmp = $('<div></div>').page({data:{page:dialog}});
+              tmp.on('read_'+dialog, function(event, object, options) {
+                object.dialog($.extend({modal:true}, options));
               });
             });
           }
