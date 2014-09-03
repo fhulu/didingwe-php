@@ -316,20 +316,27 @@ class page {
     }
   }
 
+  static function check_field($options, $field)
+  {
+    $value = $options[$field];
+    if (isset($value)) return $value;
+    
+    log::warn("No $field parameter provided");
+    return false;
+  }
   static function load($request)   
   {  
     $options = page::read_field_options($request['page']);
     page::expand_values($options);
+    log::debug(json_encode($options));
 
-    $key = $request['key'];
-    if (!isset($key))  {
-      log::warn("No key provided");
-      return;
-    }
+    if (!($key=page::check_field($request, 'key'))
+      || !($load=page::check_field($options, 'load'))) return;
+   
     log::debug("key=$key, $options=".json_encode($options));
     $rows = array();
     $matches = array();
-    preg_match('/^([^:]+): ?(.+)/', $options['load'], $matches);
+    preg_match('/^([^:]+): ?(.+)/', $load, $matches);
     $type = $matches[1];
     $list = $matches[2];
     if ($type == 'sql') {
