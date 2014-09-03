@@ -41,8 +41,11 @@
       })*/
       var self = this;
       var id = this.element.attr('id');
-      if (this.hasFlag('show_header')) this.showHeader();
-      if (this.options.fields !== undefined && this.hasFlag('show_titles') !== undefined) this.showTitles();
+      if (this.hasFlag('show_titles') || this.hasFlag('show_header')) {
+        $('<thead></thead>').prependTo(this.element);
+        if (this.hasFlag('show_header')) this.showHeader();
+        if (this.hasFlag('show_titles')) this.showTitles();
+      }
       if (this.options.rows !== undefined)
         this.showData(this.options.row);
       else
@@ -70,19 +73,16 @@
     showHeader: function()
     {      
       var head = this.element.find('thead');
-      if (!head.exists()) 
-        head = $('<thead></thead>').prependTo(this.element);
-      else
-        head.html('');
+      head.html('');
       var tr = $('<tr class=header></tr>').appendTo(head);
       var th = $('<th></th>').appendTo(tr);
       if (this.options.name !== undefined)
         $('<div class=heading></div>').html(this.options.name).appendTo(th);
       
-      if (this.options.filter !== undefined)
+      if (this.options.filter != null)
         $('<div class=filtering title="Filter/Search"></div>').appendTo(th);
       
-      if (this.options.page_size !== undefined) {
+      if (this.options.page_size != null) {
         var paging = $('<div class=paging></div>').appendTo(th);
         paging.html('Showing from<div class=from></div> to <div class=to></div> of <div class=total></div>');
         $('<button nav=prev disabled></button>').appendTo(paging);
@@ -112,6 +112,7 @@
       var self = this;
       var body = this.element.find('tbody');
       var show_key = this.hasFlag('show_key');
+      var expandable = this.options.expand !== undefined;
       $.each(data, function(i, row) {
         var tr = $('<tr></tr>').appendTo(body);
         tr.attr('_key', row[0]);
@@ -120,9 +121,13 @@
         $.each(row, function(j, cell) {
           if (j===0 && !show_key) return;
           var td = $('<td></td>').appendTo(tr);
-          if (j != last) {
+          if (j !== last) {
             td.html(cell);
-          }
+            if (j === 0 && expandable) {
+              self.create_action(tr,'expand').prependTo(td);
+              self.create_action(tr,'collapse').prependTo(td).hide();
+            }
+         }
           else {
             self.set_actions(tr, td, cell)
           }
@@ -133,6 +138,20 @@
       this.adjust_actions_height();
     },
     
+    create_action: function(tr, action)
+    {
+      var props = this.options[action];
+      var div = $('<span>');
+      div.html(props.name);
+      div.attr('title', props.desc);
+      div.attr('action', action);
+      div.click(function() {
+        tr.trigger('action',[div,action,props.action]);
+        tr.trigger(action, [div,props.action]);
+      });
+      return div;
+    },
+    
     set_actions: function(tr, td, actions)
     {
       if (!$.isArray(actions)) actions = actions.split(',');
@@ -140,17 +159,8 @@
       var self = this;
       td.addClass('actions');
       var parent = tr;
-      $.each(actions, function(k, action) {        
-        var props = self.options[action];
-        var div = $('<span>');
-        div.html(props.name);
-        div.attr('title', props.desc);
-        div.attr('action', action);
-        div.click(function() {
-          tr.trigger('action',[div,action,props.action]);
-          tr.trigger(action, [div,props.action]);
-        });
-        div.appendTo(parent);
+      $.each(actions, function(k, action) {  
+        self.create_action(tr, action).appendTo(parent);
         if (action === 'slide') {
           parent = $('<span class=slide>').toggle(false).appendTo(tr);
         }
@@ -161,6 +171,8 @@
     bind_actions: function(tr) 
     {
       var self = this;
+      var key = tr.attr('_key');
+      
       tr.on('slide', function(event, button) {
         button.toggle();
         tr.find('.slide').animate({width:'toggle'}, self.options.slideSpeed);
@@ -169,9 +181,27 @@
         tr.find('.slide').animate({width:'toggle'}, self.options.slideSpeed);
         tr.find('[action=slide]').toggle();
       });
+      tr.on('expand', function(event, button, page) {
+          button.hide();
+          tr.find('[action=collapse]').show();
+          var data = {page: page, key: key, load:""};
+          var tmp = $('<div></div>').page({data:data});
+          tmp.on('read_'+page, function(event, object) {
+            var expanded = $('<tr class=expanded></tr>');
+            $('<td></td>')
+                    .attr('colspan', tr.children('td').length)
+                    .append(object)
+                    .prependTo(expanded);
+            expanded.insertAfter(tr);
+          });
+      });
+      tr.on('collapse', function(event, button) {
+        button.hide();
+        tr.find('[action=expand]').show();
+        var next = tr.next();
+        if (next.attr('class') === 'expanded') next.hide();
+      });
 
-      var key = tr.attr('_key');
-      
       tr.on('action', function(event, button, name, value) {
         if (value === undefined) return;
         if (value.indexOf('dialog:') === 0) {
