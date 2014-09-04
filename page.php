@@ -293,7 +293,7 @@ class page {
     
     $action = $options['action'];
     log::debug("ACTION: $action VALIDATE: ".isset($options['validate']));
-    if (array_key_exists('validate', $options) && !page::validate($request, $options)) {
+    if (array_key_exists('validate', $options) && !page::validate($request, $options)) 
       return;
     
     if (!isset($action)) return;
