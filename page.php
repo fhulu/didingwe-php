@@ -242,9 +242,10 @@ class page {
     $db_fields = array();
     $scope = array();
     $page_options = page::decode_db_options($db_fields, $request['_page'], $scope);
-    $options = page::decode_db_options($db_fields, $request['_field'], $scope);
+    $field = $request['_field'];
+    $options = page::decode_db_options($db_fields, $field, $scope);
 
-    return page::null_merge($page_options, $options);
+    return page::null_merge($page_options[$field], $options);
   }
   
   static function data($request)
@@ -289,13 +290,13 @@ class page {
   {
     $options = page::read_page_field_options($request);
     page::expand_values($options);
-    if (array_key_exists('validate', $options) && !page::validate($request, $options))
-      return;
     
     $action = $options['action'];
-    if (!isset($action)) return;
+    log::debug("ACTION: $action VALIDATE: ".isset($options['validate']));
+    if (array_key_exists('validate', $options) && !page::validate($request, $options)) {
+      return;
     
-    log::debug("action=$action");
+    if (!isset($action)) return;
     
     $rows = array();
     $matches = array();
