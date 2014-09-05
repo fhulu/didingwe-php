@@ -275,19 +275,34 @@ class page {
       $rows = $db->read($list, MYSQLI_ASSOC);
     }
     else if (preg_match('/^([^\(]+)\(([^\)]+)\)/', $data, $matches) ) {
-      $function = $matches[1];
-      log::debug("FUNCTION $function PARAMS:".$matches[2]);
-      list($class, $method) = explode('::', $function);
-      if (isset($method)) require_once("$class.php");
-      $rows = call_user_func($function, $request, $matches[2]);
+      page::call($request, $matches[1], $matches[2]);
     }
 
     if (isset($template)) $rows['template'] = $template;  
     echo json_encode($rows);
   }
   
+  static function call($request, $function, $params)
+  {
+    log::debug("FUNCTION $function PARAMS:".$params);
+    list($class, $method) = explode('::', $function);
+    $file = "$class.php";
+    if (isset($method)) {
+      if (file_exists($file)) 
+        require_once("$class.php");
+      else if (file_exists("../common/$file"))
+        require_once("$class.php");
+      else {
+        log::error("No such file $file");
+        return;
+      }
+    }
+    call_user_func($function, $request, $params);
+  }
+  
   static function action($request)
   {
+    log::debug("b4 ACTION: ".  json_encode($request));
     $options = page::read_page_field_options($request);
     page::expand_values($options);
     
@@ -309,11 +324,7 @@ class page {
       echo json_encode($rows);
     }
     else if (preg_match('/^([^\(]+)\(([^\)]*)\)/', $action, $matches) ) {
-      $function = $matches[1];
-      log::debug("FUNCTION $function PARAMS:".$matches[2]);
-      list($class, $method) = explode('::', $function);
-      if (isset($method)) require_once("$class.php");
-      call_user_func($function, $request, $matches[2]);
+      page::call($request, $matches[1], $matches[2]);
     }
   }
 
@@ -347,11 +358,7 @@ class page {
       echo json_encode($rows);
     }
     else if (preg_match('/^([^\(]+)\(([^\)]*)\)/', $action, $matches) ) {
-      $function = $matches[1];
-      log::debug("FUNCTION $function PARAMS:".$matches[2]);
-      list($class, $method) = explode('::', $function);
-      if (isset($method)) require_once("$class.php");
-      call_user_func($function, $request, $matches[2]);
+      page::call($request, $matches[1], $matches[2]);
     }
   }
   
@@ -387,11 +394,7 @@ class page {
       echo json_encode(array('fields'=>$fields, 'rows'=>$rows));
     }
     else if (preg_match('/^([^\(]+)\(([^\)]*)\)/', $data, $matches) ) {
-      $function = $matches[1];
-      log::debug("FUNCTION $function PARAMS:".$matches[2]);
-      list($class, $method) = explode('::', $function);
-      if (isset($method)) require_once("$class.php");
-      call_user_func($function, $request, $matches[2]);
+      page::call($request, $matches[1], $matches[2]);
     }
   }
   
