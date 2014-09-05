@@ -276,8 +276,10 @@ $.fn.page = function(options, callback)
               if (result.url !== undefined) location.href = result.url;
             });
           }
-          else $.json('/?a=page/action', {data: data}, function(result) {
-             obj.trigger('processed', [result]);
+          else obj.click(function() { 
+            $.json('/?a=page/action', {data: data}, function(result) {
+              obj.trigger('processed', [result]);
+            });
           });
         }
         else if (child.url !== undefined) {
