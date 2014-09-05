@@ -28,8 +28,8 @@ $.fn.page = function(options, callback)
     expand_value: function(values,value)
     {
       $.each(values, function(code, subst) {
-        if (typeof subst === 'string') {
-          value = value.replace('$'+code, subst);
+        if (typeof subst === 'string' && value !== null) {
+          value = value.replace(new RegExp('\\$'+code, 'g'), subst);
           if (value.indexOf('$') < 0) return;
         }
       });
@@ -147,7 +147,7 @@ $.fn.page = function(options, callback)
     load_links: function(type, options, callback)
     {
       var links = options[type];
-      if (links === undefined) {
+      if (links === undefined || links === null) {
         if (callback !== undefined) callback();
         return;
       }
@@ -179,7 +179,10 @@ $.fn.page = function(options, callback)
       
       page.load_links('css', options);
       page.load_links('script', options, function() {
-        object.customCreate(options);
+        if (options.create !== undefined && options.create !== null) {
+          var create_opts = $.extend({key: page.options.data.key}, options);
+          object.customCreate(create_opts);
+        }
         if (callback !== undefined) callback();
       });      
     },
@@ -224,12 +227,14 @@ $.fn.page = function(options, callback)
         parent.trigger('loaded');
         return;
       }
+      var self = this;
       var loaded = 0;
       children.each(function() {
         var object = $(this);
         object.removeAttr('has_data');
         var field_id = object.attr('id');
-        var params = {_page: id, _field:field_id};
+        if (field_id === undefined) field_id = id;
+        var params = {_page: id, _field:field_id, key: self.options.data.key};
         $.json('/?a=page/data', {data:params}, function(result) {
           if (result === undefined || result === null) {
             console.log('No page data result for page: ', id, ' field: ', field_id);
@@ -251,7 +256,7 @@ $.fn.page = function(options, callback)
         if (!$.isPlainObject(child)) return;
         var obj = parent.find('#'+field);
         var data = {_page: id, _field: field };
-        if ((child.selector !== undefined || child.action !== undefined) && obj.attr('action')===undefined)  {
+        if ((child.selector !== undefined || child.action !== undefined) && obj.attr('action')===undefined && child.action !== null)  {
           obj.attr('action','');
           var selector = child.selector;
           var action = child.action;
