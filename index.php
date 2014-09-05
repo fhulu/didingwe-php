@@ -39,7 +39,7 @@ if (isset($_GET['a'])) {
   log::init('index', log::DEBUG);
   log::debug(json_encode($session));
   log::debug("content is '".$_SESSION['content']."'");
-  $public_pages = array('login_page','home','map','logout');
+  $public_pages = array('login_page','home','map','register');
   if (!$session && !in_array($_GET['content'],$public_pages) && !in_array($page, $public_pages) ) {
     $page = 'landing';
   }
