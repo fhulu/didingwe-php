@@ -84,11 +84,20 @@ class page {
     return $compressed;
   }
   
+  static function replace_vars($str, $values)
+  {
+    foreach($values as $name=>$value) {
+      $str = str_replace('$'.$name, $value, $str);
+    }
+    return $str;
+  }
   static function decode_options(&$db_fields, &$parent, $encoded, $scope)
   {            
     if ($encoded == '') return $scope;
     $matches = array();
     $encoded = str_replace('~', ',', $encoded);
+    $encoded = str_replace('\n', '', $encoded);
+    $encoded = str_replace('\r', '', $encoded);
     if (!preg_match_all('/(\$?\w+)(?::\s*("[^"]*"|\[[^\]]*\]|{[^}]*}|[^,]*))?/', $encoded, $matches, PREG_SET_ORDER)) {
       log::error("Invalid JSON string $encoded");
       return $scope;
@@ -109,13 +118,14 @@ class page {
       
       $prefix = $value[0];
       if ($prefix == '"') {
-        $scope[$name] = $parent[$name] = substr($value,1,strlen($value)-2);
+        $value = substr($value,1,strlen($value)-2);
+        $scope[$name] = $parent[$name] = page::replace_vars($value, $_REQUEST);
         continue;
       }
 
       $is_template = $name == 'template';
       if ($is_template && $prefix == '$') {
-        $scope[$name] = $parent[$name] = $value;
+        $scope[$name] = $parent[$name] = page::replace_vars($value, $_REQUEST);
         continue;
       } 
             
@@ -123,7 +133,7 @@ class page {
         $value = substr($value,1,strlen($value)-2);
       }
       else if (!$is_template && !is_null($value) && ($prefix != '$' || $value[1] == '$')) {
-        $scope[$name] = $parent[$name] = $value;
+        $scope[$name] = $parent[$name] = page::replace_vars($value, $_REQUEST);
         continue;
       }
       
@@ -222,7 +232,7 @@ class page {
       $validators = $page_validator==null?$field_validator:$page_validator;
       if (is_null($validators)) continue;
       $matches = array();
-      if (!preg_match_all('/\w+(?:\([\w\,\.\s]*\))?/', $validators, $matches)) {
+      if (!preg_match_all('/\w+(?:\([\w\,\.\s]*\))?/s', $validators, $matches)) {
         log::error("Invalid validators $validators");
         return;
       }
@@ -250,14 +260,17 @@ class page {
   
   static function data($request)
   {
-    log::debug('page::data '.$request['_page']. ' '.$request['_field']);
+    log::debug('page::data page='.$request['_page']. ', field='.$request['_field']);
     $row = page::read_page_field_options($request);    
     page::expand_values($row, array('template','html'));    
     $data = $row['data'];
+    log::debug("REQUEST: ". json_encode($request));
+    log::debug("DATA: ". $data);
     $template = $row['template'];
+    log::debug("TEMPLATE: ". $template);
     
     $matches = array();
-    preg_match('/^([^:]+): ?(.+)/', $data, $matches);
+    preg_match('/^([^:]+): ?(.+)/s', $data, $matches);
     $type = $matches[1];
     $list = $matches[2];
     if ($type == 'inline') {
@@ -315,7 +328,7 @@ class page {
     
     $rows = array();
     $matches = array();
-    preg_match('/^([^:]+): ?(.+)/', $action, $matches);
+    preg_match('/^([^:]+): ?(.+)/s', $action, $matches);
     $type = $matches[1];
     $list = $matches[2];
     if ($type == 'sql') {
@@ -348,7 +361,7 @@ class page {
     log::debug("key=$key, $options=".json_encode($options));
     $rows = array();
     $matches = array();
-    preg_match('/^([^:]+): ?(.+)/', $load, $matches);
+    preg_match('/^([^:]+): ?(.+)/s', $load, $matches);
     $type = $matches[1];
     $list = $matches[2];
     if ($type == 'sql') {
@@ -364,7 +377,6 @@ class page {
   
   static function table($request)
   {
-    log::debug(json_encode($request));
     $options = page::read_field_options($request['field']);
     
     page::expand_values($options);
