@@ -1,5 +1,5 @@
 allow from all
 Options +Indexes
 RewriteEngine on
-RewriteRule ^index.html$ show_page.php?page=index&content=home  [L]
-RewriteRule ^(.+)\.html$ show_page.php?page=index&content=$1_page   [L]
+RewriteRule ^index.html$ index.php  [L]
+RewriteRule ^(.+)\.html$ index.php?page=index&content=$1 [L]
