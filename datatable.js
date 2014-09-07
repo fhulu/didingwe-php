@@ -93,23 +93,27 @@
     
     showTitles: function(fields)
     {      
-      var head = this.element.find('thead');
+      var head = this.element.children('thead').eq(0);
       if (fields === undefined) fields = this.options.fields;
       var tr = $('<tr class=titles></tr>').appendTo(head);
       var count = 0;
       var self = this;
+      var show_key = self.hasFlag('show_key');
       $.each(fields, function(code, props) {
-        if (++count == 1 && !self.hasFlag('show_key')) return;
+        if (++count == 1 && !show_key) return;
         if (code=='html' || code == 'template' || code == 'actions' ) return;
         var name = props===null? code: props.name;
         $('<th></th>').html(name).appendTo(tr);
       });
+      /*todo: check for actions*/
+      $('<th></th>').appendTo(tr);
+      tr.prev().attr('colspan', tr.find('td').length);
     },
     
     showData: function(data)
     {
       var self = this;
-      var body = this.element.find('tbody');
+      var body = this.element.children('tbody').eq(0);
       var show_key = this.hasFlag('show_key');
       var expandable = this.options.expand !== undefined;
       $.each(data, function(i, row) {
@@ -126,13 +130,13 @@
               self.create_action(tr,'expand').prependTo(td);
               self.create_action(tr,'collapse').prependTo(td).hide();
             }
-         }
-          else {
+          }
+          else /*todo: check for actions*/ {
             self.set_actions(tr, td, cell)
           }
         });
       });
-      var column_count = body.find('tr:first-child td').length;
+      var column_count = body.find('tr:first-child>td').length;
       this.element.find('tr.header th').attr('colspan', column_count);
       this.adjust_actions_height();
     },
@@ -157,11 +161,11 @@
       if (actions[0] === 'slide') actions.insert(1, 'slideoff');
       var self = this;
       td.addClass('actions');
-      var parent = tr;
+      var parent = td;
       $.each(actions, function(k, action) {  
         self.create_action(tr, action).appendTo(parent);
         if (action === 'slide') {
-          parent = $('<span class=slide>').toggle(false).appendTo(tr);
+          parent = $('<span class=slide>').toggle(false).appendTo(parent);
         }
       });
       this.bind_actions(tr);
