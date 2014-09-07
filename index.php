@@ -1,8 +1,19 @@
 <?php
-if (isset($_GET['a'])) {
-  require_once('action.php');
-  return;
-}
+  function at($array, $index) 
+  {
+    return isset($array[$index])? $array[$index]: null;
+  }
+  
+  function GET($item) { return at($_GET, $item); }
+  function POST($item) { return at($_POST, $item); }
+  function REQUEST($item) { return at($_REQUEST, $item); }
+  function SESSION($item) { return at($_SESSION, $item); }
+  
+  require_once ('session.php');
+  if (isset($_GET['a'])) {
+    require_once('../common/action.php');
+    return;
+  }
 ?>
 
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
@@ -18,8 +29,8 @@ if (isset($_GET['a'])) {
 
 <?php
   require_once ('log.php');
-  require_once ('session.php');
-  $page = $_GET['page'];
+  
+  $page = at($_GET,'page');
 
   function pre_load_custom($page)
   {
@@ -38,17 +49,17 @@ if (isset($_GET['a'])) {
   global $session;
   log::init('index', log::DEBUG);
   log::debug(json_encode($session));
-  log::debug("content is '".$_SESSION['content']."'");
-  $public_pages = array('login_page','home','map','register');
-  if (!$session && !in_array($_GET['content'],$public_pages) && !in_array($page, $public_pages) ) {
+  $public_pages = array('login_page','home','map','register','error_page');
+  $content = GET('content');
+  if (!$session && !in_array($content,$public_pages) && !in_array($page, $public_pages) ) {
     $page = 'landing';
   }
-  else if (isset($_GET['content'])) {
-    $content = $_SESSION['content'] = $_GET['content'];
+  else if (!is_null($content)) {
+    $_SESSION['content'] = $content;
   }
   
   else if (isset($_SESSION['content'])) {
-    $content = $_SESSION['content'];
+    $content = $_GET['content'] = $_SESSION['content'];
   }
   else 
     $page = 'landing';

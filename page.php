@@ -51,8 +51,8 @@ class page {
       if (is_null($value)) unset ($options[$key]);
     }
 
-    $scope = page::decode_options($fields, $options, $options['type_options'], $scope);
-    $scope = page::decode_options($fields, $options, $options['field_options'], $scope);
+    $scope = page::decode_options($fields, $options, at($options,'type_options'), $scope);
+    $scope = page::decode_options($fields, $options, at($options,'field_options'), $scope);
     page::expand_variables($db_fields, $options, $scope);
     unset($options['type_options'], $options['field_options']);
     $fields[$field] = $options;
@@ -106,17 +106,17 @@ class page {
     $index = 0;
     foreach($matches as $match) {
       $name = $match[1];
-      if ($name[0]=='$') $name = $_REQUEST[substr($name,1)];
+      if ($name[0]=='$') $name = REQUEST(substr($name,1));
 
-      $parent[$name] = $scope[$name];
-      $value = $match[2];
+      $parent[$name] = at($scope,$name);
+      $value = at($match,2);
       ++$index;
       if ($value == 'true' || $value == 'false') {
         $scope[$name] = $parent[$name] = $value == 'true';
         continue;
       }
       
-      $prefix = $value[0];
+      $prefix = at($value,0);
       if ($prefix == '"') {
         $value = substr($value,1,strlen($value)-2);
         $scope[$name] = $parent[$name] = page::replace_vars($value, $_REQUEST);
@@ -132,14 +132,14 @@ class page {
       if (in_array($prefix, array('{', '['))) {
         $value = substr($value,1,strlen($value)-2);
       }
-      else if (!$is_template && !is_null($value) && ($prefix != '$' || $value[1] == '$')) {
+      else if (!$is_template && !is_null($value) && ($prefix != '$' || at($value,1) == '$')) {
         $scope[$name] = $parent[$name] = page::replace_vars($value, $_REQUEST);
         continue;
       }
       
       $options = page::decode_db_options($db_fields, $name, $scope);
       if (is_null($value)) {
-        $parent[$name] = page::null_merge($options, $parent[$name]);
+        $parent[$name] = page::null_merge($options, at($parent,$name));
         continue;
       }
       
@@ -159,12 +159,12 @@ class page {
       
       $db_opts = page::decode_db_options($db_fields, $value, $scope);
 
-      $options[$value] = page::null_merge($db_opts, $options[$value]);
-      $options[$value] = page::null_merge($parent[$value], $options[$value]);
-      page::merge_to($options[$value], $parent[$value]);
+      $options[$value] = page::null_merge($db_opts, at($options,$value));
+      $options[$value] = page::null_merge(at($parent,$value), at($options,$value));
+      page::merge_to($options[$value], at($parent,$value));
       
       if ($is_template) 
-        $parent[$name] = $options[$value]['html'];
+        $parent[$name] = at($options[$value],'html');
       else
         $parent[$name] = $options;
       $scope[$name] = $parent[$name];
@@ -190,16 +190,17 @@ class page {
   {
 
     foreach($row as $key1=>&$value1) {
-      if (in_array($key1, $exclusions)) continue;
+      if (is_array($value1) || in_array($key1, $exclusions)) continue;
       foreach ($row as $key2=>$value2) {
-        $value1 = preg_replace('/\$'.$key2.'([^\w]*)/', "$value2\$1", $value1);
+        if (!is_array($value2))
+          $value1 = preg_replace('/\$'.$key2.'([^\w]*)/', "$value2\$1", $value1);
       }
     }
   }
   static function read($request)
   {
     log::debug("page::read ".json_encode($request));
-    $data = page::read_field_options($request['page']);
+    $data = page::read_field_options(at($request,'page'));
     $data['program'] = config::$program_name;
     echo json_encode($data);
   }
@@ -223,12 +224,12 @@ class page {
     $v = new validator($request);
 
     foreach ($rows as $row) {
-      $scope = page::decode_options($fields, $row, $row['type_options'], array());
-      page::decode_options($fields, $row, $row['field_options'], $scope);
+      $scope = page::decode_options($fields, $row, at($row, 'type_options'), array());
+      page::decode_options($fields, $row, at($row,'field_options'), $scope);
       $code = $row['code'];
       $name = $row['name'];
-      $field_validator = $row['valid'];
-      $page_validator = $page_options[$code]['valid'];
+      $field_validator = at($row,'valid');
+      $page_validator = at(at($page_options, $code), 'valid');
       $validators = $page_validator==null?$field_validator:$page_validator;
       if (is_null($validators)) continue;
       $matches = array();
@@ -251,11 +252,11 @@ class page {
   {
     $db_fields = array();
     $scope = array();
-    $page_options = page::decode_db_options($db_fields, $request['_page'], $scope);
+    $page_options = page::decode_db_options($db_fields, at($request,'_page'), $scope);
     $field = $request['_field'];
     $options = page::decode_db_options($db_fields, $field, $scope);
 
-    return page::null_merge($page_options[$field], $options);
+    return page::null_merge(at($page_options,$field), $options);
   }
   
   static function data($request)
@@ -319,7 +320,7 @@ class page {
     $options = page::read_page_field_options($request);
     page::expand_values($options);
     
-    $action = $options['action'];
+    $action = at($options,'action');
     log::debug("ACTION: $action VALIDATE: ".isset($options['validate']));
     if (array_key_exists('validate', $options) && !page::validate($request, $options)) 
       return;
@@ -328,7 +329,9 @@ class page {
     
     $rows = array();
     $matches = array();
-    preg_match('/^([^:]+): ?(.+)/s', $action, $matches);
+    if (!preg_match('/^([^:]+): ?(.+)/s', $action, $matches)) {
+      throw new Exception("Invalid action spec $action");
+    }
     $type = $matches[1];
     $list = $matches[2];
     if ($type == 'sql') {
@@ -375,10 +378,10 @@ class page {
     }
   }
   
-  static function table($request)
+  static function table()
   {
-    $options = page::read_field_options($request['field']);
-    
+    $options = page::read_field_options(REQUEST('field'));
+    if (is_null($options)) throw new Exception ("Could not find options for field" . REQUEST ('field'));
     page::expand_values($options);
     
     $data = $options['data'];
@@ -386,7 +389,9 @@ class page {
     
     $rows = array();
     $matches = array();
-    preg_match('/^([^:]+): ?(.+)/', $data, $matches);
+    if (!preg_match('/^([^:]+):\s*(.+)/', $data, $matches)) {
+      throw new Exception("Invalid table expression $data");
+    }
     $type = $matches[1];
     $list = $matches[2];
     if ($type == 'sql') {

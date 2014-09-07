@@ -230,14 +230,14 @@ class db
   function read_one($sql, $fetch_type=MYSQLI_BOTH)
   {
     $rows = db::read($sql, $fetch_type, 1);
-    return $rows[0];
+    return at($rows,0);
   }
   
   function read_one_value($sql)
   {
     $this->exec($sql);
     $row = $this->result->fetch_row();
-    return $row[0];
+    return at($rows,0);
   }
 
   function json($sql, $max_rows=0, $fetch_type=MYSQLI_ASSOC) 
@@ -300,6 +300,6 @@ class db
 }
 
 $db = null;
-if (!$daemon_mode) db::connect_default();
+if (!isset($daemon_mode)) db::connect_default();
 
 ?>

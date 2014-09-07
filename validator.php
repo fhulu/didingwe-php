@@ -266,7 +266,7 @@ class validator
     if (is_null($title)) $title = validator::title($name);
     $this->name = $name;
     $this->title = $title;
-    $this->value = $this->request[$name];
+    $this->value = at($this->request,$name);
     return $this;
   }
   
@@ -303,9 +303,9 @@ class validator
       if (!method_exists($this, $func)) 
         throw new validator_exception("validator method $func does not exists!");
         
-      $arg1 = $matches[2];
-      $arg2 = $matches[3];
-      $arg3 = $matches[4];
+      $arg1 = at($matches,2);
+      $arg2 = at($matches,3);
+      $arg3 = at($matches,4);
       
       $valid = $this->{$func}($arg1, $arg2, $arg3);
       if (!$valid || $func == 'optional') return $valid;
