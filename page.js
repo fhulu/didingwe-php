@@ -210,7 +210,7 @@ $.fn.page = function(options, callback)
       var object = $(data.html).appendTo(parent);
       object.on('loaded', function() {
         page.set_options(parent, options.data.page, data,function(){
-          page.assign_handlers(object,data);
+          page.assign_handlers(object, id, data);
           page.load_values(object);
           parent.trigger('read_'+id, [object,data]);
         });
@@ -249,13 +249,16 @@ $.fn.page = function(options, callback)
       });
     },
 
-    assign_handlers: function(parent,data)
+    assign_handlers: function(parent, id, data)
     {
-     var id = parent.attr('id');
       $.each(data, function(field, child) {
         if (!$.isPlainObject(child)) return;
         var obj = parent.find('#'+field);
-        var data = {_page: id, _field: field };
+        if (!obj.exists()) {
+          page.assign_handlers(parent, id, child);
+          return;
+        }
+        var data = { _page: id, _field: field };
         if ((child.selector !== undefined || child.action !== undefined) && obj.attr('action')===undefined && child.action !== null)  {
           obj.attr('action','');
           var selector = child.selector;
@@ -290,7 +293,7 @@ $.fn.page = function(options, callback)
         else if (child.url !== undefined) {
           obj.click(function() { location.href = child.url; });
         }
-        page.assign_handlers(parent, child);
+        page.assign_handlers(obj, field, child);
       });
     }
   };
