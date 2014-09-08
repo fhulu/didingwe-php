@@ -54,7 +54,7 @@
             return;
           }
           if (self.hasFlag('show_titles')) self.showTitles(data.fields);
-          self.showData(data.actions, data.rows);
+          self.showData(data);
        })
     },
     
@@ -105,40 +105,44 @@
       var count = 0;
       var self = this;
       var show_key = self.hasFlag('show_key');
-      $.each(fields, function(code, props) {
-        if (++count == 1 && !show_key) return;
-        if (code=='html' || code == 'template' || code == 'actions' ) return;
-        var name = props===null? code: props.name;
-        $('<th></th>').html(name).appendTo(tr);
+      $.each(fields, function(i, field) {
+        if (i === 0 && !show_key) return;
+        var code = field.code;
+        var th = $('<th></th>').appendTo(tr);
+        if (field.code !== 'actions')
+          th.html(field.name===null? code: field.name);
       });
-      /*todo: check for actions*/
-      $('<th></th>').appendTo(tr);
-      tr.prev().attr('colspan', tr.find('td').length);
+      if (this.hasHeader())
+        tr.prev().attr('colspan', tr.find('td').length);
     },
     
-    showData: function(actions, data)
+    
+    showData: function(data)
     {
       var self = this;
       var body = this.element.children('tbody').eq(0);
       var show_key = this.hasFlag('show_key');
-      var expandable = actions.expand !== undefined;
-      $.each(data, function(i, row) {
+      var expandable = data.actions !== undefined && data.actions.expand !== undefined;
+      var show_edits = this.hasFlag('show_edits');
+      var all_actions = data.actions;
+      $.each(data.rows, function(i, row) {
+        var row = data.rows[i];
         var tr = $('<tr></tr>').appendTo(body);
         tr.attr('_key', row[0]);
         if (i % 2 === 0) tr.addClass('alt');
-        var last = row.length-1;
         $.each(row, function(j, cell) {
           if (j===0 && !show_key) return;
           var td = $('<td></td>').appendTo(tr);
-          if (j !== last) {
-            td.html(cell);
+          var field = data.fields[j];
+          if (field.code !== 'actions') {
+            self.showCell(show_edits, field, td, cell);
             if (j === 0 && expandable) {
-              self.createAction('expand', actions, tr).prependTo(td);
-              self.createAction('collapse', actions, tr).prependTo(td).hide();
+              self.createAction('expand', all_actions, tr).prependTo(td);
+              self.createAction('collapse', all_actions, tr).prependTo(td).hide();
             }
           }
-          else if (actions !== null) {
-            self.setRowActions(tr, td, actions, cell)
+          else {
+            self.setRowActions(tr, td, all_actions, cell);
           }
         });
       });
@@ -147,11 +151,22 @@
       this.adjust_actions_height();
     },
     
+    showCell: function(editable, field, td, value)
+    {
+      if (!editable || !$.valid(field.html)) {
+        td.html(value);
+        return;
+      }
+      var html = field.html.replace('$code', field.code);
+      $(html).value(value).appendTo(td);
+    },
+    
     createAction: function(action, actions, sink)
     {
       if (actions === undefined) actions = this.options;
       if (sink === undefined) sink = this.element;
       var props = actions[action];
+      if (props === undefined) console.log(action, actions);
       var div = $('<span>');
       div.html(props.name);
       div.attr('title', props.desc);
@@ -163,18 +178,18 @@
       return div;
     },
     
-    setRowActions: function(tr, td, properties, actions)
+    setRowActions: function(tr, td, all_actions, row_actions)
     {
-      if (!$.isArray(actions)) actions = actions.split(',');
+      if (!$.isArray(row_actions)) row_actions = row_actions.split(',');
       var self = this;
       td.addClass('actions');
       var parent = td;
-      $.each(actions, function(k, action) {  
+      $.each(row_actions, function(i, action) {  
         if (action === 'expand') return;
-        self.createAction(action, properties, tr).appendTo(parent);
+        self.createAction(action, all_actions, tr).appendTo(parent);
         if (action === 'slide') {
-          parent = $('<span class=slide>').toggle(false).appendTo(parent);
-          self.createAction('slideoff', properties, tr).appendTo(parent);
+          parent = $('<span class="slide">').toggle(false).appendTo(parent);
+          self.createAction('slideoff', all_actions, tr).appendTo(parent);
         }
       });
       this.bind_actions(tr);
