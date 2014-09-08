@@ -40,6 +40,38 @@ $.fn.enableOnSet = function(controls, events)
 }
 
 
+$.fn.setValue = function(val)
+{
+  if (this.is("a")) {
+    var proto = this.attr('proto')==undefined? '': this.attr('proto');
+    if (val == null)
+      this.attr('href', '');
+   else
+      this.attr('href', proto+val);
+  }
+  else if (this.attr('value') === undefined)
+    this.html(val);
+  else
+    this.val(val);
+  return this;
+}
+
+$.fn.getValue = function()
+{
+  var name = this.hasAttr('name')? this.attr('name'): this.attr('id');
+  if (name === undefined) return true;
+  var type = this.attr('type');
+  if ((type === 'radio' || type === 'checkbox') && !this.is(':checked')) return true;
+  var val = this.val();
+  return val === undefined? this.text(): val;
+}
+
+$.fn.value = function(val)
+{
+  if (val === undefined) return this.getValue();
+  return this.setValue(val);
+}
+
 $.fn.values = function()
 {
   var data = {};
@@ -520,6 +552,7 @@ $.fn.customCreate = function(options)
   this.creation = this[create](options).data(create);
 }
 
+
 /**
 * @param scope Object :  The scope in which to execute the delegated function.
 * @param func Function : The function to execute
@@ -602,4 +635,9 @@ $.jsonSize = function(object)
   var i=0;
   $.each(object, function() {++i});
   return i;
+}
+
+$.valid = function(object)
+{
+  return object !== null && object !== undefined;
 }
