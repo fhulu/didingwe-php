@@ -46,15 +46,15 @@
         if (this.hasFlag('show_header')) this.showHeader();
       }
       if (this.options.rows !== undefined)
-        this.showData(this.options.row);
+        this.showData(this.options.rows);
       else
-        $.json('/?a=page/table', {data: {field: id}}, function(data) {
+        $.json('/?a=datatable/read', {data: {field: id, key: this.options.key}}, function(data) {
           if (data === undefined || data === null) {
             console.log('No table data for table:', id);
             return;
           }
           if (self.hasFlag('show_titles')) self.showTitles(data.fields);
-          self.showData(data.rows);
+          self.showData(data.actions, data.rows);
        })
     },
     
@@ -81,15 +81,21 @@
       if (this.options.filter != null)
         $('<div class=filtering title="Filter/Search"></div>').appendTo(th);
       
-      if (this.options.page_size != null) {
-        var paging = $('<div class=paging></div>').appendTo(th);
-        paging.html('Showing from<div class=from></div> to <div class=to></div> of <div class=total></div>');
-        $('<button nav=prev disabled></button>').appendTo(paging);
-        $('<input type=text></input>').val(this.options.page_size).appendTo(paging);
-        $('<button nav=next disabled></button>').appendTo(paging);
-      }
+      if (this.options.page_size != null) this.showPaging(th);
     },
     
+    showPaging: function(th)
+    {
+      var paging = $('<div class=paging></div>').appendTo(th);
+      $('<div>Show</div>').appendTo(paging);
+      $('<input id=page_size type=text></input>').val(this.options.page_size).appendTo(paging);
+      $('<div>entries per page</div>').appendTo(paging);
+      this.createAction('goto_first_page').attr('disabled','').appendTo(paging);
+      this.createAction('goto_prev_page').attr('disabled','').appendTo(paging);
+      $('<input id=page_num type=text></input>').val(1).appendTo(paging);
+      this.createAction('goto_next_page').attr('disabled','').appendTo(paging);
+      this.createAction('goto_last_page').attr('disabled','').appendTo(paging);
+    },
     
     showTitles: function(fields)
     {      
@@ -110,12 +116,12 @@
       tr.prev().attr('colspan', tr.find('td').length);
     },
     
-    showData: function(data)
+    showData: function(actions, data)
     {
       var self = this;
       var body = this.element.children('tbody').eq(0);
       var show_key = this.hasFlag('show_key');
-      var expandable = this.options.expand !== undefined;
+      var expandable = actions.expand !== undefined;
       $.each(data, function(i, row) {
         var tr = $('<tr></tr>').appendTo(body);
         tr.attr('_key', row[0]);
@@ -127,12 +133,12 @@
           if (j !== last) {
             td.html(cell);
             if (j === 0 && expandable) {
-              self.create_action(tr,'expand').prependTo(td);
-              self.create_action(tr,'collapse').prependTo(td).hide();
+              self.createAction('expand', actions, tr).prependTo(td);
+              self.createAction('collapse', actions, tr).prependTo(td).hide();
             }
           }
-          else /*todo: check for actions*/ {
-            self.set_actions(tr, td, cell)
+          else if (actions !== null) {
+            self.setRowActions(tr, td, actions, cell)
           }
         });
       });
@@ -141,31 +147,34 @@
       this.adjust_actions_height();
     },
     
-    create_action: function(tr, action)
+    createAction: function(action, actions, sink)
     {
-      var props = this.options[action];
+      if (actions === undefined) actions = this.options;
+      if (sink === undefined) sink = this.element;
+      var props = actions[action];
       var div = $('<span>');
       div.html(props.name);
       div.attr('title', props.desc);
       div.attr('action', action);
       div.click(function() {
-        tr.trigger('action',[div,action,props.action]);
-        tr.trigger(action, [div,props.action]);
+        sink.trigger('action',[div,action,props.action]);
+        sink.trigger(action, [div,props.action]);
       });
       return div;
     },
     
-    set_actions: function(tr, td, actions)
+    setRowActions: function(tr, td, properties, actions)
     {
       if (!$.isArray(actions)) actions = actions.split(',');
-      if (actions[0] === 'slide') actions.insert(1, 'slideoff');
       var self = this;
       td.addClass('actions');
       var parent = td;
       $.each(actions, function(k, action) {  
-        self.create_action(tr, action).appendTo(parent);
+        if (action === 'expand') return;
+        self.createAction(action, properties, tr).appendTo(parent);
         if (action === 'slide') {
           parent = $('<span class=slide>').toggle(false).appendTo(parent);
+          self.createAction('slideoff', properties, tr).appendTo(parent);
         }
       });
       this.bind_actions(tr);
