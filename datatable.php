@@ -59,9 +59,9 @@ class datatable
       if (preg_match_all('/(\$\w+)/', $sql, $matches)) foreach($matches as $match) {
         $var = $match[1];
         $val = REQUEST($var);
-        if (is_null($val)) $sql = str_replace('$'.$var, $val, $sql);
+        if (!is_null($val)) $sql = str_replace('$'.$var, $val, $sql);
       }
-      $rows = $db->read($ql, MYSQLI_NUM);
+      $rows = $db->read($sql, MYSQLI_NUM);
       $fields = array();
       foreach($db->field_names as $name) {
         $fields[$name] = page::read_field_options($name);
