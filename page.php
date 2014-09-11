@@ -174,7 +174,7 @@ class page {
   
     static function expand_variables(&$db_fields, &$data, $scope)
   {
-    if (isset($data['has_data'])) return;
+    if (isset($data['has_data']) || !isset($data['html'])) return;
     $matches = array();
     if (!preg_match_all('/\$(\w+)/', $data['html'], $matches)) return;
     
@@ -188,7 +188,7 @@ class page {
 
   static function expand_values(&$row, $exclusions=array())
   {
-
+    if (!is_array($row)) return;
     foreach($row as $key1=>&$value1) {
       if (is_array($value1) || in_array($key1, $exclusions)) continue;
       foreach ($row as $key2=>$value2) {
@@ -377,44 +377,7 @@ class page {
       page::call($request, $matches[1], $matches[2]);
     }
   }
-  
-  static function table()
-  {
-    $options = page::read_field_options(REQUEST('field'));
-    if (is_null($options)) throw new Exception ("Could not find options for field" . REQUEST ('field'));
-    page::expand_values($options);
     
-    $data = $options['data'];
-    if (!isset($data)) return;
-    
-    $rows = array();
-    $matches = array();
-    if (!preg_match('/^([^:]+):\s*(.+)/', $data, $matches)) {
-      throw new Exception("Invalid table expression $data");
-    }
-    $type = $matches[1];
-    $list = $matches[2];
-    if ($type == 'sql') {
-      global $db;
-      $sql = $list;
-      $matches = array();
-      if (preg_match_all('/(\$\w+)/', $sql, $matches)) foreach($matches as $match) {
-        $var = $match[1];
-        $val = $request[$var];
-        if (isset($val)) $sql = str_replace('$'.$var, $val, $sql);
-      }
-      $rows = $db->read($list, MYSQLI_NUM);
-      $fields = array();
-      foreach($db->field_names as $name) {
-        $fields[$name] = page::read_field_options($name);
-      }
-      echo json_encode(array('fields'=>$fields, 'rows'=>$rows));
-    }
-    else if (preg_match('/^([^\(]+)\(([^\)]*)\)/', $data, $matches) ) {
-      page::call($request, $matches[1], $matches[2]);
-    }
-  }
-  
   static function test($req)
   {
     log::debug(json_encode($req));
