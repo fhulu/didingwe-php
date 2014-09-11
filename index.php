@@ -1,15 +1,6 @@
 <?php
-  function at($array, $index) 
-  {
-    return isset($array[$index])? $array[$index]: null;
-  }
-  
-  function GET($item) { return at($_GET, $item); }
-  function POST($item) { return at($_POST, $item); }
-  function REQUEST($item) { return at($_REQUEST, $item); }
-  function SESSION($item) { return at($_SESSION, $item); }
-  
-  require_once ('session.php');
+  require_once('../common/utils.php');
+  require_once('../common/session.php');
   if (isset($_GET['a'])) {
     require_once('../common/action.php');
     return;
