@@ -19,13 +19,11 @@ class datatable
     else
       $actions[$action] = page::read_field_options($action);  
   }
-  static function read_actions($options, $has_row_actions, $rows)
+  static function read_actions($options, $rows)
   {
     $actions = array();
-    if (!$has_row_actions) return $actions;
-    
     foreach($rows as $row) {
-      foreach (explode(',', $row[sizeof($row)-1]) as $action) {
+      foreach (explode(',', last($row)) as $action) {
         datatable::read_action($actions, $options, $action);
         if ($action === 'slide')
           datatable::read_action($actions, $options, 'slideoff');
@@ -64,7 +62,9 @@ class datatable
       $rows = $db->read($sql, MYSQLI_NUM);
       $fields = array();
       foreach($db->field_names as $name) {
-        $fields[$name] = page::read_field_options($name);
+        $field = page::read_field_options($name);
+        page::expand_values($field);
+        $fields[] = page::null_merge(array('code'=>$name), $field);
       }
       $data = array('fields'=>$fields, 'rows'=>$rows);
     }
@@ -72,7 +72,9 @@ class datatable
       $data = page::call($request, $type, $source);
     }
 
-    $data['actions'] = datatable::read_actions($options, array_key_exists('actions', $fields), $rows);
+    $fields = $data['fields'];
+    if (at(last($fields),'code') === 'actions')
+      $data['actions'] = datatable::read_actions($options, $rows);
     echo json_encode($data);
   }
 }
