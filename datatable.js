@@ -128,14 +128,15 @@
       $.each(data.rows, function(i, row) {
         var row = data.rows[i];
         var tr = $('<tr></tr>').appendTo(body);
-        tr.attr('_key', row[0]);
+        var key = row[0];
+        tr.attr('_key', key);
         if (i % 2 === 0) tr.addClass('alt');
         $.each(row, function(j, cell) {
           if (j===0 && !show_key) return;
           var td = $('<td></td>').appendTo(tr);
           var field = data.fields[j];
           if (field.code !== 'actions') {
-            self.showCell(show_edits, field, td, cell);
+            self.showCell(show_edits, field, td, cell, key);
             if (j === 0 && expandable) {
               self.createAction('expand', all_actions, tr).prependTo(td);
               self.createAction('collapse', all_actions, tr).prependTo(td).hide();
@@ -151,13 +152,13 @@
       this.adjust_actions_height();
     },
     
-    showCell: function(editable, field, td, value)
+    showCell: function(editable, field, td, value, key)
     {
       if (!editable || !$.valid(field.html)) {
         td.html(value);
         return;
       }
-      var html = field.html.replace('$code', field.code);
+      var html = field.html.replace('$code', key+'_'+field.code);
       $(html).value(value).appendTo(td);
     },
     
