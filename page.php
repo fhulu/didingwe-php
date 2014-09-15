@@ -210,7 +210,8 @@ class page {
   {
     foreach($options as $code=>$values) {
       if (!is_array($values)) continue;
-      $valid = at($values,'valid');
+      $valid = trim(at($values,'valid'));
+      if ($value == '') continue;
       if (is_null($valid)) {
         page::validate ($validator, $values);
         continue;
