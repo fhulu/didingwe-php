@@ -10,7 +10,8 @@
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <link href="default.style.css" media="screen" rel="stylesheet" type="text/css" />	
-<link href="jquery/smoothness/ui.css" media="screen" rel="stylesheet" type="text/css" />	
+<link href="jquery/jquery-ui.min.css" media="screen" rel="stylesheet" type="text/css" />	
+<!--<link href="jquery/jquery-ui.theme.min.css" media="screen" rel="stylesheet" type="text/css" />	-->
 
 <script type='text/javascript' src='jquery/min.js'></script>
 <script type='text/javascript' src='jquery/ui-min.js'></script>
@@ -19,7 +20,7 @@
 <!--<script type="text/javascript" src='common/mukoni.jquery-ui.js'></script>-->
 
 <?php
-  require_once ('log.php');
+  require_once ('../common/log.php');
   
   $page = at($_GET,'page');
 
@@ -40,7 +41,7 @@
   global $session;
   log::init('index', log::DEBUG);
   log::debug(json_encode($session));
-  $public_pages = array('login_page','home','map','register','error_page');
+  $public_pages = array('login','home','map','register','error_page');
   $content = GET('content');
   if (!$session && !in_array($content,$public_pages) && !in_array($page, $public_pages) ) {
     $page = 'landing';
@@ -52,11 +53,11 @@
   else if (isset($_SESSION['content'])) {
     $content = $_GET['content'] = $_SESSION['content'];
   }
-  else 
+  else
     $page = 'landing';
   
   pre_load_custom($page);
-  if (isset($content)) 
+  if ($content != $page && !is_null($content)) 
     pre_load_custom($content);
   
   $params = array_merge($_GET, array('page'=>$page));
