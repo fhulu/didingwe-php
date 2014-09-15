@@ -48,11 +48,11 @@ try {
 }
 catch (user_exception $exception) {
   log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
-  session::redirect('/?c=breach');
+  session::redirect('breach.html');
 }
 catch (Exception $exception)
 {
   log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
-  session::redirect('/?c=error');
+  session::redirect('error_page.html');
 }
 ?>
