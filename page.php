@@ -12,6 +12,7 @@
  * @author fhulu
  */
 
+require_once 'session.php';
 require_once 'db.php';
 require_once 'validator.php';
 require_once 'ref.php';
@@ -160,7 +161,7 @@ class page {
       $db_opts = page::decode_db_options($db_fields, $value, $scope);
 
       $options[$value] = page::null_merge($db_opts, at($options,$value));
-      $options[$value] = page::null_merge(at($parent,$value), at($options,$value));
+      $options[$value] = page::null_merge(at($options,$value), at($parent,$value));
       page::merge_to($options[$value], at($parent,$value));
       
       if ($is_template) 
@@ -204,51 +205,32 @@ class page {
     $data['program'] = config::$program_name;
     echo json_encode($data);
   }
-  
-  static function validate($request, $page_options)
+   
+  static function validate(&$validator, $options)
   {
-    $fields = array_keys($request);
-    $fields = array_diff($fields, array('a','_page','_field'));
-    if (sizeof($fields) == 0) return false;
-    
-    $fields = implode("','", $fields);
-    global $db;
-    $rows =  $db->read(
-      "select f.code, f.name, ft.options type_options, f.options field_options"
-      . " from field f left join field_type ft on f.type = ft.code"
-      . " where f.code in ('$fields')", MYSQLI_ASSOC);
-    
-    
-    if (sizeof($rows) == 0) return false;
-    
-    $v = new validator($request);
-
-    foreach ($rows as $row) {
-      $scope = page::decode_options($fields, $row, at($row, 'type_options'), array());
-      page::decode_options($fields, $row, at($row,'field_options'), $scope);
-      $code = $row['code'];
-      $name = $row['name'];
-      $field_validator = at($row,'valid');
-      $page_validator = at(at($page_options, $code), 'valid');
-      $validators = $page_validator==null?$field_validator:$page_validator;
-      if (is_null($validators)) continue;
-      $matches = array();
-      if (!preg_match_all('/\w+(?:\([\w\,\.\s]*\))?/s', $validators, $matches)) {
-        log::error("Invalid validators $validators");
-        return;
+    foreach($options as $code=>$values) {
+      if (!is_array($values)) continue;
+      $valid = at($values,'valid');
+      if (is_null($valid)) {
+        page::validate ($validator, $values);
+        continue;
       }
+      $matches = array();
+      if (!preg_match_all('/([^,]+),?/', $valid, $matches, PREG_SET_ORDER)) 
+        throw new Exception("Invalid validators $valid");
+
+      $name = at($values, 'name');
       foreach($matches as $match) {
-        $validator = $match[0];
-        if ($validator == 'optional' && !$v->check($code, $name)->provided()) continue;
-        $v->check($code, $name)->is($validator);
+        $valid = $match[1];
+        if ($valid == 'optional' && !$validator->check($code, $name)->provided()) continue;
+        $validator->check($code, $name)->is($valid);
       }
     }
     
-    return $v->valid();
+    return $validator->valid();
   }
- 
 
-  static function read_page_field_options($request)
+  static function read_page_field_options($request, &$page_options=null)
   {
     $db_fields = array();
     $scope = array();
@@ -316,16 +298,19 @@ class page {
   
   static function action($request)
   {
-    log::debug("b4 ACTION: ".  json_encode($request));
-    $options = page::read_page_field_options($request);
+    $page_options = array();
+    $options = page::read_page_field_options($request, $page_options);
     page::expand_values($options);
+    page::expand_values($page_options);
     
+   
+    if (array_key_exists('validate', $options)) {
+      $validator = new validator($request);
+      if (!page::validate($validator, $page_options)) return;
+    }
+     
     $action = at($options,'action');
-    log::debug("ACTION: $action VALIDATE: ".isset($options['validate']));
-    if (array_key_exists('validate', $options) && !page::validate($request, $options)) 
-      return;
-    
-    if (!isset($action)) return;
+    if (is_null($action)) return;
     
     $rows = array();
     $matches = array();
