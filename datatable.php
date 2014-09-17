@@ -34,10 +34,19 @@ class datatable
     return $actions;
   }
   
-  static function read()
+  
+  static function read_db($sql, $options) 
   {
-    $options = page::read_field_options(REQUEST('field'));
-    if (is_null($options)) throw new Exception ("Could not find options for field" . REQUEST ('field'));
+    global $db;
+    $page_size = at($options,'page_size');
+    if (is_null($page_size)) $page_size = 0;
+    return $db->read($sql, MYSQLI_NUM, $page_size);    
+  }
+  
+  static function read($request)
+  {
+    $options = page::read_field_options(at($request,'field'));
+    if (is_null($options)) throw new Exception ("Could not find options for field" . at ($request, 'field'));
     page::expand_values($options);
     
     $data = $options['data'];
@@ -59,7 +68,7 @@ class datatable
         $val = REQUEST($var);
         if (!is_null($val)) $sql = str_replace('$'.$var, $val, $sql);
       }
-      $rows = $db->read($sql, MYSQLI_NUM);
+      $rows = datatable::read_db($sql, page::null_merge($options, $request));
       $fields = array();
       foreach($db->field_names as $name) {
         $field = page::read_field_options($name);
