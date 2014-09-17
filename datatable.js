@@ -38,10 +38,7 @@
         $('<thead></thead>').prependTo(this.element);
         if (this.hasFlag('show_header')) this.showHeader();
       }
-      if (this.options.rows !== undefined)
-        this.showData(this.options.rows);
-      else
-        this.load();
+      this.load();
     },
    
     load: function()
@@ -50,9 +47,13 @@
       var id = this.element.attr('id');
       var head = this.element.children('thead').eq(0);
       head.find('.titles').empty();
-      var page_size = head.find('#page_size').eq(0);
+      var page_size = head.find('#page_size');
       var data = {field: id, key: this.options.key};
-      if (page_size.exists) data.page_size = page_size.val();
+      if (page_size.exists()) {
+        data.page_size = page_size.val();
+        data.page_num = head.find('#page_num').val();
+      }
+      head.find('.paging [action]').attr('disabled','');
       $.json('/?a=datatable/read', {data: data}, function(data) {
         if (data === undefined || data === null) {
           console.log('No table data for table:', id);
@@ -60,6 +61,7 @@
         }
         if (self.hasFlag('show_titles')) self.showTitles(data.fields);
         self.showData(data);
+        self.showPaging(parseInt(data.total));
       });
     },
     
@@ -86,10 +88,10 @@
       if (this.options.filter != null)
         $('<div class=filtering title="Filter/Search"></div>').appendTo(th);
       
-      if (this.options.page_size != null) this.showPaging(th);
+      if (this.options.page_size != null) this.createPaging(th);
     },
     
-    showPaging: function(th)
+    createPaging: function(th)
     {
       var paging = $('<div class=paging></div>').appendTo(th);
       $('<div>Show</div>').appendTo(paging);
@@ -100,12 +102,67 @@
       this.createAction('goto_prev_page').attr('disabled','').appendTo(paging);
       $('<input id=page_num type=text></input>').val(1).appendTo(paging);
       this.createAction('goto_next_page').attr('disabled','').appendTo(paging);
-      this.createAction('goto_last_page').attr('disabled','').appendTo(paging);
-      
-      paging.find("[type='text']").bind('keyup input cut paste', function(e) {
-        if (e.keyCode == 13) self.load();
-      });      
+      this.createAction('goto_last_page').attr('disabled','').appendTo(paging);   
+      this.bindPaging();
     },
+    
+    bindPaging: function()
+    {
+      var self = this;
+      var head = this.element.children('thead').eq(0);
+      head.find(".paging [type='text']").bind('keyup input cut paste', function(e) {
+        if (e.keyCode == 13) self.load();
+      }); 
+      
+      var page = head.find('#page_num');
+      this.element.on('goto_first_page', function(e, obj) {
+        if (obj.hasAttr('disabled')) return;
+        page.val(1);
+        self.load();
+      })
+      .on('goto_prev_page', function(e, obj) {
+        if (obj.hasAttr('disabled')) return;
+        page.val(parseInt(page.val())-1);
+        self.load();
+      })
+      .on('goto_next_page', function(e, obj) {
+        if (obj.hasAttr('disabled')) return;
+        page.val(parseInt(page.val())+1);
+        self.load();
+      })
+      .on('goto_last_page', function(e, obj) {
+        if (obj.hasAttr('disabled')) return;
+        page.val('last');
+        self.load();
+      })
+    },
+    
+    showPaging: function(total)
+    {
+      var head = this.element.children('thead').eq(0);
+      var page = parseInt(head.find('#page_num').val());
+      var size = parseInt(head.find('#page_size').val());
+      var prev = head.find('[action=goto_first_page],[action=goto_prev_page]');
+      var next = head.find('[action=goto_last_page],[action=goto_next_page]');
+      console.log(total, page, total/size);
+      var index = (page-1)*size;
+      if (page <= 1) {
+        prev.attr('disabled','');
+        head.find('#page_num').val(1);
+      }
+      if (size >= total) {
+        head.find('#page_size').val(total);
+        head.find('#page_num').val(1);
+      }
+      if (page >= total/size) 
+        next.attr('disabled','');
+      else
+        next.removeAttr('disabled');
+        
+      if (page > 1) prev.removeAttr('disabled');
+    },
+    
+    
     
     showTitles: function(fields)
     {      

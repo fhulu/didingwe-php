@@ -19,6 +19,7 @@ class datatable
     else
       $actions[$action] = page::read_field_options($action);  
   }
+  
   static function read_actions($options, $rows)
   {
     $actions = array();
@@ -37,10 +38,23 @@ class datatable
   
   static function read_db($sql, $options) 
   {
-    global $db;
     $page_size = at($options,'page_size');
     if (is_null($page_size)) $page_size = 0;
-    return $db->read($sql, MYSQLI_NUM, $page_size);    
+    $page_num = at($options, 'page_num');
+    $offset = is_null($page_num)? 0: $page_size*($page_num-1);
+    global $db;
+    $sql = preg_replace('/^\s*select /i', 'select SQL_CALC_FOUND_ROWS ',$sql);
+    $rows = $db->page_indices($sql, $page_size, $offset);
+    $names = $db->field_names;
+    $total = $db->row_count();
+    $fields = array();
+    foreach($names as $name) {
+      $field = page::read_field_options($name);
+      page::expand_values($field);
+      $fields[] = page::null_merge(array('code'=>$name), $field);
+    }
+    
+    return array('fields'=>$fields, 'rows'=>$rows, 'total'=>$total);
   }
   
   static function read($request)
@@ -68,22 +82,15 @@ class datatable
         $val = REQUEST($var);
         if (!is_null($val)) $sql = str_replace('$'.$var, $val, $sql);
       }
-      $rows = datatable::read_db($sql, page::null_merge($options, $request));
-      $fields = array();
-      foreach($db->field_names as $name) {
-        $field = page::read_field_options($name);
-        page::expand_values($field);
-        $fields[] = page::null_merge(array('code'=>$name), $field);
-      }
-      $data = array('fields'=>$fields, 'rows'=>$rows);
+      $data = datatable::read_db($sql, page::null_merge($options, $request));
     }
     else if (preg_match('/^([^\(]+)\(([^\)]*)\)/', $data, $matches) ) {
       $data = page::call($request, $type, $source);
     }
 
     $fields = $data['fields'];
-    if (at(last($fields),'code') === 'actions')
-      $data['actions'] = datatable::read_actions($options, $rows);
+    if (at(last($fields),'code') == 'actions')
+      $data['actions'] = datatable::read_actions($options, $data['rows']);
     echo json_encode($data);
   }
 }
