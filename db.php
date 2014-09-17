@@ -99,7 +99,7 @@ class db
     $this->exec($q, $max_rows);
 
     $this->row = $this->result->fetch_array($fetch_type);     
-    if (!$this->row) return false;
+    if ($this->row == null) return false;
 
     $this->id = $this->row[0];
     return true;
@@ -123,6 +123,11 @@ class db
     return $this->result->field_count;
   }
 
+  function row_count()
+  {
+    return $this->read_one_value("select found_rows()");
+  }
+  
   static function connect_default()
   {
     global $db;
@@ -235,9 +240,9 @@ class db
   
   function read_one_value($sql)
   {
-    $this->exec($sql);
+    $this->exec($sql, 1);
     $row = $this->result->fetch_row();
-    return at($rows,0);
+    return at($row,0);
   }
 
   function json($sql, $max_rows=0, $fetch_type=MYSQLI_ASSOC) 
