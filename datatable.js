@@ -27,20 +27,13 @@
       row_actions: null,
       url: '/?a=page/read&page=mytable
       rows: null*/
-      name: 'We didnt define heading',
+      name: 'Undefined',
       flags: [],
       slideSpeed: 300
     },
     
     _create: function()
     {
-      /*
-      $.extend(this.options.actions, 
-       { slide: {name: '<', desc: 'Show more options...'},
-         slideoff: {name: '>', desc: 'Hide options'}
-      })*/
-      var self = this;
-      var id = this.element.attr('id');
       if (this.hasFlag('show_titles') || this.hasFlag('show_header')) {
         $('<thead></thead>').prependTo(this.element);
         if (this.hasFlag('show_header')) this.showHeader();
@@ -48,14 +41,26 @@
       if (this.options.rows !== undefined)
         this.showData(this.options.rows);
       else
-        $.json('/?a=datatable/read', {data: {field: id, key: this.options.key}}, function(data) {
-          if (data === undefined || data === null) {
-            console.log('No table data for table:', id);
-            return;
-          }
-          if (self.hasFlag('show_titles')) self.showTitles(data.fields);
-          self.showData(data);
-       })
+        this.load();
+    },
+   
+    load: function()
+    {
+      var self = this;
+      var id = this.element.attr('id');
+      var head = this.element.children('thead').eq(0);
+      head.find('.titles').empty();
+      var page_size = head.find('#page_size').eq(0);
+      var data = {field: id, key: this.options.key};
+      if (page_size.exists) data.page_size = page_size.val();
+      $.json('/?a=datatable/read', {data: data}, function(data) {
+        if (data === undefined || data === null) {
+          console.log('No table data for table:', id);
+          return;
+        }
+        if (self.hasFlag('show_titles')) self.showTitles(data.fields);
+        self.showData(data);
+      });
     },
     
     hasFlag: function(flag)
@@ -88,13 +93,18 @@
     {
       var paging = $('<div class=paging></div>').appendTo(th);
       $('<div>Show</div>').appendTo(paging);
-      $('<input id=page_size type=text></input>').val(this.options.page_size).appendTo(paging);
+      var self = this;
+      $('<input id=page_size type=text></input>').val(this.options.page_size).appendTo(paging)
       $('<div>entries per page</div>').appendTo(paging);
       this.createAction('goto_first_page').attr('disabled','').appendTo(paging);
       this.createAction('goto_prev_page').attr('disabled','').appendTo(paging);
       $('<input id=page_num type=text></input>').val(1).appendTo(paging);
       this.createAction('goto_next_page').attr('disabled','').appendTo(paging);
       this.createAction('goto_last_page').attr('disabled','').appendTo(paging);
+      
+      paging.find("[type='text']").bind('keyup input cut paste', function(e) {
+        if (e.keyCode == 13) self.load();
+      });      
     },
     
     showTitles: function(fields)
@@ -121,6 +131,7 @@
     {
       var self = this;
       var body = this.element.children('tbody').eq(0);
+      body.empty();
       var show_key = this.hasFlag('show_key');
       var expandable = data.actions !== undefined && data.actions.expand !== undefined;
       var show_edits = this.hasFlag('show_edits');
