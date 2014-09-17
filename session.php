@@ -1,6 +1,7 @@
 <?php 
 session_start();
 
+require_once('utils.php');
 require_once('log.php');
 require_once('db.php');
 require_once('config.php');
@@ -50,10 +51,10 @@ class session
   {
     global $session;
     $session = new session();
-    $session->referrer = $_SESSION['referrer'];
+    $session->referrer = SESSION('referrer');
     $session->user = $user;
     $session->id = sprintf("%08x%04x%04x%08x",rand(0,0xffffffff),$user->partner_id,$user->id,time());
-    $sql = "insert session (id, user_id) values ('$session->id','$user->id')";
+    $sql = "insert \$audit_db.session (id, user_id) values ('$session->id','$user->id')";
     
     global $db;
     $db->insert($sql);
@@ -61,10 +62,8 @@ class session
   }
        
  
-  static function do_login($email, $passwd, $is_paswd_plain=true) 
+  static function do_login($email, $passwd, $is_plain_password=true) 
   {
-    log::debug("LOGIN: $email PROGRAM: $session->program_id REFERRER: $session->referrer");
-
     if (!user::verify_internal($_REQUEST)) return; 
 
     errors::init();
@@ -79,8 +78,8 @@ class session
   
   static function login()
   {
-    $email = $_REQUEST['email'];
-    $passwd = $_REQUEST['password'];
+    $email = REQUEST('email');
+    $passwd = REQUEST('password');
     session::do_login($email, $passwd);
   } 
   
@@ -101,13 +100,13 @@ class session
   {
     log::debug("REDIRECT: $url");
     global $json;
-    $json["script"] = "location.href='$url';";
+    $json["url"] = $url;
   }
 
   static function force_logout($user_id)
   {
     global $db;
-    $sql = "update session set status='C', end_time=now() where user_id = $user_id";
+    $sql = "update \$audit_db.session set status='C', end_time=now() where user_id = $user_id";
     $db->exec($sql);
   }
   
@@ -116,7 +115,7 @@ class session
   {
     global $db, $session;
     if (isset($db)) {
-      $sql = "update session set status='C', end_time=now() where id = '$session->id'";
+      $sql = "update \$audit_db.session set status='C', end_time=now() where id = '$session->id'";
       $db->send($sql);
     }
 
@@ -128,16 +127,17 @@ class session
     global $session,$db;
     if (is_null($session) || $session->id == '') return false;
     
-    $status = $db->read_one_value("select status from session where id = '$session->id' ");
+    $status = $db->read_one_value("select status from \$audit_db.session where id = '$session->id' ");
     if ($status != 'C') return true;
     session::logout ();
     return false;
   }
 }
 
-if (!$daemon_mode) {
+if (!isset($daemon_mode)) {
   global $session;
-  $session = unserialize($_SESSION['instance']);
+  if (isset($_SESSION['instance']))
+    $session = unserialize($_SESSION['instance']);
+  else
+    $session = null;
 }
-
-?>
