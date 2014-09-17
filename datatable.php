@@ -35,7 +35,28 @@ class datatable
     return $actions;
   }
   
+  static function get_sql_fields($sql)
+  {
+    $matches = array();
+    
+    preg_match_all('/([^,]+),?/', substr(ltrim($sql),7), $matches, PREG_SET_ORDER);
+    $fields = array();
+    foreach($matches as $match) {
+      $fields[] = trim($match[1]);
+    }
+    return $fields;
+  }  
   
+  static function field_named($fields, $name)
+  {
+    foreach($fields as $field) {
+      list($real, $alias) = explode(' ',$field);
+      if (is_null($alias)) list($alias) = explode('.', $field); 
+      if ($alias == $name) return $real;
+    }
+      
+    return null;
+  }
   static function read_db($sql, $options) 
   {
     $page_size = at($options,'page_size');
@@ -43,7 +64,15 @@ class datatable
     $page_num = at($options, 'page_num');
     $offset = is_null($page_num)? 0: $page_size*($page_num-1);
     global $db;
+    $sql_fields = datatable::get_sql_fields($sql);
     $sql = preg_replace('/^\s*select /i', 'select SQL_CALC_FOUND_ROWS ',$sql);
+    $sort_field = at($options,'sort');
+    log::debug("OPTIONS ".  json_encode($options));
+    if (!is_null($sort_field)) {
+      $sort_order = at($options,'sort_order');
+      $sql .= " order by ". datatable::field_named($sql_fields, $sort_field) . " $sort_order"; 
+    }
+    $filtered = at($options, 'filtered');
     $rows = $db->page_indices($sql, $page_size, $offset);
     $names = $db->field_names;
     $total = $db->row_count();
@@ -54,11 +83,12 @@ class datatable
       $fields[] = page::null_merge(array('code'=>$name), $field);
     }
     
-    return array('fields'=>$fields, 'rows'=>$rows, 'total'=>$total);
+    return array('fields'=>$fields, 'rows'=>$rows, 'total'=>$total,'sort'=>$sort_field, 'sort_order'=>$sort_order);
   }
   
   static function read($request)
   {
+    log::debug("REQUEST ".json_encode($request));
     $options = page::read_field_options(at($request,'field'));
     if (is_null($options)) throw new Exception ("Could not find options for field" . at ($request, 'field'));
     page::expand_values($options);

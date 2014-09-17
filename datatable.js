@@ -38,28 +38,31 @@
         $('<thead></thead>').prependTo(this.element);
         if (this.hasFlag('show_header')) this.showHeader();
       }
+      this.params = {field: this.element.attr('id'), key: this.options.key};
+      if (this.options.sort !== undefined) this.params.sort = this.options.sort;
       this.load();
     },
    
+    head: function()
+    {
+      return this.element.children('thead').eq(0);
+    },
+    
+    body: function()
+    {
+      return this.element.children('tbody').eq(0);
+    },
+    
     load: function()
     {
       var self = this;
-      var id = this.element.attr('id');
-      var head = this.element.children('thead').eq(0);
-      head.find('.titles').empty();
-      var page_size = head.find('#page_size');
-      var data = {field: id, key: this.options.key};
-      if (page_size.exists()) {
-        data.page_size = page_size.val();
-        data.page_num = head.find('#page_num').val();
-      }
-      head.find('.paging [action]').attr('disabled','');
-      $.json('/?a=datatable/read', {data: data}, function(data) {
+      self.head().find('.paging [action]').attr('disabled','');
+      $.json('/?a=datatable/read', {data: self.params}, function(data) {
         if (data === undefined || data === null) {
-          console.log('No table data for table:', id);
+          console.log('No table data for table:', self.params.field);
           return;
         }
-        if (self.hasFlag('show_titles')) self.showTitles(data.fields);
+        if (self.hasFlag('show_titles')) self.showTitles(data);
         self.showData(data);
         self.showPaging(parseInt(data.total));
       });
@@ -78,7 +81,7 @@
     
     showHeader: function()
     {      
-      var head = this.element.find('thead');
+      var head = this.head();
       head.html('');
       var tr = $('<tr class=header></tr>').appendTo(head);
       var th = $('<th></th>').appendTo(tr);
@@ -105,46 +108,53 @@
       this.createAction('goto_last_page').attr('disabled','').appendTo(paging);   
       this.bindPaging();
     },
+
+    pageTo: function(invoker, number)
+    {
+      if (invoker.hasAttr('disabled')) return;
+      this.params.page_num = number;
+      this.params.page_size = invoker.siblings('#page_size').val();
+      invoker.siblings('#page_num').val(number);
+      this.load();
+    },
+    
+    page: function(invoker, offset)
+    {      
+      this.pageTo(invoker, parseInt(invoker.siblings('#page_num').val())+offset);
+    },
     
     bindPaging: function()
     {
       var self = this;
-      var head = this.element.children('thead').eq(0);
+      var head = self.head();
       head.find(".paging [type='text']").bind('keyup input cut paste', function(e) {
         if (e.keyCode == 13) self.load();
       }); 
       
       var page = head.find('#page_num');
-      this.element.on('goto_first_page', function(e, obj) {
-        if (obj.hasAttr('disabled')) return;
-        page.val(1);
-        self.load();
+      this.element.on('goto_first_page', function(e, invoker) {
+        self.pageTo(invoker, 1);
       })
-      .on('goto_prev_page', function(e, obj) {
-        if (obj.hasAttr('disabled')) return;
-        page.val(parseInt(page.val())-1);
-        self.load();
+      .on('goto_prev_page', function(e, invoker) {
+        self.page(invoker, -1);
       })
-      .on('goto_next_page', function(e, obj) {
-        if (obj.hasAttr('disabled')) return;
-        page.val(parseInt(page.val())+1);
-        self.load();
+      .on('goto_next_page', function(e, invoker) {
+        self.page(invoker, 1);
       })
-      .on('goto_last_page', function(e, obj) {
-        if (obj.hasAttr('disabled')) return;
-        page.val('last');
-        self.load();
+      .on('goto_last_page', function(e, invoker) {
+        var size = parseInt(head.find('#page_size').val());
+        var total = parseInt(head.find('#total').val());
+        self.pageTo(invoker, total/size);
       })
     },
     
     showPaging: function(total)
     {
-      var head = this.element.children('thead').eq(0);
+      var head = this.head();
       var page = parseInt(head.find('#page_num').val());
       var size = parseInt(head.find('#page_size').val());
       var prev = head.find('[action=goto_first_page],[action=goto_prev_page]');
       var next = head.find('[action=goto_last_page],[action=goto_next_page]');
-      console.log(total, page, total/size);
       var index = (page-1)*size;
       if (page <= 1) {
         prev.attr('disabled','');
@@ -162,22 +172,35 @@
       if (page > 1) prev.removeAttr('disabled');
     },
     
-    
-    
-    showTitles: function(fields)
+    showTitles: function(data)
     {      
-      var head = this.element.children('thead').eq(0);
-      if (fields === undefined) fields = this.options.fields;
-      var tr = $('<tr class=titles></tr>').appendTo(head);
+      var head = this.head();
+      var tr = head.find('.titles').empty();
+      if (!tr.exists()) tr = $('<tr class=titles></tr>').appendTo(head);
       var count = 0;
       var self = this;
       var show_key = self.hasFlag('show_key');
-      $.each(fields, function(i, field) {
+      $.each(data.fields, function(i, field) {
         if (i === 0 && !show_key) return;
         var code = field.code;
         var th = $('<th></th>').appendTo(tr);
-        if (field.code !== 'actions')
-          th.html(field.name===null? code: field.name);
+        var div = $('<div></div>').appendTo(th);
+        if (field.code === 'actions') return;
+        div.html(field.name===null? code: field.name);
+        if (code === data.sort) 
+          th.attr('sort', data.sort_order);
+        else
+          th.attr('sort','');
+        th.click(function() {
+          th.siblings().attr('sort','');
+          var order = 'asc';
+          if (self.params.sort === code)
+            order = th.attr('sort')==='asc'?'desc':'asc';
+          self.params.sort = code;
+          self.params.sort_order = order;
+          self.load();
+        });
+
       });
       if (this.hasHeader())
         tr.prev().attr('colspan', tr.find('td').length);
@@ -187,8 +210,7 @@
     showData: function(data)
     {
       var self = this;
-      var body = this.element.children('tbody').eq(0);
-      body.empty();
+      var body = self.body().empty();
       var show_key = this.hasFlag('show_key');
       var expandable = data.actions !== undefined && data.actions.expand !== undefined;
       var show_edits = this.hasFlag('show_edits');
@@ -327,11 +349,47 @@
     
     adjust_actions_height: function()
     {
-      this.element.find("tbody tr").each(function() {
+      this.element.find("tbody>tr").each(function() {
         var row = $(this);
-        var height = row.height()*0.98;
+        var height = row.height()*0.99;
         row.find('.slide,[action]').height(height).css('line-height', height.toString()+'px');
       });
+    },
+    
+    createEditor: function(fields, type)
+    {
+      var editables = this.options[type];
+      if (editables != null && !$.isArray(editables))
+        editables = editables.split(',');
+      var columns= this.element.children('tbody>tr').eq(0).children();
+      var editor = $('<tr></tr>').addClass(type);
+      var show_key = this.hasFlag('show_key');
+      var colIndex = 0;
+      $.each(fields, function(i, field) {
+        if (i == 0 && !show_key) return;
+        ++colIndex;
+        if (editables !== null && editables.indexOf(field.code) < 0) return;
+        var col = $(field.html == undefined?'<input type=text></input>': field.html);
+        var width = parseInt(columns.eq(colIndex++).css('width')) * 0.85;
+        col.css('width', width).appendTo(editor);
+      });
+      
+      
+      return editor;
+    },
+    
+    createFilter: function(fields)
+    {
+      var self = this;
+      self.filter = self.createEditor(fields, 'filter');
+      editor.find('input').bind('keyup input cut paste', function() {
+        self.params.filtered = '';
+        editor.find('input').each(function() {
+          self.params.filter += $(this).val() + '|';
+        });
+        self.load();
+      });
+      self.filter.appendTo(self.head());      
     }
   })
 }) (jQuery);
