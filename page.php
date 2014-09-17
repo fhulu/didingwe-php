@@ -198,10 +198,24 @@ class page {
       }
     }
   }
+  
+  static function empty_fields(&$options, $fields)
+  {
+    foreach($options as $key=>&$option)
+    {
+      if (in_array($key, $fields)) 
+        $option = "";
+      else if ($key == 'action' && strpos($option, 'dialog:') != 0)
+        $option = "";
+      else if (is_array($option))
+        page::empty_fields($option, $fields);
+    }
+  }
   static function read($request)
   {
     log::debug("page::read ".json_encode($request));
     $data = page::read_field_options(at($request,'page'));
+    page::empty_fields($data, array('data'));
     $data['program'] = config::$program_name;
     echo json_encode($data);
   }
