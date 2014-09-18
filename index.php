@@ -12,12 +12,16 @@
 <link href="default.style.css" media="screen" rel="stylesheet" type="text/css" />	
 <link href="jquery/smoothness/ui.css" media="screen" rel="stylesheet" type="text/css" />	
 <link href="jquery/jquery-ui.min.css" media="screen" rel="stylesheet" type="text/css" />	
+<link href="jquery/smoothness/ui.css" media="screen" rel="stylesheet" type="text/css" />	
 <link href="jquery/jquery-ui.theme.min.css" media="screen" rel="stylesheet" type="text/css" />
+<link href="common/jquery.datetimepicker.css" media="screen" rel="stylesheet" type="text/css" />
 
 <script type='text/javascript' src='jquery/min.js'></script>
 <script type='text/javascript' src='jquery/ui-min.js'></script>
 <script type="text/javascript" src='common/mukoni.jquery.js'></script> 
 <script type='text/javascript' src="common/page.js"></script>
+<script type='text/javascript' src="common/jquery.datetimepicker.js"></script>
+
 <!--<script type="text/javascript" src='common/mukoni.jquery-ui.js'></script>-->
 
 <?php
