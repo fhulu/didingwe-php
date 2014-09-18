@@ -57,6 +57,34 @@ class datatable
       
     return null;
   }
+  
+  static function sort(&$sql, $fields, $options) 
+  {
+    
+  }
+  static function filter(&$sql, $fields, $options)
+  {
+    $filter = at($options, 'filtered');
+    if (is_null($filter)) return;
+    
+    $index  = -1;
+    $where = '';
+    foreach(explode('|', $filter) as $value) {
+      ++$index;
+      if (trim($value) === '') continue;
+      list($field) = explode(' ',$fields[$index]);
+      $where .= " and $field like '%$value%' ";
+    }
+       
+    if ($where === '') return;
+    $where_pos = strripos($sql, "where ");
+    $where = substr($where, 5);
+    if ($where_pos === false) 
+      $sql .= " where $where";
+    else
+      $sql = substr($sql, 0, $where_pos + 6) . "$where and" . substr($sql, $where_pos + 6);
+  }
+  
   static function read_db($sql, $options) 
   {
     $page_size = at($options,'page_size');
@@ -64,15 +92,15 @@ class datatable
     $page_num = at($options, 'page_num');
     $offset = is_null($page_num)? 0: $page_size*($page_num-1);
     global $db;
-    $sql_fields = datatable::get_sql_fields($sql);
+    $fields = datatable::get_sql_fields($sql);
     $sql = preg_replace('/^\s*select /i', 'select SQL_CALC_FOUND_ROWS ',$sql);
+    datatable::filter($sql, $fields, $options);
+    
     $sort_field = at($options,'sort');
-    log::debug("OPTIONS ".  json_encode($options));
     if (!is_null($sort_field)) {
       $sort_order = at($options,'sort_order');
-      $sql .= " order by ". datatable::field_named($sql_fields, $sort_field) . " $sort_order"; 
+      $sql .= " order by ". datatable::field_named($fields, $sort_field) . " $sort_order"; 
     }
-    $filtered = at($options, 'filtered');
     $rows = $db->page_indices($sql, $page_size, $offset);
     $names = $db->field_names;
     $total = $db->row_count();

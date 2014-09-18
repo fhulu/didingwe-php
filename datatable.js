@@ -64,7 +64,8 @@
         }
         if (self.hasFlag('show_titles')) self.showTitles(data);
         self.showData(data);
-        self.showPaging(parseInt(data.total));
+        if (self.options.page_size !== undefined) self.showPaging(parseInt(data.total));
+        if (self.options.filter !== undefined) self.createFilter(data.fields);
       });
     },
     
@@ -88,10 +89,12 @@
       if (this.options.name !== undefined)
         $('<div class=heading></div>').html(this.options.name).appendTo(th);
       
-      if (this.options.filter != null)
-        $('<div class=filtering title="Filter/Search"></div>').appendTo(th);
-      
-      if (this.options.page_size != null) this.createPaging(th);
+      var self = this;
+      if (this.options.filter !== undefined) {
+        this.createAction('filter').appendTo(th);
+        this.element.on('filter', function() { self.showFilter(); });
+      }
+      if (this.options.page_size !== undefined) this.createPaging(th);
     },
     
     createPaging: function(th)
@@ -165,8 +168,8 @@
       var size = parseInt(head.find('#page_size').val());
       var prev = head.find('[action=goto_first_page],[action=goto_prev_page]');
       var next = head.find('[action=goto_last_page],[action=goto_next_page]');
-      var index = (page-1)*size;
       if (page <= 1) {
+        page = 1;
         prev.attr('disabled','');
         head.find('#page_num').val(1);
       }
@@ -174,6 +177,7 @@
         head.find('#page_size').val(total);
         head.find('#page_num').val(1);
       }
+      console.log(page,size)
       head.find('#page_from').text((page-1)*size+1);
       head.find('#page_to').text(Math.min(page*size,total));
       if (page >= total/size) 
@@ -189,7 +193,6 @@
       var head = this.head();
       var tr = head.find('.titles').empty();
       if (!tr.exists()) tr = $('<tr class=titles></tr>').appendTo(head);
-      var count = 0;
       var self = this;
       var show_key = self.hasFlag('show_key');
       $.each(data.fields, function(i, field) {
@@ -214,8 +217,8 @@
         });
 
       });
-      if (this.hasHeader())
-        tr.prev().attr('colspan', tr.find('td').length);
+      var column_count =  tr.children('th').length;
+      self.head().find('.header th').attr('colspan', column_count);
     },
     
     
@@ -249,8 +252,6 @@
           }
         });
       });
-      var column_count = body.find('tr:first-child>td').length;
-      self.head().find('.header th').attr('colspan', column_count);
       this.adjust_actions_height();
     },
     
@@ -368,22 +369,32 @@
       });
     },
     
-    createEditor: function(fields, type)
+    createEditor: function(fields, type, cell)
     {
       var editables = this.options[type];
-      if (editables != null && !$.isArray(editables))
-        editables = editables.split(',');
+      if (editables !== undefined) {
+        editables = editables.fields;
+        if (typeof editables === 'string')
+          editables = editables.split(',');
+      }
       var columns= this.element.children('tbody>tr').eq(0).children();
       var editor = $('<tr></tr>').addClass(type);
       var show_key = this.hasFlag('show_key');
       var colIndex = 0;
+      var td;
       $.each(fields, function(i, field) {
-        if (i == 0 && !show_key) return;
+        if (i === 0 && !show_key) return;
         ++colIndex;
-        if (editables !== null && editables.indexOf(field.code) < 0) return;
-        var col = $(field.html == undefined?'<input type=text></input>': field.html);
+        if (editables !== undefined && editables.indexOf(field.code) < 0) return;
+        if (field.code === 'actions') {
+          td.attr('colspan',2);
+          td.find('input').css('width','100%');
+          return;
+        }
+        td = $(cell);
         var width = parseInt(columns.eq(colIndex++).css('width')) * 0.85;
-        col.css('width', width).appendTo(editor);
+        $('<input type=text></input>').css('width', width).appendTo(td);
+        td.appendTo(editor);
       });
       
       
@@ -392,16 +403,24 @@
     
     createFilter: function(fields)
     {
+      if (this.head().find('.filter').exists()) return;
+      
       var self = this;
-      self.filter = self.createEditor(fields, 'filter');
-      editor.find('input').bind('keyup input cut paste', function() {
+      var filter = self.createEditor(fields, 'filter', '<th></th>');
+      filter.find('input').bind('keyup input cut paste', function() {
         self.params.filtered = '';
-        editor.find('input').each(function() {
-          self.params.filter += $(this).val() + '|';
+        filter.find('input').each(function() {
+          self.params.filtered += $(this).val() + '|';
         });
         self.load();
       });
-      self.filter.appendTo(self.head());      
+      filter.insertAfter(self.head().find('.titles')).hide(); 
+    },
+    
+    showFilter: function()
+    {
+      this.head().find('.filter').toggle();
     }
+    
   })
 }) (jQuery);
