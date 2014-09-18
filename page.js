@@ -282,6 +282,7 @@ $.fn.page = function(options, callback)
             obj.checkOnClick(selector, '/?a=page/action', {data: data }, function(result) {
               obj.trigger('processed', [result]);
               if (result.url !== undefined) location.href = result.url;
+              if (result.alert !== undefined) alert(result.alert);
             });
           }
           else obj.click(function() { 
