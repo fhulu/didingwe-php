@@ -10,8 +10,9 @@
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <link href="default.style.css" media="screen" rel="stylesheet" type="text/css" />	
+<link href="jquery/smoothness/ui.css" media="screen" rel="stylesheet" type="text/css" />	
 <link href="jquery/jquery-ui.min.css" media="screen" rel="stylesheet" type="text/css" />	
-<!--<link href="jquery/jquery-ui.theme.min.css" media="screen" rel="stylesheet" type="text/css" />	-->
+<link href="jquery/jquery-ui.theme.min.css" media="screen" rel="stylesheet" type="text/css" />
 
 <script type='text/javascript' src='jquery/min.js'></script>
 <script type='text/javascript' src='jquery/ui-min.js'></script>
@@ -27,8 +28,8 @@
   function pre_load_custom($page)
   {
     log::debug("loading page $page");
-    if (file_exists("pre-$page.php")) {
-      require_once "pre-$page.php";
+    if (file_exists("$page.php")) {
+      require_once "$page.php";
     } 
     if (file_exists("$page.css")) { 
       echo "<link type='text/css' rel='stylesheet' href='$page.css'></link>";
@@ -41,7 +42,7 @@
   global $session;
   log::init('index', log::DEBUG);
   log::debug(json_encode($session));
-  $public_pages = array('login','home','map','register','error_page');
+  $public_pages = array('login','map','register','error_page');
   $content = GET('content');
   if (!$session && !in_array($content,$public_pages) && !in_array($page, $public_pages) ) {
     $page = 'landing';
@@ -55,7 +56,7 @@
   }
   else
     $page = 'landing';
-  
+
   pre_load_custom($page);
   if ($content != $page && !is_null($content)) 
     pre_load_custom($content);
