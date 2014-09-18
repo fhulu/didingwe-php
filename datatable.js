@@ -177,7 +177,6 @@
         head.find('#page_size').val(total);
         head.find('#page_num').val(1);
       }
-      console.log(page,size)
       head.find('#page_from').text((page-1)*size+1);
       head.find('#page_to').text(Math.min(page*size,total));
       if (page >= total/size) 
@@ -409,6 +408,7 @@
       var filter = self.createEditor(fields, 'filter', '<th></th>');
       filter.find('input').bind('keyup input cut paste', function() {
         self.params.filtered = '';
+        self.params.page_num = 1;
         filter.find('input').each(function() {
           self.params.filtered += $(this).val() + '|';
         });
