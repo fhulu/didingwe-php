@@ -97,10 +97,16 @@
     createPaging: function(th)
     {
       var paging = $('<div class=paging></div>').appendTo(th);
-      $('<div>Show</div>').appendTo(paging);
-      var self = this;
+      $('<div>Showing from </div>').appendTo(paging);
+      $('<div id=page_from></div>').appendTo(paging);
+      $('<div>to</div>').appendTo(paging);
+      $('<div id=page_to></div>').appendTo(paging);
+      $('<div>of</div>').appendTo(paging);
+      $('<div id=page_total></div>').appendTo(paging);
+      $('<div>at</div>').appendTo(paging);
       $('<input id=page_size type=text></input>').val(this.options.page_size).appendTo(paging)
       $('<div>entries per page</div>').appendTo(paging);
+
       this.createAction('goto_first_page').attr('disabled','').appendTo(paging);
       this.createAction('goto_prev_page').attr('disabled','').appendTo(paging);
       $('<input id=page_num type=text></input>').val(1).appendTo(paging);
@@ -128,7 +134,10 @@
       var self = this;
       var head = self.head();
       head.find(".paging [type='text']").bind('keyup input cut paste', function(e) {
-        if (e.keyCode == 13) self.load();
+        if (e.keyCode === 13) {
+          self.params.page_size = $(this).val();
+          self.load();
+        }
       }); 
       
       var page = head.find('#page_num');
@@ -151,6 +160,7 @@
     showPaging: function(total)
     {
       var head = this.head();
+      head.find('#page_total').text(total);
       var page = parseInt(head.find('#page_num').val());
       var size = parseInt(head.find('#page_size').val());
       var prev = head.find('[action=goto_first_page],[action=goto_prev_page]');
@@ -164,6 +174,8 @@
         head.find('#page_size').val(total);
         head.find('#page_num').val(1);
       }
+      head.find('#page_from').text((page-1)*size+1);
+      head.find('#page_to').text(Math.min(page*size,total));
       if (page >= total/size) 
         next.attr('disabled','');
       else
@@ -238,7 +250,7 @@
         });
       });
       var column_count = body.find('tr:first-child>td').length;
-      this.element.find('tr.header th').attr('colspan', column_count);
+      self.head().find('.header th').attr('colspan', column_count);
       this.adjust_actions_height();
     },
     
