@@ -103,7 +103,6 @@ class page {
       log::error("Invalid JSON string $encoded");
       return $scope;
     }
-    log::debug(json_encode($matches));
     $index = 0;
     foreach($matches as $match) {
       $name = $match[1];
@@ -203,12 +202,13 @@ class page {
   {
     foreach($options as $key=>&$option)
     {
-      if (in_array($key, $fields)) 
-        $option = "";
-      else if ($key == 'action' && strpos($option, 'dialog:') != 0)
+      if (is_numeric($key)) continue;
+      if (in_array($key, $fields, true)) 
         $option = "";
       else if (is_array($option))
         page::empty_fields($option, $fields);
+      else if ($key == 'action' && strpos($option, 'dialog:') !== 0 && strpos($option, 'url:') !== 0)
+        $option = "";
     }
   }
   static function read($request)
@@ -356,7 +356,6 @@ class page {
   {  
     $options = page::read_field_options($request['page']);
     page::expand_values($options);
-    log::debug(json_encode($options));
 
     if (!($key=page::check_field($request, 'key'))
       || !($load=page::check_field($options, 'load'))) return;
