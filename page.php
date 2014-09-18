@@ -377,9 +377,26 @@ class page {
     }
   }
     
-  static function test($req)
+  static function send_json($field, $value=null)
   {
-    log::debug(json_encode($req));
-    echo json_encode($req);
+    global $json;
+    $json[$field] = is_null($value)?'':$value;
+    log::debug(json_encode($json));
+  }
+  
+  static function alert($message)
+  {
+    page::send_json('alert', $message);
+  }
+  
+  static function redirect($url)
+  {
+    page::send_json('url', $url);
+  }
+  
+  static function close_dialog($message=null)
+  {
+    if (!is_null($message)) page::alert($message);
+    page::send_json('close_dialog');
   }
 }
