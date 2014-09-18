@@ -279,10 +279,16 @@ $.fn.page = function(options, callback)
           }
           else if (selector !== undefined) {
             selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+id+"$2");
-            obj.checkOnClick(selector, '/?a=page/action', {data: data }, function(result) {
+            obj.checkOnClick(selector, '/?a=page/action', {method: 'get', data: data }, function(result) {
+              if (result === null) result = undefined;
               obj.trigger('processed', [result]);
+              if (result === undefined) return;
               if (result.url !== undefined) location.href = result.url;
               if (result.alert !== undefined) alert(result.alert);
+              if (result.close_dialog !== undefined) {
+                var dialog = obj.parents('.ui-dialog-content').eq(0);
+                dialog.dialog('close');
+              }
             });
           }
           else obj.click(function() { 
