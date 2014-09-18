@@ -101,7 +101,10 @@ class datatable
       $sort_order = at($options,'sort_order');
       $sql .= " order by ". datatable::field_named($fields, $sort_field) . " $sort_order"; 
     }
-    $rows = $db->page_indices($sql, $page_size, $offset);
+    if ($page_size == 0)
+      $rows = $db->read($sql, MYSQLI_NUM);
+    else
+      $rows = $db->page_indices($sql, $page_size, $offset);
     $names = $db->field_names;
     $total = $db->row_count();
     $fields = array();
@@ -111,7 +114,12 @@ class datatable
       $fields[] = page::null_merge(array('code'=>$name), $field);
     }
     
-    return array('fields'=>$fields, 'rows'=>$rows, 'total'=>$total,'sort'=>$sort_field, 'sort_order'=>$sort_order);
+    $result = array('fields'=>$fields, 'rows'=>$rows, 'total'=>$total);
+    if ($page_size) {
+      $result['sort'] = $sort_field;
+      $result['sort_order'] = $sort_order;
+    }
+    return $result;
   }
   
   static function read($request)
