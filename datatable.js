@@ -261,7 +261,11 @@
         return;
       }
       var html = field.html.replace('$code', key+'_'+field.code);
-      $(html).value(value).appendTo(td);
+      var entity = $(html).value(value).appendTo(td);
+      if (field.create !== undefined && field.create !== null) {
+        var create_opts = $.extend({key: key}, field);
+        entity.customCreate(create_opts);
+      }
     },
     
     createAction: function(action, actions, sink)
