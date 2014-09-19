@@ -253,7 +253,6 @@
         });
       });
       var widths = this.options.widths;
-      console.log('widths', widths);
       if (widths !== undefined) {
         body.children('tr').eq(0).children().each(function(i) {
           var width = widths[i];
@@ -312,18 +311,19 @@
       this.bind_actions(tr);
     },
     
+    slide: function(parent)
+    {
+       parent.find('.slide').animate({width:'toggle'}, this.options.slideSpeed);
+    },
+    
     bind_actions: function(tr) 
     {
       var self = this;
       var key = tr.attr('_key');
       
-      tr.on('slide', function(event, button) {
-        button.toggle();
-        tr.find('.slide').animate({width:'toggle'}, self.options.slideSpeed);
-      });
-      tr.on('slideoff', function() {
-        tr.find('.slide').animate({width:'toggle'}, self.options.slideSpeed);
-        tr.find('[action=slide]').toggle();
+      tr.on('slide', function(e,btn) {
+        btn.toggle();
+        self.slide(tr);
       });
       tr.on('expand', function(event, button, page) {
           button.hide();
@@ -346,7 +346,11 @@
         if (next.attr('class') === 'expanded') next.hide();
       });
 
-      tr.on('action', function(event, button, name, value) {
+      tr.on('action', function(evt, btn, name, value) {
+        if (btn.parent('.slide').exists()) {
+          self.slide(tr);
+          tr.find('[action=slide]').toggle();
+        }
         if (value === undefined) return;
         if (value.indexOf('dialog:') === 0) {
           var page = value.substr(7);
