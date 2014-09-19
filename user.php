@@ -265,7 +265,7 @@ class user
       $v->report('email', '!Email address already exists');
     
     $v->check('password', 'Passwords')->is('match(password2)', 'password(6)');
-    $v->check('cellphone')->is('int_tel');
+    $v->check('cellphone')->is('national_tel');
     return $v->valid();
   }
   static function authenticate($email, $passwd, $is_passwd_plain=true)
@@ -386,8 +386,7 @@ class user
     }
     global $db;
     $id = $db->insert($sql);
-    $sql = "insert into user_role(user_id,role_code)
-      values($id,'reg')";
+    $sql = "insert into \$audit_db.user_role(user_id,role_code) values($id,'reg')";
     $db->exec($sql);
     $password = stripslashes($password);
     $title = stripslashes($title);
@@ -450,11 +449,8 @@ class user
     $headers .= "from: ".config::$support_email;
     log::debug("Sending OTP email to $email");
     $mail_sent = mail($email, $subject, $message, $headers);
-    
-    global $json;
-    
-    $json['url'] = "show_page.php?page=check_otp";
-      
+   
+    session::redirect('check_otp.html');
   }
     
   static function info()
@@ -771,10 +767,7 @@ class user
     $id = $session->user->id;
     $db->exec("update user set active = 1 where id = $id");
     
-    global $json;
-    
-    $json['url'] = "show_page.php?page=home";
-  
+    session::redirect('login.html');
   }
      
   static function titles()
