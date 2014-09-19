@@ -252,6 +252,15 @@
           }
         });
       });
+      var widths = this.options.widths;
+      console.log('widths', widths);
+      if (widths !== undefined) {
+        body.children('tr').eq(0).children().each(function(i) {
+          var width = widths[i];
+          if (width === undefined || parseInt(width) === 0) return;
+          $(this).css('width', ''+width+'px');
+        });
+      }
       this.adjust_actions_height();
     },
     
