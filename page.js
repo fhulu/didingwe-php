@@ -286,13 +286,7 @@ $.fn.page = function(options, callback)
             obj.checkOnClick(selector, '/?a=page/action', {method: 'get', data: data }, function(result) {
               if (result === null) result = undefined;
               obj.trigger('processed', [result]);
-              if (result === undefined) return;
-              if (result.url !== undefined) location.href = result.url;
-              if (result.alert !== undefined) alert(result.alert);
-              if (result.close_dialog !== undefined) {
-                var dialog = obj.parents('.ui-dialog-content').eq(0);
-                dialog.dialog('close');
-              }
+              if (result !== undefined) page.accept(result._responses, obj);
             });
           }
           else obj.click(function() { 
@@ -305,6 +299,21 @@ $.fn.page = function(options, callback)
           obj.click(function() { location.href = child.url; });
         }
         page.assign_handlers(obj, field, child);
+      });
+    },
+    
+    accept: function(responses, invoker)
+    {
+      if (!$.isPlainObject(responses)) return;
+      var parent = invoker.parents('.ui-dialog-content').eq(0);
+      if (!parent.exists()) parent = page.parent;
+      $.each(responses, function(key, val) {
+        switch(key) {
+          case 'alert': alert(val); break;
+          case 'close_dialog': parent.dialog('close'); break;
+          case 'redirect': location.href = val; break;
+          case 'update': parent.setChildren(val); break;
+        }
       });
     }
   };

@@ -379,26 +379,33 @@ class page {
     }
   }
     
-  static function send_json($field, $value=null)
+  static function respond($action, $value=null)
   {
     global $json;
-    $json[$field] = is_null($value)?'':$value;
-    log::debug(json_encode($json));
+    $json['_responses'][$action] = is_null($value)?'':$value;
   }
-  
+    
   static function alert($message)
   {
-    page::send_json('alert', $message);
+    page::respond('alert', $message);
   }
   
   static function redirect($url)
   {
-    page::send_json('url', $url);
+    page::respond('redirect', $url);
   }
   
   static function close_dialog($message=null)
   {
     if (!is_null($message)) page::alert($message);
-    page::send_json('close_dialog');
+    page::respond('close_dialog');
+  }
+  
+  static function update($name, $value=null)
+  {
+    if (is_array($name))
+      page::respond('update', $name);
+    else
+      page::update(array($name=>$value));
   }
 }
