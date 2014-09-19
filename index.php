@@ -23,11 +23,13 @@
 <script type='text/javascript' src="common/jquery.datetimepicker.js"></script>
 
 <!--<script type="text/javascript" src='common/mukoni.jquery-ui.js'></script>-->
-
+<script>
+  var request_method = '<?=config::$request_method;?>';
+</script>
 <?php
   require_once ('../common/log.php');
   
-  $page = at($_GET,'page');
+  $page = GET('page');
 
   function pre_load_custom($page)
   {
@@ -54,9 +56,9 @@
   else if (!is_null($content)) {
     $_SESSION['content'] = $content;
   }
-  
   else if (isset($_SESSION['content'])) {
     $content = $_GET['content'] = $_SESSION['content'];
+    $page = 'index';
   }
   else
     $page = 'landing';
