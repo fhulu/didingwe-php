@@ -64,8 +64,10 @@
         }
         if (self.hasFlag('show_titles')) self.showTitles(data);
         self.showData(data);
+        self.showActions();
         if (self.options.page_size !== undefined) self.showPaging(parseInt(data.total));
         if (self.options.filter !== undefined) self.createFilter(data.fields);
+        self.adjustActionsHeight();
       });
     },
     
@@ -212,13 +214,17 @@
           self.params.sort = code;
           self.params.sort_order = order;
           self.load();
-        });
-
+        });        
       });
-      var column_count =  tr.children('th').length;
-      self.head().find('.header th').attr('colspan', column_count);
+      this.spanColumns(head.find('.header th'));
     },
     
+    spanColumns: function(td)
+    {
+      var tr = this.head().find('.titles');
+      if (tr.exists()) tr = this.body().children('tr').eq(0);
+      td.attr('colspan', tr.children().length);
+    },
     
     showData: function(data)
     {
@@ -260,7 +266,7 @@
           $(this).css('width', ''+width+'px');
         });
       }
-      this.adjust_actions_height();
+      this.spanColumns(this.head().find('.header th'));      
     },
     
     showCell: function(editable, field, td, value, key)
@@ -377,12 +383,12 @@
       });
     },
     
-    adjust_actions_height: function()
+    adjustActionsHeight: function()
     {
       this.element.find("tbody>tr").each(function() {
         var row = $(this);
-        var height = row.height()*0.99;
-        row.find('.slide,[action]').height(height).css('line-height', height.toString()+'px');
+        var height = (row.height()*0.99).toString()+'px';
+        row.find('.slide,[action]').height(height).css('line-height', height);
       });
     },
     
@@ -439,6 +445,19 @@
     showFilter: function()
     {
       this.head().find('.filter').toggle();
+    },
+    
+    showActions: function()
+    {
+      var actions = this.options.actions;
+      if (actions === undefined) return;
+      var tr = $('<tr></tr>').addClass('actions').appendTo(this.body());
+      var td = $('<td>').appendTo(tr);
+      var self = this;
+      $.each(actions, function(code) {
+        self.createAction(code, actions).appendTo(td);
+      });
+      this.spanColumns(td);
     }
     
   })
