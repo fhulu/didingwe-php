@@ -103,9 +103,10 @@ $.send = function(url, options, callback)
     options = undefined;
   }
 
+  if (typeof request_method === 'undefined') request_method = 'post';
   options = $.extend({
     progress: 'Processing...',
-    method: 'post',
+    method: request_method,
     async: true,
     showResult: false,
     invoker: undefined,
