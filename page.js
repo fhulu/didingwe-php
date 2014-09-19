@@ -251,6 +251,7 @@ $.fn.page = function(options, callback)
 
     assign_handlers: function(parent, id, data)
     {
+      var key = this.options.data.key;
       $.each(data, function(field, child) {
         if (!$.isPlainObject(child)) return;
         var obj = parent.find('#'+field);
@@ -259,6 +260,7 @@ $.fn.page = function(options, callback)
           return;
         }
         var data = { _page: id, _field: field };
+        if (key !== undefined) data.key = key;
         if ((child.selector !== undefined || child.action !== undefined) && obj.attr('action')===undefined && child.action !== null)  {
           obj.attr('action','');
           var selector = child.selector;
@@ -268,9 +270,11 @@ $.fn.page = function(options, callback)
           if (action.indexOf('dialog:') === 0) {
             obj.click(function() {
               var dialog = action.substr(7);
-              var tmp = $('<div></div>').page({data:{page:dialog}});
+              var params = { page: dialog };
+              if (key !== undefined) params.key = key;
+              var tmp = $('<div></div>').page({data:params});
               tmp.on('read_'+dialog, function(event, object, options) {
-                object.dialog($.extend({modal:true}, options));
+                object.dialog($.extend({modal:true,title: options.desc}, options));
               });
             });
           }
