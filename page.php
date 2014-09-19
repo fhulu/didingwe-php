@@ -99,7 +99,7 @@ class page {
     $encoded = str_replace('~', ',', $encoded);
     $encoded = str_replace('\n', '', $encoded);
     $encoded = str_replace('\r', '', $encoded);
-    if (!preg_match_all('/(\$?\w+)(?::\s*("[^"]*"|\[[^\]]*\]|{[^}]*}|[^,]*))?/', $encoded, $matches, PREG_SET_ORDER)) {
+    if (!preg_match_all('/(\$?\w+)(?:: *("[^"]*"|\[[^\]]*\]|{[^}]*}|[^,]*))?/', $encoded, $matches, PREG_SET_ORDER)) {
       log::error("Invalid JSON string $encoded");
       return $scope;
     }
@@ -308,7 +308,7 @@ class page {
         return;
       }
     }
-    call_user_func($function, $request, $params);
+    call_user_func_array($function, array_merge(array($request), explode(',',$params)));
   }
   
   static function action($request)
@@ -319,10 +319,9 @@ class page {
     page::expand_values($page_options);
     
    
-    if (array_key_exists('validate', $options)) {
-      $validator = new validator($request);
-      if (!page::validate($validator, $page_options)) return;
-    }
+    $validator = new validator($request); //todo: fix coupling validator with reporting to front end
+    if (array_key_exists('validate', $options) && !page::validate($validator, $page_options)) 
+      return;
      
     $action = at($options,'action');
     if (is_null($action)) return;
