@@ -88,7 +88,10 @@ class page {
   static function replace_vars($str, $values)
   {
     foreach($values as $name=>$value) {
-      $str = str_replace('$'.$name, $value, $str);
+      if (is_array($value))
+        $str = page::replace_vars ($str, $value);
+      else
+        $str = str_replace('$'.$name, $value, $str);
     }
     return $str;
   }
