@@ -173,10 +173,9 @@
         prev.attr('disabled','');
         head.find('#page_num').val(1);
       }
-      if (size >= total) {
-        head.find('#page_size').val(total);
-        head.find('#page_num').val(1);
-      }
+      
+      if (size >= total) head.find('#page_num').val(1);
+
       head.find('#page_from').text((page-1)*size+1);
       head.find('#page_to').text(Math.min(page*size,total));
       if (page >= total/size) 
@@ -235,13 +234,15 @@
         var key = row[0];
         tr.attr('_key', key);
         if (i % 2 === 0) tr.addClass('alt');
+        var expanded = !expandable;
         $.each(row, function(j, cell) {
           if (j===0 && !show_key) return;
           var td = $('<td></td>').appendTo(tr);
           var field = data.fields[j];
           if (field.code !== 'actions') {
             self.showCell(show_edits, field, td, cell, key);
-            if (j === 0 && expandable) {
+            if (!expanded) {
+              expanded = true;
               self.createAction('expand', all_actions, tr).prependTo(td);
               self.createAction('collapse', all_actions, tr).prependTo(td).hide();
             }
@@ -413,6 +414,7 @@
       filter.find('input').bind('keyup input cut paste', function() {
         self.params.filtered = '';
         self.params.page_num = 1;
+        self.params.page_size = self.options.page_size;
         filter.find('input').each(function() {
           self.params.filtered += $(this).val() + '|';
         });
