@@ -172,7 +172,7 @@ class db
   function page($sql, $size, $start=0, $callback=null, $options=null)
   {
     $options['start'] = $start;
-    $options['size'] = $size+1;
+    $options['size'] = $size;
     $rows = array();
     $this->each($sql, function($index, $row) use (&$rows,$callback) {
       if ($callback) 
@@ -194,6 +194,8 @@ class db
     $options['fetch'] = MYSQLI_NUM;
     return $this->page($sql, $size, $start, $callback, $options);
   }
+  
+  
   function page_through($sql, $size, $callback=null, $options=null)
   {
     $options['size'] = $size;
