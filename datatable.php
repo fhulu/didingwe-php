@@ -68,6 +68,7 @@ class datatable
     if (is_null($filter)) return;
     
     $index  = -1;
+    if (is_null(at($options, 'show_key'))) ++$index;
     $where = '';
     foreach(explode('|', $filter) as $value) {
       ++$index;
