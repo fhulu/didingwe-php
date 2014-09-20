@@ -204,16 +204,20 @@ $.fn.page = function(options, callback)
     show: function(data)
     {
       var id = options.data.page;
-      data = page.expand_fields(options.data.page,data);
+      var key = options.data.key;
+      data = page.expand_fields(id,data);
       page.expand_children(data);
       var parent = page.parent;
-      var object = $(data.html).appendTo(parent);
+      var object = $(data.html).addClass('page').appendTo(parent);
       object.on('loaded', function() {
-        page.set_options(parent, options.data.page, data,function(){
-          page.assign_handlers(object, id, data);
+        page.set_options(parent, id, data,function(){
+          page.bind_actions(parent, data, key);
           page.load_values(object);
           parent.trigger('read_'+id, [object,data]);
         });
+      });
+      object.on('_new_action', function(e, obj,field, options) {
+        page.bind_action(obj, field, options);
       });
       page.load_data(object);
     },
@@ -249,56 +253,56 @@ $.fn.page = function(options, callback)
       });
     },
 
-    assign_handlers: function(parent, id, data)
+    bind_actions: function(parent, data, key)
     {
-      var key = this.options.data.key;
-      $.each(data, function(field, child) {
-        if (!$.isPlainObject(child)) return;
+      $.each(data, function(field, options) {
+        if (!$.isPlainObject(options)) return;
         var obj = parent.find('#'+field);
         if (!obj.exists()) {
-          page.assign_handlers(parent, id, child);
+          page.bind_actions(parent, options, key);
           return;
         }
-        var data = { _page: id, _field: field };
-        if (key !== undefined) data.key = key;
-        if ((child.selector !== undefined || child.action !== undefined) && obj.attr('action')===undefined && child.action !== null)  {
-          obj.attr('action','');
-          var selector = child.selector;
-          var action = child.action;
-          child.action = child.selector = undefined;
-          if (action === undefined) action = '';
-          if (action.indexOf('dialog:') === 0) {
-            obj.click(function() {
-              var dialog = action.substr(7);
-              var params = { page: dialog };
-              if (key !== undefined) params.key = key;
-              var tmp = $('<div></div>').page({data:params});
-              tmp.on('read_'+dialog, function(event, object, options) {
-                object.dialog($.extend({modal:true,title: options.desc}, options));
-              });
-            });
-          }
-          else if (action.indexOf('url:') === 0) {
-            obj.click(function() { document.location = action.substr(4); });
-          }
-          else if (selector !== undefined) {
-            selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+id+"$2");
-            obj.checkOnClick(selector, '/?a=page/action', {method: 'get', data: data }, function(result) {
+        options.key = key;
+        page.bind_action(obj, field, options);
+        page.bind_actions(obj, options, key)
+      });
+    },
+    
+    bind_action: function(obj, field, options)
+    {
+      var action = options.action;
+      if (action === undefined) return;
+      var key = options.key;
+      var selector = options.selector;
+      options = undefined;
+      obj.click(function(event) {
+        if (action.indexOf('dialog:') === 0) {
+          var dialog = action.substr(7);
+          var params = { page: dialog, key: key };
+          var tmp = $('<div></div>').page({data:params});
+          tmp.on('read_'+dialog, function(event, object, options) {
+            object.dialog($.extend({modal:true}, options));
+          });
+        }
+        else if (action.indexOf('url:') === 0) {
+          document.location = action.substr(4);
+        }
+        else if (action === '') {
+          var page_id = obj.parents('[id]').eq(0).attr('id');
+          var data = { _page: page_id, _field: field, key: key };
+          if (selector !== undefined) {
+            selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+page_id+"$2");
+            obj.jsonCheck(event,selector, '/?a=page/action', { data: data }, function(result) {
               if (result === null) result = undefined;
               obj.trigger('processed', [result]);
               if (result !== undefined) page.accept(result._responses, obj);
             });
-          }
-          else obj.click(function() { 
-            $.json('/?a=page/action', {data: data}, function(result) {
-              obj.trigger('processed', [result]);
-            });
+          } 
+          else  $.json('/?a=page/action', {data: data}, function(result) {
+            obj.trigger('processed', [result]);
+            if (result !== undefined) page.accept(result._responses, obj);
           });
         }
-        else if (child.url !== undefined) {
-          obj.click(function() { location.href = child.url; });
-        }
-        page.assign_handlers(obj, field, child);
       });
     },
     
