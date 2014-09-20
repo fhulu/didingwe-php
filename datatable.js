@@ -297,6 +297,14 @@
         sink.trigger('action',[div,action,props.action]);
         sink.trigger(action, [div,props.action]);
       });
+      if (props.action !== undefined) {
+        var el = this.element;
+        var key = sink.attr('_key');
+        if (key === undefined) key = this.options.key;
+        var options = $.extend({key: key}, props);
+        var listener = el.hasClass('page')?el: el.parents('.page').eq(0);
+        listener.trigger('_new_action', [div,action,options]);
+      }
       return div;
     },
     
@@ -314,7 +322,7 @@
           self.createAction('slideoff', all_actions, tr).appendTo(parent);
         }
       });
-      this.bind_actions(tr);
+      this.bindRowActions(tr);
     },
     
     slide: function(parent)
@@ -322,7 +330,7 @@
        parent.find('.slide').animate({width:'toggle'}, this.options.slideSpeed);
     },
     
-    bind_actions: function(tr) 
+    bindRowActions: function(tr) 
     {
       var self = this;
       var key = tr.attr('_key');
@@ -353,30 +361,11 @@
       });
 
       tr.on('action', function(evt, btn, name, value) {
-        if (btn.parent('.slide').exists()) {
-          self.slide(tr);
-          tr.find('[action=slide]').toggle();
-        }
-        if (value === undefined) return;
-        if (value.indexOf('dialog:') === 0) {
-          var page = value.substr(7);
-          var data = {page: page, key: key, load:""};
-          var tmp = $('<div></div>').page({data:data});
-          tmp.on('read_'+page, function(event, object, options) {
-            object.dialog($.extend({modal:true}, options));
-          });
-        }
-        else if (value.indexOf('url:') === 0) {
-          document.location = value.substr(4).replace('$key', key);
-        }
-        else {
-          var data = {_page: self.element.attr('id'), _key: key,  _field: name};
-          $.json('/?a=page/action', {data: data}, function(result) {
-            tr.trigger('processed_'+name, [result]);
-          });
-        }
-      })
-      
+        if (!btn.parent('.slide').exists()) return;
+        self.slide(tr);
+        tr.find('[action=slide]').toggle();
+      });
+
       tr.on('processed_delete', function(result) {
         tr.remove();
 //        alert('deleted successfullyy ' + JSON.toString(result));
