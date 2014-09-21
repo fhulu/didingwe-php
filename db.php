@@ -303,6 +303,20 @@ class db
   {
     return db::stripslashes($array);
   }
+  
+  static function parse_column_name($name)
+  {
+    list($spec, $alias) = explode(' ',$name); //todo: use regex for calculated fields
+    $parts = explode('.', $spec); 
+    switch(sizeof($parts)) {
+      case 0: 
+      case 1: $column = $spec; break;
+      case 2: list($table, $column)= $parts; break;
+      case 3: list($schema, $table, $column)= $parts; break;
+    }
+    if (is_null($alias)) $alias = $column;
+    return array('spec'=>$spec, 'schema'=>$schema, 'table'=>$table, 'column'=>$column, 'alias'=>$alias);
+  }
 
 }
 
