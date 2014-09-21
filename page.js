@@ -277,12 +277,7 @@ $.fn.page = function(options, callback)
       options = undefined;
       obj.click(function(event) {
         if (action.indexOf('dialog:') === 0) {
-          var dialog = action.substr(7);
-          var params = { page: dialog, key: key };
-          var tmp = $('<div></div>').page({data:params});
-          tmp.on('read_'+dialog, function(event, object, options) {
-            object.dialog($.extend({modal:true}, options));
-          });
+          page.showDialog(action.substr(7), {key: key});
         }
         else if (action.indexOf('url:') === 0) {
           document.location = action.substr(4);
@@ -311,15 +306,27 @@ $.fn.page = function(options, callback)
       if (!$.isPlainObject(responses)) return;
       var parent = invoker.parents('.ui-dialog-content').eq(0);
       if (!parent.exists()) parent = page.parent;
+      var self = this;
       $.each(responses, function(key, val) {
         switch(key) {
           case 'alert': alert(val); break;
-          case 'close_dialog': parent.dialog('close'); break;
+          case 'show_dialog': self.showDialog(val, responses.options); break;
+          case 'close_dialog': parent.dialog('destroy').remove(); break;
           case 'redirect': location.href = val; break;
           case 'update': parent.setChildren(val); break;
         }
+      });      
+    },
+
+    showDialog: function(dialog, options)
+    {
+      var params = { page: dialog, key: options.key };
+      var tmp = $('<div></div>').page({data:params});
+      tmp.on('read_'+dialog, function(event, object, options) {
+        object.dialog($.extend({modal:true}, options));
       });
-    }
+    },
+        
   };
   if (options.autoLoad) page.load();
   return this;
