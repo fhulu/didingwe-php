@@ -122,6 +122,7 @@ class datatable
     log::debug("REQUEST ".json_encode($request));
     $options = page::read_field_options(at($request,'field'));
     if (is_null($options)) throw new Exception ("Could not find options for field" . at ($request, 'field'));
+    page::empty_fields($options);
     page::expand_values($options);
     
     $data = $options['data'];
