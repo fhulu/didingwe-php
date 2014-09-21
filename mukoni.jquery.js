@@ -340,7 +340,7 @@ $.fn.jsonCheck = function(event, controls, url, options, callback)
     options = {};
   }
   
-  var params = $.extend({invoker: this, event: event, async: false }, options);
+  var params = $.extend({invoker: this, event: event, async: true }, options);
   $(controls).siblings(".error").remove();
   $(controls).json(url, params, function(result) {
     if (result != null)
