@@ -196,34 +196,40 @@ class db
   }
   
   
-  function page_through($sql, $size, $callback=null, $options=null)
+  function page_through($sql, $size, $offset=0, $callback=null, $options=null)
   {
     $options['size'] = $size;
-    $options['start'] = 0;
-    $pagenum = 0;   
+    $options['start'] = $offset;
+    $pagenum = 0; 
+    $rows = array();
     do {
       $paged = false;
       $last_row_index = 0;
-      $this->each($sql, function($index, $row) use (&$paged, &$callback, &$pagenum, &$last_row_index) {
+      $this->each($sql, function($index, $row) use (&$paged, &$callback, &$pagenum, &$last_row_index, &$rows) {
         $paged = true;
         $last_row_index = $index;
-        return is_null($callback)? true: $callback($row, $pagenum, $index);
+        if (is_null($callback))
+          $rows[]  = $row;
+        else
+          $callback($row, $pagenum, $index);
+        return true;
       }, $options);
       $options['start']  += $size;
       ++$pagenum;
     } while ($paged && $last_row_index == $size-1);
+    return $rows;
   }
 
-  function page_through_names($sql, $size, $callback=null, $options=null)
+  function page_through_names($sql, $size, $offset=0, $callback=null, $options=null)
   {
     $options['fetch'] = MYSQLI_ASSOC;
-    return $this->page_through($sql, $size, $callback, $options);
+    return $this->page_through($sql, $size, $offset, $callback, $options);
   }
 
-  function page_through_indices($sql, $size, $callback=null, $options=null)
+  function page_through_indices($sql, $size, $offset=0, $callback=null, $options=null)
   {
     $options['fetch'] = MYSQLI_NUM;
-    return $this->page_through($sql, $size, $callback, $options);
+    return $this->page_through($sql, $size, $offset, $callback, $options);
   }
   
   function read_column($sql, $column_idx=0)
