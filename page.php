@@ -201,26 +201,27 @@ class page {
     }
   }
   
-  static function empty_fields(&$options, $fields)
+  static function empty_fields(&$options, $exclusions=array())
   {
     foreach($options as $key=>&$option)
     {
       if (is_numeric($key)) continue;
-      if (in_array($key, $fields, true)) 
+      if (in_array($key, $exclusions, true)) 
         $option = "";
       else if (is_array($option))
-        page::empty_fields($option, $fields);
-      else if ($key == 'action' && strpos($option, 'dialog:') !== 0 && strpos($option, 'url:') !== 0)
+        page::empty_fields($option, $exclusions);
+      else if ($key == 'action' && strpos($option, '::') !== false)
         $option = "";
     }
   }
-  static function read($request)
+  static function read($request, $echo = true)
   {
     log::debug("page::read ".json_encode($request));
     $data = page::read_field_options(at($request,'page'));
     page::empty_fields($data, array('data'));
     $data['program'] = config::$program_name;
-    echo json_encode($data);
+    if ($echo) echo json_encode($data);
+    return $data;
   }
    
   static function validate(&$validator, $options)
@@ -379,10 +380,10 @@ class page {
     }
   }
     
-  static function respond($action, $value=null)
+  static function respond($response, $value=null)
   {
     global $json;
-    $json['_responses'][$action] = is_null($value)?'':$value;
+    $json['_responses'][$response] = is_null($value)?'':$value;
   }
     
   static function alert($message)
@@ -393,6 +394,12 @@ class page {
   static function redirect($url)
   {
     page::respond('redirect', $url);
+  }
+
+  static function show_dialog($dialog, $options=null)
+  {
+    page::respond('show_dialog', $dialog);
+    if (!is_null($options)) page::respond('options', $options);
   }
   
   static function close_dialog($message=null)
