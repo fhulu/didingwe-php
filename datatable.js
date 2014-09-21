@@ -68,19 +68,9 @@
         if (self.options.page_size !== undefined) self.showPaging(parseInt(data.total));
         if (self.options.filter !== undefined) self.createFilter(data.fields);
         self.adjustActionsHeight();
-        self.updateTitleWidths();
       });
     },
-    
-    updateTitleWidths: function()
-    {
-      var widths = this.getWidths();
-      this.head().find('.titles>th').each(function(i) {
-        $(this).width(widths[i]*0.98);
-      });
-      
-    },
-    
+        
     hasFlag: function(flag)
     {
       return this.options.flags.indexOf(flag) >= 0;
@@ -285,7 +275,10 @@
         return;
       }
       var html = field.html.replace('$code', key+'_'+field.code);
-      var entity = $(html).value(value).appendTo(td);
+      var entity = $(html)
+              .css('width','100%')
+              .css('height','100%')
+              .value(value).appendTo(td);
       if (field.create !== undefined && field.create !== null) {
         var create_opts = $.extend({key: key}, field);
         entity.customCreate(create_opts);
