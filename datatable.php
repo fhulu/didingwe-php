@@ -105,7 +105,7 @@ class datatable
     if ($page_size == 0)
       $rows = $db->page_through_indices($sql, 1000, 0, $callback);
     else
-      $rows = $db->page_through_indices($sql, $page_size, $offset, $callback);
+      $rows = $db->page_indices($sql, $page_size, $offset, $callback);
     $names = $db->field_names;
     $total = $db->row_count();
     $fields = array();
@@ -187,6 +187,7 @@ class datatable
     
     $excel = new PHPExcel();      
     $sheet = $excel->setActiveSheetIndex(0);
+    $request['page_size'] = 0;
     $data = datatable::read_data($request, function($row_data, $pagenum, $index) use ($sheet) {
       $row = 2 + $pagenum * 1000 + $index;
       $col = 0;
