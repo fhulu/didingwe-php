@@ -98,9 +98,7 @@ class session
   
   static function redirect($url)
   {
-    log::debug("REDIRECT: $url");
-    global $json;
-    $json["url"] = $url;
+    page::redirect($url);
   }
 
   static function force_logout($user_id)
