@@ -50,25 +50,28 @@ class datatable
   static function field_named($fields, $name)
   {
     foreach($fields as $field) {
-      list($real, $alias) = explode(' ',$field);
-      if (is_null($alias)) list($alias) = explode('.', $field); 
-      if ($alias == $name) return $real;
+      $props = db::parse_column_name($field);
+      if ($props['alias'] == $name) return $props['spec'];
     }
-      
     return null;
   }
   
   static function sort(&$sql, $fields, $options) 
   {
-    
+    $sort_field = at($options,'sort');
+    if (is_null($sort_field)) return;
+    $sort_order = at($options,'sort_order');
+    $sql .= " order by ". datatable::field_named($fields, $sort_field) . " $sort_order"; 
   }
+  
   static function filter(&$sql, $fields, $options)
   {
     $filter = at($options, 'filtered');
     if (is_null($filter)) return;
     
     $index  = -1;
-    if (is_null(at($options, 'show_key'))) ++$index;
+    if (!in_array('show_key', $options['flags'])) ++$index;
+    
     $where = '';
     foreach(explode('|', $filter) as $value) {
       ++$index;
@@ -85,7 +88,7 @@ class datatable
     else
       $sql = substr($sql, 0, $where_pos + 6) . "$where and" . substr($sql, $where_pos + 6);
   }
-  
+    
   static function read_db($sql, $options) 
   {
     $page_size = at($options,'page_size');
@@ -96,12 +99,7 @@ class datatable
     $fields = datatable::get_sql_fields($sql);
     $sql = preg_replace('/^\s*select /i', 'select SQL_CALC_FOUND_ROWS ',$sql);
     datatable::filter($sql, $fields, $options);
-    
-    $sort_field = at($options,'sort');
-    if (!is_null($sort_field)) {
-      $sort_order = at($options,'sort_order');
-      $sql .= " order by ". datatable::field_named($fields, $sort_field) . " $sort_order"; 
-    }
+    datatable::sort($sql, $fields, $options);
     if ($page_size == 0)
       $rows = $db->read($sql, MYSQLI_NUM);
     else
@@ -116,10 +114,6 @@ class datatable
     }
     
     $result = array('fields'=>$fields, 'rows'=>$rows, 'total'=>$total);
-    if ($page_size) {
-      $result['sort'] = $sort_field;
-      $result['sort_order'] = $sort_order;
-    }
     return $result;
   }
   
