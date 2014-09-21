@@ -333,24 +333,28 @@ $.reportAllErrors = function(event, result)
 }
 
 
-$.fn.checkOnClick = function(controls,url, options, callback)
+$.fn.jsonCheck = function(event, controls, url, options, callback)
 {
   if (options instanceof Function) {
     callback = options;
     options = {};
   }
-
-  var self = this;
   
+  var params = $.extend({invoker: this, event: event, async: false }, options);
+  $(controls).siblings(".error").remove();
+  $(controls).json(url, params, function(result) {
+    if (result != null)
+      $.reportAllErrors(event, result);
+    if (callback !== undefined)
+      callback(result, event);      
+  });
+  return this;
+}
+
+$.fn.checkOnClick = function(controls,url, options, callback)
+{
   this.click(function(event) {
-    var params = $.extend({invoker: self, event: event, async: false }, options);
-    $(controls).siblings(".error").remove();
-    $(controls).json(url, params, function(result) {
-      if (result != null)
-        $.reportAllErrors(event, result);
-      if (callback !== undefined)
-        callback(result, event);      
-    });
+    this.jsonCheck(event, controls, url, options, callback);
   });
   return this;
 }
@@ -452,6 +456,7 @@ $.fn.jsonLoadOptions = function(url, options, callback)
 $.fn.setChildren = function(result)
 {
   var self = this;
+  if (result === null) return;
   $.each(result, function(key, val) {
     var filter = "#"+key+",[name='"+key+"']";
     self.find(filter).each(function() {
