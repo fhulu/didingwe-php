@@ -201,15 +201,15 @@ class page {
     }
   }
   
-  static function empty_fields(&$options, $exclusions=array())
+  static function empty_fields(&$options, $fields=array('data'))
   {
     foreach($options as $key=>&$option)
     {
       if (is_numeric($key)) continue;
-      if (in_array($key, $exclusions, true)) 
+      if (in_array($key, $fields, true)) 
         $option = "";
       else if (is_array($option))
-        page::empty_fields($option, $exclusions);
+        page::empty_fields($option, $fields);
       else if ($key == 'action' && strpos($option, '::') !== false)
         $option = "";
     }
