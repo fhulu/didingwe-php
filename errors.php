@@ -50,7 +50,7 @@ class errors {
     global $json;
     
     if (sizeof($list) != 0) $json["errors"] = $list; 
-    echo json_encode($json);
+    if (sizeof($json) != 0) echo json_encode($json);
   }
   
   function report($how = null)
