@@ -40,6 +40,8 @@
       }
       this.params = {field: this.element.attr('id'), key: this.options.key};
       if (this.options.sort !== undefined) this.params.sort = this.options.sort;
+      if (this.options.page_size !== undefined) this.params.page_size = this.options.page_size;
+      this.params.page_num = 1;
       this.load();
     },
    
@@ -166,8 +168,8 @@
     {
       var head = this.head();
       head.find('#page_total').text(total);
-      var page = parseInt(head.find('#page_num').val());
-      var size = parseInt(head.find('#page_size').val());
+      var page = this.params.page_num;
+      var size = this.params.page_size;
       var prev = head.find('[action=goto_first_page],[action=goto_prev_page]');
       var next = head.find('[action=goto_last_page],[action=goto_next_page]');
       if (page <= 1) {
