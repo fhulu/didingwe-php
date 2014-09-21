@@ -12,7 +12,8 @@ class datatable
 {  
   static function read_action(&$actions, $options, $action)
   {
-    if (array_key_exists($action, $actions)) return;
+    if (is_null($options)) return;
+    if (!is_null($actions) && array_key_exists($action, $actions)) return;
 
     if (array_key_exists($action, $options)) 
       $actions[$action] = $options[$action];
@@ -26,10 +27,11 @@ class datatable
     foreach($rows as $row) {
       foreach (explode(',', last($row)) as $action) {
         datatable::read_action($actions, $options, $action);
-        if ($action === 'slide')
-          datatable::read_action($actions, $options, 'slideoff');
-        else if ($action === 'expand')
-          datatable::read_action($actions, $options, 'collapse');
+        switch($action) {
+          case 'slide': datatable::read_action($actions, $options, 'slideoff'); break;
+          case 'expand': datatable::read_action($actions, $options, 'collapse'); break;
+          //case 'filter': datatable::read_action($actions, $options, 'unfilter'); break;
+        }
       }
     }
     return $actions;
@@ -89,7 +91,7 @@ class datatable
       $sql = substr($sql, 0, $where_pos + 6) . "$where and" . substr($sql, $where_pos + 6);
   }
     
-  static function read_db($sql, $options) 
+  static function read_db($sql, $options, $callback) 
   {
     $page_size = at($options,'page_size');
     if (is_null($page_size)) $page_size = 0;
@@ -101,9 +103,9 @@ class datatable
     datatable::filter($sql, $fields, $options);
     datatable::sort($sql, $fields, $options);
     if ($page_size == 0)
-      $rows = $db->read($sql, MYSQLI_NUM);
+      $rows = $db->page_through_indices($sql, 1000, 0, $callback);
     else
-      $rows = $db->page_indices($sql, $page_size, $offset);
+      $rows = $db->page_through_indices($sql, $page_size, $offset, $callback);
     $names = $db->field_names;
     $total = $db->row_count();
     $fields = array();
@@ -117,16 +119,14 @@ class datatable
     return $result;
   }
   
-  static function read($request)
+  static function read_data($request, $callback=null)
   {
-    log::debug("REQUEST ".json_encode($request));
     $options = page::read_field_options(at($request,'field'));
     if (is_null($options)) throw new Exception ("Could not find options for field" . at ($request, 'field'));
-    page::empty_fields($options);
     page::expand_values($options);
     
     $data = $options['data'];
-    if (!isset($data)) return;
+    if (!isset($data)) return null;
     
     $rows = array();
     $matches = array();
@@ -144,15 +144,82 @@ class datatable
         $val = REQUEST($var);
         if (!is_null($val)) $sql = str_replace('$'.$var, $val, $sql);
       }
-      $data = datatable::read_db($sql, page::null_merge($options, $request));
+      $data = datatable::read_db($sql, page::null_merge($options, $request), $callback);
     }
     else if (preg_match('/^([^\(]+)\(([^\)]*)\)/', $data, $matches) ) {
-      $data = page::call($request, $type, $source);
+      $data = page::call($request, $type, $source, $callback);
     }
+    page::empty_fields($options);
+    $data['options'] = $options;
+    return $data;
+  }
+  
+  static function read($request, $echo=true)
+  {
+    log::debug("REQUEST ".json_encode($request));
+    $data = datatable::read_data($request);
+        
+    page::empty_fields($data);
 
     $fields = $data['fields'];
     if (at(last($fields),'code') == 'actions')
-      $data['actions'] = datatable::read_actions($options, $data['rows']);
-    echo json_encode($data);
+      $data['actions'] = datatable::read_actions($data['options'], $data['rows']);
+    
+    if ($echo) echo json_encode($data);
+  }
+
+  static function start_export($request)
+  {
+    log::debug("START EXPORT ".json_encode($request));
+    $request['field'] = $request['_page'];
+    unset($request['a'], $request['_page'],$request['_field']);
+    $url = '/?a=datatable/export';
+    array_walk($request, function($value, $key) use (&$url) {
+      $url .= "&$key=".urlencode($value);
+    });
+    page::redirect($url);
+  }
+  
+  static function export($request)
+  {
+    ini_set('memory_limit', '512M');
+    require_once '../PHPExcel/Classes/PHPExcel.php';
+    
+    $excel = new PHPExcel();      
+    $sheet = $excel->setActiveSheetIndex(0);
+    $data = datatable::read_data($request, function($row_data, $pagenum, $index) use ($sheet) {
+      $row = 2 + $pagenum * 1000 + $index;
+      $col = 0;
+      foreach($row_data as $cell) {
+        $sheet->setCellValueByColumnAndRow($col, $row, $cell);
+        ++$col;
+      }
+      return true;
+    });
+    
+    $col = 'A';
+    foreach($data['fields'] as $field) {
+      $ref = $col."1";
+      $sheet->getStyle($ref)->getFont()->setBold(true);
+      $sheet->setCellValue($ref, $field['name']);
+      ++$col;
+    }
+    $heading = $data['options']['name'];
+    global $session; 
+    $user = $session->user->first_name ." ".$session->user->last_name;
+    $excel->getProperties()->setCreator($user)
+							 ->setLastModifiedBy($user)
+							 ->setTitle($heading)
+							 ->setSubject($heading)
+							 ->setDescription($heading)
+							 ->setKeywords($heading)
+							 ->setCategory($heading);
+    // Redirect output to a client’s web browser (Excel5)
+    header('Content-Type: application/vnd.ms-excel');
+    header("Content-Disposition: attachment;filename=\"$heading.xls\"");
+    header('Cache-Control: max-age=0');
+
+    $objWriter = PHPExcel_IOFactory::createWriter($excel, 'Excel5');
+    $objWriter->save('php://output');    
   }
 }
