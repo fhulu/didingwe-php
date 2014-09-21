@@ -68,7 +68,17 @@
         if (self.options.page_size !== undefined) self.showPaging(parseInt(data.total));
         if (self.options.filter !== undefined) self.createFilter(data.fields);
         self.adjustActionsHeight();
+        self.updateTitleWidths();
       });
+    },
+    
+    updateTitleWidths: function()
+    {
+      var widths = this.getWidths();
+      this.head().find('.titles>th').each(function(i) {
+        $(this).width(widths[i]*0.98);
+      });
+      
     },
     
     hasFlag: function(flag)
@@ -199,11 +209,10 @@
         if (i === 0 && !show_key) return;
         var code = field.code;
         var th = $('<th></th>').appendTo(tr);
-        var div = $('<div></div>').appendTo(th);
         if (field.code === 'actions') return;
-        div.html(field.name===null? code: field.name);
-        if (code === data.sort) 
-          th.attr('sort', data.sort_order);
+        th.html(field.name===null? code: field.name);
+        if (code === self.params.sort) 
+          th.attr('sort', self.params.sort_order);
         else
           th.attr('sort','');
         th.click(function() {
@@ -222,7 +231,7 @@
     spanColumns: function(td)
     {
       var tr = this.head().find('.titles');
-      if (tr.exists()) tr = this.body().children('tr').eq(0);
+      if (!tr.exists()) tr = this.body().children('tr').eq(0);
       td.attr('colspan', tr.children().length);
     },
     
@@ -266,7 +275,7 @@
           $(this).css('width', ''+width+'px');
         });
       }
-      this.spanColumns(this.head().find('.header th'));      
+      this.spanColumns(this.head().find('.header>th'));      
     },
     
     showCell: function(editable, field, td, value, key)
@@ -360,7 +369,7 @@
         if (next.attr('class') === 'expanded') next.hide();
       });
 
-      tr.on('action', function(evt, btn, name, value) {
+      tr.on('action', function(evt, btn) {
         if (!btn.parent('.slide').exists()) return;
         self.slide(tr);
         tr.find('[action=slide]').toggle();
@@ -381,7 +390,27 @@
       });
     },
     
-    createEditor: function(fields, type, cell)
+    updateWidths: function(row, widths)
+    {
+      row.children().each(function(i) {
+        var width = $(this).width();
+        if (widths[i] === undefined || width > widths[i])
+          widths[i] = width;
+      })
+    },
+    
+    getWidths: function()
+    {
+      var widths = [];
+      this.updateWidths($('.titles'),widths);
+      var self = this;
+      this.body().children('tr').each(function() {
+        self.updateWidths($(this), widths);
+      });
+      return widths;
+    },
+    
+    createEditor: function(template, fields, type, cell)
     {
       var editables = this.options[type];
       if (editables !== undefined) {
@@ -389,27 +418,25 @@
         if (typeof editables === 'string')
           editables = editables.split(',');
       }
-      var columns= this.element.children('tbody>tr').eq(0).children();
+      var widths = this.getWidths();
       var editor = $('<tr></tr>').addClass(type);
-      var show_key = this.hasFlag('show_key');
-      var colIndex = 0;
       var td;
-      $.each(fields, function(i, field) {
-        if (i === 0 && !show_key) return;
-        ++colIndex;
+      var field_index = this.hasFlag('show_key')?0:1;
+      template.children().each(function(i) {
+        var field = fields[field_index++];
         if (editables !== undefined && editables.indexOf(field.code) < 0) return;
         if (field.code === 'actions') {
           td.attr('colspan',2);
-          td.find('input').css('width','100%');
+          td.children('input').eq(0).css('width', widths[i-1]+widths[i]);
           return;
         }
         td = $(cell);
-        var width = parseInt(columns.eq(colIndex++).css('width')) * 0.85;
-        $('<input type=text></input>').css('width', width).appendTo(td);
+        $('<input type=text></input>').width(widths[i]*0.98).appendTo(td);
         td.appendTo(editor);
       });
       
-      
+      editor.insertAfter(template); 
+
       return editor;
     },
     
@@ -418,7 +445,8 @@
       if (this.head().find('.filter').exists()) return;
       
       var self = this;
-      var filter = self.createEditor(fields, 'filter', '<th></th>');
+      var titles = self.head().find('.titles');
+      var filter = self.createEditor(titles, fields, 'filter', '<th></th>').hide();
       filter.find('input').bind('keyup input cut paste', function() {
         self.params.filtered = '';
         self.params.page_num = 1;
@@ -428,7 +456,6 @@
         });
         self.load();
       });
-      filter.insertAfter(self.head().find('.titles')).hide(); 
     },
     
     showFilter: function()
