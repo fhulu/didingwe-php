@@ -81,13 +81,14 @@ class user
     $db->lineage($groups, "code", "parent_code", "partner_group", "and program_id=\$pid");
     $groups = implode("','", $groups);
     $functions = $db->read_column(
-      "select distinct function_code from role_function where role_code in('$roles')
+      "select distinct function_code from \$audit_db.role_function where role_code in('$roles')
         and program_id = $program_id
         and function_code in 
-        (select distinct function_code from partner_group_function where group_code in ('$groups') and program_id = $program_id)");
-    $base_functions = $db->read_column("select distinct function_code from role_function where role_code = 'base'
+        (select distinct function_code from  \$audit_db.partner_group_function where group_code in ('$groups') and program_id = $program_id)");
+    $base_functions = $db->read_column("select distinct function_code from  \$audit_db.role_function where role_code = 'base'
       and program_id=$program_id"); 
     $this->functions = array_merge($functions, $base_functions);
+    log::debug("FUNCTIONS:".json_encode($this->functions));
   }
   
  
