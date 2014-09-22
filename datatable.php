@@ -170,9 +170,9 @@ class datatable {
     $fields = $data['fields'];
     if (at(last($fields), 'code') == 'actions')
       $data['actions'] = datatable::read_actions($data['options'], $data['rows']);
-
-    if ($echo)
-      echo json_encode($data);
+    
+    unset($data['options']);
+    if ($echo) echo json_encode($data);
   }
 
   static function start_export($request) {
