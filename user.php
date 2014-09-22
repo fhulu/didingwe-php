@@ -37,7 +37,7 @@ class user
   static function default_functions()
   {
     global $db;
-    return $db->read_column("select distinct function_code from role_function
+    return $db->read_column("select distinct function_code from \$audit_db.role_function
     where role_code in ('base', 'unreg') 
     and program_id=" .config::$program_id);
   }
@@ -376,7 +376,7 @@ class user
     $title = addslashes($title);
     if($program_id==7){
       
-      $sql = "insert into user(program_id, partner_id, email_address, password,title, first_name,last_name, cellphone,active, otp, otp_time)
+      $sql = "insert into \$audit_db.user(program_id, partner_id, email_address, password,title, first_name,last_name, cellphone,active, otp, otp_time)
       values($program_id,$partner_id, '$email',password('$password'),'$title', '$first_name','$last_name','$cellphone',1, '$otp', now())";
     }
     else
@@ -417,12 +417,12 @@ class user
     // First check if email already exists
     global $db;
     if (user::exists($email, 0, false)) {
-      $sql = "update \user set password=password('$password'), first_name = '$first_name',last_name= '$last_name',title= '$title', cellphone='$cellphone',
+      $sql = "update \$audit_db.user set password=password('$password'), first_name = '$first_name',last_name= '$last_name',title= '$title', cellphone='$cellphone',
         otp=$otp, otp_time = now(), partner_id = $partner_id where email_address='$email' and program_id = $program_id";
       $db->exec($sql);
       $id = $db->read_one_value("select id from user where email_address = '$email' and program_id = $program_id");
-      $db->exec("delete from \user_role where user_id = $id");
-      $db->exec("insert into \user_role(user_id,role_code) values($id,'reg')");
+      $db->exec("delete from \$audit_db.user_role where user_id = $id");
+      $db->exec("insert into \$audit_db.user_role(user_id,role_code) values($id,'reg')");
       $password = stripslashes($password);
       $first_name = stripslashes($first_name);
       $last_name = stripslashes($last_name);
@@ -436,7 +436,7 @@ class user
 
     user::sms_otp($email, $otp);
     $user->reload();
-    $db->insert("insert into trx(user_id, function_code, object_id)
+    $db->insert("insert into \$audit_db.trx(user_id, function_code, object_id)
       values($user->id, 'register', $user->id)");
     //todo: send email and/or sms
     $message = "Good day <br><br>Below is your one time password, required to continue with your application.
@@ -499,10 +499,10 @@ class user
     list($email,$username) = $db->read_one("select email_address, Concat( first_name, ' ', last_name ) from user where id = $id ");
     user::audit('deactivate', $id, "$username($email)");
     
-    $sql = "delete from user_role where user_id=$id";
+    $sql = "delete from \$audit_db.user_role where user_id=$id";
     $db->exec($sql);
     
-    $sql = "update  user set active=0 where id=$id";
+    $sql = "update \$audit_db.user set active=0 where id=$id";
     $db->exec($sql);
    
     global $session;
@@ -959,7 +959,7 @@ class user
     $user_id = $request['id'];
     $group_id = $request['group_id'];
     global $db;
-    $db->exec("insert group_users(user_id,group_id) values( $user_id, $group_id)");
+    $db->exec("insert \$audit_db.group_users(user_id,group_id) values( $user_id, $group_id)");
   }
 
 
@@ -969,7 +969,7 @@ class user
     $user_id = $request['id'];
     $group_id = $request['group_id'];
     global $db;
-    $db->exec("delete from group_users where user_id = $user_id and group_id = $group_id");
+    $db->exec("delete from \$audit.db.group_users where user_id = $user_id and group_id = $group_id");
   }
 
   static function add_group($request)
