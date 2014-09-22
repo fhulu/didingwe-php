@@ -1,17 +1,8 @@
 $.fn.page = function(options, callback)
 {
-  if (options instanceof Function) {
-    callback = options;
-    options = {method: 'post'};
-  } 
-  var self = this;
-  options = $.extend({
-    method: 'post',
-    url: '/?a=page/read',
-    error: undefined,
-    autoLoad: true
-  }, options);
-  
+  if (options instanceof Function) callback = options;
+
+  var self = this;  
   var page  = {
     parent: self,
     object: null,
@@ -19,10 +10,9 @@ $.fn.page = function(options, callback)
     data: null,
     creation: null,
     links: "",
-    load: function(url) 
+    load: function() 
     {
-      if (url === undefined) url = options.url;
-      $.json(url, { data: options.data }, this.show);
+      $.json('/?a=page/read', { data: options }, this.show);
     },
    
     expand_value: function(values,value)
@@ -36,16 +26,16 @@ $.fn.page = function(options, callback)
       return value;
     },
     
-    expand_fields: function(parent_id, data)
+    expand_fields: function(parent_id, data, known)
     {
+      known = known === undefined? data: page.inherit(known, data);
       $.each(data, function(field, value) {
         if (typeof value === 'string' && value.indexOf('$') >= 0 && field !== 'template' && field != 'attr') {
           value = value.replace('$code', parent_id);
-          data[field] = page.expand_value(data, value);
+          data[field] = page.expand_value(known, value);
         }
         else if ($.isPlainObject(value)) {
-          page.inherit_values(data, value);
-          data[field] = page.expand_fields(field, value);
+          data[field] = page.expand_fields(field, value, known);
         }
       });
       return data;
@@ -58,14 +48,16 @@ $.fn.page = function(options, callback)
       return html.replace(/^<(\w+) ?/,'<$1 '+attr + ' ');
     },
     
-    inherit_values: function(parent, child)
+    inherit: function(parent, child)
     {
-      var reserved = ['html','code','template','create','css','script'];
+      var reserved = ['html','code','template','create','css','script','load', 'data'];
+      var result = $.extend({}, child);
       $.each(parent, function(key, value) {
         if (typeof value !== "string" || reserved.indexOf(key)>=0) return;
-        if (child[key] !== undefined) return;
-        child[key] = value;
+        if (result[key] !== undefined) return;
+        result[key] = value;
       });
+      return result;
     },
     
     expand_template: function(field, child, object)
@@ -93,8 +85,7 @@ $.fn.page = function(options, callback)
       }
       $.each(object, function(field, child) {
         if (!$.isPlainObject(child) && !$.isArray(child) || child === null) return;
-        page.inherit_values(object, child);
-        if (child.html !== undefined)
+          if (child.html !== undefined)
           child.html = page.expand_attr(child.html, child, child.attr);
         if (child.hidden === undefined) {
           var expanded = page.expand_template(field, child, object);
@@ -162,13 +153,6 @@ $.fn.page = function(options, callback)
       });      
     },
     
-    load_values: function(object)
-    {
-      if (options.data === undefined || options.data.load === undefined) return;
-      object.loadChildren('/?a=page/load', {data:options.data});
-    },
-    
-
     set_option: function(parent, id, options, callback)
     {
       var object = parent.find('#'+id);
@@ -180,7 +164,7 @@ $.fn.page = function(options, callback)
       page.load_links('css', options);
       page.load_links('script', options, function() {
         if (options.create !== undefined && options.create !== null) {
-          var create_opts = $.extend({key: page.options.data.key}, options);
+          var create_opts = $.extend({key: page.options.key}, options);
           object.customCreate(create_opts);
         }
         if (callback !== undefined) callback();
@@ -203,16 +187,17 @@ $.fn.page = function(options, callback)
     
     show: function(data)
     {
-      var id = options.data.page;
-      var key = options.data.key;
+      var id = options.page;
+      var key = options.key;
       data = page.expand_fields(id,data);
       page.expand_children(data);
       var parent = page.parent;
       var object = $(data.html).addClass('page').appendTo(parent);
       object.on('loaded', function() {
         page.set_options(parent, id, data,function(){
-          page.bind_actions(parent, data, key);
-          page.load_values(object);
+          var options = {};
+          options[id] = data;
+          page.init_children(parent, options, key);
           parent.trigger('read_'+id, [object,data]);
         });
       });
@@ -238,7 +223,7 @@ $.fn.page = function(options, callback)
         object.removeAttr('has_data');
         var field_id = object.attr('id');
         if (field_id === undefined) field_id = id;
-        var params = {_page: id, _field:field_id, key: self.options.data.key};
+        var params = {_page: id, _field:field_id, key: self.options.key};
         $.json('/?a=page/data', {data:params}, function(result) {
           if (result === undefined || result === null) {
             console.log('No page data result for page: ', id, ' field: ', field_id);
@@ -253,20 +238,24 @@ $.fn.page = function(options, callback)
       });
     },
 
-    bind_actions: function(parent, data, key)
+    init_children: function(parent, data, key)
     {
       $.each(data, function(field, options) {
         if (!$.isPlainObject(options)) return;
         var obj = parent.find('#'+field);
+        if (options.key !== undefined) key = options.key;
         if (!obj.exists()) {
-          page.bind_actions(parent, options, key);
+          page.init_children(parent, options, key);
           return;
         }
         obj.click(function(event) {
           page.accept(event, $(this),  
             {key:key, code:field, action: options.action, selector: options.selector});
         });
-        page.bind_actions(obj, options, key)
+        if (options.load !== undefined) {
+          obj.loadChildren('/?a=page/load', {data: {page: field, key: key } } );
+        }
+        page.init_children(obj, options, key);
       });
     },
     
@@ -310,7 +299,7 @@ $.fn.page = function(options, callback)
         switch(key) {
           case 'alert': alert(val); break;
           case 'show_dialog': self.showDialog(val, responses.options); break;
-          case 'close_dialog': parent.dialog('destroy').remove(); break;
+          case 'close_dialog': self.closeDialog(parent); break;
           case 'redirect': location.href = val; break;
           case 'update': parent.setChildren(val); break;
         }
@@ -320,14 +309,23 @@ $.fn.page = function(options, callback)
     showDialog: function(dialog, options)
     {
       var params = { page: dialog, key: options.key };
-      var tmp = $('<div></div>').page({data:params});
-      tmp.on('read_'+dialog, function(event, object, options) {
-        object.dialog($.extend({modal:true}, options));
+      var tmp = $('body').page(params);
+      tmp.on('read_'+dialog, function(event, object, options) {  
+        options = $.extend({modal:true,  close: function() {
+          $(this).dialog('destroy').remove();
+        }}, options);
+        object.dialog(options);
       });
     },
+    
+    closeDialog: function(dialog)
+    {
+      if (dialog.hasClass('ui-dialog-content'))
+        dialog.dialog('destroy').remove();
+    }
         
   };
-  if (options.autoLoad) page.load();
+  page.load();
   return this;
 }
 
