@@ -410,9 +410,12 @@ class page {
   
   static function update($name, $value=null)
   {
+    global $json;
+    $responses = &$json['_responses'];
+    $updates = &$responses['update'];
     if (is_array($name))
-      page::respond('update', $name);
+      page::null_merge ($updates, $name);
     else
-      page::update(array($name=>$value));
+      $updates[$name] = $value;
   }
 }
