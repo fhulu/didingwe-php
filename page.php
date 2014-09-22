@@ -201,7 +201,7 @@ class page {
     }
   }
   
-  static function empty_fields(&$options, $fields=array('data'))
+  static function empty_fields(&$options, $fields=array('data','load'))
   {
     foreach($options as $key=>&$option)
     {
