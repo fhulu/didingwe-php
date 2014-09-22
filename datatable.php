@@ -192,7 +192,10 @@ class datatable
       $row = 2 + $pagenum * 1000 + $index;
       $col = 0;
       foreach($row_data as $cell) {
+        
         $sheet->setCellValueByColumnAndRow($col, $row, $cell);
+        $sheet->getColumnDimension(PHPExcel_Cell::stringFromColumnIndex($col))
+        ->setAutoSize(true);
         ++$col;
       }
       return true;
