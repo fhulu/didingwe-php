@@ -408,10 +408,10 @@ class user
     $cellphone = $request[cellphone];
     $otp = rand(10042,99999);
     $program_id = config::$program_id;
-    if ($program_id==11)
+    $partner_id = (int)$request['partner_id'];
+    if ($partner_id==0)
       $partner_id =  config::$program_partner_id;
-    else
-      $partner_id = (int)$request['partner_id'];
+  
     $role = $request['role'];
     if ($role == '') $role = 'reg';
     // First check if email already exists
@@ -491,10 +491,10 @@ class user
     $db->exec("update user set active = 1 where id = $id");
   }
   
-  static function deactivate($request)
+  static function deactivate($request,$id=null)
   {
     global $db;
-    $id = $request[id];
+    if (is_null($id)) $id = $request[id];
     $request = table::remove_prefixes($request); 
     list($email,$username) = $db->read_one("select email_address, Concat( first_name, ' ', last_name ) from user where id = $id ");
     user::audit('deactivate', $id, "$username($email)");
