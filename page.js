@@ -248,10 +248,13 @@ $.fn.page = function(options, callback)
           page.init_children(parent, options, key);
           return;
         }
-        obj.click(function(event) {
-          page.accept(event, $(this),  
-            {key:key, code:field, action: options.action, selector: options.selector});
-        });
+        if (!obj.hasAttr('_bound')) { 
+          obj.attr('_bound','');
+          obj.click(function(event) {
+            page.accept(event, $(this),  
+              {key:key, code:field, action: options.action, selector: options.selector});
+          });
+        }
         if (options.load !== undefined) {
           obj.loadChildren('/?a=page/load', {data: {page: field, key: key } } );
         }
