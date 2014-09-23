@@ -72,8 +72,11 @@ class session
     $user = user::restore($email, $passwd);
     if (!$user) 
       $v->report("email", "!Invalid username/password for '$email'");
-    else
-      session::redirect('home.html');    
+    else {
+      $page = SESSION('content');
+      if (is_null($page)) $page = 'home';
+      page::redirect("$page.html");
+    }
   }
   
   static function login()
@@ -131,7 +134,7 @@ class session
     return false;
   }
 }
-
+  
 if (!isset($daemon_mode)) {
   global $session;
   if (isset($_SESSION['instance']))
