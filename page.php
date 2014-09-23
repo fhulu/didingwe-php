@@ -263,13 +263,9 @@ class page {
   static function data($request)
   {
     log::debug('page::data page='.$request['_page']. ', field='.$request['_field']);
-    $row = page::read_page_field_options($request);    
-    page::expand_values($row, array('template','html'));    
-    $data = $row['data'];
-    log::debug("REQUEST: ". json_encode($request));
-    log::debug("DATA: ". $data);
-    $template = $row['template'];
-    log::debug("TEMPLATE: ". $template);
+    $options = page::read_page_field_options($request);    
+    //page::expand_values($row, array('template','html'));    
+    $data = $options['data'];
     
     $matches = array();
     preg_match('/^([^:]+): ?(.+)/s', $data, $matches);
@@ -290,14 +286,14 @@ class page {
       $rows = $db->read($list, MYSQLI_ASSOC);
     }
     else if (preg_match('/^([^\(]+)\(([^\)]+)\)/', $data, $matches) ) {
-      page::call($request, $matches[1], $matches[2]);
+      $rows = page::call($request, $matches[1], $matches[2], $options);
     }
 
-    if (isset($template)) $rows['template'] = $template;  
+    set_valid($rows, $options, 'template');
     echo json_encode($rows);
   }
   
-  static function call($request, $function, $params)
+  static function call($request, $function, $params, $options=null)
   {
     log::debug("FUNCTION $function PARAMS:".$params);
     list($class, $method) = explode('::', $function);
@@ -312,7 +308,15 @@ class page {
         return;
       }
     }
-    call_user_func_array($function, array_merge(array($request), explode(',',$params)));
+    
+    $params = explode(',', $params);
+    if (is_array($options)) {
+      $options = array_merge($request, $options);
+      foreach($params as &$param) {
+        $param = page::replace_vars ($param, $options);
+      }
+    }
+    return call_user_func_array($function, array_merge(array($request), $params));
   }
   
   static function action($request)
