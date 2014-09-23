@@ -289,10 +289,9 @@
     
     createAction: function(action, actions, sink)
     {
-      if (actions === undefined) actions = this.options;
       if (sink === undefined) sink = this.element;
-      var props = actions[action];
-      if (props === undefined) console.log(action, actions);
+      var props = actions===undefined?this.options[action]:actions[action];
+      if (props === undefined) console.log("undefined props for", action);
       var div = $('<span>');
       div.html(props.name);
       div.attr('title', props.desc);
@@ -346,8 +345,7 @@
       tr.on('expand', function(event, button, page) {
           button.hide();
           tr.find('[action=collapse]').show();
-          var data = {page: page, key: key, load:""};
-          var tmp = $('<div></div>').page({data:data});
+          var tmp = $('<div></div>').page({page: page, key: key, load:""});
           tmp.on('read_'+page, function(event, object) {
             var expanded = $('<tr class=expanded></tr>');
             $('<td></td>')
