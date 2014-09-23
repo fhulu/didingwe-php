@@ -71,6 +71,6 @@
 ?>
 <script>
 $(function() {
-  $("body").page({data: <?=json_encode($params);?>});
+  $("body").page(<?=json_encode($params);?>);
 });
 </script>
