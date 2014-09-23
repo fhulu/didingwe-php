@@ -48,20 +48,14 @@
   global $session;
   log::init('index', log::DEBUG);
   log::debug(json_encode($session));
-  $public_pages = array('login','map','register','error_page');
   $content = GET('content');
+  if (!is_null($content) && !in_array($content, array('landing','login')))
+    $_SESSION['content'] = $content;
+
+  $public_pages = array('login','map','register','error_page');
   if (!$session && !in_array($content,$public_pages) && !in_array($page, $public_pages) ) {
     $page = 'landing';
   }
-  else if (!is_null($content)) {
-    $_SESSION['content'] = $content;
-  }
-  else if (isset($_SESSION['content'])) {
-    $content = $_GET['content'] = $_SESSION['content'];
-    $page = 'index';
-  }
-  else
-    $page = 'landing';
 
   pre_load_custom($page);
   if ($content != $page && !is_null($content)) 
