@@ -19,7 +19,139 @@ require_once 'ref.php';
 
 class page {
     
- 
+  var $fields;
+  var $keys;
+  var $result;
+  function __construct()
+  {
+    $this->fields = array();
+    $this->keys = array();
+    $this->result = array();
+    log::debug("Constructed page");
+  }
+  
+  static function test($request)
+  {
+    $inst = new page;
+    $field = $inst->load_field($request['field']);
+    echo json_encode($field);
+  }
+  
+  function load_field($code)
+  {
+    $field = at($this->fields, $code);
+    if (!is_null($field)) return $field;
+    
+    global $db;
+    $this->keys[] = $code;
+    $field =  $db->read_one(
+      "select f.name, f.description 'desc', ifnull(f.html,ft.html) html, ft.options __type_options, f.options __field_options"
+      . " from field f left join field_type ft on f.type = ft.code"
+      . " where f.code = '$code'"
+      . " union "
+      . " select name, description 'desc', html, null type_options, options __field_options"
+      . " from field_type where code = '$code'"
+      , MYSQLI_ASSOC);
+    
+    $this->fields[$code] = remove_nulls($field);
+    
+    if (is_null($field)) return $field;
+
+    page::decode_field($field);
+    log::debug("FINAL ".json_encode($field));
+    return $field;
+  }
+  
+  function decode_field(&$field)
+  {
+    $quoted = array();
+    page::decode_field_options($field, '__type_options', $quoted);
+    page::decode_field_options($field, '__field_options', $quoted);
+    
+    log::debug("DECODING ".json_encode($field));
+    $known = array('name','desc','html','action','data','load', 'valid');
+    foreach($field as $key=>&$value) {
+      if (in_array($key, $known)) continue;
+
+      $quotes = at($quoted,$key);
+
+      if (null_at($quotes,0)) // load unquoted field
+        merge_to($field, page::load_field($key));
+      
+      if (!null_at($quotes, 1)) continue;   // ignore quoted value
+      
+      
+      if (!is_array($value)) {
+        $read_val = page::load_field($value);
+        if (!is_null($read_val)) $value = $read_val;
+        continue;
+      }
+      
+      foreach($value as $sub_key=>&$sub_value) {
+        $sub_value = $this->load_field($sub_key);
+      }
+    }
+  }
+  
+  
+  static function match_quoted($str, &$quoted)
+  {
+    $result = $matches = array();
+    if (!preg_match_all('/(")?([^"]+)\1?(?:\s*:\s*(")?([^{\[^"]+)\3?)?/', $str, $matches, PREG_SET_ORDER)) return;
+    foreach($matches as $match) {
+      $key_quote = $match[1];
+      $value_quote = $match[3];
+      if (is_null($kq) && is_null($vq)) continue;
+      $key = $match[2];
+      $quoted[$key] = array($key_quote,$value_quote);
+    }
+    merge_to($quoted, $result);
+  }
+  
+  static function decode_json($str)
+  {
+    if (is_null($str)) return null;
+    $str = str_replace('~', ',', $str);
+    log::debug('ORIG {'.$str."}");
+    $str = preg_replace('/(?:(\w+)|("[^"]*"))\s*:\s*(?:([^\[{"]+)|"([^"]*)")/', '"$1$2":"$3$4"', $str);
+    $str = preg_replace('/(?:(\w+)|"([^"]*)")\s*([:\[\]{,])?/', '"$1$2"$3', $str);
+    
+    log::debug('REPLACED {'.$str."}");
+    $decoded = json_decode('{'.$str.'}', true);
+    if (!is_null($decoded)) return $decoded;
+    
+    // json not correct, perhaps we have an unexpanded object, e.g. {x,y,z}
+    $matches = array();
+    if (!preg_match_all('/("[^"]+")(\s*:\s*["\[{])?/', $str, $matches, PREG_SET_ORDER)) 
+      throw Exception("Invalid JSON $str");
+    
+    log::debug("MATCHES ".json_encode($matches));
+    $pos = 0;
+    foreach($matches as $match) {
+      $key = $match[1];
+      log::debug("FIXING $key $pos $str");
+      if (!null_at($match,2)) continue; 
+      $pos = strpos($str, $key, $pos)+strlen($key);
+      $str = substr($str, 0, $pos) . ':""'.substr($str, $pos);
+      log::debug("FIXED $pos $str");
+    }
+    
+    $decoded = json_decode('{'.$str.'}', true);
+    log::debug("DECODED ".  json_encode($decoded));
+    return $decoded;
+  }
+
+  
+  function decode_field_options(&$field, $options_name, $quoted)
+  {
+    $options = at($field,$options_name);
+    if (is_null($options)) return null;
+    
+    unset($field[$options_name]);
+    page::match_quoted($options, $quoted);    
+    merge_to($field, page::decode_json($options));
+  }
+  
   static function read_field_options($field, $expand=true)
   {
     $db_fields = array();
@@ -95,6 +227,7 @@ class page {
     }
     return $str;
   }
+  
   static function decode_options(&$db_fields, &$parent, $encoded, $scope)
   {            
     if ($encoded == '') return $scope;
@@ -102,7 +235,7 @@ class page {
     $encoded = str_replace('~', ',', $encoded);
     $encoded = str_replace('\n', '', $encoded);
     $encoded = str_replace('\r', '', $encoded);
-    if (!preg_match_all('/(\$?\w+)(?:: *("[^"]*"|\[[^\]]*\]|{[^}]*}|[^,]*))?/', $encoded, $matches, PREG_SET_ORDER)) {
+    if (!preg_match_all('/(\$?\w+)(?::\s*("[^"]*"|\[[^\]]*\]|{[^}]*}|[^,]*))?/', $encoded, $matches, PREG_SET_ORDER)) {
       log::error("Invalid JSON string $encoded");
       return $scope;
     }
