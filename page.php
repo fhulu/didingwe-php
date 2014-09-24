@@ -12,88 +12,127 @@
  * @author fhulu
  */
 
-require_once 'session.php';
 require_once 'db.php';
 require_once 'validator.php';
 require_once 'ref.php';
 
-class page {
+class page
+{
     
   var $fields;
-  var $keys;
-  var $result;
-  function __construct()
+  var $request;
+  var $validator;
+  
+  function __construct($request=null)
   {
+    if (is_null($request)) $request = $_REQUEST;
     $this->fields = array();
-    $this->keys = array();
-    $this->result = array();
-    log::debug("Constructed page");
+    $this->request = $request;
+    //todo: fix coupling validator with reporting to front end
+    $this->validator = new validator($request);
   }
   
-  static function test($request)
+  static function read($request, $echo=true)
   {
-    $inst = new page;
-    $field = $inst->load_field($request['field']);
+    $page = new page($request);
+    $field = array('program' => config::$program_name);
+    $page->read_request('page', $echo, $field);
+    if (!$echo) return $field;
+    //page::empty_fields($field);
     echo json_encode($field);
   }
   
-  function load_field($code)
+  function read_request($code, $expand_html=false, &$field=null)
   {
-    $field = at($this->fields, $code);
-    if (!is_null($field)) return $field;
-    
-    global $db;
-    $this->keys[] = $code;
-    $field =  $db->read_one(
-      "select f.name, f.description 'desc', ifnull(f.html,ft.html) html, ft.options __type_options, f.options __field_options"
-      . " from field f left join field_type ft on f.type = ft.code"
-      . " where f.code = '$code'"
-      . " union "
-      . " select name, description 'desc', html, null type_options, options __field_options"
-      . " from field_type where code = '$code'"
-      , MYSQLI_ASSOC);
-    
-    $this->fields[$code] = remove_nulls($field);
-    
-    if (is_null($field)) return $field;
+    return $this->read_field($this->request[$code], $expand_html, $field);
+  }
 
-    page::decode_field($field);
-    log::debug("FINAL ".json_encode($field));
+  function read_field($code, $expand_html=false, &$field=null)
+  {
+    if (!array_key_exists($code, $this->fields)) {
+      global $db;
+      $data =  $db->read_one(
+        "select f.name, f.description 'desc', ifnull(f.html,ft.html) html, ft.options __type_options, f.options __field_options"
+        . " from field f left join field_type ft on f.type = ft.code"
+        . " where f.code = '$code'"
+        . " union "
+        . " select name, description 'desc', html, null __type_options, options __field_options"
+        . " from field_type where code = '$code'"
+        , MYSQLI_ASSOC);
+
+      $this->fields[$code] = remove_nulls($data);      
+    }
+    
+    if (!is_array($field) && is_null($this->fields[$code])) return $field;
+    
+    $field = null_merge($this->fields[$code], $field);
+    
+    if (is_array($field)) 
+      $this->decode($field, $expand_html);
+    if ($expand_html)
+      $this->expand_html($field);
     return $field;
   }
   
-  function decode_field(&$field)
+  function decode(&$field, $expand_html)
   {
+    if (!is_assoc($field)) return;
     $quoted = array();
-    page::decode_field_options($field, '__type_options', $quoted);
-    page::decode_field_options($field, '__field_options', $quoted);
+    page::decode_options($field, '__type_options', $quoted);
+    page::decode_options($field, '__field_options', $quoted);
     
-    log::debug("DECODING ".json_encode($field));
-    $known = array('name','desc','html','action','data','load', 'valid');
-    foreach($field as $key=>&$value) {
-      if (in_array($key, $known)) continue;
+    // channge $key outside loop: php does not support key element as reference
+    $replaced = array();
+    foreach($field as $key=>$value) {
+      $replaced[$key] = $value;
+      if ($key[0] != '$') continue;
+      $new_key = at($this->request, substr($key,1));
+      unset($replaced[$key]);
+      $replaced[$new_key] = $value;
+    }    
+    
+    $field = $replaced;
+    $known_keys = array('name','desc','html','src', 'href', 'url', 
+      'action','data','load', 'valid', 'program');
+    
+    foreach($field as $key=>&$value) {      
+      $quotes = at($quoted, $key);
+      if ($quotes[0] != '"' && !in_array($key, $known_keys, true))// load unquoted field
+        $this->read_field($key, $expand_html, $value);
 
-      $quotes = at($quoted,$key);
+      if (is_array($value) || in_array($key, $known_keys, true)) continue;
 
-      if (null_at($quotes,0)) // load unquoted field
-        merge_to($field, page::load_field($key));
+      $value = replace_vars($value);      
+      if ($quotes[1] == '"' || !preg_match('/^\w+$/',$value)) continue;
       
-      if (!null_at($quotes, 1)) continue;   // ignore quoted value
-      
-      
-      if (!is_array($value)) {
-        $read_val = page::load_field($value);
-        if (!is_null($read_val)) $value = $read_val;
-        continue;
-      }
-      
-      foreach($value as $sub_key=>&$sub_value) {
-        $sub_value = $this->load_field($sub_key);
-      }
+      $sub_values = $this->read_field($value, $expand_html);
+      if (!is_null($sub_values))
+        $value = $sub_values;
     }
+    
+    $template = at($field, 'template');
+    if (is_array($template))
+     $field['template'] = at($template,'html');
+    
   }
   
   
+  
+  function decode_options(&$field, $options_name, $quoted)
+  {
+    $options = at($field,$options_name);
+    if (is_null($options)) return;
+    
+    page::match_quoted($options, $quoted);   
+    $decoded = page::decode_json($options);
+    //log::debug("FIELD ". json_encode($field));
+    //log::debug("DECODED ".  json_encode($decoded));
+    merge_to($field, $decoded);
+    unset($field[$options_name]);
+    //log::debug("MERGED ". json_encode($field));
+  }
+  
+ 
   static function match_quoted($str, &$quoted)
   {
     $result = $matches = array();
@@ -101,7 +140,7 @@ class page {
     foreach($matches as $match) {
       $key_quote = $match[1];
       $value_quote = $match[3];
-      if (is_null($kq) && is_null($vq)) continue;
+      if (is_null($key_quote) && is_null($value_quote)) continue;
       $key = $match[2];
       $quoted[$key] = array($key_quote,$value_quote);
     }
@@ -111,214 +150,48 @@ class page {
   static function decode_json($str)
   {
     if (is_null($str)) return null;
+    $orig = $str;
     $str = str_replace('~', ',', $str);
-    log::debug('ORIG {'.$str."}");
-    $str = preg_replace('/(?:(\w+)|("[^"]*"))\s*:\s*(?:([^\[{"]+)|"([^"]*)")/', '"$1$2":"$3$4"', $str);
-    $str = preg_replace('/(?:(\w+)|"([^"]*)")\s*([:\[\]{,])?/', '"$1$2"$3', $str);
+    $str = preg_replace('/(?:(\$?\w+)|("[^"]*"))\s*:\s*(?:"([^"]*)"|([^\[\]}{,]+))/', '"$1$2":"$3$4"', $str);
+    $str = preg_replace('/(?:(\$?\w+)|"([^"]*)")\s*([:\[\]\${},])?/', '"$1$2"$3', $str);
     
-    log::debug('REPLACED {'.$str."}");
     $decoded = json_decode('{'.$str.'}', true);
     if (!is_null($decoded)) return $decoded;
     
     // json not correct, perhaps we have an unexpanded object, e.g. {x,y,z}
     $matches = array();
-    if (!preg_match_all('/("[^"]+")(\s*:\s*["\[{])?/', $str, $matches, PREG_SET_ORDER)) 
-      throw Exception("Invalid JSON $str");
+    if (!preg_match_all('/("\$?\w+")(\s*:\s*["\[{]?)?/', $str, $matches, PREG_SET_ORDER)) 
+    //if (!preg_match_all('/("[^"]+")(\s*:\s*(?:"[^"]+"|\{([^{}]|(?R))*\}))/', $str, $matches, PREG_SET_ORDER)) 
+      throw new Exception("Invalid JSON $str");
     
-    log::debug("MATCHES ".json_encode($matches));
     $pos = 0;
     foreach($matches as $match) {
       $key = $match[1];
-      log::debug("FIXING $key $pos $str");
       if (!null_at($match,2)) continue; 
       $pos = strpos($str, $key, $pos)+strlen($key);
       $str = substr($str, 0, $pos) . ':""'.substr($str, $pos);
-      log::debug("FIXED $pos $str");
     }
     
-    $decoded = json_decode('{'.$str.'}', true);
-    log::debug("DECODED ".  json_encode($decoded));
+    $decoded =  json_decode('{'.$str.'}', true);
+    if (is_null($decoded))
+       throw new Exception("Invalid JSON ORIG: $orig\n DECODED $str");
+
     return $decoded;
   }
-
-  
-  function decode_field_options(&$field, $options_name, $quoted)
+   
+  function expand_html(&$field)
   {
-    $options = at($field,$options_name);
-    if (is_null($options)) return null;
-    
-    unset($field[$options_name]);
-    page::match_quoted($options, $quoted);    
-    merge_to($field, page::decode_json($options));
-  }
-  
-  static function read_field_options($field, $expand=true)
-  {
-    $db_fields = array();
-    $scope = array();
-    $options = page::decode_db_options($db_fields, $field, $scope);
-    return $options;
-  }
-  
-  
-  static function decode_db_options(&$fields, $field, $scope)
-  {
-    if (isset($fields[$field])) return $fields[$field];
-
-    global $db;
-    $options =  $db->read_one(
-      "select f.name, f.description 'desc', ifnull(f.html,ft.html) html, ft.options type_options, f.options field_options"
-      . " from field f left join field_type ft on f.type = ft.code"
-      . " where f.code = '$field'"
-      . " union "
-      . " select name, description 'desc', html, null type_options, options field_options"
-      . " from field_type where code = '$field'"
-      , MYSQLI_ASSOC);
-    
-    if (is_null($options)) {
-      $fields[$field] = null;
-      return null;
-    }
-    
-    foreach($options as $key=>$value) {
-      if (is_null($value)) unset ($options[$key]);
-    }
-
-    $scope = page::decode_options($fields, $options, at($options,'type_options'), $scope);
-    $scope = page::decode_options($fields, $options, at($options,'field_options'), $scope);
-    page::expand_variables($db_fields, $options, $scope);
-    unset($options['type_options'], $options['field_options']);
-    $fields[$field] = $options;
-    return $options;
-  }
-  
-  static function null_merge($array1, $array2) 
-  {
-    if (is_array($array1)) 
-      return is_array($array2)? array_merge($array1, $array2): $array1;
-    return $array2;
-  }
-  
-  static function merge_to(&$array1, $array2)
-  {
-    $array1 = page::null_merge($array1, $array2);
-  }
-  
-  
-  static function compress_options($options)
-  {
-    $compressed = array();
-    foreach($options as $key=>$value) {
-      if (is_null($value))
-        $compressed[] = $key;
-      else
-        $compressed[$key] = $value;
-    }
-    return $compressed;
-  }
-  
-  static function replace_vars($str, $values)
-  {
-    foreach($values as $name=>$value) {
-      if (is_array($value))
-        $str = page::replace_vars ($str, $value);
-      else
-        $str = str_replace('$'.$name, $value, $str);
-    }
-    return $str;
-  }
-  
-  static function decode_options(&$db_fields, &$parent, $encoded, $scope)
-  {            
-    if ($encoded == '') return $scope;
+    $html = $field['html'];
+    if (isset($field['has_data']) || is_null($html)) return;
     $matches = array();
-    $encoded = str_replace('~', ',', $encoded);
-    $encoded = str_replace('\n', '', $encoded);
-    $encoded = str_replace('\r', '', $encoded);
-    if (!preg_match_all('/(\$?\w+)(?::\s*("[^"]*"|\[[^\]]*\]|{[^}]*}|[^,]*))?/', $encoded, $matches, PREG_SET_ORDER)) {
-      log::error("Invalid JSON string $encoded");
-      return $scope;
-    }
-    $index = 0;
+    if (!preg_match_all('/\$(\w+)/', $html, $matches, PREG_SET_ORDER)) return;
+    
+    $exclude = array('code','name','desc');
     foreach($matches as $match) {
-      $name = $match[1];
-      if ($name[0]=='$') $name = REQUEST(substr($name,1));
-
-      $parent[$name] = at($scope,$name);
-      $value = at($match,2);
-      ++$index;
-      if ($value == 'true' || $value == 'false') {
-        $scope[$name] = $parent[$name] = $value == 'true';
-        continue;
-      }
-      
-      $prefix = at($value,0);
-      if ($prefix == '"') {
-        $value = substr($value,1,strlen($value)-2);
-        $scope[$name] = $parent[$name] = page::replace_vars($value, $_REQUEST);
-        continue;
-      }
-
-      $is_template = $name == 'template';
-      if ($is_template && $prefix == '$') {
-        $scope[$name] = $parent[$name] = page::replace_vars($value, $_REQUEST);
-        continue;
-      } 
-            
-      if (in_array($prefix, array('{', '['))) {
-        $value = substr($value,1,strlen($value)-2);
-      }
-      else if (!$is_template && !is_null($value) && ($prefix != '$' || at($value,1) == '$')) {
-        $scope[$name] = $parent[$name] = page::replace_vars($value, $_REQUEST);
-        continue;
-      }
-      
-      $options = page::decode_db_options($db_fields, $name, $scope);
-      if (is_null($value)) {
-        $parent[$name] = page::null_merge($options, at($parent,$name));
-        continue;
-      }
-      
-      $options = page::null_merge($parent[$name], $options);
-
-      $scope = page::decode_options($db_fields, $options, $value, $scope);
-      if ($prefix == '[') {
-        $scope[$name] = $parent[$name] = page::compress_options($options);
-        continue;
-      }
-      
-      if ($prefix == '{') {
-        $scope[$name] = $parent[$name] = $options;
-        continue;
-      }
-      
-      
-      $db_opts = page::decode_db_options($db_fields, $value, $scope);
-
-      $options[$value] = page::null_merge($db_opts, at($options,$value));
-      $options[$value] = page::null_merge(at($options,$value), at($parent,$value));
-      page::merge_to($options[$value], at($parent,$value));
-      
-      if ($is_template) 
-        $parent[$name] = at($options[$value],'html');
-      else
-        $parent[$name] = $options;
-      $scope[$name] = $parent[$name];
-    }
-    return $scope;
-  }
-  
-    static function expand_variables(&$db_fields, &$data, $scope)
-  {
-    if (isset($data['has_data']) || !isset($data['html'])) return;
-    $matches = array();
-    if (!preg_match_all('/\$(\w+)/', $data['html'], $matches)) return;
-    
-    $vars = array_diff($matches[1], array('code','name','desc'));
-    foreach($vars as $var) {
-      $value = page::decode_db_options($db_fields, $var, $scope);
-      if (is_null($value)) continue;
-      page::merge_to($data[$var], $value);
+      $var = $match[1]; 
+      if (in_array($var, $exclude, true)) continue;
+      $value = $this->read_field($var, true);
+      if (!is_null($value)) $field[$var] = $value;
     }
   }
 
@@ -347,24 +220,15 @@ class page {
         $option = "";
     }
   }
-  static function read($request, $echo = true)
-  {
-    log::debug("page::read ".json_encode($request));
-    $data = page::read_field_options(at($request,'page'));
-    page::empty_fields($data, array('data'));
-    $data['program'] = config::$program_name;
-    if ($echo) echo json_encode($data);
-    return $data;
-  }
    
-  static function validate(&$validator, $options)
+  function validate($field)
   {
-    foreach($options as $code=>$values) {
+    foreach($field as $code=>$values) {
       if (!is_array($values)) continue;
       $valid = trim(at($values,'valid'));
       if ($value == '') continue;
       if (is_null($valid)) {
-        page::validate ($validator, $values);
+        $this->validate ($values);
         continue;
       }
       $matches = array();
@@ -374,31 +238,28 @@ class page {
       $name = at($values, 'name');
       foreach($matches as $match) {
         $valid = $match[1];
-        if ($valid == 'optional' && !$validator->check($code, $name)->provided()) continue;
-        $validator->check($code, $name)->is($valid);
+        if ($valid == 'optional' && !$this->validator->check($code, $name)->provided()) continue;
+        $this->validator->check($code, $name)->is($valid);
       }
     }
     
-    return $validator->valid();
+    return $this->validator->valid();
   }
 
-  static function read_page_field_options($request, &$page_options=null)
+  function read_page_field(&$page=null)
   {
-    $db_fields = array();
-    $scope = array();
-    $page_options = page::decode_db_options($db_fields, at($request,'_page'), $scope);
-    $field = $request['_field'];
-    $options = page::decode_db_options($db_fields, $field, $scope);
-
-    return page::null_merge(at($page_options,$field), $options);
+    $page = $this->read_request('_page');
+    $field = $this->read_request('_field');
+    return null_merge(at($page,$field), $field);
   }
   
   static function data($request)
   {
     log::debug('page::data page='.$request['_page']. ', field='.$request['_field']);
-    $options = page::read_page_field_options($request);    
+    $page = new page($request);
+    $field = $page->read_page_field();    
     //page::expand_values($row, array('template','html'));    
-    $data = $options['data'];
+    $data = $field['data'];
     
     $matches = array();
     preg_match('/^([^:]+): ?(.+)/s', $data, $matches);
@@ -419,14 +280,14 @@ class page {
       $rows = $db->read($list, MYSQLI_ASSOC);
     }
     else if (preg_match('/^([^\(]+)\(([^\)]+)\)/', $data, $matches) ) {
-      $rows = page::call($request, $matches[1], $matches[2], $options);
+      $rows = $this->call($matches[1], $matches[2], $field);
     }
 
-    set_valid($rows, $options, 'template');
+    set_valid($rows, $field, 'template');
     echo json_encode($rows);
   }
   
-  static function call($request, $function, $params, $options=null)
+  function call($function, $params, $options=null)
   {
     log::debug("FUNCTION $function PARAMS:".$params);
     list($class, $method) = explode('::', $function);
@@ -444,24 +305,24 @@ class page {
     
     $params = explode(',', $params);
     if (is_array($options)) {
-      $options = array_merge($request, $options);
+      $options = array_merge($this->request, $options);
       foreach($params as &$param) {
         $param = page::replace_vars ($param, $options);
       }
     }
-    return call_user_func_array($function, array_merge(array($request), $params));
+    return call_user_func_array($function, array_merge(array($this->request), $params));
   }
   
   static function action($request)
   {
+    $page = new page($request);
     $page_options = array();
-    $options = page::read_page_field_options($request, $page_options);
+    $options = $page->read_page_field($page_options);
     page::expand_values($options);
     page::expand_values($page_options);
     
    
-    $validator = new validator($request); //todo: fix coupling validator with reporting to front end
-    if (array_key_exists('validate', $options) && !page::validate($validator, $page_options)) 
+    if (array_key_exists('validate', $options) && !page::validate($page_options)) 
       return;
      
     $action = at($options,'action');
@@ -480,7 +341,7 @@ class page {
       echo json_encode($rows);
     }
     else if (preg_match('/^([^\(]+)\(([^\)]*)\)/', $action, $matches) ) {
-      page::call($request, $matches[1], $matches[2]);
+      $page->call($matches[1], $matches[2]);
     }
   }
 
@@ -492,9 +353,11 @@ class page {
     log::warn("No $field parameter provided");
     return false;
   }
+  
   static function load($request)   
   {  
-    $options = page::read_field_options($request['page']);
+    $page = new page($request);
+    $options = $page->read_request('page');
     page::expand_values($options);
 
     if (!($key=page::check_field($request, 'key'))
@@ -512,8 +375,8 @@ class page {
       $rows = $db->read_one($sql, MYSQLI_ASSOC);
       echo json_encode($rows);
     }
-    else if (preg_match('/^([^\(]+)\(([^\)]*)\)/', $action, $matches) ) {
-      page::call($request, $matches[1], $matches[2]);
+    else if (preg_match('/^([^\(]+)\(([^\)]*)\)/', $load, $matches) ) {
+      $page->call($matches[1], $matches[2]);
     }
   }
     
