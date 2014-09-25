@@ -38,7 +38,7 @@ class page
     $field = array('program' => config::$program_name);
     $page->read_request('page', $echo, $field);
     if (!$echo) return $field;
-    //page::empty_fields($field);
+    page::empty_fields($field);
     echo json_encode($field);
   }
   
@@ -93,14 +93,15 @@ class page
     
     $field = $replaced;
     $known_keys = array('name','desc','html','src', 'href', 'url', 
-      'action','data','load', 'valid', 'program');
+      'action','data','load', 'valid', 'program', 'sort');
     
-    foreach($field as $key=>&$value) {      
+    foreach($field as $key=>&$value) { 
+      if (in_array($key, $known_keys, true)) continue;
       $quotes = at($quoted, $key);
-      if ($quotes[0] != '"' && !in_array($key, $known_keys, true))// load unquoted field
+      if ($quotes[0] != '"')// load unquoted field
         $this->read_field($key, $expand_html, $value);
 
-      if (is_array($value) || in_array($key, $known_keys, true)) continue;
+      if (is_array($value)) continue;
 
       $value = replace_vars($value);      
       if ($quotes[1] == '"' || !preg_match('/^\w+$/',$value)) continue;
@@ -118,7 +119,7 @@ class page
   
   
   
-  function decode_options(&$field, $options_name, $quoted)
+  function decode_options(&$field, $options_name, &$quoted)
   {
     $options = at($field,$options_name);
     if (is_null($options)) return;
@@ -152,29 +153,46 @@ class page
     if (is_null($str)) return null;
     $orig = $str;
     $str = str_replace('~', ',', $str);
-    $str = preg_replace('/(?:(\$?\w+)|("[^"]*"))\s*:\s*(?:"([^"]*)"|([^\[\]}{,]+))/', '"$1$2":"$3$4"', $str);
-    $str = preg_replace('/(?:(\$?\w+)|"([^"]*)")\s*([:\[\]\${},])?/', '"$1$2"$3', $str);
     
+    // match name:value
+    $str = preg_replace('/(?:(\$?\w+)|("[^"]*"))\s*:\s*(?:"([^"]*)"|([^\[\]{},]+))/', '"$1$2":"$3$4"', $str);
+    // match name:{} or name:[]
+    $str = preg_replace('/(?:(\$?\w+)|"([^"]*)")\s*([:$\[\]{},])?/', '"$1$2"$3', $str);
+    log::debug("JSON PASS2 $str");
     $decoded = json_decode('{'.$str.'}', true);
     if (!is_null($decoded)) return $decoded;
     
-    // json not correct, perhaps we have an unexpanded object, e.g. {x,y,z}
+    // json not correct, perhaps we names without values, e.g. {x,y,z}
+    // also match [] but don't set empty value
     $matches = array();
-    if (!preg_match_all('/("\$?\w+")(\s*:\s*["\[{]?)?/', $str, $matches, PREG_SET_ORDER)) 
-    //if (!preg_match_all('/("[^"]+")(\s*:\s*(?:"[^"]+"|\{([^{}]|(?R))*\}))/', $str, $matches, PREG_SET_ORDER)) 
-      throw new Exception("Invalid JSON $str");
+    if (!preg_match_all('/("\$?\w+")(\s*:\s*["\[{]?)?|(\])/', $str, $matches, PREG_SET_ORDER)) 
+       throw new Exception("Invalid JSON (1) ORIG: $orig\n DECODED $str");
     
     $pos = 0;
+    $array_open = false;
     foreach($matches as $match) {
       $key = $match[1];
-      if (!null_at($match,2)) continue; 
+      if (is_numeric($key)) continue;
+      $value = at($match,2);
+      $array_closed = at($match, 3);
+      //log::debug("JSON PASS3 ".json_encode(array($key,$value,last($value),$array_open,$array_closed)));
+      if ($array_closed) {  // closing array
+        $array_open = false; 
+        continue;
+      }
+      if (!is_null($value)) {
+        $array_open = last($value) == '[';
+        continue;
+      }
+      else if ($array_open) 
+        continue;
       $pos = strpos($str, $key, $pos)+strlen($key);
       $str = substr($str, 0, $pos) . ':""'.substr($str, $pos);
     }
     
     $decoded =  json_decode('{'.$str.'}', true);
     if (is_null($decoded))
-       throw new Exception("Invalid JSON ORIG: $orig\n DECODED $str");
+       throw new Exception("Invalid JSON (2) ORIG: $orig\n DECODED $str");
 
     return $decoded;
   }
@@ -249,8 +267,9 @@ class page
   function read_page_field(&$page=null)
   {
     $page = $this->read_request('_page');
+    $code = $this->request['_field'];
     $field = $this->read_request('_field');
-    return null_merge(at($page,$field), $field);
+    return null_merge($field, at($page, $code));
   }
   
   static function data($request)
@@ -320,9 +339,8 @@ class page
     $options = $page->read_page_field($page_options);
     page::expand_values($options);
     page::expand_values($page_options);
-    
-   
-    if (array_key_exists('validate', $options) && !page::validate($page_options)) 
+       
+    if (array_key_exists('validate', $options) && !$page->validate($page_options)) 
       return;
      
     $action = at($options,'action');
