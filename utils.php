@@ -2,7 +2,6 @@
 
 function at($array, $index) 
 {
-  if (!is_array($array)) return null;
   return isset($array[$index])? $array[$index]: null;
 }
 
@@ -10,15 +9,22 @@ function GET($item) { return at($_GET, $item); }
 function POST($item) { return at($_POST, $item); }
 function REQUEST($item) { return at($_REQUEST, $item); }
 function SESSION($item) { return at($_SESSION, $item); }
-function last($array) { return at($array, sizeof($array)-1); }
 function null_at($array, $index) { return is_null(at($array,$index)); }
 function valid_at($array, $index) { return !is_null(at($array,$index)); }
+
 function set_valid(&$dest, $source, $index = null) 
 {
   if (is_null($source)) return $dest;
   if (is_null($index)) return $dest = $source;
   $val = $source[$index];
   if (!is_null($val)) $dest[$index] = $val;
+}
+
+function last($array) 
+{
+  if (is_null($array)) return null;
+  $length = is_array($array)?sizeof($array): strlen($array);
+  return at($array, $length-1);
 }
 
 function null_merge($array1, $array2) 
@@ -62,3 +68,15 @@ function replace_vars($str, $values=null)
 function is_assoc($array) {
   return (bool)count(array_filter(array_keys($array), 'is_string'));
 }
+
+
+function compress_array($array)
+{
+  $compressed = array();
+  foreach($array as $key=>$value) {
+    if ($value != '') return $array;
+    $compressed[] = $key;
+  }
+  return $compressed;
+}
+  
