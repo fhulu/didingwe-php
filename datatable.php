@@ -258,8 +258,8 @@ class datatable {
     $widths = $options['widths'];
     $flags = $options['flags'];
     $show_key = in_array('show_key', $flags, true);
-    $columns = array(array());
-    $data = datatable::read_data($request, function($row_data, $pagenum, $index) use (&$columns, $widths, $show_key) {
+    $columns = array(array(),array()); // reserve space for heading and titles
+    $data = datatable::read_data($request, function($row_data, $pagenum, $index) use (&$columns, $widths, $show_key) {     
       $fill_color = $index % 2 === 0? '216,216,216': '255,255,255';
       $col = array();
       $index = 0;
@@ -272,15 +272,21 @@ class datatable {
       }
       $columns[] = $col;
     });
-    $titles = &$columns[0];
+       
+    $titles = &$columns[1];
     $index = 0;
+    $total_width = 0;
     foreach ($data['fields'] as $field) {
       if ($index++ == 0 && !$show_key ) continue;
       $pos = each($widths);
       if ($pos === false) break;
       $width = max(18,$pos[1]/7);
+      $total_width += $width;
       $titles[] = array('text' => $field['name'], 'width' => $width, 'height' => '5', 'align' => 'L', 'font_name' => 'Arial', 'font_size' => '8', 'font_style' => 'B', 'fillcolor' => '192,192,192', 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linewidth' => '0.4', 'linearea' => 'LTBR');
     }
+    
+    $heading = &$columns[0];
+    $heading[] = array('text' => $options['report_title'], 'width' =>  $total_width, 'height' => '5', 'align' => 'C', 'font_name' => 'Arial', 'font_size' => '11', 'font_style' => 'B', 'fillcolor' => '255,255,255', 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linearea' => 'LTBR');
 
     $pdf->WriteTable($columns);
     $pdf->Output();
