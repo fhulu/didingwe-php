@@ -254,19 +254,32 @@ class datatable {
     $pdf->Footer('Council for Scientific and Industrial Research (CSIR)');
     $pdf->Ln(40);
     $request['page_size'] = 0;
+    $options = page::read_field_options(at($request, 'field'));
+    $widths = $options['widths'];
+    $flags = $options['flags'];
+    $show_key = in_array('show_key', $flags, true);
     $columns = array(array());
-    $data = datatable::read_data($request, function($row_data, $pagenum, $index) use (&$columns) {
+    $data = datatable::read_data($request, function($row_data, $pagenum, $index) use (&$columns, $widths, $show_key) {
       $fill_color = $index % 2 === 0? '216,216,216': '255,255,255';
+      $col = array();
+      $index = 0;
       foreach ($row_data as $value) {
-       $col[] = array('text' => $value, 'width' => '32', 'height' => '5', 'align' => 'L', 'font_name' => 'Arial', 'font_size' => '8', 'font_style' => 'B', 'fillcolor' => "$fill_color", 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linewidth' => '0.4', 'linearea' => 'LTBR');
+       if ($index++ == 0 && !$show_key ) continue;
+       $pos = each($widths);
+       if ($pos === false) break;
+       $width = max(18,$pos[1]/7);
+       $col[] = array('text' => $value, 'width' =>  $width, 'height' => '5', 'align' => 'L', 'font_name' => 'Arial', 'font_size' => '8', 'font_style' => 'B', 'fillcolor' => "$fill_color", 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linewidth' => '0.4', 'linearea' => 'LTBR');
       }
       $columns[] = $col;
     });
     $titles = &$columns[0];
     $index = 0;
     foreach ($data['fields'] as $field) {
-      $col = &$titles[$index++];
-      $col[] = array('text' => $field, 'width' => '32', 'height' => '5', 'align' => 'L', 'font_name' => 'Arial', 'font_size' => '8', 'font_style' => 'B', 'fillcolor' => '192,192,192', 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linewidth' => '0.4', 'linearea' => 'LTBR');
+      if ($index++ == 0 && !$show_key ) continue;
+      $pos = each($widths);
+      if ($pos === false) break;
+      $width = max(18,$pos[1]/7);
+      $titles[] = array('text' => $field['name'], 'width' => $width, 'height' => '5', 'align' => 'L', 'font_name' => 'Arial', 'font_size' => '8', 'font_style' => 'B', 'fillcolor' => '192,192,192', 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linewidth' => '0.4', 'linearea' => 'LTBR');
     }
 
     $pdf->WriteTable($columns);
