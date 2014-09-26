@@ -17,10 +17,11 @@ class datatable {
     if (!is_null($actions) && array_key_exists($action, $actions))
       return;
 
+    $page = new page();
     if (array_key_exists($action, $options))
       $actions[$action] = $options[$action];
     else
-      $actions[$action] = page::read_field_options($action);
+      $actions[$action] = $page->read_field($action);
   }
 
   static function read_actions($options, $rows) {
@@ -96,7 +97,8 @@ class datatable {
       $sql = substr($sql, 0, $where_pos + 6) . "$where and" . substr($sql, $where_pos + 6);
   }
 
-  static function read_db($sql, $options, $callback) {
+  static function read_db($sql, $options, $callback) 
+  {
     $page_size = at($options, 'page_size');
     if (is_null($page_size))
       $page_size = 0;
@@ -114,10 +116,11 @@ class datatable {
     $names = $db->field_names;
     $total = $db->row_count();
     $fields = array();
+    $page = new page();
     foreach ($names as $name) {
-      $field = page::read_field_options($name);
+      $field = $page->read_field($name, false);
       page::expand_values($field);
-      $fields[] = page::null_merge(array('code' => $name), $field);
+      $fields[] = null_merge(array('code' => $name), $field);
     }
 
     $result = array('fields' => $fields, 'rows' => $rows, 'total' => $total);
@@ -125,10 +128,11 @@ class datatable {
   }
   
   static function read_data($request, $callback = null) {
-    $options = page::read_field_options(at($request, 'field'));
+    $page = new page($request);
+    $options = $page->read_request('field', false);
     if (is_null($options))
       throw new Exception("Could not find options for field" . at($request, 'field'));
-    page::expand_values($options);
+    $page->expand_values($options);
 
     $data = $options['data'];
     if (!isset($data))
@@ -152,10 +156,10 @@ class datatable {
           if (!is_null($val))
             $sql = str_replace('$' . $var, $val, $sql);
         }
-      $data = datatable::read_db($sql, page::null_merge($options, $request), $callback);
+      $data = datatable::read_db($sql, array_merge($options, $request), $callback);
     }
     else if (preg_match('/^([^\(]+)\(([^\)]*)\)/', $data, $matches)) {
-      $data = page::call($request, $type, $source, $callback);
+      $data = $page->call($type, $source, $callback);
     }
     page::empty_fields($options);
     $data['options'] = $options;
