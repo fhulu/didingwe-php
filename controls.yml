@@ -1,0 +1,175 @@
+---
+# html controls
+button: 
+  html: <button id="$code" title="$desc" class=action>$name</button>
+checkbox: 
+  html: <input id="$code" title="$desc" type='checkbox'></input>
+container: 
+  html: <div id="$code">$children</div>
+  children: {template:$field}
+control:
+  html: <$tag id="$code" title="$desc" $attrs $attr>$text<$tag>
+container_without_id:
+  html: <div>$children</div>
+  options: "children:{template:$field}"
+data_table:
+  html: <table id="$code" class=data>\n<tbody></tbody>\n</table>
+  create: datatable
+  script: common/datatable.js
+  css: datatable.css
+  position: top
+  sort_order: asc
+  paging:
+    - goto_first_page
+    - goto_prev_page
+    - goto_next_page
+    - goto_last_page
+date:
+  type: input
+  create: datepicker
+  dateFormat: yy-mm-dd
+datetime:
+  type: input
+  create: datetimepicker
+  format: Y-m-d H:i
+  script: common/jquery.datetimepicker.js
+  css: common/jquery.datetimepicker.css
+disabled_text_input:
+  type: input
+  attributes: disabled
+dropdown:
+  html: <select id="$code" has_data><option>--Select $name--</option>$children</select>
+  children:
+    template: <option value='$item_code' $extra>$item_name</option>
+file:
+  html: <file id="$code" name="$code"></file>
+form:
+  html: <form id="$code></form>
+google_map:
+  html: <div id='$code'></div>
+  create: mapper
+  script: common/map.js
+  zoom: 5
+  pin: blue_map_marker
+hidden:
+  html: <input id='$code' type=hidden></input>
+  hidden: true
+image:
+  html: <img id="$code" src="$src" title"$desc"></img>
+input: 
+  html: <input id="$code" title="$desc" type='text'></input>
+inline_input:
+  html: <a class=input>$field<span class="input">$desc</span></a>
+  attr: placeholder="$name"
+inline_input_page:
+  html: |
+    <div id='$code'>
+      $page_header
+      <div class="form">
+        $inputs
+        $actions
+      </div>
+    </div>
+  inputs: 
+    template: inline_input
+
+input_page_header: 
+  html: |
+    <div id="$code" page="$name">
+      <p class="desc">$desc</p>
+      <span class=ajax_result style="display: none;"></span>
+    </div>
+label:
+  html: <p id='$code'>$name</p>
+  
+labelled_input:
+  html: |
+    <p>$name$label_suffix</p>
+    <a class=input>
+      $field
+      <span>$desc</span>
+    </a>
+  label_suffix: :
+  labelled_input_page:
+    html: |
+      <div id="$code">
+        $page_header
+        <div class="form">
+          $inputs
+          <p></p>$actions
+        </div>
+      </div>
+    inputs: {template:labelled_input}
+    mandatory_sign: *
+
+link:
+  html: <a id="$code" href="$href" title="$desc">$name</a>"
+menu:
+  html: <ul id="$code">$items</ul>
+  template: <a href="$url">$title</a>
+  
+one_cell_row:
+  html: <tr><td>$field</td></tr>
+one_row_table:
+  html: <table id='$code'><tr>$columns</tr></table>
+  columns:{ template:table_cell}
+page:
+  html: <div id="$code" page="$name"></div>
+
+paragraph:
+  html: <p id="$code">$desc</p>
+password:
+  html:"<input type="password" id="$code" title="$desc"></input>
+plain_text:
+  html:
+  
+submit_button:
+  _type: button
+  selector: #page *
+sub_menu:
+  html: |
+    <li>
+      <a href='$href' id="$code">$name</a>
+      <span>$children</span>
+    </li>
+table:
+  html: <table id="$code"><thead></thead><tbody>$rows</tbody></table>
+  rows:{template:table_row}
+table_cell:
+  html: <td>$field</td>
+table_input:
+  html: |
+    <tr class=input>
+      <td>$name</td>
+      <td>
+        <a class=input>
+          $field
+          <span>$desc</span>
+        </a>
+      </td>
+    </tr>
+    
+table_input_page:
+  html: | 
+    <div id='$code'>
+      $page_header
+      <table class=form>
+        $inputs
+        <tr>
+          <td></td>
+          <td>$actions</td>
+        </tr>
+      </table>
+    </div>
+  inputs:{template:table_input}
+table_page:
+  html: <table id='$code' title="$name">$children</table>
+  children: {template:one_cell_row}
+table_row:
+  html: <tr>$columns</tr>
+  columns: {template:table_cell}
+text: {_type: input }
+textrea:
+  html: <textarea id="$code"></textarea>
+text_input: {_type: input }
+...
