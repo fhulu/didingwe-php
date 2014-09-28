@@ -35,9 +35,8 @@ class page3
   var $object;
   var $method;
   var $page;
-  var $controls; 
+  static $all_fields; 
   var $fields;
-  var $result;
   var $types;
   var $validator;
   static function test()
@@ -56,25 +55,24 @@ class page3
     if (is_null($this->method))
       throw new Exception("No method parameter in request");
     $this->page = at($request, 'page');
-    $this->controls = array();
     $this->fields = array('program', config::$program_name);
-    $this->result = new page_result();
+    $this->types = array();
     
     //todo: fix coupling validator with reporting to front end
     //$this->validator = new validator($request);
     
     $this->load();
-    $this->{$this->method}();
-    
-    echo json_encode($this->result);
+    $result = $this->{$this->method}($this->myfields);
+
+    echo json_encode($result);
  }
   
   function load()
   {
-    $this->load_yaml('../common/controls.yml', $this->controls); //todo cache common controls
-    $this->load_yaml('custom_controls.yml', $this->controls);
-    $this->load_yaml('../common/fields.yml', $this->fields); //todo cache common fields
-    $this->load_yaml('custom_fields.yml', $this->fields);
+    $this->load_yaml('../common/controls.yml', page3::$all_fields); //todo cache common controls
+    $this->load_yaml('custom_controls.yml', page3::$all_fields);
+    $this->load_yaml('../common/fields.yml', page3::$all_fields); //todo cache common fields
+    $this->load_yaml('custom_fields.yml', page3::$all_fields);
     $this->load_yaml("$this->object.yml", $this->fields);
   }
   
@@ -90,141 +88,44 @@ class page3
   function read()
   {    
     $fields = $this->fields[$this->page];
-    //$this->expand_fields($this->controls, $fields);
-    $this->expand_fields($fields); 
-    $this->result->fields = $fields;
+    $this->set_types($this->fields, $fields);
+    $this->set_types(page3::$all_fields, $fields);
+    return array(
+      'types'=>$this->types,
+      'fields'=>$fields,
+    );
+  }
+  
     
-    $types = array();
-    while ($this->expand_types($fields, $types)) {
-      $fields = $types;
+  function set_types($parent, $field)
+  {
+    if (!is_array($field)) {
+      if (array_key_exists($field, $this->types)) return true;
+      if (!array_key_exists($field, $parent)) return false;
+
+      $this->types[$field] = $value = $parent[$field];
+      if (is_array($value)) $this->set_types($parent, $value);
+      return true;
     }
-    $this->result->types = $types;
-//    page::empty_fields($field);
-//    echo json_encode($field);
-  }
-  
-  
-  function expand_types($fields, &$types)
-  {
-    $controls = $this->controls;
-    $expanded = false;
-    array_walk_recursive($fields, function($value, $key) use (&$types, $controls, &$expanded) {
-      if ($types[$value] == $controls[$value]) return;
-      if ($key == 'type' || $key == 'template' && ctype_alpha($value[0])) {
-        $types[$value] = $controls[$value];
-        $expanded = true;
-      }
-    });
-    return $expanded;
-  }
-  
-  function expand_fields(&$fields)
-  {
-    $parent = $this->fields;
+    
     $known_keys = array('name','desc','html','src', 'href', 'url', 
-      'data','values', 'valid', 'type', 'sort');
-    foreach($fields as $key=>&$value) {
+      'data','values', 'valid', 'attr', 'sort');
+    foreach($field as $key=>&$value) {
       if (in_array($key, $known_keys, 1)) continue;
-
-      if (is_array($value)) 
-        $this->expand_fields($value);
       
-      if (!is_numeric($key)) {
-        $options = at($this->fields, $key);
-        if (is_array($options))
-          $value = array_merge($options, $value);     
-      }
-
-      // numeric key
-      if (is_array($value)) continue;
-      $options = at($this->fields, $value);
-      if (is_array($options)) $value = array($value=>$options);
-
-    } 
-  }
-  
-  function decode_options(&$field, $options_name, &$quoted)
-  {
-    $options = at($field,$options_name);
-    if (is_null($options)) return;
-    
-    page::match_quoted($options, $quoted);   
-    $decoded = page::decode_json($options);
-    //log::debug("FIELD ". json_encode($field));
-    //log::debug("DECODED ".  json_encode($decoded));
-    merge_to($field, $decoded);
-    unset($field[$options_name]);
-    //log::debug("MERGED ". json_encode($field));
-  }
-  
- 
-  static function match_quoted($str, &$quoted)
-  {
-    $result = $matches = array();
-    if (!preg_match_all('/(")?([^"]+)\1?(?:\s*:\s*(")?([^{\[^"]+)\3?)?/', $str, $matches, PREG_SET_ORDER)) return;
-    foreach($matches as $match) {
-      $key_quote = $match[1];
-      $value_quote = $match[3];
-      if (is_null($key_quote) && is_null($value_quote)) continue;
-      $key = $match[2];
-      $quoted[$key] = array($key_quote,$value_quote);
+      if (!is_numeric($value))
+        $this->set_types($parent, $value);        
+      
+      if (!is_numeric($key))
+        $this->set_types($parent, $key);
     }
-    merge_to($quoted, $result);
+    return true;
   }
-  
-  static function decode_json($str)
-  {
-    if (is_null($str)) return null;
-    $orig = $str;
-    $str = str_replace('~', ',', $str);
-    
-    // match name:value
-    $str = preg_replace('/(?:(\$?\w+)|("[^"]*"))\s*:\s*(?:"([^"]*)"|([^\[\]{},]+))/', '"$1$2":"$3$4"', $str);
-    // match name:{} or name:[]
-    $str = preg_replace('/(?:(\$?\w+)|"([^"]*)")\s*([:$\[\]{},])?/', '"$1$2"$3', $str);
-    log::debug("JSON PASS2 $str");
-    $decoded = json_decode('{'.$str.'}', true);
-    if (!is_null($decoded)) return $decoded;
-    
-    // json not correct, perhaps we names without values, e.g. {x,y,z}
-    // also match [] but don't set empty value
-    $matches = array();
-    if (!preg_match_all('/("\$?\w+")(\s*:\s*["\[{]?)?|(\])/', $str, $matches, PREG_SET_ORDER)) 
-       throw new Exception("Invalid JSON (1) ORIG: $orig\n DECODED $str");
-    
-    $pos = 0;
-    $array_open = false;
-    foreach($matches as $match) {
-      $key = $match[1];
-      if (is_numeric($key)) continue;
-      $value = at($match,2);
-      $array_closed = at($match, 3);
-      //log::debug("JSON PASS3 ".json_encode(array($key,$value,last($value),$array_open,$array_closed)));
-      if ($array_closed) {  // closing array
-        $array_open = false; 
-        continue;
-      }
-      if (!is_null($value)) {
-        $array_open = last($value) == '[';
-        continue;
-      }
-      else if ($array_open) 
-        continue;
-      $pos = strpos($str, $key, $pos)+strlen($key);
-      $str = substr($str, 0, $pos) . ':""'.substr($str, $pos);
-    }
-    
-    $decoded =  json_decode('{'.$str.'}', true);
-    if (is_null($decoded))
-       throw new Exception("Invalid JSON (2) ORIG: $orig\n DECODED $str");
-
-    return $decoded;
-  }
-   
+     
   function expand_html(&$field)
   {
-    $html = $field['html'];
-    if (isset($field['has_data']) || is_null($html)) return;
+    $html = at($field, 'html');
+    if (is_null($html)) return;
     $matches = array();
     if (!preg_match_all('/\$(\w+)/', $html, $matches, PREG_SET_ORDER)) return;
     
@@ -232,8 +133,13 @@ class page3
     foreach($matches as $match) {
       $var = $match[1]; 
       if (in_array($var, $exclude, true)) continue;
-      $value = $this->read_field($var, true);
-      if (!is_null($value)) $field[$var] = $value;
+      if (set_types($page->fields, $var) || set_types(page3::$all_fields, $var)) continue;
+      $yaml_file = "$var.yml";
+      if (!file_exists($yaml_file)) 
+        throw new Exception("Failure expanding variable \$$var. Cannot find YAML file $yaml_file ");
+      
+      $fields = $this->load_yaml($yaml_file);
+      set_types(page3::$all_fields, $fields);
     }
   }
 
@@ -249,7 +155,7 @@ class page3
     }
   }
   
-  static function empty_fields(&$options, $fields=array('data','load'))
+  static function empty_fields(&$options, $fields=array('data','sql'))
   {
     foreach($options as $key=>&$option)
     {
