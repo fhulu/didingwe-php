@@ -301,8 +301,9 @@ $.fn.page = function(options, callback)
       var template;
       var html;
       var len = items.length;
-      for(var i=0; i<len; ++i) {
+      for(var i in items) {
         var item = items[i];
+        if (item === undefined || items === null) continue;
         var item_html;
         var id;
         if ($.isPlainObject(item)) {
@@ -330,11 +331,14 @@ $.fn.page = function(options, callback)
         else if (types[item] !== undefined) {
           id = item;
           item = types[item];
-          if (item.type === undefined && type !== undefined) 
-            item = this.merge(type, item);
+          if (type !== undefined) {
+            item = item || $.copy(type);
+            if (item.type === undefined && item.html === undefined) 
+              item = this.merge(type, item);
+          }
           item_html = this.get_html(id, item, types);
         }
-        else
+        else if (typeof item === 'string')
           item_html = item;
        
         var result = this.get_template_html(template, item, item_html, id);
@@ -349,8 +353,6 @@ $.fn.page = function(options, callback)
       field = page.merge_type(field, types);
       if (field.name === undefined)
         field.name = toTitleCase(id.replace(/_/g, ' '));
-//      if (field.desc === undefined)
-//        field.desc = field.name; 
       var html = field.html;
       console.log("before", id, html);
       if (html === undefined) return undefined;
@@ -365,8 +367,10 @@ $.fn.page = function(options, callback)
           var val = values[value];
           if (val !== undefined) value = val;
         }
-
+        
         if ($.isArray(value)) {
+          if (types[code] !== undefined)
+            value = $.merge($.merge([], types[code]), value);
           value = this.get_list_html(value, values);
         }
         else if ($.isPlainObject(value)) {
