@@ -293,7 +293,7 @@ $.fn.page = function(options, callback)
       var type;
       var template;
       var html;
-      var len = items.length;
+      var mandatory;
       for(var i in items) {
         var item = items[i];
         if (item === undefined || items === null) continue;
@@ -306,6 +306,10 @@ $.fn.page = function(options, callback)
           }
           if (item.template !== undefined) {
             template = this.get_type_html(item.template, types);
+            continue;
+          }
+          if (item.mandatory !== undefined) {
+            mandatory = item;
             continue;
           }
           
@@ -346,13 +350,26 @@ $.fn.page = function(options, callback)
       return html;
     },
     
+    get_attr_html: function(field, html)
+    {
+      var attr = field.attr;
+      if (html == '' || !attr) return html;
+      
+      var tmp = $(html);
+      if (typeof attr === 'string') 
+        tmp.attr(attr,"");
+      else $.each(attr, function(key, val) {
+        tmp.attr(key,val);
+      });
+      return $('<div>').append(tmp).html();
+    },
+    
     get_html: function(id, field, types)
     {
       field = page.merge_type(field, types);
       if (field.name === undefined)
         field.name = toTitleCase(id.replace(/_/g, ' '));
       var html = field.html;
-      console.log("before", id, html);
       if (html === undefined) return undefined;
       var reserved = ['code','create','css','script','name', 'desc', 'data'];
       var values = $.extend({}, types, field);
@@ -360,7 +377,6 @@ $.fn.page = function(options, callback)
       for (var i in matches) {
         var code = matches[i];
         var value = code === 'code'? id: values[code];
-        console.log("processing", code, value);
         if (typeof value === 'string' && value.search(/\W/) < 0 && reserved.indexOf(code) < 0) {
           var val = values[value];
           if (val !== undefined) value = val;
@@ -378,23 +394,17 @@ $.fn.page = function(options, callback)
         if (value !== undefined)
           html = html.replace("$"+code, value);
       }
-      console.log("processed", code, html);
-      return html;
+      return this.get_attr_html(field, html);
     },
     
     show: function(data)
     {
       var id = options.object;
       var html = page.get_html(id, data.page, data.types);
-      console.log(html);
-      var object = $(html).addClass('page').appendTo(page.parent);
-      
-      return;
-      var key = options.key;
-      data = page.expand_fields(id,data);
-      page.expand_children(data);
       var parent = page.parent;
-      var object = $(data.html).addClass('page').appendTo(parent);
+      var object = $(html).addClass('page').appendTo(parent);
+      return;
+      var data = this.merge(data.types, data.page)
       object.on('loaded', function() {
         page.set_options(parent, id, data,function(){
           var options = {};
