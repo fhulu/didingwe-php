@@ -1,19 +1,26 @@
 ---
 # html controls
+blank:
+  html: ""
+    
 button: 
   html: <button id="$code" title="$desc" class=action>$name</button>
+  
 checkbox: 
   html: <input id="$code" title="$desc" type='checkbox'></input>
+  
 container: 
   html: <div id="$code">$children</div>
   children: 
-    template: $field
+    - template: $field
 control:
   html: <$tag id="$code" title="$desc" $attrs $attr>$text<$tag>
+  
 container_without_id:
   html: <div>$children</div>
   children: 
     template: $field
+    
 data_table:
   html: <table id="$code" class=data>\n<tbody></tbody>\n</table>
   create: datatable
@@ -30,39 +37,50 @@ date:
   type: input
   create: datepicker
   dateFormat: yy-mm-dd
+  
 datetime:
   type: input
   create: datetimepicker
   format: Y-m-d H:i
   script: common/jquery.datetimepicker.js
   css: common/jquery.datetimepicker.css
+  
 disabled_text_input:
   type: input
   attributes: disabled
+  
 dropdown:
   html: <select id="$code" has_data><option>--Select $name--</option>$options</select>
   options:
     - template: <option value='$item_code' $extra>$item_name</option>
+
 file:
   html: <file id="$code" name="$code"></file>
+
 form:
   html: <form id="$code></form>
+
 google_map:
   html: <div id='$code'></div>
   create: mapper
   script: common/map.js
   zoom: 5
   pin: blue_map_marker
+
 hidden:
   html: <input id='$code' type=hidden></input>
   hidden: true
+
 image:
   html: <img id="$code" src="$src" title"$desc"></img>
+
 input: 
   html: <input id="$code" title="$desc" type='text'></input>
+
 inline_input:
   html: <a class=input>$field<span class="input">$desc</span></a>
   attr: placeholder="$name"
+
 inline_input_page:
   html: |
     <div id='$code'>
@@ -108,36 +126,44 @@ labelled_input_page:
 
 link:
   html: <a id="$code" href="$href" title="$desc">$name</a>"
+
 menu:
   html: <ul id="$code">$items</ul>
   items:
     - template: <a href="$url">$title</a>
-  
+
 one_cell_row:
   html: <tr><td>$field</td></tr>
+
 one_column_table:
   html: <table id='$code' title="$name">$items</table>
   items: 
-    - template : one_cell_row
+    - template: one_cell_row
+
 one_row_table:
   html: <table id='$code'><tr>$items</tr></table>
   items:
     - template: table_cell
+
 page:
   html: <div id="$code" page="$name"></div>
 
 paragraph:
   html: <p id="$code">$desc</p>
+
 password:
   html:"<input type="password" id="$code" title="$desc"></input>
+
 plain:
   html: $name
+
 plain_text:
   type: plain
   
 submit_button:
   _type: button
   selector: #page *
+
 sub_menu:
   html: |
     <li>
@@ -150,6 +176,7 @@ table:
     - template: table_row
 table_cell:
   html: <td>$field</td>
+
 table_input:
   html: |
     <tr class=input>
@@ -175,14 +202,20 @@ table_input_page:
       </table>
     </div>
   inputs: [template: table_input]
+
 table_page:
   html: <table id='$code' title="$name">$children</table>
   children: [template: one_cell_row]
+
 table_row:
   html: <tr>$columns</tr>
   columns: [template: table_cell]
+
 text: { type: input }
+
 textrea:
   html: <textarea id="$code"></textarea>
+
 text_input: {type: input }
+
 ...
