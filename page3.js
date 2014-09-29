@@ -204,13 +204,17 @@ $.fn.page = function(options, callback)
       })
     },
     
-    merge: function(a1, a2)
+    merge: function(a1, a2, stack)
     {
-      var is_array=$.isArray(a1);
-      var r = is_array? []: {};
-      for (var i in a1) {
-        if (a1.hasOwnProperty(i)) r[i] = a1[i];
+      if (stack === undefined)
+        stack = 0;
+      else if (stack == 10) {
+        console.log("overflow merge ", a1, at)
+        return field;
       }
+      if (a1 === undefined || a1 === null) return a2;
+      if (a2 === undefined || a2 === null) return a1;
+      var r = $.copy(a1);
       for (var i in a2) {
         if (!a2.hasOwnProperty(i)) continue;
         var v2 = a2[i];
@@ -218,7 +222,7 @@ $.fn.page = function(options, callback)
           r[i] = v2;
           continue;
         }
-        var v1 = a1[i];
+        var v1 = r[i];
         if (typeof v1 !== typeof v2 
                 || $.isArray(v1) && !$.isArray(v2) 
                 || $.isPlainObject(v1) && !$.isPlainObject(v2)) {
@@ -232,59 +236,138 @@ $.fn.page = function(options, callback)
           continue;
         }
         if ($.isPlainObject(v1)) 
-          r[i] = page.merge(v1, v2);
+          r[i] = page.merge(v1, v2, ++stack);
         else 
           r[i] = v2;
       }
       return r;
     },
     
-    merge_type: function(field, types)
+    merge_type: function(field, types, type, stack)
     {
-      var type = field.type;
+      if (stack === undefined)
+        stack = 0;
+      else if (stack === 3) {
+        console.log("overflow ", field, type)
+        return field;
+      }
+      if (type === undefined) type = field.type;
       if (type === undefined) return field;
-      var super_type = this.merge_type(types[type], types);
+      console.log('finding type ', type);
+      var super_type = this.merge_type(types[type], types, undefined, ++stack);
       return this.merge(super_type, field);
     },
    
-    get_template: function(type, fields, types)
+    get_type_html: function(type, types)
     {
-      var type = page.get_type(id, fields, types);
-      if (type.template !== undefined) 
-      return type.template.html===undefined? html: type.template.html;
+      if (type.search(/\W/) >= 0) return type;
+      return this.merge_type(types[type], types).html;
     },
     
-    get_list: function()
+    get_template_html: function(template, item, html, id)
     {
-      
+      if (template === undefined) return html;
+      if ($.isPlainObject(item)) {
+        var matches = getMatches(template, /\$(\w+)/g);
+        for (var i in matches) {
+          var code = matches[i];
+          if (code === 'field') continue;
+          var value = item[code];
+          if (code === 'name' && value === undefined)
+            value = toTitleCase(id);
+          
+          if (value !== undefined)
+            template = template.replace('$'+code, value);
+        }
+      }
+      else 
+        html = item;
+      if (html !== undefined)
+        template = template.replace('$field', html);
+      if (id !== undefined)
+        template = template.replace('$code', id);
+      return template;
+    },
+    
+    get_list_html: function(items, types)
+    {
+      var type;
+      var template;
+      var html;
+      var len = items.length
+      for(var i=0; i<len; ++i) {
+        var item = items[i];
+        var item_html;
+        var id;
+        if ($.isPlainObject(item)) {
+          if (item.type !== undefined) {
+            type = this.get_type_html(item.type, types);
+            continue;
+          }
+          if (item.template !== undefined) {
+            template = this.get_type_html(item.template, types);
+            continue;
+          }
+          
+          $.each(item, function(key) {
+            id = key;
+          })
+          item = this.merge(types[id], item[id]);
+          if (item.type === undefined && type !== undefined) 
+            item.html = type;
+          item_html = this.get_html(id, item, types);
+        }
+        else if ($.isArray(item)) {
+          item_html = this.get_list_html(item, types);
+        }
+        else if (types[item] !== undefined) {
+          id = item;
+          item = types[item];
+          if (item.type === undefined && type !== undefined) 
+            item.html = type;
+          item_html = this.get_html(id, item, types);
+        }
+        else
+          item_html = item;
+       
+        var result = this.get_template_html(template, item, item_html, id);
+        if (result === undefined) continue;
+        html = html===undefined? result: html + result;
+      };
+      return html;
     },
     
     get_html: function(id, field, types)
     {
       field = page.merge_type(field, types);
+      if (field.name === undefined)
+        field.name = toTitleCase(id.replace(/_/g, ' '));
+//      if (field.desc === undefined)
+//        field.desc = field.name; 
       var html = field.html;
       console.log("before", id, html);
       if (html === undefined) return undefined;
-      var reserved = ['code','template','create','css','script','load', 'data'];
+      var reserved = ['code','create','css','script','name', 'desc', 'data'];
       var values = $.extend({}, types, field);
-      var regex = /\$(\w+)/g;
-      for (var match = regex.exec(html); match !== null; match = regex.exec(html)) {
-        var code = match[1];
+      var matches = getMatches(html, /\$(\w+)/g);
+      for (var i in matches) {
+        var code = matches[i];
         var value = code === 'code'? id: values[code];
         console.log("processing", code, value);
-        if (parseInt(value) === NaN && code !== 'code') {
+        if (typeof value === 'string' && value.search(/\W/) < 0 && reserved.indexOf(code) < 0) {
           var val = values[value];
-          if (val === undefined) value = val;
+          if (val !== undefined) value = val;
         }
 
         if ($.isArray(value)) {
-          value = this.get_list(value, types);
+          value = this.get_list_html(value, values);
         }
         else if ($.isPlainObject(value)) {
           value = this.get_html(code, value, values);
         }
           
-        html = html.replace("$"+code, value);
+        if (value !== undefined)
+          html = html.replace("$"+code, value);
       }
       console.log("processed", code, html);
       return html;
@@ -293,7 +376,10 @@ $.fn.page = function(options, callback)
     show: function(data)
     {
       var id = options.object;
-      page.get_html(id, data.fields, data.types);
+      var html = page.get_html(id, data.fields, data.types);
+      console.log(html);
+      var object = $(html).addClass('page').appendTo(page.parent);
+      
       return;
       var key = options.key;
       data = page.expand_fields(id,data);
