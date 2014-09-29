@@ -1,0 +1,51 @@
+## YAML Template.
+---
+
+actions:
+  - type: button
+
+cellphone:
+  desc: The cellphone number at which you can be contacted
+  valid: national_tel
+
+contacts:
+  email: support@mukoni.co.za
+
+create_time:
+
+date:
+
+developer:
+  name: developed by Mukoni Software
+  
+email:
+  type: email_address
+
+email_address:
+  desc: The email address for email notifications and use it as your user name  on $program
+  valid: email
+
+error_page:
+  desc: Unexpected error occured. Please report to your System Administrator.
+ 
+first_name:
+  desc: "Your first name as written in your ID book."
+  valid:
+    - at_least(2)
+    - alphabetic
+  
+id:
+  name: Identity
+  
+id_no:
+  name: ID Number
+
+id_number:
+  name: ID Number
+  
+inputs:
+  - type: input
+    
+program:
+  
+

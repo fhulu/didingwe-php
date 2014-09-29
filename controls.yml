@@ -6,12 +6,14 @@ checkbox:
   html: <input id="$code" title="$desc" type='checkbox'></input>
 container: 
   html: <div id="$code">$children</div>
-  children: {template:$field}
+  children: 
+    template: $field
 control:
   html: <$tag id="$code" title="$desc" $attrs $attr>$text<$tag>
 container_without_id:
   html: <div>$children</div>
-  options: "children:{template:$field}"
+  children: 
+    template: $field
 data_table:
   html: <table id="$code" class=data>\n<tbody></tbody>\n</table>
   create: datatable
@@ -38,9 +40,9 @@ disabled_text_input:
   type: input
   attributes: disabled
 dropdown:
-  html: <select id="$code" has_data><option>--Select $name--</option>$children</select>
-  children:
-    template: <option value='$item_code' $extra>$item_name</option>
+  html: <select id="$code" has_data><option>--Select $name--</option>$options</select>
+  options:
+    - template: <option value='$item_code' $extra>$item_name</option>
 file:
   html: <file id="$code" name="$code"></file>
 form:
@@ -64,14 +66,14 @@ inline_input:
 inline_input_page:
   html: |
     <div id='$code'>
-      $page_header
+      $input_page_header
       <div class="form">
         $inputs
         $actions
       </div>
     </div>
   inputs: 
-    template: inline_input
+    - template: inline_input
 
 input_page_header: 
   html: |
@@ -88,31 +90,39 @@ labelled_input:
     <a class=input>
       $field
       <span>$desc</span>
-    </a>
-  label_suffix: :
-  labelled_input_page:
+    </a>  
+  label_suffix: ":"
+
+labelled_input_page:
     html: |
       <div id="$code">
-        $page_header
+        $input_page_header
         <div class="form">
           $inputs
           <p></p>$actions
         </div>
       </div>
-    inputs: {template:labelled_input}
-    mandatory_sign: *
+    inputs: 
+      - template: labelled_input
+      - mandatory_sign: "*"
 
 link:
   html: <a id="$code" href="$href" title="$desc">$name</a>"
 menu:
   html: <ul id="$code">$items</ul>
-  template: <a href="$url">$title</a>
+  items:
+    - template: <a href="$url">$title</a>
   
 one_cell_row:
   html: <tr><td>$field</td></tr>
+one_column_table:
+  html: <table id='$code' title="$name">$items</table>
+  items: 
+    - template : one_cell_row
 one_row_table:
-  html: <table id='$code'><tr>$columns</tr></table>
-  columns:{ template:table_cell}
+  html: <table id='$code'><tr>$items</tr></table>
+  items:
+    - template: table_cell
 page:
   html: <div id="$code" page="$name"></div>
 
@@ -120,8 +130,10 @@ paragraph:
   html: <p id="$code">$desc</p>
 password:
   html:"<input type="password" id="$code" title="$desc"></input>
+plain:
+  html: $name
 plain_text:
-  html:
+  type: plain
   
 submit_button:
   _type: button
@@ -134,7 +146,8 @@ sub_menu:
     </li>
 table:
   html: <table id="$code"><thead></thead><tbody>$rows</tbody></table>
-  rows:{template:table_row}
+  rows:
+    - template: table_row
 table_cell:
   html: <td>$field</td>
 table_input:
@@ -152,7 +165,7 @@ table_input:
 table_input_page:
   html: | 
     <div id='$code'>
-      $page_header
+      $input_page_header
       <table class=form>
         $inputs
         <tr>
@@ -161,15 +174,15 @@ table_input_page:
         </tr>
       </table>
     </div>
-  inputs:{template:table_input}
+  inputs: [template: table_input]
 table_page:
   html: <table id='$code' title="$name">$children</table>
-  children: {template:one_cell_row}
+  children: [template: one_cell_row]
 table_row:
   html: <tr>$columns</tr>
-  columns: {template:table_cell}
-text: {_type: input }
+  columns: [template: table_cell]
+text: { type: input }
 textrea:
   html: <textarea id="$code"></textarea>
-text_input: {_type: input }
+text_input: {type: input }
 ...
