@@ -260,15 +260,21 @@ $.fn.page = function(options, callback)
    
     get_type_html: function(type, types)
     {
-      if (type.search(/\W/) >= 0) return type;
-      return this.merge_type(types[type], types).html;
+      if (type.search(/\W/) >= 0) return {html: type};
+      return this.merge_type(types[type], types);
+    },
+    
+    replace_template: function(text, code, values)
+    {
     },
     
     get_template_html: function(template, item, html, id)
     {
-      if (template === undefined) return html;
+      if (template === undefined || template.html === undefined) return html;
+      var result = template.html;
       if ($.isPlainObject(item)) {
-        var matches = getMatches(template, /\$(\w+)/g);
+       item = $.extend({}, template, item);
+        var matches = getMatches(template.html, /\$(\w+)/g);
         for (var i in matches) {
           var code = matches[i];
           if (code === 'field') continue;
@@ -276,17 +282,17 @@ $.fn.page = function(options, callback)
           if (code === 'name' && value === undefined)
             value = toTitleCase(id);
           
-          if (value !== undefined)
-            template = template.replace('$'+code, value);
+          if (value === undefined) continue;
+            result = result.replace('$'+code, value);
         }
       }
       else 
         html = item;
       if (html !== undefined)
-        template = template.replace('$field', html);
+        result = result.replace('$field', html);
       if (id !== undefined)
-        template = template.replace('$code', id);
-      return template;
+        result = result.replace('$code', id);
+      return result;
     },
     
     get_list_html: function(items, types)
@@ -294,7 +300,7 @@ $.fn.page = function(options, callback)
       var type;
       var template;
       var html;
-      var len = items.length
+      var len = items.length;
       for(var i=0; i<len; ++i) {
         var item = items[i];
         var item_html;
@@ -314,7 +320,8 @@ $.fn.page = function(options, callback)
           })
           item = this.merge(types[id], item[id]);
           if (item.type === undefined && type !== undefined) 
-            item.html = type;
+            item = this.merge(type, item);
+
           item_html = this.get_html(id, item, types);
         }
         else if ($.isArray(item)) {
@@ -324,7 +331,7 @@ $.fn.page = function(options, callback)
           id = item;
           item = types[item];
           if (item.type === undefined && type !== undefined) 
-            item.html = type;
+            item = this.merge(type, item);
           item_html = this.get_html(id, item, types);
         }
         else
@@ -376,7 +383,7 @@ $.fn.page = function(options, callback)
     show: function(data)
     {
       var id = options.object;
-      var html = page.get_html(id, data.fields, data.types);
+      var html = page.get_html(id, data.page, data.types);
       console.log(html);
       var object = $(html).addClass('page').appendTo(page.parent);
       
