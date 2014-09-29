@@ -95,13 +95,14 @@ class page3
   {    
     if ($this->page == 'default')
       $this->page = $this->fields['default'];
-    $fields = $this->fields[$this->page];
-    $this->set_types($this->fields, $fields);
-    $this->set_types(page3::$all_fields, $fields);
-    $this->expand_html($fields);
+    $page = $this->fields[$this->page];
+    $this->set_types($this->fields, $page);
+    $this->set_types(page3::$all_fields, $page);
+    $this->expand_html($page, 'html');
+    $this->expand_html($page, 'template');
     return array(
-      'fields'=>$fields,
-      'types'=>$this->types,
+      'page'=>$page,
+      'types'=>  $this->types,
     );
   }
   
@@ -129,25 +130,30 @@ class page3
       if (!is_numeric($key))
         $this->set_types($parent, $key);
     }
+    
     return true;
   }
      
-  function expand_html(&$field)
+  function expand_html($field, $html_type)
   {
-    $html = at($field, 'html');
+    $html = at($field, $html_type);
     if (is_null($html)) {
       $type = at($field, 'type');
-      if (!$this->set_types($this->fields, $var) && !$this->set_types(page3::$all_fields, $type)) return;
-      $this->expand_html(at($this->types, $type));
+      if ($this->set_types($this->fields, $type) || $this->set_types(page3::$all_fields, $type)) 
+        $this->expand_html(at($this->types, $type), $html_type);
+      return;
     };
     $matches = array();
     if (!preg_match_all('/\$(\w+)/', $html, $matches, PREG_SET_ORDER)) return;
     
-    $exclude = array('code','name','desc');
+    $exclude = array('code','name','desc', 'field');
     foreach($matches as $match) {
       $var = $match[1]; 
       if (in_array($var, $exclude, true)) continue;
-      if ($this->set_types($this->fields, $var) || $this->set_types(page3::$all_fields, $var)) continue;
+      if ($this->set_types($this->fields, $var) || $this->set_types(page3::$all_fields, $var)) {
+        $this->expand_html(at($this->types, $var), $html_type);
+        continue;
+      }
       $yaml_file = "$var.yml";
       if (!file_exists($yaml_file)) 
         throw new Exception("Failure expanding variable \$$var. Cannot find YAML file $yaml_file ");
