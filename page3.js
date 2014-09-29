@@ -243,18 +243,11 @@ $.fn.page = function(options, callback)
       return r;
     },
     
-    merge_type: function(field, types, type, stack)
+    merge_type: function(field, types, type)
     {
-      if (stack === undefined)
-        stack = 0;
-      else if (stack === 3) {
-        console.log("overflow ", field, type)
-        return field;
-      }
       if (type === undefined) type = field.type;
       if (type === undefined) return field;
-      console.log('finding type ', type);
-      var super_type = this.merge_type(types[type], types, undefined, ++stack);
+      var super_type = this.merge_type(types[type], types, undefined);
       return this.merge(super_type, field);
     },
    
@@ -288,11 +281,11 @@ $.fn.page = function(options, callback)
       }
       else 
         html = item;
-      if (html !== undefined)
+      if (html != null)
         result = result.replace('$field', html);
-      if (id !== undefined)
+      if (id != null)
         result = result.replace('$code', id);
-      return result;
+      return result===template.html? undefined: result;
     },
     
     get_list_html: function(items, types)
