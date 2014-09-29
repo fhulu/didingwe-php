@@ -39,22 +39,23 @@ class page3
   var $fields;
   var $types;
   var $validator;
-  static function test()
-  {
-    new page3();
-  }
 
   function __construct($request=null)
   {
     if (is_null($request)) $request = $_REQUEST;
+    log::debug(json_encode($request));
     $this->request = $request;
     $this->object = at($request, 'object');
     if (is_null($this->object))
       throw new Exception("No object parameter in request");
+    
     $this->method = at($request, 'method');
     if (is_null($this->method))
-      throw new Exception("No method parameter in request");
-    $this->page = at($request, 'page');
+      $this->method = 'read';
+    
+    $this->page = at($request, 'page');    
+    if (is_null($this->page))
+      $this->page = 'default';
     $this->fields = array('program', config::$program_name);
     $this->types = array();
     
@@ -66,6 +67,11 @@ class page3
 
     echo json_encode($result);
  }
+  
+  static function run()
+  {
+    new page3();
+  }
   
   function load()
   {
@@ -87,18 +93,22 @@ class page3
   
   function read()
   {    
+    if ($this->page == 'default')
+      $this->page = $this->fields['default'];
     $fields = $this->fields[$this->page];
     $this->set_types($this->fields, $fields);
     $this->set_types(page3::$all_fields, $fields);
+    $this->expand_html($fields);
     return array(
-      'types'=>$this->types,
       'fields'=>$fields,
+      'types'=>$this->types,
     );
   }
   
     
   function set_types($parent, $field)
   {
+    if (is_null($field)) return;
     if (!is_array($field)) {
       if (array_key_exists($field, $this->types)) return true;
       if (!array_key_exists($field, $parent)) return false;
@@ -125,7 +135,11 @@ class page3
   function expand_html(&$field)
   {
     $html = at($field, 'html');
-    if (is_null($html)) return;
+    if (is_null($html)) {
+      $type = at($field, 'type');
+      if (!$this->set_types($this->fields, $var) && !$this->set_types(page3::$all_fields, $type)) return;
+      $this->expand_html(at($this->types, $type));
+    };
     $matches = array();
     if (!preg_match_all('/\$(\w+)/', $html, $matches, PREG_SET_ORDER)) return;
     
@@ -133,13 +147,13 @@ class page3
     foreach($matches as $match) {
       $var = $match[1]; 
       if (in_array($var, $exclude, true)) continue;
-      if (set_types($page->fields, $var) || set_types(page3::$all_fields, $var)) continue;
+      if ($this->set_types($this->fields, $var) || $this->set_types(page3::$all_fields, $var)) continue;
       $yaml_file = "$var.yml";
       if (!file_exists($yaml_file)) 
         throw new Exception("Failure expanding variable \$$var. Cannot find YAML file $yaml_file ");
       
       $fields = $this->load_yaml($yaml_file);
-      set_types(page3::$all_fields, $fields);
+      $this->set_types(page3::$all_fields, $fields);
     }
   }
 
