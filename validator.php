@@ -162,28 +162,36 @@ class validator
   
   function less($name, $title=null)
   {
-    if ($this->value < $this->request[$name]) return true;
+    $value = $this->request[$name];
+    if (is_numeric($name)) $value = $title = $name; 
+    if ($this->value < $value) return true;
     if (is_null($title)) $title = $this->title($name);
     return $this->error("!$this->title must be less than $title");
   }
   
   function less_equal($name, $title=null)
   {
-    if ($this->value < $this->request[$name]) return true;
+    $value = $this->request[$name];
+    if (is_numeric($name)) $value = $title = $name; 
+    if ($this->value <= $value) return true;
     if (is_null($title)) $title = $this->title($name);
     return $this->error("!$this->title must be less or equal to  $title");
   }
   
   function greater($name, $title=null)
   {
-    if ($this->value > $this->request[$name]) return true;
+    $value = $this->request[$name];
+    if (is_numeric($name)) $value = $title = $name; 
+    if ($this->value > $value) return true;
     if (is_null($title)) $title = $this->title($name);
     return $this->error("!$this->title must be greater than $title");
   }
   
   function greater_equal($name, $title=null)
   {
-    if ($this->value > $this->request[$name]) return true;
+    $value = $this->request[$name];
+    if (is_numeric($name)) $value = $title = $name; 
+    if ($this->value >= $value) return true;
     if (is_null($title)) $title = $this->title($name);
     return $this->error("!$this->title must be greater or equal to $title");
   }
@@ -312,20 +320,29 @@ class validator
     }
     return true;
   }
-  
+ 
+  function relate_time($time, $type)
+  {
+  if ($type == 'future' && $this->value < $time)
+      return $this->error("!$this->title must be in the future");
+
+    if ($type == 'past' && $this->value >= $time)
+      return $this->error("!$this->title must be in the past");
+    return true;
+  } 
+
   function date($type)
   {
     if (!$this->regex('/^\d{4}([-\/])(0\d|1[0-2])\1([0-2][0-9]|3[01])$/')) return false;
-    $today = Date('Y-m-d');
-    if ($type == 'future' && $this->value < $today)
-      return $this->error("!$this->title must be in the future");
-      
-    if ($type == 'past' && $this->value >= $today)
-      return $this->error("!$this->title must be in the past");    
-    return true;      
+    return $this->relate(Date('Y-m-d'), $type);
   }
   
-  
+  function datetime($type)
+  {
+    if (!$this->regex('/(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})(:(\d{2}))?/')) return false;
+    return $this->relate_time(Date('Y-m-d H:i:s'), $type);
+  }
+
   function valid()
   {
     return !$this->has_errors;
