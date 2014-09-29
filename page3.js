@@ -338,8 +338,13 @@ $.fn.page = function(options, callback)
           }
           item_html = this.get_html(id, item, types);
         }
-        else if (typeof item === 'string')
-          item_html = item;
+        else if (typeof item === 'string') {
+          id = item;
+          if (type !== undefined) {
+            item = $.copy(type);
+            item_html = this.get_html(id, item, types);
+          }
+        }
        
         var result = this.get_template_html(template, item, item_html, id);
         if (result === undefined) continue;
