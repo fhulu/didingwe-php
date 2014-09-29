@@ -63,7 +63,7 @@ $.fn.getValue = function()
   var type = this.attr('type');
   if ((type === 'radio' || type === 'checkbox') && !this.is(':checked')) return true;
   var val = this.val();
-  return val === undefined? this.text(): val;
+  return val === undefined && !this.hasAttr('value')? this.text(): val;
 }
 
 $.fn.value = function(val)
@@ -88,7 +88,7 @@ $.fn.values = function()
       else
         data[name] = val;
     }
-    else if (val === undefined)
+    else if (val === undefined && !ctrl.hasAttr('value'))
       data[name] = ctrl.text();
     else
       data[name] = val;
@@ -302,7 +302,7 @@ $.reportError = function(field, error)
   }
   var box = $("<div class=error>"+error+"</div>");
   sibling.after(box);
-  box.fadeIn('slow');
+  box.fadeIn('slow').click(function() { $(this).fadeOut('slow') });
 }
 
 $.reportFirstError = function(event, result)
