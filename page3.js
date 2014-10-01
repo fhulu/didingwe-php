@@ -263,16 +263,18 @@ $.fn.page = function(options, callback)
     
     get_template_html: function(template, item)
     {
-      assert(template.html);
-      if (!$.isPlainObject(item)) return template.html;
-      item = $.extend({}, template, item);
-      var result = template.html;
-      var matches = getMatches(template.html, /\$(\w+)/g);
+      var result = template;
+      if (typeof template !== 'string') {
+        item = $.extend({}, template, item);
+        assert(template.html);
+        result = template.html;
+      }
+      if (!$.isPlainObject(item)) return result;
+      var matches = getMatches(result, /\$(\w+)/g);
       for (var i in matches) {
         var code = matches[i];
         if (code === 'field') continue;
-        var value = item[code];          
-        if (value === undefined) continue;
+        var value = item[code] || '';          
         result = result.replace('$'+code, value);
       }
       return result;
@@ -281,7 +283,7 @@ $.fn.page = function(options, callback)
     append_contents: function(parent, name, items, types)
     {
       var type;
-      var template;
+      var template = "$field";
       var mandatory;
       var regex = new RegExp('(\\$'+name+')');
       for(var i in items) {
@@ -332,20 +334,17 @@ $.fn.page = function(options, callback)
           }
         }
         
-        var replace_id = id;
-        if (template) {
-          var templated = this.get_template_html(template, item);
-          if (typeof result === 'string') {
-            templated = templated.replace('$field', result);
-            parent.replace(regex, templated+'$1');
-            continue;
-          }
+        var templated = this.get_template_html(template, item);
+        if (typeof result === 'string') {
+          templated = templated.replace('$field', result);
           parent.replace(regex, templated+'$1');
-          replace_id = 'field';
+          continue;
         }
+        parent.replace(regex, templated+'$1');
+
         var new_id = "__new__"+id;
         var new_html = "<div id="+new_id+"></div>";
-        parent.replace("\\$"+replace_id, new_html);
+        parent.replace("\\$field", new_html);
         parent.find('#'+new_id).replaceWith(result);    
       }
       parent.replace(regex, '');
