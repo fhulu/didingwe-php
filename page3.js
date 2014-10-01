@@ -261,43 +261,31 @@ $.fn.page = function(options, callback)
     {
     },
     
-    get_template_html: function(template, item, html, id)
+    get_template_html: function(template, item)
     {
-      if (template === undefined || template.html === undefined) return html;
+      assert(template.html);
+      if (!$.isPlainObject(item)) return template.html;
+      item = $.extend({}, template, item);
       var result = template.html;
-      if ($.isPlainObject(item)) {
-       item = $.extend({}, template, item);
-        var matches = getMatches(template.html, /\$(\w+)/g);
-        for (var i in matches) {
-          var code = matches[i];
-          if (code === 'field') continue;
-          var value = item[code];
-          if (code === 'name' && value === undefined)
-            value = toTitleCase(id);
-          
-          if (value === undefined) continue;
-            result = result.replace('$'+code, value);
-        }
+      var matches = getMatches(template.html, /\$(\w+)/g);
+      for (var i in matches) {
+        var code = matches[i];
+        if (code === 'field') continue;
+        var value = item[code];          
+        if (value === undefined) continue;
+        result = result.replace('$'+code, value);
       }
-      else 
-        html = item;
-      if (html != null)
-        result = result.replace('$field', html);
-      if (id != null)
-        result = result.replace('$code', id);
-      return result===template.html? undefined: result;
+      return result;
     },
     
-    get_list_html: function(items, types)
+    append_contents: function(parent, items, types, html)
     {
       var type;
       var template;
-      var html;
       var mandatory;
       for(var i in items) {
         var item = items[i];
-        if (item === undefined || items === null) continue;
-        var item_html;
+        var result;
         var id;
         if ($.isPlainObject(item)) {
           if (item.type !== undefined) {
@@ -320,10 +308,11 @@ $.fn.page = function(options, callback)
           if (item.type === undefined && type !== undefined) 
             item = this.merge(type, item);
 
-          item_html = this.get_html(id, item, types);
+          item.code = id;
+          result = this.create(parent, item, types);
         }
         else if ($.isArray(item)) {
-          item_html = this.get_list_html(item, types);
+          result = this.append_contents(parent, item, types, html);
         }
         else if (types[item] !== undefined) {
           id = item;
@@ -333,76 +322,131 @@ $.fn.page = function(options, callback)
             if (item.type === undefined && item.html === undefined) 
               item = this.merge(type, item);
           }
-          item_html = this.get_html(id, item, types);
+          item.code = id
+          result = this.create(parent, item, types);
         }
         else if (typeof item === 'string') {
           id = item;
           if (type !== undefined) {
             item = $.copy(type);
-            item_html = this.get_html(id, item, types);
+            item.code = id;
+            result = this.create(parent, item, types);
           }
         }
-       
-        var result = this.get_template_html(template, item, item_html, id);
-        if (result === undefined) continue;
-        html = html===undefined? result: html + result;
-      };
+        
+        var replace_id = id;
+        if (template) {
+          var templated = this.get_template_html(template, item);
+          if (typeof result === 'string') {
+            templated = templated.replace('$field', result);
+            html && (html += templated) || parent.replace(/$/, templated);
+           continue;
+          }
+          parent.replace(/\$/, templated);
+          replace_id = 'field';
+        }
+        var new_id = "__new__"+id;
+        var new_html = "<div id="+new_id+"></div>";
+        parent.replace("\\$"+replace_id, new_html);
+        parent.find('#'+new_id).replaceWith(result);
+        
+      }
       return html;
     },
     
-    get_attr_html: function(field, html)
+    set_attr: function(obj, field)
     {
       var attr = field.attr;
-      if (html == '' || !attr) return html;
-      
-      var tmp = $(html);
-      if (typeof attr === 'string') 
-        tmp.attr(attr,"");
-      else $.each(attr, function(key, val) {
-        tmp.attr(key,val);
+      if (attr) {
+        if (typeof attr === 'string') 
+          obj.attr(attr,"");
+        else $.each(attr, function(key, val) {
+          obj.attr(key,val);
+        });
+      }
+      $.each(obj[0].attributes, function(i, attr) {
+        var matches = getMatches(attr.value, /\$(\w+)/g)
+        for (var j in matches) {
+          var value = field[matches[j]];
+          if (value === undefined || typeof value !== 'string') continue;
+          obj.attr(attr.name, attr.value.replace(/\$(\w+)/g, value));
+        }
       });
-      return $('<div>').append(tmp).html();
     },
     
-    get_html: function(id, field, types)
+    replace: function(id, value, obj, html)
+    {
+      if (typeof value === 'string') {
+        obj && obj.replace("$"+id, value);
+        html && html.replace('$'+id,value);
+        return html || obj;
+      }
+      var new_id = "__new__"+id;
+      var new_html = "<div id="+new_id+"></div>";
+      obj.replace('$'+id, new_html);
+      obj.find('#'+new_id).replaceWith(value);
+      return obj;
+    },
+    
+    create: function(parent, field, types)
     {
       field = page.merge_type(field, types);
       if (field.name === undefined)
-        field.name = toTitleCase(id.replace(/_/g, ' '));
-      var html = field.html;
-      if (html === undefined) return undefined;
+        field.name = toTitleCase(field.code.replace(/_/g, ' '));
+      var obj = $(field.html);
+      var dest = parent;
+      var html;
+      if (obj.exists()) {
+        dest = obj;
+        this.set_attr(obj, field);
+      }
+      else {
+        html = field.html;
+        obj = undefined;
+      } 
       var reserved = ['code','create','css','script','name', 'desc', 'data'];
       var values = $.extend({}, types, field);
-      var matches = getMatches(html, /\$(\w+)/g);
+      console.log(field.code, html || obj.html());
+      var matches = getMatches(html || obj.html(), /\$(\w+)/g);
       for (var i in matches) {
         var code = matches[i];
-        var value = code === 'code'? id: values[code];
+        var value = values[code];
         if (typeof value === 'string' && value.search(/\W/) < 0 && reserved.indexOf(code) < 0) {
-          var val = values[value];
-          if (val !== undefined) value = val;
+          value = values[value] || value;
         }
         
         if ($.isArray(value)) {
           if (types[code] !== undefined)
             value = $.merge($.merge([], types[code]), value);
-          value = this.get_list_html(value, values);
+          value = this.append_contents(dest, value, values, html);
+          if (typeof value !== 'string') continue;
         }
-        else if ($.isPlainObject(value)) {
-          value = this.get_html(code, value, values);
+        
+        if (typeof value === 'string') {
+          obj && obj.replace("\\$"+code, value);
+          html && html.replace('$'+code,value);
+          continue;
         }
-          
-        if (value !== undefined)
-          html = html.replace("$"+code, value);
+
+        value.code = code;
+        value = this.create(dest, value, values);
+        var new_id = "__new__"+code;
+        var new_html = "<div id="+new_id+"></div>";
+        dest.replace("\\$"+code, new_html);
+        console.log("replaced \\$"+code, dest.html());
+        dest.find('#'+new_id).replaceWith(value);
       }
-      return this.get_attr_html(field, html);
+      
+      return html || obj;
     },
     
     show: function(data)
     {
-      var id = options.object;
-      var html = page.get_html(id, data.page, data.types);
+      data.page.code = options.page;
       var parent = page.parent;
-      var object = $(html).addClass('page').appendTo(parent);
+      var object = page.create(parent, data.page, data.types);
+      if (object !== undefined)
+         object.addClass('page').appendTo(parent);
       return;
       var data = this.merge(data.types, data.page)
       object.on('loaded', function() {
