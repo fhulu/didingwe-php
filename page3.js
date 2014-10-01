@@ -341,11 +341,8 @@ $.fn.page = function(options, callback)
           continue;
         }
         parent.replace(regex, templated+'$1');
-
-        var new_id = "__new__"+id;
-        var new_html = "<div id="+new_id+"></div>";
-        parent.replace("\\$field", new_html);
-        parent.find('#'+new_id).replaceWith(result);    
+        
+        this.replace(parent, result, id, 'field');
       }
       parent.replace(regex, '');
     },
@@ -370,18 +367,14 @@ $.fn.page = function(options, callback)
       });
     },
     
-    replace: function(id, value, obj, html)
+    replace: function(parent, child, id, field)
     {
-      if (typeof value === 'string') {
-        obj && obj.replace("$"+id, value);
-        html && html.replace('$'+id,value);
-        return html || obj;
-      }
+      id = id || child.attr('id');
+      field = field || id;
       var new_id = "__new__"+id;
       var new_html = "<div id="+new_id+"></div>";
-      obj.replace('$'+id, new_html);
-      obj.find('#'+new_id).replaceWith(value);
-      return obj;
+      parent.replace("\\$"+field, new_html);
+      parent.find('#'+new_id).replaceWith(child);    
     },
     
     create: function(field, types)
@@ -417,11 +410,7 @@ $.fn.page = function(options, callback)
 
         value.code = code;
         value = this.create(value, values);
-        var new_id = "__new__"+code;
-        var new_html = "<div id="+new_id+"></div>";
-        obj.replace("\\$"+code, new_html);
-        console.log("replaced \\$"+code, obj.html());
-        obj.find('#'+new_id).replaceWith(value);
+        this.replace(obj, value, code);
       }
       
       return obj;
