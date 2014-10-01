@@ -288,7 +288,6 @@ $.fn.page = function(options, callback)
       var regex = new RegExp('(\\$'+name+')');
       for(var i in items) {
         var item = items[i];
-        var result;
         var id;
         if ($.isPlainObject(item)) {
           if (item.type !== undefined) {
@@ -302,47 +301,33 @@ $.fn.page = function(options, callback)
           if (item.mandatory !== undefined) {
             mandatory = item;
             continue;
-          }
-          
+          } 
           $.each(item, function(key) {
             id = key;
           })
           item = this.merge(types[id], item[id]);
-          if (item.type === undefined && type !== undefined) 
-            item = this.merge(type, item);
-
-          item.code = id;
-          result = this.create(item, types);
         }
         else if (types[item] !== undefined) {
           id = item;
           item = types[item];
-          if (type !== undefined) {
-            item = item || $.copy(type);
-            if (item.type === undefined && item.html === undefined) 
-              item = this.merge(type, item);
-          }
-          item.code = id
-          result = this.create(item, types);
         }
         else if (typeof item === 'string') {
+          if (type === undefined) continue; // todo take care of undefined types
           id = item;
-          if (type !== undefined) {
-            item = $.copy(type);
-            item.code = id;
-            result = this.create(item, types);
-          }
+          item = $.copy(type);
         }
         
-        var templated = this.get_template_html(template, item);
-        if (typeof result === 'string') {
-          templated = templated.replace('$field', result);
-          parent.replace(regex, templated+'$1');
-          continue;
+        if (type !== undefined) {
+          item = item || $.copy(type);
+          if (item.type === undefined) 
+            item = this.merge(type, item);
         }
-        parent.replace(regex, templated+'$1');
         
-        this.replace(parent, result, id, 'field');
+        item.code = id;
+        var created = this.create(item, types);        
+        var templated = this.get_template_html(template, created[0]);
+        parent.replace(regex, templated+'$1');        
+        this.replace(parent, created[1], id, 'field');
       }
       parent.replace(regex, '');
     },
@@ -380,14 +365,12 @@ $.fn.page = function(options, callback)
     create: function(field, types)
     {
       field = page.merge_type(field, types);
-      if (field.name === undefined)
-        field.name = toTitleCase(field.code.replace(/_/g, ' '));
+      field.name = field.name || toTitleCase(field.code.replace(/_/g, ' '));
       var obj = $(field.html);
       assert(obj.exists(), "Invalid HTML for "+field.code); 
       this.set_attr(obj, field);
       var reserved = ['code','create','css','script','name', 'desc', 'data'];
       var values = $.extend({}, types, field);
-      console.log(field.code, obj.html());
       var matches = getMatches(obj.html(), /\$(\w+)/g);
       for (var i in matches) {
         var code = matches[i];
@@ -399,8 +382,8 @@ $.fn.page = function(options, callback)
         if ($.isArray(value)) {
           if (types[code] !== undefined)
             value = $.merge($.merge([], types[code]), value);
-          value = this.append_contents(obj, code, value, values);
-          if (typeof value !== 'string') continue;
+           this.append_contents(obj, code, value, values);
+           continue;
         }
         
         if (typeof value === 'string') {
@@ -409,18 +392,18 @@ $.fn.page = function(options, callback)
         }
 
         value.code = code;
-        value = this.create(value, values);
-        this.replace(obj, value, code);
+        var result = this.create(value, values);
+        this.replace(obj, result[1], code);
       }
       
-      return obj;
+      return [field, obj];
     },
     
     show: function(data)
     {
       data.page.code = options.page;
       var parent = page.parent;
-      var object = page.create(data.page, data.types);
+      var object = page.create(data.page, data.types)[1];
       if (object !== undefined)
          object.addClass('page').appendTo(parent);
       return;
