@@ -27,12 +27,13 @@ function last($array)
   return at($array, $length-1);
 }
 
-function null_merge($array1, $array2) 
+function null_merge($array1, $array2, $recurse = true) 
 {
   if (!is_array($array2)) return $array1;
   
   if (is_array($array1)) 
-    return is_array($array2)? array_merge_recursive($array1, $array2): $array1;
+    return $recurse? array_merge_recursive($array1, $array2): array_merge($array1, $array2);
+
   return $array2;
 }
 
