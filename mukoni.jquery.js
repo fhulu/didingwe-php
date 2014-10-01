@@ -632,10 +632,6 @@ function loadLink(link,type)
    loadFile(link,'script');
  }
  
- Array.prototype.insert = function (index, item) {
-  this.splice(index, 0, item);
-};
-
 $.jsonSize = function(object)
 {
   var i=0;
@@ -646,4 +642,81 @@ $.jsonSize = function(object)
 $.valid = function(object)
 {
   return object !== null && object !== undefined;
+}
+
+
+
+
+function isNumber(n) {
+  return !isNaN(parseFloat(n)) && isFinite(n);
+}
+
+
+function toTitleCase(str) {
+  return str.replace(/\w\S*/g,  function (txt) { 
+    return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase(); 
+  });
+}
+  
+ 
+// from stackoverflow: Mathias Bynens 
+function getMatches(string, regex, index) {
+    index || (index = 1); // default to the first capturing group
+    var matches = [];
+    var match;
+    while (match = regex.exec(string)) {
+        matches.push(match[index]);
+    }
+    return matches;
+}  
+
+// Gary Haran => gary@talkerapp.com
+// This code is released under MIT licence
+(function($) {
+  var replacer = function(finder, replacement, element, blackList) {
+    if (!finder || typeof replacement === 'undefined') {
+      return
+    }
+    var regex = (typeof finder == 'string') ? new RegExp(finder, 'g') : finder;
+    var childNodes = element.childNodes;
+    var len = childNodes.length;
+    var list = typeof blackList == 'undefined' ? 'html,head,style,title,link,meta,script,object,iframe,pre,a,' : blackList;
+    while (len--) {
+      var node = childNodes[len];
+      if (node.nodeType === 1 && true || (list.indexOf(node.nodeName.toLowerCase()) === -1)) {
+        replacer(finder, replacement, node, list);
+      }
+      if (node.nodeType !== 3 || !regex.test(node.data)) {
+        continue;
+      }
+      var frag = (function() {
+        var html = node.data.replace(regex, replacement);
+        var wrap = document.createElement('span');
+        var frag = document.createDocumentFragment();
+        wrap.innerHTML = html;
+        while (wrap.firstChild) {
+          frag.appendChild(wrap.firstChild);
+        }
+        return frag;
+      })();
+      var parent = node.parentNode;
+      parent.insertBefore(frag, node);
+      parent.removeChild(node);
+    }
+  }
+  $.fn.replace = function(finder, replacement, blackList) {
+    return this.each(function() {
+      replacer(finder, replacement, $(this).get(0), blackList);
+    });
+  }
+})(jQuery);
+
+function assert(condition, message) {
+  if (!condition) {
+    message = message || "Assertion failed";
+    if (typeof Error !== "undefined") {
+      throw new Error(message);
+    }
+    throw message; // Fallback
+  }
 }
