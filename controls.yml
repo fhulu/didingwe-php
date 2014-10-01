@@ -4,6 +4,7 @@ blank:
   html: ""
     
 button: 
+  desc: ""
   html: <button id="$code" title="$desc" class=action>$name</button>
   
 checkbox: 
@@ -13,6 +14,7 @@ container:
   html: <div id="$code">$children</div>
   children: 
     - template: $field
+    
 control:
   html: <$tag id="$code" title="$desc" $attrs $attr>$text<$tag>
   
@@ -50,10 +52,14 @@ disabled_text_input:
   attributes: disabled
   
 dropdown:
-  html: <select id="$code" has_data><option>--Select $name--</option>$options</select>
+  html: |
+    <select id="$code">
+      <option value=''>--Select $name--</option>
+      $options
+    </select>
   options:
-    - template: <option value='$item_code' $extra>$item_name</option>
-
+    - template: <option value='$name'>$value</option>
+    
 file:
   html: <file id="$code" name="$code"></file>
 
@@ -67,15 +73,14 @@ google_map:
   zoom: 5
   pin: blue_map_marker
 
-hidden:
+hidden:  
   html: <input id='$code' type=hidden></input>
-  hidden: true
 
 image:
   html: <img id="$code" src="$src" title"$desc"></img>
 
 input: 
-  html: <input id="$code" title="$desc" type='text'></input>
+  html: <input id="$code" type="text"></input>
 
 inline_input:
   html: <a class=input>$field<span class="input">$desc</span></a>
@@ -122,7 +127,7 @@ labelled_input_page:
       </div>
     inputs: 
       - template: labelled_input
-      - mandatory_sign: "*"
+      - mandatory: "*"
 
 link:
   html: <a id="$code" href="$href" title="$desc">$name</a>"
@@ -152,7 +157,7 @@ paragraph:
   html: <p id="$code">$desc</p>
 
 password:
-  html:"<input type="password" id="$code" title="$desc"></input>
+  html: <input type="password" id="$code" title="$desc"></input>
 
 plain:
   html: $name
