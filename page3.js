@@ -278,11 +278,12 @@ $.fn.page = function(options, callback)
       return result;
     },
     
-    append_contents: function(parent, items, types, html)
+    append_contents: function(parent, name, items, types)
     {
       var type;
       var template;
       var mandatory;
+      var regex = new RegExp('(\\$'+name+')');
       for(var i in items) {
         var item = items[i];
         var result;
@@ -309,10 +310,7 @@ $.fn.page = function(options, callback)
             item = this.merge(type, item);
 
           item.code = id;
-          result = this.create(parent, item, types);
-        }
-        else if ($.isArray(item)) {
-          result = this.append_contents(parent, item, types, html);
+          result = this.create(item, types);
         }
         else if (types[item] !== undefined) {
           id = item;
@@ -323,14 +321,14 @@ $.fn.page = function(options, callback)
               item = this.merge(type, item);
           }
           item.code = id
-          result = this.create(parent, item, types);
+          result = this.create(item, types);
         }
         else if (typeof item === 'string') {
           id = item;
           if (type !== undefined) {
             item = $.copy(type);
             item.code = id;
-            result = this.create(parent, item, types);
+            result = this.create(item, types);
           }
         }
         
@@ -339,19 +337,18 @@ $.fn.page = function(options, callback)
           var templated = this.get_template_html(template, item);
           if (typeof result === 'string') {
             templated = templated.replace('$field', result);
-            html && (html += templated) || parent.replace(/$/, templated);
-           continue;
+            parent.replace(regex, templated+'$1');
+            continue;
           }
-          parent.replace(/\$/, templated);
+          parent.replace(regex, templated+'$1');
           replace_id = 'field';
         }
         var new_id = "__new__"+id;
         var new_html = "<div id="+new_id+"></div>";
         parent.replace("\\$"+replace_id, new_html);
-        parent.find('#'+new_id).replaceWith(result);
-        
+        parent.find('#'+new_id).replaceWith(result);    
       }
-      return html;
+      parent.replace(regex, '');
     },
     
     set_attr: function(obj, field)
@@ -388,26 +385,18 @@ $.fn.page = function(options, callback)
       return obj;
     },
     
-    create: function(parent, field, types)
+    create: function(field, types)
     {
       field = page.merge_type(field, types);
       if (field.name === undefined)
         field.name = toTitleCase(field.code.replace(/_/g, ' '));
       var obj = $(field.html);
-      var dest = parent;
-      var html;
-      if (obj.exists()) {
-        dest = obj;
-        this.set_attr(obj, field);
-      }
-      else {
-        html = field.html;
-        obj = undefined;
-      } 
+      assert(obj.exists(), "Invalid HTML for "+field.code); 
+      this.set_attr(obj, field);
       var reserved = ['code','create','css','script','name', 'desc', 'data'];
       var values = $.extend({}, types, field);
-      console.log(field.code, html || obj.html());
-      var matches = getMatches(html || obj.html(), /\$(\w+)/g);
+      console.log(field.code, obj.html());
+      var matches = getMatches(obj.html(), /\$(\w+)/g);
       for (var i in matches) {
         var code = matches[i];
         var value = values[code];
@@ -418,33 +407,32 @@ $.fn.page = function(options, callback)
         if ($.isArray(value)) {
           if (types[code] !== undefined)
             value = $.merge($.merge([], types[code]), value);
-          value = this.append_contents(dest, value, values, html);
+          value = this.append_contents(obj, code, value, values);
           if (typeof value !== 'string') continue;
         }
         
         if (typeof value === 'string') {
-          obj && obj.replace("\\$"+code, value);
-          html && html.replace('$'+code,value);
+          obj.replace("\\$"+code, value);
           continue;
         }
 
         value.code = code;
-        value = this.create(dest, value, values);
+        value = this.create(value, values);
         var new_id = "__new__"+code;
         var new_html = "<div id="+new_id+"></div>";
-        dest.replace("\\$"+code, new_html);
-        console.log("replaced \\$"+code, dest.html());
-        dest.find('#'+new_id).replaceWith(value);
+        obj.replace("\\$"+code, new_html);
+        console.log("replaced \\$"+code, obj.html());
+        obj.find('#'+new_id).replaceWith(value);
       }
       
-      return html || obj;
+      return obj;
     },
     
     show: function(data)
     {
       data.page.code = options.page;
       var parent = page.parent;
-      var object = page.create(parent, data.page, data.types);
+      var object = page.create(data.page, data.types);
       if (object !== undefined)
          object.addClass('page').appendTo(parent);
       return;
