@@ -314,12 +314,13 @@ $.fn.page = function(options, callback)
         else if (typeof item === 'string') {
           if (type === undefined) continue; // todo take care of undefined types
           id = item;
-          item = $.copy(type);
+          item = undefined;
         }
         
         if (type !== undefined) {
-          item = item || $.copy(type);
-          if (item.type === undefined) 
+          if (item === undefined)
+            item = $.copy(type)
+          else if (item.type === undefined) 
             item = this.merge(type, item);
         }
         
