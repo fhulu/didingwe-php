@@ -107,12 +107,8 @@ $.fn.page = function(options, callback)
     
     load_link: function(link,type, callback)
     {
-      if (page.links.indexOf("["+link+"]")>=0)  {
-        callback();
-        return;
-      }
-
       var element;
+      ++page.loading;
       if (type == 'css') {
         element = document.createElement('link');
         element.rel = 'stylesheet';
@@ -125,18 +121,15 @@ $.fn.page = function(options, callback)
         element.src =  link;
         element.type = 'text/javascript';
       }
-      if (element === undefined) {
-        console.log('Error loading ', link);
-        return;
-      }
+      assert(element !== undefined, "Error loading "+link);
       var loaded = false;
       if (callback !== undefined) element.onreadystatechange = element.onload = function() {
         if (!loaded) callback();
         loaded = true;
+        --page.loading;
       }
       var head = document.getElementsByTagName('head')[0];
       head.appendChild(element);
-      page.links +="["+link+"]";
     },
     
     load_links: function(type, options, callback)
@@ -146,7 +139,8 @@ $.fn.page = function(options, callback)
         if (callback !== undefined) callback();
         return;
       }
-      links = links.split(',');
+      if (typeof links === 'string')
+        links = links.split(',');
       var loaded = 0;
       $.each(links, function(i, link) {
         page.load_link(link,type, function() {
@@ -157,56 +151,16 @@ $.fn.page = function(options, callback)
       });      
     },
     
-    set_option: function(parent, id, options, callback)
-    {
-      var object = parent.find('#'+id);
-      if (!object.exists()) {
-        if (callback !== undefined) callback();
-        return;
-      }
-      
-      page.load_links('css', options);
-      page.load_links('script', options, function() {
-        if (options.create !== undefined && options.create !== null) {
-          var create_opts = $.extend({key: page.options.key}, options);
-          object.customCreate(create_opts);
-        }
+    init_links: function(object, field, callback)
+    {      
+      page.load_links('css', field);
+      page.load_links('script', field, function() {
+        if (field.create)
+          object.customCreate(field);
         if (callback !== undefined) callback();
       });      
     },
     
-    set_options: function(parent, id, options, callback)
-    {
-      var count = $.jsonSize(options);
-      var set = 0;
-      $.each(options, function(key, option) {
-        if (!$.isPlainObject(option)) {
-          if (++set === count) page.set_option(parent, id, options, callback);
-        }
-        else page.set_options(parent, key, option, function() {
-          if (++set === count) page.set_option(parent, id, options, callback);
-        });
-      });      
-    },
-    
-    create_list: function(parent, items, types)
-    {
-      
-    },
-    
-    create_object: function(parent, id, fields, types)
-    {
-      var type = page.get_type(id, fields, types);
-      var template = page.get_template(type, fields, types);
-      var html = type.html===undefined?'<div></div>': type.html;
-      
-      if (template !== undefined) {
-        
-      }
-      $.each(fields, function(code, value) {
-        
-      })
-    },
     
     merge: function(a1, a2, stack)
     {
@@ -385,6 +339,7 @@ $.fn.page = function(options, callback)
     {
       field = page.merge_type(field, types);
       field.name = field.name || toTitleCase(field.code.replace(/_/g, ' '));
+      field.key = page.options.key;
       var obj = $(field.html);
       assert(obj.exists(), "Invalid HTML for "+field.code); 
       this.set_attr(obj, field);
@@ -415,7 +370,8 @@ $.fn.page = function(options, callback)
         var result = this.create(value, values);
         this.replace(obj, result[1], code);
       }
-      
+     
+      page.init_links(obj, field);
       return [field, obj];
     },
     
@@ -426,20 +382,17 @@ $.fn.page = function(options, callback)
       var object = page.create(data.page, data.types)[1];
       if (object !== undefined)
          object.addClass('page').appendTo(parent);
-      return;
-      var data = this.merge(data.types, data.page)
       object.on('loaded', function() {
-        page.set_options(parent, id, data,function(){
-          var options = {};
-          options[id] = data;
-          page.init_children(parent, options, key);
-          parent.trigger('read_'+id, [object,data]);
-        });
+//        page.set_options(parent, id, data,function(){
+//          var options = {};
+//          options[id] = data;
+//          page.init_children(parent, options, key);
+//          parent.trigger('read_'+id, [object,data]);
+//        });
       });
       object.on('child_action', function(event,  obj, options) {
         page.accept(event, obj, options);
       });
-      page.load_data(object);
     },
     
     load_data: function(object, id, name, items, types) 
@@ -456,7 +409,7 @@ $.fn.page = function(options, callback)
         object.trigger('loaded', result);
         --page.loading;
         if (page.loading === 0)
-          page.trigger('loaded', result);
+          page.parent.trigger('loaded', result);
       });
     },
 
