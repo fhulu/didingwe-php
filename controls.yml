@@ -58,7 +58,7 @@ dropdown:
       $options
     </select>
   options:
-    - template: <option value='$name'>$value</option>
+    - type: <option value='$code'>$name</option>
     
 file:
   html: <file id="$code" name="$code"></file>
