@@ -28,7 +28,7 @@ class page_result
     $this->fields = array();
   }
 }
-
+# read/booking/create/facility/options/data
 class page3
 {  
   var $requet;
@@ -39,23 +39,19 @@ class page3
   var $fields;
   var $types;
   var $validator;
+  var $path;
+  var $root;
 
   function __construct($request=null)
   {
     if (is_null($request)) $request = $_REQUEST;
     log::debug(json_encode($request));
     $this->request = $request;
-    $this->object = at($request, 'object');
-    if (is_null($this->object))
-      throw new Exception("No object parameter in request");
-    
-    $this->method = at($request, 'method');
+    $this->path = explode('/', $request['path']);
+    $this->method = array_shift($this->path);
     if (is_null($this->method))
-      $this->method = 'read';
+      throw new Exception("No method parameter in request");    
     
-    $this->page = at($request, 'page');    
-    if (is_null($this->page))
-      $this->page = 'default';
     $this->fields = array('program', config::$program_name);
     $this->types = array();
     
@@ -63,7 +59,7 @@ class page3
     //$this->validator = new validator($request);
     
     $this->load();
-    $result = $this->{$this->method}($this->myfields);
+    $result = $this->{$this->method}();
 
     echo json_encode($result);
  }
@@ -75,38 +71,58 @@ class page3
   
   function load()
   {
-    $this->load_yaml('../common/controls.yml', page3::$all_fields); //todo cache common controls
-    $this->load_yaml('custom_controls.yml', page3::$all_fields);
-    $this->load_yaml('../common/fields.yml', page3::$all_fields); //todo cache common fields
-    $this->load_yaml('custom_fields.yml', page3::$all_fields);
-    $this->load_yaml("$this->object.yml", $this->fields);
+    $this->load_yaml('../common/controls.yml', false, page3::$all_fields); //todo cache common controls
+    $this->load_yaml('custom_controls.yml', false, page3::$all_fields);
+    $this->load_yaml('../common/fields.yml', false, page3::$all_fields); //todo cache common fields
+    $this->load_yaml('custom_fields.yml', false, page3::$all_fields);
   }
-  
-  static function load_yaml($file, &$fields=array())
+
+  static function load_yaml($file, $strict, &$fields=array())
   {
-    if (!file_exists($file)) return $fields;
+    if (!file_exists($file)) {
+      if ($strict) throw new Exception("Unable to load file $file");
+      return $fields;
+    }
+    
     $data = yaml_parse_file($file); 
     if (is_null($data))
       throw new Exception ("Unable to parse file $file");
     return merge_to($fields, $data);
   }
+
+  function load_field($path=null, $expand=false)
+  {
+    if (is_null($path))
+      $path = $this->path;
+    else if (!is_array($path))
+      $path = explode('/', $path);
+    
+    $object_name = array_shift($path);
+    $this->fields = $this->load_yaml("$object_name.yml", true);
+    if (sizeof($path) == 0) {
+      $path[] = at($this->fields, 'default');
+    }
+    $field  = $this->fields;
+    foreach ($path as $step) {
+      $field = $field[$step];
+      $this->set_types($this->fields, $field);
+      $this->set_types(page3::$all_fields, $field);
+      if (!$expand) continue;
+      $this->expand_html($field, 'html');
+      $this->expand_html($field, 'template');
+    }
+    return $field;
+  }
   
   function read()
   {    
-    if ($this->page == 'default')
-      $this->page = $this->fields['default'];
-    $page = $this->fields[$this->page];
-    $this->set_types($this->fields, $page);
-    $this->set_types(page3::$all_fields, $page);
-    $this->expand_html($page, 'html');
-    $this->expand_html($page, 'template');
+    $page = $this->load_field(null, true);
     return array(
       'page'=>$page,
-      'types'=>  $this->types,
+      'types'=>$this->types,
     );
   }
   
-    
   function set_types($parent, $field)
   {
     if (is_null($field)) return;
@@ -222,38 +238,25 @@ class page3
     return null_merge($field, at($page, $code));
   }
   
-  static function data($request)
+  function data()
   {
-    log::debug('page::data page='.$request['_page']. ', field='.$request['_field']);
-    $page = new page($request);
-    $field = $page->read_page_field();    
-    //page::expand_values($row, array('template','html'));    
-    $data = $field['data'];
-    
-    $matches = array();
-    preg_match('/^([^:]+): ?(.+)/s', $data, $matches);
-    $type = $matches[1];
-    $list = $matches[2];
-    if ($type == 'inline') {
-      $values = explode('|', $list);
-      $rows = array();
-      foreach($values as $pair) {
-        list($code) = explode(',', $pair);
-        $value['item_code'] = $code;
-        $value['item_name'] = substr($pair, strlen($code)+1);
-        $rows[] = $value;
+    $options = $this->load_field();
+    $items = array();
+    foreach($options as $option) {
+      $data = at($option, 'data');
+      if (is_null($data)) {
+        $items[] = $option;
+        continue;
+      }
+      $sql = at($data, 'sql');
+      if (!is_null($sql)) {
+        global $db;
+        $items = array_merge($items, $db->read($sql, MYSQLI_ASSOC));
+        continue;
       }
     }
-    else if ($type == 'sql') {
-      global $db;
-      $rows = $db->read($list, MYSQLI_ASSOC);
-    }
-    else if (preg_match('/^([^\(]+)\(([^\)]+)\)/', $data, $matches) ) {
-      $rows = $this->call($matches[1], $matches[2], $field);
-    }
-
-    set_valid($rows, $field, 'template');
-    echo json_encode($rows);
+    
+    return $items;
   }
   
   function call($function, $params, $options=null)
