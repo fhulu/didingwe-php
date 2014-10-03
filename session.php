@@ -6,6 +6,7 @@ require_once('log.php');
 require_once('db.php');
 require_once('config.php');
 require_once('user.php');
+require_once('page.php');
 
 
 class session_exception extends Exception {};
