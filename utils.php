@@ -55,7 +55,7 @@ function replace_vars($str, $values=null)
 {
   if (is_null($values)) $values = $_REQUEST;
   $matches = array();
-  if (!preg_match_all('/\[^$]$(\w+)/', $str, $matches, PREG_SET_ORDER)) return  $str;
+  if (!preg_match_all('/\$(\w+)/', $str, $matches, PREG_SET_ORDER)) return  $str;
 
   foreach($matches as $match) {
     $key = $match[1];
