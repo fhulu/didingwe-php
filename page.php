@@ -324,9 +324,9 @@ class page
     
     $params = explode(',', $params);
     if (is_array($options)) {
-      $options = array_merge($this->request, $options);
+      $options = array_merge($options, $this->request);
       foreach($params as &$param) {
-        $param = page::replace_vars ($param, $options);
+        $param = replace_vars ($param, $options);
       }
     }
     return call_user_func_array($function, array_merge(array($this->request), $params));
@@ -359,7 +359,7 @@ class page
       echo json_encode($rows);
     }
     else if (preg_match('/^([^\(]+)\(([^\)]*)\)/', $action, $matches) ) {
-      $page->call($matches[1], $matches[2]);
+      $page->call($matches[1], $matches[2], $options);
     }
   }
 
