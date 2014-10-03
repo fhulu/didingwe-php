@@ -17,18 +17,10 @@
 
 //require_once 'db.php';
 require_once 'validator.php';
-require_once 'config.php';
+require_once 'db.php';
 
-class page_result
-{
-  var $fields;
-  var $types;
-  function __construct() {
-    $this->types = array();
-    $this->fields = array();
-  }
-}
-# read/booking/create/facility/options/data
+
+# read/booking/create/facility/options/
 class page3
 {  
   var $requet;
