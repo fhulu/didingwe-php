@@ -200,23 +200,24 @@ class datatable {
     $request['page_size'] = 0;
     $data = datatable::read_data($request, function($row_data, $pagenum, $index) use ($sheet) {
         $row = 2 + $pagenum * 1000 + $index;
-        $col = 0;
+        $col = 'A';
         foreach ($row_data as $cell) {
-
-          $sheet->setCellValueByColumnAndRow($col, $row, $cell);
-          $sheet->getColumnDimension(PHPExcel_Cell::stringFromColumnIndex($col))
-            ->setAutoSize(true);
+          $sheet->setCellValue("$col$row", $cell);
+          $sheet->getColumnDimension($col)->setAutoSize(true);
           $sheet->getRowDimension($row)->setRowHeight(20);
           ++$col;
         }
+        $sheet->setCellValue("$col$row", ''); // take care of PHPExcel bug which fails to remove the last column
         return true;
       });
-
     $col = 'A';
     foreach ($data['fields'] as $field) {
       $ref = $col . "1";
       $sheet->getStyle($ref)->getFont()->setBold(true);
-      $sheet->setCellValue($ref, $field['name']);
+      if ($field['code'] === 'actions')
+        $sheet->removeColumn($col);
+      else
+        $sheet->setCellValue($ref, $field['name']);
       ++$col;
     }
     $heading = $data['options']['name'];
@@ -253,7 +254,7 @@ class datatable {
   {
     $pdf = new FPDF();
     $pdf->AddPage();
-    $pdf->Image('csir_logo.png', 80, 20, 45);
+    $pdf->Image('ethekwini.png', 80, 10, 35);
     $pdf->SetFont('Arial', 'B', 10);
     $pdf->Footer('Council for Scientific and Industrial Research (CSIR)');
     $pdf->Ln(40);
@@ -296,8 +297,7 @@ class datatable {
     $now = $now->format('Y-m-d');
     $report_title=$options['report_title'];
     $heading[] = array('text' =>"$report_title for $now", 'width' =>  $total_width, 'height' => '5', 'align' => 'C', 'font_name' => 'Arial', 'font_size' => '11', 'font_style' => 'B', 'fillcolor' => '255,255,255', 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linearea' => 'LTBR');
-
-    $pdf->WriteTable($columns);
+    $pdf->WriteTable($columns,80,10);
     $pdf->Output();
   }
 
