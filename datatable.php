@@ -149,13 +149,14 @@ class datatable {
       global $db;
       $sql = $source;
       $matches = array();
-      if (preg_match_all('/(\$\w+)/', $sql, $matches))
+      if (preg_match_all('/\$(\w+)/', $sql, $matches, PREG_SET_ORDER)) {
         foreach ($matches as $match) {
           $var = $match[1];
-          $val = REQUEST($var);
+          $val = $_REQUEST[$var];
           if (!is_null($val))
             $sql = str_replace('$' . $var, $val, $sql);
         }
+      }
       $data = datatable::read_db($sql, array_merge($options, $request), $callback);
     }
     else if (preg_match('/^([^\(]+)\(([^\)]*)\)/', $data, $matches)) {
