@@ -200,6 +200,7 @@
       $.each(data.fields, function(i, field) {
         if (i === 0 && !show_key) return;
         var code = field.code;
+        if (field.code === 'attr') return;
         var th = $('<th></th>').appendTo(tr);
         if (field.code === 'actions') return;
         th.html(field.name===null? code: field.name);
@@ -244,18 +245,28 @@
         var expanded = !expandable;
         $.each(row, function(j, cell) {
           if (j===0 && !show_key) return;
-          var td = $('<td></td>').appendTo(tr);
           var field = data.fields[j];
-          if (field.code !== 'actions') {
-            self.showCell(show_edits, field, td, cell, key);
-            if (!expanded) {
-              expanded = true;
-              self.createAction('expand', all_actions, tr).prependTo(td);
-              self.createAction('collapse', all_actions, tr).prependTo(td).hide();
-            }
+          if (field.code === 'attr') {
+            $.each(cell.split(','), function(k,attr) {
+              attr = attr.split(':');
+              if (attr[0] === 'class') 
+                tr.addClass(attr[1]);
+              else
+                tr.attr(attr[0],attr[1]);
+            });
+            return;
           }
-          else {
+          var td = $('<td></td>').appendTo(tr);
+          if (field.code === 'actions') {
             self.setRowActions(tr, td, all_actions, cell);
+            return;
+          }
+          
+          self.showCell(show_edits, field, td, cell, key);
+          if (!expanded) {
+            expanded = true;
+            self.createAction('expand', all_actions, tr).prependTo(td);
+            self.createAction('collapse', all_actions, tr).prependTo(td).hide();
           }
         });
       });
@@ -418,6 +429,8 @@
       var field_index = this.hasFlag('show_key')?0:1;
       template.children().each(function(i) {
         var field = fields[field_index++];
+        if (field.code === 'attr') return;
+        
         if (editables !== undefined && editables.indexOf(field.code) < 0) return;
         if (field.code === 'actions') {
           td.attr('colspan',2);
