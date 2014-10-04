@@ -243,7 +243,7 @@ class page3
       $sql = at($data, 'sql');
       if (!is_null($sql)) {
         global $db;
-        $items = array_merge($items, $db->read($sql, MYSQLI_ASSOC));
+        $items = array_merge($items, $db->page_through_indices($sql));
         continue;
       }
     }
