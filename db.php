@@ -312,8 +312,12 @@ class db
   
   static function parse_column_name($name)
   {
-    list($spec, $alias) = explode(' ',$name); //todo: use regex for calculated fields
+    $list = explode(' ',$name); //todo: use regex for calculated fields
+    $spec = $list[0];
+    $alias = at($list,1);
     $parts = explode('.', $spec); 
+    $schema = null;
+    $table = null;
     switch(sizeof($parts)) {
       case 0: 
       case 1: $column = $spec; break;
