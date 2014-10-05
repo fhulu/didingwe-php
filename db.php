@@ -220,13 +220,13 @@ class db
     return $rows;
   }
 
-  function page_through_names($sql, $size, $offset=0, $callback=null, $options=null)
+  function page_through_names($sql, $size=500, $offset=0, $callback=null, $options=null)
   {
     $options['fetch'] = MYSQLI_ASSOC;
     return $this->page_through($sql, $size, $offset, $callback, $options);
   }
 
-  function page_through_indices($sql, $size, $offset=0, $callback=null, $options=null)
+  function page_through_indices($sql, $size=500, $offset=0, $callback=null, $options=null)
   {
     $options['fetch'] = MYSQLI_NUM;
     return $this->page_through($sql, $size, $offset, $callback, $options);
