@@ -260,7 +260,9 @@ class datatable {
     $pdf->Footer('Council for Scientific and Industrial Research (CSIR)');
     $pdf->Ln(40);
     $request['page_size'] = 0;
-    $options = page::read_field_options(at($request, 'field'));
+    //$options = page::read_field_options(at($request, 'field'));
+    $page = new page($request);
+    $options = $page->read_request('field');
     $widths = $options['widths'];
     $flags = $options['flags'];
     $show_key = in_array('show_key', $flags, true);
