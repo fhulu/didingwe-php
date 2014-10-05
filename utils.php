@@ -59,8 +59,8 @@ function replace_vars($str, $values=null)
 
   foreach($matches as $match) {
     $key = $match[1];
-    $value = $values[$key];
-    if (isset($value))
+    $value = at($values, $key);
+    if (!is_null($value))
       $str = str_replace('$'.$key, $value, $str);
   }
   return $str;
@@ -83,9 +83,10 @@ function compress_array($array)
   
 function errHandle($errNo, $errStr, $errFile, $errLine) {
   $msg = "$errStr in $errFile on line $errLine";
-  if ($errNo == E_NOTICE || $errNo == E_WARNING) 
+  //if ($errNo == E_NOTICE || $errNo == E_WARNING) 
+  if ($errNo == E_WARNING) 
     throw new ErrorException($msg, $errNo);
-  echo $msg;
+//  echo $msg;
 }
 
 set_error_handler('errHandle');
