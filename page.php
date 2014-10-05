@@ -140,7 +140,7 @@ class page
     if (!preg_match_all('/(")?([^"]+)\1?(?:\s*:\s*(")?([^{\[^"]+)\3?)?/', $str, $matches, PREG_SET_ORDER)) return;
     foreach($matches as $match) {
       $key_quote = $match[1];
-      $value_quote = $match[3];
+      $value_quote = at($match,3);
       if (is_null($key_quote) && is_null($value_quote)) continue;
       $key = $match[2];
       $quoted[$key] = array($key_quote,$value_quote);
@@ -199,8 +199,8 @@ class page
    
   function expand_html(&$field)
   {
-    $html = $field['html'];
-    if (isset($field['has_data']) || is_null($html)) return;
+    $html = at($field,'html');
+    if (!is_null(at($field, 'has_data')) || is_null($html)) return;
     $matches = array();
     if (!preg_match_all('/\$(\w+)/', $html, $matches, PREG_SET_ORDER)) return;
     
@@ -244,7 +244,7 @@ class page
     foreach($field as $code=>$values) {
       if (!is_array($values)) continue;
       $valid = trim(at($values,'valid'));
-      if ($value == '') continue;
+      if ($valid == '') continue;
       if (is_null($valid)) {
         $this->validate ($values);
         continue;
