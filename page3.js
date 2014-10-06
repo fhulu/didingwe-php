@@ -14,7 +14,8 @@ $.fn.page = function(options, callback)
     page_id: null,
     load: function() 
     {
-      page_id = options.path;
+      var path = options.path.split('/');
+      page_id = path[path.len-1];
       options.path = "read/"+options.path;
       $.json('/?a=page3/run', { data: options}, this.show);
     },
@@ -211,10 +212,6 @@ $.fn.page = function(options, callback)
       return this.merge_type(types[type], types);
     },
     
-    replace_template: function(text, code, values)
-    {
-    },
-    
     get_template_html: function(template, item)
     {
       var result = template;
@@ -393,6 +390,7 @@ $.fn.page = function(options, callback)
     {
       var parent = page.parent;
       data.page.path = options.path.substr(options.path.indexOf('/')+1);
+      page_id = data.page.path.replace('/','_');
       var result = page.create(data.page, page_id, data.types);
       var object = result[1];
       data.page = result[0];
