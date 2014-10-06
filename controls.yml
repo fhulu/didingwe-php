@@ -158,6 +158,7 @@ paragraph:
 
 password:
   html: <input type="password" id="$code" title="$desc"></input>
+  valid: password
 
 plain:
   html: $name
