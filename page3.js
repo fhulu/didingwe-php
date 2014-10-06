@@ -233,7 +233,7 @@ $.fn.page = function(options, callback)
       return result;
     },
     
-    append_contents: function(parent, parent_id, name, items, types)
+    append_contents: function(parent, parent_id, name, items, types, path)
     {
       var type;
       var template = "$field";
@@ -257,12 +257,6 @@ $.fn.page = function(options, callback)
             continue;
           } 
           
-          if (item.data !== undefined) {
-            loading_data = true;
-            page.load_data(parent, parent_id, name, [{type:type},{template:template}], types);
-            continue;
-          }
-          
           if (item.code === undefined) {
             for (var key in item) {
               if (!item.hasOwnProperty(key)) continue;
@@ -283,10 +277,20 @@ $.fn.page = function(options, callback)
             item = $.copy(type);
           }
         }
+        if (path)
+          item.path = path + '/' + id;
         var created = this.create(item, id, types, type);        
         var templated = this.get_template_html(template, created[0]);
-        parent.replace(regex, templated+'$1');        
-        this.replace(parent, created[1], id, 'field');
+        parent.replace(regex, templated+'$1'); 
+        var obj = created[1];
+        this.replace(parent, obj, id, 'field');
+        if (item.data === undefined) {
+          this.init_events(obj, item);
+          continue;
+        }
+
+        loading_data = true;
+        page.load_data(parent, parent_id, name, [{type:type},{template:template}], types);  
       }
       
       if (!loading_data)
@@ -360,7 +364,7 @@ $.fn.page = function(options, callback)
         if ($.isArray(value)) {
           if (types[code] !== undefined)
             value = $.merge($.merge([], types[code]), value);
-           this.append_contents(obj, id, code, value, values);
+           this.append_contents(obj, id, code, value, values, field.path+'/'+code);
            continue;
         }
         
@@ -369,17 +373,22 @@ $.fn.page = function(options, callback)
           continue;
         }
 
+        value.path = field.path+'/'+code;
         var result = this.create(value, code, values);
         this.replace(obj, result[1], code);
       }
      
       page.init_links(obj, field);
+      obj.on('loaded', function() {
+        page.init_events(obj, field);
+      });
       return [field, obj];
     },
     
     show: function(data)
     {
       var parent = page.parent;
+      data.page.path = options.path.substr(options.path.indexOf('/')+1);
       var object = page.create(data.page, page_id, data.types)[1];
       if (object !== undefined)
          object.addClass('page').appendTo(parent);
@@ -413,6 +422,16 @@ $.fn.page = function(options, callback)
           page.parent.trigger('loaded', result);
       });
     },
+    
+    
+    init_events: function(obj, field)
+    {
+      if (!field.post && !field.dialog && !field.redirect && !field.validate && !field.call)
+        return;
+      obj.click(function(event) {
+        page.accept(event, $(this), field);
+      });
+    },
 
     init_children: function(parent, data, key)
     {
@@ -438,34 +457,31 @@ $.fn.page = function(options, callback)
       });
     },
     
-    accept: function(event, obj, options)
+    accept: function(event, obj, field)
     {
-      var action = options.action;
-      if (action === undefined) return;
-      var key = options.key;
-      var selector = options.selector;
-      if (action.indexOf('dialog:') === 0) {
-        page.showDialog(action.substr(7), {key: key});
+      if (field.dialog) {
+        page.showDialog(field.dialog, {key: field.key});
+        return;
       }
-      else if (action.indexOf('url:') === 0) {
-        document.location = action.substr(4);
+      if (field.redirect) {
+        document.location = field.substr(4);
+        return;
       }
-      else if (action === '') {
-        var page_id = obj.parents('[id]').eq(0).attr('id');
-        var data = $.extend({ _page: page_id, _field: options.code }, options);
-        if (selector !== undefined) {
-          selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+page_id+"$2");
-          obj.jsonCheck(event, selector, '/?a=page/action', { data: data }, function(result) {
-            if (result === null) result = undefined;
-            obj.trigger('processed', [result]);
-            if (result !== undefined) page.respond(result._responses, obj);
-          });
-        } 
-        else  $.json('/?a=page/action', {data: data}, function(result) {
+      
+      var data = {path: 'action/'+field.path, key: field.key };
+      if (field.post) {
+        var selector = field.post.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+page_id+"$2");
+        obj.jsonCheck(event, selector, '/?a=page3/run', { data: data }, function(result) {
+          if (result === null) result = undefined;
           obj.trigger('processed', [result]);
           if (result !== undefined) page.respond(result._responses, obj);
         });
+        return;
       }
+      $.json('/?a=page3/run', {data: data}, function(result) {
+        obj.trigger('processed', [result]);
+        if (result !== undefined) page.respond(result._responses, obj);
+      });
     },
     
     respond: function(responses, invoker)
