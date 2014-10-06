@@ -14,7 +14,7 @@ $.fn.page = function(options, callback)
     page_id: null,
     load: function() 
     {
-      page_id = options.path.split('/')[0];
+      page_id = options.path;
       options.path = "read/"+options.path;
       $.json('/?a=page3/run', { data: options}, this.show);
     },
@@ -197,9 +197,10 @@ $.fn.page = function(options, callback)
     
     merge_type: function(field, types, type)
     {
+      if (field == undefined) return field;
       if (type === undefined) type = field.type;
       if (type === undefined) return field;
-      var super_type = this.merge_type(types[type], types, undefined);
+      var super_type = this.merge_type(types[type], types);
       return this.merge(super_type, field);
     },
    
@@ -263,13 +264,15 @@ $.fn.page = function(options, callback)
               id = key;
               break;
             };
+            if (item.type !== undefined && type)
+              item = this.merge(type, item);
             item = this.merge(types[id], item[id]);
           }
         }
         else if (typeof item === 'string') {
           if (types[item] !== undefined) {
             id = item;
-            item = types[item];
+            item = this.merge(types[item], type);
           }
           else {
             if (type === undefined) continue;  // todo take care of undefined types
@@ -290,7 +293,7 @@ $.fn.page = function(options, callback)
         }
 
         loading_data = true;
-        page.load_data(parent, parent_id, name, [{type:type},{template:template}], types);  
+        page.load_data(parent, parent_id, name, [{type:type},{template:template}], types, path);  
       }
       
       if (!loading_data)
@@ -337,9 +340,10 @@ $.fn.page = function(options, callback)
       }
       else if (type && field.type === undefined) 
         field = this.merge(type, field);
+      
       field.code = id;
       field = page.merge_type(field, types);
-      field.name = field.name || toTitleCase(id.replace(/_/g, ' '));
+      field.name = field.name || toTitleCase(id.replace(/[_\/]/g, ' '));
       field.key = page.options.key;
       var obj = $(field.html);
       assert(obj.exists(), "Invalid HTML for "+id); 
@@ -389,25 +393,25 @@ $.fn.page = function(options, callback)
     {
       var parent = page.parent;
       data.page.path = options.path.substr(options.path.indexOf('/')+1);
-      var object = page.create(data.page, page_id, data.types)[1];
-      if (object !== undefined)
-         object.addClass('page').appendTo(parent);
-      object.on('loaded', function() {
-//        page.set_options(parent, id, data,function(){
-//          var options = {};
-//          options[id] = data;
-//          page.init_children(parent, options, key);
-//          parent.trigger('read_'+id, [object,data]);
-//        });
+      var result = page.create(data.page, page_id, data.types);
+      var object = result[1];
+      data.page = result[0];
+      assert(object !== undefined, "Unable to create page "+page_id);
+      object.addClass('page').appendTo(parent);      
+      parent.trigger('read_'+page_id, [object, data.page]);
+      if (!page.loading)
+        page.set_values(object, data.page);
+      else parent.on('loaded', function() {
+        page.set_Values(object, data.page);
       });
       object.on('child_action', function(event,  obj, options) {
         page.accept(event, obj, options);
       });
     },
     
-    load_data: function(object, id, name, items, types) 
+    load_data: function(object, id, name, items, types, path) 
     {
-      var params = {path: 'data/'+page_id+'/'+id+'/'+name, key: page.options.key};
+      var params = {path: 'data/'+path, key: page.options.key};
       page.loading++;
       $.json('/?a=page3/run', {data:params}, function(result) {
         if (result === undefined || result === null) {
@@ -415,7 +419,7 @@ $.fn.page = function(options, callback)
           return;
         }
         result = $.merge(items, result);
-        page.append_contents(object, id, name, result, types);
+        page.append_contents(object, id, name, result, types, path);
         object.trigger('loaded', result);
         --page.loading;
         if (page.loading === 0)
@@ -433,28 +437,28 @@ $.fn.page = function(options, callback)
       });
     },
 
-    init_children: function(parent, data, key)
+    set_values: function(parent, field)
     {
-      $.each(data, function(field, options) {
-        if (!$.isPlainObject(options)) return;
-        var obj = parent.find('#'+field);
-        if (options.key !== undefined) key = options.key;
-        if (!obj.exists()) {
-          page.init_children(parent, options, key);
-          return;
+      if (!field.values) return;
+      for (var i in field.values) {
+        var item = field.values[i];
+        if (!$.isPlainObject(item)) continue;
+        var id, value;
+        for (var key in item) {
+          if (!item.hasOwnProperty(key)) continue;
+          id = key;
+          value = item[key];
+          break;
+        };
+        var obj = parent.find('#'+id);
+        if (obj.exists()) {
+          obj.val(value);
+          continue;
         }
-        if (!obj.hasAttr('_bound')) { 
-          obj.attr('_bound','');
-          obj.click(function(event) {
-            page.accept(event, $(this),  
-              {key:key, code:field, action: options.action, selector: options.selector});
-          });
-        }
-        if (options.load !== undefined) {
-          obj.loadChildren('/?a=page/load', {data: {page: field, key: key } } );
-        }
-        page.init_children(obj, options, key);
-      });
+        if (id !== 'sql' && id !== 'call') continue;
+        var data = { path: 'values/'+field.path, key: field.key } 
+        parent.loadChildren('/?a=page/run', {data: data } );
+      }
     },
     
     accept: function(event, obj, field)
@@ -464,7 +468,7 @@ $.fn.page = function(options, callback)
         return;
       }
       if (field.redirect) {
-        document.location = field.substr(4);
+        document.location = field.redirect;
         return;
       }
       
@@ -501,13 +505,14 @@ $.fn.page = function(options, callback)
       });      
     },
 
-    showDialog: function(dialog, options)
+    showDialog: function(path, field)
     {
-      var params = { page: dialog, key: options.key };
+      var params = { path: path, key: field.key };
       var tmp = $('body').page(params);
-      tmp.on('read_'+dialog, function(event, object, options) {  
-        options = $.extend({modal:true,  close: function() {
-          $(this).dialog('destroy').remove();
+      tmp.on('read_'+path, function(event, object, options) { 
+        object.attr('title', options.name);
+        options = $.extend({modal:true, close: function() {
+          $(this).attr('title', options.name).dialog('destroy').remove();
         }}, options);
         object.dialog(options);
       });
