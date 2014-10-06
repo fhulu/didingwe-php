@@ -70,12 +70,13 @@ program:
   
 password2:
   type: confirm_password
+  name: Confirm Password
 
 submit:
   type: button
   post: "#page *"
   validate: all
-  call: dafault
+  call: default
       
 title:
   options:
