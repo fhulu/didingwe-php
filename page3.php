@@ -23,10 +23,11 @@ require_once 'db.php';
 # read/booking/create/facility/options/
 class page3
 {  
-  var $requet;
+  var $request;
   var $object;
   var $method;
   var $page;
+  var $field;
   static $all_fields; 
   var $fields;
   var $types;
@@ -46,14 +47,12 @@ class page3
     
     $this->fields = array('program', config::$program_name);
     $this->types = array();
-    
-    //todo: fix coupling validator with reporting to front end
-    //$this->validator = new validator($request);
+    $this->validator = null;
     
     $this->load();
     $result = $this->{$this->method}();
-
-    echo json_encode($result);
+    if (!is_null($result))
+      echo json_encode($result);
  }
   
   static function run()
@@ -89,13 +88,15 @@ class page3
     else if (!is_array($path))
       $path = explode('/', $path);
     
-    $object_name = array_shift($path);
-    $this->fields = $this->load_yaml("$object_name.yml", true);
+    $this->object = array_shift($path);
+    $this->fields = $this->load_yaml("$this->object.yml", true);
     if (sizeof($path) == 0) {
       $path[] = at($this->fields, 'default');
     }
+    $this->page = $path[0];
     $field  = $this->fields;
     foreach ($path as $step) {
+      $this->field = $step;
       $field = $field[$step];
       $this->set_types($this->fields, $field);
       $this->set_types(page3::$all_fields, $field);
@@ -171,6 +172,7 @@ class page3
     }
   }
 
+
   static function expand_values(&$row, $exclusions=array())
   {
     if (!is_array($row)) return;
@@ -199,11 +201,21 @@ class page3
    
   function validate($field)
   {
+    if (is_null($this->validator))
+      $this->validator = new validator($this->request);
+    //todo: validate only required fields;
     foreach($field as $code=>$values) {
       if (!is_array($values)) continue;
-      $valid = trim(at($values,'valid'));
-      if ($value == '') continue;
-      if (is_null($valid)) {
+      if (is_numeric($code)) {
+        $code = at($values, 'code');
+        if (is_null($code)) {
+          $this->validate($values);
+          continue;
+        }
+      }
+      $valid = at($values,'valid');
+      if (is_array($valid)) $valid = last($valid);
+      if ($valid == '') {
         $this->validate ($values);
         continue;
       }
@@ -222,14 +234,6 @@ class page3
     return $this->validator->valid();
   }
 
-  function read_page_field(&$page=null)
-  {
-    $page = $this->read_request('_page');
-    $code = $this->request['_field'];
-    $field = $this->read_request('_field');
-    return null_merge($field, at($page, $code));
-  }
-  
   function data()
   {
     $options = $this->load_field();
@@ -277,23 +281,99 @@ class page3
     return call_user_func_array($function, array_merge(array($this->request), $params));
   }
   
-  static function action($request)
+  function merge_type($field, $type=null)
   {
-    $page = new page($request);
-    $page_options = array();
-    $options = $page->read_page_field($page_options);
-    page::expand_values($options);
-    page::expand_values($page_options);
-       
-    if (array_key_exists('validate', $options) && !$page->validate($page_options)) 
-      return;
-     
-    $action = at($options,'action');
-    if (is_null($action)) return;
+    if (is_null($type)) $type = at($field, 'type');
+    if (is_null($type)) return $field;
+    $expanded = at($this->types, $type);
+    if (is_null($expanded)) return $field;
+    $super_type = $this->merge_type($expanded);
+    return null_merge($super_type, $field);
+  }
+  
+  function expand_contents(&$parent)
+  {
+    $default_type = null;
+    $length = sizeof($parent);
+    $result = array();
+    foreach($parent as $key=>&$value) {
+      $code = null;
+      if (is_array($value)) {
+        $type = at($value, 'type');
+        if (!is_null($type)) {
+          $default_type = $type;
+          continue;
+        }
+        $code = at($value, 'code');
+        if (is_null($code)) {
+          foreach ($value as $code=>$val) break; 
+          $value = null_merge(at($this->types, $code), $value[$code]);
+        }
+      }
+      else if (is_string($value)) {
+        if (preg_match('/\W/', $value)) continue;
+        $code = $value;
+        $field = at($this->types,$value);
+        if (is_null($field)) continue;
+        $value = $field;
+      }
+      else continue;
+      
+      
+      $value['code'] = $code;
+      if (is_null(at($value, 'type')) && !is_null($default_type)) {
+        $value = $this->merge_type($value, $default_type);
+      }
+
+      $value = null_merge(at($this->types, $code), $value, false);
+    }
     
+  }
+
+  function expand_field(&$field)
+  {
+    if (!is_assoc($field)) {
+      $this->expand_contents($field);
+      return;
+    }
+    foreach ($field as $key=>&$value) {
+      if (!is_array($value)) continue;
+      $value = null_merge(at($this->types,$key), $value);
+      $this->expand_field($value);
+    }
+  }
+  
+  function action()
+  {
+    $path_len = sizeof($this->path);
+    $path = array_slice($this->path, 0, $path_len-2); // skip actions and action
+    $fields = $this->load_field($path);
+    $this->expand_field($fields);
+    log::debug("FIELDS ".json_encode($fields));
+    $action_name = $this->path[$path_len-1];
+    $parent_name = $this->path[$path_len-2];
+    $actions = $fields[$parent_name];
+    log::debug("ACTIONS ".json_encode($actions));
+    foreach ($actions as $action) {
+      if (at($action,'code') === $action_name) break;
+    }
+    log::debug("ACTION ".json_encode($action));
+    
+    if (array_key_exists('validate', $action) && !$this->validate($fields)) {
+      return array("errors"=>$this->validator->errors);
+    }
+    return;
+//    
+//    if 
+//    foreach($actions as $key=>$action) {
+//      switch($action) {
+//        case 'parent': $this->call("$this->object::$this->page");
+//      }
+//    }
+
     $rows = array();
     $matches = array();
-    if (!preg_match('/^([^:]+): ?(.+)/s', $action, $matches)) {
+    if (!preg_match('/^([^:]+):\s?(.+)/s', $action, $matches)) {
       throw new Exception("Invalid action spec $action");
     }
     $type = $matches[1];
