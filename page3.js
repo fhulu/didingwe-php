@@ -264,6 +264,12 @@ $.fn.page = function(options, callback)
               id = key;
               break;
             };
+            
+            if (id === 'sql' || id === 'call') {
+              loading_data = true;
+              this.load_data(parent, parent_id, name, [{type:type},{template:template}], types, path); 
+              continue;
+            }
             if (item.type !== undefined && type)
               item = this.merge(type, item);
             item = this.merge(types[id], item[id]);
@@ -287,13 +293,7 @@ $.fn.page = function(options, callback)
         parent.replace(regex, templated+'$1'); 
         var obj = created[1];
         this.replace(parent, obj, id, 'field');
-        if (item.data === undefined) {
-          this.init_events(obj, item);
-          continue;
-        }
-
-        loading_data = true;
-        page.load_data(parent, parent_id, name, [{type:type},{template:template}], types, path);  
+        this.init_events(obj, item);
       }
       
       if (!loading_data)
@@ -402,7 +402,7 @@ $.fn.page = function(options, callback)
       if (!page.loading)
         page.set_values(object, data.page);
       else parent.on('loaded', function() {
-        page.set_Values(object, data.page);
+        page.set_values(object, data.page);
       });
       object.on('child_action', function(event,  obj, options) {
         page.accept(event, obj, options);
