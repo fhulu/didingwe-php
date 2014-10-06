@@ -81,7 +81,7 @@ class page3
     return merge_to($fields, $data);
   }
 
-  function load_field($path=null, $expand=false)
+  function load_field($path=null, $expand=array('html','field'))
   {
     if (is_null($path))
       $path = $this->path;
@@ -90,26 +90,40 @@ class page3
     
     $this->object = array_shift($path);
     $this->fields = $this->load_yaml("$this->object.yml", true);
-    if (sizeof($path) == 0) {
-      $path[] = at($this->fields, 'default');
+    if (sizeof($path) == 0 || is_null(at($this->fields, $path[0]))) {
+      array_unshift($path, at($this->fields, 'default'));
     }
     $this->page = $path[0];
     $field  = $this->fields;
     foreach ($path as $step) {
       $this->field = $step;
-      $field = $field[$step];
+      $step_field = at($field, $step);
+      if (is_null($step_field)) {
+        foreach($field as $values) {
+          if (is_array($values) && at($values, 'code') != $step 
+              || is_string($values) && $values != $step) continue;
+          $step_field = $values;
+          break;
+        }
+        if (is_null($step_field)) 
+          throw new Exception("Invalid path ".implode('/', $path));
+      }
+      $field = $step_field;
       $this->set_types($this->fields, $field);
       $this->set_types(page3::$all_fields, $field);
-      if (!$expand) continue;
-      $this->expand_html($field, 'html');
-      $this->expand_html($field, 'template');
+      if (in_array('html', $expand)) {
+        $this->expand_html($field, 'html');
+        $this->expand_html($field, 'template');
+      }
+      if (in_array('field', $expand))
+        $this->expand_field($field);
     }
     return $field;
   }
   
   function read()
   {    
-    $page = $this->load_field(null, true);
+    $page = $this->load_field(null, array('html'));
     return array(
       'page'=>$page,
       'types'=>$this->types,
@@ -236,15 +250,10 @@ class page3
 
   function data()
   {
-    $options = $this->load_field();
+    $options = $this->load_field(null, array('field'));
     $items = array();
     foreach($options as $option) {
-      $data = at($option, 'data');
-      if (is_null($data)) {
-        $items[] = $option;
-        continue;
-      }
-      $sql = at($data, 'sql');
+      $sql = at($option, 'sql');
       if (!is_null($sql)) {
         global $db;
         $items = array_merge($items, $db->page_through_indices($sql));
@@ -288,7 +297,7 @@ class page3
     $expanded = at($this->types, $type);
     if (is_null($expanded)) return $field;
     $super_type = $this->merge_type($expanded);
-    return null_merge($super_type, $field);
+    return null_merge($super_type, $field, false);
   }
   
   function expand_contents(&$parent)
@@ -296,7 +305,7 @@ class page3
     $default_type = null;
     $length = sizeof($parent);
     $result = array();
-    foreach($parent as $key=>&$value) {
+    foreach($parent as &$value) {
       $code = null;
       if (is_array($value)) {
         $type = at($value, 'type');
@@ -305,27 +314,24 @@ class page3
           continue;
         }
         $code = at($value, 'code');
-        if (is_null($code)) {
-          foreach ($value as $code=>$val) break; 
-          $value = null_merge(at($this->types, $code), $value[$code]);
-        }
+        if (is_null($code)) foreach ($value as $code=>$val) break; 
+        $value = $value[$code];
+        $value['code'] = $code;
+        $value = null_merge(at($this->types, $code), $value, false);
+        $value = $this->merge_type($value, $default_type);
+        continue;
       }
-      else if (is_string($value)) {
-        if (preg_match('/\W/', $value)) continue;
-        $code = $value;
-        $field = at($this->types,$value);
-        if (is_null($field)) continue;
-        $value = $field;
-      }
-      else continue;
-      
-      
-      $value['code'] = $code;
-      if (is_null(at($value, 'type')) && !is_null($default_type)) {
+      if (!is_string($value) || preg_match('/\W/', $value)) continue;
+      $code = $value;
+      if (!null_at($this->types, $value)) {  
+        $value = at($this->types,$value);
         $value = $this->merge_type($value, $default_type);
       }
-
-      $value = null_merge(at($this->types, $code), $value, false);
+      else {
+        if (is_null($default_type))          continue;
+        $value = $default_type;
+      }
+      $value['code'] = $code;
     }
     
   }
@@ -338,54 +344,50 @@ class page3
     }
     foreach ($field as $key=>&$value) {
       if (!is_array($value)) continue;
-      $value = null_merge(at($this->types,$key), $value);
+      $value = null_merge(at($this->types,$key), $value, false);
       $this->expand_field($value);
     }
   }
-  
+
   function action()
   {
-    $path_len = sizeof($this->path);
-    $path = array_slice($this->path, 0, $path_len-2); // skip actions and action
-    $fields = $this->load_field($path);
+//    $path_len = sizeof($this->path);
+//    $path = array_slice($this->path, 0, $path_len-2); // skip actions and action
+//    $fields = $this->load_field($path);
+//    $this->expand_field($fields);
+//    $action_name = $this->path[$path_len-1];
+//    $parent_name = $this->path[$path_len-2];
+//    $actions = $fields[$parent_name];
+//    foreach ($actions as $action) {
+//      if (at($action,'code') === $action_name) break;
+//    }    
+//
+    $action = $this->load_field(null, array('field'));
+    log::debug("ACTION ".json_encode($action));
+    $fields = $this->fields[$this->page];
     $this->expand_field($fields);
     log::debug("FIELDS ".json_encode($fields));
-    $action_name = $this->path[$path_len-1];
-    $parent_name = $this->path[$path_len-2];
-    $actions = $fields[$parent_name];
-    log::debug("ACTIONS ".json_encode($actions));
-    foreach ($actions as $action) {
-      if (at($action,'code') === $action_name) break;
-    }
-    log::debug("ACTION ".json_encode($action));
-    
     if (array_key_exists('validate', $action) && !$this->validate($fields)) {
       return array("errors"=>$this->validator->errors);
     }
-    return;
-//    
-//    if 
-//    foreach($actions as $key=>$action) {
-//      switch($action) {
-//        case 'parent': $this->call("$this->object::$this->page");
-//      }
-//    }
 
-    $rows = array();
-    $matches = array();
-    if (!preg_match('/^([^:]+):\s?(.+)/s', $action, $matches)) {
-      throw new Exception("Invalid action spec $action");
+    $call = at($action ,'call');
+    if ($call === 'default') 
+      $call = "$this->object::".$this->path[1].'()';
+    
+    log::debug("CALL $call");
+    if ($call != '') { 
+      $matches = array();
+      if (!preg_match('/^([^\(]+)\(([^\)]*)\)/', $call, $matches) ) 
+        throw Exception("Invalid function spec $call");
+      return $this->call($matches[1], $matches[2]);
     }
-    $type = $matches[1];
-    $list = $matches[2];
-    if ($type == 'sql') {
-      global $db;
-      $rows = $db->read($list, MYSQLI_ASSOC);
-      echo json_encode($rows);
-    }
-    else if (preg_match('/^([^\(]+)\(([^\)]*)\)/', $action, $matches) ) {
-      $page->call($matches[1], $matches[2]);
-    }
+    
+    $sql = at($action,'sql');
+    if ($sql == '') return;
+    
+    global $db;
+    return $db->read($sql, MYSQLI_ASSOC);
   }
 
   static function check_field($options, $field)
@@ -397,7 +399,7 @@ class page3
     return false;
   }
   
-  static function values($request)   
+  function values()   
   {  
     $page = new page($request);
     $options = $page->read_request('page');
