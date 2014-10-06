@@ -1,15 +1,27 @@
 ## YAML Template.
 ---
 
+action:
+  post:
+  dialog:
+  redirect:
+  validate:
+  call:
+
 actions:
-  - type: button
+ - type: submit
 
 cellphone:
   desc: The cellphone number at which you can be contacted
-  valid: national_tel
+  valid: /[\d- ]+/
 
 contacts:
   email: support@mukoni.co.za
+
+confirm_password: 
+  type: password
+  desc: Type in the same password as above to confirm correctness
+  valid: matches(password)
 
 create_time:
 
@@ -19,20 +31,24 @@ developer:
   name: developed by Mukoni Software
   
 email:
-  type: email_address
+  desc: The email address for email notifications and use it as your user name on $program
+  valid: email
 
 email_address:
-  desc: The email address for email notifications and use it as your user name  on $program
+  desc: The email address for email notifications and use it as your user name on $program
   valid: email
 
 error_page:
   desc: Unexpected error occured. Please report to your System Administrator.
  
 first_name:
-  desc: "Your first name as written in your ID book."
+  desc: Your first name as written in your ID book
   valid:
     - at_least(2)
     - alphabetic
+  
+goto:
+  action: $page.html
   
 id:
   name: Identity
@@ -45,7 +61,32 @@ id_number:
   
 inputs:
   - type: input
-    
+     
+otp:
+  name: OTP
+  desc: One Time Pin
+  
 program:
   
+password2:
+  type: confirm_password
 
+submit:
+  type: button
+  post: "#page *"
+  validate: all
+  call: dafault
+      
+title:
+  options:
+    - dr
+    - miss
+    - mr
+    - mrs
+    - ms
+    - prof
+    - rev
+
+validator:
+  post: #page *
+  validate: all
