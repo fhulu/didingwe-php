@@ -38,6 +38,7 @@ class page
     $field = array('program' => config::$program_name);
     $page->read_request('page', $echo, $field);
     if (!$echo) return $field;
+    page::filter_access($field);
     page::empty_fields($field);
     echo json_encode($field);
   }
@@ -52,11 +53,11 @@ class page
     if (!array_key_exists($code, $this->fields)) {
       global $db;
       $data =  $db->read_one(
-        "select f.name, f.description 'desc', ifnull(f.html,ft.html) html, ft.options __type_options, f.options __field_options"
+        "select f.name, f.description 'desc', ifnull(f.html,ft.html) html, ft.options __type_options, f.options __field_options, f.access"
         . " from field f left join field_type ft on f.type = ft.code"
         . " where f.code = '$code'"
         . " union "
-        . " select name, description 'desc', html, null __type_options, options __field_options"
+        . " select name, description 'desc', html, null __type_options, options __field_options, '' access"
         . " from field_type where code = '$code'"
         , MYSQLI_ASSOC);
 
@@ -237,6 +238,34 @@ class page
       else if ($key == 'action' && strpos($option, '::') !== false)
         $option = "";
     }
+  }
+  
+  static function filter_access(&$options, $user_roles = null)
+  {
+    if (is_null($user_roles)) {
+      global $session;
+
+      $user_roles = array('public');
+      if (!is_null($session) && !is_null($session->user))
+        $user_roles = $session->user->roles;
+      log::debug("ROLES ".json_encode($user_roles));
+    }
+    $filtered = $options;
+    foreach($options as $key=>$option)
+    {
+      if (!is_array($option)) continue;
+      $allowed_roles = at($option, 'access');
+      if ($allowed_roles == '') {
+        page::filter_access($filtered[$key], $user_roles);
+        continue;
+      }
+      $allowed = array_intersect($user_roles, explode(',', $allowed_roles));      //log::debug("PERMITTED $key ".  json_encode($allowed));
+      if (sizeof($allowed) == 0) 
+        unset($filtered[$key]);
+      else 
+        page::filter_access($filtered[$key], $user_roles);
+    }
+    $options = $filtered;
   }
    
   function validate($field)
