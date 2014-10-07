@@ -44,7 +44,7 @@
 
   global $session;
   log::init('index', log::DEBUG);
-  $public_pages = array('login','map','register','error_page','forgot_password', 'otp_page','otp_done','breach');
+  $public_pages = array('home','login','map','register','error_page','forgot_password', 'otp_page','otp_done','breach');
   $content = GET('content');
   if (!$session && !in_array($content,$public_pages) && !in_array($page, $public_pages) ) {
     $page = 'landing';
