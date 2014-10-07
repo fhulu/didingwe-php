@@ -302,7 +302,10 @@
     {
       if (sink === undefined) sink = this.element;
       var props = actions===undefined?this.options[action]:actions[action];
-      if (props === undefined) console.log("undefined props for", action);
+      if (props === undefined) { 
+        console.log("undefined props for", action);
+        return $('');
+      }
       var div = $('<span>');
       div.html(props.name);
       div.attr('title', props.desc);

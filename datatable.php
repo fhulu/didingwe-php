@@ -38,6 +38,7 @@ class datatable {
         }
       }
     }
+    page::filter_access($actions);
     return $actions;
   }
 
@@ -162,6 +163,7 @@ class datatable {
     else if (preg_match('/^([^\(]+)\(([^\)]*)\)/', $data, $matches)) {
       $data = $page->call($type, $source, $callback);
     }
+    page::filter_access($options);
     page::empty_fields($options);
     $data['options'] = $options;
     return $data;
