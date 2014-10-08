@@ -293,11 +293,11 @@ $.fn.page = function(options, callback)
       field = page.merge_type(field, types);
       field.name = field.name || toTitleCase(id.replace(/[_\/]/g, ' '));
       field.key = page.options.key;
+      var values = $.extend({}, types, field);
+      this.expand_fields(id, field);
       var obj = $(field.html);
       assert(obj.exists(), "Invalid HTML for "+id); 
       var reserved = ['code','create','css','script','name', 'desc', 'data'];
-      var values = $.extend({}, types, field);
-      this.expand_fields(id, values);
       this.set_attr(obj, values, id);
       var matches = getMatches(obj.html(), /\$(\w+)/g);
       for (var i = 0; i< matches.length; ++i) {
