@@ -175,13 +175,18 @@ submit_button:
 sub_menu:
   html: |
     <li>
-      <a href='$href' id="$code">$name</a>
-      <span>$children</span>
+      <a href='$url' id="$code">$name</a>
+      <span>$sub_items</span>
     </li>
+  url: $code.html
+  sub_items:
+    - type: link
+    
 table:
   html: <table id="$code"><thead></thead><tbody>$rows</tbody></table>
   rows:
     - template: table_row
+    
 table_cell:
   html: <td>$field</td>
 
