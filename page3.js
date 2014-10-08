@@ -150,6 +150,7 @@ $.fn.page = function(options, callback)
     
     get_template_html: function(template, item)
     {
+      if (item.type === 'hidden') return '$field';
       var result = template;
       if (typeof template !== 'string') {
         item = $.extend({}, template, item);
@@ -201,6 +202,7 @@ $.fn.page = function(options, callback)
           } 
           
           if (item.page !== undefined) {
+            item.page.key = this.options.key;
             this.append_sub_page(parent, regex, template, item.page);
             continue;
           }
