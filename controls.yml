@@ -11,16 +11,16 @@ checkbox:
   html: <input id="$code" title="$desc" type='checkbox'></input>
   
 container: 
-  html: <div id="$code">$children</div>
-  children: 
+  html: <div id="$code">$contents</div>
+  contents: 
     - template: $field
     
 control:
   html: <$tag id="$code" title="$desc" $attrs $attr>$text<$tag>
   
 container_without_id:
-  html: <div>$children</div>
-  children: 
+  html: <div>$contents</div>
+  contents: 
     template: $field
     
 data_table:
@@ -105,7 +105,7 @@ input_page_header:
       <span class=ajax_result style="display: none;"></span>
     </div>
 label:
-  html: <p id='$code'>$name</p>
+  html: <label id='$code'>$name</label>
   
 labelled_input:
   html: |
@@ -130,13 +130,18 @@ labelled_input_page:
       - mandatory: "*"
 
 link:
-  html: <a id="$code" href="$href" title="$desc">$name</a>"
+  href: $code.html
+  html: <a id="$code" href="$href" title="$desc">$name</a>
 
 menu:
   html: <ul id="$code">$items</ul>
   items:
-    - template: <a href="$url">$title</a>
+    - type: menu_item
 
+menu_item:
+  url: $code.html
+  html: <li><a href="$url" title="$desc">$name</a></li>
+ 
 one_cell_row:
   html: <tr><td>$field</td></tr>
 
@@ -150,11 +155,8 @@ one_row_table:
   items:
     - template: table_cell
 
-page:
-  html: <div id="$code" page="$name"></div>
-
 paragraph:
-  html: <p id="$code">$desc</p>
+  html: <p id="$code">$name</p>
 
 password:
   html: <input type="password" id="$code" title="$desc"></input>
