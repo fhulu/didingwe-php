@@ -27,7 +27,7 @@ create_time:
 
 date:
 
-developer:
+developed_by:
   name: developed by Mukoni Software
   
 email:
@@ -65,9 +65,7 @@ inputs:
 otp:
   name: OTP
   desc: One Time Pin
-  
-program:
-  
+    
 password2:
   type: confirm_password
   name: Confirm Password
@@ -80,13 +78,13 @@ submit:
       
 title:
   options:
-    - dr
-    - miss
-    - mr
-    - mrs
-    - ms
-    - prof
-    - rev
+    - Dr
+    - Miss
+    - Mr
+    - Mrs
+    - Ms
+    - Prof
+    - Rev
 
 validator:
   post: #page *
