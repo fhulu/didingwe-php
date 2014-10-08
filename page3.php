@@ -6,15 +6,6 @@
  * and open the template in the editor.
  */
 
-/**
- * Description of 
- * - request : http request
- * - object : object requested, if not supplied use common
- * - page : page required on the object
- * - method : method to be performed
- * @author fhulu
- */
-
 //require_once 'db.php';
 require_once 'validator.php';
 require_once 'db.php';
@@ -46,7 +37,6 @@ class page3
     if (is_null($this->method))
       throw new Exception("No method parameter in request");    
     
-    $this->fields = array('program', config::$program_name);
     $this->types = array();
     $this->validator = null;
     
@@ -72,6 +62,7 @@ class page3
 
   static function load_yaml($file, $strict, &$fields=array())
   {
+    if (!file_exists($file)) $file = "../common/$file";
     if (!file_exists($file)) {
       if ($strict) throw new Exception("Unable to load file $file");
       return $fields;
@@ -92,8 +83,8 @@ class page3
     
     $this->object = array_shift($path);
     $this->fields = $this->load_yaml("$this->object.yml", true);
-    if (sizeof($path) == 0 || is_null(at($this->fields, $path[0]))) {
-      array_unshift($path, at($this->fields, 'default'));
+    if (sizeof($path) == 0) {
+      array_unshift($path, $this->object);
     }
     $this->page = $path[0];
     $field  = $this->fields;
@@ -133,22 +124,21 @@ class page3
       'types'=>$this->types,
     );
   }
-  
+    
   function expand_sub_pages(&$fields)
   {
     $request = $this->request;
     array_walk_recursive($fields, function(&$value, $key) use ($request) {
-      if (is_numeric($key) || $key != 'page') return;
+      if ($key !== 'page') return;
       $request['path'] = 'read/'.$value;
-      log::debug("EXPANDING $key $value ".json_encode($request));
       $sub_page = new page3(false, $request);
       $value = $sub_page->result;
     });
   }
-  
+    
   function set_types($parent, $field)
   {
-    if (is_null($field)) return;
+    if (is_null($field)) return false;
     if (!is_array($field)) {
       if (array_key_exists($field, $this->types)) return true;
       if (!array_key_exists($field, $parent)) return false;
@@ -159,7 +149,7 @@ class page3
     }
     
     $known_keys = array('name','desc','html','src', 'href', 'url', 
-      'data','values', 'valid', 'attr', 'sort');
+      'sql','values', 'valid', 'attr', 'sort');
     foreach($field as $key=>&$value) {
       if (in_array($key, $known_keys, 1)) continue;
       
@@ -191,13 +181,7 @@ class page3
       if (in_array($var, $exclude, true)) continue;
       if ($this->set_types($this->fields, $var) || $this->set_types(page3::$all_fields, $var)) {
         $this->expand_html(at($this->types, $var), $html_type);
-        continue;
       }
-      $yaml_file = "$var.yml";
-      if (!file_exists($yaml_file)) 
-        throw new Exception("Failure expanding variable \$$var. Cannot find YAML file $yaml_file ");
-      $fields = $this->load_yaml($yaml_file);
-      $this->set_types(page3::$all_fields, $fields);
     }
   }
 
@@ -387,7 +371,6 @@ class page3
     if ($call === 'default') 
       $call = "$this->object::".$this->path[1].'()';
     
-    log::debug("CALL $call");
     if ($call != '') { 
       $matches = array();
       if (!preg_match('/^([^\(]+)\(([^\)]*)\)/', $call, $matches) ) 
@@ -396,7 +379,7 @@ class page3
     }
     
     $sql = at($action,'sql');
-    if ($sql == '') return;
+    if ($sql == '') return null;
     
     global $db;
     return $db->read($sql, MYSQLI_ASSOC);
