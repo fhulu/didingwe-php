@@ -231,6 +231,15 @@ $.fn.page = function(options, callback)
       return result;
     },
     
+    append_sub_page: function(parent, regex, template, sub_page)
+    {
+      var tmp = $('<div></div>');
+      var object = tmp.page(sub_page);
+      var templated = this.get_template_html(template, sub_page.fields);
+      parent.replace(regex, templated+'$1'); 
+      this.replace(parent, object, object.attr('id'), 'field');
+    },
+    
     append_contents: function(parent, parent_id, name, items, types, path)
     {
       var type;
@@ -254,6 +263,11 @@ $.fn.page = function(options, callback)
             mandatory = item;
             continue;
           } 
+          
+          if (item.page !== undefined) {
+            this.append_sub_page(parent, regex, template, item.page);
+            continue;
+          }
           
           if (item.code === undefined) {
             for (var key in item) {
@@ -283,6 +297,7 @@ $.fn.page = function(options, callback)
             item = $.copy(type);
           }
         }
+        
         if (path)
           item.path = path + '/' + id;
         var created = this.create(item, id, types, type);        
@@ -389,9 +404,8 @@ $.fn.page = function(options, callback)
     show: function(data)
     {
       var parent = page.parent;
-      data.page.path = options.path.substr(options.path.indexOf('/')+1);
-      page_id = data.page.path.replace('/','_');
-      var result = page.create(data.page, page_id, data.types);
+      page_id = data.path.replace('/','_');
+      var result = page.create(data.fields, page_id, data.types);
       var object = result[1];
       data.page = result[0];
       assert(object !== undefined, "Unable to create page "+page_id);
@@ -405,6 +419,8 @@ $.fn.page = function(options, callback)
       object.on('child_action', function(event,  obj, options) {
         page.accept(event, obj, options);
       });
+      this.object = object;
+      return this;
     },
     
     load_data: function(object, id, name, items, types, path) 
@@ -523,8 +539,8 @@ $.fn.page = function(options, callback)
     }
         
   };
-  page.load();
-  return this;
+  options.fields && page.show(options) || page.load();
+  return page.object;
 }
 
 

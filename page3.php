@@ -34,8 +34,9 @@ class page3
   var $validator;
   var $path;
   var $root;
+  var $result;
 
-  function __construct($request=null)
+  function __construct($echo=true, $request=null)
   {
     if (is_null($request)) $request = $_REQUEST;
     log::debug(json_encode($request));
@@ -50,11 +51,11 @@ class page3
     $this->validator = null;
     
     $this->load();
-    $result = $this->{$this->method}();
-    if (!is_null($result))
-      echo json_encode($result);
- }
-  
+    $this->result = $this->{$this->method}();
+    if ($echo && !is_null($this->result))
+      echo json_encode($this->result);
+  }
+   
   static function run()
   {
     new page3();
@@ -62,6 +63,7 @@ class page3
   
   function load()
   {
+    if (sizeof(page3::$all_fields) > 0) return;
     $this->load_yaml('../common/controls.yml', false, page3::$all_fields); //todo cache common controls
     $this->load_yaml('custom_controls.yml', false, page3::$all_fields);
     $this->load_yaml('../common/fields.yml', false, page3::$all_fields); //todo cache common fields
@@ -123,11 +125,25 @@ class page3
   
   function read()
   {    
-    $page = $this->load_field(null, array('html'));
+    $fields = $this->load_field(null, array('html'));
+    $this->expand_sub_pages($fields);
     return array(
-      'page'=>$page,
+      'path'=>implode('/',$this->path),
+      'fields'=>$fields,
       'types'=>$this->types,
     );
+  }
+  
+  function expand_sub_pages(&$fields)
+  {
+    $request = $this->request;
+    array_walk_recursive($fields, function(&$value, $key) use ($request) {
+      if (is_numeric($key) || $key != 'page') return;
+      $request['path'] = 'read/'.$value;
+      log::debug("EXPANDING $key $value ".json_encode($request));
+      $sub_page = new page3(false, $request);
+      $value = $sub_page->result;
+    });
   }
   
   function set_types($parent, $field)
@@ -180,7 +196,6 @@ class page3
       $yaml_file = "$var.yml";
       if (!file_exists($yaml_file)) 
         throw new Exception("Failure expanding variable \$$var. Cannot find YAML file $yaml_file ");
-      
       $fields = $this->load_yaml($yaml_file);
       $this->set_types(page3::$all_fields, $fields);
     }
@@ -314,11 +329,14 @@ class page3
           continue;
         }
         $code = at($value, 'code');
-        if (is_null($code)) foreach ($value as $code=>$val) break; 
+        if (is_null($code)) {
+          foreach ($value as $code=>$val) break; 
+          if (!is_array($val)) continue;
+        }
         $value = $value[$code];
-        $value['code'] = $code;
         $value = null_merge(at($this->types, $code), $value, false);
         $value = $this->merge_type($value, $default_type);
+        $value['code'] = $code;
         continue;
       }
       if (!is_string($value) || preg_match('/\W/', $value)) continue;
@@ -328,8 +346,8 @@ class page3
         $value = $this->merge_type($value, $default_type);
       }
       else {
-        if (is_null($default_type))          continue;
-        $value = $default_type;
+        if (is_null($default_type)) continue;
+        $value = at($this->types, $default_type);
       }
       $value['code'] = $code;
     }
@@ -351,17 +369,6 @@ class page3
 
   function action()
   {
-//    $path_len = sizeof($this->path);
-//    $path = array_slice($this->path, 0, $path_len-2); // skip actions and action
-//    $fields = $this->load_field($path);
-//    $this->expand_field($fields);
-//    $action_name = $this->path[$path_len-1];
-//    $parent_name = $this->path[$path_len-2];
-//    $actions = $fields[$parent_name];
-//    foreach ($actions as $action) {
-//      if (at($action,'code') === $action_name) break;
-//    }    
-//
     $action = $this->load_field(null, array('field'));
     log::debug("ACTION ".json_encode($action));
     $fields = $this->fields[$this->page];
@@ -370,7 +377,12 @@ class page3
     if (array_key_exists('validate', $action) && !$this->validate($fields)) {
       return array("errors"=>$this->validator->errors);
     }
-
+    
+    return $this->reply($action);
+  }
+  
+  function reply($action)
+  {
     $call = at($action ,'call');
     if ($call === 'default') 
       $call = "$this->object::".$this->path[1].'()';
@@ -401,28 +413,14 @@ class page3
   
   function values()   
   {  
-    $page = new page($request);
-    $options = $page->read_request('page');
-    page::expand_values($options);
-
-    if (!($key=page::check_field($request, 'key'))
-      || !($load=page::check_field($options, 'load'))) return;
-   
-    log::debug("key=$key, $options=".json_encode($options));
-    $rows = array();
-    $matches = array();
-    preg_match('/^([^:]+): ?(.+)/s', $load, $matches);
-    $type = $matches[1];
-    $list = $matches[2];
-    if ($type == 'sql') {
-      global $db;
-      $sql = str_replace('$key', addslashes($key), $list);
-      $rows = $db->read_one($sql, MYSQLI_ASSOC);
-      echo json_encode($rows);
+    $options = $this->load_field(null, array('field'));
+    log::debug("EDIT ".json_encode($options));
+    $items = array();
+    foreach($options as $option) {
+      $items = null_merge($items, $this->reply($option));
     }
-    else if (preg_match('/^([^\(]+)\(([^\)]*)\)/', $load, $matches) ) {
-      $page->call($matches[1], $matches[2]);
-    }
+    
+    return $items;
   }
     
   static function respond($response, $value=null)
