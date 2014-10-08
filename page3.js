@@ -407,14 +407,14 @@ $.fn.page = function(options, callback)
       page_id = data.path.replace('/','_');
       var result = page.create(data.fields, page_id, data.types);
       var object = result[1];
-      data.page = result[0];
+      data.fields = result[0];
       assert(object !== undefined, "Unable to create page "+page_id);
       object.addClass('page').appendTo(parent);      
-      parent.trigger('read_'+page_id, [object, data.page]);
+      parent.trigger('read_'+page_id, [object, data.fields]);
       if (!page.loading)
-        page.set_values(object, data.page);
+        page.set_values(object, data);
       else parent.on('loaded', function() {
-        page.set_values(object, data.page);
+        page.set_values(object, data);
       });
       object.on('child_action', function(event,  obj, options) {
         page.accept(event, obj, options);
@@ -451,11 +451,12 @@ $.fn.page = function(options, callback)
       });
     },
 
-    set_values: function(parent, field)
+    set_values: function(parent, data)
     {
-      if (!field.values) return;
-      for (var i in field.values) {
-        var item = field.values[i];
+      var values = data.fields.values;
+      if (!values) return;
+      for (var i in values) {
+        var item = values[i];
         if (!$.isPlainObject(item)) continue;
         var id, value;
         for (var key in item) {
@@ -470,8 +471,12 @@ $.fn.page = function(options, callback)
           continue;
         }
         if (id !== 'sql' && id !== 'call') continue;
-        var data = { path: 'values/'+field.path, key: field.key } 
-        parent.loadChildren('/?a=page/run', {data: data } );
+        var data = { path: 'values/'+data.path+'/values', key: data.fields.key } 
+        $.json('/?a=page3/run', {data: data }, function(result) { 
+          for (var i in result) {
+            parent.setChildren(result[i]);
+          }
+        });
       }
     },
     
