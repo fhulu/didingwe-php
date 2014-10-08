@@ -31,10 +31,9 @@ $.fn.page = function(options, callback)
     expand_fields: function(parent_id, data)
     {
       $.each(data, function(field, value) {
-        if (typeof value === 'string' && value.indexOf('$') >= 0 && field !== 'template' && field != 'attr') {
-          value = value.replace('$code', parent_id);
-          data[field] = page.expand_value(data, value);
-        }
+        if (typeof value !== 'string' || value.indexOf('$') < 0 || field === 'template' && field === 'attr') return;
+        value = value.replace('$code', parent_id);
+        data[field] = page.expand_value(data, value);
       });
       return data;
     },
@@ -292,12 +291,12 @@ $.fn.page = function(options, callback)
       field = page.merge_type(field, types);
       field.name = field.name || toTitleCase(id.replace(/[_\/]/g, ' '));
       field.key = page.options.key;
-      var values = $.extend({}, types, field);
-      this.expand_fields(id, field);
+      if (!array) this.expand_fields(id, field);
       var obj = $(field.html);
       assert(obj.exists(), "Invalid HTML for "+id); 
       var reserved = ['code','create','css','script','name', 'desc', 'data'];
-      this.set_attr(obj, values, id);
+      this.set_attr(obj, field, id);
+      var values = $.extend({}, types, field);
       var matches = getMatches(obj.html(), /\$(\w+)/g);
       for (var i = 0; i< matches.length; ++i) {
         var code = matches[i];
