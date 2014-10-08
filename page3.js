@@ -11,11 +11,8 @@ $.fn.page = function(options, callback)
     creation: null,
     links: "",
     loading: 0,
-    page_id: null,
     load: function() 
     {
-      var path = options.path.split('/');
-      page_id = path[path.len-1];
       options.path = "read/"+options.path;
       $.json('/?a=page3/run', { data: options}, this.show);
     },
@@ -343,13 +340,14 @@ $.fn.page = function(options, callback)
     show: function(data)
     {
       var parent = page.parent;
-      page_id = data.path.replace('/','_');
-      var result = page.create(data.fields, page_id, data.types);
+      this.id = data.path.replace('/','_');
+      data.fields.path = data.path;
+      var result = page.create(data.fields, this.id, data.types);
       var object = result[1];
       data.fields = result[0];
-      assert(object !== undefined, "Unable to create page "+page_id);
+      assert(object !== undefined, "Unable to create page "+this.id);
       object.addClass('page').appendTo(parent);      
-      parent.trigger('read_'+page_id, [object, data.fields]);
+      parent.trigger('read_'+this.id, [object, data.fields]);
       if (!page.loading)
         page.set_values(object, data);
       else parent.on('loaded', function() {
@@ -432,7 +430,7 @@ $.fn.page = function(options, callback)
       
       var data = {path: 'action/'+field.path, key: field.key };
       if (field.post) {
-        var selector = field.post.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+page_id+"$2");
+        var selector = field.post.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+this.id+"$2");
         obj.jsonCheck(event, selector, '/?a=page3/run', { data: data }, function(result) {
           if (result === null) result = undefined;
           obj.trigger('processed', [result]);
