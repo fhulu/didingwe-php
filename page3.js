@@ -31,81 +31,17 @@ $.fn.page = function(options, callback)
       return value;
     },
     
-    expand_fields: function(parent_id, data, known)
+    expand_fields: function(parent_id, data)
     {
-      known = known === undefined? data: page.inherit(known, data);
       $.each(data, function(field, value) {
         if (typeof value === 'string' && value.indexOf('$') >= 0 && field !== 'template' && field != 'attr') {
           value = value.replace('$code', parent_id);
-          data[field] = page.expand_value(known, value);
-        }
-        else if ($.isPlainObject(value)) {
-          data[field] = page.expand_fields(field, value, known);
+          data[field] = page.expand_value(data, value);
         }
       });
       return data;
     },
-    
-    expand_attr: function(html, values, attr)
-    {
-      if (attr === undefined) return html;
-      attr = page.expand_value(values, attr);
-      return html.replace(/^<(\w+) ?/,'<$1 '+attr + ' ');
-    },
-    
-    inherit: function(parent, child)
-    {
-      var reserved = ['html','code','template','create','css','script','load', 'data'];
-      var result = $.extend({}, child);
-      $.each(parent, function(key, value) {
-        if (typeof value !== "string" || reserved.indexOf(key)>=0) return;
-        if (result[key] !== undefined) return;
-        result[key] = value;
-      });
-      return result;
-    },
-    
-    expand_template: function(field, child, object)
-    {
-      if (object.template === undefined) return false;
-      var expanded = page.expand_value(child, object.template);
-      expanded = expanded.replace('$code', field);
-      if (child.html === undefined) {
-        if (expanded.indexOf('$field') >= 0) return false;
-        child.html = expanded;
-      }
-      else {
-        child.html = page.expand_attr(child.html, child, object.attr);
-        child.html = expanded.replace('$field', child.html);
-      }
-      return true;
-    },
-    
-    expand_children: function(object)
-    {
-      if (!$.isPlainObject(object) && !$.isArray(object)) return;
-      if (object.html === undefined) {
-        object.html = "";
-        if (object.template === undefined) object.template = "$field";
-      }
-      $.each(object, function(field, child) {
-        if (!$.isPlainObject(child) && !$.isArray(child) || child === null) return;
-          if (child.html !== undefined)
-          child.html = page.expand_attr(child.html, child, child.attr);
-        if (child.hidden === undefined) {
-          var expanded = page.expand_template(field, child, object);
-          page.expand_children(child); 
-          if (!expanded)
-            page.expand_template(field, child, object);
-        }
-        object.html = object.html.replace('$'+field, child.html);
-        if (object.template !== undefined)
-          object.html += child.html;
-        object.html = page.expand_value(object, object.html);
-      });
-    },
-
-    
+        
     load_link: function(link,type, callback)
     {
       var element;
@@ -359,9 +295,10 @@ $.fn.page = function(options, callback)
       field.key = page.options.key;
       var obj = $(field.html);
       assert(obj.exists(), "Invalid HTML for "+id); 
-      this.set_attr(obj, field, id);
       var reserved = ['code','create','css','script','name', 'desc', 'data'];
       var values = $.extend({}, types, field);
+      this.expand_fields(id, values);
+      this.set_attr(obj, values, id);
       var matches = getMatches(obj.html(), /\$(\w+)/g);
       for (var i = 0; i< matches.length; ++i) {
         var code = matches[i];
