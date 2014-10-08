@@ -194,6 +194,7 @@ class user
     if (!user::unlocked($email)) return false;
     $otp = user::update_otp($email);
     user::send_otp($email, $otp);
+    page::redirect('otp_page.html');
   }
   
   static function reset_pw($request)
@@ -224,6 +225,7 @@ class user
     $password = addslashes($request['password']);
     $db->exec("update user set password = password('$password'), attempts=0
     where email_address='$email' and program_id = " . config::$program_id);
+    page::redirect('otp_done.html');
 }
 
   
@@ -451,7 +453,7 @@ class user
     log::debug("Sending OTP email to $email");
     $mail_sent = mail($email, $subject, $message, $headers);
    
-    session::redirect('check_otp.html');
+    page::redirect('check_otp.html');
   }
     
   static function info()
@@ -556,8 +558,10 @@ class user
       user::update_role($request);
     }
     $passwd = $request['password'];
-    if ($passwd != '**********')
+    if ($passwd != '**********' && $passwd != '')    
       $db->exec("update user set password = password('$passwd') where id = $id");
+    page::close_dialog("User successfully updated");
+    page::redirect('manage_users.html');
   }
 
   static function verify($function, $private=true)
@@ -573,7 +577,7 @@ class user
       $email = $user->email; 
       $functions = &$user->functions;
     }
-    if (!in_array($function, $functions)) 
+    if (!is_array($functions) || !in_array($function, $functions)) 
       throw new user_exception("Unauthorised access to function $function from $email");
   }
 
@@ -647,9 +651,10 @@ class user
     $request = table::remove_prefixes($request);
     $id = $request['id'];
     $role = $request['role'];
-    user::audit('update_role', $id, $role);
-    
     global $db, $session;
+    $username = $db->read_one_value("select Concat( first_name, ' ', last_name ) AS contact_person from user where id = $id ");
+    user::audit('update_role', $id, "$username - $role");
+    
     $user = &$session->user;
 
     $sql = "update user_role set role_code='$role' where user_id = $id";
@@ -660,7 +665,6 @@ class user
                   where id = $id");  
                    
 
-    $username = $db->read_one_value("select Concat( first_name, ' ', last_name ) AS contact_person from user where id = $id ");
     $admin = "$user->first_name $user->last_name <$user->email>";
     $user_role = $db->read_one_value("select name from role where code = '$role'"); 
       
@@ -669,7 +673,6 @@ class user
     if($program_id==3){
       foreach($emails as $email) {
         $message = "Dear $username <br><br> Administrator would like to inform you that you have been registered and you role is $user_role. <br>
-        For more information please log on to <a href='$proto://submit.fpb.org.za/'>submit.fpb.org.za</a> or call 012 661 0051.<br><br>
           Regards<br>
           Administrator";
         $subject = "Approve Registration";
@@ -683,7 +686,6 @@ class user
    else{
      foreach($emails as $email) {
         $message = "Dear $username <br><br> Administrator would like to inform you that you have been registered and you role is $user_role. <br>
-        For more information please log on to <a href='http://mampo.qmessenger.mukoni.net'>mampo.qmessenger.mukoni.net</a> or call 021 661 0051.<br><br>
           Regards<br>
           Administrator";
         $subject = "Approve Registration";
@@ -768,7 +770,9 @@ class user
     $id = $session->user->id;
     $db->exec("update user set active = 1 where id = $id");
     
-    session::redirect('login.html');
+    page::alert("You have been successfully registered. Your registration is awaiting verification");
+    session::logout();
+    page::redirect('home.html');
   }
      
   static function titles()
