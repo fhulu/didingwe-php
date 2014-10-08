@@ -63,6 +63,7 @@ class page3
   static function load_yaml($file, $strict, &$fields=array())
   {
     if (!file_exists($file)) $file = "../common/$file";
+    log::debug("YAML LOAD $file");
     if (!file_exists($file)) {
       if ($strict) throw new Exception("Unable to load file $file");
       return $fields;
@@ -111,6 +112,7 @@ class page3
       if (in_array('field', $expand))
         $this->expand_field($field);
     }
+    $this->expand_params($field);
     return $field;
   }
   
@@ -133,6 +135,14 @@ class page3
       $request['path'] = 'read/'.$value;
       $sub_page = new page3(false, $request);
       $value = $sub_page->result;
+    });
+  }
+  
+  function expand_params(&$fields)
+  {
+    $request = $this->request;
+    array_walk_recursive($fields, function(&$value) use ($request) {
+      $value = replace_vars ($value, $request);
     });
   }
     
