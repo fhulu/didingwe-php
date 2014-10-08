@@ -95,7 +95,7 @@ class datatable {
     if ($where_pos === false)
       $sql .= " where $where";
     else
-      $sql = substr($sql, 0, $where_pos + 6) . "$where and" . substr($sql, $where_pos + 6);
+      $sql = substr($sql, 0, $where_pos + 6) . "$where and " . substr($sql, $where_pos + 6);
   }
 
   static function read_db($sql, $options, $callback) 
