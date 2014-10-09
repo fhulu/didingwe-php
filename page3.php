@@ -121,6 +121,11 @@ class page3
   {    
     $fields = $this->load_field(null, array('html'));
     $this->expand_sub_pages($fields);
+    global $session;
+    if ($session && $session->user) {
+      $user = $session->user;
+      $fields['user_full_name'] = "$user->first_name $user->last_name";
+    }
     return array(
       'path'=>implode('/',$this->path),
       'fields'=>$fields,
