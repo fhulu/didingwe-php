@@ -113,7 +113,6 @@ class page3
         $this->expand_field($field);
     }
     $this->expand_params($field);
-    $this->filter_access($field);
     return $field;
   }
   
@@ -121,6 +120,7 @@ class page3
   {    
     $fields = $this->load_field(null, array('html'));
     $this->expand_sub_pages($fields);
+    $fields = $this->filter_access($fields);
     global $session;
     if ($session && $session->user) {
       $user = $session->user;
@@ -133,7 +133,7 @@ class page3
     );
   }
     
-  static function filter_access(&$options, $user_roles = null)
+  function filter_access($options, $user_roles = null)
   {
     if (is_null($user_roles)) {
       global $session;
@@ -147,29 +147,33 @@ class page3
     $filtered = array();
     foreach($options as $key=>$option)
     {
-      if (!is_array($option)) {
+      $original = $option;
+      $expanded = false;
+      if (is_numeric($key) && is_string($option)) {
+        $option = at($this->types, $option);
+        $expanded = true;
+      }
+      if  (!is_array($option)) {
         if (is_numeric($key))
-          $filtered[] = $option;
+          $filtered[] = $original;
         else
-          $filtered[$key] = $option;
+          $filtered[$key] = $original;
         continue;
       }
       $allowed_roles = at($option, 'access');
-      if ($allowed_roles == '') {
-        page3::filter_access($option, $user_roles);
-      }
-      else {
+      if ($allowed_roles != '') {
         $allowed = array_intersect($user_roles, explode(',', $allowed_roles));      //log::debug("PERMITTED $key ".  json_encode($allowed));
         if (sizeof($allowed) == 0) continue;
-        page3::filter_access($option, $user_roles);
       }
-      if (count($option) == 0) continue;
+      $option = $this->filter_access($option, $user_roles);
+      if (sizeof($option) == 0) continue;
+      if ($expanded) $option = $original;
       if (is_numeric($key))
         $filtered[] = $option;
       else
         $filtered[$key] = $option;
     }
-    $options = $filtered;
+    return $filtered;
   }
   
   function expand_sub_pages(&$fields)
