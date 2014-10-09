@@ -78,7 +78,7 @@ hidden:
   html: <input id='$code' type=hidden></input>
 
 image:
-  html: <img id="$code" src="$src" title"$desc"></img>
+  html: <img id="$code" src="$src" title="$desc"></img>
 
 input: 
   html: <input id="$code" type="text"></input>
