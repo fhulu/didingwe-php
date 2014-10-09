@@ -35,6 +35,7 @@ data_table:
     - goto_prev_page
     - goto_next_page
     - goto_last_page
+
 date:
   type: input
   create: datepicker
@@ -130,8 +131,8 @@ labelled_input_page:
       - mandatory: "*"
 
 link:
-  href: $code.html
-  html: <a id="$code" href="$href" title="$desc">$name</a>
+  url: $code.html
+  html: <a id="$code" href="$url" title="$desc">$name</a>
 
 menu:
   html: <ul id="$code">$items</ul>
