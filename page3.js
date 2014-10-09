@@ -223,7 +223,7 @@ $.fn.page = function(options, callback)
         else if (typeof item === 'string') {
           if (types[item] !== undefined) {
             id = item;
-            item = this.merge(types[item], type);
+            item = this.merge(type, types[item]);
           }
           else {
             if (type === undefined) continue;  // todo take care of undefined types
@@ -265,6 +265,15 @@ $.fn.page = function(options, callback)
         }
       });
     },
+
+    set_style: function(obj, field)
+    {
+      var style = field.style;
+      if (!style) return;
+      for (var key in style) {
+        obj.css(key, style[key]);
+      }
+    },
     
     replace: function(parent, child, id, field)
     {
@@ -296,6 +305,7 @@ $.fn.page = function(options, callback)
       assert(obj.exists(), "Invalid HTML for "+id); 
       var reserved = ['code','create','css','script','name', 'desc', 'data'];
       this.set_attr(obj, field, id);
+      this.set_style(obj, field);
       var values = $.extend({}, types, field);
       var matches = getMatches(obj.html(), /\$(\w+)/g);
       for (var i = 0; i< matches.length; ++i) {
@@ -380,7 +390,7 @@ $.fn.page = function(options, callback)
     
     init_events: function(obj, field)
     {
-      if (!field.post && !field.dialog && !field.redirect && !field.validate && !field.call)
+       if (!field.post && !field.dialog && !field.redirect && !field.validate && !field.call && !field.url)
         return;
       obj.click(function(event) {
         page.accept(event, $(this), field);
@@ -422,8 +432,9 @@ $.fn.page = function(options, callback)
         page.showDialog(field.dialog, {key: field.key});
         return;
       }
-      if (field.redirect) {
-        document.location = field.redirect;
+      if (field.redirect || field.url) {
+        console.log(field);
+        document.location = field.redirect || field.url;
         return;
       }
       
