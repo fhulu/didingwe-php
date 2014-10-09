@@ -156,6 +156,9 @@ one_row_table:
   items:
     - template: table_cell
 
+page_title:
+  html: <title>$name</$title>
+
 paragraph:
   html: <p id="$code">$name</p>
 
