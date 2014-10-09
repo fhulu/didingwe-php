@@ -131,7 +131,7 @@ labelled_input_page:
       - mandatory: "*"
 
 link:
-  url: $code.html
+  url: $code
   html: <a id="$code" href="$url" title="$desc">$name</a>
 
 menu:
@@ -140,7 +140,7 @@ menu:
     - type: menu_item
 
 menu_item:
-  url: $code.html
+  url: $code
   html: <li><a href="$url" title="$desc">$name</a></li>
  
 one_cell_row:
