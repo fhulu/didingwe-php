@@ -171,6 +171,9 @@ plain:
 
 plain_text:
   type: plain
+
+span:
+  html: <span id="$code">$name</span>
   
 submit_button:
   _type: button
