@@ -113,6 +113,7 @@ class page3
         $this->expand_field($field);
     }
     $this->expand_params($field);
+    $this->filter_access($field);
     return $field;
   }
   
@@ -127,6 +128,45 @@ class page3
     );
   }
     
+  static function filter_access(&$options, $user_roles = null)
+  {
+    if (is_null($user_roles)) {
+      global $session;
+
+      $user_roles = array('public');
+      if (!is_null($session) && !is_null($session->user))
+        $user_roles = $session->user->roles;
+      log::debug("ROLES ".json_encode($user_roles));
+    }
+    
+    $filtered = array();
+    foreach($options as $key=>$option)
+    {
+      if (!is_array($option)) {
+        if (is_numeric($key))
+          $filtered[] = $option;
+        else
+          $filtered[$key] = $option;
+        continue;
+      }
+      $allowed_roles = at($option, 'access');
+      if ($allowed_roles == '') {
+        page3::filter_access($option, $user_roles);
+      }
+      else {
+        $allowed = array_intersect($user_roles, explode(',', $allowed_roles));      //log::debug("PERMITTED $key ".  json_encode($allowed));
+        if (sizeof($allowed) == 0) continue;
+        page3::filter_access($option, $user_roles);
+      }
+      if (count($option) == 0) continue;
+      if (is_numeric($key))
+        $filtered[] = $option;
+      else
+        $filtered[$key] = $option;
+    }
+    $options = $filtered;
+  }
+  
   function expand_sub_pages(&$fields)
   {
     $request = $this->request;
