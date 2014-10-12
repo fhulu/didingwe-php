@@ -315,7 +315,8 @@
         return $('');
       }
       var div = $('<span>');
-      div.html(props.name || toTitleCase(action));
+      if (props.name === undefined) props.name = toTitleCase(action);
+      div.html(props.name);
       div.attr('title', props.desc);
       div.attr('action', action);
       var self = this;
@@ -323,11 +324,10 @@
         sink.trigger('action',[div,action,props.action]);
         sink.trigger(action, [div,props.action]);
         if (props.action === undefined) return;
-        var el = self.element;
         var key = sink.attr('_key');
         if (key === undefined) key = self.options.key;
         var options = $.extend({},self.params,{code: action, action: props.action, key: key, selector: props.selector});
-        var listener = el.hasClass('page')?el: el.parents('.page').eq(0);
+        var listener = self.element.closest('.page').eq(0);
         listener.trigger('child_action', [div,options]);
       });
       return div;
