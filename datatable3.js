@@ -68,7 +68,7 @@
         self.showData(data);
         self.showActions();
         if (self.options.page_size !== undefined) self.showPaging(parseInt(data.total));
-        if (self.options.filter !== undefined) self.createFilter(data.fields);
+        if (self.hasFlag('filter')) self.createFilter(data.fields);
         self.adjustActionsHeight();
       });
     },
@@ -94,7 +94,7 @@
         $('<div class=heading></div>').html(this.options.name).appendTo(th);
       
       var self = this;
-      if (this.options.filter !== undefined) {
+      if (this.hasFlag('filter')) {
         this.createAction('filter').appendTo(th);
         this.element.on('filter', function() { self.showFilter(); });
       }
@@ -300,11 +300,17 @@
     createAction: function(action, actions, sink)
     {
       if (sink === undefined) sink = this.element;
+      if (actions === undefined) actions = this.options;
       var props;
-      if (actions === undefined)
-        props = this.options[action];
-      else 
+      if ($.isPlainObject(action)) {
+        var key;
+        for (key in action) {};
+        props = $.extend({}, actions[key], action);
+        action = key;
+      }
+      else if (typeof action === 'string') {
         props = $.extend({}, this.options[action], actions[action]);
+      }
       if (props === undefined) { 
         console.log("undefined props for", action, "defined", actions);
         return $('');
@@ -461,7 +467,7 @@
       var self = this;
       var titles = self.head().find('.titles');
       var filter = self.createEditor(titles, fields, 'filter', '<th></th>').hide();
-      filter.find('input').bind('keyup input cut paste', function() {
+      filter.find('input').bind('keyup cut paste', function(e) {
         self.params.filtered = '';
         self.params.page_num = 1;
         self.params.page_size = self.options.page_size;
