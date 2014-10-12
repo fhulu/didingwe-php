@@ -69,7 +69,7 @@ class datatable3
 
   static function read_db($page, $callback) 
   {
-    $options = $page->result['fields'];
+    $options = null_merge($page->result['fields'], $page->request, false);
     $page_size = at($options, 'page_size');
     if (is_null($page_size))
       $page_size = 0;
