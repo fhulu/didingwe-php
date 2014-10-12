@@ -1,13 +1,6 @@
 ## YAML Template.
 ---
 
-action:
-  post:
-  dialog:
-  redirect:
-  validate:
-  call:
-
 actions:
  - type: submit
 
@@ -72,9 +65,10 @@ password2:
 
 submit:
   type: button
-  post: "#page *"
-  validate: all
-  call: default
+  action:
+    post: "#page *"
+    validate: all
+    call: default
       
 title:
   options:

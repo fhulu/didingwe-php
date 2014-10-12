@@ -13,6 +13,7 @@ $.fn.page = function(options, callback)
     loading: 0,
     load: function() 
     {
+      if (options.path[0] === '/') options.path=options.path.substr(1);
       options.path = "read/"+options.path;
       $.json('/?a=page3/run', { data: options}, this.show);
     },
@@ -355,7 +356,7 @@ $.fn.page = function(options, callback)
       var object = result[1];
       data.fields = result[0];
       assert(object !== undefined, "Unable to create page "+this.id);
-      object.addClass('page').appendTo(parent);      
+      object.addClass('page').appendTo(parent);   
       parent.trigger('read_'+this.id, [object, data.fields]);
       if (!page.loading)
         page.set_values(object, data);
@@ -363,6 +364,7 @@ $.fn.page = function(options, callback)
         page.set_values(object, data);
       });
       object.on('child_action', function(event,  obj, options) {
+        event.stopImmediatePropagation();
         page.accept(event, obj, options);
       });
       this.object = object;
@@ -390,8 +392,7 @@ $.fn.page = function(options, callback)
     
     init_events: function(obj, field)
     {
-       if (!field.post && !field.dialog && !field.redirect && !field.validate && !field.call && !field.url)
-        return;
+       if (!field.action) return;
       obj.click(function(event) {
         page.accept(event, $(this), field);
       });
@@ -428,19 +429,19 @@ $.fn.page = function(options, callback)
     
     accept: function(event, obj, field)
     {
-      if (field.dialog) {
-        page.showDialog(field.dialog, {key: field.key});
+      var action = field.action;
+      if (action.dialog) {
+        page.showDialog(action.dialog, {key: field.key});
         return;
       }
-      if (field.redirect || field.url) {
-        console.log(field);
-        document.location = field.redirect || field.url;
+      if (action.redirect || action.url) {
+        document.location = action.redirect || action.url;
         return;
       }
       
-      var data = {path: 'action/'+field.path, key: field.key };
-      if (field.post) {
-        var selector = field.post.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+this.id+"$2");
+      var data = {path: 'action/'+field.path+'/action', key: field.key };
+      if (action.post) {
+        var selector = action.post.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+this.id+"$2");
         obj.jsonCheck(event, selector, '/?a=page3/run', { data: data }, function(result) {
           if (result === null) result = undefined;
           obj.trigger('processed', [result]);
@@ -473,15 +474,18 @@ $.fn.page = function(options, callback)
 
     showDialog: function(path, field)
     {
+      if (path[0] === '/') path = path.substr(1);
       var params = { path: path, key: field.key };
-      var tmp = $('body').page(params);
-      tmp.on('read_'+path, function(event, object, options) { 
+      var tmp = $('body');
+      var id = path.replace('/','_');
+      tmp.on('read_'+id, function(event, object, options) { 
         object.attr('title', options.name);
         options = $.extend({modal:true, close: function() {
           $(this).attr('title', options.name).dialog('destroy').remove();
         }}, options);
         object.dialog(options);
       });
+      tmp.page(params);
     },
     
     closeDialog: function(dialog)
