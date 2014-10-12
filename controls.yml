@@ -51,11 +51,15 @@ datatable:
   export:
     name: Export to Excel
     desc: Export to an Excel spreadsheet
+  filter:
+    name: ""
+    desc: Filter by specific columns
   collapse:
     name: "-"
     desc: Hide details
   print:
     desc: "Print selected contents"
+  slideSpeed: 100
   slide: 
      name: "<"
      desc: More options...
@@ -158,8 +162,9 @@ labelled_input_page:
       - mandatory: "*"
 
 link:
-  url: $code
-  html: <a id="$code" href="$url" title="$desc">$name</a>
+  html: <a id="$code" title="$desc">$name</a>
+  action:
+    url: /$code
 
 menu:
   html: <ul id="$code">$items</ul>
@@ -167,8 +172,9 @@ menu:
     - type: menu_item
 
 menu_item:
-  url: $code
-  html: <li><a href="$url" title="$desc">$name</a></li>
+  html: <li><a title="$desc">$name</a></li>
+  action:
+    url: /$code
  
 one_cell_row:
   html: <tr><td>$field</td></tr>
