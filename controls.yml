@@ -23,18 +23,45 @@ container_without_id:
   contents: 
     template: $field
     
-data_table:
-  html: <table id="$code" class=data>\n<tbody></tbody>\n</table>
+datatable:
+  html: |
+    <table id="$code" class=data>
+      <tbody></tbody>
+    </table>
   create: datatable
-  script: common/datatable.js
-  css: datatable.css
+  script: /common/datatable3.js
+  css: /datatable.css
   position: top
   sort_order: asc
-  paging:
-    - goto_first_page
-    - goto_prev_page
-    - goto_next_page
-    - goto_last_page
+  goto_first:
+    name: First
+    desc: Go to first page
+  goto_prev:
+    name: "<"
+    desc: Go to previous page
+  goto_next:
+    name: ">"
+    desc: Go to next page
+  goto_last:
+    name: Last
+    desc: Go to last page
+  expand:
+    name: +
+    desc: More details ...
+  export:
+    name: Export to Excel
+    desc: Export to an Excel spreadsheet
+  collapse:
+    name: "-"
+    desc: Hide details
+  print:
+    desc: "Print selected contents"
+  slide: 
+     name: "<"
+     desc: More options...
+  slideoff: 
+     name: ">"
+     desc: Hide options
 
 date:
   type: input
