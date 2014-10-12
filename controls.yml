@@ -33,6 +33,16 @@ datatable:
   css: /datatable.css
   position: top
   sort_order: asc
+  # table-wide actions
+  export:
+    name: Export to Excel
+    desc: Export to an Excel spreadsheet
+    action:
+      validate: none
+      call: datatable3::start_export()    
+  filter:
+    name: ""
+    desc: Filter by specific columns
   goto_first:
     name: First
     desc: Go to first page
@@ -45,27 +55,25 @@ datatable:
   goto_last:
     name: Last
     desc: Go to last page
-  expand:
-    name: +
-    desc: More details ...
-  export:
-    name: Export to Excel
-    desc: Export to an Excel spreadsheet
-  filter:
-    name: ""
-    desc: Filter by specific columns
+  print:
+    desc: "Print selected contents"
+    action:
+      validate: none
+      call: datatable3::start_redirect(pdf)
+  # row-specific actions
   collapse:
     name: "-"
     desc: Hide details
-  print:
-    desc: "Print selected contents"
-  slideSpeed: 100
+  expand:
+    name: +
+    desc: More details ...
   slide: 
      name: "<"
      desc: More options...
   slideoff: 
      name: ">"
      desc: Hide options
+  slideSpeed: 100
 
 date:
   type: input
@@ -91,7 +99,15 @@ dropdown:
     </select>
   options:
     - type: <option value='$code'>$name</option>
-    
+
+#todo: fix backend inheritance
+export:
+  name: Export to Excel
+  desc: Export to an Excel spreadsheet
+  action:
+    validate: none
+    call: datatable3::start_redirect(export)    
+
 file:
   html: <file id="$code" name="$code"></file>
 
@@ -205,13 +221,15 @@ plain:
 plain_text:
   type: plain
 
+print:
+  desc: "Print above contents"
+  action:
+    validate: none
+    call: datatable3::start_redirect(pdf)
+
 span:
   html: <span id="$code">$name</span>
   
-submit_button:
-  _type: button
-  selector: #page *
-
 sub_menu:
   html: |
     <li>
