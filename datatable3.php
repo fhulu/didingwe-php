@@ -95,15 +95,17 @@ class datatable3
       $fields[] = $field;
     }
     $total = $db->row_count();
-    $result = array('fields' => $fields, 'rows' => $rows, 'total' => $total);
-    return $result;
+    return array('fields' => $fields, 'rows' => $rows, 'total' => $total);
   }
   
-  static function read_data($request, $callback = null) 
+  static function read_data($request, $callback = null, $append_options=false) 
   {
     $request['path'] = 'fields/'.$request['path'];
     $page = new page3(false,$request);
-    return datatable3::read_db($page, $callback);
+    $result =  datatable3::read_db($page, $callback);
+    if ($append_options)
+      $result['options'] = $page->result['fields'];
+    return $result;
   }
 
   static function read($request, $echo = true) 
@@ -113,15 +115,16 @@ class datatable3
     if ($echo) echo json_encode($data);
   }
 
-  static function start_export($request) {
-    log::debug("START EXPORT " . json_encode($request));
-    $request['field'] = $request['_page'];
-    unset($request['a'], $request['_page'], $request['_field']);
-    $url = '/?a=datatable/export';
+  static function start_redirect($request,$method) {
+    log::debug("START REDIRECT " . json_encode($request));
+    unset($request['a']);
+    $path = explode('/', $request['path']);
+    $request['path'] = implode('/', array_slice($path, 1, sizeof($path)-3));
+    $url = '/?a=datatable3/'.$method;
     array_walk($request, function($value, $key) use (&$url) {
       $url .= "&$key=" . urlencode($value);
     });
-    page::redirect($url);
+    page3::redirect($url);
   }
 
   static function export($request) {
@@ -131,26 +134,30 @@ class datatable3
     $excel = new PHPExcel();
     $sheet = $excel->setActiveSheetIndex(0);
     $request['page_size'] = 0;
-    $data = datatable::read_data($request, function($row_data, $pagenum, $index) use ($sheet) {
-        $row = 2 + $pagenum * 1000 + $index;
-        $col = 'A';
-        foreach ($row_data as $cell) {
-          $sheet->setCellValue("$col$row", $cell);
-          $sheet->getColumnDimension($col)->setAutoSize(true);
-          $sheet->getRowDimension($row)->setRowHeight(20);
-          ++$col;
-        }
-        $sheet->setCellValue("$col$row", ''); // take care of PHPExcel bug which fails to remove the last column
-        return true;
-      });
+    $data = datatable3::read_data($request, function($row_data, $pagenum, $index) use ($sheet) {
+      $row = 2 + $pagenum * 1000 + $index;
+      $col = 'A';
+      foreach ($row_data as $cell) {
+        $sheet->setCellValue("$col$row", $cell);
+        $sheet->getColumnDimension($col)->setAutoSize(true);
+        $sheet->getRowDimension($row)->setRowHeight(20);
+        ++$col;
+      }
+      $sheet->setCellValue("$col$row", ''); // take care of PHPExcel bug which fails to remove the last column
+      return true;
+    }, true);
     $col = 'A';
     foreach ($data['fields'] as $field) {
       $ref = $col . "1";
       $sheet->getStyle($ref)->getFont()->setBold(true);
-      if ($field['code'] === 'actions')
+      $code = $field['code'];
+      if ($code === 'actions')
         $sheet->removeColumn($col);
-      else
-        $sheet->setCellValue($ref, $field['name']);
+      else {
+        $name = at($field,'name');
+        if (is_null($name)) $name = ucwords(preg_replace('/[_\/]/', ' ',$code));
+        $sheet->setCellValue($ref, $name);
+      }
       ++$col;
     }
     $heading = $data['options']['name'];
@@ -172,18 +179,7 @@ class datatable3
     $objWriter->save('php://output');
   }
   
-  static function start_print($request) {
-    log::debug("START PRINT " . json_encode($request));
-    $request['field'] = $request['_page'];
-    unset($request['a'], $request['_page'], $request['_field']);
-    $url = '/?a=datatable/pdf';
-    array_walk($request, function($value, $key) use (&$url) {
-      $url .= "&$key=" . urlencode($value);
-    });
-    page::redirect($url);
-  }
-  
-  function pdf($request)
+  static function pdf($request)
   {
     $pdf = new FPDF();
     $pdf->AddPage();
@@ -194,12 +190,12 @@ class datatable3
     $request['page_size'] = 0;
     //$options = page::read_field_options(at($request, 'field'));
     $page = new page($request);
-    $options = $page->read_request('field');
+    $options = $page->result['fields'];
     $widths = $options['widths'];
     $flags = $options['flags'];
     $show_key = in_array('show_key', $flags, true);
     $columns = array(array(),array()); // reserve space for heading and titles
-    $data = datatable::read_data($request, function($row_data, $pagenum, $index) use (&$columns, $widths, $show_key) {     
+    $data = datatable3::read_data($request, function($row_data, $pagenum, $index) use (&$columns, $widths, $show_key) {     
       $fill_color = $index % 2 === 0? '216,216,216': '255,255,255';
       $col = array();
       $index = 0;
