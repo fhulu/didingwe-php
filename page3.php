@@ -116,9 +116,14 @@ class page3
     return $field;
   }
   
-  function read()
+  static function get_field($fields, $name)
+  {
+    return null_merge(at(page3::$all_fields, $name), at($fields, $name));
+  }
+  
+  function read($expand='html')
   {    
-    $fields = $this->load_field(null, array('html'));
+    $fields = $this->load_field(null, array($expand));
     $this->expand_sub_pages($fields);
     $fields = $this->filter_access($fields);
     global $session;
@@ -412,24 +417,29 @@ class page3
 
   function action()
   {
-    $action = $this->load_field(null, array('field'));
-    log::debug("ACTION ".json_encode($action));
+    $invoker = $this->load_field(null, array('field'));
+    $name = $this->path[sizeof($this->path)-1];
+    $invoker = null_merge(at($this->fields, $name), $invoker, false);
+    $invoker = null_merge(at($this->types, $name), $invoker, false);
+    log::debug("INVOKER ".json_encode($invoker));
     $fields = $this->fields[$this->page];
+    $action = $invoker['action'];
     $this->expand_field($fields);
-    log::debug("FIELDS ".json_encode($fields));
+    //log::debug("FIELDS ".json_encode($fields));
     if (array_key_exists('validate', $action) && !$this->validate($fields)) {
       return array("errors"=>$this->validator->errors);
     }
     
-    return $this->reply($action);
+    return $this->reply($action, $name);
   }
   
-  function reply($action)
+  function reply($action, $invoker = null)
   {
     $call = at($action ,'call');
-    if ($call === 'default') 
-      $call = "$this->object::".$this->path[1].'()';
-    
+    if ($call === 'default') {
+      $method = is_null($invoker)? $this->page: $invoker;
+      $call = "$this->object::$method()";
+    }
     if ($call != '') { 
       $matches = array();
       if (!preg_match('/^([^\(]+)\(([^\)]*)\)/', $call, $matches) ) 
@@ -453,10 +463,15 @@ class page3
     return false;
   }
   
+  function fields()
+  {
+    return $this->read('field');
+  }
+  
   function values()   
   {  
     $options = $this->load_field(null, array('field'));
-    log::debug("EDIT ".json_encode($options));
+    log::debug("VALUES ".json_encode($options));
     $items = array();
     foreach($options as $option) {
       $items = null_merge($items, $this->reply($option));
