@@ -38,10 +38,11 @@ class page3
       throw new Exception("No method parameter in request");    
     
     $this->types = array();
-    $this->validator = null;
+    $this->validator = new validator($request);
     
     $this->load();
     $this->result = $this->{$this->method}();
+    
     if ($echo && !is_null($this->result))
       echo json_encode($this->result);
   }
@@ -87,14 +88,16 @@ class page3
     if (sizeof($path) == 0) {
       array_unshift($path, $this->object);
     }
+    
     $this->page = $path[0];
-    $field  = $this->fields;
+    $prev_field = $field  = $this->fields;
     foreach ($path as $step) {
       $this->field = $step;
       $step_field = at($field, $step);
       if (is_null($step_field)) {
+        log::debug("SEARCHING FOR $step ".json_encode($field));
         foreach($field as $values) {
-          if (is_array($values) && at($values, 'code') != $step 
+          if (is_array($values) && (at($values, 'code') != $step)
               || is_string($values) && $values != $step) continue;
           $step_field = $values;
           break;
@@ -105,25 +108,82 @@ class page3
       $field = $step_field;
       $this->set_types($this->fields, $field);
       $this->set_types(page3::$all_fields, $field);
+      if (is_string($field)) {
+        $field = at($this->fields, $field);
+        if (is_null($field)) $field = at($this->types, $field);
+        log::debug("STRING field ".json_encode($field));
+        log::debug("FIELDS ".json_encode($this->fields));
+      }
       if (in_array('html', $expand)) {
         $this->expand_html($field, 'html');
         $this->expand_html($field, 'template');
       }
       if (in_array('field', $expand))
         $this->expand_field($field);
+      $prev_field = $field;
     }
     $this->expand_params($field);
     return $field;
   }
-  
+
   static function get_field($fields, $name)
   {
-    return null_merge(at(page3::$all_fields, $name), at($fields, $name));
+    $field = null_merge(at(page3::$all_fields, $name), at($fields, $name));
   }
+
+  function read_field($path=null)
+  {
+    if (is_null($path))
+      $path = $this->path;
+    else if (!is_array($path))
+      $path = explode('/', $path);
+    
+    $this->object = array_shift($path);
+    $this->fields = $this->load_yaml("$this->object.yml", true);
+    if (sizeof($path) == 0) {
+      array_unshift($path, $this->object);
+    }
+    $this->page = $path[0];
+    $global_field = $this->traverse_field(page3::$all_fields, $path);
+    log::debug("GLOBAL FIELD ".json_encode($global_field));
+    $local_field = $this->traverse_field($this->fields, $path);
+    log::debug("LOCAL FIELD ".json_encode($local_field));
+  }
+  
+  function traverse_field($fields, $path, $name=null)
+  {
+    if (is_null($fields)) return null;
+    if (is_null($name)) $name = last($path);
+    log::debug("TRAVERSE $name ".implode('/',$path). " ".json_encode($fields));
+    $parent = array_shift($path);
+    if (is_assoc($fields)) {
+      $value = at($fields, $name);
+      $sub_field = at($fields, $parent);
+      if (is_null($sub_field)) return null;
+      return null_merge($value, $this->traverse_field($sub_field, $path, $name),false);
+    }
+    
+    foreach($fields as $value) {
+      if ($value === $parent) return null;
+      if (!is_array($value)) continue;
+      foreach($value as $key=>$sub_val) {
+        if ($key == $parent)
+          return null_merge($value, $this->traverse_field ($value, $path, $name), false);
+      }
+    }
+    return null;
+  }
+  
   
   function read($expand='html')
   {    
     $fields = $this->load_field(null, array($expand));
+//    $type = at($fields, 'type');
+//    if (!is_null($type)) {
+//      $fields = null_merge(at(page3::$all_fields,$type), $fields);
+//      $fields = null_merge(at($this->fields,$type), $fields);
+//      unset($fields['type']);
+//    }
     $this->expand_sub_pages($fields);
     $fields = $this->filter_access($fields);
     global $session;
@@ -418,15 +478,17 @@ class page3
   function action()
   {
     $invoker = $this->load_field(null, array('field'));
+    log::debug("INVOKER ".json_encode($invoker));
     $name = $this->path[sizeof($this->path)-1];
     $invoker = null_merge(at($this->fields, $name), $invoker, false);
     $invoker = null_merge(at($this->types, $name), $invoker, false);
-    log::debug("INVOKER ".json_encode($invoker));
     $fields = $this->fields[$this->page];
     $action = $invoker['action'];
-    $this->expand_field($fields);
-    //log::debug("FIELDS ".json_encode($fields));
-    if (array_key_exists('validate', $action) && !$this->validate($fields)) {
+//    return;
+ //   $this->expand_field($fields);
+    log::debug("FIELDS ".json_encode($fields));
+    $validate = at($action, 'validate');
+    if (!is_null($validate) && $validate != 'none' && !$this->validate($fields)) {
       return array("errors"=>$this->validator->errors);
     }
     
