@@ -239,6 +239,7 @@ $.fn.page = function(options, callback)
         var templated = this.get_template_html(template, created[0]);
         parent.replace(regex, templated+'$1'); 
         var obj = created[1];
+        item = created[0];
         this.replace(parent, obj, id, 'field');
         this.init_events(obj, item);
       }
@@ -298,6 +299,7 @@ $.fn.page = function(options, callback)
         field = this.merge(type, field);
       
       field.code = id;
+      field.page_id = this.options.page_id;
       field = page.merge_type(field, types);
       field.name = field.name || toTitleCase(id.replace(/[_\/]/g, ' '));
       field.key = page.options.key;
@@ -350,7 +352,7 @@ $.fn.page = function(options, callback)
     show: function(data)
     {
       var parent = page.parent;
-      this.id = data.path.replace('/','_');
+      this.id = options.page_id = data.path.replace('/','_');
       data.fields.path = data.path;
       var result = page.create(data.fields, this.id, data.types);
       var object = result[1];
@@ -392,7 +394,8 @@ $.fn.page = function(options, callback)
     
     init_events: function(obj, field)
     {
-       if (!field.action) return;
+      if (!field.action) return;
+      field.page_id = options.page_id;
       obj.click(function(event) {
         page.accept(event, $(this), field);
       });
@@ -439,9 +442,9 @@ $.fn.page = function(options, callback)
         return;
       }
       
-      var data = {path: 'action/'+field.path+'/action', key: field.key };
+      var data = {path: 'action/'+field.path, key: field.key };
       if (action.post) {
-        var selector = action.post.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+this.id+"$2");
+        var selector = action.post.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+field.page_id+"$2");
         obj.jsonCheck(event, selector, '/?a=page3/run', { data: data }, function(result) {
           if (result === null) result = undefined;
           obj.trigger('processed', [result]);
@@ -480,8 +483,8 @@ $.fn.page = function(options, callback)
       var id = path.replace('/','_');
       tmp.on('read_'+id, function(event, object, options) { 
         object.attr('title', options.name);
-        options = $.extend({modal:true, close: function() {
-          $(this).attr('title', options.name).dialog('destroy').remove();
+        options = $.extend({modal:true, page_id: id, close: function() {
+          $(this).dialog('destroy').remove();
         }}, options);
         object.dialog(options);
       });
