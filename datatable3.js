@@ -28,8 +28,7 @@
       url: '/?a=page/read&page=mytable
       rows: null*/
       name: 'Untitled',
-      flags: [],
-      slideSpeed: 300
+      flags: []
     },
     
     _create: function()
@@ -203,7 +202,7 @@
         if (field.code === 'attr') return;
         var th = $('<th></th>').appendTo(tr);
         if (field.code === 'actions') return;
-        th.html(field.name===null? code: field.name);
+        th.html(field.name || toTitleCase(code));
         if (code === self.params.sort) 
           th.attr('sort', self.params.sort_order);
         else
@@ -316,8 +315,7 @@
         return $('');
       }
       var div = $('<span>');
-      if (props.name === undefined) props.name = toTitleCase(action);
-      div.html(props.name);
+      div.html(props.name || toTitleCase(action));
       div.attr('title', props.desc);
       div.attr('action', action);
       var self = this;
