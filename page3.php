@@ -95,7 +95,6 @@ class page3
       $this->field = $step;
       $step_field = at($field, $step);
       if (is_null($step_field)) {
-        log::debug("SEARCHING FOR $step ".json_encode($field));
         foreach($field as $values) {
           if (is_array($values) && (at($values, 'code') != $step)
               || is_string($values) && $values != $step) continue;
@@ -111,8 +110,6 @@ class page3
       if (is_string($field)) {
         $field = at($this->fields, $field);
         if (is_null($field)) $field = at($this->types, $field);
-        log::debug("STRING field ".json_encode($field));
-        log::debug("FIELDS ".json_encode($this->fields));
       }
       if (in_array('html', $expand)) {
         $this->expand_html($field, 'html');
@@ -178,14 +175,19 @@ class page3
   function read($expand='html')
   {    
     $fields = $this->load_field(null, array($expand));
-//    $type = at($fields, 'type');
-//    if (!is_null($type)) {
-//      $fields = null_merge(at(page3::$all_fields,$type), $fields);
-//      $fields = null_merge(at($this->fields,$type), $fields);
-//      unset($fields['type']);
-//    }
-    $this->expand_sub_pages($fields);
+    $type = at($fields, 'type');
+    if (!is_null($type)) {
+      $fields = null_merge(at(page3::$all_fields,$type), $fields);
+      $fields = null_merge(at($this->fields,$type), $fields);
+      unset($fields['type']);
+    }
+    if ($expand === 'html') {
+      page3::empty_fields($fields);
+      $this->expand_sub_pages($fields);
+    }
     $fields = $this->filter_access($fields);
+    if (!is_null($type))  // todo: remove double type
+      unset($this->types[$type]);
     global $session;
     if ($session && $session->user) {
       $user = $session->user;
@@ -322,7 +324,7 @@ class page3
     }
   }
   
-  static function empty_fields(&$options, $fields=array('data','sql'))
+  static function empty_fields(&$options, $fields=array('call','sql'))
   {
     foreach($options as $key=>&$option)
     {
@@ -330,9 +332,7 @@ class page3
       if (in_array($key, $fields, true)) 
         $option = "";
       else if (is_array($option))
-        page::empty_fields($option, $fields);
-      else if ($key == 'action' && strpos($option, '::') !== false)
-        $option = "";
+        page3::empty_fields($option, $fields);
     }
   }
    
@@ -504,8 +504,8 @@ class page3
     }
     if ($call != '') { 
       $matches = array();
-      if (!preg_match('/^([^\(]+)\(([^\)]*)\)/', $call, $matches) ) 
-        throw Exception("Invalid function spec $call");
+      if (!preg_match('/^([^\(]+)(?:\(([^\)]*)\))?/', $call, $matches) ) 
+        throw new Exception("Invalid function spec $call");
       return $this->call($matches[1], $matches[2]);
     }
     
