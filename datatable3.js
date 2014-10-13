@@ -232,9 +232,9 @@
       var self = this;
       var body = self.body().empty();
       var show_key = this.hasFlag('show_key');
-      var expandable = this.options.row.expand !== undefined;
+      var expandable = this.options.row && this.optoins.row.expand !== undefined;
       var show_edits = this.hasFlag('show_edits');
-      var all_actions = this.options.row.actions;
+      var all_actions = this.options.row;
       $.each(data.rows, function(i, row) {
         var tr = $('<tr></tr>').appendTo(body);
         var key = row[0];
@@ -263,7 +263,7 @@
           self.showCell(show_edits, field, td, cell, key);
           if (!expanded) {
             expanded = true;
-            f.createAction('expand', all_actions, tr).prependTo(td);
+            self.createAction('expand', all_actions, tr).prependTo(td);
             self.createAction('collapse', all_actions, tr).prependTo(td).hide();
           }
         });
@@ -326,8 +326,11 @@
         if (props.action === undefined) return;
         var key = sink.attr('_key');
         if (key === undefined) key = self.options.key;
-        var options = $.extend({},self.params,{code: action, action: props.action, key: key, selector: props.selector});
+        var options = $.extend({},self.params,{code: action, action: props.action, key: key });
         var listener = self.element.closest('.page').eq(0);
+        options.path += '/';
+        if (actions === self.options) options.path += 'actions/';
+        options.path += action;
         listener.trigger('child_action', [div,options]);
       });
       return div;
@@ -489,6 +492,7 @@
       var td = $('<td>').appendTo(tr);
       var self = this;
       $.each(actions, function(i, action) {
+        if ($.isPlainObject(action) && action.type !== undefined) return;
         self.createAction(action).appendTo(td);
       });
       this.spanColumns(td);
