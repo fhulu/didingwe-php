@@ -76,7 +76,7 @@ class datatable3
     $page_num = at($options, 'page_num');
     $offset = is_null($page_num) ? 0 : $page_size * ($page_num - 1);
     global $db;
-    $options = array_merge($options, $options['row']);
+    $options = null_merge($options, $options['row'], false);
     $sql = $options['sql'];
     $fields = datatable3::get_sql_fields($sql);
     $sql = preg_replace('/^\s*select /i', 'select SQL_CALC_FOUND_ROWS ', $sql);
