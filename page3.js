@@ -442,7 +442,8 @@ $.fn.page = function(options, callback)
         return;
       }
       
-      var data = {path: 'action/'+field.path, key: field.key };
+      var data = $.extend({}, field, {path: 'action/'+field.path});
+      data.action = undefined;
       if (action.post) {
         var selector = action.post.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+field.page_id+"$2");
         obj.jsonCheck(event, selector, '/?a=page3/run', { data: data }, function(result) {
