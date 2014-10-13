@@ -309,14 +309,14 @@
       var option_action = this.options[action] || {}
       for( var i in actions) {
         var item = actions[i];
-        if (typeof item === 'string') return $.extend({}, type_action, option_action, props);
+        if (typeof item === 'string' && action === item) break;
         if (!$.isPlainObject(item)) continue;
         var key;
         for (key in item) {}
         if (key !== action) continue;
         return $.extend({}, type_action, option_action, props, item[key]);
       }
-      return undefined;
+      return $.extend({}, type_action, option_action, props);
     },
     
     createAction: function(action, actions, sink)
