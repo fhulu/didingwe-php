@@ -85,57 +85,25 @@ $.fn.page = function(options, callback)
       });      
     },
     
-    init_links: function(object, field, callback)
+    init_links: function(object, field, types, callback)
     {      
       page.load_links('css', field);
       page.load_links('script', field, function() {
-        if (field.create)
-          object.customCreate(field);
+        if (field.create) 
+          object.customCreate($.extend({types: types},field));
         if (callback !== undefined) callback();
       });      
     },
     
     
-    merge: function(a1, a2)
-    {
-      if (a1 === undefined || a1 === null) return a2;
-      if (a2 === undefined || a2 === null) return a1;
-      var r = $.copy(a1);
-      for (var i in a2) {
-        if (!a2.hasOwnProperty(i)) continue;
-        var v2 = a2[i];
-        if (!a1.hasOwnProperty(i)) {
-          r[i] = v2;
-          continue;
-        }
-        var v1 = r[i];
-        if (typeof v1 !== typeof v2 
-                || $.isArray(v1) && !$.isArray(v2) 
-                || $.isPlainObject(v1) && !$.isPlainObject(v2)) {
-          r[i] = v2;
-          continue;
-        }
-          
-        if ($.isArray(v1)) {
-          r[i] = $.merge( $.merge([], v1), v2);
-          //note: no deep copying arrays, only objects
-          continue;
-        }
-        if ($.isPlainObject(v1)) 
-          r[i] = page.merge(v1, v2);
-        else 
-          r[i] = v2;
-      }
-      return r;
-    },
     
     merge_type: function(field, types, type)
     {
-      if (field == undefined) return field;
+      if (field == undefined || types === undefined) return field;
       if (type === undefined) type = field.type;
       if (type === undefined) return field;
       var super_type = this.merge_type(types[type], types);
-      return this.merge(super_type, field);
+      return merge(super_type, field);
     },
    
     get_type_html: function(type, types)
@@ -217,14 +185,14 @@ $.fn.page = function(options, callback)
               continue;
             }
             if (item.type !== undefined && type)
-              item = this.merge(type, item);
-            item = this.merge(types[id], item[id]);
+              item = merge(type, item);
+            item = merge(types[id], item[id]);
           }
         }
         else if (typeof item === 'string') {
           if (types[item] !== undefined) {
             id = item;
-            item = this.merge(type, types[item]);
+            item = merge(type, types[item]);
           }
           else {
             if (type === undefined) continue;  // todo take care of undefined types
@@ -296,7 +264,7 @@ $.fn.page = function(options, callback)
         id = array[0];
       }
       else if (type && field.type === undefined) 
-        field = this.merge(type, field);
+        field = merge(type, field);
       
       field.code = id;
       field.page_id = this.options.page_id;
@@ -342,7 +310,7 @@ $.fn.page = function(options, callback)
         this.replace(obj, result[1], code);
       }
      
-      page.init_links(obj, field);
+      page.init_links(obj, field, types);
       obj.on('loaded', function() {
         page.init_events(obj, field);
       });
