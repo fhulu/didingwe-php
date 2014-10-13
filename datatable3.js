@@ -232,9 +232,8 @@
       var self = this;
       var body = self.body().empty();
       var show_key = this.hasFlag('show_key');
-      var expandable = this.options.row && this.optoins.row.expand !== undefined;
+      var expandable = this.options.expand;
       var show_edits = this.hasFlag('show_edits');
-      var all_actions = this.options.row;
       $.each(data.rows, function(i, row) {
         var tr = $('<tr></tr>').appendTo(body);
         var key = row[0];
@@ -256,15 +255,15 @@
           }
           var td = $('<td></td>').appendTo(tr);
           if (field.code === 'actions') {
-            self.setRowActions(tr, td, all_actions, cell);
+            self.setRowActions(tr, td, cell);
             return;
           }
           
           self.showCell(show_edits, field, td, cell, key);
           if (!expanded) {
             expanded = true;
-            self.createAction('expand', all_actions, tr).prependTo(td);
-            self.createAction('collapse', all_actions, tr).prependTo(td).hide();
+            self.createAction('expand', undefined, tr).prependTo(td);
+            self.createAction('collapse', undefined, tr).prependTo(td).hide();
           }
         });
       });
@@ -296,20 +295,35 @@
       }
     },
     
+    getActionProps: function(action, actions)
+    {
+      var props = {};
+      if ($.isPlainObject(action)) {
+        var key;
+        for (key in action) {};
+        props = action;
+        action = key;
+      }
+      
+      var type_action = this.options.types[action] || {};
+      var option_action = this.options[action] || {}
+      for( var i in actions) {
+        var item = actions[i];
+        if (typeof item === 'string') return $.extend({}, type_action, option_action, props);
+        if (!$.isPlainObject(item)) continue;
+        var key;
+        for (key in item) {}
+        if (key !== action) continue;
+        return $.extend({}, type_action, option_action, props, item[key]);
+      }
+      return undefined;
+    },
+    
     createAction: function(action, actions, sink)
     {
       if (sink === undefined) sink = this.element;
       if (actions === undefined) actions = this.options;
-      var props;
-      if ($.isPlainObject(action)) {
-        var key;
-        for (key in action) {};
-        props = $.extend({}, actions[key], action);
-        action = key;
-      }
-      else if (typeof action === 'string') {
-        props = $.extend({}, this.options[action], actions[action]);
-      }
+      var props = this.getActionProps(action, actions);
       if (props === undefined) { 
         console.log("undefined props for", action, "defined", actions);
         return $('');
@@ -321,27 +335,31 @@
       div.attr('action', action);
       var self = this;
       div.click(function() {
-        sink.trigger('action',[div,action,props.action]);
-        sink.trigger(action, [div,props.action]);
+        sink.trigger('action',[div,action,props.action,props]);
+        sink.trigger(action, [div,props.action,props]);
         if (props.action === undefined) return;
         var key = sink.attr('_key');
         if (key === undefined) key = self.options.key;
         var options = $.extend({},self.params,{code: action, action: props.action, key: key });
         var listener = self.element.closest('.page').eq(0);
         options.path += '/';
-        if (actions === self.options) options.path += 'actions/';
+        if (actions === self.options.row_actions) 
+          options.path += 'row_actions/';
+        else if (actions === self.options.footer_actions) 
+          options.path += 'footer_actions/';
         options.path += action;
         listener.trigger('child_action', [div,options]);
       });
       return div;
     },
     
-    setRowActions: function(tr, td, all_actions, row_actions)
+    setRowActions: function(tr, td, row_actions)
     {
       if (!$.isArray(row_actions)) row_actions = row_actions.split(',');
       var self = this;
       td.addClass('actions');
       var parent = td;
+      var all_actions = this.options.row_actions;
       $.each(row_actions, function(i, action) {  
         if (action === 'expand') return;
         self.createAction(action, all_actions, tr).appendTo(parent);
@@ -367,11 +385,14 @@
         btn.toggle();
         self.slide(tr);
       });
-      tr.on('expand', function(event, button, page) {
-          button.hide();
-          tr.find('[action=collapse]').show();
-          var tmp = $('<div></div>').page({page: page, key: key, load:""});
-          tmp.on('read_'+page, function(event, object) {
+      tr.on('expand', function(event, button, action, field) {
+        button.hide();
+        tr.find('[action=collapse]').show();
+        $.each(field.pages, function(i, path) {
+          var tmp = $('<div></div>');
+          tmp.page({path: path, key: key});
+          path = path.replace(/\//, '_');
+          tmp.on('read_'+path, function(event, object) {
             var expanded = $('<tr class=expanded></tr>');
             $('<td></td>')
                     .attr('colspan', tr.children('td').length)
@@ -379,6 +400,7 @@
                     .prependTo(expanded);
             expanded.insertAfter(tr);
           });
+        });
       });
       tr.on('collapse', function(event, button) {
         button.hide();
@@ -486,14 +508,14 @@
     
     showActions: function()
     {
-      var actions = this.options.actions;
+      var actions = this.options.footer_actions;
       if (actions === undefined) return;
       var tr = $('<tr></tr>').addClass('actions').appendTo(this.body());
       var td = $('<td>').appendTo(tr);
       var self = this;
       $.each(actions, function(i, action) {
         if ($.isPlainObject(action) && action.type !== undefined) return;
-        self.createAction(action).appendTo(td);
+        self.createAction(action, actions).appendTo(td);
       });
       this.spanColumns(td);
     }
