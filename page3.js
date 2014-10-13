@@ -406,7 +406,7 @@ $.fn.page = function(options, callback)
         return;
       }
       if (action.redirect || action.url) {
-        document.location = action.redirect || action.url;
+        document.location = (action.redirect || action.url).replace('$key', field.key);
         return;
       }
       
