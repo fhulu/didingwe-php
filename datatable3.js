@@ -202,6 +202,7 @@
         if (field.code === 'attr') return;
         var th = $('<th></th>').appendTo(tr);
         if (field.code === 'actions') return;
+        if ($.isArray(field.name)) field.name = field.name[field.name.length-1];
         th.html(field.name || toTitleCase(code));
         if (code === self.params.sort) 
           th.attr('sort', self.params.sort_order);
@@ -232,7 +233,7 @@
       var self = this;
       var body = self.body().empty();
       var show_key = this.hasFlag('show_key');
-      var expandable = this.options.expand;
+      var expandable = this.options.expand.action !== undefined;
       var show_edits = this.hasFlag('show_edits');
       $.each(data.rows, function(i, row) {
         var tr = $('<tr></tr>').appendTo(body);
@@ -335,8 +336,9 @@
       div.attr('action', action);
       var self = this;
       div.click(function() {
-        sink.trigger('action',[div,action,props.action,props]);
-        sink.trigger(action, [div,props.action,props]);
+        console.log("clicked", action, props);
+        sink.trigger('action',[div,action,props.action]);
+        sink.trigger(action, [div,props.action]);
         if (props.action === undefined) return;
         var key = sink.attr('_key');
         if (key === undefined) key = self.options.key;
@@ -385,10 +387,11 @@
         btn.toggle();
         self.slide(tr);
       });
-      tr.on('expand', function(event, button, action, field) {
+      tr.on('expand', function(event, button, action) {
+        if (!action || !action.pages) return;
         button.hide();
         tr.find('[action=collapse]').show();
-        $.each(field.pages, function(i, path) {
+        $.each(action.pages, function(i, path) {
           var tmp = $('<div></div>');
           tmp.page({path: path, key: key});
           path = path.replace(/\//, '_');
