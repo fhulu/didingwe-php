@@ -43,6 +43,7 @@ datatable:
   filter:
     name: ""
     desc: Filter by specific columns
+  #paging
   goto_first:
     name: First
     desc: Go to first page
@@ -56,11 +57,10 @@ datatable:
     name: Last
     desc: Go to last page
   print:
-    desc: "Print selected contents"
-    action:
-      validate: none
-      call: datatable3::start_redirect(pdf)
-  # row-specific actions
+      desc: "Print above contents"
+      action:
+        validate: none
+        call: datatable3::start_redirect(pdf)
   collapse:
     name: "-"
     desc: Hide details
@@ -68,11 +68,11 @@ datatable:
     name: +
     desc: More details ...
   slide: 
-     name: "<"
-     desc: More options...
+    name: "<"
+    desc: More options...
   slideoff: 
-     name: ">"
-     desc: Hide options
+    name: ">"
+    desc: Hide options
   slideSpeed: 100
 
 date:
@@ -221,6 +221,7 @@ plain:
 plain_text:
   type: plain
 
+# todo: fix back-end to contextualise
 print:
   desc: "Print above contents"
   action:
