@@ -11,7 +11,8 @@ require('pdf/fpdf.php');
 
 class datatable3 
 {
-  static function get_sql_fields($sql) {
+  static function get_sql_fields($sql) 
+  {
     $matches = array();
 
     preg_match_all('/([^,]+),?/', substr(ltrim($sql), 7), $matches, PREG_SET_ORDER);
@@ -22,7 +23,8 @@ class datatable3
     return $fields;
   }
 
-  static function field_named($fields, $name) {
+  static function field_named($fields, $name) 
+  {
     foreach ($fields as $field) {
       $props = db::parse_column_name($field);
       if ($props['alias'] == $name)
@@ -31,7 +33,8 @@ class datatable3
     return null;
   }
 
-  static function sort(&$sql, $fields, $options) {
+  static function sort(&$sql, $fields, $options) 
+  {
     $sort_field = at($options, 'sort');
     if (is_null($sort_field))
       return;
@@ -91,7 +94,7 @@ class datatable3
     foreach ($db->field_names as $name) {
       $field = array('code'=>$name);
       if ($name !== 'actions') 
-        $field = null_merge($field, page3::get_field($options, $name));
+        $field = null_merge($field, $page->get_field($name), false);
       $fields[] = $field;
     }
     $total = $db->row_count();
