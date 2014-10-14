@@ -413,7 +413,8 @@ $.fn.page = function(options, callback)
       var data = $.extend({}, field, {path: 'action/'+field.path});
       data.action = undefined;
       if (action.post) {
-        var selector = action.post.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+field.page_id+"$2");
+        var page_id = field.page_id || obj.parents(".page").eq(0).attr('id');
+        var selector = action.post.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+page_id+"$2");
         obj.jsonCheck(event, selector, '/?a=page3/run', { data: data }, function(result) {
           if (result === null) result = undefined;
           obj.trigger('processed', [result]);
@@ -449,7 +450,8 @@ $.fn.page = function(options, callback)
     showDialog: function(path, field)
     {
       if (path[0] === '/') path = path.substr(1);
-      var params = { path: path, key: field.key };
+      var params = { path: path };
+      if (field) params.key =  field.key;
       var tmp = $('body');
       var id = path.replace('/','_');
       tmp.on('read_'+id, function(event, object, options) { 
