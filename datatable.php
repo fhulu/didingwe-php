@@ -7,7 +7,6 @@
  */
 
 require_once '../common/page.php';
-require('pdf/fpdf.php');
 
 class datatable {
 
@@ -17,11 +16,10 @@ class datatable {
     if (!is_null($actions) && array_key_exists($action, $actions))
       return;
 
-    $page = new page();
     if (array_key_exists($action, $options))
       $actions[$action] = $options[$action];
     else
-      $actions[$action] = $page->read_field($action);
+      $actions[$action] = page::read_field_options($action);
   }
 
   static function read_actions($options, $rows) {
@@ -38,7 +36,6 @@ class datatable {
         }
       }
     }
-    page::filter_access($actions);
     return $actions;
   }
 
@@ -95,11 +92,10 @@ class datatable {
     if ($where_pos === false)
       $sql .= " where $where";
     else
-      $sql = substr($sql, 0, $where_pos + 6) . "$where and " . substr($sql, $where_pos + 6);
+      $sql = substr($sql, 0, $where_pos + 6) . "$where and" . substr($sql, $where_pos + 6);
   }
 
-  static function read_db($sql, $options, $callback) 
-  {
+  static function read_db($sql, $options, $callback) {
     $page_size = at($options, 'page_size');
     if (is_null($page_size))
       $page_size = 0;
@@ -117,23 +113,21 @@ class datatable {
     $names = $db->field_names;
     $total = $db->row_count();
     $fields = array();
-    $page = new page();
     foreach ($names as $name) {
-      $field = $page->read_field($name, false);
+      $field = page::read_field_options($name);
       page::expand_values($field);
-      $fields[] = null_merge(array('code' => $name), $field);
+      $fields[] = page::null_merge(array('code' => $name), $field);
     }
 
     $result = array('fields' => $fields, 'rows' => $rows, 'total' => $total);
     return $result;
   }
-  
+
   static function read_data($request, $callback = null) {
-    $page = new page($request);
-    $options = $page->read_request('field', false);
+    $options = page::read_field_options(at($request, 'field'));
     if (is_null($options))
       throw new Exception("Could not find options for field" . at($request, 'field'));
-    $page->expand_values($options);
+    page::expand_values($options);
 
     $data = $options['data'];
     if (!isset($data))
@@ -150,20 +144,18 @@ class datatable {
       global $db;
       $sql = $source;
       $matches = array();
-      if (preg_match_all('/\$(\w+)/', $sql, $matches, PREG_SET_ORDER)) {
+      if (preg_match_all('/(\$\w+)/', $sql, $matches))
         foreach ($matches as $match) {
           $var = $match[1];
-          $val = $_REQUEST[$var];
+          $val = REQUEST($var);
           if (!is_null($val))
             $sql = str_replace('$' . $var, $val, $sql);
         }
-      }
-      $data = datatable::read_db($sql, array_merge($options, $request), $callback);
+      $data = datatable::read_db($sql, page::null_merge($options, $request), $callback);
     }
     else if (preg_match('/^([^\(]+)\(([^\)]*)\)/', $data, $matches)) {
-      $data = $page->call($type, $source, $callback);
+      $data = page::call($request, $type, $source, $callback);
     }
-    page::filter_access($options);
     page::empty_fields($options);
     $data['options'] = $options;
     return $data;
@@ -203,24 +195,23 @@ class datatable {
     $request['page_size'] = 0;
     $data = datatable::read_data($request, function($row_data, $pagenum, $index) use ($sheet) {
         $row = 2 + $pagenum * 1000 + $index;
-        $col = 'A';
+        $col = 0;
         foreach ($row_data as $cell) {
-          $sheet->setCellValue("$col$row", $cell);
-          $sheet->getColumnDimension($col)->setAutoSize(true);
+
+          $sheet->setCellValueByColumnAndRow($col, $row, $cell);
+          $sheet->getColumnDimension(PHPExcel_Cell::stringFromColumnIndex($col))
+            ->setAutoSize(true);
           $sheet->getRowDimension($row)->setRowHeight(20);
           ++$col;
         }
-        $sheet->setCellValue("$col$row", ''); // take care of PHPExcel bug which fails to remove the last column
         return true;
       });
+
     $col = 'A';
     foreach ($data['fields'] as $field) {
       $ref = $col . "1";
       $sheet->getStyle($ref)->getFont()->setBold(true);
-      if ($field['code'] === 'actions')
-        $sheet->removeColumn($col);
-      else
-        $sheet->setCellValue($ref, $field['name']);
+      $sheet->setCellValue($ref, $field['name']);
       ++$col;
     }
     $heading = $data['options']['name'];
@@ -240,70 +231,6 @@ class datatable {
 
     $objWriter = PHPExcel_IOFactory::createWriter($excel, 'Excel5');
     $objWriter->save('php://output');
-  }
-  
-  static function start_print($request) {
-    log::debug("START PRINT " . json_encode($request));
-    $request['field'] = $request['_page'];
-    unset($request['a'], $request['_page'], $request['_field']);
-    $url = '/?a=datatable/pdf';
-    array_walk($request, function($value, $key) use (&$url) {
-      $url .= "&$key=" . urlencode($value);
-    });
-    page::redirect($url);
-  }
-  
-  function pdf($request)
-  {
-    $pdf = new FPDF();
-    $pdf->AddPage();
-    $pdf->Image('ethekwini.png', 80, 10, 35);
-    $pdf->SetFont('Arial', 'B', 10);
-    $pdf->Footer('Council for Scientific and Industrial Research (CSIR)');
-    $pdf->Ln(40);
-    $request['page_size'] = 0;
-    //$options = page::read_field_options(at($request, 'field'));
-    $page = new page($request);
-    $options = $page->read_request('field');
-    $widths = $options['widths'];
-    $flags = $options['flags'];
-    $show_key = in_array('show_key', $flags, true);
-    $columns = array(array(),array()); // reserve space for heading and titles
-    $data = datatable::read_data($request, function($row_data, $pagenum, $index) use (&$columns, $widths, $show_key) {     
-      $fill_color = $index % 2 === 0? '216,216,216': '255,255,255';
-      $col = array();
-      $index = 0;
-      foreach ($row_data as $value) {
-       if ($index++ == 0 && !$show_key ) continue;
-       $pos = each($widths);
-       if ($pos === false) break;
-       $width = max(18,$pos[1]/7);
-       $col[] = array('text' => $value, 'width' =>  $width, 'height' => '5', 'align' => 'L', 'font_name' => 'Arial', 'font_size' => '8', 'font_style' => 'B', 'fillcolor' => "$fill_color", 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linewidth' => '0.4', 'linearea' => 'LTBR');
-      }
-      $columns[] = $col;
-    });
-       
-    $titles = &$columns[1];
-    $index = 0;
-    $total_width = 0;
-    foreach ($data['fields'] as $field) {
-      if ($index++ == 0 && !$show_key ) continue;
-      $pos = each($widths);
-      if ($pos === false) break;
-      $width = max(18,$pos[1]/7);
-      $total_width += $width;
-      $titles[] = array('text' => $field['name'], 'width' => $width, 'height' => '5', 'align' => 'L', 'font_name' => 'Arial', 'font_size' => '8', 'font_style' => 'B', 'fillcolor' => '192,192,192', 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linewidth' => '0.4', 'linearea' => 'LTBR');
-    }
-    
-    $heading = &$columns[0];
-    $now = new DateTime();
-    $now->getTimestamp();
-    $now->setTimezone(new DateTimeZone('Europe/London'));
-    $now = $now->format('Y-m-d');
-    $report_title=$options['report_title'];
-    $heading[] = array('text' =>"$report_title for $now", 'width' =>  $total_width, 'height' => '5', 'align' => 'C', 'font_name' => 'Arial', 'font_size' => '11', 'font_style' => 'B', 'fillcolor' => '255,255,255', 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linearea' => 'LTBR');
-    $pdf->WriteTable($columns,80,10);
-    $pdf->Output();
   }
 
 }

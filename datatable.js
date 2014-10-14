@@ -244,6 +244,7 @@
         if (i % 2 === 0) tr.addClass('alt');
         var expanded = !expandable;
         $.each(row, function(j, cell) {
+          if (cell == null) cell = '';//console.log(row);
           if (j===0 && !show_key) return;
           var field = data.fields[j];
           if (field.code === 'attr') {
@@ -290,7 +291,6 @@
       var html = field.html.replace('$code', key+'_'+field.code);
       var entity = $(html)
               .css('width','100%')
-              .css('height','100%')
               .value(value).appendTo(td);
       if (field.create !== undefined && field.create !== null) {
         var create_opts = $.extend({key: key}, field);
