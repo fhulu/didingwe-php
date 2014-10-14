@@ -234,7 +234,6 @@
       var body = self.body().empty();
       var show_key = this.hasFlag('show_key');
       var expandable = this.options.expand.action !== undefined;
-      var show_edits = this.hasFlag('show_edits');
       $.each(data.rows, function(i, row) {
         var tr = $('<tr></tr>').appendTo(body);
         var key = row[0];
@@ -260,7 +259,7 @@
             return;
           }
           
-          self.showCell(show_edits, field, td, cell, key);
+          self.showCell(field, td, cell, key);
           if (!expanded) {
             expanded = true;
             self.createAction('expand', undefined, tr).prependTo(td);
@@ -279,9 +278,11 @@
       this.spanColumns(this.head().find('.header>th'));      
     },
     
-    showCell: function(editable, field, td, value, key)
-    {
-      if (!editable || !$.valid(field.html)) {
+    showCell: function(field, td, value, key)
+    {      
+      field = this.getProperties(field, this.options.editables);
+      
+      if (!$.valid(field.html)) {
         td.html(value);
         return;
       }
@@ -296,35 +297,56 @@
       }
     },
     
-    getActionProps: function(action, actions)
+    getProperties: function(field, fields)
     {
       var props = {};
-      if ($.isPlainObject(action)) {
-        var key;
-        for (key in action) {};
-        props = action;
-        action = key;
+      if ($.isPlainObject(field)) {
+        if (field.code !== undefined) {
+          props = field;
+        }
+        else {
+          var key;
+          for (key in field) {};
+          props = field;
+          props.code = key;
+          field = key;
+        }
       }
       
-      var type_action = this.options.types[action] || {};
-      var option_action = this.options[action] || {}
-      for( var i in actions) {
-        var item = actions[i];
-        if (typeof item === 'string' && action === item) break;
+      var type_field = this.options.types[field] || {};
+      var option_field = this.options[field] || {}
+      var list_item_type = {};
+      var in_list = false;
+      for( var i in fields) {
+        var item = fields[i];
+        if (typeof item === 'string' && field === item || $.isPlainObject(field) && field.code == item) {
+          in_list = true;
+          break;
+        }
         if (!$.isPlainObject(item)) continue;
-        var key;
-        for (key in item) {}
-        if (key !== action) continue;
-        return $.extend({}, type_action, option_action, props, item[key]);
+        if (item.type !== undefined) {
+          list_item_type = this.options.types[item.type];
+          continue;
+        }
+        if (typeof field == 'string') {
+          var key;
+          for (key in item) {}
+          if (key !== field) continue;
+          props = $.extend(props, item[key], {code: key} );
+          in_list = true;
+          break;
+        }
       }
-      return $.extend({}, type_action, option_action, props);
+
+      if (!in_list) list_item_type = {};
+      return $.extend({}, type_field, option_field, props, list_item_type);
     },
     
     createAction: function(action, actions, sink)
     {
       if (sink === undefined) sink = this.element;
       if (actions === undefined) actions = this.options;
-      var props = this.getActionProps(action, actions);
+      var props = this.getProperties(action, actions);
       if (props === undefined) { 
         console.log("undefined props for", action, "defined", actions);
         return $('');
@@ -336,7 +358,6 @@
       div.attr('action', action);
       var self = this;
       div.click(function() {
-        console.log("clicked", action, props);
         sink.trigger('action',[div,action,props.action]);
         sink.trigger(action, [div,props.action]);
         if (props.action === undefined) return;
