@@ -10,8 +10,28 @@
 require_once 'validator.php';
 require_once 'db.php';
 
+class page_output
+{
+  var $values;
+  function __construct() 
+  {
+    $this->values = null;
+  }
+  
+  function __destruct() 
+  {
+    if ($this->values)
+      echo json_encode ($this->values);
+  }
+  
+}
 
-# read/booking/create/facility/options/
+{
+  global $page_output;
+  $page_output = new page_output();
+}
+
+
 class page3
 {  
   var $request;
@@ -39,10 +59,10 @@ class page3
     
     $this->types = array();
     $this->validator = new validator($request);
-    
+  
     $this->load();
     $this->result = $this->{$this->method}();
-    
+  
     if ($echo && !is_null($this->result))
       echo json_encode($this->result);
   }
@@ -175,6 +195,7 @@ class page3
   function read($expand='html')
   {    
     $fields = $this->load_field(null, array($expand));
+    $this->check_access($fields, true);
     $type = at($fields, 'type');
     if (!is_null($type)) {
       $fields = null_merge(at(page3::$all_fields,$type), $fields);
@@ -475,10 +496,34 @@ class page3
     }
   }
 
+  function check_access($field, $throw=false)
+  {
+    $allowed_roles = at($field, 'access');
+    if (is_array($allowed_roles)) $allowed_roles = last($allowed_roles);
+    if ($allowed_roles == '') return true;
+
+    global $session;
+
+    $user_roles = array('public');
+    if (!is_null($session) && !is_null($session->user))
+      $user_roles = $session->user->roles;
+    
+    if (in_array('super', $user_roles)) return true;
+    
+    $allowed = array_intersect($user_roles, explode(',', $allowed_roles));    
+    if (sizeof($allowed) > 0) return true;
+    if (!$throw) return false;
+    $code = $field['code'];
+    $path = implode('/', $this->path);
+    throw new user_exception("Unauthorized access to PATH $path FIELD $code");
+  }
+  
   function action()
   {
     $invoker = $this->load_field(null, array('field'));
     log::debug("INVOKER ".json_encode($invoker));
+    $this->check_access($field, true);
+    
     $name = $this->path[sizeof($this->path)-1];
     $invoker = null_merge(at($this->fields, $name), $invoker, false);
     $invoker = null_merge(at($this->types, $name), $invoker, false);
@@ -488,9 +533,8 @@ class page3
  //   $this->expand_field($fields);
     log::debug("FIELDS ".json_encode($fields));
     $validate = at($action, 'validate');
-    if (!is_null($validate) && $validate != 'none' && !$this->validate($fields)) {
-      return array("errors"=>$this->validator->errors);
-    }
+    if (!is_null($validate) && $validate != 'none' && !$this->validate($fields))
+      return null;
     
     return $this->reply($action, $name);
   }
@@ -498,15 +542,16 @@ class page3
   function reply($action, $invoker = null)
   {
     $call = at($action ,'call');
-    if ($call === 'default') {
-      $method = is_null($invoker)? $this->page: $invoker;
-      $call = "$this->object::$method()";
-    }
     if ($call != '') { 
+      $call = preg_replace('/\$class([^\w]|$)/', "$this->object\$1", $call);
+      $call = preg_replace('/\$page([^\w]|$)/', "$this->page\$1", $call); 
+      $call = preg_replace('/\$invoker([^\w]|$)/', "$invoker\$1", $call);
+      $call = preg_replace('/\$default([^\w]|$)/', "$this->object::$page\$1", $call);
+
       $matches = array();
       if (!preg_match('/^([^\(]+)(?:\(([^\)]*)\))?/', $call, $matches) ) 
         throw new Exception("Invalid function spec $call");
-      return $this->call($matches[1], $matches[2]);
+      $this->call($matches[1], $matches[2]);
     }
     
     $sql = at($action,'sql');
@@ -544,41 +589,51 @@ class page3
     
   static function respond($response, $value=null)
   {
-    global $json;
-    $json['_responses'][$response] = is_null($value)?'':$value;
+    global $page_output;
+    $result = &$page_output->values;
+    $result['_responses'][$response] = is_null($value)?'':$value;
   }
     
   static function alert($message)
   {
-    page::respond('alert', $message);
+    page3::respond('alert', $message);
   }
   
   static function redirect($url)
   {
-    page::respond('redirect', $url);
+    page3::respond('redirect', $url);
   }
 
   static function show_dialog($dialog, $options=null)
   {
-    page::respond('show_dialog', $dialog);
-    if (!is_null($options)) page::respond('options', $options);
+    page3::respond('show_dialog', $dialog);
+    if (!is_null($options)) page3::respond('options', $options);
   }
   
   static function close_dialog($message=null)
   {
     if (!is_null($message)) page::alert($message);
-    page::respond('close_dialog');
+    page3::respond('close_dialog');
   }
-  
+
   static function update($name, $value=null)
   {
-    global $json;
-    $responses = &$json['_responses'];
+    global $page_output;
+    $result = &$page_output->values;
+    $responses = &$result['_responses'];
     $updates = &$responses['update'];
     if (is_array($name))
-      page::null_merge ($updates, $name);
+      null_merge ($updates, $name);
     else
       $updates[$name] = $value;
   }
   
+  static function error($name, $value)
+  {
+    global $page_output;
+    $result = &$page_output->result;
+    $result['errors'][$name] = $value;
+  }
+  
 }
+
