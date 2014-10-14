@@ -27,13 +27,12 @@ function last($array)
   return at($array, $length-1);
 }
 
-function null_merge($array1, $array2, $recurse = true) 
+function null_merge($array1, $array2) 
 {
   if (!is_array($array2)) return $array1;
   
   if (is_array($array1)) 
-    return $recurse? array_merge_recursive($array1, $array2): array_merge($array1, $array2);
-
+    return is_array($array2)? array_merge_recursive($array1, $array2): $array1;
   return $array2;
 }
 
@@ -55,12 +54,12 @@ function replace_vars($str, $values=null)
 {
   if (is_null($values)) $values = $_REQUEST;
   $matches = array();
-  if (!preg_match_all('/\$(\w+)/', $str, $matches, PREG_SET_ORDER)) return  $str;
+  if (!preg_match_all('/\[^$]$(\w+)/', $str, $matches, PREG_SET_ORDER)) return  $str;
 
   foreach($matches as $match) {
     $key = $match[1];
-    $value = at($values, $key);
-    if (!is_null($value))
+    $value = $values[$key];
+    if (isset($value))
       $str = str_replace('$'.$key, $value, $str);
   }
   return $str;
@@ -81,12 +80,3 @@ function compress_array($array)
   return $compressed;
 }
   
-function errHandle($errNo, $errStr, $errFile, $errLine) {
-  $msg = "$errStr in $errFile on line $errLine";
-  //if ($errNo == E_NOTICE || $errNo == E_WARNING) 
-  if ($errNo == E_WARNING) 
-    throw new ErrorException($msg, $errNo);
-//  echo $msg;
-}
-
-set_error_handler('errHandle');
