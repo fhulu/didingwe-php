@@ -46,6 +46,7 @@ class page3
   var $path;
   var $root;
   var $result;
+  var $user;
 
   function __construct($echo=true, $request=null)
   {
@@ -58,8 +59,9 @@ class page3
       throw new Exception("No method parameter in request");    
     
     $this->types = array();
-    $this->validator = new validator($request);
-  
+    global $session;
+    $this->user = $session->user;
+
     $this->load();
     $this->result = $this->{$this->method}();
   
@@ -209,9 +211,8 @@ class page3
       page3::empty_fields($fields);
       $this->expand_sub_pages($fields);
     }
-    global $session;
-    if ($session && $session->user) {
-      $user = $session->user;
+    if ($this->user) {
+      $user = $this->user;
       $fields['user_full_name'] = "$user->first_name $user->last_name";
     }
     return array(
@@ -253,7 +254,8 @@ class page3
         $allowed = array_intersect($user_roles, explode(',', $allowed_roles));      //log::debug("PERMITTED $key ".  json_encode($allowed));
         if (sizeof($allowed) == 0) continue;
       }
-      $option = $this->filter_access($option, $user_roles);
+      if (!$expanded)
+        $option = $this->filter_access($option, $user_roles);
       if (sizeof($option) == 0) continue;
       if ($expanded) $option = $original;
       if (is_numeric($key))
@@ -428,7 +430,7 @@ class page3
     if (is_array($options)) {
       $options = array_merge($this->request, $options);
       foreach($params as &$param) {
-        $param = page::replace_vars ($param, $options);
+        $param = replace_vars ($param, $options);
       }
     }
     return call_user_func_array($function, array_merge(array($this->request), $params));
@@ -531,7 +533,6 @@ class page3
     $action = $invoker['action'];
 //    return;
  //   $this->expand_field($fields);
-    log::debug("FIELDS ".json_encode($fields));
     $validate = at($action, 'validate');
     if (!is_null($validate) && $validate != 'none' && !$this->validate($fields))
       return null;
@@ -546,7 +547,7 @@ class page3
       $call = preg_replace('/\$class([^\w]|$)/', "$this->object\$1", $call);
       $call = preg_replace('/\$page([^\w]|$)/', "$this->page\$1", $call); 
       $call = preg_replace('/\$invoker([^\w]|$)/', "$invoker\$1", $call);
-      $call = preg_replace('/\$default([^\w]|$)/', "$this->object::$page\$1", $call);
+      $call = preg_replace('/\$default([^\w]|$)/', "$this->object::$this->page\$1", $call);
 
       $matches = array();
       if (!preg_match('/^([^\(]+)(?:\(([^\)]*)\))?/', $call, $matches) ) 
@@ -556,7 +557,8 @@ class page3
     
     $sql = at($action,'sql');
     if ($sql == '') return null;
-    
+    $user_id = $this->user->id;
+    $sql = preg_replace('/\$uid([^\w]|$)/', "$user_id\$1", $sql);
     global $db;
     return $db->read($sql, MYSQLI_ASSOC);
   }
@@ -631,8 +633,10 @@ class page3
   static function error($name, $value)
   {
     global $page_output;
-    $result = &$page_output->result;
-    $result['errors'][$name] = $value;
+    log::debug("ERROR $name $value ");
+    $result = &$page_output->values;
+    $errors = &$result['errors'];
+    $errors[$name] = $value;
   }
   
 }
