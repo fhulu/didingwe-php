@@ -417,10 +417,12 @@ $.fn.page = function(options, callback)
         obj.jsonCheck(event, selector, '/?a=page3/run', { data: data }, function(result) {
           if (result === null) result = undefined;
           obj.trigger('processed', [result]);
-          if (result !== undefined) page.respond(result._responses, obj);
+          if (result) page.respond(result._responses, obj);
         });
         return;
       }
+      
+      if (action.call === undefined) return;
       $.json('/?a=page3/run', {data: data}, function(result) {
         obj.trigger('processed', [result]);
         if (result !== undefined) page.respond(result._responses, obj);
