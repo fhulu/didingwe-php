@@ -202,13 +202,13 @@ class page3
       $fields = null_merge(at($this->fields,$type), $fields);
       unset($fields['type']);
     }
+    $fields = $this->filter_access($fields);
+    if (!is_null($type))  // todo: remove double type
+      unset($this->types[$type]);
     if ($expand === 'html') {
       page3::empty_fields($fields);
       $this->expand_sub_pages($fields);
     }
-    $fields = $this->filter_access($fields);
-    if (!is_null($type))  // todo: remove double type
-      unset($this->types[$type]);
     global $session;
     if ($session && $session->user) {
       $user = $session->user;
