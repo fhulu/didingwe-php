@@ -123,9 +123,9 @@ class page3
     return $field;
   }
 
-  static function get_field($fields, $name)
+  function get_field($name)
   {
-    $field = null_merge(at(page3::$all_fields, $name), at($fields, $name));
+    return null_merge(at(page3::$all_fields, $name), at($this->fields, $name), false);
   }
 
   function read_field($path=null)
