@@ -300,42 +300,33 @@
     getProperties: function(field, fields)
     {
       var props = {};
+      var key = field;
       if ($.isPlainObject(field)) {
-        if (field.code !== undefined) {
+        key = field.code;
+        if (key !== undefined) {
           props = field;
         }
         else {
-          var key;
           for (key in field) {};
-          props = field;
+          props = field[key];
           props.code = key;
           field = key;
         }
       }
-      
-      var type_field = this.options.types[field] || {};
-      var option_field = this.options[field] || {}
+
+      var type_field = this.options.types[key] || {};
+      var option_field = this.options[key] || {}
       var list_item_type = {};
       var in_list = false;
+      
       for( var i in fields) {
         var item = fields[i];
-        if (typeof item === 'string' && field === item || $.isPlainObject(field) && field.code == item) {
+        if (typeof item === 'string' && key === item) {
           in_list = true;
           break;
         }
-        if (!$.isPlainObject(item)) continue;
-        if (item.type !== undefined) {
+        if ($.isPlainObject(item) && item.type !== undefined) 
           list_item_type = this.options.types[item.type];
-          continue;
-        }
-        if (typeof field == 'string') {
-          var key;
-          for (key in item) {}
-          if (key !== field) continue;
-          props = $.extend(props, item[key], {code: key} );
-          in_list = true;
-          break;
-        }
       }
 
       if (!in_list) list_item_type = {};

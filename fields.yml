@@ -8,6 +8,14 @@ cellphone:
   desc: The cellphone number at which you can be contacted
   valid: /[\d- ]+/
 
+change_password: 
+  desc: Change your password
+  access: reg
+  action:
+    call: /user/start_reset_pw
+    # dialog: /user/start_reset_password
+
+    
 contacts:
   email: support@mukoni.co.za
 
@@ -58,17 +66,29 @@ inputs:
 otp:
   name: OTP
   desc: One Time Pin
-    
-password2:
-  type: confirm_password
-  name: Confirm Password
 
+password:
+  desc: A secret combination of letters and number only known to you. Please do not give out your password.
+  valid: password
+ 
+popup:
+  action:
+    dialog:  
+    
+    
 submit:
   type: button
   action:
     post: "#page *"
     validate: all
-    call: default
+    call: $class::$invoker($key)
+
+submit_page:
+  type: button
+  action:
+    post: "#page *"
+    validate: all
+    call: $class::$page($key)
       
 title:
   options:

@@ -716,6 +716,7 @@ function getMatches(string, regex, index) {
 function assert(condition, message) {
   if (!condition) {
     message = message || "Assertion failed";
+    console.log(message);
     if (typeof Error !== "undefined") {
       throw new Error(message);
     }

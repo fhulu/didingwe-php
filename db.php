@@ -287,7 +287,7 @@ class db
   {
     $output = array();
     foreach($array as $key => $val) {
-      $output[$key] = addslashes($val);
+      $output[$key] = is_string($val)? addslashes($val): $val;
     }
     return $output;
   }

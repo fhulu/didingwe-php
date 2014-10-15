@@ -1,6 +1,7 @@
 <?php 
 require_once('log.php');
 require_once 'session.php';
+require_once 'page3.php';
 
 $args = explode('/', $_GET['a']);
 if (in_array($args[0], array('json','select'))) { 
@@ -43,16 +44,26 @@ try {
     $value = str_replace("\'", "'", $value);
     $value = str_replace('\"', '"', $value);
   }
-
- call_user_func($function, $_REQUEST);
+  call_user_func($function, $_REQUEST);
 }
 catch (user_exception $exception) {
   log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
-  session::redirect('breach.html');
+  log_trace($exception);
+  page3::show_dialog('/breach');
 }
 catch (Exception $exception)
 {
   log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
-  session::redirect('error_page.html');
+  log_trace($exception);
+  page3::show_dialog('/error_page');
+}
+
+function log_trace($exception)
+{
+  $index = 0;
+  foreach($exception->getTrace() as $trace) {
+    log::debug("TRACE $index. ".$trace['file']." line ".$trace['line']." function ".$trace['class'] ."::".$trace['function'] ." args ".json_encode($trace['args']));
+    ++$index;
+  }
 }
 ?>
