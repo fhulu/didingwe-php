@@ -441,9 +441,10 @@ class page3
     if (is_null($type)) $type = at($field, 'type');
     if (is_null($type)) return $field;
     $expanded = at($this->types, $type);
-    if (is_null($expanded)) return $field;
+    if (is_null($expanded)) 
+      throw new Exception("Unknown  type $type specified");
     $super_type = $this->merge_type($expanded);
-    return null_merge($super_type, $field, false);
+    return array_merge_recursive_distinct($super_type, $field);
   }
   
   function expand_contents(&$parent)
@@ -454,27 +455,32 @@ class page3
     foreach($parent as &$value) {
       $code = null;
       if (is_array($value)) {
+        //log::debug("EXPANDING VALUE ".json_encode($value));
         $type = at($value, 'type');
         if (!is_null($type)) {
-          $default_type = $type;
+          $default_type = at($this->types, $type);
           continue;
         }
-        $code = at($value, 'code');
-        if (is_null($code)) {
-          foreach ($value as $code=>$val) break; 
+        if (null_at($value, 'code')) {
+          foreach ($value as $key=>$val) break;
           if (!is_array($val)) continue;
+          $value = $val;
+          $value['code'] = $key;
+          //log::debug("EXPANDING overloaded ".json_encode($value));
         }
-        $value = $value[$code];
-        $value = null_merge(at($this->types, $code), $value, false);
-        $value = $this->merge_type($value, $default_type);
-        $value['code'] = $code;
+        if (null_at($value,'type'))
+          $value = array_merge_recursive_distinct($default_type, $value);
+        $type_value = at($this->types, $key);
+        //log::debug("TYPE VALUE ".json_encode($type_value));
+        $value = array_merge_recursive_distinct($type_value, $value);
+        //log::debug("EXPANDED ".json_encode($value));
         continue;
       }
       if (!is_string($value) || preg_match('/\W/', $value)) continue;
       $code = $value;
       if (!null_at($this->types, $value)) {  
         $value = at($this->types,$value);
-        $value = $this->merge_type($value, $default_type);
+        $value = array_merge_recursive_distinct($default_type, $value);
       }
       else {
         if (is_null($default_type)) continue;
@@ -487,13 +493,14 @@ class page3
 
   function expand_field(&$field)
   {
-    if (!is_assoc($field)) {
-      $this->expand_contents($field);
-      return;
-    }
     foreach ($field as $key=>&$value) {
+      if (is_numeric($key)) {
+        $this->expand_contents($field);
+        break;
+      }
       if (!is_array($value)) continue;
-      $value = null_merge(at($this->types,$key), $value, false);
+      $type_value = at($this->types, $key);
+      $value = null_merge($type_value, $value, false);
       $this->expand_field($value);
     }
   }
@@ -523,14 +530,16 @@ class page3
   function action()
   {
     $invoker = $this->load_field(null, array('field'));
-    log::debug("INVOKER ".json_encode($invoker));
-    $this->check_access($field, true);
-    
+    log::debug("INVOKER  ".json_encode($invoker));
+//    $this->check_access($field, true);
+    $this->expand_field($invoker);
     $name = $this->path[sizeof($this->path)-1];
-    $invoker = null_merge(at($this->fields, $name), $invoker, false);
-    $invoker = null_merge(at($this->types, $name), $invoker, false);
+//    $invoker = null_merge(at($this->fields, $name), $invoker, false);
+//    $invoker = null_merge(at($this->types, $name), $invoker, false);
+//    $invoker = null_merge(at(page3::$all_fields, $name), $invoker, false);
     $fields = $this->fields[$this->page];
     $action = $invoker['action'];
+    log::debug("EXPANDED ".json_encode($invoker));
 //    return;
  //   $this->expand_field($fields);
     $validate = at($action, 'validate');
