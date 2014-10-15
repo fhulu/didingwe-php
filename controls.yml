@@ -1,8 +1,5 @@
 ---
 # html controls
-blank:
-  html: ""
-    
 button: 
   desc: ""
   html: <button id="$code" title="$desc" class=action>$name</button>
@@ -83,8 +80,8 @@ datetime:
   type: input
   create: datetimepicker
   format: Y-m-d H:i
-  script: common/jquery.datetimepicker.js
-  css: common/jquery.datetimepicker.css
+  script: /common/jquery.datetimepicker.js
+  css: /common/jquery.datetimepicker.css
   
 disabled_text_input:
   type: input
@@ -290,7 +287,7 @@ table_row:
 
 text: { type: input }
 
-textrea:
+textarea:
   html: <textarea id="$code"></textarea>
 
 text_input: {type: input }
