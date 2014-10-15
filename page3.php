@@ -123,8 +123,10 @@ class page3
           $step_field = $values;
           break;
         }
-        if (is_null($step_field)) 
-          throw new Exception("Invalid path ".implode('/', $path));
+        if (is_null($step_field)) {
+          log::error("MISTEP ".json_encode($field));
+          throw new Exception("Invalid path step $step on ".implode('/', $path));
+        }
       }
       $field = $step_field;
       $this->set_types($this->fields, $field);
@@ -228,8 +230,11 @@ class page3
       global $session;
 
       $user_roles = array('public');
-      if (!is_null($session) && !is_null($session->user))
+      if (!is_null($session) && !is_null($session->user)) {
         $user_roles = $session->user->roles;
+        if (in_array('super', $user_roles))
+          $user_roles = array('user','reg', 'viewer','admin','clerk','manager');
+      }
       log::debug("ROLES ".json_encode($user_roles));
     }
     
@@ -250,6 +255,7 @@ class page3
         continue;
       }
       $allowed_roles = at($option, 'access');
+      if (is_array($allowed_roles)) $allowed_roles = last($allowed_roles);
       if ($allowed_roles != '') {
         $allowed = array_intersect($user_roles, explode(',', $allowed_roles));      //log::debug("PERMITTED $key ".  json_encode($allowed));
         if (sizeof($allowed) == 0) continue;
@@ -478,14 +484,8 @@ class page3
       }
       if (!is_string($value) || preg_match('/\W/', $value)) continue;
       $code = $value;
-      if (!null_at($this->types, $value)) {  
-        $value = at($this->types,$value);
-        $value = array_merge_recursive_distinct($default_type, $value);
-      }
-      else {
-        if (is_null($default_type)) continue;
-        $value = at($this->types, $default_type);
-      }
+      $value = at($this->types, $code);
+      $value = array_merge_recursive_distinct($default_type, $value);
       $value['code'] = $code;
     }
     
@@ -531,17 +531,10 @@ class page3
   {
     $invoker = $this->load_field(null, array('field'));
     log::debug("INVOKER  ".json_encode($invoker));
-//    $this->check_access($field, true);
-    $this->expand_field($invoker);
     $name = $this->path[sizeof($this->path)-1];
-//    $invoker = null_merge(at($this->fields, $name), $invoker, false);
-//    $invoker = null_merge(at($this->types, $name), $invoker, false);
-//    $invoker = null_merge(at(page3::$all_fields, $name), $invoker, false);
     $fields = $this->fields[$this->page];
     $action = $invoker['action'];
-    log::debug("EXPANDED ".json_encode($invoker));
-//    return;
- //   $this->expand_field($fields);
+    $this->expand_field($fields);
     $validate = at($action, 'validate');
     if (!is_null($validate) && $validate != 'none' && !$this->validate($fields))
       return null;
@@ -615,18 +608,24 @@ class page3
     page3::respond('redirect', $url);
   }
 
-  static function show_dialog($dialog, $options=null)
+  static function show_dialog($dialog, $options=null, $values = null)
   {
     page3::respond('show_dialog', $dialog);
+    $options['values'] = $values;
     if (!is_null($options)) page3::respond('options', $options);
   }
   
-  static function close_dialog($message=null)
+  static function dialog($dialog, $options=null, $values=null)
   {
-    if (!is_null($message)) page::alert($message);
-    page3::respond('close_dialog');
+    page3::show_dialog($dialog, $options, $values);
   }
 
+  static function close_dialog($message=null)
+  {
+    if (!is_null($message)) page3::alert($message);
+    page3::respond('close_dialog');
+  }
+  
   static function update($name, $value=null)
   {
     global $page_output;

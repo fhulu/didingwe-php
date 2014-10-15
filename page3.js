@@ -15,7 +15,12 @@ $.fn.page = function(options, callback)
     {
       if (options.path[0] === '/') options.path=options.path.substr(1);
       options.path = "read/"+options.path;
-      $.json('/?a=page3/run', { data: options}, this.show);
+      var data = $.copy(options);
+      //data.values = undefined;
+      $.json('/?a=page3/run', { data: data}, function(result) {
+        if (result._responses) page.respond(result._responses);
+        if (result.path) page.show($.extend({ values: options.values }, result));
+      });
     },
    
     expand_value: function(values,value)
@@ -178,21 +183,22 @@ $.fn.page = function(options, callback)
               id = key;
               break;
             };
+            item = item[id];
             
             if (id === 'sql' || id === 'call') {
               loading_data = true;
               this.load_data(parent, parent_id, name, [{type:type},{template:template}], types, path); 
               continue;
             }
-            if (item.type !== undefined && type)
+            if (!item.type && type)
               item = merge(type, item);
-            item = merge(types[id], item[id]);
+            item = merge(types[id], item);
           }
         }
         else if (typeof item === 'string') {
           if (types[item] !== undefined) {
             id = item;
-            item = merge(type, types[item]);
+            item = merge(types[item], type);
           }
           else {
             if (type === undefined) continue;  // todo take care of undefined types
@@ -273,7 +279,7 @@ $.fn.page = function(options, callback)
       field.key = page.options.key;
       if (!array) this.expand_fields(id, field);
       var obj = $(field.html);
-      assert(obj.exists(), "Invalid HTML for "+id); 
+      assert(obj.exists(), "Invalid HTML for "+id+": "+field.html); 
       var reserved = ['code','create','css','script','name', 'desc', 'data'];
       this.set_attr(obj, field, id);
       this.set_style(obj, field);
@@ -371,24 +377,27 @@ $.fn.page = function(options, callback)
 
     set_values: function(parent, data)
     {
-      var values = data.fields.values;
+      var values = $.extend({}, data.fields.values, data.values);
       if (!values) return;
       for (var i in values) {
         var item = values[i];
-        if (!$.isPlainObject(item)) continue;
-        var id, value;
-        for (var key in item) {
-          if (!item.hasOwnProperty(key)) continue;
-          id = key;
-          value = item[key];
-          break;
-        };
+        var array = $.isNumeric(i);
+        if (array && !$.isPlainObject(item)) continue;
+         var id = i, value= item;
+        if (array) {
+          for (var key in item) {
+            if (!item.hasOwnProperty(key)) continue;
+            id = key;
+            value = item[key];
+            break;
+          };
+        }
         var obj = parent.find('#'+id);
         if (obj.exists()) {
           obj.val(value);
           continue;
         }
-        if (id !== 'sql' && id !== 'call') continue;
+        if (array && id !== 'sql' && id !== 'call') continue;
         var data = { path: 'values/'+data.path+'/values', key: data.fields.key } 
         $.json('/?a=page3/run', {data: data }, function(result) { 
           for (var i in result) {
@@ -410,7 +419,7 @@ $.fn.page = function(options, callback)
         return;
       }
       
-      var data = $.extend({}, field, {path: 'action/'+field.path});
+      var data = {key: field.key, path: 'action/'+field.path};
       data.action = undefined;
       if (action.post) {
         var page_id = field.page_id || obj.parents(".page").eq(0).attr('id');
@@ -432,9 +441,12 @@ $.fn.page = function(options, callback)
     
     respond: function(responses, invoker)
     {
-      if (!$.isPlainObject(responses)) return;
-      var parent = invoker.parents('.ui-dialog-content').eq(0);
-      if (!parent.exists()) parent = page.parent;
+      if (!$.isPlainObject(responses)) return this;
+      var parent = this.parent;
+      if (invoker) {
+         parent = invoker.parents('.ui-dialog-content').eq(0);
+        if (!parent.exists()) parent = this.parent;
+      }
       var self = this;
       $.each(responses, function(key, val) {
         switch(key) {
@@ -445,13 +457,17 @@ $.fn.page = function(options, callback)
           case 'update': parent.setChildren(val); break;
         }
       });      
+      return this;
     },
 
     showDialog: function(path, field)
     {
       if (path[0] === '/') path = path.substr(1);
       var params = { path: path };
-      if (field) params.key =  field.key;
+      if (field) {
+        params.values = field.values;
+        params.key = field.key;
+      }
       var tmp = $('body');
       var id = path.replace('/','_');
       tmp.on('read_'+id, function(event, object, options) { 
