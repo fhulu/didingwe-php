@@ -120,7 +120,7 @@ $.fn.page = function(options, callback)
     
     get_template_html: function(template, item)
     {
-      if (item.type === 'hidden') return '$field';
+      if (item.type === 'hidden' || item.template === "none") return '$field';
       var result = template;
       if (typeof template !== 'string') {
         item = $.extend({}, template, item);
@@ -210,10 +210,10 @@ $.fn.page = function(options, callback)
         if (path)
           item.path = path + '/' + id;
         var created = this.create(item, id, types, type);        
-        var templated = this.get_template_html(template, created[0]);
+        item = created[0];
+        var templated = this.get_template_html(item.template || template, item);
         parent.replace(regex, templated+'$1'); 
         var obj = created[1];
-        item = created[0];
         this.replace(parent, obj, id, 'field');
         this.init_events(obj, item);
       }
@@ -327,10 +327,12 @@ $.fn.page = function(options, callback)
     {
       var parent = page.parent;
       this.id = options.page_id = data.path.replace('/','_');
+      var values = data.fields.values;
       data.fields.path = data.path;
       var result = page.create(data.fields, this.id, data.types);
       var object = result[1];
       data.fields = result[0];
+      data.values = values;
       assert(object !== undefined, "Unable to create page "+this.id);
       object.addClass('page').appendTo(parent);   
       parent.trigger('read_'+this.id, [object, data.fields]);
