@@ -32,7 +32,6 @@ datatable:
   script: /common/datatable3.js
   css: /datatable.css
   position: top
-  sort_order: asc
   # table-wide actions
   export:
     name: Export to Excel
@@ -89,7 +88,7 @@ datetime:
   
 disabled_text_input:
   type: input
-  attributes: disabled
+  attr: disabled
   
 dropdown:
   html: |
@@ -177,11 +176,15 @@ labelled_input_page:
       - template: labelled_input
       - mandatory: "*"
 
+line:
+  html: <hr></hr>
+  
 link:
   html: <a id="$code" title="$desc">$name</a>
-  action:
-    url: /$code
 
+list_item:
+  html: <li id="$code">$name</li>
+  
 menu:
   html: <ul id="$code">$items</ul>
   items:
@@ -189,8 +192,6 @@ menu:
 
 menu_item:
   html: <li><a title="$desc">$name</a></li>
-  action:
-    url: /$code
  
 one_cell_row:
   html: <tr><td>$field</td></tr>
@@ -212,6 +213,10 @@ paragraph:
   html: <p id="$code">$name</p>
 
 password:
+  html: <input type="password" id="$code" title="$desc"></input>
+  valid: password
+
+password_input:
   html: <input type="password" id="$code" title="$desc"></input>
   valid: password
 
