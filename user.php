@@ -520,7 +520,7 @@ class user
     
   }
   
-  static function update($request)
+  static function update($request,$id)
   {
     $request = table::remove_prefixes($request);
     $fields = array('email_address','first_name', 'last_name','title', 'cellphone','otp');
@@ -530,10 +530,9 @@ class user
         $values .= ", $key = '$value'";
     }
     global $db, $session;
-    $id = $request['id'];
-    $user  = $sesion->user;
+    $user  = $session->user;
     $function = 'update_details';
-    if ($id == $user->id || is_null($id)) {
+    if ($id == $user->id || is_null($id) || $id == '$key') {
       $function = 'update_own_details';
       $id = $user->id;
     }
@@ -561,7 +560,6 @@ class user
     if ($passwd != '**********' && $passwd != '')    
       $db->exec("update user set password = password('$passwd') where id = $id");
     page::close_dialog("User successfully updated");
-    page::redirect('manage_users.html');
   }
 
   static function verify($function, $private=true)
