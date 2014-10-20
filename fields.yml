@@ -63,6 +63,12 @@ id_number:
 inputs:
   - type: input
   
+last_name:
+  desc: Your first name as written in your ID book
+  valid:
+    - at_least(2)
+    - alphabetic
+
 latitude:
   valid: /^\d+\.\d+$/
 
