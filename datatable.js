@@ -416,17 +416,17 @@
         if (!action || !action.pages) return;
         button.hide();
         tr.find('[action=collapse]').show();
+        var expanded = $('<tr class=expanded></tr>');
+        var td = $('<td></td>')
+                .attr('colspan', tr.children('td').length)
+                .prependTo(expanded);
+        expanded.insertAfter(tr);
         $.each(action.pages, function(i, path) {
           var tmp = $('<div></div>');
           tmp.page({path: path, key: key});
           path = path.replace(/\//, '_');
           tmp.on('read_'+path, function(event, object) {
-            var expanded = $('<tr class=expanded></tr>');
-            $('<td></td>')
-                    .attr('colspan', tr.children('td').length)
-                    .append(object)
-                    .prependTo(expanded);
-            expanded.insertAfter(tr);
+            td.append(object);
           });
         });
       });
@@ -434,7 +434,7 @@
         button.hide();
         tr.find('[action=expand]').show();
         var next = tr.next();
-        if (next.attr('class') === 'expanded') next.hide();
+        if (next.attr('class') === 'expanded') next.remove();
       });
 
       tr.on('action', function(evt, btn) {
