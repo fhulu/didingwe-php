@@ -35,16 +35,16 @@ class session
     if (!is_null($session) && !is_null($session->user)) return $sesion;
   
     $_SESSION['referrer'] = $_SERVER[REQUEST_URI];
-    session::redirect($fallback_url);
+    page::redirect($fallback_url);
   }
 
   static function ensure_logged_in()
   {
-    session::validate('index.php?c=login');
+    session::validate('/login');
   }
   static function ensure_not_expired()
   {
-    session::validate('index.php?c=home');
+    session::validate('/home');
   }
 
   
@@ -54,8 +54,10 @@ class session
     $session = new session();
     $session->referrer = SESSION('referrer');
     $session->user = $user;
+    $session->roles = $user->roles;
     $session->id = sprintf("%08x%04x%04x%08x",rand(0,0xffffffff),$user->partner_id,$user->id,time());
     $sql = "insert \$audit_db.session (id, user_id) values ('$session->id','$user->id')";
+    log::debug_json("ROLES", $user->roles);
     
     global $db;
     $db->insert($sql);
@@ -63,20 +65,16 @@ class session
   }
        
  
-  static function do_login($email, $passwd, $is_plain_password=true) 
+  static function do_login($email, $passwd) 
   {
-    if (!user::verify_internal($_REQUEST)) return; 
-
-    errors::init();
-    $v = new validator();
-    if (!$v->check('email')->is('email')) return false;
     $user = user::restore($email, $passwd);
     if (!$user) 
-      $v->report("email", "!Invalid username/password for '$email'");
+      page::error("email", "Invalid username/password for '$email'");
     else {
       $page = SESSION('content');
-      if (is_null($page)) $page = 'home';
-      page::redirect("$page.html");
+      if (is_null($page)) $page = '/home';
+      page::close_dialog();
+      page::redirect("$page");
     }
   }
   
@@ -96,7 +94,7 @@ class session
   function restore()
   {
     $_SESSION[last_error] = '';
-    if ($this->referrer == '') $this->referrer = 'home.html';
+    if ($this->referrer == '') $this->referrer = '/home';
     session::redirect($this->referrer);
   }
   
