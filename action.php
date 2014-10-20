@@ -1,7 +1,7 @@
 <?php 
 require_once('log.php');
 require_once 'session.php';
-require_once 'page3.php';
+require_once 'page.php';
 
 $args = explode('/', $_GET['a']);
 if (in_array($args[0], array('json','select'))) { 
@@ -49,13 +49,13 @@ try {
 catch (user_exception $exception) {
   log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
   log_trace($exception);
-  page3::show_dialog('/breach');
+  page::show_dialog('/breach');
 }
 catch (Exception $exception)
 {
   log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
   log_trace($exception);
-  page3::show_dialog('/error_page');
+  page::show_dialog('/error_page');
 }
 
 function log_trace($exception)
