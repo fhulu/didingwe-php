@@ -119,10 +119,13 @@ class page
     if (sizeof($path) == 0) {
       array_unshift($path, $this->object);
     }
-    
-    $this->fields = $this->filter_access($this->fields);
     $this->page = array_shift($path);
-    $field  = $this->fields[$this->page];
+    $field_exists  = !null_at($this->fields,$this->page);
+    $this->fields = $this->filter_access($this->fields);
+    $field  = at($this->fields,$this->page);
+    if (is_null($field) && $field_exists)
+      throw new user_exception("Unauthorized access to ".implode('/', $path));
+    
     $this->set_types($this->fields, $field);
     $this->set_types(page::$all_fields, $field);
     $type = at($field, 'type');
@@ -137,7 +140,6 @@ class page
     }
     if (in_array('field', $expand))
       $this->expand_field($field);
-    $this->expand_params($field);
     
     log::debug_json("PATH", $path);
     foreach ($path as $step) {
@@ -173,6 +175,7 @@ class page
       if (in_array('field', $expand))
         $this->expand_field($field);
     }
+    $this->expand_params($field);
       
     return $field;
   }
