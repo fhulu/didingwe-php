@@ -35,7 +35,7 @@ class page_output
   }
   catch (user_exception $exception) {
     log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
-    log_trace($exception);
+    log::stack($exception);
     page::show_dialog('/breach');
   }
   catch (Exception $exception)
@@ -597,7 +597,7 @@ class page
     
     $sql = at($action,'sql');
     if ($sql == '') return null;
-    $sql = page::replace_sql($sql);
+    $sql = page::replace_sql($sql, $this->request);
     global $db;
     return $assoc?$db->page_through_names($sql): $db->page_through_indices($sql);
   }
