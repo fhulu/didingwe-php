@@ -9,6 +9,7 @@ require_once('validator.php');
 require_once('select.php');
 require_once('curl.php');
 require_once('errors.php');
+require_once('page.php');
 ////require_once('telephone.php');
 
 class user_exception extends Exception {};
@@ -101,6 +102,11 @@ class user
   }
   
   
+  function is_admin()
+  {
+    return sizeof(array_intersect(array('admin','super'), $this->roles)) > 0;
+  }
+  
   static function change_email($request)
   {        
     global $db, $session,$errors;
@@ -176,54 +182,50 @@ class user
     if ($contact_person == '') $contact_person = config::$support_company;
     if ($contact_email == '') $contact_email = config::$support_email;
     if ($contact_tel == '') $contact_tel = config::$support_tel;
-    return errors::q('password', "Account locked because of too many incorrect OTP or password attempts. Please contact $contact_person ($contact_email) on $contact_tel.");
+    return page::error('email', "Account locked because of too many incorrect OTP or password attempts. Please contact $contact_person ($contact_email) on $contact_tel.");
  
   }
   static function start_reset_pw($request)
   {    
-    if (!user::verify_internal($request)) return false;
     $email = addslashes($request['email']);
     global $db;
     $email = $db->read_one_value("select email_address, cellphone from user "
             . "where email_address='$email' and program_id = " . config::$program_id);
 
-    $v = new validator($request);
-    if ($email == '') 
-      return $v->report('email', "!We do not have a user with supplied details registered on the system");
-        
+    if (!$email) {
+      page::error('email', "We do not have a user with supplied details registered on the system");
+      return false;
+    }
     if (!user::unlocked($email)) return false;
     $otp = user::update_otp($email);
     user::send_otp($email, $otp);
+    page::close_dialog();
+    page::dialog('user/change_password', null, array("email"=>$email));
   }
   
-  static function reset_pw($request)
+  static function reset_password($request)
   {
-    if (!user::verify_internal($request)) return false;
-    $v = new validator($request);
-    $v->check('otp')->titled('OTP')->is('numeric','at_least(5,digits)');
-    $v->check('email')->is('email');
-    $v->check('password')->is('password', 'match(password2)');
-    if (!$v->valid()) return false;
     $email = addslashes($request['email']);
         
-    if (!user::unlocked($email)) return false;
+    if (!user::unlocked($email)) return;
 
     global $db;
-    list($email,$otp, $otp_time) = $db->read_one("select email_address, otp,timestampdiff(minute, otp_time, now()) from user
+    list($otp, $otp_time) = $db->read_one("select otp,timestampdiff(minute, otp_time, now()) from user
      where email_address='$email' and active=1 and program_id = ". config::$program_id);
     if ($email == '') 
-      return errors::q('email', "We do not have a user with supplied details registered on the system");
+      return page::error('email', "We do not have a user with supplied details registered on the system");
     
     if ($otp != $request['otp']) { 
       user::update_attempts($email);
-      return errors::q('otp', 'Incorrect OTP');
+      return page::error('otp', 'Incorrect OTP');
     }   
     if ($otp_time > config::$otp_expiry)  
-      return errors::q('otp', 'OTP has expired. Please go back and request a new PIN');  
+      return page::error('otp', 'OTP has expired. Please go back and request a new PIN');  
     
     $password = addslashes($request['password']);
     $db->exec("update user set password = password('$password'), attempts=0
     where email_address='$email' and program_id = " . config::$program_id);
+    page::close_dialog("Your password has been successfully reset. You can now proceeed to login");
 }
 
   
@@ -248,27 +250,13 @@ class user
   static function exists($email, $active = 1, $echo=true)
   {
     $program_id = config::$program_id;
-    global $db, $errors;
+    global $db;
     if (!$db->exists("select id from user where email_address = '$email' 
         and program_id = $program_id and active = $active")) return false;
-    if ($echo) $errors->add('email', "The email address already exists"); 
+    if ($echo) page::error('email', "The email address already exists"); 
     return true; 
   }
-  
-  static function check($request, $check_email=true)
-  {
-    user::verify_internal($request);
-    $v = new validator($request); 
-    $v->check('first_name')->is('alphabetic',2);
-    $v->check('last_name')->is('alphabetic',2);
-    $v->check('email')->is('email');
-    if($check_email && user::exists($request['email'], 1))
-      $v->report('email', '!Email address already exists');
-    
-    $v->check('password', 'Passwords')->is('match(password2)', 'password(6)');
-    $v->check('cellphone')->is('national_tel');
-    return $v->valid();
-  }
+
   static function authenticate($email, $passwd, $is_passwd_plain=true)
   {
     if ($is_passwd_plain)
@@ -398,7 +386,7 @@ class user
   
   static function register($request, $is_admin=false)
   {    
-    if (!$is_admin && !user::check($request)) return;
+    if (user::exists($request['email'], 1)) return;
     $request = db::quote($request);
     $title = $request[title];
     $first_name = $request[first_name];
@@ -423,7 +411,7 @@ class user
       $db->exec($sql);
       $id = $db->read_one_value("select id from user where email_address = '$email' and program_id = $program_id");
       $db->exec("delete from \$audit_db.user_role where user_id = $id");
-      $db->exec("insert into \$audit_db.user_role(user_id,role_code) values($id,'reg')");
+      $db->exec("insert into \$audit_db.user_role(user_id,role_code) values($id,'public')");
       $password = stripslashes($password);
       $first_name = stripslashes($first_name);
       $last_name = stripslashes($last_name);
@@ -436,7 +424,7 @@ class user
 
 
     user::sms_otp($email, $otp);
-    $user->reload();
+    //$user->reload();
     $db->insert("insert into \$audit_db.trx(user_id, function_code, object_id)
       values($user->id, 'register', $user->id)");
     //todo: send email and/or sms
@@ -451,7 +439,8 @@ class user
     log::debug("Sending OTP email to $email");
     $mail_sent = mail($email, $subject, $message, $headers);
    
-    session::redirect('check_otp.html');
+    page::close_dialog();
+    page::show_dialog('/user/check_otp', null, array("id"=>$user->id));
   }
     
   static function info()
@@ -467,45 +456,54 @@ class user
     ));
   }
   static function check_otp($request)
-  {
-
-    $otp = $request['otp'];
+  {    
+    global $db;
     
-    global $db, $session;
-    $id = $session->user->id;
-    $v = new validator($request); 
-
-    if (!$db->exists("select id from user 
-      where id = $id and otp='$otp' and timestampdiff(minute, otp_time, now()) <= 30")) {
-        $v->report("otp", "!Invalid OTP or OTP has expired");
-        return false;
-    }
-    return true;
+    $otp = $request['otp'];
+    $id = $request['id'];
+    $details = $db->read_one("select first_name, last_name, email_address email, cellphone from user 
+      where id = $id and otp='$otp' and timestampdiff(minute, otp_time, now()) <= 30");
+    if (!$details)
+      page::error("otp", "Invalid OTP or OTP has expired");
+    return $details;
   }
   
-  static function activate($request)
+  static function confirm_registration($req)
   {
-    if (!user::check_otp($request)) return false;
+    $details = user::activate($req);
+    if (!$details) return;
+    page::close_dialog();
+    page::show_dialog('user/confirm_registration', null, $details);
+  }
+  
+  static function activate($request, $id=null)
+  {
+    global $session;
     
-    global $db, $session;
-    $id = $session->user->id;
+    $user = $session->user;
+    $is_admin = $user->is_admin();
+    if (!$is_admin && !user::check_otp($request)) return false;
+    
+    global $db;
+    if (is_null($id)) $id = $request['id'];
     $db->exec("update user set active = 1 where id = $id");
+    
+    if ($is_admin)
+      page::redirect('/user/list'); //todo: use refresh
+    return true;
   }
   
   static function deactivate($request,$id=null)
   {
     global $db;
-    if (is_null($id)) $id = $request[id];
+    if (is_null($id)) $id = $request['id'];
     $request = table::remove_prefixes($request); 
     list($email,$username) = $db->read_one("select email_address, Concat( first_name, ' ', last_name ) from user where id = $id ");
-    user::audit('deactivate', $id, "$username($email)");
-    
-    $sql = "delete from \$audit_db.user_role where user_id=$id";
-    $db->exec($sql);
+    user::audit('deactivate', $id, "$username($email)");    
     
     $sql = "update \$audit_db.user set active=0 where id=$id";
     $db->exec($sql);
-   
+    page::redirect('/user/list');
     global $session;
     $user = $session->user;
     $admin = "$user->first_name $user->last_name <$user->email>";
@@ -519,6 +517,7 @@ class user
     $headers .= "from:  $admin";
     $mail_sent = mail($email, $subject, $message, $headers);
     log::debug("Sending email to $email: $mail_sent");  
+    
   }
   
   static function update($request)
@@ -532,11 +531,14 @@ class user
     }
     global $db, $session;
     $id = $request['id'];
-//    if ($id == $user_id)
-//      $function = 'update_own_details';
-//    else
-//      $function = 'update_details';
-//    user::audit($function, $id, $values);
+    $user  = $sesion->user;
+    $function = 'update_details';
+    if ($id == $user->id || is_null($id)) {
+      $function = 'update_own_details';
+      $id = $user->id;
+    }
+
+    user::audit($function, $id, $values);
     
     $email= $request['email_address'];
     $program_id = config::$program_id;
@@ -556,8 +558,10 @@ class user
       user::update_role($request);
     }
     $passwd = $request['password'];
-    if ($passwd != '**********')
+    if ($passwd != '**********' && $passwd != '')    
       $db->exec("update user set password = password('$passwd') where id = $id");
+    page::close_dialog("User successfully updated");
+    page::redirect('manage_users.html');
   }
 
   static function verify($function, $private=true)
@@ -573,7 +577,7 @@ class user
       $email = $user->email; 
       $functions = &$user->functions;
     }
-    if (!in_array($function, $functions)) 
+    if (!is_array($functions) || !in_array($function, $functions)) 
       throw new user_exception("Unauthorised access to function $function from $email");
   }
 
@@ -647,9 +651,10 @@ class user
     $request = table::remove_prefixes($request);
     $id = $request['id'];
     $role = $request['role'];
-    user::audit('update_role', $id, $role);
-    
     global $db, $session;
+    $username = $db->read_one_value("select Concat( first_name, ' ', last_name ) AS contact_person from user where id = $id ");
+    user::audit('update_role', $id, "$username - $role");
+    
     $user = &$session->user;
 
     $sql = "update user_role set role_code='$role' where user_id = $id";
@@ -660,7 +665,6 @@ class user
                   where id = $id");  
                    
 
-    $username = $db->read_one_value("select Concat( first_name, ' ', last_name ) AS contact_person from user where id = $id ");
     $admin = "$user->first_name $user->last_name <$user->email>";
     $user_role = $db->read_one_value("select name from role where code = '$role'"); 
       
@@ -669,7 +673,6 @@ class user
     if($program_id==3){
       foreach($emails as $email) {
         $message = "Dear $username <br><br> Administrator would like to inform you that you have been registered and you role is $user_role. <br>
-        For more information please log on to <a href='$proto://submit.fpb.org.za/'>submit.fpb.org.za</a> or call 012 661 0051.<br><br>
           Regards<br>
           Administrator";
         $subject = "Approve Registration";
@@ -683,7 +686,6 @@ class user
    else{
      foreach($emails as $email) {
         $message = "Dear $username <br><br> Administrator would like to inform you that you have been registered and you role is $user_role. <br>
-        For more information please log on to <a href='http://mampo.qmessenger.mukoni.net'>mampo.qmessenger.mukoni.net</a> or call 021 661 0051.<br><br>
           Regards<br>
           Administrator";
         $subject = "Approve Registration";
@@ -698,22 +700,6 @@ class user
    
  }
   
-  static function verify_internal($request)
-  {
-/*
-    $email = $request[email];
-    if (config::$program_id == 3 && !preg_match('/@(fpb\.(org|gov)\.za|mukoni\.co\.za|microsoft\.com|ea\.com|absa\.co\.za)$/i', $email)) { 
-      global $errors;
-      return $errors->add('email', "Application not yet released to the public. An announcement will be made soon.");
-    } */
-    return true;
-  }
-  
-  static function verify_hacker($request)
-  {
-    return user::verify_internal($request) && user::check_otp($request); 
-  }
-
   static function start_approval($request)
   {     
     if (!user::check_otp($request)) return;
@@ -768,7 +754,9 @@ class user
     $id = $session->user->id;
     $db->exec("update user set active = 1 where id = $id");
     
-    session::redirect('login.html');
+    page::alert("You have been successfully registered. Your registration is awaiting verification");
+    session::logout();
+    page::redirect('home.html');
   }
      
   static function titles()
@@ -1102,6 +1090,21 @@ class user
             order by position";
     
     return $db->read($sql, MYSQLI_ASSOC);
- }
+  }
   
+  static function login() 
+  {
+    $email = REQUEST('email');
+    $user = user::restore($email, REQUEST('password'));
+    if (!$user) 
+      page::error("email", "Invalid username/password for '$email'");
+    else {
+      $page = SESSION('content');
+      if (is_null($page)) $page = '/home';
+      page::close_dialog();
+      page::redirect("$page");
+    }
+  }
+ 
+ 
 }

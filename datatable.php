@@ -7,39 +7,12 @@
  */
 
 require_once '../common/page.php';
+require('pdf/fpdf.php');
 
-class datatable {
-
-  static function read_action(&$actions, $options, $action) {
-    if (is_null($options))
-      return;
-    if (!is_null($actions) && array_key_exists($action, $actions))
-      return;
-
-    if (array_key_exists($action, $options))
-      $actions[$action] = $options[$action];
-    else
-      $actions[$action] = page::read_field_options($action);
-  }
-
-  static function read_actions($options, $rows) {
-    $actions = array();
-    foreach ($rows as $row) {
-      foreach (explode(',', last($row)) as $action) {
-        datatable::read_action($actions, $options, $action);
-        switch ($action) {
-          case 'slide': datatable::read_action($actions, $options, 'slideoff');
-            break;
-          case 'expand': datatable::read_action($actions, $options, 'collapse');
-            break;
-          //case 'filter': datatable::read_action($actions, $options, 'unfilter'); break;
-        }
-      }
-    }
-    return $actions;
-  }
-
-  static function get_sql_fields($sql) {
+class datatable 
+{
+  static function get_sql_fields($sql) 
+  {
     $matches = array();
 
     preg_match_all('/([^,]+),?/', substr(ltrim($sql), 7), $matches, PREG_SET_ORDER);
@@ -50,7 +23,8 @@ class datatable {
     return $fields;
   }
 
-  static function field_named($fields, $name) {
+  static function field_named($fields, $name) 
+  {
     foreach ($fields as $field) {
       $props = db::parse_column_name($field);
       if ($props['alias'] == $name)
@@ -59,12 +33,18 @@ class datatable {
     return null;
   }
 
-  static function sort(&$sql, $fields, $options) {
+  static function sort(&$sql, $fields, $options) 
+  {
     $sort_field = at($options, 'sort');
     if (is_null($sort_field))
       return;
+    $index = array_search($sort_field, at($options, 'fields'));  //todo: handle expanded fields
+    if (!in_array('show_key', $options['flags']))
+      ++$index;
+    $db_sort_field = at($fields, $index);
+    log::debug("SORT $sort_field $index $db_sort_field");
     $sort_order = at($options, 'sort_order');
-    $sql .= " order by " . datatable::field_named($fields, $sort_field) . " $sort_order";
+    $sql .= " order by $db_sort_field $sort_order";
   }
 
   static function filter(&$sql, $fields, $options) {
@@ -92,16 +72,20 @@ class datatable {
     if ($where_pos === false)
       $sql .= " where $where";
     else
-      $sql = substr($sql, 0, $where_pos + 6) . "$where and" . substr($sql, $where_pos + 6);
+      $sql = substr($sql, 0, $where_pos + 6) . "$where and " . substr($sql, $where_pos + 6);
   }
 
-  static function read_db($sql, $options, $callback) {
+  static function read($options, $key, $callback=null) 
+  {
+    log::debug("KEY $key CALLBACK $callback");
+    log::debug_json('OPTIONS', $options);
     $page_size = at($options, 'page_size');
     if (is_null($page_size))
       $page_size = 0;
     $page_num = at($options, 'page_num');
     $offset = is_null($page_num) ? 0 : $page_size * ($page_num - 1);
     global $db;
+    $sql = $options['sql'];
     $fields = datatable::get_sql_fields($sql);
     $sql = preg_replace('/^\s*select /i', 'select SQL_CALC_FOUND_ROWS ', $sql);
     datatable::filter($sql, $fields, $options);
@@ -110,111 +94,57 @@ class datatable {
       $rows = $db->page_through_indices($sql, 1000, 0, $callback);
     else
       $rows = $db->page_indices($sql, $page_size, $offset, $callback);
-    $names = $db->field_names;
     $total = $db->row_count();
-    $fields = array();
-    foreach ($names as $name) {
-      $field = page::read_field_options($name);
-      page::expand_values($field);
-      $fields[] = page::null_merge(array('code' => $name), $field);
-    }
-
-    $result = array('fields' => $fields, 'rows' => $rows, 'total' => $total);
-    return $result;
+    return array('rows' => $rows, 'total' => $total);
   }
+  
 
-  static function read_data($request, $callback = null) {
-    $options = page::read_field_options(at($request, 'field'));
-    if (is_null($options))
-      throw new Exception("Could not find options for field" . at($request, 'field'));
-    page::expand_values($options);
-
-    $data = $options['data'];
-    if (!isset($data))
-      return null;
-
-    $rows = array();
-    $matches = array();
-    if (!preg_match('/^([^:]+):\s*(.+)/', $data, $matches)) {
-      throw new Exception("Invalid table expression $data");
-    }
-    $type = $matches[1];
-    $source = $matches[2];
-    if ($type == 'sql') {
-      global $db;
-      $sql = $source;
-      $matches = array();
-      if (preg_match_all('/(\$\w+)/', $sql, $matches))
-        foreach ($matches as $match) {
-          $var = $match[1];
-          $val = REQUEST($var);
-          if (!is_null($val))
-            $sql = str_replace('$' . $var, $val, $sql);
-        }
-      $data = datatable::read_db($sql, page::null_merge($options, $request), $callback);
-    }
-    else if (preg_match('/^([^\(]+)\(([^\)]*)\)/', $data, $matches)) {
-      $data = page::call($request, $type, $source, $callback);
-    }
-    page::empty_fields($options);
-    $data['options'] = $options;
-    return $data;
-  }
-
-  static function read($request, $echo = true) {
-    log::debug("REQUEST " . json_encode($request));
-    $data = datatable::read_data($request);
-
-    page::empty_fields($data);
-
-    $fields = $data['fields'];
-    if (at(last($fields), 'code') == 'actions')
-      $data['actions'] = datatable::read_actions($data['options'], $data['rows']);
-    
-    unset($data['options']);
-    if ($echo) echo json_encode($data);
-  }
-
-  static function start_export($request) {
-    log::debug("START EXPORT " . json_encode($request));
-    $request['field'] = $request['_page'];
-    unset($request['a'], $request['_page'], $request['_field']);
-    $url = '/?a=datatable/export';
+  static function start_redirect($request,$method) {
+    log::debug("START REDIRECT " . json_encode($request));
+    unset($request['a']);
+    $path = explode('/', $request['path']);
+    $request['path'] = implode('/', array_slice($path, 1, sizeof($path)-3));
+    $url = '/?action=datatable/'.$method;
     array_walk($request, function($value, $key) use (&$url) {
       $url .= "&$key=" . urlencode($value);
     });
     page::redirect($url);
   }
 
-  static function export($request) {
+  static function export($options, $key) {
     ini_set('memory_limit', '512M');
     require_once '../PHPExcel/Classes/PHPExcel.php';
 
     $excel = new PHPExcel();
     $sheet = $excel->setActiveSheetIndex(0);
-    $request['page_size'] = 0;
-    $data = datatable::read_data($request, function($row_data, $pagenum, $index) use ($sheet) {
-        $row = 2 + $pagenum * 1000 + $index;
-        $col = 0;
-        foreach ($row_data as $cell) {
-
-          $sheet->setCellValueByColumnAndRow($col, $row, $cell);
-          $sheet->getColumnDimension(PHPExcel_Cell::stringFromColumnIndex($col))
-            ->setAutoSize(true);
-          $sheet->getRowDimension($row)->setRowHeight(20);
-          ++$col;
-        }
-        return true;
-      });
-
+    $options['page_size'] = 0;
+    $data = datatable::read($options, $key, function($row_data, $pagenum, $index) use ($sheet) {
+      $row = 2 + $pagenum * 1000 + $index;
+      $col = 'A';
+      foreach ($row_data as $cell) {
+        $sheet->setCellValue("$col$row", $cell);
+        $sheet->getColumnDimension($col)->setAutoSize(true);
+        $sheet->getRowDimension($row)->setRowHeight(20);
+        ++$col;
+      }
+      $sheet->setCellValue("$col$row", ''); // take care of PHPExcel bug which fails to remove the last column
+      return true;
+    }, true);
     $col = 'A';
-    foreach ($data['fields'] as $field) {
+    foreach ($options['fields'] as $field) {
       $ref = $col . "1";
       $sheet->getStyle($ref)->getFont()->setBold(true);
-      $sheet->setCellValue($ref, $field['name']);
+      $code = $field['code'];
+      if ($code === 'actions')
+        $sheet->removeColumn($col);
+      else {
+        $name = at($field,'name');
+        if (is_null($name)) $name = ucwords(preg_replace('/[_\/]/', ' ',$code));
+        $sheet->setCellValue($ref, $name);
+      }
       ++$col;
     }
-    $heading = $data['options']['name'];
+    $heading = $options['name'];
     global $session;
     $user = $session->user->first_name . " " . $session->user->last_name;
     $excel->getProperties()->setCreator($user)
@@ -231,6 +161,58 @@ class datatable {
 
     $objWriter = PHPExcel_IOFactory::createWriter($excel, 'Excel5');
     $objWriter->save('php://output');
+  }
+  
+  static function pdf($request,$options)
+  {
+    $pdf = new FPDF();
+    $pdf->AddPage();
+    $pdf->Image('ethekwini.png', 80, 10, 35);
+    $pdf->SetFont('Arial', 'B', 10);
+    $pdf->Footer('Council for Scientific and Industrial Research (CSIR)');
+    $pdf->Ln(40);
+    $request['page_size'] = 0;
+    //$options = page::read_field_options(at($request, 'field'));
+    $page = new page($request);
+    $widths = $options['widths'];
+    $flags = $options['flags'];
+    $show_key = in_array('show_key', $flags, true);
+    $columns = array(array(),array()); // reserve space for heading and titles
+    $data = datatable::read_data($request, function($row_data, $pagenum, $index) use (&$columns, $widths, $show_key) {     
+      $fill_color = $index % 2 === 0? '216,216,216': '255,255,255';
+      $col = array();
+      $index = 0;
+      foreach ($row_data as $value) {
+       if ($index++ == 0 && !$show_key ) continue;
+       $pos = each($widths);
+       if ($pos === false) break;
+       $width = max(18,$pos[1]/7);
+       $col[] = array('text' => $value, 'width' =>  $width, 'height' => '5', 'align' => 'L', 'font_name' => 'Arial', 'font_size' => '8', 'font_style' => 'B', 'fillcolor' => "$fill_color", 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linewidth' => '0.4', 'linearea' => 'LTBR');
+      }
+      $columns[] = $col;
+    });
+       
+    $titles = &$columns[1];
+    $index = 0;
+    $total_width = 0;
+    foreach ($data['fields'] as $field) {
+      if ($index++ == 0 && !$show_key ) continue;
+      $pos = each($widths);
+      if ($pos === false) break;
+      $width = max(18,$pos[1]/7);
+      $total_width += $width;
+      $titles[] = array('text' => $field['name'], 'width' => $width, 'height' => '5', 'align' => 'L', 'font_name' => 'Arial', 'font_size' => '8', 'font_style' => 'B', 'fillcolor' => '192,192,192', 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linewidth' => '0.4', 'linearea' => 'LTBR');
+    }
+    
+    $heading = &$columns[0];
+    $now = new DateTime();
+    $now->getTimestamp();
+    $now->setTimezone(new DateTimeZone('Europe/London'));
+    $now = $now->format('Y-m-d');
+    $report_title=$options['report_title'];
+    $heading[] = array('text' =>"$report_title for $now", 'width' =>  $total_width, 'height' => '5', 'align' => 'C', 'font_name' => 'Arial', 'font_size' => '11', 'font_style' => 'B', 'fillcolor' => '255,255,255', 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linearea' => 'LTBR');
+    $pdf->WriteTable($columns,80,10);
+    $pdf->Output();
   }
 
 }

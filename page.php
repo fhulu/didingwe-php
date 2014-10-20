@@ -6,213 +6,363 @@
  * and open the template in the editor.
  */
 
-/**
- * Description of form
- *
- * @author fhulu
- */
-
-require_once 'db.php';
+//require_once 'db.php';
 require_once 'validator.php';
-require_once 'ref.php';
+require_once 'db.php';
+
+class page_output
+{
+  var $values;
+  function __construct() 
+  {
+    $this->values = null;
+  }
+  
+  function __destruct() 
+  {
+    if ($this->values)
+      echo json_encode ($this->values);
+  }
+  
+}
+
+{
+  global $page_output;
+  $page_output = new page_output();
+  
+  try {
+    $page = new page();
+  }
+  catch (user_exception $exception) {
+    log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
+    log_trace($exception);
+    page::show_dialog('/breach');
+  }
+  catch (Exception $exception)
+  {
+    log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
+    log::stack($exception);
+    page::show_dialog('/error_page');
+  }
+}
 
 class page
-{
-    
-  var $fields;
+{  
   var $request;
+  var $object;
+  var $method;
+  var $page;
+  var $field;
+  static $all_fields; 
+  var $fields;
+  var $types;
   var $validator;
-  
-  function __construct($request=null)
+  var $path;
+  var $root;
+  var $result;
+  var $user;
+
+  function __construct($echo=true, $request=null)
   {
     if (is_null($request)) $request = $_REQUEST;
-    $this->fields = array();
+    log::debug(json_encode($request));
     $this->request = $request;
-    //todo: fix coupling validator with reporting to front end
-    $this->validator = new validator($request);
+    $this->path = explode('/', $request['path']);
+    $this->method = $request['action'];
+    if (is_null($this->method))
+      throw new Exception("No method parameter in request");    
+    
+    $this->types = array();
+    global $session;
+    $this->user = $session->user;
+
+    $this->load();
+    $this->result = $this->{$this->method}();
+  
+    if ($echo && !is_null($this->result))
+      echo json_encode($this->result);
   }
   
-  static function read($request, $echo=true)
+  function load()
   {
-    $page = new page($request);
-    $field = array('program' => config::$program_name);
-    $page->read_request('page', $echo, $field);
-    if (!$echo) return $field;
-    page::filter_access($field);
-    page::empty_fields($field);
-    echo json_encode($field);
-  }
-  
-  function read_request($code, $expand_html=false, &$field=null)
-  {
-    return $this->read_field($this->request[$code], $expand_html, $field);
+    if (sizeof(page::$all_fields) > 0) return;
+    $this->load_yaml('../common/controls.yml', false, page::$all_fields); //todo cache common controls
+    $this->load_yaml('custom_controls.yml', false, page::$all_fields);
+    $this->load_yaml('../common/fields.yml', false, page::$all_fields); //todo cache common fields
+    $this->load_yaml('custom_fields.yml', false, page::$all_fields);
   }
 
-  function read_field($code, $expand_html=false, &$field=null)
+  static function load_yaml($file, $strict, &$fields=array())
   {
-    if (!array_key_exists($code, $this->fields)) {
-      global $db;
-      $data =  $db->read_one(
-        "select f.name, f.description 'desc', ifnull(f.html,ft.html) html, ft.options __type_options, f.options __field_options, f.access"
-        . " from field f left join field_type ft on f.type = ft.code"
-        . " where f.code = '$code'"
-        . " union "
-        . " select name, description 'desc', html, null __type_options, options __field_options, '' access"
-        . " from field_type where code = '$code'"
-        , MYSQLI_ASSOC);
-
-      $this->fields[$code] = remove_nulls($data);      
+    if (!file_exists($file)) $file = "../common/$file";
+    log::debug("YAML LOAD $file");
+    if (!file_exists($file)) {
+      if ($strict) throw new Exception("Unable to load file $file");
+      return $fields;
     }
     
-    if (!is_array($field) && is_null($this->fields[$code])) return $field;
+    $data = yaml_parse_file($file); 
+    if (is_null($data))
+      throw new Exception ("Unable to parse file $file");
+    return merge_to($fields, $data);
+  }
+
+  function load_field($path=null, $expand=array('html','field'))
+  {
+    if (is_null($path))
+      $path = $this->path;
+    else if (!is_array($path))
+      $path = explode('/', $path);
     
-    $field = null_merge($this->fields[$code], $field);
+    $this->object = array_shift($path);
+    $this->fields = $this->load_yaml("$this->object.yml", true);
+    if (sizeof($path) == 0) {
+      array_unshift($path, $this->object);
+    }
     
-    if (is_array($field)) 
-      $this->decode($field, $expand_html);
-    if ($expand_html)
-      $this->expand_html($field);
+    $this->fields = $this->filter_access($this->fields);
+    $this->page = array_shift($path);
+    $field  = $this->fields[$this->page];
+    $this->set_types($this->fields, $field);
+    $this->set_types(page::$all_fields, $field);
+    $type = at($field, 'type');
+    if (!is_null($type)) {
+      $field = null_merge(at(page::$all_fields, $type), $field);
+      $field = null_merge(at($this->fields, $type), $field);
+      unset($field['type']);
+    }
+    if (in_array('html', $expand)) {
+      $this->expand_html($field, 'html');
+      $this->expand_html($field, 'template');
+    }
+    if (in_array('field', $expand))
+      $this->expand_field($field);
+    $this->expand_params($field);
+    
+    log::debug_json("PATH", $path);
+    foreach ($path as $step) {
+      $this->field = $step;
+      $step_field = at($field, $step);
+      log::debug_json("FIELD", $field);
+      log::debug_json("STEP $step", $step_field);
+      if (is_null($step_field)) {
+        foreach($field as $values) {
+          if (is_array($values) && (at($values, 'code') != $step)
+              || is_string($values) && $values != $step) continue;
+          $step_field = $values;
+          break;
+        }
+        if (is_null($step_field)) {
+          log::error("MISTEP ".json_encode($field));
+          throw new Exception("Invalid path step $step on ".implode('/', $path));
+        }
+      }
+      $field = $step_field;
+      if (is_string($field)) {
+        $field = at($this->fields, $field);
+        if (is_null($field)) $field = at($this->types, $field);
+      }
+      
+      $this->set_types($this->fields, $field);
+      $this->set_types(page::$all_fields, $field);
+      if (in_array('html', $expand)) {
+        $this->expand_html($field, 'html');
+        $this->expand_html($field, 'template');
+      }
+
+      if (in_array('field', $expand))
+        $this->expand_field($field);
+    }
+      
     return $field;
   }
-  
-  function decode(&$field, $expand_html)
+
+  function get_field($name)
   {
-    if (!is_assoc($field)) return;
-    $quoted = array();
-    page::decode_options($field, '__type_options', $quoted);
-    page::decode_options($field, '__field_options', $quoted);
+    return null_merge(at(page::$all_fields, $name), at($this->fields, $name), false);
+  }
+
+  function read_field($path=null)
+  {
+    if (is_null($path))
+      $path = $this->path;
+    else if (!is_array($path))
+      $path = explode('/', $path);
     
-    // channge $key outside loop: php does not support key element as reference
-    $replaced = array();
-    foreach($field as $key=>$value) {
-      $replaced[$key] = $value;
-      if ($key[0] != '$') continue;
-      $new_key = at($this->request, substr($key,1));
-      unset($replaced[$key]);
-      $replaced[$new_key] = $value;
-    }    
+    $this->object = array_shift($path);
+    $this->fields = $this->load_yaml("$this->object.yml", true);
+    if (sizeof($path) == 0) {
+      array_unshift($path, $this->object);
+    }
+    $this->page = $path[0];
+    $global_field = $this->traverse_field(page::$all_fields, $path);
+    log::debug("GLOBAL FIELD ".json_encode($global_field));
+    $local_field = $this->traverse_field($this->fields, $path);
+    log::debug("LOCAL FIELD ".json_encode($local_field));
+  }
+  
+  function traverse_field($fields, $path, $name=null)
+  {
+    if (is_null($fields)) return null;
+    if (is_null($name)) $name = last($path);
+    log::debug("TRAVERSE $name ".implode('/',$path). " ".json_encode($fields));
+    $parent = array_shift($path);
+    if (is_assoc($fields)) {
+      $value = at($fields, $name);
+      $sub_field = at($fields, $parent);
+      if (is_null($sub_field)) return null;
+      return null_merge($value, $this->traverse_field($sub_field, $path, $name),false);
+    }
     
-    $field = $replaced;
+    foreach($fields as $value) {
+      if ($value === $parent) return null;
+      if (!is_array($value)) continue;
+      foreach($value as $key=>$sub_val) {
+        if ($key == $parent)
+          return null_merge($value, $this->traverse_field ($value, $path, $name), false);
+      }
+    }
+    return null;
+  }
+  
+  
+  function read($expand='html')
+  {    
+    $fields = $this->load_field(null, array($expand));
+    $this->check_access($fields, true);
+    $fields = $this->filter_access($fields);
+    if ($expand === 'html') {
+      page::empty_fields($fields);
+      $this->expand_sub_pages($fields);
+    }
+    if ($this->user) {
+      $user = $this->user;
+      $fields['user_full_name'] = "$user->first_name $user->last_name";
+    }
+    return array(
+      'path'=>implode('/',$this->path),
+      'fields'=>$fields,
+      'types'=>$this->types,
+    );
+  }
+    
+  function filter_access($options, $user_roles = null)
+  {
+    if (is_null($user_roles)) {
+      global $session;
+      require_once 'session.php';
+
+      $user_roles = array('public');
+      if (!is_null($session)) {
+        $user_roles = $session->roles;
+        if (in_array('super', $user_roles))
+          $user_roles = array('user','reg', 'viewer','admin','clerk','manager');
+      }
+      log::debug("ROLES ".json_encode($user_roles));
+    }
+    
+    $filtered = array();
+    foreach($options as $key=>$option)
+    {
+      $original = $option;
+      $expanded = false;
+      if (is_numeric($key) && is_string($option)) {
+        $option = at($this->types, $option);
+        $expanded = true;
+      }
+      if  (!is_array($option)) {
+        if (is_numeric($key))
+          $filtered[] = $original;
+        else
+          $filtered[$key] = $original;
+        continue;
+      }
+      $allowed_roles = at($option, 'access');
+      if (is_array($allowed_roles)) $allowed_roles = last($allowed_roles);
+      if ($allowed_roles != '') {
+        $allowed = array_intersect($user_roles, explode(',', $allowed_roles));      //log::debug("PERMITTED $key ".  json_encode($allowed));
+        if (sizeof($allowed) == 0) continue;
+      }
+      if (!$expanded)
+        $option = $this->filter_access($option, $user_roles);
+      if (sizeof($option) == 0) continue;
+      if ($expanded) $option = $original;
+      if (is_numeric($key))
+        $filtered[] = $option;
+      else
+        $filtered[$key] = $option;
+    }
+    return $filtered;
+  }
+  
+  function expand_sub_pages(&$fields)
+  {
+    $request = $this->request;
+    array_walk_recursive($fields, function(&$value, $key) use ($request) {
+      if ($key !== 'page') return;
+      $request['path'] = $value;
+      $sub_page = new page(false, $request);
+      $value = $sub_page->result;
+    });
+  }
+  
+  function expand_params(&$fields)
+  {
+    $request = $this->request;
+    array_walk_recursive($fields, function(&$value) use ($request) {
+      $value = replace_vars ($value, $request);
+    });
+  }
+    
+  function set_types($parent, $field)
+  {
+    if (is_null($field)) return false;
+    if (!is_array($field)) {
+      if (array_key_exists($field, $this->types)) return true;
+      if (!array_key_exists($field, $parent)) return false;
+
+      $this->types[$field] = $value = $parent[$field];
+      if (is_array($value)) $this->set_types($parent, $value);
+      return true;
+    }
+    
     $known_keys = array('name','desc','html','src', 'href', 'url', 
-      'action','data','load', 'valid', 'program', 'sort');
-    
-    foreach($field as $key=>&$value) { 
-      if (in_array($key, $known_keys, true)) continue;
-      $quotes = at($quoted, $key);
-      if ($quotes[0] != '"')// load unquoted field
-        $this->read_field($key, $expand_html, $value);
-
-      if (is_array($value)) continue;
-
-      $value = replace_vars($value);      
-      if ($quotes[1] == '"' || !preg_match('/^\w+$/',$value)) continue;
+      'sql','values', 'valid', 'attr', 'sort');
+    foreach($field as $key=>&$value) {
+      if (in_array($key, $known_keys, 1)) continue;
       
-      $sub_values = $this->read_field($value, $expand_html);
-      if (!is_null($sub_values))
-        $value = $sub_values;
+      if (!is_numeric($value))
+        $this->set_types($parent, $value);        
+      
+      if (!is_numeric($key))
+        $this->set_types($parent, $key);
     }
     
-    $template = at($field, 'template');
-    if (is_array($template))
-     $field['template'] = at($template,'html');
-    
+    return true;
   }
-  
-  
-  
-  function decode_options(&$field, $options_name, &$quoted)
+     
+  function expand_html($field, $html_type)
   {
-    $options = at($field,$options_name);
-    if (is_null($options)) return;
-    
-    page::match_quoted($options, $quoted);   
-    $decoded = page::decode_json($options);
-    //log::debug("FIELD ". json_encode($field));
-    //log::debug("DECODED ".  json_encode($decoded));
-    merge_to($field, $decoded);
-    unset($field[$options_name]);
-    //log::debug("MERGED ". json_encode($field));
-  }
-  
- 
-  static function match_quoted($str, &$quoted)
-  {
-    $result = $matches = array();
-    if (!preg_match_all('/(")?([^"]+)\1?(?:\s*:\s*(")?([^{\[^"]+)\3?)?/', $str, $matches, PREG_SET_ORDER)) return;
-    foreach($matches as $match) {
-      $key_quote = $match[1];
-      $value_quote = at($match,3);
-      if (is_null($key_quote) && is_null($value_quote)) continue;
-      $key = $match[2];
-      $quoted[$key] = array($key_quote,$value_quote);
-    }
-    merge_to($quoted, $result);
-  }
-  
-  static function decode_json($str)
-  {
-    if (is_null($str)) return null;
-    $orig = $str;
-    $str = str_replace('~', ',', $str);
-    
-    // match name:value
-    $str = preg_replace('/(?:(\$?\w+)|("[^"]*"))\s*:\s*(?:"([^"]*)"|([^\[\]{},]+))/', '"$1$2":"$3$4"', $str);
-    // match name:{} or name:[]
-    $str = preg_replace('/(?:(\$?\w+)|"([^"]*)")\s*([:$\[\]{},])?/', '"$1$2"$3', $str);
-    log::debug("JSON PASS2 $str");
-    $decoded = json_decode('{'.$str.'}', true);
-    if (!is_null($decoded)) return $decoded;
-    
-    // json not correct, perhaps we names without values, e.g. {x,y,z}
-    // also match [] but don't set empty value
-    $matches = array();
-    if (!preg_match_all('/("\$?\w+")(\s*:\s*["\[{]?)?|(\])/', $str, $matches, PREG_SET_ORDER)) 
-       throw new Exception("Invalid JSON (1) ORIG: $orig\n DECODED $str");
-    
-    $pos = 0;
-    $array_open = false;
-    foreach($matches as $match) {
-      $key = $match[1];
-      if (is_numeric($key)) continue;
-      $value = at($match,2);
-      $array_closed = at($match, 3);
-      //log::debug("JSON PASS3 ".json_encode(array($key,$value,last($value),$array_open,$array_closed)));
-      if ($array_closed) {  // closing array
-        $array_open = false; 
-        continue;
-      }
-      if (!is_null($value)) {
-        $array_open = last($value) == '[';
-        continue;
-      }
-      else if ($array_open) 
-        continue;
-      $pos = strpos($str, $key, $pos)+strlen($key);
-      $str = substr($str, 0, $pos) . ':""'.substr($str, $pos);
-    }
-    
-    $decoded =  json_decode('{'.$str.'}', true);
-    if (is_null($decoded))
-       throw new Exception("Invalid JSON (2) ORIG: $orig\n DECODED $str");
-
-    return $decoded;
-  }
-   
-  function expand_html(&$field)
-  {
-    $html = at($field,'html');
-    if (!is_null(at($field, 'has_data')) || is_null($html)) return;
+    $html = at($field, $html_type);
+    if (is_null($html)) {
+      $type = at($field, 'type');
+      if ($this->set_types($this->fields, $type) || $this->set_types(page::$all_fields, $type)) 
+        $this->expand_html(at($this->types, $type), $html_type);
+      return;
+    };
     $matches = array();
     if (!preg_match_all('/\$(\w+)/', $html, $matches, PREG_SET_ORDER)) return;
     
-    $exclude = array('code','name','desc');
+    $exclude = array('code','name','desc', 'field');
     foreach($matches as $match) {
       $var = $match[1]; 
       if (in_array($var, $exclude, true)) continue;
-      $value = $this->read_field($var, true);
-      if (!is_null($value)) $field[$var] = $value;
+      if ($this->set_types($this->fields, $var) || $this->set_types(page::$all_fields, $var)) {
+        $this->expand_html(at($this->types, $var), $html_type);
+      }
     }
   }
+
 
   static function expand_values(&$row, $exclusions=array())
   {
@@ -226,7 +376,7 @@ class page
     }
   }
   
-  static function empty_fields(&$options, $fields=array('data','load'))
+  static function empty_fields(&$options, $fields=array('call','sql'))
   {
     foreach($options as $key=>&$option)
     {
@@ -235,46 +385,26 @@ class page
         $option = "";
       else if (is_array($option))
         page::empty_fields($option, $fields);
-      else if ($key == 'action' && strpos($option, '::') !== false)
-        $option = "";
     }
-  }
-  
-  static function filter_access(&$options, $user_roles = null)
-  {
-    if (is_null($user_roles)) {
-      global $session;
-
-      $user_roles = array('public');
-      if (!is_null($session) && !is_null($session->user))
-        $user_roles = $session->user->roles;
-      log::debug("ROLES ".json_encode($user_roles));
-    }
-    $filtered = $options;
-    foreach($options as $key=>$option)
-    {
-      if (!is_array($option)) continue;
-      $allowed_roles = at($option, 'access');
-      if ($allowed_roles == '') {
-        page::filter_access($filtered[$key], $user_roles);
-        continue;
-      }
-      $allowed = array_intersect($user_roles, explode(',', $allowed_roles));      //log::debug("PERMITTED $key ".  json_encode($allowed));
-      if (sizeof($allowed) == 0) 
-        unset($filtered[$key]);
-      else 
-        page::filter_access($filtered[$key], $user_roles);
-    }
-    $options = $filtered;
   }
    
   function validate($field)
   {
+    if (is_null($this->validator))
+      $this->validator = new validator($this->request);
+    //todo: validate only required fields;
     foreach($field as $code=>$values) {
       if (!is_array($values)) continue;
-      $valid = trim(at($values,'valid'));
-      if ($valid == '') continue;
-      if (is_null($valid)) {
+      if (is_numeric($code)) {
+        $code = at($values, 'code');
+        if (is_null($code)) {
+          $this->validate($values);
+          continue;
+        }
+      }
+      $valid = at($values,'valid');
+      if (is_array($valid)) $valid = last($valid);
+      if ($valid == '') {
         $this->validate ($values);
         continue;
       }
@@ -293,46 +423,21 @@ class page
     return $this->validator->valid();
   }
 
-  function read_page_field(&$page=null)
+  function data()
   {
-    $page = $this->read_request('_page');
-    $code = $this->request['_field'];
-    $field = $this->read_request('_field');
-    return null_merge($field, at($page, $code));
-  }
-  
-  static function data($request)
-  {
-    log::debug('page::data page='.$request['_page']. ', field='.$request['_field']);
-    $page = new page($request);
-    $field = $page->read_page_field();    
-    //page::expand_values($row, array('template','html'));    
-    $data = $field['data'];
-    
-    $matches = array();
-    preg_match('/^([^:]+): ?(.+)/s', $data, $matches);
-    $type = $matches[1];
-    $list = $matches[2];
-    if ($type == 'inline') {
-      $values = explode('|', $list);
-      $rows = array();
-      foreach($values as $pair) {
-        list($code) = explode(',', $pair);
-        $value['item_code'] = $code;
-        $value['item_name'] = substr($pair, strlen($code)+1);
-        $rows[] = $value;
-      }
+    $field = $this->load_field(null, array('field'));
+    $type = at($field, 'type');
+    if (!is_null($type)) {
+      $field = null_merge(at(page::$all_fields, $type), $field);
+      $field = null_merge(at($this->fields, $type), $field);
+      unset($field['type']);
     }
-    else if ($type == 'sql') {
-      global $db;
-      $rows = $db->read($list, MYSQLI_ASSOC);
+    log::debug_json('field', $field);
+    $items = array();
+    foreach($field as $item) {
+      $items = null_merge($items, $this->reply($item, false), false);
     }
-    else if (preg_match('/^([^\(]+)\(([^\)]+)\)/', $data, $matches) ) {
-      $rows = $this->call($matches[1], $matches[2], $field);
-    }
-
-    set_valid($rows, $field, 'template');
-    echo json_encode($rows);
+    return $items;
   }
   
   function call($function, $params, $options=null)
@@ -358,38 +463,132 @@ class page
         $param = replace_vars ($param, $options);
       }
     }
-    return call_user_func_array($function, array_merge(array($this->request), $params));
+    else $options = $this->request;
+    return call_user_func_array($function, array_merge(array($options), $params));
   }
   
-  static function action($request)
+  function merge_type($field, $type=null)
   {
-    $page = new page($request);
-    $page_options = array();
-    $options = $page->read_page_field($page_options);
-    page::expand_values($options);
-    page::expand_values($page_options);
-       
-    if (array_key_exists('validate', $options) && !$page->validate($page_options)) 
-      return;
-     
-    $action = at($options,'action');
-    if (is_null($action)) return;
+    if (is_null($type)) $type = at($field, 'type');
+    if (is_null($type)) return $field;
+    $expanded = at($this->types, $type);
+    if (is_null($expanded)) 
+      throw new Exception("Unknown  type $type specified");
+    $super_type = $this->merge_type($expanded);
+    return array_merge_recursive_distinct($super_type, $field);
+  }
+  
+  function expand_contents(&$parent)
+  {
+    $default_type = null;
+    $length = sizeof($parent);
+    $result = array();
+    foreach($parent as &$value) {
+      $code = null;
+      if (is_array($value)) {
+        //log::debug("EXPANDING VALUE ".json_encode($value));
+        $type = at($value, 'type');
+        if (!is_null($type)) {
+          $default_type = at($this->types, $type);
+          continue;
+        }
+        if (null_at($value, 'code')) {
+          foreach ($value as $key=>$val) break;
+          if (!is_array($val)) continue;
+          $value = $val;
+          $value['code'] = $key;
+          //log::debug("EXPANDING overloaded ".json_encode($value));
+        }
+        if (null_at($value,'type'))
+          $value = array_merge_recursive_distinct($default_type, $value);
+        $type_value = at($this->types, $key);
+        //log::debug("TYPE VALUE ".json_encode($type_value));
+        $value = array_merge_recursive_distinct($type_value, $value);
+        //log::debug("EXPANDED ".json_encode($value));
+        continue;
+      }
+      if (!is_string($value) || preg_match('/\W/', $value)) continue;
+      $code = $value;
+      $value = at($this->types, $code);
+      $value = array_merge_recursive_distinct($default_type, $value);
+      $value['code'] = $code;
+    }
     
-    $rows = array();
-    $matches = array();
-    if (!preg_match('/^([^:]+): ?(.+)/s', $action, $matches)) {
-      throw new Exception("Invalid action spec $action");
+  }
+
+  function expand_field(&$field)
+  {
+    foreach ($field as $key=>&$value) {
+      if (is_numeric($key)) {
+        $this->expand_contents($field);
+        break;
+      }
+      if (!is_array($value)) continue;
+      $type_value = at($this->types, $key);
+      $value = null_merge($type_value, $value, false);
+      $this->expand_field($value);
     }
-    $type = $matches[1];
-    $list = $matches[2];
-    if ($type == 'sql') {
-      global $db;
-      $rows = $db->read($list, MYSQLI_ASSOC);
-      echo json_encode($rows);
+  }
+
+  function check_access($field, $throw=false)
+  {
+    $allowed_roles = at($field, 'access');
+    if (is_array($allowed_roles)) $allowed_roles = last($allowed_roles);
+    if ($allowed_roles == '') return true;
+
+    global $session;
+
+    $user_roles = array('public');
+    if (!is_null($session) && !is_null($session->user))
+      $user_roles = $session->user->roles;
+    
+    if (in_array('super', $user_roles)) return true;
+    
+    $allowed = array_intersect($user_roles, explode(',', $allowed_roles));    
+    if (sizeof($allowed) > 0) return true;
+    if (!$throw) return false;
+    $code = $field['code'];
+    $path = implode('/', $this->path);
+    throw new user_exception("Unauthorized access to PATH $path FIELD $code");
+  }
+  
+  function action()
+  {
+    $invoker = $this->load_field(null, array('field'));
+    log::debug_json("INVOKER ", $invoker);
+    $fields = $this->fields[$this->page];
+    $action = $invoker['action'];
+//    $this->expand_field($fields);
+    $validate = at($action, 'validate');
+    if (!is_null($validate) && $validate != 'none' && !$this->validate($fields))
+      return null;
+    
+    return $this->reply($action);
+  }
+  
+  function reply($action, $assoc = true)
+  {
+    $call = at($action ,'call');
+    if ($call != '') { 
+      $invoker = $this->path[sizeof($this->path)-1];
+      log::debug("INVOKER $invoker ");
+      $call = preg_replace('/\$class([^\w]|$)/', "$this->object\$1", $call);
+      $call = preg_replace('/\$page([^\w]|$)/', "$this->page\$1", $call); 
+      $call = preg_replace('/\$invoker([^\w]|$)/', "$invoker\$1", $call);
+      $call = preg_replace('/\$default([^\w]|$)/', "$this->object::$this->page\$1", $call);
+
+      $matches = array();
+      if (!preg_match('/^([^\(]+)(?:\(([^\)]*)\))?/', $call, $matches) ) 
+        throw new Exception("Invalid function spec $call");
+      return $this->call($matches[1], $matches[2], $this->fields[$this->page]);
     }
-    else if (preg_match('/^([^\(]+)\(([^\)]*)\)/', $action, $matches) ) {
-      $page->call($matches[1], $matches[2], $options);
-    }
+    
+    $sql = at($action,'sql');
+    if ($sql == '') return null;
+    $user_id = $this->user->id;
+    $sql = preg_replace('/\$uid([^\w]|$)/', "$user_id\$1", $sql);
+    global $db;
+    return $assoc?$db->page_through_names($sql): $db->page_through_indices($sql);
   }
 
   static function check_field($options, $field)
@@ -401,36 +600,28 @@ class page
     return false;
   }
   
-  static function load($request)   
+  function fields()
+  {
+    return $this->read('field');
+  }
+  
+  function values()   
   {  
-    $page = new page($request);
-    $options = $page->read_request('page');
-    page::expand_values($options);
-
-    if (!($key=page::check_field($request, 'key'))
-      || !($load=page::check_field($options, 'load'))) return;
-   
-    log::debug("key=$key, $options=".json_encode($options));
-    $rows = array();
-    $matches = array();
-    preg_match('/^([^:]+): ?(.+)/s', $load, $matches);
-    $type = $matches[1];
-    $list = $matches[2];
-    if ($type == 'sql') {
-      global $db;
-      $sql = str_replace('$key', addslashes($key), $list);
-      $rows = $db->read_one($sql, MYSQLI_ASSOC);
-      echo json_encode($rows);
+    $options = $this->load_field(null, array('field'));
+    log::debug("VALUES ".json_encode($options));
+    $items = array();
+    foreach($options as $option) {
+      $items = null_merge($items, $this->reply($option), false);
     }
-    else if (preg_match('/^([^\(]+)\(([^\)]*)\)/', $load, $matches) ) {
-      $page->call($matches[1], $matches[2]);
-    }
+    
+    return $items;
   }
     
   static function respond($response, $value=null)
   {
-    global $json;
-    $json['_responses'][$response] = is_null($value)?'':$value;
+    global $page_output;
+    $result = &$page_output->values;
+    $result['_responses'][$response] = is_null($value)?'':$value;
   }
     
   static function alert($message)
@@ -443,12 +634,18 @@ class page
     page::respond('redirect', $url);
   }
 
-  static function show_dialog($dialog, $options=null)
+  static function show_dialog($dialog, $options=null, $values = null)
   {
     page::respond('show_dialog', $dialog);
+    $options['values'] = $values;
     if (!is_null($options)) page::respond('options', $options);
   }
   
+  static function dialog($dialog, $options=null, $values=null)
+  {
+    page::show_dialog($dialog, $options, $values);
+  }
+
   static function close_dialog($message=null)
   {
     if (!is_null($message)) page::alert($message);
@@ -457,12 +654,23 @@ class page
   
   static function update($name, $value=null)
   {
-    global $json;
-    $responses = &$json['_responses'];
+    global $page_output;
+    $result = &$page_output->values;
+    $responses = &$result['_responses'];
     $updates = &$responses['update'];
     if (is_array($name))
-      page::null_merge ($updates, $name);
+      null_merge ($updates, $name);
     else
       $updates[$name] = $value;
   }
+  
+  static function error($name, $value)
+  {
+    global $page_output;
+    log::debug("ERROR $name $value ");
+    $result = &$page_output->values;
+    $errors = &$result['errors'];
+    $errors[$name] = $value;
+  }
+  
 }

@@ -27,21 +27,25 @@
       row_actions: null,
       url: '/?a=page/read&page=mytable
       rows: null*/
-      name: 'Undefined',
-      flags: [],
-      slideSpeed: 300
+      name: 'Untitled',
+      flags: []
     },
     
     _create: function()
     {
+      this.params = { 
+        path: this.options.path, 
+        key: this.options.key, 
+        sort: this.options.sort,
+        sort_order: this.options.sort_order,
+        page_num: this.options.page_num || 1,
+        page_size: this.options.page_size
+      };
       if (this.hasFlag('show_titles') || this.hasFlag('show_header')) {
         $('<thead></thead>').prependTo(this.element);
         if (this.hasFlag('show_header')) this.showHeader();
+        if (this.hasFlag('show_titles')) this.showTitles();
       }
-      this.params = {field: this.element.attr('id'), key: this.options.key};
-      if (this.options.sort !== undefined) this.params.sort = this.options.sort;
-      if (this.options.page_size !== undefined) this.params.page_size = this.options.page_size;
-      this.params.page_num = 1;
       this.load();
     },
    
@@ -59,19 +63,25 @@
     {
       var self = this;
       self.head().find('.paging [action]').attr('disabled','');
-      $.json('/?a=datatable/read', {data: self.params}, function(data) {
-        if (data === undefined || data === null) {
-          console.log('No table data for table:', self.params.field);
-          return;
-        }
-        if (self.hasFlag('show_titles')) self.showTitles(data);
-        self.showData(data);
-        self.showActions();
-        if (self.options.page_size !== undefined) self.showPaging(parseInt(data.total));
-        if (self.options.filter !== undefined) self.createFilter(data.fields);
-        self.adjustActionsHeight();
+      var data = $.extend({action: 'data'}, self.params);
+      data.path = data.path +'/load';
+      $.json('/', {data: data}, function(data) {
+        self.populate(data);
       });
     },
+    
+    populate: function(data)
+    {
+      if (data === undefined || data === null) {
+        console.log('No table data for table:', this.params.field);
+        return;
+      }
+      this.showData(data);
+      this.showActions();
+      if (this.options.page_size !== undefined) this.showPaging(parseInt(data.total));
+      this.adjustActionsHeight();
+    },
+    
         
     hasFlag: function(flag)
     {
@@ -94,7 +104,7 @@
         $('<div class=heading></div>').html(this.options.name).appendTo(th);
       
       var self = this;
-      if (this.options.filter !== undefined) {
+      if (this.hasFlag('filter')) {
         this.createAction('filter').appendTo(th);
         this.element.on('filter', function() { self.showFilter(); });
       }
@@ -114,11 +124,11 @@
       $('<input id=page_size type=text></input>').val(this.options.page_size).appendTo(paging)
       $('<div>entries per page</div>').appendTo(paging);
 
-      this.createAction('goto_first_page').attr('disabled','').appendTo(paging);
-      this.createAction('goto_prev_page').attr('disabled','').appendTo(paging);
+      this.createAction('goto_first').attr('disabled','').appendTo(paging);
+      this.createAction('goto_prev').attr('disabled','').appendTo(paging);
       $('<input id=page_num type=text></input>').val(1).appendTo(paging);
-      this.createAction('goto_next_page').attr('disabled','').appendTo(paging);
-      this.createAction('goto_last_page').attr('disabled','').appendTo(paging);   
+      this.createAction('goto_next').attr('disabled','').appendTo(paging);
+      this.createAction('goto_last').attr('disabled','').appendTo(paging);   
       this.bindPaging();
     },
 
@@ -148,16 +158,16 @@
       }); 
       
       var page = head.find('#page_num');
-      this.element.on('goto_first_page', function(e, invoker) {
+      this.element.on('goto_first', function(e, invoker) {
         self.pageTo(invoker, 1);
       })
-      .on('goto_prev_page', function(e, invoker) {
+      .on('goto_prev', function(e, invoker) {
         self.page(invoker, -1);
       })
-      .on('goto_next_page', function(e, invoker) {
+      .on('goto_next', function(e, invoker) {
         self.page(invoker, 1);
       })
-      .on('goto_last_page', function(e, invoker) {
+      .on('goto_last', function(e, invoker) {
         var size = parseInt(head.find('#page_size').val());
         var total = parseInt(head.find('#total').val());
         self.pageTo(invoker, total/size);
@@ -170,8 +180,8 @@
       head.find('#page_total').text(total);
       var page = this.params.page_num;
       var size = this.params.page_size;
-      var prev = head.find('[action=goto_first_page],[action=goto_prev_page]');
-      var next = head.find('[action=goto_last_page],[action=goto_next_page]');
+      var prev = head.find('[action=goto_first],[action=goto_prev]');
+      var next = head.find('[action=goto_last],[action=goto_next]');
       if (page <= 1) {
         page = 1;
         prev.attr('disabled','');
@@ -190,29 +200,31 @@
       if (page > 1) prev.removeAttr('disabled');
     },
     
-    showTitles: function(data)
+    showTitles: function()
     {      
       var head = this.head();
       var tr = head.find('.titles').empty();
       if (!tr.exists()) tr = $('<tr class=titles></tr>').appendTo(head);
       var self = this;
-      var show_key = self.hasFlag('show_key');
-      $.each(data.fields, function(i, field) {
-        if (i === 0 && !show_key) return;
-        var code = field.code;
-        if (field.code === 'attr') return;
+      var fields = this.options.fields;
+      $.each(fields, function(i, code) {
+        if (code === 'attr') return;
+        var field = self.getProperties(field, fields);
         var th = $('<th></th>').appendTo(tr);
-        if (field.code === 'actions') return;
-        th.html(field.name===null? code: field.name);
+        if (code === 'actions') return;
+        if ($.isArray(field.name)) field.name = field.name[field.name.length-1];
+        th.html(field.name || toTitleCase(code));
         if (code === self.params.sort) 
           th.attr('sort', self.params.sort_order);
         else
           th.attr('sort','');
         th.click(function() {
+          console.log(th.attr('sort'), self.params.sort);
           th.siblings().attr('sort','');
           var order = 'asc';
-          if (self.params.sort === code)
+          if (self.params.sort === code) 
             order = th.attr('sort')==='asc'?'desc':'asc';
+          th.attr('sort', order);
           self.params.sort = code;
           self.params.sort_order = order;
           self.load();
@@ -233,21 +245,19 @@
       var self = this;
       var body = self.body().empty();
       var show_key = this.hasFlag('show_key');
-      var expandable = data.actions !== undefined && data.actions.expand !== undefined;
-      var show_edits = this.hasFlag('show_edits');
-      var all_actions = data.actions;
+      var expandable = this.options.expand.action !== undefined;
+      var fields = this.options.fields;
       $.each(data.rows, function(i, row) {
-        var row = data.rows[i];
         var tr = $('<tr></tr>').appendTo(body);
         var key = row[0];
         tr.attr('_key', key);
         if (i % 2 === 0) tr.addClass('alt');
         var expanded = !expandable;
+        var k = 0;
         $.each(row, function(j, cell) {
-          if (cell == null) cell = '';//console.log(row);
           if (j===0 && !show_key) return;
-          var field = data.fields[j];
-          if (field.code === 'attr') {
+          var field = fields[k++];
+          if (field === 'attr') {
             $.each(cell.split(','), function(k,attr) {
               attr = attr.split(':');
               if (attr[0] === 'class') 
@@ -258,16 +268,16 @@
             return;
           }
           var td = $('<td></td>').appendTo(tr);
-          if (field.code === 'actions') {
-            self.setRowActions(tr, td, all_actions, cell);
+          if (field === 'actions') {
+            self.setRowActions(tr, td, cell);
             return;
           }
           
-          self.showCell(show_edits, field, td, cell, key);
+          self.showCell(field, td, cell, key);
           if (!expanded) {
             expanded = true;
-            self.createAction('expand', all_actions, tr).prependTo(td);
-            self.createAction('collapse', all_actions, tr).prependTo(td).hide();
+            self.createAction('expand', undefined, tr).prependTo(td);
+            self.createAction('collapse', undefined, tr).prependTo(td).hide();
           }
         });
       });
@@ -282,15 +292,18 @@
       this.spanColumns(this.head().find('.header>th'));      
     },
     
-    showCell: function(editable, field, td, value, key)
-    {
-      if (!editable || !$.valid(field.html)) {
+    showCell: function(field, td, value, key)
+    {      
+      field = this.getProperties(field, this.options.fields);
+      
+      if (!$.valid(field.html)) {
         td.html(value);
         return;
       }
       var html = field.html.replace('$code', key+'_'+field.code);
       var entity = $(html)
               .css('width','100%')
+              .css('height','100%')
               .value(value).appendTo(td);
       if (field.create !== undefined && field.create !== null) {
         var create_opts = $.extend({key: key}, field);
@@ -298,15 +311,52 @@
       }
     },
     
+    getProperties: function(field, fields)
+    {
+      var props = {};
+      var key = field;
+      if ($.isPlainObject(field)) {
+        key = field.code;
+        if (key !== undefined) {
+          props = field;
+        }
+        else {
+          for (key in field) {};
+          props = field[key];
+          props.code = key;
+          field = key;
+        }
+      }
+
+      var type_field = this.options.types[key] || {};
+      var option_field = this.options[key] || {}
+      var list_item_type = {};
+      var in_list = false;
+      
+      for( var i in fields) {
+        var item = fields[i];
+        if (typeof item === 'string' && key === item) {
+          in_list = true;
+          break;
+        }
+        if ($.isPlainObject(item) && item.type !== undefined) 
+          list_item_type = this.options.types[item.type];
+      }
+
+      if (!in_list) list_item_type = {};
+      return $.extend({}, type_field, option_field, props, list_item_type);
+    },
+    
     createAction: function(action, actions, sink)
     {
       if (sink === undefined) sink = this.element;
-      var props = actions===undefined?this.options[action]:actions[action];
-      if (props === undefined) { 
-        console.log("undefined props for", action);
+      if (actions === undefined) actions = this.options;
+      var props = this.getProperties(action, actions);
+      if ($.isEmptyObject(props)) { 
         return $('');
       }
       var div = $('<span>');
+      if (props.name === undefined) props.name = toTitleCase(action);
       div.html(props.name);
       div.attr('title', props.desc);
       div.attr('action', action);
@@ -315,22 +365,28 @@
         sink.trigger('action',[div,action,props.action]);
         sink.trigger(action, [div,props.action]);
         if (props.action === undefined) return;
-        var el = self.element;
         var key = sink.attr('_key');
         if (key === undefined) key = self.options.key;
-        var options = $.extend({},self.params,{code: action, action: props.action, key: key, selector: props.selector});
-        var listener = el.hasClass('page')?el: el.parents('.page').eq(0);
+        var options = $.extend({},self.params,{code: action, action: props.action, key: key });
+        var listener = self.element.closest('.page').eq(0);
+        options.path += '/';
+        if (actions === self.options.row_actions) 
+          options.path += 'row_actions/';
+        else if (actions === self.options.footer_actions) 
+          options.path += 'footer_actions/';
+        options.path += action;
         listener.trigger('child_action', [div,options]);
       });
       return div;
     },
     
-    setRowActions: function(tr, td, all_actions, row_actions)
+    setRowActions: function(tr, td, row_actions)
     {
       if (!$.isArray(row_actions)) row_actions = row_actions.split(',');
       var self = this;
       td.addClass('actions');
       var parent = td;
+      var all_actions = this.options.row_actions;
       $.each(row_actions, function(i, action) {  
         if (action === 'expand') return;
         self.createAction(action, all_actions, tr).appendTo(parent);
@@ -356,11 +412,15 @@
         btn.toggle();
         self.slide(tr);
       });
-      tr.on('expand', function(event, button, page) {
-          button.hide();
-          tr.find('[action=collapse]').show();
-          var tmp = $('<div></div>').page({page: page, key: key, load:""});
-          tmp.on('read_'+page, function(event, object) {
+      tr.on('expand', function(event, button, action) {
+        if (!action || !action.pages) return;
+        button.hide();
+        tr.find('[action=collapse]').show();
+        $.each(action.pages, function(i, path) {
+          var tmp = $('<div></div>');
+          tmp.page({path: path, key: key});
+          path = path.replace(/\//, '_');
+          tmp.on('read_'+path, function(event, object) {
             var expanded = $('<tr class=expanded></tr>');
             $('<td></td>')
                     .attr('colspan', tr.children('td').length)
@@ -368,6 +428,7 @@
                     .prependTo(expanded);
             expanded.insertAfter(tr);
           });
+        });
       });
       tr.on('collapse', function(event, button) {
         button.hide();
@@ -401,7 +462,9 @@
     {
       row.children().each(function(i) {
         var width = $(this).width();
-        if (widths[i] === undefined || width > widths[i])
+        if (i === widths.length)
+          widths.push(width);
+        else if (width > widths[i])
           widths[i] = width;
       })
     },
@@ -409,13 +472,29 @@
     getWidths: function()
     {
       var widths = [];
-      this.updateWidths($('.titles'),widths);
+      this.updateWidths(this.head().find('.titles'),widths);
       var self = this;
       this.body().children('tr').each(function() {
         if (!$(this).hasClass('actions'))
           self.updateWidths($(this), widths);
       });
       return widths;
+    },
+    
+    adjustWidths: function(editor)
+    {
+      var widths = this.getWidths();
+      var input;
+      var fields = this.options.fields;
+      editor.children().each(function(i) {
+        var field = fields[i];
+        if (field === 'actions') {
+          input.css('width', widths[i-1] + widths[i] + 'px');
+          return;
+        }
+        input = $(this).children('*').eq(0);
+        input.css('width', widths[i]+'px');
+      });
     },
     
     createEditor: function(template, fields, type, cell)
@@ -426,38 +505,36 @@
         if (typeof editables === 'string')
           editables = editables.split(',');
       }
-      var widths = this.getWidths();
       var editor = $('<tr></tr>').addClass(type);
-      var td;
-      var field_index = this.hasFlag('show_key')?0:1;
+      var td
       template.children().each(function(i) {
-        var field = fields[field_index++];
-        if (field.code === 'attr') return;
+        var field = fields[i];
+        if (field === 'attr') return;
         
-        if (editables !== undefined && editables.indexOf(field.code) < 0) return;
-        if (field.code === 'actions') {
+        //if (editables !== undefined && editables.indexOf(field.code) < 0) return;
+        if (field === 'actions') {
           td.attr('colspan',2);
-          td.children('input').eq(0).css('width', widths[i-1]+widths[i]);
           return;
         }
         td = $(cell);
-        $('<input type=text></input>').width(widths[i]*0.98).appendTo(td);
+        $('<input type=text></input>').css('width','10px').appendTo(td);
         td.appendTo(editor);
       });
       
       editor.insertAfter(template); 
-
+      this.adjustWidths(editor);
       return editor;
     },
     
-    createFilter: function(fields)
+    createFilter: function()
     {
-      if (this.head().find('.filter').exists()) return;
+      var filter = this.head().find('.filter');
+      if (filter.exists()) return filter;
       
       var self = this;
       var titles = self.head().find('.titles');
-      var filter = self.createEditor(titles, fields, 'filter', '<th></th>').hide();
-      filter.find('input').bind('keyup input cut paste', function() {
+      filter = self.createEditor(titles, self.options.fields, 'filter', '<th></th>').hide();
+      filter.find('input').bind('keyup cut paste', function(e) {
         self.params.filtered = '';
         self.params.page_num = 1;
         self.params.page_size = self.options.page_size;
@@ -466,22 +543,27 @@
         });
         self.load();
       });
+      return filter;
     },
     
     showFilter: function()
     {
-      this.head().find('.filter').toggle();
+      var filter = this.createFilter();
+      filter.toggle();
+      if (filter.is(':visible'))
+        this.adjustWidths(filter);
     },
     
     showActions: function()
     {
-      var actions = this.options.actions;
+      var actions = this.options.footer_actions;
       if (actions === undefined) return;
       var tr = $('<tr></tr>').addClass('actions').appendTo(this.body());
       var td = $('<td>').appendTo(tr);
       var self = this;
-      $.each(actions, function(code) {
-        self.createAction(code, actions).appendTo(td);
+      $.each(actions, function(i, action) {
+        if ($.isPlainObject(action) && action.type !== undefined) return;
+        self.createAction(action, actions).appendTo(td);
       });
       this.spanColumns(td);
     }
