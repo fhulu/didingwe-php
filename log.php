@@ -66,6 +66,20 @@ class log
     $logger->write($level, $message);
   }
 
+  static function stack($exception)
+  {
+    $index = 0;
+    foreach($exception->getTrace() as $trace) {
+      log::error("TRACE $index. ".$trace['file']." line ".$trace['line']." function ".$trace['class'] ."::".$trace['function'] ." args ".json_encode($trace['args']));
+      ++$index;
+    }
+  }
+  
+  static function debug_json($name, $value)
+  {
+    log::debug("$name ".json_encode($value));
+  }
+
   static function info($message) { log::log(self::INFO, $message); }
   static function warn($message) { log::log(self::WARNING, $message); }
   static function error($message) { log::log(self::ERROR, $message); }
