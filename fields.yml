@@ -12,8 +12,8 @@ change_password:
   desc: Change your password
   access: reg
   action:
-    call: /user/start_reset_pw
-    # dialog: /user/start_reset_password
+    #call: /user/start_reset_pw
+    dialog: /user/start_reset_password
 
     
 contacts:
