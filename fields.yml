@@ -6,7 +6,7 @@ actions:
 
 cellphone:
   desc: The cellphone number at which you can be contacted
-  valid: /[\d- ]+/
+  valid: national_tel
 
 change_password: 
   desc: Change your password
@@ -62,7 +62,13 @@ id_number:
   
 inputs:
   - type: input
-     
+  
+latitude:
+  valid: /^\d+\.\d+$/
+
+longitude:
+  valid: /^\d+\.\d+$/
+  
 otp:
   name: OTP
   desc: One Time Pin
@@ -85,6 +91,7 @@ submit:
 
 submit_page:
   type: button
+  name: Submit
   action:
     post: "#page *"
     validate: all
