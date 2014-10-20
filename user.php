@@ -28,10 +28,11 @@ class user
   var $title;
   var $functions;
   var $groups;
+  var $requested_role;
   function __construct($data)
   {
     $this->other_partner_id = $this->partner_id;
-    list($this->id, $this->partner_id, $this->email,$this->title, $this->first_name, $this->last_name, $this->cellphone) = $data;
+    list($this->id, $this->partner_id, $this->email,$this->title, $this->first_name, $this->last_name, $this->cellphone, $this->requested_role) = $data;
    
   }
 
@@ -356,7 +357,7 @@ class user
     }
 
   }
-  static function create($partner_id, $email, $password,$title, $first_name, $last_name, $cellphone, $otp)
+  static function create($partner_id, $email, $password,$title, $first_name, $last_name, $cellphone, $otp, $requested_role)
   {
     $program_id = config::$program_id;   
     $password = addslashes($password);
@@ -365,13 +366,13 @@ class user
     $title = addslashes($title);
     if($program_id==7){
       
-      $sql = "insert into \$audit_db.user(program_id, partner_id, email_address, password,title, first_name,last_name, cellphone,active, otp, otp_time)
-      values($program_id,$partner_id, '$email',password('$password'),'$title', '$first_name','$last_name','$cellphone',1, '$otp', now())";
+      $sql = "insert into \$audit_db.user(program_id, partner_id, email_address, password,title, first_name,last_name, cellphone,active, otp, otp_time, requested_role)
+      values($program_id,$partner_id, '$email',password('$password'),'$title', '$first_name','$last_name','$cellphone',1, '$otp', now(), '$requested_role')";
     }
     else
     {
-      $sql = "insert into user(program_id, partner_id, email_address, password,title, first_name,last_name, cellphone, otp, otp_time)
-      values($program_id,$partner_id, '$email',password('$password'),'$title', '$first_name','$last_name','$cellphone', '$otp', now())";
+      $sql = "insert into user(program_id, partner_id, email_address, password,title, first_name,last_name, cellphone, otp, otp_time, requested_role)
+      values($program_id,$partner_id, '$email',password('$password'),'$title', '$first_name','$last_name','$cellphone', '$otp', now(), '$requested_role')";
     }
     global $db;
     $id = $db->insert($sql);
@@ -395,6 +396,7 @@ class user
     if ($email  == '') $email = $request['email_address'];
     $password = $request[password];
     $cellphone = $request[cellphone];
+    $requested_role = $request['requested_role'];
     $otp = rand(10042,99999);
     $program_id = config::$program_id;
     $partner_id = (int)$request['partner_id'];
@@ -415,10 +417,10 @@ class user
       $password = stripslashes($password);
       $first_name = stripslashes($first_name);
       $last_name = stripslashes($last_name);
-      $user = new user(array($id, $partner_id, $email,$title, $first_name, $last_name, $cellphone, $otp));
+      $user = new user(array($id, $partner_id, $email,$title, $first_name, $last_name, $cellphone, $otp, $requested_role));
     }
     else {
-      $user = user::create($partner_id, $email, $password, $title,$first_name, $last_name, $cellphone, $otp);
+      $user = user::create($partner_id, $email, $password, $title,$first_name, $last_name, $cellphone, $otp, $requested_role);
     }
     if ($is_admin) return;
 
@@ -470,27 +472,22 @@ class user
   
   static function confirm_registration($req)
   {
-    $details = user::activate($req);
-    if (!$details) return;
+    if (!user::check_otp($req)) return false;
+    
+    global $db;
+    $id = $req['id'];
+    $db->exec("update user set active = 1 where id = $id");
     page::close_dialog();
-    page::show_dialog('user/confirm_registration', null, $details);
+    page::show_dialog('user/confirm_registration');
   }
+  
   
   static function activate($request, $id=null)
   {
-    global $session;
-    
-    $user = $session->user;
-    $is_admin = $user->is_admin();
-    if (!$is_admin && !user::check_otp($request)) return false;
-    
     global $db;
     if (is_null($id)) $id = $request['id'];
     $db->exec("update user set active = 1 where id = $id");
-    
-    if ($is_admin)
-      page::redirect('/user/list'); //todo: use refresh
-    return true;
+    page::redirect('/user/list');
   }
   
   static function deactivate($request,$id=null)
