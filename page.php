@@ -566,6 +566,18 @@ class page
     return $this->reply($action);
   }
   
+  
+  static function replace_sql($sql, $options) 
+  {
+    global $session; 
+    require_once 'session.php';
+    $user = $session->user;
+    $user_id = $user->id;
+    $key = $options['key'];
+    $sql = preg_replace('/\$uid([^\w]|$)/', "$user_id\$1", $sql);
+    return preg_replace('/\$key([^\w]|$)/', "$key\$1", $sql);
+  }
+  
   function reply($action, $assoc = true)
   {
     $call = at($action ,'call');
@@ -585,13 +597,7 @@ class page
     
     $sql = at($action,'sql');
     if ($sql == '') return null;
-    {
-      global $session; 
-      require_once 'session.php';
-      $user = $session->user;
-      $user_id = $user->id;
-      $sql = preg_replace('/\$uid([^\w]|$)/', "$user_id\$1", $sql);
-    }
+    $sql = page::replace_sql($sql);
     global $db;
     return $assoc?$db->page_through_names($sql): $db->page_through_indices($sql);
   }
