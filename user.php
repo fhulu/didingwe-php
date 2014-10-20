@@ -544,7 +544,7 @@ class user
     list($old_id, $old_partner_id, $active) = $db->read_one("select id, partner_id,active from user 
       where email_address = '$email' and program_id = $program_id");
     if ($old_partner_id != 0 && $old_id != $id && $active != 0)  {
-      return errors::q('email_address','Email Address already exists');
+      return page::error('email_address','Email Address already exists');
     }
     if ($old_id != '' || $active != 0) { 
       $time = time();
@@ -554,6 +554,7 @@ class user
     $sql = "update user set ". substr($values,1). " where id = $id";
     $db->exec($sql);    
     if (!is_null($request['role'])){
+      $request['id'] = $id;
       user::update_role($request);
     }
     $passwd = $request['password'];
