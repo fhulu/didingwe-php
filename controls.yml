@@ -26,8 +26,10 @@ datatable:
       <tbody></tbody>
     </table>
   create: datatable
-  script: /common/datatable3.js
+  script: /common/datatable.js
   css: /datatable.css
+  load:
+    - call: datatable::read($key)
   position: top
   # table-wide actions
   export:
@@ -35,7 +37,7 @@ datatable:
     desc: Export to an Excel spreadsheet
     action:
       validate: none
-      call: datatable3::start_export()    
+      call: datatable::start_export()    
   filter:
     name: ""
     desc: Filter by specific columns
@@ -56,7 +58,7 @@ datatable:
       desc: "Print above contents"
       action:
         validate: none
-        call: datatable3::start_redirect(pdf)
+        call: datatable::start_redirect(pdf)
   collapse:
     name: "-"
     desc: Hide details
@@ -102,13 +104,16 @@ export:
   desc: Export to an Excel spreadsheet
   action:
     validate: none
-    call: datatable3::start_redirect(export)    
+    call: datatable::start_redirect(export)    
 
 file:
   html: <file id="$code" name="$code"></file>
 
 form:
   html: <form id="$code></form>
+
+footer_actions:
+  - type: submit
 
 google_map:
   html: <div id='$code'></div>
@@ -228,12 +233,12 @@ print:
   desc: "Print above contents"
   action:
     validate: none
-    call: datatable3::start_redirect(pdf)
+    call: datatable::start_redirect(pdf)
 
 span:
   html: <span id="$code">$name</span>
   
-sub_menu:
+sub_menu: 
   html: |
     <li>
       <a href='$url' id="$code">$name</a>
