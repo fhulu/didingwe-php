@@ -85,7 +85,7 @@ class datatable
     $page_num = at($options, 'page_num');
     $offset = is_null($page_num) ? 0 : $page_size * ($page_num - 1);
     global $db;
-    $sql = $options['sql'];
+    $sql =  page::replace_sql($options['sql'], $options);
     $fields = datatable::get_sql_fields($sql);
     $sql = preg_replace('/^\s*select /i', 'select SQL_CALC_FOUND_ROWS ', $sql);
     datatable::filter($sql, $fields, $options);
