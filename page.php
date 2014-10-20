@@ -558,7 +558,7 @@ class page
     log::debug_json("INVOKER ", $invoker);
     $fields = $this->fields[$this->page];
     $action = $invoker['action'];
-//    $this->expand_field($fields);
+    $this->expand_field($fields);
     $validate = at($action, 'validate');
     if (!is_null($validate) && $validate != 'none' && !$this->validate($fields))
       return null;
