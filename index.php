@@ -1,8 +1,11 @@
 <?php
+  require_once '../common/log.php';
+  log::init('index', log::DEBUG);
   require_once('../common/utils.php');
   require_once('config.php');
-  if (isset($_GET['a'])) {
-    require_once('../common/action.php');
+  $action = GET('action');
+  if (!is_null($action)) {
+    require_once('../common/page.php');
     return;
   }
 ?>
@@ -13,15 +16,13 @@
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <link href="/jquery/smoothness/ui.css" media="screen" rel="stylesheet" type="text/css" />	
-<link href="/common/jquery.datetimepicker.css" media="screen" rel="stylesheet" type="text/css" />
 <link href="/main_menu.css" media="screen" rel="stylesheet" type="text/css" />	
 <link href="/default.style.css" media="screen" rel="stylesheet" type="text/css" />	
 
 <script type='text/javascript' src='/jquery/min.js'></script>
 <script type='text/javascript' src='/jquery/ui-min.js'></script>
 <script type="text/javascript" src='/common/mukoni.jquery.js'></script> 
-<script type='text/javascript' src="/common/page3.js"></script>
-<script type='text/javascript' src="/common/jquery.datetimepicker.js"></script>
+<script type='text/javascript' src="/common/page.js"></script>
 
 <script>
   var request_method = '<?=config::$request_method;?>';
@@ -44,7 +45,6 @@
   }
 
   global $session;
-  log::init('index', log::DEBUG);
   log::debug(json_encode($_GET));
   list($page) = explode('/', GET('path'));
   $content = GET('content');
