@@ -585,8 +585,13 @@ class page
     
     $sql = at($action,'sql');
     if ($sql == '') return null;
-    $user_id = $this->user->id;
-    $sql = preg_replace('/\$uid([^\w]|$)/', "$user_id\$1", $sql);
+    {
+      global $session; 
+      require_once 'session.php';
+      $user = $session->user;
+      $user_id = $user->id;
+      $sql = preg_replace('/\$uid([^\w]|$)/', "$user_id\$1", $sql);
+    }
     global $db;
     return $assoc?$db->page_through_names($sql): $db->page_through_indices($sql);
   }
