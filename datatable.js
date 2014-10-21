@@ -208,8 +208,11 @@
       var self = this;
       var fields = this.options.fields;
       $.each(fields, function(i, code) {
+        if ($.isPlainObject(code) && code.type != undefined) return;
         if (code === 'attr') return;
-        var field = self.getProperties(field, fields);
+        var field = self.getProperties(code, fields);
+        if ($.isPlainObject(code) && field === 'type') return;
+        code = field.code || code;
         var th = $('<th></th>').appendTo(tr);
         if (code === 'actions') return;
         if ($.isArray(field.name)) field.name = field.name[field.name.length-1];
@@ -256,8 +259,8 @@
         var k = 0;
         $.each(row, function(j, cell) {
           if (j===0 && !show_key) return;
-          var field = fields[k++];
-          if (field === 'attr') {
+          var code = fields[k++];
+          if (code === 'attr') {
             $.each(cell.split(','), function(k,attr) {
               attr = attr.split(':');
               if (attr[0] === 'class') 
@@ -267,8 +270,13 @@
             });
             return;
           }
+          var field = self.getProperties(code, fields);
+          if ($.isPlainObject(code) && field == 'type') {
+            code = fields[k++];
+            field = self.getProperties(code, fields);
+          }
           var td = $('<td></td>').appendTo(tr);
-          if (field === 'actions') {
+          if (code === 'actions') {
             self.setRowActions(tr, td, cell);
             return;
           }
@@ -321,10 +329,12 @@
           props = field;
         }
         else {
-          for (key in field) {};
-          props = field[key];
-          props.code = key;
-          field = key;
+          for (key in field) {
+            if (!field.hasOwnProperty(key)) continue;
+            if (key === 'type') return 'type';
+            props.code = key;
+            break;
+          };
         }
       }
 
@@ -344,6 +354,7 @@
       }
 
       if (!in_list) list_item_type = {};
+      props.code = key;
       return $.extend({}, type_field, option_field, props, list_item_type);
     },
     
