@@ -430,6 +430,16 @@ $.fn.page = function(options, callback)
         return;
       }
       
+      if (action.target !== undefined) {
+        var url = '/?action=action';
+        for (var key in field) {
+          if (key === 'action') continue;
+          url += '&'+key+'='+encodeURIComponent(field[key]);
+        }        
+        document.location = url;
+        return;
+      }
+      
       var data = {action: 'action', key: field.key, path: field.path};
       if (action.post) {
         var page_id = field.page_id || obj.parents(".page").eq(0).attr('id');
@@ -478,7 +488,6 @@ $.fn.page = function(options, callback)
         params.values = field.values;
         params.key = field.key;
       }
-      console.log(params);
       var tmp = $('body');
       var id = path.replace('/','_');
       tmp.on('read_'+id, function(event, object, options) { 
