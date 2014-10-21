@@ -241,10 +241,9 @@ span:
 sub_menu: 
   html: |
     <li>
-      <a href='$url' id="$code">$name</a>
+      <a id="$code">$name</a>
       <span>$sub_items</span>
     </li>
-  url: $code.html
   sub_items:
     - type: link
     
