@@ -145,8 +145,6 @@ class page
     foreach ($path as $step) {
       $this->field = $step;
       $step_field = at($field, $step);
-      log::debug_json("FIELD", $field);
-      log::debug_json("STEP $step", $step_field);
       if (is_null($step_field)) {
         foreach($field as $values) {
           if (is_array($values) && (at($values, 'code') != $step)
@@ -568,7 +566,6 @@ class page
     
     return $this->reply($action);
   }
-  
   
   static function replace_sql($sql, $options) 
   {
