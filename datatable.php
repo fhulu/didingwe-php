@@ -42,7 +42,6 @@ class datatable
     if (!in_array('show_key', $options['flags']))
       ++$index;
     $db_sort_field = at($fields, $index);
-    log::debug("SORT $sort_field $index $db_sort_field");
     $sort_order = at($options, 'sort_order');
     $sql .= " order by $db_sort_field $sort_order";
   }
@@ -77,8 +76,7 @@ class datatable
 
   static function read($options, $key, $callback=null) 
   {
-    log::debug("KEY $key CALLBACK $callback");
-    log::debug_json('OPTIONS', $options);
+    log::debug("KEY $key");
     $page_size = at($options, 'page_size');
     if (is_null($page_size))
       $page_size = 0;
@@ -98,19 +96,6 @@ class datatable
     return array('rows' => $rows, 'total' => $total);
   }
   
-
-  static function start_redirect($request,$method) {
-    log::debug("START REDIRECT " . json_encode($request));
-    unset($request['a']);
-    $path = explode('/', $request['path']);
-    $request['path'] = implode('/', array_slice($path, 1, sizeof($path)-3));
-    $url = '/?action=datatable/'.$method;
-    array_walk($request, function($value, $key) use (&$url) {
-      $url .= "&$key=" . urlencode($value);
-    });
-    page::redirect($url);
-  }
-
   static function export($options, $key) {
     ini_set('memory_limit', '512M');
     require_once '../PHPExcel/Classes/PHPExcel.php';
@@ -129,12 +114,12 @@ class datatable
       }
       $sheet->setCellValue("$col$row", ''); // take care of PHPExcel bug which fails to remove the last column
       return true;
-    }, true);
+    });
     $col = 'A';
-    foreach ($options['fields'] as $field) {
+    foreach ($options['fields'] as $code) {
       $ref = $col . "1";
       $sheet->getStyle($ref)->getFont()->setBold(true);
-      $code = $field['code'];
+     // $code = $field['code'];
       if ($code === 'actions')
         $sheet->removeColumn($col);
       else {
@@ -163,7 +148,7 @@ class datatable
     $objWriter->save('php://output');
   }
   
-  static function pdf($request,$options)
+  static function pdf($options, $key)
   {
     $pdf = new FPDF();
     $pdf->AddPage();
@@ -171,14 +156,12 @@ class datatable
     $pdf->SetFont('Arial', 'B', 10);
     $pdf->Footer('Council for Scientific and Industrial Research (CSIR)');
     $pdf->Ln(40);
-    $request['page_size'] = 0;
-    //$options = page::read_field_options(at($request, 'field'));
-    $page = new page($request);
+    $options['page_size'] = 0;
     $widths = $options['widths'];
     $flags = $options['flags'];
     $show_key = in_array('show_key', $flags, true);
     $columns = array(array(),array()); // reserve space for heading and titles
-    $data = datatable::read_data($request, function($row_data, $pagenum, $index) use (&$columns, $widths, $show_key) {     
+    $data = datatable::read($options, $key, function($row_data, $pagenum, $index) use (&$columns, $widths, $show_key) {     
       $fill_color = $index % 2 === 0? '216,216,216': '255,255,255';
       $col = array();
       $index = 0;
@@ -195,13 +178,13 @@ class datatable
     $titles = &$columns[1];
     $index = 0;
     $total_width = 0;
-    foreach ($data['fields'] as $field) {
+    foreach ($options['fields'] as $field) {
       if ($index++ == 0 && !$show_key ) continue;
       $pos = each($widths);
       if ($pos === false) break;
       $width = max(18,$pos[1]/7);
       $total_width += $width;
-      $titles[] = array('text' => $field['name'], 'width' => $width, 'height' => '5', 'align' => 'L', 'font_name' => 'Arial', 'font_size' => '8', 'font_style' => 'B', 'fillcolor' => '192,192,192', 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linewidth' => '0.4', 'linearea' => 'LTBR');
+      $titles[] = array('text' => $field, 'width' => $width, 'height' => '5', 'align' => 'L', 'font_name' => 'Arial', 'font_size' => '8', 'font_style' => 'B', 'fillcolor' => '192,192,192', 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linewidth' => '0.4', 'linearea' => 'LTBR');
     }
     
     $heading = &$columns[0];

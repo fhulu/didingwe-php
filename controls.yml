@@ -37,7 +37,8 @@ datatable:
     desc: Export to an Excel spreadsheet
     action:
       validate: none
-      call: datatable::start_export()    
+      call: datatable::export($key)
+      target: _blank
   filter:
     name: ""
     desc: Filter by specific columns
@@ -58,7 +59,8 @@ datatable:
       desc: "Print above contents"
       action:
         validate: none
-        call: datatable::start_redirect(pdf)
+        call: datatable::pdf($key)
+        target: _blank
   collapse:
     name: "-"
     desc: Hide details
@@ -104,7 +106,8 @@ export:
   desc: Export to an Excel spreadsheet
   action:
     validate: none
-    call: datatable::start_redirect(export)    
+    call: datatable::export($key)
+    target: _blank
 
 file:
   html: <file id="$code" name="$code"></file>
@@ -112,8 +115,8 @@ file:
 form:
   html: <form id="$code></form>
 
-footer_actions:
-  - type: submit
+#footer_actions:
+#  - type: submit
 
 google_map:
   html: <div id='$code'></div>
@@ -233,7 +236,8 @@ print:
   desc: "Print above contents"
   action:
     validate: none
-    call: datatable::start_redirect(pdf)
+    call: datatable::pdf($key)
+    target: _blank
 
 span:
   html: <span id="$code">$name</span>
@@ -289,7 +293,7 @@ table_row:
   html: <tr>$columns</tr>
   columns: [template: table_cell]
 
-text: { type: input }
+text: { type: input } 
 
 textarea:
   html: <textarea id="$code"></textarea>
