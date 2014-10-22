@@ -200,6 +200,21 @@
       if (page > 1) prev.removeAttr('disabled');
     },
     
+    bindSort: function(th, field)
+    {
+      var self = this;
+      th.click(function() {
+        th.siblings().attr('sort','');
+        var order = 'asc';
+        if (self.params.sort === field) 
+          order = th.attr('sort')==='asc'?'desc':'asc';
+        th.attr('sort', order);
+        self.params.sort = field;
+        self.params.sort_order = order;
+        self.load();
+      });        
+    },
+    
     showTitles: function()
     {      
       var head = this.head();
@@ -207,32 +222,24 @@
       if (!tr.exists()) tr = $('<tr class=titles></tr>').appendTo(head);
       var self = this;
       var fields = this.options.fields;
-      $.each(fields, function(i, code) {
-        if ($.isPlainObject(code) && code.type != undefined) return;
-        if (code === 'attr') return;
+      for (var i in fields) {
+        var code = fields[i];
+        if ($.isPlainObject(code) && code.type !== undefined) continue;
+        if (code === 'attr') continue;
         var field = self.getProperties(code, fields);
-        if ($.isPlainObject(code) && field === 'type') return;
+        if (field.hide) continue;
         code = field.code || code;
         var th = $('<th></th>').appendTo(tr);
-        if (code === 'actions') return;
+        if (code === 'actions') continue;
         if ($.isArray(field.name)) field.name = field.name[field.name.length-1];
         th.html(field.name || toTitleCase(code));
         if (code === self.params.sort) 
           th.attr('sort', self.params.sort_order);
         else
           th.attr('sort','');
-        th.click(function() {
-          console.log(th.attr('sort'), self.params.sort);
-          th.siblings().attr('sort','');
-          var order = 'asc';
-          if (self.params.sort === code) 
-            order = th.attr('sort')==='asc'?'desc':'asc';
-          th.attr('sort', order);
-          self.params.sort = code;
-          self.params.sort_order = order;
-          self.load();
-        });        
-      });
+        if (field.width !== undefined) th.css('width', field.width);
+        self.bindSort(th, code);
+      };
       this.spanColumns(head.find('.header th'));
     },
     
@@ -247,55 +254,52 @@
     {
       var self = this;
       var body = self.body().empty();
-      var show_key = this.hasFlag('show_key');
       var expandable = this.options.expand.action !== undefined;
       var fields = this.options.fields;
-      $.each(data.rows, function(i, row) {
+      for(var i in data.rows) {
+        var row = data.rows[i];
         var tr = $('<tr></tr>').appendTo(body);
-        var key = row[0];
-        tr.attr('_key', key);
+        var key;
         if (i % 2 === 0) tr.addClass('alt');
         var expanded = !expandable;
         var k = 0;
-        $.each(row, function(j, cell) {
-          if (j===0 && !show_key) return;
+        for (var j in row) {
+          var cell = row[j];
           var code = fields[k++];
           if (code === 'attr') {
-            $.each(cell.split(','), function(k,attr) {
-              attr = attr.split(':');
+            cell = cell.split(',');
+            for (var l in cell) {
+              var attr = cell[l].split(':');
               if (attr[0] === 'class') 
                 tr.addClass(attr[1]);
               else
                 tr.attr(attr[0],attr[1]);
-            });
-            return;
+            };
+            continue;
           }
           var field = self.getProperties(code, fields);
-          if ($.isPlainObject(code) && field == 'type') {
+          if (field.code === 'type') {
             code = fields[k++];
             field = self.getProperties(code, fields);
           }
+          if (field.code === 'key') {
+            key = cell;
+            tr.attr('_key', key);
+          }
+          if (field.hide) continue;
+          
           var td = $('<td></td>').appendTo(tr);
           if (code === 'actions') {
             self.setRowActions(tr, td, cell);
-            return;
+            continue;
           }
           
           self.showCell(field, td, cell, key);
-          if (!expanded) {
-            expanded = true;
-            self.createAction('expand', undefined, tr).prependTo(td);
-            self.createAction('collapse', undefined, tr).prependTo(td).hide();
-          }
-        });
-      });
-      var widths = this.options.widths;
-      if (widths !== undefined) {
-        body.children('tr').eq(0).children().each(function(i) {
-          var width = widths[i];
-          if (width === undefined || parseInt(width) === 0) return;
-          $(this).css('width', ''+width+'px');
-        });
+          if (expanded) continue;
+          expanded = true;
+          self.createAction('expand', undefined, tr).prependTo(td);
+          self.createAction('collapse', undefined, tr).prependTo(td).hide();
+        }
       }
       this.spanColumns(this.head().find('.header>th'));      
     },
@@ -331,26 +335,40 @@
         else {
           for (key in field) {
             if (!field.hasOwnProperty(key)) continue;
-            if (key === 'type') return 'type';
+            props = field[key];
             props.code = key;
+            if (key === 'type') {
+              props.hide = true;
+              return props;
+            }
             break;
           };
         }
       }
 
-      var type_field = this.options.types[key] || {};
+      if (fields === undefined) {
+        props = this.options[key];
+        props.code = key;
+        return props;
+      }
       var option_field = this.options[key] || {}
+      var type_field = this.options.types[key] || {};
       var list_item_type = {};
       var in_list = false;
       
-      for( var i in fields) {
-        var item = fields[i];
+      for( var code in fields) {
+        if (!$.hasOwnProperty(fields, code)) continue;
+        var item = fields[code];
         if (typeof item === 'string' && key === item) {
           in_list = true;
           break;
         }
-        if ($.isPlainObject(item) && item.type !== undefined) 
+        if (!$.isPlainObject(item)) continue;
+        if (item.type !== undefined) 
           list_item_type = this.options.types[item.type];
+        if (code !== key) continue;
+        in_list = true;
+        break;
       }
 
       if (!in_list) 
@@ -363,11 +381,9 @@
     createAction: function(action, actions, sink)
     {
       if (sink === undefined) sink = this.element;
-      if (actions === undefined) actions = this.options;
       var props = this.getProperties(action, actions);
-      if ($.isEmptyObject(props) || ['slide','slideoff','collapse'].indexOf(action) < 0  && props.action === undefined) { 
+      if ($.isEmptyObject(props))
         return $('');
-      }
       var div = $('<span>');
       if (props.name === undefined) props.name = toTitleCase(action);
       div.html(props.name);
@@ -519,7 +535,7 @@
           editables = editables.split(',');
       }
       var editor = $('<tr></tr>').addClass(type);
-      var td
+      var td;
       template.children().each(function(i) {
         var field = fields[i];
         if (field === 'attr') return;
@@ -546,14 +562,19 @@
       
       var self = this;
       var titles = self.head().find('.titles');
+      var fields = self.options.fields;
       filter = self.createEditor(titles, self.options.fields, 'filter', '<th></th>').hide();
+      var cols = filter.children();
       filter.find('input').bind('keyup cut paste', function(e) {
         self.params.filtered = '';
         self.params.page_num = 1;
         self.params.page_size = self.options.page_size;
-        filter.find('input').each(function() {
-          self.params.filtered += $(this).val() + '|';
-        });
+        var j = 0;
+        for (var i in fields) {
+          var field = self.getProperties(fields[i], fields);
+          var val = field.hide? '': cols.eq(j++).find('input').val();
+          self.params.filtered += val + '|';
+        }
         self.load();
       });
       return filter;
