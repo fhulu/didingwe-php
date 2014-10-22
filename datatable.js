@@ -365,7 +365,7 @@
       if (sink === undefined) sink = this.element;
       if (actions === undefined) actions = this.options;
       var props = this.getProperties(action, actions);
-      if ($.isEmptyObject(props) || ['slide','slideoff'].indexOf(action) < 0  && props.action === undefined) { 
+      if ($.isEmptyObject(props) || ['slide','slideoff','collapse'].indexOf(action) < 0  && props.action === undefined) { 
         return $('');
       }
       var div = $('<span>');
