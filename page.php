@@ -686,4 +686,12 @@ class page
     $errors[$name] = $value;
   }
   
+  static function collapse($field)
+  {
+    if (!is_array($field))  return array('code'=>$field);
+    foreach($field as $key=>$value) break;
+    $field = $field[$key];
+    $field['code'] = $key;
+    return $field;
+  }
 }
