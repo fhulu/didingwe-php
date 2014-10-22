@@ -31,6 +31,8 @@ datatable:
   load:
     - call: datatable::read($key)
   position: top
+  sort_order: asc
+  filter: all
   # table-wide actions
   export:
     name: Export to Excel
