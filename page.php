@@ -404,20 +404,22 @@ class page
         }
       }
       $valid = at($values,'valid');
-      if (is_array($valid)) $valid = last($valid);
       if ($valid == '') {
         $this->validate ($values);
         continue;
       }
-      $matches = array();
-      if (!preg_match_all('/([^,]+),?/', $valid, $matches, PREG_SET_ORDER)) 
-        throw new Exception("Invalid validators $valid");
+      if (!is_array($valid)) $valid = array($valid);
+      foreach($valid as $check) {
+        $matches = array();
+        if (!preg_match_all('/([^,]+),?/', $check, $matches, PREG_SET_ORDER)) 
+          throw new Exception("Invalid validators $check");
 
-      $name = at($values, 'name');
-      foreach($matches as $match) {
-        $valid = $match[1];
-        if ($valid == 'optional' && !$this->validator->check($code, $name)->provided()) continue;
-        $this->validator->check($code, $name)->is($valid);
+        $name = at($values, 'name');
+        foreach($matches as $match) {
+          $check = $match[1];
+          if ($check == 'optional' && !$this->validator->check($code, $name)->provided()) continue;
+          $this->validator->check($code, $name)->is($check);
+        }
       }
     }
     
