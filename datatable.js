@@ -353,8 +353,10 @@
           list_item_type = this.options.types[item.type];
       }
 
-      if (!in_list) list_item_type = {};
-      props.code = key;
+      if (!in_list) 
+        list_item_type = {};
+      else
+        props.code = key;
       return $.extend({}, type_field, option_field, props, list_item_type);
     },
     
@@ -363,7 +365,7 @@
       if (sink === undefined) sink = this.element;
       if (actions === undefined) actions = this.options;
       var props = this.getProperties(action, actions);
-      if ($.isEmptyObject(props)) { 
+      if ($.isEmptyObject(props) || ['slide','slideoff'].indexOf(action) < 0  && props.action === undefined) { 
         return $('');
       }
       var div = $('<span>');
