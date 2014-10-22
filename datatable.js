@@ -222,6 +222,7 @@
       if (!tr.exists()) tr = $('<tr class=titles></tr>').appendTo(head);
       var self = this;
       var fields = this.options.fields;
+      var j = 0;
       for (var i in fields) {
         var code = fields[i];
         if ($.isPlainObject(code) && code.type !== undefined) continue;
@@ -237,7 +238,12 @@
           th.attr('sort', self.params.sort_order);
         else
           th.attr('sort','');
-        if (field.width !== undefined) th.css('width', field.width);
+        if (field.width !== undefined) {
+          th.css('width', field.width);
+          if (j === 0 && self.options.expand) 
+            th.css('width',(parseInt(field.width)+10).toString()+'%');
+        }
+        ++j;
         self.bindSort(th, code);
       };
       this.spanColumns(head.find('.header th'));
