@@ -332,7 +332,7 @@ class page
     foreach($field as $key=>&$value) {
       if (in_array($key, $known_keys, 1)) continue;
       
-      if (!is_numeric($value))
+      if (!is_numeric($value) && !is_bool($value))  //todo: check for scalar
         $this->set_types($parent, $value);        
       
       if (!is_numeric($key))
