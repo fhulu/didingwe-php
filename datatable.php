@@ -33,14 +33,26 @@ class datatable
     return null;
   }
 
+  static function get_field_index($options, $code)
+  {
+    $index = -1;
+    foreach($options['fields'] as $field) {
+      ++$index;
+      $field = page::collapse($field);
+      log::debug_json($index, $field);
+      if ($field['hide']) continue;
+      if ($field['code'] == $code ) break;
+    }
+    return $index;
+  }
+  
   static function sort(&$sql, $fields, $options) 
   {
     $sort_field = at($options, 'sort');
     if (is_null($sort_field))
       return;
-    $index = array_search($sort_field, at($options, 'fields'));  //todo: handle expanded fields
-    if (!in_array('show_key', $options['flags']))
-      ++$index;
+    log::debug("sort_field $sort_field");
+    $index = datatable::get_field_index($options, $sort_field);
     $db_sort_field = at($fields, $index);
     $sort_order = at($options, 'sort_order');
     $sql .= " order by $db_sort_field $sort_order";
@@ -52,14 +64,10 @@ class datatable
       return;
 
     $index = -1;
-    if (!in_array('show_key', $options['flags']))
-      ++$index;
-
     $where = '';
     foreach (explode('|', $filter) as $value) {
       ++$index;
-      if (trim($value) === '')
-        continue;
+      if (trim($value) === '') continue;
       list($field) = explode(' ', $fields[$index]);
       $where .= " and $field like '%$value%' ";
     }
@@ -96,6 +104,20 @@ class datatable
     return array('rows' => $rows, 'total' => $total);
   }
   
+  static function get_display_field($code)
+  {
+    $field = page::collapse($code);
+    if ($field['hide'] || in_array($field['code'], array('attr','actions'))) return false;
+    return $field;
+  }
+  
+  static function get_display_name($field)
+  {
+      $name = at($field,'name');
+      if (!is_null($name)) return $name;
+      return ucwords(preg_replace('/[_\/]/', ' ',at($field,'code')));
+  }
+  
   static function export($options, $key) {
     ini_set('memory_limit', '512M');
     require_once '../PHPExcel/Classes/PHPExcel.php';
@@ -103,10 +125,14 @@ class datatable
     $excel = new PHPExcel();
     $sheet = $excel->setActiveSheetIndex(0);
     $options['page_size'] = 0;
-    $data = datatable::read($options, $key, function($row_data, $pagenum, $index) use ($sheet) {
+    $fields = $options['fields'];
+    $data = datatable::read($options, $key, function($row_data, $pagenum, $index) use ($sheet, $fields) {
       $row = 2 + $pagenum * 1000 + $index;
       $col = 'A';
+      $col_index = 0;
       foreach ($row_data as $cell) {
+        if (!datatable::get_display_field($fields[$col_index++])) continue;
+        
         $sheet->setCellValue("$col$row", $cell);
         $sheet->getColumnDimension($col)->setAutoSize(true);
         $sheet->getRowDimension($row)->setRowHeight(20);
@@ -116,17 +142,12 @@ class datatable
       return true;
     });
     $col = 'A';
-    foreach ($options['fields'] as $code) {
+    foreach ($fields as $code) {
       $ref = $col . "1";
+      if (!($field = datatable::get_display_field($code))) continue;
       $sheet->getStyle($ref)->getFont()->setBold(true);
-     // $code = $field['code'];
-      if ($code === 'actions')
-        $sheet->removeColumn($col);
-      else {
-        $name = at($field,'name');
-        if (is_null($name)) $name = ucwords(preg_replace('/[_\/]/', ' ',$code));
-        $sheet->setCellValue($ref, $name);
-      }
+      $name = datatable::get_display_name($field);
+      $sheet->setCellValue($ref, $name);
       ++$col;
     }
     $heading = $options['name'];
@@ -157,20 +178,19 @@ class datatable
     $pdf->Footer('Council for Scientific and Industrial Research (CSIR)');
     $pdf->Ln(40);
     $options['page_size'] = 0;
-    $widths = $options['widths'];
+    $page_width = 200;
     $flags = $options['flags'];
-    $show_key = in_array('show_key', $flags, true);
+    $fields = $options['fields']; 
     $columns = array(array(),array()); // reserve space for heading and titles
-    $data = datatable::read($options, $key, function($row_data, $pagenum, $index) use (&$columns, $widths, $show_key) {     
+    $data = datatable::read($options, $key, function($row_data, $pagenum, $index) use (&$columns, $page_width, $fields) {     
       $fill_color = $index % 2 === 0? '216,216,216': '255,255,255';
       $col = array();
       $index = 0;
+      $col_index = 0;
       foreach ($row_data as $value) {
-       if ($index++ == 0 && !$show_key ) continue;
-       $pos = each($widths);
-       if ($pos === false) break;
-       $width = max(18,$pos[1]/7);
-       $col[] = array('text' => $value, 'width' =>  $width, 'height' => '5', 'align' => 'L', 'font_name' => 'Arial', 'font_size' => '8', 'font_style' => 'B', 'fillcolor' => "$fill_color", 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linewidth' => '0.4', 'linearea' => 'LTBR');
+        if (!($field = datatable::get_display_field($fields[$col_index++]))) continue;
+        $width = max(5,$page_width*(float)$field['width']/100);
+        $col[] = array('text' => $value, 'width' =>  $width, 'height' => '5', 'align' => 'L', 'font_name' => 'Arial', 'font_size' => '8', 'font_style' => 'B', 'fillcolor' => "$fill_color", 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linewidth' => '0.4', 'linearea' => 'LTBR');
       }
       $columns[] = $col;
     });
@@ -178,13 +198,11 @@ class datatable
     $titles = &$columns[1];
     $index = 0;
     $total_width = 0;
-    foreach ($options['fields'] as $field) {
-      if ($index++ == 0 && !$show_key ) continue;
-      $pos = each($widths);
-      if ($pos === false) break;
-      $width = max(18,$pos[1]/7);
-      $total_width += $width;
-      $titles[] = array('text' => $field, 'width' => $width, 'height' => '5', 'align' => 'L', 'font_name' => 'Arial', 'font_size' => '8', 'font_style' => 'B', 'fillcolor' => '192,192,192', 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linewidth' => '0.4', 'linearea' => 'LTBR');
+    foreach ($fields as $code) {
+      if (!($field = datatable::get_display_field($code))) continue;
+      $width = max(5,$page_width*(float)$field['width']/100);
+      $name = datatable::get_display_name($field);
+        $titles[] = array('text' => $name, 'width' => $width, 'height' => '5', 'align' => 'L', 'font_name' => 'Arial', 'font_size' => '8', 'font_style' => 'B', 'fillcolor' => '192,192,192', 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linewidth' => '0.4', 'linearea' => 'LTBR');
     }
     
     $heading = &$columns[0];
