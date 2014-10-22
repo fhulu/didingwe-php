@@ -233,7 +233,7 @@ plain_text:
 
 # todo: fix back-end to contextualise
 print:
-  desc: "Print above contents"
+  desc: Print above contents
   action:
     validate: none
     call: datatable::pdf($key)
