@@ -308,15 +308,27 @@
     {      
       field = this.getProperties(field, this.options.fields);
       
+      var entity;
       if (!$.valid(field.html)) {
         td.html(value);
-        return;
+        entity = td;
       }
-      var html = field.html.replace('$code', key+'_'+field.code);
-      var entity = $(html)
+      else {
+        var html = field.html.replace('$code', key+'_'+field.code);
+        entity = $(html)
               .css('width','100%')
               .css('height','100%')
-              .value(value).appendTo(td);
+              .value(value)
+              .appendTo(td);
+      }
+
+      var style = field.style;
+      if (style) {
+        for (var key in style) entity.css(key, style[key]);
+      }
+      if (field.action) {
+        this.bindAction(entity, field, td.parents('tr').eq(0));
+      }
       if (field.create !== undefined && field.create !== null) {
         var create_opts = $.extend({key: key}, field);
         entity.customCreate(create_opts);
@@ -378,21 +390,14 @@
       return $.extend({}, type_field, option_field, props, list_item_type);
     },
     
-    createAction: function(action, actions, sink)
+    bindAction: function(obj, props, sink, actions)
     {
       if (sink === undefined) sink = this.element;
-      var props = this.getProperties(action, actions);
-      if ($.isEmptyObject(props))
-        return $('');
-      var div = $('<span>');
-      if (props.name === undefined) props.name = toTitleCase(action);
-      div.html(props.name);
-      div.attr('title', props.desc);
-      div.attr('action', action);
       var self = this;
-      div.click(function() {
-        sink.trigger('action',[div,action,props.action]);
-        sink.trigger(action, [div,props.action]);
+      obj.click(function() {
+        var action = props.code;
+        sink.trigger('action',[obj,action,props.action]);
+        sink.trigger(action, [obj,props.action]);
         if (props.action === undefined) return;
         var key = sink.attr('_key');
         if (key === undefined) key = self.options.key;
@@ -404,8 +409,23 @@
         else if (actions === self.options.footer_actions) 
           options.path += 'footer_actions/';
         options.path += action;
-        listener.trigger('child_action', [div,options]);
+        listener.trigger('child_action', [obj,options]);
       });
+    },
+    
+    createAction: function(action, actions, sink)
+    {
+      if (actions === undefined) actions = this.options;
+      var props = this.getProperties(action, actions);
+      if ($.isEmptyObject(props))
+        return $('');
+      var div = $('<span>');
+      if (props.name === undefined) props.name = toTitleCase(action);
+      div.html(props.name);
+      div.attr('title', props.desc);
+      div.attr('action', action);
+      props.code = action;
+      this.bindAction(div, props, sink, actions);
       return div;
     },
     
