@@ -51,10 +51,10 @@ class datatable
     $sort_field = at($options, 'sort');
     if (is_null($sort_field))
       return;
-    log::debug("sort_field $sort_field");
     $index = datatable::get_field_index($options, $sort_field);
     $db_sort_field = at($fields, $index);
     $sort_order = at($options, 'sort_order');
+    if (is_array($sort_order)) $sort_order = last($sort_order);
     $sql .= " order by $db_sort_field $sort_order";
   }
 
@@ -93,7 +93,7 @@ class datatable
     global $db;
     $sql =  page::replace_sql($options['sql'], $options);
     $fields = datatable::get_sql_fields($sql);
-    $sql = preg_replace('/^\s*select /i', 'select SQL_CALC_FOUND_ROWS ', $sql);
+    $sql = preg_replace('/^\s*(select )/i', '$1 SQL_CALC_FOUND_ROWS ', $sql, 1);
     datatable::filter($sql, $fields, $options);
     datatable::sort($sql, $fields, $options);
     if ($page_size == 0)
@@ -107,7 +107,7 @@ class datatable
   static function get_display_field($code)
   {
     $field = page::collapse($code);
-    if ($field['hide'] || in_array($field['code'], array('attr','actions'))) return false;
+    if ($field['hide'] || in_array($field['code'], array('attr','actions'), true)) return false;
     return $field;
   }
   
@@ -178,19 +178,19 @@ class datatable
     $pdf->Footer('Council for Scientific and Industrial Research (CSIR)');
     $pdf->Ln(40);
     $options['page_size'] = 0;
-    $page_width = 200;
+    $page_width = 190;
     $flags = $options['flags'];
     $fields = $options['fields']; 
     $columns = array(array(),array()); // reserve space for heading and titles
     $data = datatable::read($options, $key, function($row_data, $pagenum, $index) use (&$columns, $page_width, $fields) {     
-      $fill_color = $index % 2 === 0? '216,216,216': '255,255,255';
+      $fill_color = $index % 2 === 0? '225,225,225': '255,255,255';
       $col = array();
       $index = 0;
       $col_index = 0;
       foreach ($row_data as $value) {
         if (!($field = datatable::get_display_field($fields[$col_index++]))) continue;
         $width = max(5,$page_width*(float)$field['width']/100);
-        $col[] = array('text' => $value, 'width' =>  $width, 'height' => '5', 'align' => 'L', 'font_name' => 'Arial', 'font_size' => '8', 'font_style' => 'B', 'fillcolor' => "$fill_color", 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linewidth' => '0.4', 'linearea' => 'LTBR');
+        $col[] = array('text' => $value, 'width' =>  $width, 'height' => '5', 'align' => 'L', 'font_name' => 'Arial', 'font_size' => '7', 'font_style' => '', 'fillcolor' => "$fill_color", 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linewidth' => '0.1', 'linearea' => 'LTBR');
       }
       $columns[] = $col;
     });
@@ -202,7 +202,7 @@ class datatable
       if (!($field = datatable::get_display_field($code))) continue;
       $width = max(5,$page_width*(float)$field['width']/100);
       $name = datatable::get_display_name($field);
-        $titles[] = array('text' => $name, 'width' => $width, 'height' => '5', 'align' => 'L', 'font_name' => 'Arial', 'font_size' => '8', 'font_style' => 'B', 'fillcolor' => '192,192,192', 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linewidth' => '0.4', 'linearea' => 'LTBR');
+        $titles[] = array('text' => $name, 'width' => $width, 'height' => '5', 'align' => 'L', 'font_name' => 'Arial', 'font_size' => '8', 'font_style' => 'B', 'fillcolor' => '128,128,128', 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linewidth' => '0.1', 'linearea' => 'LTBR');
     }
     
     $heading = &$columns[0];
@@ -211,7 +211,7 @@ class datatable
     $now->setTimezone(new DateTimeZone('Europe/London'));
     $now = $now->format('Y-m-d');
     $report_title=$options['report_title'];
-    $heading[] = array('text' =>"$report_title for $now", 'width' =>  $total_width, 'height' => '5', 'align' => 'C', 'font_name' => 'Arial', 'font_size' => '11', 'font_style' => 'B', 'fillcolor' => '255,255,255', 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linearea' => 'LTBR');
+    $heading[] = array('text' =>"$report_title for $now", 'width' =>  $total_width, 'height' => '5', 'align' => 'C', 'font_name' => 'Arial', 'font_size' => '11', 'font_style' => 'B', 'fillcolor' => '255,255,255', 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linearea' => '');
     $pdf->WriteTable($columns,80,10);
     $pdf->Output();
   }
