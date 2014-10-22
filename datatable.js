@@ -571,6 +571,8 @@
         self.params.page_size = self.options.page_size;
         var j = 0;
         for (var i in fields) {
+          var code = fields[i];
+          if (code === 'actions' || code === 'attr') continue;
           var field = self.getProperties(fields[i], fields);
           var val = field.hide? '': cols.eq(j++).find('input').val();
           self.params.filtered += val + '|';
