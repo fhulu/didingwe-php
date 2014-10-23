@@ -327,8 +327,8 @@
       }
 
       var style = field.style;
-      if (style && td !== entity) {
-        for (var attr in style) entity.css(key, style[attr]);
+      if (style) {
+        for (var attr in style) entity.css(attr, style[attr]);
       }
       if (field.action) {
         this.bindAction(entity, field, td.parents('tr').eq(0));
