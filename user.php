@@ -9,7 +9,6 @@ require_once('validator.php');
 require_once('select.php');
 require_once('curl.php');
 require_once('errors.php');
-require_once('page.php');
 ////require_once('telephone.php');
 
 class user_exception extends Exception {};
