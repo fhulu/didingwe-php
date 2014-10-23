@@ -288,7 +288,7 @@
             code = fields[k++];
             field = self.getProperties(code, fields);
           }
-          if (field.code === 'key') {
+          if (field.code === 'key' || field.key) {
             key = cell;
             tr.attr('_key', key);
           }
