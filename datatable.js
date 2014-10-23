@@ -312,8 +312,6 @@
     
     showCell: function(field, td, value, key)
     {      
-      field = this.getProperties(field, this.options.fields);
-      
       var entity;
       if (!$.valid(field.html)) {
         td.html(value);
@@ -330,7 +328,7 @@
 
       var style = field.style;
       if (style) {
-        for (var key in style) entity.css(key, style[key]);
+        for (var attr in style) entity.css(key, style[attr]);
       }
       if (field.action) {
         this.bindAction(entity, field, td.parents('tr').eq(0));
@@ -353,12 +351,12 @@
         else {
           for (key in field) {
             if (!field.hasOwnProperty(key)) continue;
-            props = field[key];
             props.code = key;
             if (key === 'type') {
               props.hide = true;
               return props;
             }
+            $.extend(props, field[key]);
             break;
           };
         }
@@ -373,27 +371,32 @@
       var type_field = this.options.types[key] || {};
       var list_item_type = {};
       var in_list = false;
-      
-      for( var code in fields) {
-        if (!$.hasOwnProperty(fields, code)) continue;
-        var item = fields[code];
+      for( var i in fields) {
+        var item = fields[i];
         if (typeof item === 'string' && key === item) {
           in_list = true;
           break;
         }
         if (!$.isPlainObject(item)) continue;
-        if (item.type !== undefined) 
+        if (item.type !== undefined) {
           list_item_type = this.options.types[item.type];
-        if (code !== key) continue;
-        in_list = true;
-        break;
+          continue;
+        }
+        for (var code in item) {
+          if (!item.hasOwnProperty(code)) continue;
+          if (code === key) {
+            in_list = true;
+            break;
+          }
+        }
+        if (in_list) break;
       }
 
       if (!in_list) 
         list_item_type = {};
       else
         props.code = key;
-      return $.extend({}, type_field, option_field, props, list_item_type);
+      return $.extend({}, type_field, option_field, props,list_item_type);
     },
     
     bindAction: function(obj, props, sink, actions)
