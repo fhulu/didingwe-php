@@ -8,6 +8,10 @@
     require_once('../common/page.php');
     return;
   }
+
+  require_once '../common/session.php';
+  global  $session;
+  $tag = is_null($session)?time(): $session->id;
 ?>
 
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
@@ -16,13 +20,13 @@
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <link href="/jquery/smoothness/ui.css" media="screen" rel="stylesheet" type="text/css" />	
-<link href="/main_menu.css" media="screen" rel="stylesheet" type="text/css" />	
-<link href="/default.style.css" media="screen" rel="stylesheet" type="text/css" />	
+<link href="/main_menu.css?<?=$tag?>" media="screen" rel="stylesheet" type="text/css" />	
+<link href="/default.style.css?<?=$tag?>" media="screen" rel="stylesheet" type="text/css" />	
 
 <script type='text/javascript' src='/jquery/min.js'></script>
 <script type='text/javascript' src='/jquery/ui-min.js'></script>
-<script type="text/javascript" src='/common/mukoni.jquery.js'></script> 
-<script type='text/javascript' src="/common/page.js"></script>
+<script type="text/javascript" src='/common/mukoni.jquery.js?<?=$tag?>'></script> 
+<script type='text/javascript' src="/common/page.js?<?=$tag?>"></script>
 
 <script>
   var request_method = '<?=config::$request_method;?>';
