@@ -327,7 +327,7 @@
       }
 
       var style = field.style;
-      if (style) {
+      if (style && td !== entity) {
         for (var attr in style) entity.css(key, style[attr]);
       }
       if (field.action) {
