@@ -28,11 +28,13 @@
       url: '/?a=page/read&page=mytable
       rows: null*/
       name: 'Untitled',
-      flags: []
+      flags: [],
     },
     
     _create: function()
     {
+      this.expandFields(this.options.fields);
+      this.expandFields(this.options.row_actions);
       this.params = { 
         path: this.options.path, 
         key: this.options.key, 
@@ -61,12 +63,16 @@
     
     load: function()
     {
+      var start = new Date().getTime();
       var self = this;
       self.head().find('.paging [action]').attr('disabled','');
       var data = $.extend({action: 'data'}, self.params);
       data.path = data.path +'/load';
       $.json('/', {data: data}, function(data) {
+        var end = new Date().getTime();
+        console.log("Load: ", end - start);
         self.populate(data);
+        console.log("Populate: ", new Date().getTime() - end);
       });
     },
     
@@ -170,7 +176,6 @@
       .on('goto_last', function(e, invoker) {
         var size = parseInt(head.find('#page_size').val());
         var total = parseInt(head.find('#page_total').html());
-        console.log(size,total,Math.floor(total/size));
         self.pageTo(invoker, Math.floor(total/size));
       })
     },
@@ -225,14 +230,11 @@
       var fields = this.options.fields;
       var j = 0;
       for (var i in fields) {
-        var code = fields[i];
-        if ($.isPlainObject(code) && code.type !== undefined) continue;
-        if (code === 'attr') continue;
-        var field = self.getProperties(code, fields);
+        var field = fields[i];
         if (field.hide) continue;
-        code = field.code || code;
+        var code = field.code;
         var th = $('<th></th>').appendTo(tr);
-        if (code === 'actions') continue;
+        if (code === 'actions' || code == 'attr') continue;
         if ($.isArray(field.name)) field.name = field.name[field.name.length-1];
         th.html(field.name || toTitleCase(code));
         if (code === self.params.sort) 
@@ -263,16 +265,19 @@
       var body = self.body().empty();
       var expandable = this.options.expand.action !== undefined;
       var fields = this.options.fields;
+      var tr;
       for(var i in data.rows) {
         var row = data.rows[i];
-        var tr = $('<tr></tr>').appendTo(body);
+        if (tr) tr.appendTo(body);
+        tr = $('<tr></tr>');//.appendTo(body);
         var key;
         if (i % 2 === 0) tr.addClass('alt');
         var expanded = !expandable;
         var k = 0;
         for (var j in row) {
           var cell = row[j];
-          var code = fields[k++];
+          var field = fields[k++];
+          var code = field.code;
           if (code === 'attr') {
             cell = cell.split(',');
             for (var l in cell) {
@@ -284,10 +289,9 @@
             };
             continue;
           }
-          var field = self.getProperties(code, fields);
           if (field.code === 'type') {
-            code = fields[k++];
-            field = self.getProperties(code, fields);
+            field = fields[k++];
+            code = field.code;
           }
           if (field.code === 'key' || field.key) {
             key = cell;
@@ -308,6 +312,7 @@
           self.createAction('collapse', undefined, tr).prependTo(td).hide();
         }
       }
+      tr.appendTo(body);
       this.spanColumns(this.head().find('.header>th'));      
     },
     
@@ -400,6 +405,14 @@
       return $.extend({}, type_field, option_field, props,list_item_type);
     },
     
+    expandFields: function(fields)
+    {
+      if (!fields) return;
+      for (var i in fields) {
+        fields[i] = this.getProperties(fields[i], fields);
+      }
+    },
+    
     bindAction: function(obj, props, sink, actions)
     {
       if (sink === undefined) sink = this.element;
@@ -423,11 +436,22 @@
       });
     },
     
-    createAction: function(action, actions, sink)
+    findField: function(name, fields)
     {
-      if (actions === undefined) actions = this.options;
-      var props = this.getProperties(action, actions);
-      if ($.isEmptyObject(props))
+      for (var i in fields) {
+        if (name === fields[i].code) return fields[i];
+      }
+    },
+    
+    createAction: function(action, actions, sink)
+    { 
+      var props;
+      if (actions) {
+        props = this.findField(action, actions);
+        if (!props) props = this.options[action];
+      }
+      else props = this.options[action];
+      if (!props || $.isEmptyObject(props))
         return $('');
       var div = $('<span>');
       if (props.name === undefined) props.name = toTitleCase(action);
@@ -446,14 +470,15 @@
       td.addClass('actions');
       var parent = td;
       var all_actions = this.options.row_actions;
-      $.each(row_actions, function(i, action) {  
-        if (action === 'expand') return;
+      for (var i in row_actions) {
+        var action = row_actions[i];
+        if (action === 'expand') continue;
         self.createAction(action, all_actions, tr).appendTo(parent);
         if (action === 'slide') {
           parent = $('<span class="slide">').toggle(false).appendTo(parent);
           self.createAction('slideoff', all_actions, tr).appendTo(parent);
         }
-      });
+      };
       this.bindRowActions(tr);
     },
     
@@ -554,6 +579,7 @@
         input = $(this).children('*').eq(0);
         input.css('width', widths[i]+'px');
       });
+      editor.find('input:last-child').css('width','99%');
     },
     
     createEditor: function(template, fields, type, cell)
@@ -568,11 +594,10 @@
       var td;
       template.children().each(function(i) {
         var field = fields[i];
-        if (field === 'attr') return;
-        
-        //if (editables !== undefined && editables.indexOf(field.code) < 0) return;
-        if (field === 'actions') {
-          td.attr('colspan',2);
+        if (field.code === 'attr' || field.code === 'actions') {
+          var colspan = td.attr('colspan');
+          if (!colspan) colspan = 1;
+          td.attr('colspan', parseInt(colspan)+1);
           return;
         }
         td = $(cell);
@@ -601,9 +626,8 @@
         self.params.page_size = self.options.page_size;
         var j = 0;
         for (var i in fields) {
-          var code = fields[i];
-          if (code === 'actions' || code === 'attr') continue;
-          var field = self.getProperties(fields[i], fields);
+          var field = fields[i];
+          if (field.code === 'actions' || field.code === 'attr') continue;
           var val = field.hide? '': cols.eq(j++).find('input').val();
           self.params.filtered += val + '|';
         }
