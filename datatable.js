@@ -169,8 +169,9 @@
       })
       .on('goto_last', function(e, invoker) {
         var size = parseInt(head.find('#page_size').val());
-        var total = parseInt(head.find('#total').val());
-        self.pageTo(invoker, total/size);
+        var total = parseInt(head.find('#page_total').html());
+        console.log(size,total,Math.floor(total/size));
+        self.pageTo(invoker, Math.floor(total/size));
       })
     },
     
