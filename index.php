@@ -26,8 +26,10 @@
 <script type='text/javascript' src='/jquery/min.js'></script>
 <script type='text/javascript' src='/jquery/ui-min.js'></script>
 <script type="text/javascript" src='/common/mukoni.jquery.js?<?=$tag?>'></script> 
+<script type='text/javascript' src="/common/map.js?<?=$tag?>"></script>
 <script type='text/javascript' src="/common/page.js?<?=$tag?>"></script>
-
+<script src="http://maps.googleapis.com/maps/api/js?key=AIzaSyDIme6JirOo3AHLvsY8zlEE31FUWMF4FjM&sensor=true"></script>
+<script src="http://maps.google.com/maps/api/js?key=AIzaSyBbcsqZAVHn3yKeUVAOTBpocRPhFBihfZ4&sensor=true"></script> 
 <script>
   var request_method = '<?=config::$request_method;?>';
 </script>
