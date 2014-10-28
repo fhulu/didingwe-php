@@ -460,17 +460,20 @@ $.fn.setChildren = function(result)
   $.each(result, function(key, val) {
     var filter = "#"+key+",[name='"+key+"']";
     self.find(filter).each(function() {
-      if ($(this).is("a")) {
-        var proto = $(this).attr('proto')==undefined? '': $(this).attr('proto');
+      var el = $(this);
+      if (el.is("a")) {
+        var proto = el.attr('proto')==undefined? '': el.attr('proto');
         if (val == null)
-          $(this).attr('href', '');
+          el.attr('href', '');
        else
-          $(this).attr('href', proto+val);
-      }
-      else if ($(this).attr('value') === undefined)
-        $(this).html(val);
+          el.attr('href', proto+val);
+      }      
+      else if (el.attr('value') !== undefined)
+        el.val(val);
+      else if (el.attr('customCreate') !== undefined) 
+        el.trigger('customValue', [val]);
       else
-        $(this).val(val);
+        el.html(val);
     });
   });
   return this;
@@ -555,7 +558,8 @@ $.fn.customCreate = function(options)
 {
   var create = options.create;
   if (create === undefined) return;
-  this.creation = this[create](options).data(create);
+  this.attr('customCreate',true);
+  this[create](options);
 }
 
 
