@@ -122,7 +122,7 @@ form:
 google_map:
   html: <div id='$code'></div>
   create: mapper
-  script: common/map.js
+  script: /common/map.js
   zoom: 5
   pin: blue_map_marker
 
