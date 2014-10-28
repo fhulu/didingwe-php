@@ -83,7 +83,7 @@
         return;
       }
       this.showData(data);
-      this.showActions();
+      this.showFooterActions();
       if (this.options.page_size !== undefined) this.showPaging(parseInt(data.total));
       this.adjustActionsHeight();
     },
@@ -231,10 +231,10 @@
       var j = 0;
       for (var i in fields) {
         var field = fields[i];
-        if (field.hide) continue;
+        if (field.hide || field.code === 'attr') continue;
         var code = field.code;
         var th = $('<th></th>').appendTo(tr);
-        if (code === 'actions' || code == 'attr') continue;
+        if (code === 'actions') continue;
         if ($.isArray(field.name)) field.name = field.name[field.name.length-1];
         th.html(field.name || toTitleCase(code));
         if (code === self.params.sort) 
@@ -277,8 +277,7 @@
         for (var j in row) {
           var cell = row[j];
           var field = fields[k++];
-          var code = field.code;
-          if (code === 'attr') {
+          if (field.code === 'attr') {
             cell = cell.split(',');
             for (var l in cell) {
               var attr = cell[l].split(':');
@@ -289,10 +288,7 @@
             };
             continue;
           }
-          if (field.code === 'type') {
-            field = fields[k++];
-            code = field.code;
-          }
+          if (field.type && !field.code) field = fields[k++];
           if (field.code === 'key' || field.key) {
             key = cell;
             tr.attr('_key', key);
@@ -300,7 +296,7 @@
           if (field.hide) continue;
           
           var td = $('<td></td>').appendTo(tr);
-          if (code === 'actions') {
+          if (field.code === 'actions') {
             self.setRowActions(tr, td, cell);
             continue;
           }
@@ -312,7 +308,7 @@
           self.createAction('collapse', undefined, tr).prependTo(td).hide();
         }
       }
-      tr.appendTo(body);
+      if (tr) tr.appendTo(body);
       this.spanColumns(this.head().find('.header>th'));      
     },
     
@@ -345,75 +341,48 @@
       }
     },
     
-    getProperties: function(field, fields)
-    {
-      var props = {};
-      var key = field;
-      if ($.isPlainObject(field)) {
-        key = field.code;
-        if (key !== undefined) {
-          props = field;
-        }
-        else {
-          for (key in field) {
-            if (!field.hasOwnProperty(key)) continue;
-            props.code = key;
-            if (key === 'type') {
-              props.hide = true;
-              return props;
-            }
-            $.extend(props, field[key]);
-            break;
-          };
-        }
-      }
-
-      if (fields === undefined) {
-        props = this.options[key];
-        props.code = key;
-        return props;
-      }
-      var option_field = this.options[key] || {}
-      var type_field = this.options.types[key] || {};
-      var list_item_type = {};
-      var in_list = false;
-      for( var i in fields) {
-        var item = fields[i];
-        if (typeof item === 'string' && key === item) {
-          in_list = true;
-          break;
-        }
-        if (!$.isPlainObject(item)) continue;
-        if (item.type !== undefined) {
-          list_item_type = this.options.types[item.type];
-          continue;
-        }
-        for (var code in item) {
-          if (!item.hasOwnProperty(code)) continue;
-          if (code === key) {
-            in_list = true;
-            break;
-          }
-        }
-        if (in_list) break;
-      }
-
-      if (!in_list) 
-        list_item_type = {};
-      else
-        props.code = key;
-      return $.extend({}, type_field, option_field, props,list_item_type);
-    },
-    
     expandFields: function(fields)
     {
       if (!fields) return;
+      var default_type;
+      var types = this.options.types;
       for (var i in fields) {
-        fields[i] = this.getProperties(fields[i], fields);
+        var item = fields[i];
+        var id;
+        if ($.isPlainObject(item)) {
+          if (item.type !== undefined) {
+            default_type = types[item.type];
+            item.hide = true;
+            continue;
+          }
+          if (item.code === undefined) {
+            for (var key in item) {
+              if (!item.hasOwnProperty(key)) continue;
+              id = key;
+              break;
+            };
+            item = item[id];
+            if (!item.type && default_type)
+              item = merge(default_type, item);
+            item = merge(types[id], item);
+          }
+        }
+        else if (typeof item === 'string') {
+          id = item;
+          if (types[item] !== undefined) 
+            item = merge(types[item], default_type);
+          else if (default_type !== undefined) 
+            item = $.copy(default_type);
+          else
+            item = {};
+        }
+        
+        item.code = id;
+        fields[i] = item;
       }
     },
     
-    bindAction: function(obj, props, sink, actions)
+    bindAction: function(obj, props, sink, path)
     {
       if (sink === undefined) sink = this.element;
       var self = this;
@@ -427,10 +396,7 @@
         var options = $.extend({},self.params,{code: action, action: props.action, key: key });
         var listener = self.element.closest('.page').eq(0);
         options.path += '/';
-        if (actions === self.options.row_actions) 
-          options.path += 'row_actions/';
-        else if (actions === self.options.footer_actions) 
-          options.path += 'footer_actions/';
+        if (path !== undefined) options.path += path + '/';
         options.path += action;
         listener.trigger('child_action', [obj,options]);
       });
@@ -443,14 +409,19 @@
       }
     },
     
-    createAction: function(action, actions, sink)
+    createAction: function(action, actions, sink, path)
     { 
       var props;
       if (actions) {
         props = this.findField(action, actions);
         if (!props) props = this.options[action];
       }
-      else props = this.options[action];
+      else if ($.isPlainObject(action)) {
+        props = action;
+        action = props.code;
+      }
+      else
+        props = this.options[action];
       if (!props || $.isEmptyObject(props))
         return $('');
       var div = $('<span>');
@@ -459,7 +430,7 @@
       div.attr('title', props.desc);
       div.attr('action', action);
       props.code = action;
-      this.bindAction(div, props, sink, actions);
+      this.bindAction(div, props, sink, path);
       return div;
     },
     
@@ -473,7 +444,7 @@
       for (var i in row_actions) {
         var action = row_actions[i];
         if (action === 'expand') continue;
-        self.createAction(action, all_actions, tr).appendTo(parent);
+        self.createAction(action, all_actions, tr, 'row_actions').appendTo(parent);
         if (action === 'slide') {
           parent = $('<span class="slide">').toggle(false).appendTo(parent);
           self.createAction('slideoff', all_actions, tr).appendTo(parent);
@@ -644,17 +615,18 @@
         this.adjustWidths(filter);
     },
     
-    showActions: function()
+    showFooterActions: function()
     {
       var actions = this.options.footer_actions;
       if (actions === undefined) return;
       var tr = $('<tr></tr>').addClass('actions').appendTo(this.body());
       var td = $('<td>').appendTo(tr);
-      var self = this;
-      $.each(actions, function(i, action) {
-        if ($.isPlainObject(action) && action.type !== undefined) return;
-        self.createAction(action, actions).appendTo(td);
-      });
+      this.expandFields(actions);
+      for (var i in actions) {
+        var action = actions[i];
+        if (!action.hide)
+          this.createAction(action, undefined, tr, 'footer_actions').appendTo(td);
+      }
       this.spanColumns(td);
     }
     
