@@ -219,7 +219,7 @@ paragraph:
   html: <p id="$code">$name</p>
 
 password:
-  html: <input type="password" id="$code" title="$desc"></input>
+  html: <input type="password" id="$code"></input>
   valid: password
 
 password_input:
