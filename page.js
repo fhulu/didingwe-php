@@ -65,6 +65,7 @@ $.fn.page = function(options, callback)
         if (!loaded) callback();
         loaded = true;
         --page.loading;
+        if (!page.loading) page.parent.trigger('loaded');
       }
       var head = document.getElementsByTagName('head')[0];
       head.appendChild(element);
