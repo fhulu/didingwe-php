@@ -87,6 +87,10 @@ popup:
   action:
     dialog:  
     
+query:
+  type: button
+  action:
+    call: $class::$invoker($key)
     
 submit:
   type: button
