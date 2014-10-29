@@ -125,6 +125,13 @@ google_map:
   script: /common/map.js
   zoom: 5
   pin: blue_map_marker
+  icon_path: /
+  colors: 
+   - blue
+   - green
+   - yellow
+   - orange
+   - pink
 
 hidden:  
   html: <input id='$code' type=hidden></input>
