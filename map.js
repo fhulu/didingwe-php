@@ -30,7 +30,6 @@
     addPoints: function(data)
     {
       var colors = this.options.colors;
-      console.log(colors)
       var hint = this.hint;
       var self = this;
       var map = this.map;
