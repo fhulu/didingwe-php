@@ -255,8 +255,8 @@ class page
 
       $user_roles = array('public');
       if (!is_null($session)) {
-        $user_roles = $session->roles;
-        if (in_array('super', $user_roles))
+        if (!is_null($session->roles)) $user_roles =  $session->roles;
+        if (in_array('super', $user_roles, true))
           $user_roles = array('user','reg', 'viewer','admin','clerk','manager');
       }
       log::debug("ROLES ".json_encode($user_roles));
