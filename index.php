@@ -20,16 +20,12 @@
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <link href="/jquery/smoothness/ui.css" media="screen" rel="stylesheet" type="text/css" />	
-<link href="/main_menu.css?<?=$tag?>" media="screen" rel="stylesheet" type="text/css" />	
 <link href="/default.style.css?<?=$tag?>" media="screen" rel="stylesheet" type="text/css" />	
 
 <script type='text/javascript' src='/jquery/min.js'></script>
 <script type='text/javascript' src='/jquery/ui-min.js'></script>
 <script type="text/javascript" src='/common/mukoni.jquery.js?<?=$tag?>'></script> 
-<script type='text/javascript' src="/common/map.js?<?=$tag?>"></script>
 <script type='text/javascript' src="/common/page.js?<?=$tag?>"></script>
-<script src="http://maps.googleapis.com/maps/api/js?key=AIzaSyDIme6JirOo3AHLvsY8zlEE31FUWMF4FjM&sensor=true"></script>
-<script src="http://maps.google.com/maps/api/js?key=AIzaSyBbcsqZAVHn3yKeUVAOTBpocRPhFBihfZ4&sensor=true"></script> 
 <script>
   var request_method = '<?=config::$request_method;?>';
 </script>
@@ -38,9 +34,9 @@
   
   function pre_load_custom($page)
   {
-    log::debug("loading page $page");
-    if (file_exists("$page.php")) {
-      require_once "$page.php";
+    log::debug("loading page pre_$page");
+    if (file_exists("pre_$page.php")) {
+      require_once "pre_$page.php";
     } 
     if (file_exists("$page.css")) { 
       echo "<link type='text/css' rel='stylesheet' href='$page.css'></link>";
@@ -59,7 +55,7 @@
 
   if ($content == '') $content = 'home';
   if ($page == '') $page = 'index';
-  if (!is_null($page) && $page !== 'index') pre_load_custom($page);
+  if (!is_null($page))  pre_load_custom($page);
   if ($content != $page && !is_null($content)) 
     pre_load_custom($content);
   $params = array_merge($_GET, array('path'=>$page, 'content'=>$content));
