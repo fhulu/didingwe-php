@@ -56,12 +56,10 @@ datatable:
   goto_last:
     name: Last
     desc: Go to last page
-  print:
-      desc: "Print above contents"
-      action:
-        validate: none
-        call: datatable::pdf($key)
-        target: _blank
+    
+  # row actions
+  row_actions:
+    - type: query
   collapse:
     name: "-"
     desc: Hide details
@@ -75,6 +73,13 @@ datatable:
     name: ">"
     desc: Hide options
   slideSpeed: 100
+  #footer actions
+  print:
+      desc: "Print above contents"
+      action:
+        validate: none
+        call: datatable::pdf($key)
+        target: _blank
 
 date:
   type: input
