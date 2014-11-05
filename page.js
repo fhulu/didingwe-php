@@ -422,7 +422,7 @@ $.fn.page = function(options, callback)
     accept: function(event, obj, field)
     {
       var action = field.action;
-      if (action.dialog) {
+      if (action.dialog && action.call === undefined) {
         page.showDialog(action.dialog, {key: field.key});
         return;
       }
