@@ -116,7 +116,7 @@ class page
     
     $this->object = array_shift($path);
     $this->fields = $this->load_yaml("$this->object.yml", true);
-    if (sizeof($path) == 0) {
+    if (sizeof($path) == 0 || array_key_exists($this->object, $this->fields)) {
       array_unshift($path, $this->object);
     }
     $this->page = array_shift($path);
@@ -141,7 +141,7 @@ class page
     if (in_array('field', $expand))
       $this->expand_field($field);
     
-    log::debug_json("PATH", $path);
+    log::debug_json("LOAD FIELD PATH", $path);
     foreach ($path as $step) {
       $this->field = $step;
       $step_field = at($field, $step);
@@ -555,6 +555,26 @@ class page
     throw new user_exception("Unauthorized access to PATH $path FIELD $code");
   }
   
+  
+  function audit($action, $result)
+  {
+    $fields = $this->fields[$this->page];
+    $name = at($action, 'name');
+    if (is_null($name)) $name = ucwords (str_replace ('_', '',at($action, 'code')));
+    $result = null_merge($fields, $result, false);
+    $detail = at($action, 'audit');
+    if ($detail)
+      $detail = addslashes(replace_vars($detail, $result));
+    $user = $this->user;
+    if (!$user) {
+      global $session;
+      $user = $session->user;
+    }
+    global $db;
+    $db->insert("insert into audit_trail(user_id, action, detail)
+      values($user->id, '$name', '$detail')");
+  }
+  
   function action()
   {
     $invoker = $this->load_field(null, array('field'));
@@ -565,8 +585,10 @@ class page
     $validate = at($action, 'validate');
     if (!is_null($validate) && $validate != 'none' && !$this->validate($fields))
       return null;
-    
-    return $this->reply($action);
+    $result = $this->reply($action);
+    if (array_key_exists('audit', $invoker))
+      $this->audit($invoker, $result);
+    return $result;
   }
   
   static function replace_sql($sql, $options) 
