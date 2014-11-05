@@ -422,42 +422,40 @@ $.fn.page = function(options, callback)
     accept: function(event, obj, field)
     {
       var action = field.action;
-      if (action.dialog && action.call === undefined) {
-        page.showDialog(action.dialog, {key: field.key});
-        return;
-      }
-      if (action.redirect || action.url) {
-        document.location = (action.redirect || action.url).replace('$key', field.key);
-        return;
-      }
-      
-      if (action.target !== undefined) {
-        var url = '/?action=action';
-        for (var key in field) {
-          if (key === 'action') continue;
-          url += '&'+key+'='+encodeURIComponent(field[key]);
-        }        
-        document.location = url;
-        return;
-      }
-      
       var data = {action: 'action', key: field.key, path: field.path};
-      if (action.post) {
-        var page_id = field.page_id || obj.parents(".page").eq(0).attr('id');
-        var selector = action.post.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+page_id+"$2");
-        obj.jsonCheck(event, selector, '/', { data: data }, function(result) {
-          if (result === null) result = undefined;
-          obj.trigger('processed', [result]);
-          if (result) page.respond(result._responses, obj);
-        });
-        return;
+      for (var method in action) {
+        var value = action[method];
+        switch(method) {
+          case 'dialog': page.showDialog(value, {key: field.key}); return;
+          case 'redirect':
+          case 'url':
+            document.location = (action.redirect || action.url).replace('$key', field.key); 
+            return;
+          case 'target':
+            var url = '/?action=action';
+            for (var key in field) {
+              if (key === 'action') continue;
+              url += '&'+key+'='+encodeURIComponent(field[key]);
+            }        
+            document.location = url;
+            return;
+          case 'call':
+            if (action.post !== undefined) {
+              var page_id = field.page_id || obj.parents(".page").eq(0).attr('id');
+              var selector = action.post.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+page_id+"$2");
+              obj.jsonCheck(event, selector, '/', { data: data }, function(result) {
+                if (result === null) result = undefined;
+                obj.trigger('processed', [result]);
+                if (result) page.respond(result._responses, obj);
+              });
+              return;
+            }
+            $.json('/', {data: data}, function(result) {
+              obj.trigger('processed', [result]);
+              if (result !== undefined) page.respond(result._responses, obj);
+            });
+        }
       }
-      
-      if (action.call === undefined) return;
-      $.json('/', {data: data}, function(result) {
-        obj.trigger('processed', [result]);
-        if (result !== undefined) page.respond(result._responses, obj);
-      });
     },
     
     respond: function(responses, invoker)
