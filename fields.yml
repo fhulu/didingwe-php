@@ -72,6 +72,19 @@ last_name:
 latitude:
   valid: /^\d+\.\d+$/
 
+login:
+  access: public
+  audit: $email
+  action:
+    dialog: /user/login
+
+
+logout:
+  access: reg 
+  audit: 
+  action:
+    call: user::logout()
+
 longitude:
   valid: /^\d+\.\d+$/
   
