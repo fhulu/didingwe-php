@@ -319,8 +319,11 @@ class page
   {
     if (is_null($field)) return false;
     if (!is_array($field)) {
-      if (array_key_exists($field, $this->types)) return true;
       if (!array_key_exists($field, $parent)) return false;
+      if (array_key_exists($field, $this->types)) {
+        $this->types[$field] = array_merge($this->types[$field], at($parent, $field)); 
+        return true;
+      }
 
       $this->types[$field] = $value = $parent[$field];
       if (is_array($value)) $this->set_types($parent, $value);
@@ -558,19 +561,28 @@ class page
   
   function audit($action, $result)
   {
+    global $db;
     $fields = $this->fields[$this->page];
     $name = at($action, 'name');
     if (is_null($name)) $name = ucwords (str_replace ('_', '',at($action, 'code')));
     $result = null_merge($fields, $result, false);
     $detail = at($action, 'audit');
-    if ($detail)
+    if ($detail) {
       $detail = addslashes(replace_vars($detail, $result));
+      $decodes = array();
+      preg_match_all('/decode\(([^,]+)\s*,\s*([\w.]+)\.([^.]+)\s*,\s*(\w+)\)/', $detail, $decodes, PREG_SET_ORDER);
+      foreach($decodes as $decoded) {
+        list($match,$key,$table,$key_field, $display_field) = $decoded;
+        $key = addslashes($key);
+        $display = $db->read_one_value("select $display_field from $table where $key_field = '$key'");
+        $detail = str_replace($match, $display, $detail);
+      }
+    }
     $user = $this->user;
     if (!$user) {
       global $session;
       $user = $session->user;
     }
-    global $db;
     $db->insert("insert into audit_trail(user_id, action, detail)
       values($user->id, '$name', '$detail')");
   }
