@@ -532,8 +532,6 @@ class user
       $function = 'update_own_details';
       $id = $user->id;
     }
-
-    user::audit($function, $id, $values);
     
     $email= $request['email_address'];
     $program_id = config::$program_id;
@@ -1101,5 +1099,9 @@ class user
     }
   }
  
- 
+  static function logout()
+  {
+    session::logout();
+    page::redirect('/home');
+  }
 }
