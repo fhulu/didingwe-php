@@ -728,4 +728,11 @@ class page
     $field['code'] = $key;
     return $field;
   }
+  
+  static function has_errors()
+  {
+    global $page_output;
+    $result = &$page_output->values;
+    return !is_null(at($result, $errors));
+  }
 }
