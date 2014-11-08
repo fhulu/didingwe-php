@@ -48,6 +48,7 @@
         if (this.hasFlag('show_header')) this.showHeader();
         if (this.hasFlag('show_titles')) this.showTitles();
       }
+      this.showFooterActions();
       this.load();
     },
    
@@ -83,7 +84,6 @@
         return;
       }
       this.showData(data);
-      this.showFooterActions();
       if (this.options.page_size !== undefined) this.showPaging(parseInt(data.total));
       this.adjustActionsHeight();
     },
@@ -176,7 +176,7 @@
       .on('goto_last', function(e, invoker) {
         var size = parseInt(head.find('#page_size').val());
         var total = parseInt(head.find('#page_total').html());
-        self.pageTo(invoker, Math.floor(total/size));
+        self.pageTo(invoker, Math.floor(total/size)+1);
       })
     },
     
@@ -619,7 +619,8 @@
     {
       var actions = this.options.footer_actions;
       if (actions === undefined) return;
-      var tr = $('<tr></tr>').addClass('actions').appendTo(this.body());
+      var footer = $('<tfoot></tfoot>').appendTo(this.element);
+      var tr = $('<tr></tr>').addClass('actions').appendTo(footer);
       var td = $('<td>').appendTo(tr);
       this.expandFields(actions);
       for (var i in actions) {
