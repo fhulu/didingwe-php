@@ -114,10 +114,10 @@ class page
     else if (!is_array($path))
       $path = explode('/', $path);
     
-    $this->object = array_shift($path);
+    $this->object = $path[0];
     $this->fields = $this->load_yaml("$this->object.yml", true);
-    if (sizeof($path) == 0 || array_key_exists($this->object, $this->fields)) {
-      array_unshift($path, $this->object);
+    if (sizeof($path) > 1) {
+      array_shift($path);
     }
     $this->page = array_shift($path);
     $field_exists  = !null_at($this->fields,$this->page);
@@ -558,6 +558,31 @@ class page
     throw new user_exception("Unauthorized access to PATH $path FIELD $code");
   }
   
+  static function decode_field($message)
+  {
+    $decodes = array();
+    preg_match_all('/decode\(([^,]+)\s*,\s*([\w.]+)\.([^.]+)\s*,\s*(\w+)\)/', $message, $decodes, PREG_SET_ORDER);
+    foreach($decodes as $decoded) {
+      list($match,$key,$table,$key_field, $display_field) = $decoded;
+      $key = addslashes($key);
+      $display = $db->read_one_value("select $display_field from $table where $key_field = '$key'");
+      $message = str_replace($match, $display, $detail);
+    }
+    return $message;
+  }
+  
+  
+  static function decode_sql($message)
+  {
+    $matches = array();
+    preg_match_all('/sql\s*\(((?>[^()]|(?R))*)\)/', $message, $matches, PREG_SET_ORDER);
+    global $db;
+    foreach($matches as $match) {
+      $data = $db->read_one($match[1], MYSQLI_NUM);
+      $message = str_replace($match[0], implode(' ', $data), $message);
+    }
+    return $message;
+  }
   
   function audit($action, $result)
   {
@@ -568,15 +593,9 @@ class page
     $result = null_merge($fields, $result, false);
     $detail = at($action, 'audit');
     if ($detail) {
-      $detail = addslashes(replace_vars($detail, $result));
-      $decodes = array();
-      preg_match_all('/decode\(([^,]+)\s*,\s*([\w.]+)\.([^.]+)\s*,\s*(\w+)\)/', $detail, $decodes, PREG_SET_ORDER);
-      foreach($decodes as $decoded) {
-        list($match,$key,$table,$key_field, $display_field) = $decoded;
-        $key = addslashes($key);
-        $display = $db->read_one_value("select $display_field from $table where $key_field = '$key'");
-        $detail = str_replace($match, $display, $detail);
-      }
+      $detail = replace_vars($detail, $result);
+      $detail = page::decode_field($detail);
+      $detail = page::decode_sql($detail);
     }
     $user = $this->user;
     if (!$user) {
