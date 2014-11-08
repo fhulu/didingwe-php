@@ -114,15 +114,21 @@ class page
     else if (!is_array($path))
       $path = explode('/', $path);
     
-    $this->object = $path[0];
+    if (sizeof($path) == 1)
+      array_unshift ($path, $path[0]);
+   
+    $this->object = array_shift($path);
     $this->fields = $this->load_yaml("$this->object.yml", true);
-    if (sizeof($path) > 1) {
-      array_shift($path);
-    }
     $this->page = array_shift($path);
-    $field_exists  = !null_at($this->fields,$this->page);
+    $field  = at($this->fields, $this->page);
+    if (is_null($field)) {
+      array_unshift($path, $this->page);
+      $this->page = $this->object;
+      $field = at($this->fields, $this->page);
+    }
+    $field_exists  = !is_null($field);
     $this->fields = $this->filter_access($this->fields);
-    $field  = at($this->fields,$this->page);
+    $field = at($this->fields, $this->page);
     if (is_null($field) && $field_exists)
       throw new user_exception("Unauthorized access to ".implode('/', $path));
     
@@ -617,7 +623,7 @@ class page
     if (!is_null($validate) && $validate != 'none' && !$this->validate($fields))
       return null;
     $result = $this->reply($action);
-    if (array_key_exists('audit', $invoker))
+    if (!page::has_errors() && array_key_exists('audit', $invoker))
       $this->audit($invoker, $result);
     return $result;
   }
@@ -752,6 +758,6 @@ class page
   {
     global $page_output;
     $result = &$page_output->values;
-    return !is_null(at($result, $errors));
+    return !is_null(at($result, 'errors'));
   }
 }
