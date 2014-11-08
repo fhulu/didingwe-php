@@ -71,9 +71,9 @@ class session
       page::error("email", "Invalid username/password for '$email'");
     else {
       $page = SESSION('content');
-      if (is_null($page)) $page = '/home';
+      if (is_null($page)) $page = 'home';
       page::close_dialog();
-      page::redirect("$page");
+      page::redirect("/$page");
     }
   }
   
