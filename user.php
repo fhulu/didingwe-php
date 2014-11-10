@@ -264,23 +264,39 @@ class user
     else
       $passwd = "'$passwd'";
     $email = addslashes($email);
-    $sql = "select id, partner_id, email_address,title, first_name, last_name,cellphone,attempts from user
-     where email_address='$email' and password=$passwd and active=1 and program_id = ". config::$program_id;         
+    $sql = "select active, password=$passwd, attempts, id, partner_id, email_address,title, first_name, last_name,cellphone,attempts from user
+     where email_address='$email' and program_id = ". config::$program_id;         
     
     global $db;
-    $success = $db->exists($sql);
-    $tries = $db->row[7];
-    if ($success) {
-      $attempts = 0;
+    $exists = $db->exists($sql, MYSQL_NUM);
+    if (!$exists) {
+      page::error('email', "Invalid user name or password for $email");
+      //todo: block ip address to prevent brute force login
+      return false;
+    }
+    
+    list($active, $valid, $attempts) = $db->row;
+    if (!$active) {
+      page::error("email", "Account has been deactivated, please ask the administrator to reactivate your account");
+      return false;
+    }
+
+    if ($attempts > 3) {
+      $attempts = 'attempts+1';
+      page::error("email", "Account locked because of too many incorrect attempts, please ask the administrator to unlock your account");
+    }
+    else if (!$valid) {
+      $attempts = 'attempts+1';
+      page::error("email", "Invalid user name or password for $email");
     }
     else {
-      if($tries >3) errors::q('email', "Account locked. ");
-      $attempts = 'attempts+1';
+      $attempts = 0;
     }
+      
     $db->exec("update user set attempts = $attempts
      where email_address='$email' and active=1 and program_id = \$pid");
   
-    return $success? $db->row: false;
+    return page::has_errors()? false: array_slice($db->row,3);
   }
   
   static function restore($email, $password, $is_password_plain=true)
@@ -1089,14 +1105,12 @@ class user
   {
     $email = REQUEST('email');
     $user = user::restore($email, REQUEST('password'));
-    if (!$user) 
-      page::error("email", "Invalid username/password for '$email'");
-    else {
-      $page = SESSION('content');
-      if (is_null($page)) $page = 'home';
-      page::close_dialog();
-      page::redirect("/$page");
-    }
+    if (!$user) return;
+    
+    $page = SESSION('content');
+    if (is_null($page)) $page = 'home';
+    page::close_dialog();
+    page::redirect("/$page");
   }
  
   static function logout()
