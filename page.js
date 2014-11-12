@@ -481,6 +481,10 @@ $.fn.page = function(options, callback)
 
     showDialog: function(path, field)
     {
+      // expecting a value not an array, if array given take the last value
+      // bug or inconsistent implentation of array_merge_recursive
+      if ($.isArray(path)) path = path[path.length-1];
+      
       if (path[0] === '/') path = path.substr(1);
       var params = { path: path };
       if (field) {
