@@ -32,11 +32,11 @@ developed_by:
   name: developed by Mukoni Software
   
 email:
-  desc: The email address for email notifications and use it as your user name on the system
+  desc: Valid e-mail address to be used as your username
   valid: email
 
 email_address:
-  desc: The email address for email notifications and use it as your user name on the system
+  desc: Valid e-mail address to be used as your username
   valid: email
 
 error_page:
