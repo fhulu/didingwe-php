@@ -32,11 +32,11 @@ developed_by:
   name: developed by Mukoni Software
   
 email:
-  desc: Valid e-mail address to be used as your username
+  desc: Valid e-mail address
   valid: email
 
 email_address:
-  desc: Valid e-mail address to be used as your username
+  desc: Valid e-mail address 
   valid: email
 
 error_page:
@@ -64,7 +64,7 @@ inputs:
   - type: input
   
 last_name:
-  desc: Your first name as written in your ID book
+  desc: Your las name as written in your ID book
   valid:
     - at_least(2)
     - alphabetic
