@@ -235,7 +235,7 @@ password:
   valid: password
 
 password_input:
-  html: <input type="password" id="$code" title="$desc"></input>
+  html: <input type="password" id="$code" ></input>
   valid: password
 
 plain:
