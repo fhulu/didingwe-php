@@ -64,7 +64,7 @@ inputs:
   - type: input
   
 last_name:
-  desc: Your las name as written in your ID book
+  desc: Your last name as written in your ID book
   valid:
     - at_least(2)
     - alphabetic
