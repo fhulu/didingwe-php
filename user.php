@@ -796,7 +796,7 @@ class user
     global $db, $session;
     $user = &$session->user;
     $requestor = "$user->first_name $user->last_name";
-    $email = $request['email_address'];
+    $email = $request['email'];
     $first_name= addslashes($request['first_name']);
     $last_name= addslashes($request['last_name']);
     $cellphone= $request['cellphone'];
@@ -816,7 +816,9 @@ class user
           values($selected_program_id,$partner_id, '$email','$title', '$first_name','$last_name','$cellphone',password('$password'),1)";
        $user_id=$db->insert($sql);
 
-
+      page::close_dialog("User has been added");
+      page::redirect("/user/list");
+       
        $sql = "insert into user_role(user_id, role_code)
           values($user_id,'$code')";
        $db->exec($sql);
