@@ -5,7 +5,7 @@ actions:
  - type: submit
 
 cellphone:
-  desc: The cellphone number at which you can be contacted
+  desc: The cellphone number at which you can be contacted on
   valid: national_tel
 
 change_password: 
@@ -59,6 +59,7 @@ id_no:
 
 id_number:
   name: ID Number
+  desc: Valid South African ID number
   
 inputs:
   - type: input
