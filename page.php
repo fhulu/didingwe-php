@@ -86,15 +86,17 @@ class page
   function load()
   {
     if (sizeof(page::$all_fields) > 0) return;
-    $this->load_yaml('../common/controls.yml', false, page::$all_fields); //todo cache common controls
-    $this->load_yaml('custom_controls.yml', false, page::$all_fields);
-    $this->load_yaml('../common/fields.yml', false, page::$all_fields); //todo cache common fields
-    $this->load_yaml('custom_fields.yml', false, page::$all_fields);
+    $this->load_yaml('controls.yml', false, page::$all_fields); //todo cache common controls
+    $this->load_yaml('fields.yml', false, page::$all_fields); //todo cache common fields
   }
 
-  static function load_yaml($file, $strict, &$fields=array())
+  static function load_yaml($file, $strict=false, &$fields=array(), $loading = false)
   {
-    if (!file_exists($file)) $file = "../common/$file";
+    if (!$loading) {
+      page::load_yaml("../common/$file", false, $fields, true); 
+      return page::load_yaml($file, $strict, $fields, true);
+    }
+      
     log::debug("YAML LOAD $file");
     if (!file_exists($file)) {
       if ($strict) throw new Exception("Unable to load file $file");
@@ -164,10 +166,6 @@ class page
         }
       }
       $field = $step_field;
-      if (is_string($field)) {
-        $field = at($this->fields, $field);
-        if (is_null($field)) $field = at($this->types, $field);
-      }
       
       $this->set_types($this->fields, $field);
       $this->set_types(page::$all_fields, $field);
@@ -253,6 +251,14 @@ class page
     );
   }
     
+  static function allow_access(&$options, $key, $value)
+  {
+    if (is_numeric($key))
+      $options[] = $value;
+    else
+      $options[$key] = $value;
+  }
+  
   function filter_access($options, $user_roles = null)
   {
     if (is_null($user_roles)) {
@@ -275,32 +281,25 @@ class page
       $expanded = false;
       if (is_numeric($key) && is_string($option)) {
         $option = at($this->types, $option);
-        $expanded = true;
       }
       if (!is_array($option)) {
-        if (is_numeric($key))
-          $filtered[] = $original;
-        else
-          $filtered[$key] = $original;
+        page::allow_access($filtered, $key, $original);
         continue;
       }
-      else if (!is_numeric($key)) {
+      if (!is_numeric($key)) {
         $option = merge_options(at($this->types, $key), $option);
       }
       $allowed_roles = at($option, 'access');
-      if (is_array($allowed_roles)) $allowed_roles = last($allowed_roles);
-      if ($allowed_roles != '') {
-        $allowed = array_intersect($user_roles, explode(',', $allowed_roles));      //log::debug("PERMITTED $key ".  json_encode($allowed));
+      if (!is_null($allowed_roles)) {
+        if (!is_array($allowed_roles)) $allowed_roles = explode(',', $allowed_roles);
+        $allowed = array_intersect($user_roles, $allowed_roles);      //log::debug("PERMITTED $key ".  json_encode($allowed));
         if (sizeof($allowed) == 0) continue;
       }
-      if (!$expanded)
+      $option = $original;
+      if (is_array($option))
         $option = $this->filter_access($option, $user_roles);
       if (sizeof($option) == 0) continue;
-      if ($expanded) $option = $original;
-      if (is_numeric($key))
-        $filtered[] = $option;
-      else
-        $filtered[$key] = $option;
+      page::allow_access($filtered, $key, $option);
     }
     return $filtered;
   }
