@@ -72,47 +72,6 @@ function is_assoc($array) {
   return (bool)count(array_filter(array_keys($array), 'is_string'));
 }
 
-/**
-* array_merge_recursive does indeed merge arrays, but it converts values with duplicate
-* keys to arrays rather than overwriting the value in the first array with the duplicate
-* value in the second array, as array_merge does. I.e., with array_merge_recursive,
-* this happens (documented behavior):
-*
-* array_merge_recursive(array('key' => 'org value'), array('key' => 'new value'));
-*     => array('key' => array('org value', 'new value'));
-*
-* array_merge_recursive_distinct does not change the datatypes of the values in the arrays.
-* Matching keys' values in the second array overwrite those in the first array, as is the
-* case with array_merge, i.e.:
-*
-* array_merge_recursive_distinct(array('key' => 'org value'), array('key' => 'new value'));
-*     => array('key' => 'new value');
-*
-* Parameters are passed by reference, though only for performance reasons. They're not
-* altered by this function.
-*
-* @param array $array1
-* @param mixed $array2
-* @author daniel@danielsmedegaardbuus.dk
-* @return array
-*/
-function &array_merge_recursive_distinct(&$array1, &$array2 = null)
-{
-  if (!is_array($array1)) return $array2;
-  if (!is_array($array2)) return $array1;
-  
-  $merged = $array1;
-  
-  if (is_array($array2))
-    foreach ($array2 as $key => $val)
-      if (is_array($array2[$key]))
-        $merged[$key] = is_array($merged[$key]) ? array_merge_recursive_distinct($merged[$key], $array2[$key]) : $array2[$key];
-      else
-        $merged[$key] = $val;
-  
-  return $merged;
-}
-
 function compress_array($array)
 {
   $compressed = array();
@@ -143,3 +102,23 @@ set_error_handler('caught_error');
 
 register_shutdown_function('caught_fatal');
  
+
+function merge_options($options1, $options2)
+{
+  if (!is_array($options1)) return $options2;
+  if (!is_array($options2)) return $options1;
+  if (!is_assoc($options1)) return array_merge($options1, $options2);
+
+  $result = $options2;
+  foreach($options1 as $key=>$value ) {
+    if (!array_key_exists($key, $result)) {
+      $result[$key] = $value;
+      continue;
+    }
+    if (!is_array($value)) continue;
+    $value2 = $result[$key];
+    if (!is_array($value2)) continue;
+    $result[$key] = merge_options($value, $value2);
+  }
+  return $result; 
+}
