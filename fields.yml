@@ -4,6 +4,16 @@
 actions:
  - type: submit
 
+add_user: 
+  access: admin
+  action:
+    dialog: /user/create
+
+audit_trail:
+  access: admin
+  action:
+    url: /user/audit_trail
+
 cellphone:
   desc: The cellphone number at which you can be contacted on
   valid: national_tel
@@ -50,7 +60,11 @@ first_name:
   
 goto:
   action: $page.html
-  
+ 
+home:
+  action:
+    url: /home
+     
 id:
   name: Identity
   
@@ -136,3 +150,8 @@ title:
 validator:
   post: #page *
   validate: all
+
+view_profile: 
+  access: reg
+  action:
+    dialog: /user/profile
