@@ -1,0 +1,283 @@
+## YAML Template.
+---
+
+activate:
+  access: admin
+  desc: Activate inactive user
+  audit: sql(select first_name, last_name, email_address from user where id = $key)
+  
+audit_trail:
+  access: admin
+  type: datatable
+  sort: time
+  sort_order: desc
+  page_size: 15
+  flags: 
+    - filter
+    - show_header
+    - show_titles
+  report_title: User Audit Trail
+  actions:
+    - print
+    - export
+  fields:
+    - time: { width: 4% }
+    - first_name: { width: 10% }
+    - last_name: { width: 16% }
+    - email: { width: 18% }
+    - action: { width: 18% }
+    - detail: { width: 40% }
+  sql: |
+    select t.create_time, u.first_name, u.last_name,u.email_address, t.action, t.detail 
+      from audit_trail t join user u on t.user_id = u.id
+        
+change_password:
+  type: labelled_input_page
+  width: 700
+  desc: 
+    Please enter your new password as well as the OTP (One Time Pin) that you received on your email or cellphone.
+  inputs:
+    - otp
+    - email: { attr: disabled }
+    - type: password_input
+    - password
+    - confirm_password
+  actions:
+    - reset_password
+
+
+check_otp:
+  type: labelled_input_page
+  width: 700
+  name: One Time Pin
+  desc: 
+    Please enter the OTP(One Time Pin) that you received on your email or cellphone.
+  inputs:
+    - id: { type: hidden }
+    - otp
+  actions:
+    - confirm_registration
+    - resend_otp: { name: Resend OTP }
+
+confirm_registration:
+  type: labelled_input_page
+  width: 700
+  desc: |
+    Thank you. You have been provisionally registered. <be>
+    You will have limited access to the system
+    until your registration has been approved. <br>
+    Please check your email for registration status.
+  actions:
+    - login:
+        action: 
+          dialog: /user/login
+    
+add:
+  type: labelled_input_page
+  access: admin
+  audit: >
+    Title: $title, First Name:$first_name, Last Name:$last_name, Cellphone:$cellphone, E-Mail:$email, Role:$role
+  width: 500
+  name: Add User
+  desc:  Add a new user
+  inputs: 
+    - title: {type: dropdown}          
+    - first_name
+    - last_name
+    - cellphone
+    - email
+    - type: password_input
+    - password
+    - confirm_password
+    - role: { type: dropdown }
+  actions:
+    - create
+
+deactivate:
+  access: admin
+  desc: Deactivate this user
+  audit: sql(select first_name, last_name, email_address from user where id = $key)
+
+ 
+delete:
+  type: deactivate
+
+edit:
+  access: admin
+  action:
+    dialog: user/modify
+
+history:
+  access: admin,manager
+  type: datatable
+  sort: time
+  sort_order: desc
+  page_size: 15
+  flags: 
+    - show_header
+    - show_titles
+  fields:
+    - time: { width: 4% }
+    - action: { width: 30% }
+    - detail: { width: 65% }
+  sql: select create_time, action, detail from audit_trail where user_id = $key
+  
+login:
+  #access: public
+  audit: $email
+  type: labelled_input_page
+  width: 500
+  desc: Fill in your credentials below and click Login to logon
+  inputs:
+    - email
+    - password:
+        type: password_input
+        valid: provided
+        
+  actions:
+    - logon
+    - forgot_password:
+        desc: Click here if you have forgotten your password and you need to reset it
+        action:
+          dialog: /user/start_reset_password
+
+logon:
+  name: Login
+  audit: $email
+  action:
+    call: user::login()
+    
+list:
+  access: admin,manager
+  type: datatable
+  name: Users
+  sort: create_time
+  sort_order: desc
+  page_size: 15
+  flags: 
+    - filter
+    - show_header
+    - show_titles
+  report_title: User Report
+  slide: { access: admin }
+  row_actions:
+    - edit
+    - activate: { access: admin }
+    - deactivate: { access: admin }
+  footer_actions:
+    - print
+    - export
+  fields:
+    - key: { hide: yes }
+    - create_time: { width: 10% }
+    - email: { width: 24% }
+    - first_name: { width: 13% }
+    - last_name: { width: 13% }
+    - cellphone: { width: 12% }
+    - role: { width: 9% }
+    - status: { width: 8% }
+    - actions
+  expand:
+    action:
+      pages:
+        - user/history
+  sql: |
+    select u.id, u.create_time,email_address, u.first_name, u.last_name,
+      u.cellphone, r.name, 
+      if(u.active=1,'active','inactive') status,
+      if(u.active=1,'expand,slide,edit,deactivate','expand,slide,edit,activate') actions
+    from user u left join user_role ur on u.id = ur.user_id 
+      left join role r on ur.role_code = r.code
+      where r.code != 'super'
+
+logout:
+  audit:
+    
+modify:
+  type: labelled_input_page
+  desc: Change user details
+  width: 600
+  inputs: 
+    - title: {type: dropdown}          
+    - first_name
+    - last_name
+    - cellphone
+    - email_address
+    - requested_role: { attr: disabled }
+    - role: 
+        name: Assigned Role
+        type: dropdown 
+  values:
+    - sql: |
+        select ur.role_code role, u.*, email_address email, email_address new_email 
+        from user u left join user_role ur on u.id = ur.user_id
+        where id = $key
+  actions:
+    - update
+
+profile:
+  access: reg
+  type: labelled_input_page
+  name: View Own Profile
+  desc: $name
+  width: 600
+  inputs: 
+    - title: {type: dropdown}          
+    - first_name
+    - last_name
+    - cellphone
+    - email_address
+    - role: { attr: disabled }
+  values:
+    - sql: |
+        select ur.role_code role, u.*, email_address email, email_address new_email 
+        from user u left join user_role ur on u.id = ur.user_id
+        where id = $uid
+  actions:
+    - update
+
+register:
+  access: public
+  type: labelled_input_page
+  desc: Register as a new user of the system
+  width: 700
+  action:
+    dialog: user/register
+  inputs: 
+    - title: {type: dropdown}          
+    - first_name
+    - last_name
+    - cellphone
+    - email
+    - type: password_input
+    - password
+    - confirm_password
+  actions:
+    - submit: { action: { call: $default } }
+
+reset_password:
+  audit: Changed password
+
+role: 
+  access: admin
+  options:
+    - admin: { name: Administrator }
+    - clerk
+    - manager
+
+start_reset_password:
+  width: 600
+  name: Reset Password
+  desc: Start reset password process
+  type: labelled_input_page    
+  inputs: 
+    - email    
+  actions:
+    - next:
+        action: 
+          call: user::start_reset_pw()
+   
+
+update:
+  audit: $title $first_name $last_name $cellphone $role $email_address
+  
