@@ -70,7 +70,7 @@ class log
   {
     $index = 0;
     foreach($exception->getTrace() as $trace) {
-      log::error("TRACE $index. ".$trace['file']." line ".$trace['line']." function ".$trace['class'] ."::".$trace['function'] ." args ".json_encode($trace['args']));
+      log::error("TRACE $index. ".$trace['file']." line ".$trace['line']." function ".$trace['class'] ."::".$trace['function'] ."(".json_encode($trace['args']).')');
       ++$index;
     }
   }
