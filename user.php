@@ -189,7 +189,7 @@ class user
   {    
     $email = addslashes($request['email']);
     global $db;
-    $email = $db->read_one_value("select email_address from user "
+    $email = $db->read_one_value("select email_address, cellphone from user "
             . "where email_address='$email' and program_id = " . config::$program_id);
 
     if (!$email) {
@@ -256,19 +256,7 @@ class user
     if ($echo) page::error('email', "The email address already exists"); 
     return true; 
   }
-  static function user_add($request){
-    global $db;
-    $email = $request['email'];
-    $password = $request['password'];
-    $confirm_password = $request['confirm_password'];
-    $otp = $request['otp'];
-    $user_id = "select id from user where email_address = '$email'";
-    $defined_otp = "select otp from user where id = $user_id";
-    if (!$otp == $defined_otp && $password == $confirm_password)     
-      page::error('email', "either incorrect otp or passwords do not match");
-    $db->exec("update user set password = '$password', active = 1 where id = $user_id");
-    page::redirect('/home');  
-  }
+
   static function authenticate($email, $passwd, $is_passwd_plain=true)
   {
     if ($is_passwd_plain)
@@ -276,8 +264,8 @@ class user
     else
       $passwd = "'$passwd'";
     $email = addslashes($email);
-    $sql = "select active, password=$passwd, attempts, id, partner_id, email_address,e.title, e.first_name, e.last_name,e.cellphone,attempts from user u, employee e
-     where u.email_address='$email' and program_id = ". config::$program_id;         
+    $sql = "select active, password=$passwd, attempts, id, partner_id, email_address,title, first_name, last_name,cellphone,attempts from user
+     where email_address='$email' and program_id = ". config::$program_id;         
     
     global $db;
     $exists = $db->exists($sql, MYSQL_NUM);
@@ -292,6 +280,7 @@ class user
       page::error("email", "Account has been deactivated, please ask the administrator to reactivate your account");
       return false;
     }
+
     if ($attempts > 3) {
       $attempts = 'attempts+1';
       page::error("email", "Account locked because of too many incorrect attempts, please ask the administrator to unlock your account");
@@ -392,7 +381,7 @@ class user
     $title = addslashes($title);
     if($program_id==7){
       
-      $sql = "insert into user(program_id, partner_id, email_address, password,title, first_name,last_name, cellphone,active, otp, otp_time, requested_role)
+      $sql = "insert into \$audit_db.user(program_id, partner_id, email_address, password,title, first_name,last_name, cellphone,active, otp, otp_time, requested_role)
       values($program_id,$partner_id, '$email',password('$password'),'$title', '$first_name','$last_name','$cellphone',1, '$otp', now(), '$requested_role')";
     }
     else
@@ -434,12 +423,12 @@ class user
     // First check if email already exists
     global $db;
     if (user::exists($email, 0, false)) {
-      $sql = "update user set password=password('$password'), first_name = '$first_name',last_name= '$last_name',title= '$title', cellphone='$cellphone',
+      $sql = "update \$audit_db.user set password=password('$password'), first_name = '$first_name',last_name= '$last_name',title= '$title', cellphone='$cellphone',
         otp=$otp, otp_time = now(), partner_id = $partner_id where email_address='$email' and program_id = $program_id";
       $db->exec($sql);
       $id = $db->read_one_value("select id from user where email_address = '$email' and program_id = $program_id");
-      $db->exec("delete from user_role where user_id = $id");
-      $db->exec("insert into user_role(user_id,role_code) values($id,'$role')");
+      $db->exec("delete from \$audit_db.user_role where user_id = $id");
+      $db->exec("insert into \$audit_db.user_role(user_id,role_code) values($id,'public')");
       $password = stripslashes($password);
       $first_name = stripslashes($first_name);
       $last_name = stripslashes($last_name);
