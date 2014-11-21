@@ -49,24 +49,23 @@ class user
     $this->load_roles();
     $this->load_functions();
     session::register($this);
-    $this->force_audit('login');
   }
 
   function load_groups()
   {
     global $db;
-    $this->groups = $db->read_column("select group_id from group_users where user_id = $this->id");
+    $this->groups = $db->read_column("select group_id from \$audit_db.group_users where user_id = $this->id");
     //todo: take care of group hierachy
   }
 
   function load_roles()
   {
     global $db;
-    $assigned_roles = $db->read_column("select role_code from user_role where user_id = $this->id");
+    $assigned_roles = $db->read_column("select role_code from \$audit_db.user_role where user_id = $this->id");
     $this->roles = array();
     foreach ($assigned_roles as $role) {
       $roles = array($role);
-      $db->lineage($roles, "code", "base_code", "role", " and program_id = \$pid");
+      $db->lineage($roles, "code", "base_code", "\$audit_db.role", " and program_id = \$pid");
       $this->roles = array_merge($this->roles, $roles);
     }
   }
@@ -78,8 +77,8 @@ class user
     global $db;
     
     $program_id = config::$program_id;
-    $groups = $db->read_column("select group_code from group_partner where partner_id = $this->partner_id and program_id=$program_id");
-    $db->lineage($groups, "code", "parent_code", "partner_group", "and program_id=\$pid");
+    $groups = $db->read_column("select group_code from \$audit_db.group_partner where partner_id = $this->partner_id and program_id=$program_id");
+    $db->lineage($groups, "code", "parent_code", "\$audit_db.partner_group", "and program_id=\$pid");
     $groups = implode("','", $groups);
     $functions = $db->read_column(
       "select distinct function_code from \$audit_db.role_function where role_code in('$roles')
@@ -264,7 +263,8 @@ class user
     else
       $passwd = "'$passwd'";
     $email = addslashes($email);
-    $sql = "select active, password=$passwd, attempts, id, partner_id, email_address,title, first_name, last_name,cellphone,attempts from user
+    $sql = "select active, password=$passwd, attempts, id, partner_id, email_address,title,
+      first_name, last_name,cellphone,attempts from \$audit_db.user
      where email_address='$email' and program_id = ". config::$program_id;         
     
     global $db;
@@ -293,7 +293,7 @@ class user
       $attempts = 0;
     }
       
-    $db->exec("update user set attempts = $attempts
+    $db->exec("update \$audit_db.user set attempts = $attempts
      where email_address='$email' and active=1 and program_id = \$pid");
   
     return page::has_errors()? false: array_slice($db->row,3);
