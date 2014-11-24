@@ -263,7 +263,7 @@ class user
     else
       $passwd = "'$passwd'";
     $email = addslashes($email);
-    $sql = "select active, password=$passwd, attempts, id, partner_id, email_address,
+    $sql = "select active, password=$passwd, attempts, id, partner_id, email_address,title,
       first_name, last_name,cellphone,attempts from \$audit_db.user
      where email_address='$email' and program_id = ". config::$program_id;         
     
@@ -400,7 +400,7 @@ class user
     return new user(array($id, $partner_id, $email,$title, $first_name, $last_name, $cellphone, $otp, $partner_id));
   }
   
-  static function register_user($request, $is_admin=false)
+  static function register($request, $is_admin=false)
   {    
     if (user::exists($request['email'], 1)) return;
     $request = db::quote($request);
