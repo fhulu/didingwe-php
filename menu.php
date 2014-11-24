@@ -42,13 +42,16 @@ class menu
   
   function show_subitems($parent_id, $functions, $level)
   {    
+  
     $sql = "select function_code, m.id, f.name function, m.name display, url, description, protected 
-            from \$audit_db.menu m join \$audit_db.function f on f.code = m.function_code and f.program_id = m.program_id
-            where parent_id = $parent_id and f.code in ('$functions') order by position"; 
-    
+            from menu m join function f on f.code = m.function_code and f.program_id = m.program_id
+            where parent_id = $parent_id and f.program_id = ". config::$program_id;
+            $sql .= " order by position"; 
     
     global $db;
     $items = $db->read($sql);
+    $submenu = sizeof($items) > 1 && $this->flags & self::SUBMENU;
+    if ($submenu) echo "<span>\n";
     foreach ($items as $item) {
       $function = $item['function_code'];
       $protected = $item['protected'];

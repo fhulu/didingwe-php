@@ -132,7 +132,7 @@ class datatable
       $col_index = 0;
       foreach ($row_data as $cell) {
         if (!datatable::get_display_field($fields[$col_index++])) continue;
-        
+        $sheet->getStyle("$col")->getAlignment()->setWrapText(true);
         $sheet->setCellValue("$col$row", $cell);
         $sheet->getColumnDimension($col)->setAutoSize(true);
         $sheet->getRowDimension($row)->setRowHeight(20);

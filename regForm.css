@@ -1,0 +1,42 @@
+body
+{
+  background-color: #ffffff;
+  font-family:sans-serif;
+  font-size: 15px;
+
+}
+h3{padding-top:15px;
+}
+div.container
+{
+  position: relative;
+  border: 0px solid red;
+  clear: both;
+}
+
+div.labels
+{
+  position: absolute;
+  left: 0;
+  padding: 5px;
+  border: 0px solid green;
+  
+}
+div.controls
+{
+  position: absolute;
+  left: 130px;
+  width: 55%;
+  border: 0px solid blue;
+}
+
+div.line
+{
+  padding: 1px;
+  height: 22px;
+  border: 0px solid black;
+  padding-bottom:15px;
+ 
+}
+
+

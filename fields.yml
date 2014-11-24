@@ -113,14 +113,15 @@ password:
   desc: A secret combination of letters and number only known to you. Please do not give out your password.
   valid: password
  
-popup:
-  action:
-    dialog:  
-    
 query:
   type: button
   action:
     call: $class::$invoker($key)
+  
+register:
+  access: public
+  action:
+    dialog: /user/register
     
 submit:
   type: button

@@ -15,6 +15,14 @@ require('pdf/fpdf.php');
 
 class ExtPDF extends FPDF {
 
+  var $header;
+  var $footer;
+//  function __construct($header, $footer) 
+//  {
+//    $this->header = $header;
+//    $this->footer = $footer;
+//  }
+  
   function wrap($left_margin, &$y, $right_margin, $sentence, $vertical_spacing=null)
   {
     if (is_null($vertical_spacing)) 
@@ -35,4 +43,13 @@ class ExtPDF extends FPDF {
     }
     $y += $vertical_spacing;
   }
+//  function Footer()
+//{
+//    // Go to 1.5 cm from bottom
+//    $this->SetY($this->footer['x']);
+//    // Select Arial italic 8
+//    $this->SetFont($this->footer['font_style'], $this->footer['font_type'], $this->footer['font_size']);
+//    // Print centered page number
+//    $this->Cell(0,10,'Page '.$this->PageNo(),0,0,'C');
+//}
 }

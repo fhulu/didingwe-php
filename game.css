@@ -1,0 +1,177 @@
+body
+{
+  background-color: #CCFFFF;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 13px;
+}
+
+div.labels
+{
+  position: absolute;
+  left: 0;
+  padding: 5px;
+  border: 0px solid green;
+}
+
+div.controls
+{
+  position: absolute;
+  left: 130px;
+  width: 55%;
+  border: 0px solid blue;
+}
+
+div.line
+{
+  padding: 1px;
+  height: 22px;
+  border: 0px solid black;
+}
+
+div.dropdown
+{
+  position:relative;
+  top:0;
+  left:0;
+  border:0px solid grey;
+  width: 270px;
+  z-index:5;
+  font-size: 10px;
+}
+
+div.error {
+      
+      padding:5px 10px 5px 30px;
+      color:#FFF;
+      font-weight:bold;
+      border:2px solid #CCCC99;
+      margin:10px 0 5px 10px;
+    }
+    .validation-advice {
+      
+      color:#9E2522;
+      font-size:85%;
+      padding:8px 0 5px 22px;
+    }
+
+input[type=text] 
+{
+width: 170px;
+height: 30px;
+}
+input[type=password]
+{
+width: 170px;
+height: 30px;
+} 
+
+input :hover,  
+input:focus
+{  
+  border-color: #000000; 
+  border: 2px solid #ff0000;
+} 
+input{border-color: #000000; }
+input[type='submit'],[type='reset'] 
+{
+  cursor:pointer;
+  padding: 4px 15px;
+  
+}
+
+table.game
+{
+  position: relative;
+  border: 1px solid #c3c3c3;
+  border-collapse: collapse;
+  font-family: Arial, Helvetica, sans-serif;
+  text-align: left;
+  width:60%;
+}
+
+table.game th
+{
+  background-color: #c3c3c3;
+  border: 1px solid #a0a0a0;
+  padding: 3px;
+  vertical-align: top;
+  font-size: 13px;
+}
+table.game td
+{
+  border: 1px solid #c3c3c3;
+  padding: 3px;
+  vertical-align: top;
+  font-size: 12;
+}
+table.game tr td
+{
+  background-color: #FEFED8;
+}
+table.game tr.alt td
+{
+  background-color: #FEFEF8;
+}
+table.game tr td
+{
+  background-color: #FEFED8;
+}
+table.game tr.alt td
+{
+  background-color: #FEFEF8;
+}
+
+
+table.dropdown
+{
+  position: relative;
+  border: 1px solid black;
+  border-collapse: collapse;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 11px;
+  text-align: left;
+  width:270px;
+  z-index:5;
+}
+
+table.dropdown tr
+{
+  border: 1px solid grey;
+  background-color: #FEFED8;
+}
+table.dropdown tr:hover
+{
+  background-color: #a0f000;
+}
+table.dropdown tr.nav
+{
+  background-color: #c3c3c3;
+}
+
+table.game tr.d0:hover td,
+table.game tr.d1:hover td,
+table.game tr:hover td
+{
+  background-color: #a0f000;
+} 
+
+.select select {
+   outline: 0;
+  overflow: hidden;
+  height: 30px;
+  background:#FEFED8;
+  color:#c3c3c3;
+  border:#c3c3c3 ;
+  padding:5px 3px 5px 10px;
+  -moz-border-radius:6px;
+  -webkit-border-radius:6px;
+  border-radius:10px;
+
+}
+select :hover,
+select:focus
+{
+  border-color: #000000;
+  border: 2px solid #ff0000;
+} 
+

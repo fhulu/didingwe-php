@@ -8,6 +8,7 @@ div.calendarbutton{
 	width: 15px;
 	height: 16px;
 	background: transparent url("calendar_icon.png") no-repeat center;
+  
 }
 
 #CalendarPickerControl{
