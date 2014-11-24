@@ -94,6 +94,7 @@ class page
   {
     if (!$loading) {
       page::load_yaml("../common/$file", false, $fields, true); 
+      $strict &= (sizeof($fields) == 0);
       return page::load_yaml($file, $strict, $fields, true);
     }
       
@@ -127,13 +128,8 @@ class page
       array_unshift($path, $this->page);
       $this->page = $this->object;
       $field = at($this->fields, $this->page);
-    }
-    $field_exists  = !is_null($field);
-    $this->fields = $this->filter_access($this->fields);
-    $field = at($this->fields, $this->page);
-    if (is_null($field) && $field_exists)
-      throw new user_exception("Unauthorized access to ".implode('/', $path));
-    
+    }   
+
     $this->set_types($this->fields, $field);
     $this->set_types(page::$all_fields, $field);
     $type = at($field, 'type');
@@ -142,6 +138,7 @@ class page
       $field = merge_options(at($this->fields, $type), $field);
       unset($field['type']);
     }
+    $this->check_access($field);
     if (in_array('html', $expand)) {
       $this->expand_html($field, 'html');
       $this->expand_html($field, 'template');
