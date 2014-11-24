@@ -253,7 +253,7 @@ register:
     - password
     - confirm_password
   actions:
-    - register_user
+    - submit: { action: { call: $default } }
 
 reset_password:
   audit: Changed password
