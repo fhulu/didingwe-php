@@ -156,3 +156,8 @@ view_profile:
   access: reg
   action:
     dialog: /user/profile
+
+view_users:
+  access: admin
+  action:
+    url: /user/list
