@@ -182,7 +182,7 @@ list:
       pages:
         - user/history
   sql: |
-    select u.id, u.create_time,email_address, u.first_name, u.last_name,
+    select distinct u.id, u.create_time,email_address, u.first_name, u.last_name,
       u.cellphone, r.name, 
       if(u.active=1,'active','inactive') status,
       if(u.active=1,'expand,slide,edit,deactivate','expand,slide,edit,activate') actions
