@@ -8,7 +8,6 @@ require_once('select.php');
 require_once('validator.php');
 require_once('select.php');
 require_once('curl.php');
-require_once('page.php');
 
 class user_exception extends Exception {};
 class user
