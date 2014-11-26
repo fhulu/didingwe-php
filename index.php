@@ -35,9 +35,13 @@
   function pre_load_custom($page)
   {
     log::debug("loading page pre_$page");
-    if (file_exists("pre_$page.php")) {
-      require_once "pre_$page.php";
-    } 
+    $file = "pre_$page.php";
+    $common_file = "../common/$file";
+    if (file_exists($file)) 
+      require_once $file;
+    else if (file_exists($common_file))
+      require_once $common_file;
+    
     if (file_exists("$page.css")) { 
       echo "<link type='text/css' rel='stylesheet' href='$page.css'></link>";
     } 
