@@ -209,9 +209,9 @@ modify:
         type: dropdown 
   values:
     - sql: |
-        select ur.role_code role, u.*, email_address email, email_address new_email 
+        select title,first_name,last_name,cellphone,email_address,requested_role  
         from user u left join user_role ur on u.id = ur.user_id
-        where id = $key
+        where id = $uid
   actions:
     - update
 
@@ -230,7 +230,7 @@ profile:
     - role: { attr: disabled }
   values:
     - sql: |
-        select ur.role_code role, u.*, email_address email, email_address new_email 
+        select title,first_name,last_name,cellphone,email_address,requested_role  
         from user u left join user_role ur on u.id = ur.user_id
         where id = $uid
   actions:
