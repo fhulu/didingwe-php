@@ -10,6 +10,7 @@
 require_once 'validator.php';
 require_once 'db.php';
 require_once 'user.php';
+require_once 'utils.php';
 
 class page_output
 {
