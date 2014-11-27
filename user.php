@@ -660,7 +660,6 @@ class user
     $role = $request['role'];
     global $db, $session;
     $username = $db->read_one_value("select Concat( first_name, ' ', last_name ) AS contact_person from user where id = $id ");
-    user::audit('update_role', $id, "$username - $role");
     
     $user = &$session->user;
 
