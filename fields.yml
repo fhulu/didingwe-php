@@ -147,6 +147,11 @@ title:
     - Ms
     - Prof
     - Rev
+    
+users:
+  access: admin
+  action:
+    url: /user/list
 
 validator:
   post: #page *
