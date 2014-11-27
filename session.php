@@ -54,7 +54,7 @@ class session
     $session->referrer = SESSION('referrer');
     $session->user = $user;
     $session->roles = $user->roles;
-    $session->id = sprintf("%08x%04x%04x%08x",rand(0,0xffffffff),$user->partner_id,$user->id,time());
+    $session->id = sprintf("%08x%04x%04x%08x",rand(),$user->partner_id,$user->id,time());
     $sql = "insert \$audit_db.session (id, user_id) values ('$session->id','$user->id')";
     log::debug_json("ROLES", $user->roles);
     
