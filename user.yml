@@ -216,7 +216,6 @@ modify:
     - update
 
 profile:
-  access: reg
   type: labelled_input_page
   name: View Own Profile
   desc: $name
