@@ -440,11 +440,7 @@ class page
   {
     $field = $this->load_field(null, array('field'));
     $type = at($field, 'type');
-    if (!is_null($type)) {
-      $field = null_merge(at(page::$all_fields, $type), $field);
-      $field = null_merge(at($this->fields, $type), $field);
-      unset($field['type']);
-    }
+
     log::debug_json('field', $field);
     $items = array();
     foreach($field as $item) {
@@ -538,7 +534,7 @@ class page
       }
       if (!is_array($value)) continue;
       $type_value = at($this->types, $key);
-      $value = null_merge($type_value, $value, false);
+      $value = merge_options($type_value, $value);
       $this->expand_field($value);
     }
   }
