@@ -104,6 +104,7 @@ delete:
 
 edit:
   access: admin
+  audit: $title,$first_name,$last_name,$cellphone,$email_address,$assigned_role
   action:
     dialog: user/modify
 
@@ -203,7 +204,6 @@ modify:
     - last_name
     - cellphone
     - email_address
-    - requested_role: { attr: disabled }
     - role: 
         name: Assigned Role
         type: dropdown 
@@ -211,7 +211,7 @@ modify:
     - sql: |
         select title,first_name,last_name,cellphone,email_address,requested_role  
         from user u left join user_role ur on u.id = ur.user_id
-        where id = $uid
+        where id = $key
   actions:
     - update
 
@@ -258,12 +258,6 @@ register:
 reset_password:
   audit: Changed password
 
-role: 
-  access: admin
-  options:
-    - admin: { name: Administrator }
-    - clerk
-    - manager
 
 start_reset_password:
   width: 600
