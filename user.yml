@@ -106,7 +106,7 @@ edit:
   access: admin
   audit: $title,$first_name,$last_name,$cellphone,$email_address,$assigned_role
   action:
-    dialog: user/modify
+    dialog: /user/modify
 
 history:
   access: admin,manager
@@ -195,6 +195,7 @@ logout:
   audit:
     
 modify:
+#  access: admin
   type: labelled_input_page
   desc: Change user details
   width: 600
@@ -209,8 +210,9 @@ modify:
         type: dropdown 
   values:
     - sql: |
-        select title,first_name,last_name,cellphone,email_address,requested_role  
+        select title,first_name,last_name,cellphone,email_address,r.name role  
         from user u left join user_role ur on u.id = ur.user_id
+        left joint role r on r.code = ur.role_code
         where id = $key
   actions:
     - update
