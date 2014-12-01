@@ -9,6 +9,9 @@ add_user:
   action:
     dialog: /user/create
 
+admin:
+  name: Administrator
+  
 audit_trail:
   access: admin
   action:
