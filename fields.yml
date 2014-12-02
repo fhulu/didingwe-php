@@ -161,6 +161,7 @@ validator:
   validate: all
 
 view_profile: 
+  desc: View my profile
   access: reg
   action:
     dialog: /user/profile
