@@ -37,10 +37,6 @@ confirm_password:
   desc: Type in the same password as above to confirm correctness
   valid: matches(password)
 
-create_time:
-
-date:
-
 developed_by:
   name: developed by Mukoni Software
   
