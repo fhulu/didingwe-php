@@ -103,6 +103,10 @@ logout:
 
 longitude:
   valid: /^\d+\.\d+$/
+
+mobile_number:
+  desc: The mobile number at which you can be contacted on
+  valid: national_tel
   
 otp:
   name: OTP
