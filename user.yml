@@ -229,10 +229,9 @@ profile:
     - cellphone
     - email_address
     - role: { attr: disabled }
-    - requested_role: { attr: disabled }
   values:
     - sql: |
-        select title,first_name,last_name,cellphone,email_address, group_concat(r.name) role, requested_role
+        select title,first_name,last_name,cellphone,email_address, group_concat(r.name) role
         from user u left join user_role ur on u.id = ur.user_id
         left join role r on r.code = ur.role_code
         where u.id = $uid
