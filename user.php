@@ -488,8 +488,12 @@ class user
     if (!user::check_otp($req)) return false;
     
     global $db;
+    $program_id = config::$program_id;  
     $id = $req['id'];
-    $db->exec("update user set active = 1 where id = $id");
+    if($program_id==9)
+       $db->exec("update user set active = 0 where id = $id");
+    else
+       $db->exec("update user set active = 1 where id = $id");
     page::close_dialog();
     page::show_dialog('user/confirm_registration');
   }
