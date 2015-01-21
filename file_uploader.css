@@ -13,28 +13,28 @@ Copyright Expression year is undefined on line 4, column 29 in file:///Users/fhu
 
 .file_uploader .progress 
 { 
-  position:relative; 
-  width:100%; 
-/*  margin-left: auto;
-  margin-right: auto;
-  border: 1px solid grey; 
-  padding: 1px; 
-  border-radius: 3px; */
+  float: right;
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  width: 100%; 
+  height: 98%;
+  border: 1px solid #4cae4c;
 }
 
 .file_uploader .bar 
 { 
-  background-color: lime; 
+  background-color: #4cae4c; 
   width:0%; 
-  height:20px; 
-  border-radius: 3px; 
+  height: 100%; 
 }
-.file_uplaoder .percent 
+.file_uploader .percent 
 { 
-  position:absolute; 
-  display:inline-block; 
-  top:3px; 
-  left:48%; 
+  position: absolute;
+  width: 100%;
+  top: 6px;
+  color: white;
+  text-align: left;
 }
 
 .file_uploader iframe
@@ -53,8 +53,5 @@ Copyright Expression year is undefined on line 4, column 29 in file:///Users/fhu
 .file_uploader button
 {
   float: right;
-/*  display: inline-block;
-  position: absolute;
-  right: 0px;*/
   margin-right: 0px;
 }

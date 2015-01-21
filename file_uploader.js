@@ -19,10 +19,10 @@
       });
       var progress = $('<div class=progress></div>').hide().appendTo(el);
       var bar = $('<div class=bar></div>').appendTo(progress);
-      var percent = $('<div class=percent></div>').appendTo(progress);
+      var percent = $('<span class=percent></span>').appendTo(progress);
       $('<iframe src="#"></iframe>').attr('target',id+'_target').appendTo(el);
       file.change(function() {
-         button.removeAttr('disabled').text('Upload').show();
+         button.show();
          progress.hide();
       });
       form.ajaxForm({
@@ -30,8 +30,8 @@
         {
           bar.width('0%');
           percent.html('0%');
-          progress.show();
-          button.attr('disabled','disabaled').text('Uploading...');
+          progress.fadeIn();
+          button.hide();
         },
 
         uploadProgress: function(event, position, total, done) 
@@ -43,13 +43,8 @@
 
         success: function(response, textStatus, xhr) 
         {
-//          if (response.length && response != "ok" ) {
-//            alert(response);
-//            return xhr.abort();
-//          }
-          bar.width('100%')
-          percent.html('Finished uploading');
-          button.hide();
+          percent.css('text-align','center').text('Uploaded');
+          progress.animate({width:'80px'}, 200);
           el.trigger('uploaded');
         },
 
