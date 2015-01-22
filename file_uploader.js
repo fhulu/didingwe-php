@@ -29,8 +29,8 @@
         beforeSend: function()
         {
           bar.width('0%');
-          percent.html('0%');
-          progress.fadeIn();
+          percent.css('text-align','left').html('0%');
+          progress.css("width",'100%').fadeIn();
           button.hide();
         },
 
