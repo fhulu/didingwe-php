@@ -116,7 +116,10 @@ export:
     target: _blank
 
 file:
-  html: <file id="$code" name="$code"></file>
+  html: <div id="$code" name="$code"></div>
+  create: file_uploader
+  script: /common/file_uploader.js,/common/jquery.form.js
+  css: /common/file_uploader.css
 
 form:
   html: <form id="$code></form>
@@ -174,11 +177,13 @@ label:
   
 labelled_input:
   html: |
-    <p>$name$label_suffix</p>
-    <a class=input>
-      $field
-      <span>$desc</span>
-    </a>  
+    <div class=labelled-input>
+      <span class=label>$name$label_suffix</span>
+      <a class=input>
+        $field
+        <span class=hint>$desc</span>
+      </a>
+    </div>  
   label_suffix: ":"
 
 labelled_input_page:
