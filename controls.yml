@@ -120,6 +120,8 @@ file:
   create: file_uploader
   script: /common/file_uploader.js,/common/jquery.form.js
   css: /common/file_uploader.css
+  uploader: /?action=upload
+  max_size: 100
 
 form:
   html: <form id="$code></form>
