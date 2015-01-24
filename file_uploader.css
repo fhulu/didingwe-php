@@ -46,6 +46,17 @@ Copyright Expression year is undefined on line 4, column 29 in file:///Users/fhu
   width: 80px;
 }
 
+.file_uploader .error
+{
+  padding: 0px;
+  border: 1px solid red;
+}
+
+.file_uploader .error .bar
+{
+  background-color: red;
+}
+
 .file_uploader iframe
 {
   width: 0px;
