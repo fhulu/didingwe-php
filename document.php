@@ -5,18 +5,27 @@ require_once('session.php');
 class document_exception extends Exception {};
 class document
 {
-  static function upload($control, $type, $partner_id)
+  static function upload($control, $types, $partner_id=null)
   {
     session::ensure_not_expired();
     $file_name = addslashes($_FILES[$control]["name"]);
-    log::debug("about to upload $file_name from $control of $type");
-    if ($file_name == '') {
-      echo "Error uploading document of type $type. File may be too large";
+    $type = document::extension($file_name);
+    log::debug("about to upload $file_name from $control of type $type");
+
+    if (!is_array($types)) $types = preg_split('/ /',$types);
+    if (!in_array($type, $types, 1)) {
+      page::error($control, "File $file_name is not allowed");
       return;
+    }
+    if ($file_name == '') {
+      page::error($control, "Error uploading document of type $type. File may be too large");
+      return null;
     }
     
     global $db,$session;
-    $user_id = $session->user->id;
+    $user = $session->user;
+    $user_id = $user->id;
+    if (is_null($partner_id)) $partner_id = $user->partner_id;
 
     
     $pid = getmypid();
@@ -33,15 +42,16 @@ class document
     $temp_file = $_FILES[$control]['tmp_name'];
     if (!is_uploaded_file($temp_file)) {
       $db->exec("update document set status = 'inva' where id = $id");
-      echo "Error uploading document. File may be too large.";
-      return $id;
+      page::error($control, "Error uploading document. File may be too large");
+      //echo "Error uploading document. File may be too large.";
+      return null;
       //throw new document_exception("File $temp_file cannot be uploaded. Perhaps the file is too large.");
     }      
     if (!move_uploaded_file($_FILES[$control]["tmp_name"], $path)) {
       
       $db->exec("update document set status = 'perm' where id = $id");
-      echo "Error uploading document of type $type. File may be too large";
-      return $id;
+      page::error("Error uploading document of type $type. File may be too large");
+      return null;
      // throw new document_exception("File $path not moved to destination folder. Check permissions");
     }
     $db->exec("update document set status = 'done' where id = $id");
