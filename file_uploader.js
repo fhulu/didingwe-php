@@ -14,7 +14,7 @@
               .appendTo(el);
       var file = $('<input type=file></input>').attr('name',id+'_file').appendTo(form);
       $('<input type=hidden name=path></input>').val(this.options.path).appendTo(form);
-      $('<input type=hidden></input>').attr('name',id+'_id').appendTo(el);
+      var uploaded_id = $('<input type=hidden></input>').attr('name',id+'_id').appendTo(el);
       var button = $('<button>Upload</button>').appendTo(el).hide().click(function() {
         form.submit();
       });
@@ -31,7 +31,8 @@
         {
           bar.width('0%');
           percent.html('0%');
-          progress.removeClass("uploaded error").fadeIn();
+          progress.removeClass("uploaded error").width('100%').fadeIn();
+          $('.error').remove();
           button.hide();
         },
 
@@ -43,15 +44,22 @@
 
         success: function(response, textStatus, xhr) 
         {
+          response = $.parseJSON(response);
+          if (response.errors !== undefined) {
+            this.error(response.errors[id+'_file']);
+            return;
+          }
+          uploaded_id.val(response._responses.update.id)
           percent.text('Uploaded');
           progress.animate({width:'80px'}, 200).addClass('uploaded');
           el.trigger('uploaded');
         },
 
-        error: function(x) 
+        error: function(msg) 
         {
           percent.text('Error');
           progress.animate({width:'80px'}, 200).addClass('error');
+          $.reportError(id, msg);
         }
       });
     }
