@@ -9,7 +9,6 @@
 //require_once 'db.php';
 require_once 'validator.php';
 require_once 'db.php';
-require_once 'user.php';
 require_once 'utils.php';
 
 class page_output
@@ -686,6 +685,16 @@ class page
     return $items;
   }
     
+  function upload()
+  {
+    $options = $this->load_field(null, array('field'));
+    log::debug_json("UPLOAD", $options);
+    require_once 'document.php';
+    $id = document::upload($options['code']."_file", $options['format']);
+    if (!is_null($id))
+      page::update("id", $id);
+  }
+  
   static function respond($response, $value=null)
   {
     global $page_output;
