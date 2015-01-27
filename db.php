@@ -39,6 +39,7 @@ class db
     log::debug("MySQL connect to $this->hostname with user $this->user");
     $this->mysqli = new mysqli($this->hostname,$this->user,$this->passwd, $this->dbname);
     if ($this->mysqli->connect_errno) throw new db_exception("Could not connect to '$this->dbname' :" . $this->mysqli->connect_error);
+    $this->mysqli->set_charset('utf8');    
     log::debug("User $this->user connected to MySQL on $this->hostname");
   }
 
