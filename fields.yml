@@ -36,8 +36,7 @@ confirm_password:
 country:
   options:    
     - sql: SELECT item_code,item_name item_code from ref_list WHERE list_name = "country"
-  valid: in(ref_list.item_code) 
-             
+               
 create_time:
 
 date:
@@ -45,9 +44,12 @@ date:
 developed_by:
   name: developed by Mukoni Software
 
-distributor:
+distributor_type:
   options:
-    - sql: SELECT list_name FROM ref_list 
+    - sql: >
+          SELECT item_code, item_name, list_name
+          FROM ref_list
+          WHERE list_name LIKE "%distr%" 
   
 email:
   desc: Valid e-mail address
