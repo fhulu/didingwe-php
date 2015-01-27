@@ -439,11 +439,15 @@ class page
   {
     $field = $this->load_field(null, array('field'));
     $type = at($field, 'type');
-
+    if (!is_null($type)) {
+      $field = merge_options(at(page::$all_fields, $type), $field);
+      $field = merge_options(at($this->fields, $type), $field);
+      unset($field['type']);
+    }
     log::debug_json('field', $field);
     $items = array();
     foreach($field as $item) {
-      $items = null_merge($items, $this->reply($item, false), false);
+      $items = merge_options($items, $this->reply($item, false), false);
     }
     return $items;
   }
