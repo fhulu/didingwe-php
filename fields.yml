@@ -1,6 +1,5 @@
 ## YAML Template.
 ---
-
 actions:
  - type: submit
 
@@ -9,9 +8,6 @@ add_user:
   action:
     dialog: /user/create
 
-admin:
-  name: Administrator
-  
 audit_trail:
   access: admin
   action:
@@ -37,8 +33,21 @@ confirm_password:
   desc: Type in the same password as above to confirm correctness
   valid: matches(password)
 
+country:
+  options:    
+    - sql: SELECT item_code,item_name item_code from ref_list WHERE list_name = "country"
+  valid: in(ref_list.item_code) 
+             
+create_time:
+
+date:
+
 developed_by:
   name: developed by Mukoni Software
+
+distributor:
+  options:
+    - sql: SELECT list_name FROM ref_list 
   
 email:
   desc: Valid e-mail address
@@ -103,10 +112,6 @@ logout:
 
 longitude:
   valid: /^\d+\.\d+$/
-
-mobile_number:
-  desc: The mobile number at which you can be contacted on
-  valid: national_tel
   
 otp:
   name: OTP
@@ -161,7 +166,6 @@ validator:
   validate: all
 
 view_profile: 
-  desc: View my profile
   access: reg
   action:
     dialog: /user/profile
