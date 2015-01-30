@@ -1,12 +1,12 @@
----
 # html controls
+---
 button: 
   desc: ""
   html: <button id="$code" title="$desc" class=action>$name</button>
   
 checkbox: 
   html: <input id="$code" title="$desc" type='checkbox'></input>
-  
+
 container: 
   html: <div id="$code">$contents</div>
   contents: 
@@ -124,7 +124,7 @@ file:
   max_size: 100
 
 form:
-  html: <form id="$code></form>
+  html: <form id="$code"></form>
 
 #footer_actions:
 #  - type: submit
@@ -260,6 +260,9 @@ print:
     call: datatable::pdf($key)
     target: _blank
 
+radio:
+  html: <input name="$code" title="$desc" type='radio'></input>
+    
 span:
   html: <span id="$code">$name</span>
   
