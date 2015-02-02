@@ -268,7 +268,10 @@
       var tr;
       for(var i in data.rows) {
         var row = data.rows[i];
-        if (tr) tr.appendTo(body);
+        if (tr) {
+          self.bindRowActions(tr);
+          tr.appendTo(body);
+        }
         tr = $('<tr></tr>');//.appendTo(body);
         var key;
         if (i % 2 === 0) tr.addClass('alt');
@@ -283,7 +286,7 @@
               var attr = cell[l].split(':');
               if (attr[0] === 'class') 
                 tr.addClass(attr[1]);
-              else
+              else 
                 tr.attr(attr[0],attr[1]);
             };
             continue;
@@ -308,7 +311,10 @@
           self.createAction('collapse', undefined, tr).prependTo(td).hide();
         }
       }
-      if (tr) tr.appendTo(body);
+        if (tr) {
+          self.bindRowActions(tr);
+          tr.appendTo(body);
+        }
       this.spanColumns(this.head().find('.header>th'));      
     },
     
@@ -450,7 +456,7 @@
           self.createAction('slideoff', all_actions, tr).appendTo(parent);
         }
       };
-      this.bindRowActions(tr);
+      //this.bindRowActions(tr);
     },
     
     slide: function(parent)
@@ -462,12 +468,12 @@
     {
       var self = this;
       var key = tr.attr('_key');
-      
       tr.on('slide', function(e,btn) {
         btn.toggle();
         self.slide(tr);
       });
       tr.on('expand', function(event, button, action) {
+        console.log(action)
         if (!action || !action.pages) return;
         button.hide();
         tr.find('[action=collapse]').show();
@@ -481,6 +487,7 @@
           tmp.page({path: path, key: key});
           path = path.replace(/\//, '_');
           tmp.on('read_'+path, function(event, object) {
+            console.log("read", object)
             td.append(object);
           });
         });
