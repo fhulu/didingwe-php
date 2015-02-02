@@ -441,7 +441,7 @@ $.fn.page = function(options, callback)
             return;
           case 'call':
             if (action.post !== undefined) {
-              var page_id = field.page_id || obj.parents(".page").eq(0).attr('id');
+              var page_id = field.piage_id || obj.parents(".page").eq(0).attr('id');
               var selector = action.post.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+page_id+"$2");
               obj.jsonCheck(event, selector, '/', { data: data }, function(result) {
                 if (result === null) result = undefined;
@@ -454,6 +454,8 @@ $.fn.page = function(options, callback)
               obj.trigger('processed', [result]);
               if (result !== undefined) page.respond(result._responses, obj);
             });
+          case 'event':
+            obj.trigger(action.event, [obj, action]);
         }
       }
     },
