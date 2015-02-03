@@ -136,7 +136,7 @@ login:
         valid: provided
         
   actions:
-    - login
+    - logon
     - forgot_password:
         desc: Click here if you have forgotten your password and you need to reset it
         action:
@@ -192,8 +192,10 @@ list:
       where r.code != 'super'
 
 logout:
-  audit:
-    
+  audit: $email
+  action:
+    call: user::logout()
+      
 modify:
   type: labelled_input_page
   desc: Change user details
