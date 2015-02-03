@@ -124,7 +124,7 @@ history:
   sql: select create_time, action, detail from audit_trail where user_id = $key
   
 login:
-  #access: public
+  access: public
   audit: $email
   type: labelled_input_page
   width: 500
