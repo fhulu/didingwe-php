@@ -45,7 +45,6 @@ class user
   {
     $this->load_groups();
     $this->load_roles();
-    $this->load_functions();
     session::register($this);
   }
 
@@ -63,7 +62,7 @@ class user
     $this->roles = array();
     foreach ($assigned_roles as $role) {
       $roles = array($role);
-      $db->lineage($roles, "code", "base_code", "\$audit_db.role", " and program_id = \$pid");
+      $db->lineage($roles, "code", "base_code", "\$audit_db.role");
       $this->roles = array_merge($this->roles, $roles);
     }
   }
