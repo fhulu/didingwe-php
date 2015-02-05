@@ -7,6 +7,11 @@ button:
 checkbox: 
   html: <input id="$code" title="$desc" type='checkbox'></input>
 
+  
+background-image:
+            html: <body background="$code"></body>
+
+  
 container: 
   html: <div id="$code">$contents</div>
   contents: 
@@ -19,7 +24,7 @@ container_without_id:
   html: <div>$contents</div>
   contents: 
     template: $field
-    
+  
 datatable:
   html: |
     <table id="$code" class=data>
@@ -148,6 +153,9 @@ hidden:
 
 image:
   html: <img id="$code" src="$src" title="$desc"></img>
+  
+imageurl:
+  html: <a href="$code"> <img id="$code" src="$src" title="$desc"></img></a>
 
 input: 
   html: <input id="$code" type="text"></input>
@@ -220,6 +228,10 @@ menu_item:
  
 one_cell_row:
   html: <tr><td>$field</td></tr>
+  
+two_cell_row:
+  html: <table><th align="left">$header</th><th align="left">$heading</th><tr></tr><tr><td valign="top">$field1</td><td>$field2</td></tr>
+        <tr></tr><tr><td valign="top">$field3</td><td>$field4</td></tr></table>
 
 one_column_table:
   html: <table id='$code' title="$name">$items</table>
@@ -323,5 +335,18 @@ textarea:
   html: <textarea id="$code"></textarea>
 
 text_input: {type: input }
+
+heading_1:
+    html: <h1 id="$code"><h1>
+    
+heading_2:
+    html: <h2 id="$code"><h2>
+    
+heading_3:
+    html: <h3 id="$code"><h3>
+    
+footer_table:
+  html: <table><tr><td colspan="3">$code</td></tr><tr><td>$code</td><td>$code</td></tr></table>
+
 
 ...
