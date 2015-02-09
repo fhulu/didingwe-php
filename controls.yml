@@ -229,9 +229,11 @@ menu_item:
 one_cell_row:
   html: <tr><td>$field</td></tr>
   
-two_cell_row:
-  html: <table><th align="left">$header</th><th align="left">$heading</th><tr></tr><tr><td valign="top">$field1</td><td>$field2</td></tr>
-        <tr></tr><tr><td valign="top">$field3</td><td>$field4</td></tr></table>
+  
+  
+four_cell_row:
+  html: <table ><th align="left">$header</th><th align="left">$heading</th><tr></tr><tr><td valign="top">$field1</td><td>$field2</td></tr>
+        <tr></tr><tr><td valign="top">$field3</td><td valign="top">$field4</td></tr><tr><td colspan="2">$field5</td></tr></table>
 
 one_column_table:
   html: <table id='$code' title="$name">$items</table>
@@ -346,7 +348,12 @@ heading_3:
     html: <h3 id="$code"><h3>
     
 footer_table:
-  html: <table><tr><td colspan="3">$code</td></tr><tr><td>$code</td><td>$code</td></tr></table>
+  html: <table ><tr></tr><tr><td valign="top" colspan="4">$field1</br></td></tr>
+        <tr></tr><tr><td valign="top">$field3$field4</td><td>$field5 $field6</td></tr></table>
+       
+four_rows_text:
+  html: <span >$name1</span></br><span>$name2</span></br><span>$name3</span></br><span>$name4</span>
+  
 
 
 ...
