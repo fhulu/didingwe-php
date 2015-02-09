@@ -347,9 +347,9 @@ heading_2:
 heading_3:
     html: <h3 id="$code"><h3>
     
-footer_table:
-  html: <table ><tr></tr><tr><td valign="top" colspan="4">$field1</br></td></tr>
-        <tr></tr><tr><td valign="top">$field3$field4</td><td>$field5 $field6</td></tr></table>
+#footer_table:
+#  html: <table><tr></tr><tr><td valign="top" colspan="4">$field1</br></td></tr>
+#        <tr></tr><tr><td valign="top">$field3$field4</td><td>$field5 $field6</td></tr></table>
        
 four_rows_text:
   html: <span >$name1</span></br><span>$name2</span></br><span>$name3</span></br><span>$name4</span>
