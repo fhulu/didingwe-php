@@ -193,6 +193,7 @@ list:
 
 logout:
   audit: $email
+  type: link
   action:
     call: user::logout()
       
