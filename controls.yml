@@ -229,11 +229,6 @@ menu_item:
 one_cell_row:
   html: <tr><td>$field</td></tr>
   
-  
-  
-four_cell_row:
-  html: <table ><th align="left">$header</th><th align="left">$heading</th><tr></tr><tr><td valign="top">$field1</td><td>$field2</td></tr>
-        <tr></tr><tr><td valign="top">$field3</td><td valign="top">$field4</td></tr><tr><td colspan="2">$field5</td></tr></table>
 
 one_column_table:
   html: <table id='$code' title="$name">$items</table>
@@ -347,13 +342,28 @@ heading_2:
 heading_3:
     html: <h3 id="$code"><h3>
     
-#footer_table:
-#  html: <table><tr></tr><tr><td valign="top" colspan="4">$field1</br></td></tr>
-#        <tr></tr><tr><td valign="top">$field3$field4</td><td>$field5 $field6</td></tr></table>
+footer_table:
+  html: <table frame="box" ><tr></tr><tr><td valign="top" colspan="4">$field1</br></td></tr>
+        <tr></tr><tr><td valign="top">$field3</td><td align="right">$field6</td></tr></table>
+address_table:
+    html: <table><td></td>Contact Us<tr><td>$tel1</td><td>:</td><td>$tel2</td></tr>
+            <tr><td>$mail1</td><td>:</td><td>mail2</td></tr>
+               <tr><td>$fax1</td><td>:</td><td>$fax2</td></tr></table>
        
 four_rows_text:
   html: <span >$name1</span></br><span>$name2</span></br><span>$name3</span></br><span>$name4</span>
   
-
+mukoni_logo:
+    html: <table><tr><td size="1" style="font-family:Arial">Developed by:</td><td><a href="http://www.mukoni.co.za"><img src="mukoni.png" alt="mukoni logo" style="width:80px;height:20px"></a></td></tr></table>
+    
+social_media:
+    html: <table><tr><td><a href="http://www.facebook.com"><img src="fb.png" alt="facebook" style="width:30px;height:30px"></a></td>
+          <td><a href="http://www.twitter.com"><img src="twitter.png" alt="twitter" style="width:30px;height:30px"></a></td></tr></table>
+    
+    
+  
+four_cell_row:
+  html: <table></tr>
+        <tr><td>$field3</td></tr></table>
 
 ...
