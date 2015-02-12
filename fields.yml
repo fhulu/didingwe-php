@@ -68,6 +68,11 @@ first_name:
     - at_least(2)
     - alphabetic
   
+facebook:
+  src: /fb.png
+  action:
+    url: http://facebook.com
+  
 goto:
   action: $page.html
  
@@ -158,6 +163,11 @@ title:
     - Prof
     - Rev
     
+twitter:
+  src: /twitter.png
+  action:
+    url: https://twitter.com
+
 users:
   access: admin
   action:
@@ -176,3 +186,4 @@ view_users:
   access: admin
   action:
     url: /user/list
+
