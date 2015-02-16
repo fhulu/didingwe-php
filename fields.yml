@@ -42,7 +42,9 @@ create_time:
 date:
 
 developed_by:
-  name: developed by Mukoni Software
+  name: "developed by:"
+  
+  
 
 distributor_type:
   options:
@@ -102,6 +104,7 @@ last_name:
 latitude:
   valid: /^\d+\.\d+$/
 
+
 login:
   desc: Log in
   access: public
@@ -120,6 +123,14 @@ logout:
 longitude:
   valid: /^\d+\.\d+$/
   
+mukoni_logo:
+    desc: Visit our home page
+    type: image
+    src: mukoni.png
+    action:
+        url: http://www.mukoni.co.za
+       
+  
 otp:
   name: OTP
   desc: One Time Pin
@@ -134,9 +145,11 @@ query:
     call: $class::$invoker($key)
   
 register:
+  desc: Click here to register
   access: public
   action:
     dialog: /user/register
+    
     
 submit:
   type: button
