@@ -7,7 +7,9 @@ add_user:
   access: admin
   action:
     dialog: /user/create
-
+country_of_origin:
+  name: country
+  desc: country where game was developed
 audit_trail:
   access: admin
   action:
