@@ -211,7 +211,7 @@ $.fn.page = function(options, callback)
         
         if (path)
           item.path = path + '/' + id;
-        var created = this.create(item, id, types, type);        
+        var created = this.create(item, id, type);        
         item = created[0];
         var templated = this.get_template_html(item.template || template, item);
         parent.replace(regex, templated+'$1'); 
@@ -263,8 +263,9 @@ $.fn.page = function(options, callback)
       parent.find('#'+new_id).replaceWith(child);    
     },
     
-    create: function(field, id, types, type)
+    create: function(field, id, type)
     {
+      var types = this.types;
       var array;
       if ($.isArray(field)) {
         array = field;
@@ -314,7 +315,7 @@ $.fn.page = function(options, callback)
         }
 
         value.path = field.path+'/'+code;
-        var result = this.create(value, code, values);
+        var result = this.create(value, code);
         this.replace(obj, result[1], code);
       }
      
@@ -327,11 +328,13 @@ $.fn.page = function(options, callback)
     
     show: function(data)
     {
+      this.data = data;
+      this.types = this.data.types;
       var parent = page.parent;
       this.id = options.page_id = data.path.replace('/','_');
       var values = data.fields.values || data.values;
       data.fields.path = data.path;
-      var result = page.create(data.fields, this.id, data.types);
+      var result = page.create(data.fields, this.id);
       var object = result[1];
       data.fields = result[0];
       data.values = values;
