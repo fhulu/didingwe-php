@@ -108,7 +108,7 @@ class page
     $data = yaml_parse_file($file); 
     if (is_null($data))
       throw new Exception ("Unable to parse file $file");
-    return $fields = merge_options($fields, $data);
+    return $fields = page::merge_options($fields, $data);
   }
 
   function load_field($path=null, $expand=array('html','field'))
@@ -135,8 +135,8 @@ class page
     $this->set_types(page::$all_fields, $field);
     $type = at($field, 'type');
     if (!is_null($type)) {
-      $field = merge_options(at(page::$all_fields, $type), $field);
-      $field = merge_options(at($this->fields, $type), $field);
+      $field = page::merge_options(at(page::$all_fields, $type), $field);
+      $field = page::merge_options(at($this->fields, $type), $field);
       unset($field['type']);
     }
     $this->check_access($field);
@@ -182,7 +182,7 @@ class page
 
   function get_field($name)
   {
-    return merge_options(at(page::$all_fields, $name), at($this->fields, $name));
+    return page::merge_options(at(page::$all_fields, $name), at($this->fields, $name));
   }
 
   function read_field($path=null)
@@ -285,7 +285,7 @@ class page
         continue;
       }
       if (!is_numeric($key)) {
-        $option = merge_options(at($this->types, $key), $option);
+        $option = page::merge_options(at($this->types, $key), $option);
       }
       $allowed_roles = at($option, 'access');
       if (!is_null($allowed_roles)) {
@@ -327,7 +327,7 @@ class page
     if (!is_array($field)) {
       if (!array_key_exists($field, $parent)) return false;
       if (array_key_exists($field, $this->types)) {
-        $this->types[$field] = merge_options($this->types[$field], $parent[$field]); 
+        $this->types[$field] = page::merge_options($this->types[$field], $parent[$field]); 
         return true;
       }
 
@@ -479,6 +479,36 @@ class page
     return call_user_func_array($function, array_merge(array($options), $params));
   }
   
+  static function merge_options($options1, $options2)
+  {
+    //return merge_options($options1, $options2);
+    if (!is_array($options1) || !is_assoc($options1) && is_assoc($options2)) return $options2;
+    if (!is_assoc($options1)) {
+      $new_values = array();
+      $inheritables = array('type', 'template');
+      foreach($options1 as $v1) {
+        if (!is_array($v1) || array_intersect($inheritables,  array_keys($v1)) === array()) continue;
+        $new_values[] = $v1;
+      }
+      return array_merge($new_values, $options2);
+    }
+
+    $result = $options2;
+    foreach($options1 as $key=>$value ) {
+      if (!array_key_exists($key, $result)) {
+        $result[$key] = $value;
+        continue;
+      }
+      if (!is_array($value)) continue;
+      $value2 = $result[$key];
+      if (!is_array($value2)) continue;
+      $result[$key] = page::merge_options($value, $value2);
+    }
+    return $result; 
+  }  
+  
+
+
   function merge_type($field, $type=null)
   {
     if (is_null($type)) $type = at($field, 'type');
@@ -487,7 +517,7 @@ class page
     if (is_null($expanded)) 
       throw new Exception("Unknown  type $type specified");
     $super_type = $this->merge_type($expanded);
-    return merge_options($super_type, $field);
+    return page::merge_options($super_type, $field);
   }
   
   function expand_contents(&$parent)
@@ -512,17 +542,17 @@ class page
           //log::debug("EXPANDING overloaded ".json_encode($value));
         }
         if (null_at($value,'type'))
-          $value = merge_options($default_type, $value);
+          $value = page::merge_options($default_type, $value);
         $type_value = at($this->types, $key);
         //log::debug("TYPE VALUE ".json_encode($type_value));
-        $value = merge_options($type_value, $value);
+        $value = page::merge_options($type_value, $value);
         //log::debug("EXPANDED ".json_encode($value));
         continue;
       }
       if (!is_string($value) || preg_match('/\W/', $value)) continue;
       $code = $value;
       $value = at($this->types, $code);
-      $value = merge_options($default_type, $value);
+      $value = page::merge_options($default_type, $value);
       $value['code'] = $code;
     }
     
@@ -537,7 +567,7 @@ class page
       }
       if (!is_array($value)) continue;
       $type_value = at($this->types, $key);
-      $value = merge_options($type_value, $value);
+      $value = page::merge_options($type_value, $value);
       $this->expand_field($value);
     }
   }
