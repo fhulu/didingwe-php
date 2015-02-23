@@ -38,7 +38,8 @@ confirm_password:
 country:
   options:    
     - sql: SELECT item_code,item_name item_code from ref_list WHERE list_name = "country"
-               
+  valid: provided
+  
 create_time:
 
 date:
