@@ -163,7 +163,7 @@ class page
           throw new Exception("Invalid path step $step on ".implode('/', $path));
         }
       }
-      $field = $step_field;
+      $field = $this->merge_type($step_field);
       
       $this->set_types($this->fields, $field);
       $this->set_types(page::$all_fields, $field);
@@ -673,8 +673,26 @@ class page
   {
     $call = at($action ,'call');
     if ($call != '') { 
-      $invoker = $this->path[sizeof($this->path)-1];
-      log::debug("INVOKER $invoker ");
+      
+      $path_len = sizeof($this->path);
+      $invoker = $this->path[$path_len-1];
+      $context = $this->fields;//[$this->page];
+      log::debug_json("PATH $this->page", $this->path);
+      for ($i=1; $i < $path_len-1; ++$i) {
+        $path = $this->path[$i];
+        if (is_assoc($context)) {
+          $context = $context[$path];
+          continue;
+        }
+        
+        foreach($context as $pair) {
+          if(!isset($pair[$path])) continue;
+          $context = $pair[$path];
+          break;
+        }
+      }
+      $context = page::merge_options($this->fields[$path], $context);
+      log::debug_json("CALL $invoker $path_len", $context);
       $call = preg_replace('/\$class([^\w]|$)/', "$this->object\$1", $call);
       $call = preg_replace('/\$page([^\w]|$)/', "$this->page\$1", $call); 
       $call = preg_replace('/\$invoker([^\w]|$)/', "$invoker\$1", $call);
@@ -683,7 +701,7 @@ class page
       $matches = array();
       if (!preg_match('/^([^\(]+)(?:\(([^\)]*)\))?/', $call, $matches) ) 
         throw new Exception("Invalid function spec $call");
-      return $this->call($matches[1], $matches[2], $this->fields[$this->page]);
+      return $this->call($matches[1], $matches[2], $context);
     }
     
     $sql = at($action,'sql');
