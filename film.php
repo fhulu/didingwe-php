@@ -7,7 +7,47 @@ require_once('../common/table.php');
 class film 
 {
   //A function to add a game into a DB
-  
+  static function save($request)
+  {    
+          
+
+    global $db,$session;
+    
+    $title = $request[title];
+    $description =  $request[description];
+    $director  = $request[director];
+    $type = $request['type'];
+    $format = $request['format']; 
+    $running_time  = $request[running_time];
+    $genre = $request[subject_genre];
+    $director = $request[director];
+    $cast = $request[cast];
+    $language = $request[language];
+    $previous_advice = $request[previous_advice];
+    $prev_certificate_number = $request[certificate_number];
+    $release_type  = $request[release_type];
+    $status='amat';
+    $link=$request[link];
+    
+    if($link !='')
+      $status='matr';
+      
+    $partner_id = $session->user->partner_id;
+    $publisher = $db->read_one_value("select co_name from vendor where partner_id=$partner_id");
+    
+    $sql = "INSERT INTO film(title,synopsis,running_time,genre_code,publisher,director,cast,certificate_no,prev_format_code,language_code,release_type,link)
+            VALUES('$title','$description','$running_time','$genre','$publisher','$director','$cast','$prev_certificate_number','$format','$language','$release_type','$link')";
+       
+    $film_id = $db->insert($sql);
+    
+    //payment::start('fpb_submit_film', $film_id, $title, 'publication::payment_result');
+     
+    $user_id = $session->user->id;
+    $sql = "INSERT INTO partner_film(partner_id,film_id,user_id,status)
+            VALUES($partner_id,$film_id,$user_id,'$status')";
+    $db->insert($sql);
+    #user::audit('submit_film', $film_id, $title);
+  }
   
      
   //To check if a film already exits in the DB, validating by the name field
