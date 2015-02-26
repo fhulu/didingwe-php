@@ -184,14 +184,14 @@ $.fn.page = function(options, callback)
               break;
             };
             item = item[id];
-            if (typeof item === 'string') {
-              item = { code: id, name: item };
-            }
-            else if (id === 'sql' || id === 'call') {
+            if (id === 'sql' || id === 'call') {
               loading_data = true;
               this.load_data(parent, parent_id, name, [{type:type},{template:template}], types, path); 
               continue;
             }
+            if (typeof item === 'string') {
+              item = { code: id, name: item };
+            }            
             if (!item.type && type)
               item = merge(type, item);
             item = merge(types[id], item);
@@ -211,7 +211,7 @@ $.fn.page = function(options, callback)
         
         if (path)
           item.path = path + '/' + id;
-        var created = this.create(item, id, type);        
+        var created = this.create(item, id, types, type);        
         item = created[0];
         var templated = this.get_template_html(item.template || template, item);
         parent.replace(regex, templated+'$1'); 
@@ -263,9 +263,8 @@ $.fn.page = function(options, callback)
       parent.find('#'+new_id).replaceWith(child);    
     },
     
-    create: function(field, id, type)
+    create: function(field, id, types, type)
     {
-      var types = this.types;
       var array;
       if ($.isArray(field)) {
         array = field;
@@ -315,7 +314,7 @@ $.fn.page = function(options, callback)
         }
 
         value.path = field.path+'/'+code;
-        var result = this.create(value, code);
+        var result = this.create(value, code, values);
         this.replace(obj, result[1], code);
       }
      
@@ -328,13 +327,11 @@ $.fn.page = function(options, callback)
     
     show: function(data)
     {
-      this.data = data;
-      this.types = this.data.types;
       var parent = page.parent;
       this.id = options.page_id = data.path.replace('/','_');
       var values = data.fields.values || data.values;
       data.fields.path = data.path;
-      var result = page.create(data.fields, this.id);
+      var result = page.create(data.fields, this.id, data.types);
       var object = result[1];
       data.fields = result[0];
       data.values = values;
