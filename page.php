@@ -761,7 +761,7 @@ class page
   
   static function redirect($url)
   {
-    page::respond('redirect', $url);
+    page::respond('redirect', $url);    
   }
 
   static function show_dialog($dialog, $options=null, $values = null)
@@ -775,7 +775,7 @@ class page
   {
     page::show_dialog($dialog, $options, $values);
   }
-
+  
   static function close_dialog($message=null)
   {
     if (!is_null($message)) page::alert($message);
