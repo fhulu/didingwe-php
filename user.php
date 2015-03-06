@@ -469,6 +469,9 @@ class user
       'cellphone'=>$user->cellphone            
     ));
   }
+  static function distributor_details(){
+    page::redirect('/vendor/distributor_details');
+  }
   static function check_otp($request)
   {    
     global $db;
