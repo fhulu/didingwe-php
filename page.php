@@ -9,6 +9,7 @@
 //require_once 'db.php';
 require_once 'validator.php';
 require_once 'db.php';
+require_once 'user.php';
 require_once 'utils.php';
 
 class page_output
@@ -108,7 +109,7 @@ class page
     $data = yaml_parse_file($file); 
     if (is_null($data))
       throw new Exception ("Unable to parse file $file");
-    return $fields = page::merge_options($fields, $data);
+    return $fields = merge_options($fields, $data);
   }
 
   function load_field($path=null, $expand=array('html','field'))
@@ -135,8 +136,8 @@ class page
     $this->set_types(page::$all_fields, $field);
     $type = at($field, 'type');
     if (!is_null($type)) {
-      $field = page::merge_options(at(page::$all_fields, $type), $field);
-      $field = page::merge_options(at($this->fields, $type), $field);
+      $field = merge_options(at(page::$all_fields, $type), $field);
+      $field = merge_options(at($this->fields, $type), $field);
       unset($field['type']);
     }
     $this->check_access($field);
@@ -163,7 +164,7 @@ class page
           throw new Exception("Invalid path step $step on ".implode('/', $path));
         }
       }
-      $field = $this->merge_type($step_field);
+      $field = $step_field;
       
       $this->set_types($this->fields, $field);
       $this->set_types(page::$all_fields, $field);
@@ -182,7 +183,7 @@ class page
 
   function get_field($name)
   {
-    return page::merge_options(at(page::$all_fields, $name), at($this->fields, $name));
+    return merge_options(at(page::$all_fields, $name), at($this->fields, $name));
   }
 
   function read_field($path=null)
@@ -285,7 +286,7 @@ class page
         continue;
       }
       if (!is_numeric($key)) {
-        $option = page::merge_options(at($this->types, $key), $option);
+        $option = merge_options(at($this->types, $key), $option);
       }
       $allowed_roles = at($option, 'access');
       if (!is_null($allowed_roles)) {
@@ -327,7 +328,7 @@ class page
     if (!is_array($field)) {
       if (!array_key_exists($field, $parent)) return false;
       if (array_key_exists($field, $this->types)) {
-        $this->types[$field] = page::merge_options($this->types[$field], $parent[$field]); 
+        $this->types[$field] = merge_options($this->types[$field], $parent[$field]); 
         return true;
       }
 
@@ -439,15 +440,11 @@ class page
   {
     $field = $this->load_field(null, array('field'));
     $type = at($field, 'type');
-    if (!is_null($type)) {
-      $field = merge_options(at(page::$all_fields, $type), $field);
-      $field = merge_options(at($this->fields, $type), $field);
-      unset($field['type']);
-    }
+
     log::debug_json('field', $field);
     $items = array();
     foreach($field as $item) {
-      $items = merge_options($items, $this->reply($item, false), false);
+      $items = null_merge($items, $this->reply($item, false), false);
     }
     return $items;
   }
@@ -479,36 +476,6 @@ class page
     return call_user_func_array($function, array_merge(array($options), $params));
   }
   
-  static function merge_options($options1, $options2)
-  {
-    //return merge_options($options1, $options2);
-    if (!is_array($options1) || !is_assoc($options1) && is_assoc($options2)) return $options2;
-    if (!is_assoc($options1)) {
-      $new_values = array();
-      $inheritables = array('type', 'template');
-      foreach($options1 as $v1) {
-        if (!is_array($v1) || array_intersect($inheritables,  array_keys($v1)) === array()) continue;
-        $new_values[] = $v1;
-      }
-      return array_merge($new_values, $options2);
-    }
-
-    $result = $options2;
-    foreach($options1 as $key=>$value ) {
-      if (!array_key_exists($key, $result)) {
-        $result[$key] = $value;
-        continue;
-      }
-      if (!is_array($value)) continue;
-      $value2 = $result[$key];
-      if (!is_array($value2)) continue;
-      $result[$key] = page::merge_options($value, $value2);
-    }
-    return $result; 
-  }  
-  
-
-
   function merge_type($field, $type=null)
   {
     if (is_null($type)) $type = at($field, 'type');
@@ -517,7 +484,7 @@ class page
     if (is_null($expanded)) 
       throw new Exception("Unknown  type $type specified");
     $super_type = $this->merge_type($expanded);
-    return page::merge_options($super_type, $field);
+    return merge_options($super_type, $field);
   }
   
   function expand_contents(&$parent)
@@ -542,17 +509,17 @@ class page
           //log::debug("EXPANDING overloaded ".json_encode($value));
         }
         if (null_at($value,'type'))
-          $value = page::merge_options($default_type, $value);
+          $value = merge_options($default_type, $value);
         $type_value = at($this->types, $key);
         //log::debug("TYPE VALUE ".json_encode($type_value));
-        $value = page::merge_options($type_value, $value);
+        $value = merge_options($type_value, $value);
         //log::debug("EXPANDED ".json_encode($value));
         continue;
       }
       if (!is_string($value) || preg_match('/\W/', $value)) continue;
       $code = $value;
       $value = at($this->types, $code);
-      $value = page::merge_options($default_type, $value);
+      $value = merge_options($default_type, $value);
       $value['code'] = $code;
     }
     
@@ -567,7 +534,7 @@ class page
       }
       if (!is_array($value)) continue;
       $type_value = at($this->types, $key);
-      $value = page::merge_options($type_value, $value);
+      $value = merge_options($type_value, $value);
       $this->expand_field($value);
     }
   }
@@ -625,7 +592,7 @@ class page
     global $db;
     $fields = $this->fields[$this->page];
     $name = at($action, 'name');
-    if (is_null($name)) $name = ucwords (str_replace ('_', '',at($action, 'code')));
+    if (is_null($name)) $name = ucwords (str_replace ('_', ' ',at($action, 'code')));
     $result = null_merge($fields, $result, false);
     $detail = at($action, 'audit');
     if ($detail) {
@@ -673,26 +640,8 @@ class page
   {
     $call = at($action ,'call');
     if ($call != '') { 
-      
-      $path_len = sizeof($this->path);
-      $invoker = $this->path[$path_len-1];
-      $context = $this->fields;//[$this->page];
-      log::debug_json("PATH $this->page", $this->path);
-      for ($i=1; $i < $path_len-1; ++$i) {
-        $path = $this->path[$i];
-        if (is_assoc($context)) {
-          $context = $context[$path];
-          continue;
-        }
-        
-        foreach($context as $pair) {
-          if(!isset($pair[$path])) continue;
-          $context = $pair[$path];
-          break;
-        }
-      }
-      $context = page::merge_options($this->fields[$path], $context);
-      log::debug_json("CALL $invoker $path_len", $context);
+      $invoker = $this->path[sizeof($this->path)-1];
+      log::debug("INVOKER $invoker ");
       $call = preg_replace('/\$class([^\w]|$)/', "$this->object\$1", $call);
       $call = preg_replace('/\$page([^\w]|$)/', "$this->page\$1", $call); 
       $call = preg_replace('/\$invoker([^\w]|$)/', "$invoker\$1", $call);
@@ -701,7 +650,7 @@ class page
       $matches = array();
       if (!preg_match('/^([^\(]+)(?:\(([^\)]*)\))?/', $call, $matches) ) 
         throw new Exception("Invalid function spec $call");
-      return $this->call($matches[1], $matches[2], $context);
+      return $this->call($matches[1], $matches[2], $this->fields[$this->page]);
     }
     
     $sql = at($action,'sql');
@@ -737,16 +686,6 @@ class page
     return $items;
   }
     
-  function upload()
-  {
-    $options = $this->load_field(null, array('field'));
-    log::debug_json("UPLOAD", $options);
-    require_once 'document.php';
-    $id = document::upload($options['code']."_file", $options['format']);
-    if (!is_null($id))
-      page::update("id", $id);
-  }
-  
   static function respond($response, $value=null)
   {
     global $page_output;
