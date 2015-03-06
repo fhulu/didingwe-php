@@ -270,7 +270,7 @@ print:
     target: _blank
 
 radio:
-  html: <input name="$code" title="$desc" type='radio'></input>
+  html: <input name="$code" title="$desc" type="radio"></input>
     
 span:
   html: <span id="$code">$name</span>
