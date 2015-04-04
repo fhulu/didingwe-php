@@ -1,7 +1,12 @@
 # html controls
----
+---  
+
+ajax_result:
+  html: >
+    <span class=ajax_result style="display: none;"></span>
+
+
 button: 
-  desc: ""
   html: <button id="$code" title="$desc" class=action>$name</button>
   
 checkbox: 
@@ -22,8 +27,8 @@ control:
 container_without_id:
   html: <div>$contents</div>
   contents: 
-    template: $field
-  
+    - template: $field
+    
 datatable:
   html: |
     <table id="$code" class=data>
@@ -147,6 +152,15 @@ google_map:
    - orange
    - pink
 
+h1:
+  html: <h1 id="$code">$name</h1>
+    
+h2:
+  html: <h2 id="$code">$name</h2>
+    
+h3:
+  html: <h3 id="$code">$name</h3>
+    
 hidden:  
   html: <input id='$code' type=hidden></input>
 
@@ -155,9 +169,6 @@ image:
   
 imageurl:
   html: <a href="$code"> <img id="$code" src="$src" title="$desc"></img></a>
-
-input: 
-  html: <input id="$code" type="text"></input>
 
 inline_input:
   html: <a class=input>$field<span class="input">$desc</span></a>
@@ -175,6 +186,26 @@ inline_input_page:
   inputs: 
     - template: inline_input
 
+input: 
+  html: <input id="$code" type="text"></input>
+
+input_page:
+  type: container
+  contents:
+    - type: container
+    - header: 
+        contents:
+          - desc: { type: p }
+          - line
+          - ajax_result
+    - inputs: 
+        contents:
+          - type: input
+    - actions:
+        contents:
+          - type: button
+        
+    
 input_page_header: 
   html: |
     <div id="$code" page="$name">
@@ -198,13 +229,17 @@ labelled_input:
 labelled_input_page:
     html: |
       <div id="$code">
-        $input_page_header
+        <div id="$code" page="$name">
+          <p class="desc">$desc</p>
+          <span class=ajax_result style="display: none;"></span>
+        </div>
         <div class="form">
           $inputs
           <p></p>$actions
         </div>
       </div>
     inputs: 
+      - type: input
       - template: labelled_input
       - mandatory: "*"
 
@@ -239,6 +274,9 @@ one_row_table:
   html: <table id='$code'><tr>$items</tr></table>
   items:
     - template: table_cell
+
+p:
+  html: <p id="$code">$name</p>
 
 page_title:
   html: <title>$name</title>
@@ -335,12 +373,3 @@ textarea:
 
 text_input: {type: input }
 
-heading_1:
-    html: <h1 id="$code">$name</h1>
-    
-heading_2:
-    html: <h2 id="$code">$name</h2>
-    
-heading_3:
-    html: <h3 id="$code">$name</h3>
-    
