@@ -102,20 +102,20 @@ $.fn.page = function(options, callback)
     
     
     
-    merge_type: function(field, types, type)
+    merge_type: function(field, type)
     {
-      if (field == undefined || types === undefined) return field;
+      if (field == undefined || this.types === undefined) return field;
       if (type === undefined) type = field.type;
       if (type === undefined) return field;
-      var super_type = this.merge_type(types[type], types);
+      var super_type = this.merge_type(this.types[type]);
       return merge(super_type, field);
     },
    
-    get_type_html: function(type, types)
+    get_type_html: function(type)
     {
       if ($.isPlainObject(type)) return type;
       if (type.search(/\W/) >= 0) return {html: type};
-      return this.merge_type(types[type], types);
+      return this.merge_type(this.types[type]);
     },
     
     get_template_html: function(template, item)
@@ -152,6 +152,7 @@ $.fn.page = function(options, callback)
       var type;
       var template = "$field";
       var mandatory;
+      var action;
       var loading_data = false;
       var regex = new RegExp('(\\$'+name+')');
       for(var i in items) {
@@ -168,6 +169,10 @@ $.fn.page = function(options, callback)
           }
           if (item.mandatory !== undefined) {
             mandatory = item;
+            continue;
+          } 
+          if (item.action !== undefined) {
+            action = item.action;
             continue;
           } 
           
@@ -189,6 +194,7 @@ $.fn.page = function(options, callback)
               this.load_data(parent, parent_id, name, [{type:type},{template:template}], types, path); 
               continue;
             }
+            if (!item.action) item.action = action;
             if (typeof item === 'string') {
               item = { code: id, name: item };
             }            
@@ -207,6 +213,7 @@ $.fn.page = function(options, callback)
             id = item;
             item = $.copy(type);
           }
+          if (action) item.action = action;
         }
         
         if (path)
@@ -276,7 +283,7 @@ $.fn.page = function(options, callback)
       
       field.code = id;
       field.page_id = this.options.page_id;
-      field = page.merge_type(field, types);
+      field = this.merge_type(field);
       field.name = field.name || toTitleCase(id.replace(/[_\/]/g, ' '));
       field.key = page.options.key;
       if (!array) this.expand_fields(id, field);
@@ -285,7 +292,7 @@ $.fn.page = function(options, callback)
       var reserved = ['code','create','css','script','name', 'desc', 'data'];
       this.set_attr(obj, field, id);
       this.set_style(obj, field);
-      var values = $.extend({}, types, field);
+      var values = $.extend({}, this.globals, types, field);
       var matches = getMatches(obj.html(), /\$(\w+)/g);
       for (var i = 0; i< matches.length; ++i) {
         var code = matches[i];
@@ -304,17 +311,18 @@ $.fn.page = function(options, callback)
         if ($.isArray(value)) {
           if (types[code] !== undefined)
             value = $.merge($.merge([], types[code]), value);
-           this.append_contents(obj, id, code, value, values, field.path+'/'+code);
+           this.append_contents(obj, id, code, value, types, field.path+'/'+code);
            continue;
         }
         
         if (typeof value === 'string') {
           obj.replace("\\$"+code, value);
+          this.globals[code] = value;
           continue;
         }
 
         value.path = field.path+'/'+code;
-        var result = this.create(value, code, values);
+        var result = this.create(value, code, types);
         this.replace(obj, result[1], code);
       }
      
@@ -327,6 +335,13 @@ $.fn.page = function(options, callback)
     
     show: function(data)
     {
+      var self = this;
+      this.globals = {};
+      $.each(data.fields, function(code, value) {
+        self.globals[code] = value;
+      });
+      this.data = data;
+      this.types = this.data.types;
       var parent = page.parent;
       this.id = options.page_id = data.path.replace('/','_');
       var values = data.fields.values || data.values;
@@ -425,40 +440,44 @@ $.fn.page = function(options, callback)
     {
       var action = field.action;
       var data = {action: 'action', key: field.key, path: field.path};
-      for (var method in action) {
-        var value = action[method];
-        switch(method) {
-          case 'dialog': page.showDialog(value, {key: field.key}); return;
-          case 'redirect':
-          case 'url':
-            document.location = (action.redirect || action.url).replace('$key', field.key); 
-            return;
-          case 'target':
-            var url = '/?action=action';
-            for (var key in field) {
-              if (key === 'action') continue;
-              url += '&'+key+'='+encodeURIComponent(field[key]);
-            }        
-            document.location = url;
-            return;
-          case 'call':
-            if (action.post !== undefined) {
-              var page_id = field.page_id || obj.parents(".page").eq(0).attr('id');
-              var selector = action.post.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+page_id+"$2");
-              obj.jsonCheck(event, selector, '/', { data: data }, function(result) {
-                if (result === null) result = undefined;
-                obj.trigger('processed', [result]);
-                if (result) page.respond(result._responses, obj);
-              });
-              return;
-            }
-            $.json('/', {data: data}, function(result) {
+      console.log("Accepting ", field)
+      switch(action) {
+        case 'dialog': page.showDialog(field.url, {key: field.key}); return;
+        case 'target':
+          var url = '/?action=action';
+          for (var key in field) {
+            if (key === 'action') continue;
+            url += '&'+key+'='+encodeURIComponent(field[key]);
+          }        
+          document.location = url;
+          break;
+        case 'post':
+          if (field.post === undefined) {
+            console.log("No 'post' values set for 'post' action");
+            break;
+          }
+          var selector = field.post.select || field.post.selector;
+          if (selector !== undefined) {
+            var page_id = field.page_id || obj.parents(".page").eq(0).attr('id');
+            selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+page_id+"$2");
+            obj.jsonCheck(event, selector, '/', { data: data }, function(result) {
+              if (result === null) result = undefined;
               obj.trigger('processed', [result]);
-              if (result !== undefined) page.respond(result._responses, obj);
+              if (result) page.respond(result._responses, obj);
             });
-          case 'event':
-            obj.trigger(action.event, [obj, action]);
-        }
+            break;
+          }
+          $.json('/', {data: data}, function(result) {
+            obj.trigger('processed', [result]);
+            if (result !== undefined) page.respond(result._responses, obj);
+          });
+          break;
+        case 'event':
+          obj.trigger(field.event, [obj, action]);
+          break;
+        default:
+          if (field.url)
+            document.location = field.url.replace('$key', field.key); 
       }
     },
     
