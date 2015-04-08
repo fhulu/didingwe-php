@@ -397,7 +397,7 @@ class user
     return new user(array($id, $partner_id, $email,$title, $first_name, $last_name, $cellphone, $otp, $partner_id));
   }
   
-  static function register($request, $is_admin=false)
+  static function register($request)
   {    
     if (user::exists($request['email'], 1)) return;
     $request = db::quote($request);
@@ -434,9 +434,6 @@ class user
     else {
       $user = user::create($partner_id, $email, $password, $title,$first_name, $last_name, $cellphone, $otp, $requested_role);
     }
-    if ($is_admin) return;
-
-
     user::sms_otp($email, $otp);
     //$user->reload();
     $db->insert("insert into \$audit_db.trx(user_id, function_code, object_id)
