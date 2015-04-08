@@ -62,7 +62,7 @@ class user
     $this->roles = array();
     foreach ($assigned_roles as $role) {
       $roles = array($role);
-      $db->lineage($roles, "code", "base_code", "\$audit_db.role");
+      $db->lineage($roles, "code", "base_code", "\$audit_db.role", " and program_id = \$pid");
       $this->roles = array_merge($this->roles, $roles);
     }
   }
@@ -434,6 +434,9 @@ class user
     else {
       $user = user::create($partner_id, $email, $password, $title,$first_name, $last_name, $cellphone, $otp, $requested_role);
     }
+    if ($is_admin) return;
+
+
     user::sms_otp($email, $otp);
     //$user->reload();
     $db->insert("insert into \$audit_db.trx(user_id, function_code, object_id)
@@ -466,9 +469,6 @@ class user
       'cellphone'=>$user->cellphone            
     ));
   }
-  static function distributor_details(){
-    page::redirect('/vendor/distributor_details');
-  }
   static function check_otp($request)
   {    
     global $db;
@@ -489,10 +489,8 @@ class user
     global $db;
     $program_id = config::$program_id;  
     $id = $req['id'];
-    if($program_id==9)
-       $db->exec("update user set active = 0 where id = $id");
-    else
-       $db->exec("update user set active = 1 where id = $id");
+    
+    $db->exec("update user set active = 1 where id = $id");
     page::close_dialog();
     page::show_dialog('user/confirm_registration');
   }
@@ -728,16 +726,7 @@ class user
             from user u, user_role ur
             where u.id = ur.user_id and partner_id = $partner_id and role_code = 'admin' ");
     $link = "$proto://". $_SERVER['SERVER_NAME'] ."/manage_users.html"; //todo: get right http address for production
-
-    //todo: use program's main partner
-    if (sizeof($emails) == 0) {
-      $emails = $db->read_column("select email_address
-        from user u, user_role r
-        where u.partner_id = 3 and r.user_id = u.id and r.role_code = 'admin'");
-      $link = "$proto://". $_SERVER['SERVER_NAME'] ."/manage_all_users.html"; //todo: get right http address for production
-    }  
-    
-    
+       
     
     foreach($emails as $email) {
       $message = "Good day<br><br>$requestor would like to register as a user of the $program_name. Please click <a href=\"$link\">here</a> to give access to user.<br><br>
