@@ -68,9 +68,7 @@ confirm_registration:
     until your registration has been approved. <br>
     Please check your email for registration status.
   actions:
-    - login:
-        action: 
-          dialog: /user/login
+    - login: { action: dialog }
     
 add:
   type: labelled_input_page
@@ -106,6 +104,9 @@ edit:
   access: admin
   audit: $title,$first_name,$last_name,$cellphone,$email_address,$assigned_role
   url: /user/modify
+
+forgot_password:
+  desc: Click here if you have forgotten your password and you need to reset it
   
 history:
   access: admin,manager
@@ -135,17 +136,9 @@ login:
         valid: provided
         
   actions:
-    - logon
-    - forgot_password:
-        desc: Click here if you have forgotten your password and you need to reset it
-        action:
-          dialog: /user/start_reset_password
+    - login
+    - forgot_password: { action: dialog }
 
-logon:
-  name: Login
-  audit: $email
-  action:
-    call: user::login()
     
 list:
   access: admin,manager
@@ -193,10 +186,10 @@ list:
 logout:
   audit: $email
   type: link
-  call: user::logout()
+  action:
+    call: user::logout()
       
 modify:
-#  access: admin
   type: labelled_input_page
   desc: Change user details
   width: 600
@@ -214,7 +207,6 @@ modify:
         select title,first_name,last_name,cellphone,email_address,r.code
         role  
         from user u left join user_role ur on u.id = ur.user_id
-        left join role r on r.code = ur.role_code
         where id = $key
   actions:
     - update
@@ -233,10 +225,9 @@ profile:
     - role: { attr: disabled }
   values:
     - sql: |
-        select title,first_name,last_name,cellphone,email_address,r.code role
+        select title,first_name,last_name,cellphone,email_address,requested_role  
         from user u left join user_role ur on u.id = ur.user_id
-        left join role r on r.code = ur.role_code
-        where u.id = $uid
+        where id = $uid
   actions:
     - update
 
@@ -245,8 +236,7 @@ register:
   type: labelled_input_page
   desc: Register as a new user of the system
   width: 700
-  action:
-    dialog: user/register
+  url: /user/register
   inputs: 
     - title: {type: dropdown}          
     - first_name
@@ -257,8 +247,8 @@ register:
     - password
     - confirm_password
   actions:
-    - submit: { action: { call: $default } }
-
+    - submit
+    
 reset_password:
   audit: Changed password
 
@@ -272,8 +262,8 @@ start_reset_password:
     - email    
   actions:
     - next:
-        action: 
-          call: user::start_reset_pw()
+        call: user::start_reset_pw()
+        action: post
    
 
 update:
