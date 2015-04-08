@@ -1,5 +1,6 @@
 ## YAML Template.
 ---
+
 actions:
  - type: submit
 
@@ -7,6 +8,9 @@ add_user:
   access: admin
   url: /user/create
 
+admin:
+  name: Administrator
+  
 audit_trail:
   access: admin
   url: /user/audit_trail
@@ -29,27 +33,14 @@ confirm_password:
   type: password
   desc: Type in the same password as above to confirm correctness
   valid: matches(password)
-
+  
 country:
   options:    
     - sql: SELECT item_code,item_name item_code from ref_list WHERE list_name = "country"
   valid: provided
-  
-create_time:
-
-date:
-
+    
 developed_by:
-  name: "developed by:"
-  
-  
-
-distributor_type:
-  options:
-    - sql: >
-          SELECT item_code, item_name, list_name
-          FROM ref_list
-          WHERE list_name LIKE "%distr%" 
+  name: developed by Mukoni Software
   
 email:
   desc: Valid e-mail address
@@ -62,15 +53,15 @@ email_address:
 error_page:
   desc: Unexpected error occured. Please report to your System Administrator.
  
+facebook:
+  src: /fb.png
+  url: http://facebook.com
+  
 first_name:
   desc: Your first name as written in your ID book
   valid:
     - at_least(2)
     - alphabetic
-  
-facebook:
-  src: /fb.png
-  url: http://facebook.com
   
 goto:
   action: $page.html
@@ -100,7 +91,6 @@ last_name:
 latitude:
   valid: /^\d+\.\d+$/
 
-
 login:
   desc: Log in to the system
   access: public
@@ -112,7 +102,7 @@ logout:
   desc: Log out
   access: reg 
   audit: 
-  post:
+  action:
     call: user::logout()
 
 longitude:
@@ -125,6 +115,10 @@ manage_user_group:
 manage_users:
   access: user
   url: /user/list
+
+mobile_number:
+  desc: The mobile number at which you can be contacted on
+  valid: national_tel
   
 mukoni_logo:
     desc: Visit our home page
@@ -143,7 +137,7 @@ password:
 query:
   type: button
   call: $class::$invoker($key)
-
+  
 register:
   desc: Click here to register
   access: public
@@ -161,7 +155,7 @@ submit_page:
   type: submit
   name: Submit
   post: 
-    call: $class::$page($key)        
+    call: $class::$page($key)
       
 title:
   options:
@@ -186,6 +180,7 @@ validator:
   validate: all
 
 view_profile: 
+  desc: View my profile
   access: reg
   url: /user/profile
   action: dialog
