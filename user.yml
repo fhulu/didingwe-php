@@ -105,9 +105,8 @@ delete:
 edit:
   access: admin
   audit: $title,$first_name,$last_name,$cellphone,$email_address,$assigned_role
-  action:
-    dialog: user/modify
-
+  url: /user/modify
+  
 history:
   access: admin,manager
   type: datatable
@@ -194,10 +193,10 @@ list:
 logout:
   audit: $email
   type: link
-  action:
-    call: user::logout()
+  call: user::logout()
       
 modify:
+#  access: admin
   type: labelled_input_page
   desc: Change user details
   width: 600
@@ -212,8 +211,10 @@ modify:
         type: dropdown 
   values:
     - sql: |
-        select title,first_name,last_name,cellphone,email_address,requested_role  
+        select title,first_name,last_name,cellphone,email_address,r.code
+        role  
         from user u left join user_role ur on u.id = ur.user_id
+        left join role r on r.code = ur.role_code
         where id = $key
   actions:
     - update
@@ -232,9 +233,10 @@ profile:
     - role: { attr: disabled }
   values:
     - sql: |
-        select title,first_name,last_name,cellphone,email_address,requested_role  
+        select title,first_name,last_name,cellphone,email_address,r.code role
         from user u left join user_role ur on u.id = ur.user_id
-        where id = $uid
+        left join role r on r.code = ur.role_code
+        where u.id = $uid
   actions:
     - update
 
