@@ -96,14 +96,14 @@ login:
   access: public
   audit: $email
   url: /user/login
-
+  src: /logout_icon.jpg 
 
 logout:
   desc: Log out
   access: reg 
-  audit: 
-  action:
-    call: user::logout()
+  audit: $email  
+  src: /logout_icon.jpg 
+  call: user::logout()
 
 longitude:
   valid: /^\d+\.\d+$/
