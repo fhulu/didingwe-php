@@ -232,6 +232,7 @@ menu:
   html: <ul id="$code">$items</ul>
   items:
     - type: menu_item
+    - action: redirect
 
 menu_item:
   html: <li><a title="$desc">$name</a></li>
@@ -293,6 +294,7 @@ sub_menu:
       <span>$sub_items</span>
     </li>
   sub_items:
+    - action: redirect
     - type: link
     
 table:
