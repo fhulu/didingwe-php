@@ -5,15 +5,11 @@ actions:
 
 add_user: 
   access: admin
-  action:
-    dialog: /user/create
-country_of_origin:
-  name: country
-  desc: country where game was developed
+  url: /user/create
+
 audit_trail:
   access: admin
-  action:
-    url: /user/audit_trail
+  url: /user/audit_trail
 
 cellphone:
   desc: The cellphone number at which you can be contacted on
@@ -22,9 +18,8 @@ cellphone:
 change_password: 
   desc: Change your current password
   access: reg
-  action:
-    #call: /user/start_reset_pw
-    dialog: /user/start_reset_password
+  action: dialog
+  url: /user/start_reset_password
 
     
 contacts:
@@ -75,15 +70,13 @@ first_name:
   
 facebook:
   src: /fb.png
-  action:
-    url: http://facebook.com
+  url: http://facebook.com
   
 goto:
   action: $page.html
  
 home:
-  action:
-    url: /home
+  url: /home
      
 id:
   name: Identity
@@ -109,31 +102,36 @@ latitude:
 
 
 login:
-  desc: Log in
+  desc: Log in to the system
   access: public
   audit: $email
-  action:
-    dialog: /user/login
+  url: /user/login
 
 
 logout:
   desc: Log out
   access: reg 
   audit: 
-  action:
+  post:
     call: user::logout()
 
 longitude:
   valid: /^\d+\.\d+$/
+
+manage_user_group:
+  access: user
+  url: /user/groups
+  
+manage_users:
+  access: user
+  url: /user/list
   
 mukoni_logo:
     desc: Visit our home page
     type: image
     src: mukoni.png
-    action:
-        url: http://www.mukoni.co.za
-       
-  
+    url: http://www.mukoni.co.za
+    
 otp:
   name: OTP
   desc: One Time Pin
@@ -144,30 +142,26 @@ password:
  
 query:
   type: button
-  action:
-    call: $class::$invoker($key)
-  
+  call: $class::$invoker($key)
+
 register:
   desc: Click here to register
   access: public
-  action:
-    dialog: /user/register
-    
+  url: /user/register
     
 submit:
   type: button
-  action:
-    post: "#page *"
+  post: 
+    select: "#page *"
     validate: all
     call: $class::$invoker($key)
+  action: post
 
 submit_page:
-  type: button
+  type: submit
   name: Submit
-  action:
-    post: "#page *"
-    validate: all
-    call: $class::$page($key)
+  post: 
+    call: $class::$page($key)        
       
 title:
   options:
@@ -181,13 +175,11 @@ title:
     
 twitter:
   src: /twitter.png
-  action:
-    url: https://twitter.com
+  url: https://twitter.com
 
 users:
   access: admin
-  action:
-    url: /user/list
+  url: /user/list
 
 validator:
   post: #page *
@@ -195,11 +187,9 @@ validator:
 
 view_profile: 
   access: reg
-  action:
-    dialog: /user/profile
+  url: /user/profile
+  action: dialog
 
 view_users:
   access: admin
-  action:
-    url: /user/list
-
+  url: /user/list
