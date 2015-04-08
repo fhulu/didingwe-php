@@ -63,26 +63,39 @@ class page
   var $root;
   var $result;
   var $user;
+  var $page_offset;
 
   function __construct($echo=true, $request=null)
   {
     if (is_null($request)) $request = $_REQUEST;
-    log::debug(json_encode($request));
+    log::debug_json("REQUEST",json_encode($request));
     $this->request = $request;
     $this->path = explode('/', $request['path']);
     $this->method = $request['action'];
     if (is_null($this->method))
-      throw new Exception("No method parameter in request");    
+      throw new Exception("No method parameter in request");
+
+    $this->read_user();
+    $this->page_offset = 1;
     
     $this->types = array();
-    global $session;
-    $this->user = $session->user;
 
     $this->load();
     $this->result = $this->{$this->method}();
   
     if ($echo && !is_null($this->result))
       echo json_encode($this->result);
+  }
+  
+  function read_user()
+  {
+    log::debug_json("SESSION",$_SESSION['instance']);
+    if (!isset($_SESSION['instance'])) return;
+    require_once 'session.php';
+    global $session;
+    $session = unserialize($_SESSION['instance']);
+    $this->user = $session->user;
+    log::debug_json("USER",$this->user);
   }
   
   function load()
@@ -127,6 +140,7 @@ class page
     $this->page = array_shift($path);
     $field  = at($this->fields, $this->page);
     if (is_null($field)) {
+      $this->page_offset = 0;
       array_unshift($path, $this->page);
       $this->page = $this->object;
       $field = at($this->fields, $this->page);
@@ -440,8 +454,12 @@ class page
   {
     $field = $this->load_field(null, array('field'));
     $type = at($field, 'type');
-
-    log::debug_json('field', $field);
+    if (!is_null($type)) {
+      $field = merge_options(at(page::$all_fields, $type), $field);
+      $field = merge_options(at($this->fields, $type), $field);
+      unset($field['type']);
+    }
+    log::debug_json('field', $field); 
     $items = array();
     foreach($field as $item) {
       $items = null_merge($items, $this->reply($item, false), false);
@@ -476,6 +494,35 @@ class page
     return call_user_func_array($function, array_merge(array($options), $params));
   }
   
+  static function merge_options($options1, $options2)
+  {
+    //return merge_options($options1, $options2);
+    if (!is_array($options1) || !is_assoc($options1) && is_assoc($options2)) return $options2;
+    if (!is_assoc($options1)) {
+      $new_values = array();
+      $inheritables = array('type', 'template', 'action');
+      foreach($options1 as $v1) {
+        if (!is_array($v1) || array_intersect($inheritables,  array_keys($v1)) === array()) continue;
+        $new_values[] = $v1;
+      }
+      return array_merge($new_values, $options2);
+    }
+
+    $result = $options2;
+    foreach($options1 as $key=>$value ) {
+      if (!array_key_exists($key, $result)) {
+        $result[$key] = $value;
+        continue;
+      }
+      if (!is_array($value)) continue;
+      $value2 = $result[$key];
+      if (!is_array($value2)) continue;
+      $result[$key] = page::merge_options($value, $value2);
+    }
+    return $result; 
+  }  
+  
+
   function merge_type($field, $type=null)
   {
     if (is_null($type)) $type = at($field, 'type');
@@ -484,7 +531,7 @@ class page
     if (is_null($expanded)) 
       throw new Exception("Unknown  type $type specified");
     $super_type = $this->merge_type($expanded);
-    return merge_options($super_type, $field);
+    return page::merge_options($super_type, $field);
   }
   
   function expand_contents(&$parent)
@@ -605,6 +652,8 @@ class page
       global $session;
       $user = $session->user;
     }
+    $name = addslashes($name);
+    $detail = addslashes($detail);
     $db->insert("insert into audit_trail(user_id, action, detail)
       values($user->id, '$name', '$detail')");
   }
@@ -614,7 +663,7 @@ class page
     $invoker = $this->load_field(null, array('field'));
     log::debug_json("INVOKER ", $invoker);
     $fields = $this->fields[$this->page];
-    $action = $invoker['action'];
+    $action = $invoker['post'];
     $this->expand_field($fields);
     $validate = at($action, 'validate');
     if (!is_null($validate) && $validate != 'none' && !$this->validate($fields))
@@ -638,26 +687,49 @@ class page
   
   function reply($action, $assoc = true)
   {
-    $call = at($action ,'call');
-    if ($call != '') { 
-      $invoker = $this->path[sizeof($this->path)-1];
-      log::debug("INVOKER $invoker ");
-      $call = preg_replace('/\$class([^\w]|$)/', "$this->object\$1", $call);
-      $call = preg_replace('/\$page([^\w]|$)/', "$this->page\$1", $call); 
-      $call = preg_replace('/\$invoker([^\w]|$)/', "$invoker\$1", $call);
-      $call = preg_replace('/\$default([^\w]|$)/', "$this->object::$this->page\$1", $call);
-
-      $matches = array();
-      if (!preg_match('/^([^\(]+)(?:\(([^\)]*)\))?/', $call, $matches) ) 
-        throw new Exception("Invalid function spec $call");
-      return $this->call($matches[1], $matches[2], $this->fields[$this->page]);
+    $sql = at($action,'sql');
+    if ($sql != '') {
+      $sql = page::replace_sql($sql, $this->request);
+      global $db;
+     
+      return $assoc?$db->page_through_names($sql): $db->page_through_indices($sql);
     }
     
-    $sql = at($action,'sql');
-    if ($sql == '') return null;
-    $sql = page::replace_sql($sql, $this->request);
-    global $db;
-    return $assoc?$db->page_through_names($sql): $db->page_through_indices($sql);
+    $call = at($action ,'call');
+    if ($call == '') return null;
+      
+    $path_len = sizeof($this->path);
+    $invoker = $this->path[$path_len-1];
+    $context = $this->fields[$this->page];
+    log::debug_json("PATH $this->page", $this->path);
+    $i = $this->page_offset+1;
+    $branch = $this->path[$i];
+    for (; $i < $path_len-1; ++$i) {
+      $branch = $this->path[$i];
+      if (is_assoc($context)) {
+       log::debug_json("ASSOC BRANCH $branch ", $context);
+       $context = $context[$branch];
+        continue;
+      }
+
+      log::debug_json("ARRAY BRANCH $branch ", $context);
+      foreach($context as $pair) {
+        if(!isset($pair[$branch])) continue;
+        $context = $pair[$branch];
+        break;
+      }
+    }
+    $context = page::merge_options($this->fields[$branch], $context);
+    log::debug_json("CALL $invoker $path_len", $context);
+    $call = preg_replace('/\$class([^\w]|$)/', "$this->object\$1", $call);
+    $call = preg_replace('/\$page([^\w]|$)/', "$this->page\$1", $call); 
+    $call = preg_replace('/\$invoker([^\w]|$)/', "$invoker\$1", $call);
+    $call = preg_replace('/\$default([^\w]|$)/', "$this->object::$this->page\$1", $call);
+
+    $matches = array();
+    if (!preg_match('/^([^\(]+)(?:\(([^\)]*)\))?/', $call, $matches) ) 
+      throw new Exception("Invalid function spec $call");
+    return $this->call($matches[1], $matches[2], $context);    
   }
 
   static function check_field($options, $field)
