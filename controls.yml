@@ -12,10 +12,6 @@ button:
 checkbox: 
   html: <input id="$code" title="$desc" type='checkbox'></input>
 
-background-image:
-            html: <body background="$code"></body>
-
-  
 container: 
   html: <div id="$code">$contents</div>
   contents: 
@@ -166,9 +162,7 @@ hidden:
 
 image:
   html: <img id="$code" src="$src" title="$desc"></img>
-  
-imageurl:
-  html: <a href="$code"> <img id="$code" src="$src" title="$desc"></img></a>
+
 
 inline_input:
   html: <a class=input>$field<span class="input">$desc</span></a>
@@ -186,26 +180,6 @@ inline_input_page:
   inputs: 
     - template: inline_input
 
-input: 
-  html: <input id="$code" type="text"></input>
-
-input_page:
-  type: container
-  contents:
-    - type: container
-    - header: 
-        contents:
-          - desc: { type: p }
-          - line
-          - ajax_result
-    - inputs: 
-        contents:
-          - type: input
-    - actions:
-        contents:
-          - type: button
-        
-    
 input_page_header: 
   html: |
     <div id="$code" page="$name">
@@ -259,11 +233,9 @@ menu:
 
 menu_item:
   html: <li><a title="$desc">$name</a></li>
-
  
 one_cell_row:
   html: <tr><td>$field</td></tr>
-  
 
 one_column_table:
   html: <table id='$code' title="$name">$items</table>
@@ -283,8 +255,7 @@ page_title:
 
 paragraph:
   html: <p id="$code">$name</p>
-  
-  
+
 password:
   html: <input type="password" id="$code"></input>
   valid: password
@@ -363,8 +334,6 @@ table_page:
 table_row:
   html: <tr>$columns</tr>
   columns: [template: table_cell]
-  
-
 
 text: { type: input } 
 
@@ -373,3 +342,12 @@ textarea:
 
 text_input: {type: input }
 
+
+time:
+  type: input
+  create: datetimepicker
+  datepicker: false
+  format: H:i
+  script: /common/jquery.datetimepicker.js
+  css: /common/jquery.datetimepicker.css
+...
