@@ -17,12 +17,9 @@
       });
       if (this.options.center)
         this.location(this.options.center[0], this.options.center[1]);
+      
       if (this.options.load) {
-        var data = { 
-            action: 'data', 
-            path: this.options.path + '/load', 
-            key: this.options.key 
-        };
+        var data = { action: 'data', path: this.options.path + '/load' };
         $.json('/', {data: data}, function(data) {
           self.addPoints(data);
         });

@@ -3,7 +3,7 @@
 
 actions:
  - type: submit
- - action: redirect
+ - action: post
 
 add_user: 
   access: admin

@@ -186,8 +186,8 @@ list:
 logout:
   audit: $email
   type: link
-  action:
-    call: user::logout()
+  action: post
+  call: user::logout()
       
 modify:
   type: labelled_input_page
