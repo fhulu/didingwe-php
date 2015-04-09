@@ -213,7 +213,7 @@ $.fn.page = function(options, callback)
             id = item;
             item = $.copy(type);
           }
-          if (action) item.action = action;
+          if (action) item = merge({ action: action}, item);
         }
         
         if (path)
