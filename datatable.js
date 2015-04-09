@@ -399,7 +399,7 @@
         if (props.action === undefined) return;
         var key = sink.attr('_key');
         if (key === undefined) key = self.options.key;
-        var options = $.extend({},self.params,{code: action, action: props.action, key: key });
+        var options = $.extend({},self.params, props, {code: action, action: props.action, key: key });
         var listener = self.element.closest('.page').eq(0);
         options.path += '/';
         if (path !== undefined) options.path += path + '/';
