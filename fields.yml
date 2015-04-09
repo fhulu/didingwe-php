@@ -3,6 +3,7 @@
 
 actions:
  - type: submit
+ - action: redirect
 
 add_user: 
   access: admin
@@ -102,7 +103,8 @@ logout:
   desc: Log out
   access: reg 
   audit: $email  
-  src: /logout_icon.jpg 
+  src: /logout_icon.jpg
+  action: post
   call: user::logout()
 
 longitude:
