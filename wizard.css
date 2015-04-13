@@ -1,0 +1,22 @@
+/* 
+    Document   : wizard
+    Created on : 27 Jul 2012, 12:18:39 PM
+    Author     : fhulu
+    Description:
+        Purpose of the stylesheet follows.
+*/
+
+.wizard-page
+{ 
+  display: block;
+  position: relative;
+}
+
+.wizard-nav
+{
+  display: inline-block;
+  border-top: 1px solid grey;
+  padding-top: 5px;
+  top: -70px;
+  width: 100%;
+}
