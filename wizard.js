@@ -123,23 +123,22 @@
         $('<button class="wizard-next action">').text(this.options.next_name).appendTo(nav);
       var self = this;
       nav.find('.wizard-prev').click(function() {
-        nav.trigger('wizard-jump', [self.stack[self.stack.length-2]]);
+        nav.trigger('wizard-jump', [$(this),self.stack[self.stack.length-2]]);
       })
       nav.find('.wizard-next').click(function() {
-        var dest;
-        if (typeof props.next === 'string') {
-          var page = self.element.find('.wizard-page[name="'+props.next+'"]');
-          dest = self.element.find('.wizard-page').index(page);
-        }
-        else dest = index + 1;
-        nav.trigger('wizard-jump', [dest]);
+        var dest = typeof props.next === 'string'? props.next: index+1;
+        nav.trigger('wizard-jump', [$(this),dest]);
       })
     },
     
     _bindActions: function()
     {
       var self = this;
-      this.element.on('wizard-jump', function(event, index) {
+      this.element.on('wizard-jump', function(event, object, index) {
+        if (typeof index === 'string') {
+          var page = self.element.find('.wizard-page[name="'+index+'"]');
+          index = self.element.find('.wizard-page').index(page);
+        }
         self._showPage(index);
       })
     }    
