@@ -215,7 +215,7 @@ $.fn.page = function(options, callback)
           }
         }
         
-        if (action) item = $.extend({ action: action}, item);
+        if (action) item.action = action;
         if (path)
           item.path = path + '/' + id;
         var created = this.create(item, id, types, type);        
@@ -472,8 +472,9 @@ $.fn.page = function(options, callback)
             if (result !== undefined) page.respond(result._responses, obj);
           });
           break;
-        case 'event':
-          obj.trigger(field.event, [obj, field.event]);
+        case 'trigger':
+          var event = field.event.split('<');
+          obj.trigger(event[0], [obj, event[1]]);
           break;
         default:
           if (field.url)
