@@ -760,3 +760,55 @@ function merge(a1, a2)
   }
   return r;
 }
+
+function rgbToHex(color) {
+    if (color.substr(0, 1) === "#") {
+        return color;
+    }
+    var nums = /(.*?)rgb\((\d+),\s*(\d+),\s*(\d+)\)/i.exec(color),
+        r = parseInt(nums[2], 10).toString(16),
+        g = parseInt(nums[3], 10).toString(16),
+        b = parseInt(nums[4], 10).toString(16);
+    return "#"+ (
+        (r.length == 1 ? "0"+ r : r) +
+        (g.length == 1 ? "0"+ g : g) +
+        (b.length == 1 ? "0"+ b : b)
+    );
+}
+
+function darken( hexColor, factor ) {
+   if ( factor < 0 ) factor = 0;
+
+   var c = hexColor;
+   if( c.substr(0,1) == "#" ){
+     c = c.substring(1);
+   }
+
+   if( c.length == 3 || c.length == 6 ){
+     var i = c.length / 3;
+     var f;  // the relative distance from white
+
+     var r = parseInt( c.substr(0, i ), 16 );
+     f = ( factor * r / (256-r) );
+     r = Math.floor((256 * f) / (f+1));
+
+     r = r.toString(16);
+     if ( r.length == 1 ) r = "0" + r;
+
+     var g = parseInt(c.substr(i, i), 16);
+     f = (factor * g / (256 - g));
+     g = Math.floor((256 * f) / (f + 1));
+     g = g.toString(16);
+     if (g.length == 1)
+     g = "0" + g;
+
+     var b = parseInt(c.substr(2 * i, i), 16);
+     f = (factor * b / (256 - b));
+     b = Math.floor((256 * f) / (f + 1));
+     b = b.toString(16);
+     if (b.length == 1)
+     b = "0" + b;
+     c = r + g + b;
+   }
+  return "#" + c;
+ }
