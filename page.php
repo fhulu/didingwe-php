@@ -467,7 +467,7 @@ class page
     return $items;
   }
   
-  function call($function, $params, $options=null)
+  function call_method($function, $params, $options=null)
   {
     log::debug("FUNCTION $function PARAMS:".$params);
     list($class, $method) = explode('::', $function);
@@ -668,6 +668,7 @@ class page
     $validate = at($action, 'validate');
     if (!is_null($validate) && $validate != 'none' && !$this->validate($fields))
       return null;
+    
     $result = $this->reply($action);
     if (!page::has_errors() && array_key_exists('audit', $invoker))
       $this->audit($invoker, $result);
@@ -685,19 +686,16 @@ class page
     return preg_replace('/\$key([^\w]|$)/', "$key\$1", $sql);
   }
   
-  function reply($action, $assoc = true)
+  function sql($sql)
   {
-    $sql = at($action,'sql');
-    if ($sql != '') {
-      $sql = page::replace_sql($sql, $this->request);
-      global $db;
-     
-      return $assoc?$db->page_through_names($sql): $db->page_through_indices($sql);
-    }
-    
-    $call = at($action ,'call');
-    if ($call == '') return null;
-      
+    $sql = page::replace_sql($sql, $this->request);
+    global $db;
+    return $assoc?$db->page_through_names($sql): $db->page_through_indices($sql);    
+  }
+  
+
+  function call($method)
+  {
     $path_len = sizeof($this->path);
     $invoker = $this->path[$path_len-1];
     $context = $this->fields[$this->page];
@@ -721,17 +719,30 @@ class page
     }
     $context = page::merge_options($this->fields[$branch], $context);
     log::debug_json("CALL $invoker $path_len", $context);
-    $call = preg_replace('/\$class([^\w]|$)/', "$this->object\$1", $call);
-    $call = preg_replace('/\$page([^\w]|$)/', "$this->page\$1", $call); 
-    $call = preg_replace('/\$invoker([^\w]|$)/', "$invoker\$1", $call);
-    $call = preg_replace('/\$default([^\w]|$)/', "$this->object::$this->page\$1", $call);
+    $method = preg_replace('/\$class([^\w]|$)/', "$this->object\$1", $method);
+    $method = preg_replace('/\$page([^\w]|$)/', "$this->page\$1", $method); 
+    $method = preg_replace('/\$invoker([^\w]|$)/', "$invoker\$1", $method);
+    $method = preg_replace('/\$default([^\w]|$)/', "$this->object::$this->page\$1", $method);
 
     $matches = array();
-    if (!preg_match('/^([^\(]+)(?:\(([^\)]*)\))?/', $call, $matches) ) 
-      throw new Exception("Invalid function spec $call");
-    return $this->call($matches[1], $matches[2], $context);    
+    if (!preg_match('/^([^\(]+)(?:\(([^\)]*)\))?/', $method, $matches) ) 
+      throw new Exception("Invalid function spec $method");
+    return $this->call_method($matches[1], $matches[2], $context);    
   }
-
+  
+  function reply($actions, $assoc = true)
+  {
+    $results = null;
+    log::debug_json("REPLY", $actions);
+    foreach($actions as $method=>$parameter) {
+      if ($method === 'validate' || !method_exists($this, $method)) continue;
+      $result = $this->{$method}($parameter);
+      if ($result == false) return null;
+      $results = page::merge_options($results, $result);
+    }
+    return $results;
+  }
+  
   static function check_field($options, $field)
   {
     $value = $options[$field];
