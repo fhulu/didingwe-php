@@ -194,7 +194,7 @@ $.fn.page = function(options, callback)
               this.load_data(parent, parent_id, name, [{type:type},{template:template}], types, path); 
               continue;
             }
-            if (!item.action) item.action = action;
+          
             if (typeof item === 'string') {
               item = { code: id, name: item };
             }            
@@ -213,9 +213,9 @@ $.fn.page = function(options, callback)
             id = item;
             item = $.copy(type);
           }
-          if (action) item = merge({ action: action}, item);
         }
         
+        if (action) item = $.extend({ action: action}, item);
         if (path)
           item.path = path + '/' + id;
         var created = this.create(item, id, types, type);        
@@ -440,7 +440,7 @@ $.fn.page = function(options, callback)
     {
       var action = field.action;
       var data = {action: 'action', key: field.key, path: field.path};
-      console.log("Accepting ", field)
+      console.log("accept", field)
       switch(action) {
         case 'dialog': page.showDialog(field.url, {key: field.key}); return;
         case 'target':
@@ -453,7 +453,7 @@ $.fn.page = function(options, callback)
           break;
         case 'post':
           if (field.post === undefined) {
-            console.log("No 'post' values set for 'post' action");
+            console.log("No 'post' values set for 'post' action")
             break;
           }
           var selector = field.post.select || field.post.selector;
@@ -473,7 +473,7 @@ $.fn.page = function(options, callback)
           });
           break;
         case 'event':
-          obj.trigger(field.event, [obj, action]);
+          obj.trigger(field.event, [obj, field.event]);
           break;
         default:
           if (field.url)
@@ -491,12 +491,14 @@ $.fn.page = function(options, callback)
       }
       var self = this;
       $.each(responses, function(key, val) {
+        console.log("response", key, val);
         switch(key) {
           case 'alert': alert(val); break;
           case 'show_dialog': self.showDialog(val, responses.options); break;
           case 'close_dialog': self.closeDialog(parent); break;
           case 'redirect': location.href = val; break;
-          case 'update': parent.setChildren(val); break;
+          case 'update': 
+            parent.setChildren(val); break;
         }
       });      
       return this;
