@@ -9,14 +9,48 @@
 .wizard-page
 { 
   display: block;
-  position: relative;
+  position: absolute;
+  top: 0px;
 }
+
 
 .wizard-nav
 {
+  position: relative;
   display: inline-block;
   border-top: 1px solid grey;
   padding-top: 5px;
-  top: -70px;
+  height: 40px;
   width: 100%;
+  top: -28px;
+}
+
+.wizard-heading
+{
+  color: white;
+  background-color: darkcyan;
+  -webkit-transform:rotate(90deg);
+  -moz-transform:rotate(90deg);
+  -o-transform: rotate(90deg);
+  -ms-transform:rotate(90deg);
+  transform: rotate(270deg);
+  padding: 3px 5px;
+  border-bottom: 1px solid grey;
+/*  left: -50%;
+  top: 50%;*/
+}
+
+.wizard-content
+{
+  width: 100%;
+  top: -28px;
+  position: relative;
+}
+.wizard-heading>*
+{
+/*  -webkit-transform:rotate(90deg);
+  -moz-transform:rotate(90deg);
+  -o-transform: rotate(90deg);
+  -ms-transform:rotate(90deg);
+  transform: rotate(270deg);*/
 }

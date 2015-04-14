@@ -34,41 +34,62 @@
     _createPage: function(index) 
     {
       var props = this.options.steps[index];
-      var page = $('<div class=wizard-page>').attr('name',props.name).appendTo(this.element);
-      var heading = $('<div class=wizard-heading>').appendTo(page);
-      $('<div class=wizard-number>').text(index).appendTo(heading);
+      var page = $('<div class=wizard-page>').attr('name',props.name).hide().appendTo(this.element);
+      var heading = $('<div class=wizard-heading>').hide().appendTo(page);
+      $('<div class=wizard-number>').text(index+1).appendTo(heading);
       $('<span class=wizard-title>').appendTo(heading);
+      var height = parseInt(this.element.css('height'));
+      var width = parseInt(this.element.css('width'));
+      var content = $('<div class=wizard-content>').appendTo(page);
+      var nav = $('<div class=wizard-nav>').appendTo(page);
+      content.height(height-parseInt(nav.css('height')));
+      var offset = 24*index;
+      page.css('left', offset+'px');
+      heading.width(height);
+      heading.css('left', -height/2+'px');
+      heading.css('top', height/2-12+'px');
+      heading.hide();
+      if (index > 0) {
+        var prev = this.element.find('.wizard-page').eq(index-1);
+        var color = prev.find('.wizard-heading').css('background-color');
+        color = darken(rgbToHex(color), 1.2);
+        heading.css('background-color', color);
+      }
     },
     
     _showPage: function(index)
     { 
       if (this.stack.length) {
-        var prev_page;
-        var prev_index = this.stack[this.stack.length-1];
-        if (prev_index < index) {
-           var prev_page = this.element.find('.wizard-page').eq(prev_index);
-           prev_page.removeClass('wizard-current');
-           prev_page.addClass('wizard-done');
+        var top_index = this.stack[this.stack.length-1];
+        if (index == top_index) return;
+        if (top_index < index) {
+          this._hidePage(top_index, true);
         }
-        else do { 
-          prev_page = this.element.find('.wizard-page').eq(prev_index);
-          prev_page.removeClass('wizard-done');
-          prev_index = this.stack.pop();
-        } while (prev_index > index);
-        prev_page.find('.wizard-content,.wizard-nav').hide();
-        
+        else do {
+          top_index = this.stack.pop();
+          this._hidePage(top_index, false);
+        } while (top_index >   index);
       }
 
       var page = this.element.find('.wizard-page').eq(index);
-      page.addClass('wizard-current');
-      var content = page.find('.wizard-content');
-      if (!content.exists()) 
+      page.addClass('wizard-current').show();
+      if (!page.hasClass('wizard-loaded')) 
         this._loadPage(page, index);
-      else content.show();
       this.stack.push(index);
-      page.find('.wizard-nav').show();
+      page.find('.wizard-heading').hide();
+      page.find('.wizard-content,.wizard-nav').show();
     },
         
+        
+    _hidePage: function(index, show_heading)
+    {
+      var page = this.element.find('.wizard-page').eq(index);
+      page.removeClass('wizard-current');
+      if (show_heading) page.find('.wizard-heading').show();
+      page.find('.wizard-content,.wizard-nav').hide();
+      page.removeClass('wizard-done');
+    },
+    
     _loadPage: function(page, index)
     {
       page.addClass('wizard-loading');
@@ -78,9 +99,12 @@
       var tmp = $('<div></div>');
       tmp.page({path: path, key: this.options.key});
       var self = this;
+      var content = page.find('.wizard-content');
       tmp.on('read_'+path.replace(/\//, '_'), function(event, object) {
-        object.css('height','100%');
-        object.addClass('wizard-content').appendTo(page);
+        object.height(content.height());
+        object.css('left', content.css('left'));
+        object.addClass('wizard-content');
+        content.replaceWith(object);
         self._createNavigation(page, props, index);
         page.addClass('wizard-loaded').removeClass('wizard-loading');
       });
@@ -91,8 +115,8 @@
       var num_steps = this.options.steps.length;
       if (props.prev === undefined) props.prev = index > 0 && num_steps > 1;
       if (props.next === undefined) props.next = index >= 0 && index < num_steps-1;
-      var nav = $('<div class=wizard-nav>').appendTo(parent);
       if (!props.prev && !props.next) return;
+      var nav = parent.find('.wizard-nav');
       if (props.prev) 
         $('<button class="wizard-prev action">').text(this.options.prev_name).appendTo(nav);
       if (props.next) 
@@ -102,12 +126,13 @@
         nav.trigger('wizard-jump', [self.stack[self.stack.length-2]]);
       })
       nav.find('.wizard-next').click(function() {
+        var dest;
         if (typeof props.next === 'string') {
           var page = self.element.find('.wizard-page[name="'+props.next+'"]');
-          index = self.element.find('.wizard-page').index(page);
+          dest = self.element.find('.wizard-page').index(page);
         }
-        else index += 1;
-        nav.trigger('wizard-jump', [index]);
+        else dest = index + 1;
+        nav.trigger('wizard-jump', [dest]);
       })
     },
     
