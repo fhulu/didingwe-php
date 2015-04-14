@@ -354,4 +354,13 @@ time:
   format: H:i
   script: /common/jquery.datetimepicker.js
   css: /common/jquery.datetimepicker.css
+
+wizard:
+  create: wizard
+  script: /common/wizard.js
+  css: /common/wizard.css
+  html: <div id=$code class=wizard></div>
+  prev_name: Previous
+  next_name: Next
+
 ...
