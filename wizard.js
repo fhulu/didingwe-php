@@ -36,15 +36,13 @@
       var props = this.options.steps[index];
       var page = $('<div class=wizard-page>').attr('name',props.name).hide().appendTo(this.element);
       var heading = $('<div class=wizard-heading>').hide().appendTo(page);
-      $('<div class=wizard-number>').text(index+1).appendTo(heading);
+      $('<div class=wizard-number>').appendTo(heading);
       $('<span class=wizard-title>').appendTo(heading);
       var height = parseInt(this.element.css('height'));
       var width = parseInt(this.element.css('width'));
       var content = $('<div class=wizard-content>').appendTo(page);
       var nav = $('<div class=wizard-nav>').appendTo(page);
       content.height(height-parseInt(nav.css('height')));
-      var offset = 24*index;
-      page.css('left', offset+'px');
       heading.width(height);
       heading.css('left', -height/2+'px');
       heading.css('top', height/2-12+'px');
@@ -72,10 +70,9 @@
           }
           this._hidePage(top_index, true);
         }
-        
-        do { // going backwards
-          top_index = this.stack.pop();
-          this._hidePage(top_index, false);
+        else do {
+            top_index = this.stack.pop();
+            this._hidePage(top_index, false);
         } while (top_index >  index);
       }
       
@@ -90,6 +87,10 @@
         this._loadPage(page, index);
       page.find('.wizard-heading').hide();
       page.find('.wizard-content,.wizard-nav').show();
+      var offset = 24*this.stack.length;
+      //todo: allow variable page band width;
+      page.css('left', offset+'px');
+      page.width(this.element.width()-offset);
       this.stack.push(index);
     },
         
@@ -98,6 +99,7 @@
     {
       var page = this.element.find('.wizard-page').eq(index);
       page.removeClass('wizard-current');
+      page.find('.wizard-number').text(this.stack.length);
       if (show_heading) page.find('.wizard-heading').show();
       page.find('.wizard-content,.wizard-nav').hide();
       page.removeClass('wizard-done');
