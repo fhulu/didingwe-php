@@ -22,10 +22,15 @@ $.fn.page = function(options, callback)
       });
     },
    
-    expand_value: function(values,value)
+    expand_value: function(values,value, parent_id)
     {
       $.each(values, function(code, subst) {
         if (typeof subst === 'string' && value !== null) {
+          var sources = /copy\s*\((.+)\)/.exec(subst);
+          if (sources && sources.length > 1) {
+            var source = $('#'+sources[1]+' #'+parent_id+',[name='+sources[1]+'] #'+parent_id);
+            subst = source.val() || source.text() ;
+          }
           value = value.replace(new RegExp('\\$'+code, 'g'), subst);
           if (value.indexOf('$') < 0) return;
         }
@@ -38,7 +43,7 @@ $.fn.page = function(options, callback)
       $.each(data, function(field, value) {
         if (typeof value !== 'string' || value.indexOf('$') < 0 || field === 'template' && field === 'attr') return;
         value = value.replace('$code', parent_id);
-        data[field] = page.expand_value(data, value);
+        data[field] = page.expand_value(data, value, parent_id);
       });
       data['html'] = data['html'].replace(/\$(value|desc)/, '');
       return data;
@@ -317,7 +322,6 @@ $.fn.page = function(options, callback)
         }
         
         if (typeof value === 'string') {
-          console.log("code-value", code,value);
           obj.replace("\\$"+code, value);
           this.globals[code] = value;
           continue;
