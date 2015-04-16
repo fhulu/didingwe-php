@@ -691,7 +691,7 @@ class page
     return preg_replace('/\$key([^\w]|$)/', "$key\$1", $sql);
   }
   
-  function sql($sql)
+  function sql($sql, $assoc)
   {
     $sql = page::replace_sql($sql, $this->request);
     global $db;
@@ -741,7 +741,7 @@ class page
     log::debug_json("REPLY", $actions);
     foreach($actions as $method=>$parameter) {
       if ($method === 'validate' || !method_exists($this, $method)) continue;
-      $result = $this->{$method}($parameter);
+      $result = $this->{$method}($parameter, $assoc);
       if ($result == false) return null;
       $results = page::merge_options($results, $result);
     }
