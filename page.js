@@ -40,6 +40,7 @@ $.fn.page = function(options, callback)
         value = value.replace('$code', parent_id);
         data[field] = page.expand_value(data, value);
       });
+      data['html'] = data['html'].replace(/\$(value|desc)/, '');
       return data;
     },
         
@@ -316,6 +317,7 @@ $.fn.page = function(options, callback)
         }
         
         if (typeof value === 'string') {
+          console.log("code-value", code,value);
           obj.replace("\\$"+code, value);
           this.globals[code] = value;
           continue;
