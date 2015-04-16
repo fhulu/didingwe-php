@@ -168,7 +168,7 @@ image:
   html: <img id="$code" src="$src" title="$desc"></img>
 
 input: 
-  html: <input id="$code" type="text"></input>
+  html: <input id="$code" type="text" value="$value"></input>
 
 inline_input:
   html: <a class=input>$field<span class="input">$desc</span></a>
