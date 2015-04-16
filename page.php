@@ -469,6 +469,10 @@ class page
   
   function call_method($function, $params, $options=null)
   {
+    if (!is_callable($function)) {
+      log::warn("Uncallable function $function");
+      return;
+    }
     log::debug("FUNCTION $function PARAMS:".$params);
     list($class, $method) = explode('::', $function);
     $file = "$class.php";
