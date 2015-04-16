@@ -101,6 +101,10 @@ datetime:
 disabled_text_input:
   type: input
   attr: disabled
+
+disabled_input:
+  type: input
+  attr: disabled
   
 dropdown:
   html: |
