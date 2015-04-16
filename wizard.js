@@ -9,7 +9,7 @@
       this._createPages();
       this._bindActions();
       this.stack = new Array();
-      this._showPage(0);
+      this._jumpTo(0);
     },
     
     _createPages: function()
@@ -57,25 +57,34 @@
       }
     },
     
-    _showPage: function(index)
+    _jumpTo: function(index)
     { 
       if (this.stack.length) {
         var top_index = this.stack[this.stack.length-1];
-        if (index == top_index) return;
-        if (top_index < index) {
-          this._hidePage(top_index, true);
+        if (index === top_index) return;
+        if (top_index < index) {  // going forward
+          this.stack.push(index);
+          var page = this.element.find('.wizard-page').eq(top_index);
+          page.find('#validate').click();
+          return;
         }
-        else do {
+        
+        do { // going backwards
           top_index = this.stack.pop();
           this._hidePage(top_index, false);
         } while (top_index >   index);
       }
-
+      
+      this.stack.push(index);
+      this._showPage(index);
+    },
+    
+    _showPage: function(index)
+    {
       var page = this.element.find('.wizard-page').eq(index);
       page.addClass('wizard-current').show();
       if (!page.hasClass('wizard-loaded')) 
         this._loadPage(page, index);
-      this.stack.push(index);
       page.find('.wizard-heading').hide();
       page.find('.wizard-content,.wizard-nav').show();
     },
@@ -139,6 +148,14 @@
           var page = self.element.find('.wizard-page[name="'+index+'"]');
           index = self.element.find('.wizard-page').index(page);
         }
+        self._jumpTo(index);
+      })
+      
+      this.element.on('processed', function(event, result) {
+        if (!result) return;
+        var index = self.stack.pop();
+        self._hidePage(index, true);
+        index = self.stack[self.stack.length-1];
         self._showPage(index);
       })
     }    
