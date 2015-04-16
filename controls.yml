@@ -208,11 +208,9 @@ labelled_input:
 
 labelled_input_page:
     html: |
-      <div id="$code">
-        <div id="$code" page="$name">
-          <p class="desc">$desc</p>
-          <span class=ajax_result style="display: none;"></span>
-        </div>
+      <div id="$code" page="$name" title="$name">
+        <p class="desc">$desc</p>
+        <span class=ajax_result style="display: none;"></span>
         <div class="form">
           $inputs
           <p></p>$actions
