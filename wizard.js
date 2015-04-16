@@ -59,11 +59,11 @@
     
     _jumpTo: function(index)
     { 
+      this.next_step = index;
       if (this.stack.length) {
         var top_index = this.stack[this.stack.length-1];
         if (index === top_index) return;
         if (top_index < index) {  // going forward
-          this.stack.push(index);
           var page = this.element.find('.wizard-page').eq(top_index);
           page.find('#validate').click();
           return;
@@ -72,10 +72,9 @@
         do { // going backwards
           top_index = this.stack.pop();
           this._hidePage(top_index, false);
-        } while (top_index >   index);
+        } while (top_index >  index);
       }
       
-      this.stack.push(index);
       this._showPage(index);
     },
     
@@ -87,6 +86,7 @@
         this._loadPage(page, index);
       page.find('.wizard-heading').hide();
       page.find('.wizard-content,.wizard-nav').show();
+      this.stack.push(index);
     },
         
         
@@ -152,11 +152,10 @@
       })
       
       this.element.on('processed', function(event, result) {
-        if (!result) return;
-        var index = self.stack.pop();
+        if (result || !self.stack.length) return;
+        var index = self.stack[self.stack.length-1];
         self._hidePage(index, true);
-        index = self.stack[self.stack.length-1];
-        self._showPage(index);
+        self._showPage(self.next_step);
       })
     }    
   })
