@@ -36,7 +36,7 @@
       var props = this.options.steps[index];
       var page = $('<div class=wizard-page>').attr('name',props.name).hide().appendTo(this.element);
       var heading = $('<div class=wizard-heading>').hide().appendTo(page);
-      $('<div class=wizard-number>').appendTo(heading);
+      $('<span class=wizard-number>').appendTo(heading);
       $('<span class=wizard-title>').appendTo(heading);
       var height = parseInt(this.element.css('height'));
       var width = parseInt(this.element.css('width'));
@@ -99,7 +99,8 @@
     {
       var page = this.element.find('.wizard-page').eq(index);
       page.removeClass('wizard-current');
-      page.find('.wizard-number').text(this.stack.length);
+      page.find('.wizard-number').text(this.stack.length+'. ');
+      page.find('.wizard-title').text(page.find('.wizard-content').attr('title'));
       if (show_heading) page.find('.wizard-heading').show();
       page.find('.wizard-content,.wizard-nav').hide();
       page.removeClass('wizard-done');
