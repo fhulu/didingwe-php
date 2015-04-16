@@ -35,7 +35,8 @@
     {
       var props = this.options.steps[index];
       var page = $('<div class=wizard-page>').attr('name',props.name).hide().appendTo(this.element);
-      var heading = $('<div class=wizard-heading>').hide().appendTo(page);
+      var heading = $('<div class=wizard-heading>').appendTo(page);
+      this.heading_width = parseInt(heading.css('height'));
       $('<span class=wizard-number>').appendTo(heading);
       $('<span class=wizard-title>').appendTo(heading);
       var height = parseInt(this.element.css('height'));
@@ -44,13 +45,13 @@
       var nav = $('<div class=wizard-nav>').appendTo(page);
       content.height(height-parseInt(nav.css('height')));
       heading.width(height);
-      heading.css('left', -height/2+'px');
-      heading.css('top', height/2-12+'px');
+      heading.css('left', (-(height-this.heading_width+6)/2)+'px');
+      heading.css('top', (height/2-12)+'px');
       heading.hide();
       if (index > 0) {
         var prev = this.element.find('.wizard-page').eq(index-1);
         var color = prev.find('.wizard-heading').css('background-color');
-        color = darken(rgbToHex(color), 1.2);
+        color = darken(rgbToHex(color), 1.15);
         heading.css('background-color', color);
       }
     },
@@ -87,8 +88,7 @@
         this._loadPage(page, index);
       page.find('.wizard-heading').hide();
       page.find('.wizard-content,.wizard-nav').show();
-      var offset = 24*this.stack.length;
-      //todo: allow variable page band width;
+      var offset = this.stack.length * this.heading_width + 2;
       page.css('left', offset+'px');
       page.width(this.element.width()-offset);
       this.stack.push(index);
@@ -99,9 +99,13 @@
     {
       var page = this.element.find('.wizard-page').eq(index);
       page.removeClass('wizard-current');
-      page.find('.wizard-number').text(this.stack.length+'. ');
-      page.find('.wizard-title').text(page.find('.wizard-content').attr('title'));
-      if (show_heading) page.find('.wizard-heading').show();
+      if (show_heading) {
+        page.find('.wizard-number').text(this.stack.length+'. ');
+        page.find('.wizard-title').text(page.find('.wizard-content').attr('title'));  
+        page.find('.wizard-heading').show();
+      }
+      else
+        page.find('.wizard-heading').hide();
       page.find('.wizard-content,.wizard-nav').hide();
       page.removeClass('wizard-done');
     },
@@ -163,6 +167,11 @@
         var index = self.stack[self.stack.length-1];
         self._hidePage(index, true);
         self._showPage(self.next_step);
+      })
+      
+      this.element.find('.wizard-heading').click(function() {
+        var index = parseInt($(this).find('.wizard-number').text())-1;
+        self._jumpTo(self.stack[index]);
       })
     }    
   })
