@@ -434,7 +434,7 @@ $.fn.page = function(options, callback)
         }
         if (array && id !== 'sql' && id !== 'call') continue;
         var params = { action: 'values', path: data.path+'/values', key: data.fields.key } 
-        $.json('/', {data: params }, function(result) { 
+        parent.find('*').json('/', {data: params }, function(result) { 
           for (var i in result) {
             parent.setChildren(result[i]);
           }
