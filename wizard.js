@@ -65,8 +65,12 @@
         if (index === top_index) return;
         if (top_index < index) {  // going forward
           var page = this.element.find('.wizard-page').eq(top_index);
-          page.find('#validate').click();
-          return;
+          var validator = page.find('#validate');
+          if (validator.exists()) {
+            validator.click();
+            return;
+          }
+          this._hidePage(top_index, true);
         }
         
         do { // going backwards
