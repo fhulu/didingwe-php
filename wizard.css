@@ -41,8 +41,8 @@
   transform: rotate(270deg);
   padding: 3px 5px;
   border-bottom: 1px solid grey;
-/*  left: -50%;
-  top: 50%;*/
+  height: 24px;
+  cursor: pointer
 }
 
 .wizard-content
