@@ -204,8 +204,8 @@ $.fn.page = function(options, callback)
             if (typeof item === 'string') {
               item = { code: id, name: item };
             }            
-            if (!item.type && type)
-              item = merge(type, item);
+            if (!item.action && action) item.action = action;
+            if (!item.type && type) item = merge(type, item);
             item = merge(types[id], item);
           }
         }
@@ -219,9 +219,9 @@ $.fn.page = function(options, callback)
             id = item;
             item = $.copy(type);
           }
+          if (action) item.action = action;
         }
         
-        if (action) item.action = action;
         if (path)
           item.path = path + '/' + id;
         var created = this.create(item, id, types, type);        
