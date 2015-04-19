@@ -14,11 +14,6 @@
   width: 100%
 }
 
-.wizard-content #validate
-{
-  display: none;
-}
-
 .wizard-nav
 {
   position: relative;
@@ -27,7 +22,8 @@
   padding-top: 5px;
   height: 40px;
   width: 100%;
-  top: -28px;
+  top: -2px;
+  left: 8px;
 }
 
 .wizard-heading
@@ -49,5 +45,12 @@
 {
   width: 100%;
   top: -10px;
+  left: 10px;
   position: relative;
 }
+
+.wizard-content #validate
+{
+  display: none;
+}
+
