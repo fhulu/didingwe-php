@@ -194,6 +194,7 @@ $.fn.page = function(options, callback)
               id = key;
               break;
             };
+            assert(item[id], "Invalid item " + JSON.stringify($.copy(item))); 
             item = item[id];
             if (id === 'sql' || id === 'call') {
               loading_data = true;
@@ -458,11 +459,7 @@ $.fn.page = function(options, callback)
           document.location = url;
           break;
         case 'post':
-          if (field.post === undefined) {
-            console.log("No 'post' values set for 'post' action")
-            break;
-          }
-          var selector = field.post.select || field.post.selector;
+          var selector = field.selector;
           if (selector !== undefined) {
             var page_id = field.page_id || obj.parents(".page").eq(0).attr('id');
             selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+page_id+"$2");
