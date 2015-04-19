@@ -98,6 +98,9 @@ datetime:
   script: /common/jquery.datetimepicker.js
   css: /common/jquery.datetimepicker.css
   
+date_time:
+  type: date_time
+  
 disabled_text_input:
   type: input
   attr: disabled
@@ -107,9 +110,10 @@ disabled_input:
   attr: disabled
   
 dropdown:
+  unselected: --Select $name--
   html: |
     <select id="$code">
-      <option value=''>--Select $name--</option>
+      <option value=''>$unselected</option>
       $options
     </select>
   options:
@@ -166,6 +170,27 @@ hidden:
 
 image:
   html: <img id="$code" src="$src" title="$desc"></img>
+
+info_line:
+  html: |
+    <div class=info-line>
+      <label>$name</label>
+      <div class=info-text>$field</div>
+    </div>  
+
+info_page:
+    html: |
+      <div id="$code" page="$name" title="$name">
+        <p class="desc">$desc</p>
+        <span class=ajax_result style="display: none;"></span>
+        <div class="form">
+          $lines
+          <p></p>$actions
+        </div>
+      </div>
+    lines: 
+      - type: disabled_input
+      - template: info_line
 
 input: 
   html: <input id="$code" type="text" value="$value"></input>
@@ -282,6 +307,31 @@ print:
     validate: none
     call: datatable::pdf($key)
     target: _blank
+
+question_input:
+  html: |
+    <div class=question-input name="$name">
+      <div class=question>$question</div>
+      <a class=input>
+        $field
+      </a>
+    </div>  
+
+question_input_page:
+    html: |
+      <div id="$code" page="$name" title="$name">
+          <h2>$name</h2>
+        <p class="desc">$desc</p>
+        <span class=ajax_result style="display: none;"></span>
+        <div class="form">
+          $inputs
+          $actions
+        </div>
+      </div>
+    inputs: 
+      - type: input
+      - template: question_input
+      - mandatory: "*"
 
 radio:
   html: <input name="$code" title="$desc" type="radio"></input>
