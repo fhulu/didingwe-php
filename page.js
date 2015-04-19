@@ -161,6 +161,8 @@ $.fn.page = function(options, callback)
       var action;
       var loading_data = false;
       var regex = new RegExp('(\\$'+name+')');
+      var new_item_name = '_new_'+name;
+      var new_item_html = '<div id="'+new_item_name+'"></div>';
       for(var i in items) {
         var item = items[i];
         var id;
@@ -225,13 +227,26 @@ $.fn.page = function(options, callback)
         
         if (path)
           item.path = path + '/' + id;
+        parent.replace(regex,new_item_html+'$1');
         var created = this.create(item, id, types, type);        
         item = created[0];
-        var templated = this.get_template_html(item.template || template, item);
-        parent.replace(regex, templated+'$1'); 
         var obj = created[1];
-        this.replace(parent, obj, id, 'field');
+        var templated = this.get_template_html(item.template || template, item);
+        if (templated === '$field') {
+          templated = obj;
+        }
+        else {
+          templated = $(templated);
+          this.replace(templated, obj, id, 'field');
+        }
+        parent.find('#'+new_item_name).replaceWith(templated);
         this.init_events(obj, item);
+        if (item.hide || item.show === false) {
+          templated.hide();
+        }
+        templated.on('show_hide', function() {
+          obj.is(':visible')? $(this).hide(): $(this).show();
+        });
       }
       
       if (!loading_data)
@@ -274,7 +289,8 @@ $.fn.page = function(options, callback)
       var new_id = "__new__"+id;
       var new_html = "<div id="+new_id+"></div>";
       parent.replace("\\$"+field, new_html);
-      parent.find('#'+new_id).replaceWith(child);    
+      parent.find('#'+new_id).replaceWith(child); 
+      return child;
     },
     
     create: function(field, id, types, type)
@@ -408,7 +424,7 @@ $.fn.page = function(options, callback)
       field.page_id = options.page_id;
       obj.click(function(event) {
         page.accept(event, $(this), field);
-      });
+      });      
     },
 
     set_values: function(parent, data)
@@ -448,6 +464,7 @@ $.fn.page = function(options, callback)
       var action = field.action;
       var data = {action: 'action', key: field.key, path: field.path};
       console.log("accept", field)
+      var page_id = field.page_id || obj.parents(".page").eq(0).attr('id');
       switch(action) {
         case 'dialog': page.showDialog(field.url, {key: field.key}); return;
         case 'target':
@@ -461,7 +478,6 @@ $.fn.page = function(options, callback)
         case 'post':
           var selector = field.selector;
           if (selector !== undefined) {
-            var page_id = field.page_id || obj.parents(".page").eq(0).attr('id');
             selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+page_id+"$2");
             obj.jsonCheck(event, selector, '/', { data: data }, function(result) {
               if (result === null) result = undefined;
@@ -477,7 +493,11 @@ $.fn.page = function(options, callback)
           break;
         case 'trigger':
           var event = field.event.split('<');
-          obj.trigger(event[0], [obj, event[1]]);
+          var sink = obj;
+          if (field.sink) {
+            sink = $(field.sink.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+page_id+"$2"));
+          }
+          sink.trigger(event[0], [obj, event[1]]);
           break;
         default:
           if (field.url)
