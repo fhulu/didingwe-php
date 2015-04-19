@@ -666,15 +666,14 @@ class page
   function action()
   {
     $invoker = $this->load_field(null, array('field'));
-    log::debug_json("INVOKER ", $invoker);
+    log::debug_json("action INVOKER ", $invoker);
     $fields = $this->fields[$this->page];
-    $action = $invoker['post'];
     $this->expand_field($fields);
-    $validate = at($action, 'validate');
+    $validate = at($invoker, 'validate');
     if (!is_null($validate) && $validate != 'none' && !$this->validate($fields))
       return null;
     
-    $result = $this->reply($action);
+    $result = $this->reply($invoker);
     if (!page::has_errors() && array_key_exists('audit', $invoker))
       $this->audit($invoker, $result);
     return $result;
@@ -739,8 +738,9 @@ class page
   {
     $results = null;
     log::debug_json("REPLY", $actions);
+    $methods = array('sql', 'call');
     foreach($actions as $method=>$parameter) {
-      if ($method === 'validate' || !method_exists($this, $method)) continue;
+      if (!in_array($method, $methods)) continue;
       $result = $this->{$method}($parameter, $assoc);
       if ($result == false) return null;
       $results = page::merge_options($results, $result);
