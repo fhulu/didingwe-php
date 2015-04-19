@@ -88,7 +88,7 @@
         this._loadPage(page, index);
       page.find('.wizard-heading').hide();
       page.find('.wizard-content,.wizard-nav').show();
-      var offset = this.stack.length * this.heading_width + 2;
+      var offset = this.stack.length * this.heading_width + 6;
       page.css('left', offset+'px');
       page.width(this.element.width()-offset);
       this.stack.push(index);
