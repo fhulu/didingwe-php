@@ -147,17 +147,15 @@ register:
     
 submit:
   type: button
-  post: 
-    select: "#page *"
-    validate: all
-    call: $class::$invoker($key)
+  selector: "#page *"
+  validate: all
+  call: $class::$invoker($key)
   action: post
 
 submit_page:
   type: submit
   name: Submit
-  post: 
-    call: $class::$page($key)
+  call: $class::$page($key)
       
 title:
   options:
@@ -178,7 +176,7 @@ users:
   url: /user/list
 
 validator:
-  post: #page *
+  action: post
   validate: all
 
 view_profile: 
