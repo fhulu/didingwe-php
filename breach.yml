@@ -23,5 +23,6 @@ breach:
           access: public
           name: Your session has timed out. 
   actions:
-    - login: { type: button }
+    - home: { action: redirect }
+    - login: { action: dialog } 
     
