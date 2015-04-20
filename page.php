@@ -492,7 +492,7 @@ class page
     if (is_array($options)) {
       $options = array_merge($options, $this->request);
       foreach($params as &$param) {
-        $param = replace_vars ($param, $options);
+        $param = replace_vars (trim($param), $options);
       }
     }
     else $options = $this->request;
