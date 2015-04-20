@@ -845,4 +845,12 @@ class page
     $result = &$page_output->values;
     return !is_null(at($result, 'errors'));
   }
+  
+  static function trigger($event, $selector=null, $arg1=null)
+  {
+    $options = array("event"=>$event);
+    if (!is_null($selector)) $options['sink'] = $selector;
+    if (!is_null($arg1)) $options['args'] = array_slice(func_get_args(),2);
+    page::respond('trigger', $options);    
+  }
 }
