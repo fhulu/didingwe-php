@@ -245,7 +245,7 @@ $.fn.page = function(options, callback)
           templated.hide();
         }
         templated.on('show_hide', function() {
-          obj.is(':visible')? $(this).hide(): $(this).show();
+          $(this).is(':visible')? $(this).hide(): $(this).show();
         });
       }
       
@@ -391,6 +391,12 @@ $.fn.page = function(options, callback)
           object.setChildren(result[i]);
         }
       });
+      
+      object.find('*').on('show', function(e, invoker,show) {
+        if (show === undefined) return false;
+        console.log('captured show', $(this), show);
+        show?$(this).show():$(this).hide();
+      });
       this.object = object;
       return this;
     },
@@ -523,6 +529,16 @@ $.fn.page = function(options, callback)
           case 'redirect': location.href = val; break;
           case 'update': 
             parent.setChildren(val); break;
+          case 'trigger':
+            var event = val.event;
+            var sink = parent;
+            if (val.sink) {
+              sink = $(val.sink.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+self.id+"$2"));
+            }
+            //val.args.unshift(invoker);
+            console.log("args", val.args);
+            sink.trigger(event, [invoker, val.args[0]]);
+            break;
         }
       });      
       return this;
