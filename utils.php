@@ -122,3 +122,11 @@ function merge_options($options1, $options2)
   }
   return $result; 
 }
+
+function choose_value(&$array, $arg1)
+{
+  if (array_key_exists($arg1, $array)) return $array[$arg1];
+  $args = func_get_args();
+  if (sizeof($args) < 3) return null;
+  return call_user_func_array('choose_value', array_splice($args, 1,1));
+}
