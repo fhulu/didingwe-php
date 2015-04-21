@@ -123,10 +123,12 @@ function merge_options($options1, $options2)
   return $result; 
 }
 
-function choose_value(&$array, $arg1)
+function choose_value(&$array)
 {
-  if (array_key_exists($arg1, $array)) return $array[$arg1];
   $args = func_get_args();
-  if (sizeof($args) < 3) return null;
-  return call_user_func_array('choose_value', array_splice($args, 1,1));
+  array_shift($args);
+  foreach ($args as $arg) {
+    if ($array[$arg] != '') return $array[$arg];
+  }
+  return null;
 }
