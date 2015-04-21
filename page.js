@@ -22,16 +22,29 @@ $.fn.page = function(options, callback)
       });
     },
    
-    expand_value: function(values,value, parent_id)
+    expand_function: function(value, parent_id)
+    {
+      var matches = /(copy|css)\s*\((.+)\)/.exec(value);
+      if (!matches || matches.length < 1) return value;
+      var source = matches[2];
+      if (matches[1] === 'copy')
+        source = $('#'+source+' #'+parent_id+',[name='+source+'] #'+parent_id);
+      else
+        source = $(source);
+      var result = source.val();
+      if (result === undefined) result = source.text();
+      if (result === undefined) result = value;
+      console.log("copy/css", result, matches);
+      return result;
+    },
+    
+    expand_value: function(values,value,parent_id)
     {
       $.each(values, function(code, subst) {
         if (typeof subst === 'string' && value !== null) {
-          var sources = /copy\s*\((.+)\)/.exec(subst);
-          if (sources && sources.length > 1) {
-            var source = $('#'+sources[1]+' #'+parent_id+',[name='+sources[1]+'] #'+parent_id);
-            subst = source.val() || source.text() ;
-          }
+          subst = page.expand_function(subst, parent_id)
           value = value.replace(new RegExp('\\$'+code, 'g'), subst);
+          values[code] = subst;
           if (value.indexOf('$') < 0) return;
         }
       });
@@ -110,7 +123,7 @@ $.fn.page = function(options, callback)
     
     merge_type: function(field, type)
     {
-      if (field == undefined || this.types === undefined) return field;
+      if (field === undefined || this.types === undefined) return field;
       if (type === undefined) type = field.type;
       if (type === undefined) return field;
       var super_type = this.merge_type(this.types[type]);
@@ -310,6 +323,9 @@ $.fn.page = function(options, callback)
       field.name = field.name || toTitleCase(id.replace(/[_\/]/g, ' '));
       field.key = page.options.key;
       if (!array) this.expand_fields(id, field);
+      if (field.value) {
+        console.log("expandend field", id, $.copy(field));
+      }
       var obj = $(field.html);
       assert(obj.exists(), "Invalid HTML for "+id+": "+field.html); 
       var reserved = ['code','create','css','script','name', 'desc', 'data'];
@@ -469,7 +485,7 @@ $.fn.page = function(options, callback)
     {
       var action = field.action;
       var data = {action: 'action', key: field.key, path: field.path};
-      console.log("accept", field)
+      //console.log("accept", field)
       var page_id = field.page_id || obj.parents(".page").eq(0).attr('id');
       switch(action) {
         case 'dialog': page.showDialog(field.url, {key: field.key}); return;
