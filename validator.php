@@ -265,6 +265,12 @@ class validator
     return true; 
   }
   
+  function depends($field, $value)
+  {
+    log::debug("DEPENDS($field,$value): ". $this->request[$field]);
+    return $this->request[$field] == $value;
+  }
+  
   static function title($name)
   {
     return ucwords(str_replace('_', ' ', $name));
@@ -308,7 +314,7 @@ class validator
         throw new validator_exception("Invalid validator expression $func!");
 
       $func = $matches[1];
-      if (!$this->provided()) return false;    
+      if ($func != 'depends' && !$this->provided()) return false;    
       if (!method_exists($this, $func)) 
         throw new validator_exception("validator method $func does not exists!");
         
@@ -317,6 +323,7 @@ class validator
       $arg3 = at($matches,4);
       
       $valid = $this->{$func}($arg1, $arg2, $arg3);
+      if ($func == 'depends' && !$valid) return true;
       if (!$valid || $func == 'optional') return $valid;
     }
     return true;
