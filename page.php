@@ -434,12 +434,12 @@ class page
       }
       
       $name = at($values, $name);
-      if ($name == '') $name = ucwords($code);
+      if ($name == '') $name = validator::title($code);
       if (!is_array($valid)) $valid = array($valid);
       foreach($valid as $check) {
-        $result = $this->validator->check($code, $name)->is($check);
-        if (preg_match('/^depends\(/', $check) && $result) {
-          log::debug("depends $check $result");
+        $success = $this->validator->check($code, $name)->is($check);
+        if ($success && preg_match('/^depends\(/', $check)) {
+          log::debug("depends $check");
           break;
         }
       }
