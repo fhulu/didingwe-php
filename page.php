@@ -438,10 +438,7 @@ class page
       if (!is_array($valid)) $valid = array($valid);
       foreach($valid as $check) {
         $success = $this->validator->check($code, $name)->is($check);
-        if ($success && preg_match('/^depends\(/', $check)) {
-          log::debug("depends $check");
-          break;
-        }
+        if (!$success && preg_match('/^depends\(/', $check)) break;
       }
     }
     
