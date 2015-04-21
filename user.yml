@@ -7,7 +7,7 @@ activate:
   audit: sql(select first_name, last_name, email_address from user where id = $key)
   
 audit_trail:
-  access: admin
+#  access: distributor_admin 
   type: datatable
   sort: time
   sort_order: desc
