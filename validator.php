@@ -271,9 +271,47 @@ class validator
     return $this->request[$field] == $value;
   }
   
+  function call($function)
+  {
+    $params = array_slice(func_get_args(), 1);
+    log::debug_json("FUNCTION $function PARAMS:", $params);
+    list($class, $method) = explode('::', $function);
+    $file = "$class.php";
+    if (isset($method)) {
+      if (file_exists($file)) 
+        require_once("$class.php");
+      else if (file_exists("../common/$file"))
+        require_once("$class.php");
+      else {
+        log::error("No such file $file");
+        return;
+      }
+    }
+    
+    if (!is_callable($function)) {
+      log::warn("Uncallable function $function");
+      return;
+    }
+    
+
+    foreach($params as &$param) {
+      $param = trim($param);
+      if ($param=='this') $param = $this->name;
+      if (array_key_exists($param, $this->request)) $param = $this->request[$param];
+    }
+    $result = call_user_func_array($function, $params);
+    if ($result === true) return true;
+    return $this->error("!$result");
+  }
+  
   static function title($name)
   {
     return ucwords(str_replace('_', ' ', $name));
+  }
+  
+  static function is_method($name)
+  {
+    return strpos($name, '::') !== false;
   }
   
   function check($name, $title=null)
@@ -310,19 +348,23 @@ class validator
       } 
       $matches = array(); 
       log::debug("VALIDATE FUNC $func");
-      if (!preg_match('/^([a-z_]+)(?:\(([^,]+)(?:,([^,]+))?(?:,([^,]+))?\))*$/i', $func, $matches)) 
+      if (!preg_match('/^([^\(]+)(?:\((.*)\))?/', $func, $matches)) 
         throw new validator_exception("Invalid validator expression $func!");
 
       $func = $matches[1];
       if ($func != 'depends' && !$this->provided()) return false;    
-      if (!method_exists($this, $func)) 
-        throw new validator_exception("validator method $func does not exists!");
-        
-      $arg1 = at($matches,2);
-      $arg2 = at($matches,3);
-      $arg3 = at($matches,4);
+       
+      $args = array();
+      $args = explode(',', at($matches,2));
       
-      $valid = $this->{$func}($arg1, $arg2, $arg3);
+      if (validator::is_method($func)) {
+        array_unshift($args, $func);
+        $func = 'call';
+      }
+      else if (!method_exists($this, $func)) 
+        throw new validator_exception("validator method $func does not exists!");
+      
+      $valid = call_user_func_array(array($this, $func), $args);        
       if ($func == 'depends' && !$valid) return true;
       if (!$valid || $func == 'optional') return $valid;
     }
