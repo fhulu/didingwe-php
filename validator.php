@@ -28,8 +28,8 @@ class validator
   function error($msg)
   {
     $this->has_errors = true;
-    if ($this->title[0] == '!') $msg = $this->title;
-    page::error($this->name, substr($msg,1));
+    if ($this->title[0] == '!') $msg = substr($this->title,1);
+    page::error($this->name, $msg);
 }
   
 
@@ -37,7 +37,7 @@ class validator
   {
     if (preg_match($regex, $this->value)) return true;
     if ($title == '') $title = "!Invalid $this->title.";
-    return $this->error($title);
+    return $title;
   }
   
   function country_code()
@@ -84,7 +84,8 @@ class validator
 
    function url($option)
   {
-    if (!$this->regex('/^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/')) return false;
+    $result = $this->regex('/^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/');
+    if ($result !== true) return $result;
     
     if ($option == 'visitable') {
       $curl = new curl();
@@ -111,7 +112,7 @@ class validator
   function provided()
   {
     if ($this->value != '') return true;
-    return $this->error("!$this->title must be provided.");
+    return "$this->title must be provided.";
   }
   
   function optional($option, $option_title)
@@ -120,14 +121,13 @@ class validator
     if ($option == '') return true;
     if ($this->request[$option] != '') return true;
     if ($option_title == '') $option_title = validator::title($option);
-    return $this->error("!Either $this->title or $option_title must be provided");
+    return "!Either $this->title or $option_title must be provided";
   }
   
   function at_least($length, $units='characters')
   {
-    if (!$this->provided()) return false;
     if (strlen($this->value) >= $length) return true;
-    return $this->error("!$this->title must contain at least $length $units.");
+    return "$this->title must contain at least $length $units.";
   }
   
   function numeric()
@@ -153,7 +153,7 @@ class validator
   function match($name)
   {
     if ($this->value == $this->request[$name]) return true;
-    return $this->error("!$this->title do not match.");
+    return "$this->title do not match.";
   }
   
   function matches($name)
@@ -167,7 +167,7 @@ class validator
     if (is_numeric($name)) $value = $title = $name; 
     if ($this->value < $value) return true;
     if (is_null($title)) $title = $this->title($name);
-    return $this->error("!$this->title must be less than $title");
+    return "$this->title must be less than $title";
   }
   
   function less_equal($name, $title=null)
@@ -176,7 +176,7 @@ class validator
     if (is_numeric($name)) $value = $title = $name; 
     if ($this->value <= $value) return true;
     if (is_null($title)) $title = $this->title($name);
-    return $this->error("!$this->title must not be greater than  $title");
+    return "$this->title must not be greater than  $title";
   }
   
   function greater($name, $title=null)
@@ -185,7 +185,7 @@ class validator
     if (is_numeric($name)) $value = $title = $name; 
     if ($this->value > $value) return true;
     if (is_null($title)) $title = $this->title($name);
-    return $this->error("!$this->title must be greater than $title");
+    return "$this->title must be greater than $title";
   }
   
   function greater_equal($name, $title=null)
@@ -194,7 +194,7 @@ class validator
     if (is_numeric($name)) $value = $title = $name; 
     if ($this->value >= $value) return true;
     if (is_null($title)) $title = $this->title($name);
-    return $this->error("!$this->title must not be less than  $title");
+    return "$this->title must not be less than  $title";
   }
   
   function password($min_length)
@@ -237,14 +237,14 @@ class validator
     }
     $db = $this->db;
     $value = addslashes($this->value);
-    return $db->exists("select $field from $table where $field = '$value'");
+    $exists = $db->exists("select $field from $table where $field = '$value'");
+    if ($exists) return true;
+    return "No such $this->title found.";
   }
 
   function in($table=null)
   {
-    if (!$this->find_in($table))
-      return $this->error("!No such $this->title found.");
-    return true; 
+    return $this->find_in($table);
   }
   
   function exist($table=null)
@@ -260,15 +260,15 @@ class validator
 
   function unique($table=null)
   {
-    if ($this->find_in($table))
-      return $this->error("!$this->title already exists.");
-    return true; 
+    if ($this->in($table) !== true) return true;
+    return "$this->title already exists.";
   }
   
   function depends($field, $value)
   {
-    log::debug("DEPENDS($field,$value): ". $this->request[$field]);
-    return $this->request[$field] == $value;
+    if ($field == 'this') $field = $this->name;
+    log::debug("DEPENDS($field,$value,$this->name): ". $this->request[$field]);
+    return trim($this->request[$field]) == trim($value);
   }
   
   function call($function)
@@ -299,9 +299,7 @@ class validator
       if ($param=='this') $param = $this->name;
       if (array_key_exists($param, $this->request)) $param = $this->request[$param];
     }
-    $result = call_user_func_array($function, $params);
-    if ($result === true) return true;
-    return $this->error("!$result");
+    return call_user_func_array($function, $params);
   }
   
   static function title($name)
@@ -309,7 +307,7 @@ class validator
     return ucwords(str_replace('_', ' ', $name));
   }
   
-  static function is_method($name)
+  static function is_static_method($name)
   {
     return strpos($name, '::') !== false;
   }
@@ -319,7 +317,7 @@ class validator
     if (is_null($title)) $title = validator::title($name);
     $this->name = $name;
     $this->title = $title;
-    $this->value = at($this->request,$name);
+    $this->value = trim(at($this->request,$name));
     return $this;
   }
   
@@ -330,66 +328,67 @@ class validator
   }
   function is()
   {
-   $funcs = func_get_args();
-   
-   log::debug("VALIDATE $this->name=$this->value FUNCTIONS:".implode(',',$funcs));
+    $funcs = func_get_args();
+    log::debug("VALIDATE $this->name=$this->value FUNCTIONS:".implode(',',$funcs));
   
-   if ($this->value == '' && in_array('optional', $funcs)) return true;
    // validate each argument
-   foreach($funcs as $func) {
+    $result = true;
+    foreach($funcs as $func) {
+      $args = array($func);
       if ($func == 'optional') continue;
-      if (is_numeric($func)) {
-        if (!$this->at_least($func)) return false;
-        continue;
-      }
-      if ($func[0] == '/') {
-        if (!$this->regex($func)) return false;
-        continue;
-      } 
-      $matches = array(); 
-      log::debug("VALIDATE FUNC $func");
-      if (!preg_match('/^([^\(]+)(?:\((.*)\))?/', $func, $matches)) 
-        throw new validator_exception("Invalid validator expression $func!");
+      if (is_numeric($func)) 
+        $func = 'at_least';
+      else if ($func[0] == '/') 
+        $func = 'regex';
+      else {
+        $matches = array(); 
+        log::debug("VALIDATE FUNC $func");
+        if (!preg_match('/^([^\(]+)(?:\((.*)\))?/', $func, $matches)) 
+          throw new validator_exception("Invalid validator expression $func!");
 
-      $func = $matches[1];
-      if ($func != 'depends' && !$this->provided()) return false;    
-       
-      $args = array();
-      $args = explode(',', at($matches,2));
+        $func = $matches[1];
+        $args = explode(',', at($matches,2));
+      }
       
-      if (validator::is_method($func)) {
+      if (validator::is_static_method($func)) {
         array_unshift($args, $func);
         $func = 'call';
       }
       else if (!method_exists($this, $func)) 
         throw new validator_exception("validator method $func does not exists!");
       
-      $valid = call_user_func_array(array($this, $func), $args);        
-      if ($func == 'depends' && !$valid) return true;
-      if (!$valid || $func == 'optional') return $valid;
+      if ($func != 'depends') $result = $this->provided();
+      if ($result === true)
+        $result = call_user_func_array(array($this, $func), $args); 
+      if ($result === true) continue;
+      if ($func == 'depends') return false;
+      if ($func == 'optional') return true;
+      return $this->error($result);
     }
     return true;
   }
  
-  function relate_time($time, $type)
+  function relate_time($now, $type)
   {
-  if ($type == 'future' && $this->value < $time)
-      return $this->error("!$this->title must be in the future");
+    if ($type == 'future' && $this->value <= $now)
+      return "$this->title must be in the future";
 
-    if ($type == 'past' && $this->value >= $time)
-      return $this->error("!$this->title must be in the past");
+    if ($type == 'past' && $this->value >= $now)
+      return "$this->title must be in the past";
     return true;
   } 
 
   function date($type)
   {
-    if (!$this->regex('/^\d{4}([-\/])(0\d|1[0-2])\1([0-2][0-9]|3[01])$/')) return false;
+    $result = $this->regex('/^\d{4}([-\/])(0\d|1[0-2])\1([0-2][0-9]|3[01])$/');
+    if ($result !== true) return $result;
     return $this->relate(Date('Y-m-d'), $type);
   }
   
   function datetime($type)
   {
-    if (!$this->regex('/(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})(:(\d{2}))?/')) return false;
+    $result = $this->regex('/(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})(:(\d{2}))?/');
+    if ($result !== true) return $result;
     return $this->relate_time(Date('Y-m-d H:i:s'), $type);
   }
 
