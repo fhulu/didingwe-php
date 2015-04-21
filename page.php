@@ -432,17 +432,15 @@ class page
         $this->validate ($values);
         continue;
       }
+      
+      $name = at($values, $name);
+      if ($name == '') $name = ucwords($code);
       if (!is_array($valid)) $valid = array($valid);
       foreach($valid as $check) {
-        $matches = array();
-        if (!preg_match_all('/([^,]+),?/', $check, $matches, PREG_SET_ORDER)) 
-          throw new Exception("Invalid validators $check");
-
-        $name = at($values, 'name');
-        foreach($matches as $match) {
-          $check = $match[1];
-          if ($check == 'optional' && !$this->validator->check($code, $name)->provided()) continue;
-          $this->validator->check($code, $name)->is($check);
+        $result = $this->validator->check($code, $name)->is($check);
+        if (preg_match('/^depends\(/', $check) && $result) {
+          log::debug("depends $check $result");
+          break;
         }
       }
     }
