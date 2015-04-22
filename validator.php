@@ -274,7 +274,7 @@ class validator
   function call($function)
   {
     $params = array_slice(func_get_args(), 1);
-    log::debug_json("FUNCTION $function PARAMS:", $params);
+    log::debug_json("VALIDATE CALL $function PARAMS:", $params);
     list($class, $method) = explode('::', $function);
     $file = "$class.php";
     if (isset($method)) {
@@ -361,7 +361,7 @@ class validator
       if ($result === true)
         $result = call_user_func_array(array($this, $func), $args); 
       if ($result === true) continue;
-      if ($func == 'depends') return false;
+      if ($func == 'depends' || $result === false) return false;
       if ($func == 'optional') return true;
       return $this->error($result);
     }
