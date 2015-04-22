@@ -264,11 +264,15 @@ class validator
     return "$this->title already exists.";
   }
   
-  function depends($field, $value)
+  function depends($field)
   {
     if ($field == 'this') $field = $this->name;
+    $args = func_get_args();
+    $value =  at($args,1);
     log::debug("DEPENDS($field,$value,$this->name): ". $this->request[$field]);
-    return trim($this->request[$field]) == trim($value);
+    $dependant = trim($this->request[$field]);
+    if (sizeof($args) < 2) return $dependant != '';
+    return $dependant == trim($value);
   }
   
   function call($function)
