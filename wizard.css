@@ -26,19 +26,35 @@
   left: 8px;
 }
 
-.wizard-heading
+.wizard-bookmark
 {
-  color: white;
   background-color: darkcyan;
-  -webkit-transform:rotate(90deg);
-  -moz-transform:rotate(90deg);
-  -o-transform: rotate(90deg);
-  -ms-transform:rotate(90deg);
-  transform: rotate(270deg);
   padding: 3px 5px;
-  border-bottom: 1px solid grey;
   height: 24px;
-  cursor: pointer
+  cursor: pointer;
+  position: relative;
+  -webkit-transform:rotate(270deg);
+  -moz-transform:rotate(270deg);
+  -o-transform: rotate(270deg);
+  -ms-transform:rotate(270deg);
+  transform: rotate(270deg);
+}
+
+.wizard-bookmark>*
+{
+  display: inline-block;
+  height: 20px;
+  color: white;
+}
+
+.wizard-bookmark-number
+{
+  width: 24px;
+}
+
+
+.wizard-bookmark-title
+{
 }
 
 .wizard-content
