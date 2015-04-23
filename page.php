@@ -64,6 +64,7 @@ class page
   var $result;
   var $user;
   var $page_offset;
+  var $reply;
 
   function __construct($echo=true, $request=null)
   {
@@ -331,8 +332,9 @@ class page
   function expand_params(&$fields)
   {
     $request = $this->request;
-    array_walk_recursive($fields, function(&$value) use ($request) {
-      $value = replace_vars ($value, $request);
+    array_walk_recursive($fields, function(&$value, $key) use ($request) {
+      if ($key != 'sql')
+        $value = replace_vars ($value, $request);
     });
   }
     
@@ -682,14 +684,18 @@ class page
     $user_id = $user->id;
     $key = $options['key'];
     $sql = preg_replace('/\$uid([^\w]|$)/', "$user_id\$1", $sql);
-    return preg_replace('/\$key([^\w]|$)/', "$key\$1", $sql);
+    $sql = preg_replace('/\$key([^\w]|$)/', "$key\$1", $sql);
+    return replace_vars($sql, $options);
   }
   
   function sql($sql, $assoc)
   {
-    $sql = page::replace_sql($sql, $this->request);
+    $values = null_merge($this->request, $this->reply, false);
+    $sql = page::replace_sql($sql, db::quote($values));
     global $db;
-    return $assoc?$db->page_through_names($sql): $db->page_through_indices($sql);    
+    if (preg_match('/\s*select/i', $sql))
+      return $assoc?$db->page_through_names($sql): $db->page_through_indices($sql);    
+    return $db->exec($sql);
   }
   
 
@@ -731,16 +737,24 @@ class page
   
   function reply($actions, $assoc = true)
   {
-    $results = null;
+    $this->reply = null;
     log::debug_json("REPLY", $actions);
+    $post = at($actions, 'post');
+    if (isset($post)) 
+      $actions = $post;
+    else 
+      $actions = array($actions);
+   
     $methods = array('sql', 'call');
-    foreach($actions as $method=>$parameter) {
-      if (!in_array($method, $methods)) continue;
-      $result = $this->{$method}($parameter, $assoc);
-      if ($result == false) return null;
-      $results = page::merge_options($results, $result);
+    foreach($actions as $action) {
+      foreach($action as $method=>$parameter) {
+        if (!in_array($method, $methods)) continue;
+        $result = $this->{$method}($parameter, $assoc);
+        if ($result === false) return null;
+        $this->reply = page::merge_options($this->reply, $result);
+      }
     }
-    return $results;
+    return $this->reply;
   }
   
   static function check_field($options, $field)
