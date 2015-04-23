@@ -61,7 +61,7 @@ $.fn.getValue = function()
   var name = this.hasAttr('name')? this.attr('name'): this.attr('id');
   if (name === undefined) return true;
   var type = this.attr('type');
-  if ((type === 'radio' || type === 'checkbox') && !this.is(':checked')) return true;
+  if ((type === 'radio' || type === 'checkbox')) return this.is(':checked')?1:0;
   var val = this.val();
   return val === undefined && !this.hasAttr('value')? this.text(): val;
 }
@@ -79,19 +79,7 @@ $.fn.values = function()
     var ctrl = $(this);
     var name = ctrl.hasAttr('name')? ctrl.attr('name'): ctrl.attr('id');
     if (name === undefined) return true;
-    var type = ctrl.attr('type');
-    var val = ctrl.val();
-    if ((type === 'radio' || type === 'checkbox') && !ctrl.is(':checked')) return true;
-    if (type === 'checkbox') {
-      if (data[name] !== undefined) 
-        data[name] = data[name] + ',' + val;
-      else
-        data[name] = val;
-    }
-    else if (val === undefined && !ctrl.hasAttr('value'))
-      data[name] = ctrl.text();
-    else
-      data[name] = val;
+    data[name] = ctrl.value();
   });
   return data;
 }
