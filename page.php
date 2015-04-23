@@ -433,7 +433,7 @@ class page
         continue;
       }
       
-      $name = at($values, $name);
+      $name = at($values, 'name');
       if ($name == '') $name = validator::title($code);
       if (!is_array($valid)) $valid = array($valid);
       foreach($valid as $check) {
