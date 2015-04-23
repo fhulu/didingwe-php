@@ -117,8 +117,15 @@ dropdown:
       $options
     </select>
   options:
-    - type: <option value='$code'>$name</option>
+    - type: dropdown_option
 
+dropdown_option:
+  html: <option value="$code">$name</option>
+  
+element:
+  text: ""
+  html: <$tag>$text</$tag>
+  
 #todo: fix backend inheritance
 export:
   name: Export to Excel
