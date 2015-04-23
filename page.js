@@ -31,11 +31,7 @@ $.fn.page = function(options, callback)
         source = $('#'+source+' #'+parent_id+',[name='+source+'] #'+parent_id);
       else
         source = $(source);
-      var result = source.val();
-      if (result === undefined) result = source.text();
-      if (result === undefined) result = value;
-      console.log("copy/css", result, matches);
-      return result;
+      return source.value();
     },
     
     expand_value: function(values,value,parent_id)
@@ -323,9 +319,6 @@ $.fn.page = function(options, callback)
       field.name = field.name || toTitleCase(id.replace(/[_\/]/g, ' '));
       field.key = page.options.key;
       if (!array) this.expand_fields(id, field);
-      if (field.value) {
-        console.log("expandend field", id, $.copy(field));
-      }
       var obj = $(field.html);
       assert(obj.exists(), "Invalid HTML for "+id+": "+field.html); 
       var reserved = ['code','create','css','script','name', 'desc', 'data'];
@@ -408,10 +401,14 @@ $.fn.page = function(options, callback)
         }
       });
       
-      object.find('*').on('show', function(e, invoker,show) {
+      var children = object.find("*");
+      children.on('show', function(e, invoker,show) {
         if (show === undefined) return false;
-        console.log('captured show', $(this), show);
         show?$(this).show():$(this).hide();
+      });
+      
+      children.on('refresh', function(e) {
+        
       });
       this.object = object;
       return this;
