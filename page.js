@@ -320,6 +320,7 @@ $.fn.page = function(options, callback)
       field.name = field.name || toTitleCase(id.replace(/[_\/]/g, ' '));
       field.key = page.options.key;
       if (!array) this.expand_fields(id, field);
+      field.html.replace('$tag', field.tag);
       var obj = $(field.html);
       assert(obj.exists(), "Invalid HTML for "+id+": "+field.html); 
       var reserved = ['code','create','css','script','name', 'desc', 'data'];
@@ -435,7 +436,10 @@ $.fn.page = function(options, callback)
       });
       if (field.autoload || field.autoload === undefined) {
         $.json('/', {data:params}, function(result) {
-          object.trigger('loaded', [result]);
+          if (result._responses)
+            page.respond(result._responses, object);
+          else
+            object.trigger('loaded', [result]);
         });
       }
       
@@ -488,7 +492,9 @@ $.fn.page = function(options, callback)
     {
       var params = { action: 'values', path: data.path+'/values', key: this.options.key } 
       parent.find('*').json('/', {data: params }, function(result) {
-        if ($.isPlainObject(result))
+        if (result._responses) 
+          page.respond(result._responses);
+        else if ($.isPlainObject(result))
           parent.setChildren(result[i]);
         else for (var i in result) {
           parent.setChildren(result[i]);
