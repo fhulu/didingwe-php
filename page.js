@@ -162,7 +162,7 @@ $.fn.page = function(options, callback)
       this.replace(parent, object, object.attr('id'), 'field');
     },
     
-    append_contents: function(parent, parent_id, name, items, types, path)
+    append_contents: function(parent, parent_field, name, items, types)
     {
       var type;
       var template = "$field";
@@ -172,6 +172,7 @@ $.fn.page = function(options, callback)
       var regex = new RegExp('(\\$'+name+')');
       var new_item_name = '_new_'+name;
       var new_item_html = '<div id="'+new_item_name+'"></div>';
+      var path = parent_field.path+'/'+name;
       for(var i in items) {
         var item = items[i];
         var id;
@@ -209,7 +210,7 @@ $.fn.page = function(options, callback)
             item = item[id];
             if (id === 'sql' || id === 'call') {
               loading_data = true;
-              this.load_data(parent, parent_id, name, [{type:type},{template:template}], types, path); 
+              this.load_data(parent, parent_field, name, [{type:type},{template:template}], types); 
               continue;
             }
           
@@ -343,8 +344,9 @@ $.fn.page = function(options, callback)
         if ($.isArray(value)) {
           if (types[code] !== undefined)
             value = $.merge($.merge([], types[code]), value);
-           this.append_contents(obj, id, code, value, types, field.path+'/'+code);
-           continue;
+            //this.append_contents(obj, id, code, value, types, field.path+'/'+code);
+            this.append_contents(obj, field, code, value, types);
+            continue;
         }
         
         if (typeof value === 'string') {
@@ -414,9 +416,10 @@ $.fn.page = function(options, callback)
       return this;
     },
     
-    load_data: function(object, id, name, items, types, path) 
+    load_data: function(object, field, name, items, types) 
     {
-      var params = {action: 'data', path: path, key: page.options.key};
+      
+      var params = {action: 'data', path: field.path+'/'+name, key: page.options.key};
       page.loading++;
       object.on('loaded', function(event,result) {
         result = $.merge(items, result);
@@ -426,14 +429,22 @@ $.fn.page = function(options, callback)
           console.log('No page data result for object: ', page.object, ' field ', id);
           return;
         }
-        page.append_contents(object, id, name, result, types, path);
+        page.append_contents(object, field, name, result, types);
         if (page.loading === 0)
           page.parent.trigger('loaded', result);
       });
-      $.json('/', {data:params}, function(result) {
-        object.trigger('loaded', [result]);
-      });
-
+      if (field.autoload || field.autoload === undefined) {
+        $.json('/', {data:params}, function(result) {
+          object.trigger('loaded', [result]);
+        });
+      }
+      
+      object.on('reload', function() {
+        field.autoload = true;
+        page.load_data(object, field, name, items, types);
+        if (field.values)
+          page.load_values(object, field);
+      })
     },
     
     
@@ -469,17 +480,22 @@ $.fn.page = function(options, callback)
           continue;
         }
         if (array && id !== 'sql' && id !== 'call') continue;
-        var params = { action: 'values', path: data.path+'/values', key: data.fields.key } 
-        parent.find('*').json('/', {data: params }, function(result) {
-          if ($.isPlainObject(result))
-            parent.setChildren(result[i]);
-          else for (var i in result) {
-            parent.setChildren(result[i]);
-          }
-        });
+        page.load_values(parent, data);
       }
     },
     
+    load_values: function(parent, data)
+    {
+      var params = { action: 'values', path: data.path+'/values', key: this.options.key } 
+      parent.find('*').json('/', {data: params }, function(result) {
+        if ($.isPlainObject(result))
+          parent.setChildren(result[i]);
+        else for (var i in result) {
+          parent.setChildren(result[i]);
+        }
+      });
+    },
+            
     accept: function(event, obj, field)
     {
       var action = field.action;
