@@ -272,7 +272,8 @@ class validator
     log::debug("DEPENDS($field,$value,$this->name): ". $this->request[$field]);
     $dependant = trim($this->request[$field]);
     if (sizeof($args) < 2) return $dependant != '';
-    return $dependant == trim($value);
+    $value = trim($value);
+    return $dependant == $value || is_numeric($value) && (int)$dependant == $value;
   }
   
   function call($function)
