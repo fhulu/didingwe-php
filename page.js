@@ -122,8 +122,8 @@ $.fn.page = function(options, callback)
       if (field === undefined || this.types === undefined) return field;
       if (type === undefined) type = field.type;
       if (type === undefined) return field;
-      var super_type = this.merge_type(this.types[type]);
-      return merge(super_type, field);
+      if (typeof type === 'string') type = this.types[type];
+      return merge(type, field);
     },
    
     get_type_html: function(type)
@@ -162,12 +162,25 @@ $.fn.page = function(options, callback)
       this.replace(parent, object, object.attr('id'), 'field');
     },
     
-    append_contents: function(parent, parent_field, name, items, types)
+    set_defaults: function(defaults, item)
     {
-      var type;
-      var template = "$field";
-      var mandatory;
-      var action;
+      var names = [ 'type', 'template', 'mandatory', 'action', 'attr' ];
+      var set = false;
+      for (var i in names) {
+        var name = names[i];
+        if (item[name] === undefined) continue;
+        if (name === 'type' || name === 'template')
+          defaults[name] = this.get_type_html(item[name]);
+        else
+          defaults[name] = item[name];
+        set = true;
+      }
+      return set;
+    },
+    
+    append_contents: function(parent, parent_field, name, items, types, defaults)
+    {
+      if (!defaults) defaults = { template: "$field" };
       var loading_data = false;
       var regex = new RegExp('(\\$'+name+')');
       var new_item_name = '_new_'+name;
@@ -176,27 +189,13 @@ $.fn.page = function(options, callback)
       for(var i in items) {
         var item = items[i];
         var id;
+        var array;
         if ($.isPlainObject(item)) {
-          if (item.type !== undefined) {
-            type = this.get_type_html(item.type, types);
-            continue;
-          }
-          if (item.template !== undefined) {
-            template = this.get_type_html(item.template, types);
-            continue;
-          }
-          if (item.mandatory !== undefined) {
-            mandatory = item;
-            continue;
-          } 
-          if (item.action !== undefined) {
-            action = item.action;
-            continue;
-          } 
+          if (this.set_defaults(defaults, item)) continue;          
           
           if (item.page !== undefined) {
             item.page.key = this.options.key;
-            this.append_sub_page(parent, regex, template, item.page);
+            this.append_sub_page(parent, regex, defaults.template, item.page);
             continue;
           }
           
@@ -210,38 +209,46 @@ $.fn.page = function(options, callback)
             item = item[id];
             if (id === 'sql' || id === 'call') {
               loading_data = true;
-              this.load_data(parent, parent_field, name, [{type:type},{template:template}], types); 
+              this.load_data(parent, parent_field, name, types, defaults); 
               continue;
             }
           
             if (typeof item === 'string') {
               item = { code: id, name: item };
             }            
-            if (!item.action && action) item.action = action;
-            if (!item.type && type) item = merge(type, item);
+            if (!item.action && defaults.action) item.action = defaults.action;
+            if (!item.attr && defaults.attr) item.attr = defaults.attr;
+            if (!item.type && defaults.type) item = merge(defaults.type, item);
             item = merge(types[id], item);
           }
         }
         else if (typeof item === 'string') {
           if (types[item] !== undefined) {
             id = item;
-            item = merge(types[item], type);
+            item = merge(types[item], defaults.type);
           }
           else {
-            if (type === undefined) continue;  // todo take care of undefined types
+            if (defaults.type === undefined) continue;  // todo take care of undefined types
             id = item;
-            item = $.copy(type);
+            item = $.copy(defaults.type);
           }
-          if (action) item.action = action;
+          if (defaults.action) item.action = defaults.action;
+          if (defaults.attr) item.attr = defaults.attr;
+        }
+        else if ($.isArray(item)) {
+          array = item;
+          id = item[0];
+          item = defaults;
+          console.log("array",id, item, array);
         }
         
         if (path)
           item.path = path + '/' + id;
         parent.replace(regex,new_item_html+'$1');
-        var created = this.create(item, id, types, type);        
+        var created = this.create(item, id, types, array);        
         item = created[0];
         var obj = created[1];
-        var templated = this.get_template_html(item.template || template, item);
+        var templated = this.get_template_html(item.template || defaults.template, item);
         if (templated === '$field') {
           templated = obj;
         }
@@ -258,7 +265,6 @@ $.fn.page = function(options, callback)
           $(this).is(':visible')? $(this).hide(): $(this).show();
         });
       }
-      
       if (!loading_data)
         parent.replace(regex, '');
     },
@@ -267,6 +273,7 @@ $.fn.page = function(options, callback)
     {
       var attr = field.attr;
       if (attr) {
+        console.log("found attr", attr, field)
         if (typeof attr === 'string') 
           obj.attr(attr,"");
         else $.each(attr, function(key, val) {
@@ -303,20 +310,13 @@ $.fn.page = function(options, callback)
       return child;
     },
     
-    create: function(field, id, types, type)
-    {
-      var array;
-      if ($.isArray(field)) {
-        array = field;
-        field = type;
-        id = array[0];
-      }
-      else if (type && field.type === undefined) 
-        field = merge(type, field);
-      
+    create: function(field, id, types, array)
+    {      
       field.code = id;
       field.page_id = this.options.page_id;
       field = this.merge_type(field);
+      if ($.isNumeric(id))
+        console.log("merged id", id, $.copy(field))
       field.name = field.name || toTitleCase(id.replace(/[_\/]/g, ' '));
       field.key = page.options.key;
       if (!array) this.expand_fields(id, field);
@@ -345,7 +345,6 @@ $.fn.page = function(options, callback)
         if ($.isArray(value)) {
           if (types[code] !== undefined)
             value = $.merge($.merge([], types[code]), value);
-            //this.append_contents(obj, id, code, value, types, field.path+'/'+code);
             this.append_contents(obj, field, code, value, types);
             continue;
         }
@@ -417,20 +416,19 @@ $.fn.page = function(options, callback)
       return this;
     },
     
-    load_data: function(object, field, name, items, types) 
+    load_data: function(object, field, name, types, defaults) 
     {
       
       var params = {action: 'data', path: field.path+'/'+name, key: page.options.key};
       page.loading++;
       object.on('loaded', function(event,result) {
-        result = $.merge(items, result);
         if (--page.loading === 0)
           page.parent.trigger('loaded', result);
         if (result === undefined || result === null) {
           console.log('No page data result for object: ', page.object, ' field ', id);
           return;
         }
-        page.append_contents(object, field, name, result, types);
+        page.append_contents(object, field, name, result, types, defaults);
         if (page.loading === 0)
           page.parent.trigger('loaded', result);
       });
@@ -445,7 +443,7 @@ $.fn.page = function(options, callback)
       
       object.on('reload', function() {
         field.autoload = true;
-        page.load_data(object, field, name, items, types);
+        page.load_data(object, field, name, types, defaults);
         if (field.values)
           page.load_values(object, field);
       })
