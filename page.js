@@ -239,7 +239,7 @@ $.fn.page = function(options, callback)
           array = item;
           id = item[0];
           item = defaults;
-          console.log("array",id, item, array);
+          item.array = array;
         }
         
         if (path)
@@ -273,10 +273,13 @@ $.fn.page = function(options, callback)
     {
       var attr = field.attr;
       if (attr) {
-        console.log("found attr", attr, field)
         if (typeof attr === 'string') 
           obj.attr(attr,"");
         else $.each(attr, function(key, val) {
+          if (field.array) {
+            var numeric = getMatches(val, /\$(\d+)/g);
+            if (numeric.length) val = field.array[numeric[0]];
+          }
           obj.attr(key,val);
         });
       }
@@ -310,29 +313,27 @@ $.fn.page = function(options, callback)
       return child;
     },
     
-    create: function(field, id, types, array)
+    create: function(field, id, types)
     {      
       field.code = id;
       field.page_id = this.options.page_id;
       field = this.merge_type(field);
-      if ($.isNumeric(id))
-        console.log("merged id", id, $.copy(field))
       field.name = field.name || toTitleCase(id.replace(/[_\/]/g, ' '));
       field.key = page.options.key;
-      if (!array) this.expand_fields(id, field);
+      if (!field.array) this.expand_fields(id, field);
       field.html.replace('$tag', field.tag);
       var obj = $(field.html);
       assert(obj.exists(), "Invalid HTML for "+id+": "+field.html); 
       var reserved = ['code','create','css','script','name', 'desc', 'data'];
-      this.set_attr(obj, field, id);
+      this.set_attr(obj, field);
       this.set_style(obj, field);
       var values = $.extend({}, this.globals, types, field);
       var matches = getMatches(obj.html(), /\$(\w+)/g);
       for (var i = 0; i< matches.length; ++i) {
         var code = matches[i];
         var value;
-        if (array) {
-          value = array[i+1];
+        if (field.array) {
+          value = field.array[i+1];
         } 
         else {
           value = values[code];
@@ -504,7 +505,6 @@ $.fn.page = function(options, callback)
     {
       var action = field.action;
       var data = {action: 'action', key: field.key, path: field.path};
-      //console.log("accept", field)
       var page_id = field.page_id || obj.parents(".page").eq(0).attr('id');
       switch(action) {
         case 'dialog': page.showDialog(field.url, {key: field.key}); return;
@@ -570,8 +570,6 @@ $.fn.page = function(options, callback)
             if (val.sink) {
               sink = $(val.sink.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+self.id+"$2"));
             }
-            //val.args.unshift(invoker);
-            console.log("args", val.args);
             sink.trigger(event, [invoker, val.args[0]]);
             break;
         }
