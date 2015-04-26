@@ -55,6 +55,49 @@ country:
     - sql: SELECT item_code,item_name item_code from ref_list WHERE list_name = "country"
   valid: provided
     
+day_of_month:
+  options:
+    - 1st
+    - 2nd
+    - 3rd
+    - 4th
+    - 5th
+    - 6th
+    - 7th
+    - 8th
+    - 9th
+    - 10th
+    - 11th
+    - 12th
+    - 13th
+    - 14th
+    - 15th
+    - 16th
+    - 17th
+    - 18th
+    - 19th
+    - 20th
+    - 21st
+    - 22nd
+    - 23rd
+    - 24th
+    - 25th
+    - 26th
+    - 27th
+    - 28th
+    - 29th
+    - 30th
+    - 31st  
+
+day_of_week:
+  options:
+    - Sunday
+    - Monday
+    - Tuesday
+    - Wednesday
+    - Thursday
+    - Friday
+    - Saturday
 developed_by:
   name: developed by Mukoni Software
   
@@ -174,6 +217,11 @@ register:
   desc: Click here to register
   access: public
   url: /user/register
+
+start_date:
+  name: Start Date 
+  desc: Date Effective From
+  
     
 submit:
   type: button
@@ -188,6 +236,7 @@ submit_page:
   call: $class::$page($key)
       
 title:
+  desc: A descriptive or distinctive appellation, especially one belonging to a person by right of rank, office, attainment
   options:
     - Dr
     - Miss
@@ -218,3 +267,15 @@ view_profile:
 view_users:
   access: admin
   url: /user/list
+
+weekday:
+  options:
+    - Sunday
+    - Monday
+    - Tuesday
+    - Wednesday
+    - Thursday
+    - Friday
+    - Saturday
+    
+    
