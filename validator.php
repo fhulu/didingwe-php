@@ -89,7 +89,7 @@ class validator
     
     if ($option == 'visitable') {
       $curl = new curl();
-      if (!$curl->read($this->value,512)) return $this->error("!$this->title $this->value is not accessible.");
+      if (!$curl->read($this->value,512)) return $this->error("$this->title $this->value is not accessible.");
     }
     return true;
   }
@@ -132,12 +132,12 @@ class validator
   
   function numeric()
   {
-    return $this->regex('/^\d+$/', "!$this->title must be numeric.");
+    return $this->regex('/^\d+$/', "$this->title must be numeric");
   }
   
   function alphabetic()
   {
-    return $this->regex('/^[a-zA-Z]+$/', "!$this->title must be alphabetic.");
+    return $this->regex('/^[a-zA-Z]+$/', "$this->title must be alphabetic");
   }
   
   function proc()
@@ -200,7 +200,7 @@ class validator
   function password($min_length)
   {
     if ($min_length == 0) $min_length=6;
-    $title = "!$this->title must contain at least:
+    $title = "$this->title must contain at least:
       <li>one upper case letter
       <li>one lower case letter
       <li>one number or special character
@@ -210,7 +210,7 @@ class validator
 
   function extension($ext)
   {
-    return $this->regex('/\.'.$ext.'/i', "!$this->title must be of type $ext");
+    return $this->regex('/\.'.$ext.'/i', "$this->title must be of type $ext");
   }
   
   function find_in($table)
