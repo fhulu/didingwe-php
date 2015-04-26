@@ -2,7 +2,7 @@
 error_page: 
   type: labelled_input_page
   name: Unexpected Error
-  width: 550
+  width: 630
   style:
     color: rgb(20,60,90)
   desc: |
