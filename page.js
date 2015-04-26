@@ -404,6 +404,9 @@ $.fn.page = function(options, callback)
         }
       });
       
+      object.on('reload', function() {
+        page.load_values(object, data);
+      });
       var children = object.find("*");
       children.on('show', function(e, invoker,show) {
         if (show === undefined) return false;
@@ -428,6 +431,12 @@ $.fn.page = function(options, callback)
         if (result === undefined || result === null) {
           console.log('No page data result for object: ', page.object, ' field ', id);
           return;
+        }
+        if (defaults.attr === undefined) defaults.attr = {};
+        defaults.attr.loaded = '';
+        
+        if (object.find('[loaded]').exists()) {
+          object.find('[loaded]').replaceWith('$'+name);
         }
         page.append_contents(object, field, name, result, types, defaults);
         if (page.loading === 0)
@@ -479,7 +488,7 @@ $.fn.page = function(options, callback)
         }
         var obj = parent.find('#'+id);
         if (obj.exists()) {
-          obj.val(value);
+          obj.value(value);
           continue;
         }
         if (array && id !== 'sql' && id !== 'call') continue;
