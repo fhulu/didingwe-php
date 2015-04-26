@@ -53,6 +53,7 @@
         color = darken(rgbToHex(color), 1.15);
         bookmark.css('background-color', color);
       }
+      this._createNavigation(page, props, index);
     },
     
     _jumpTo: function(index)
@@ -70,7 +71,7 @@
           }
           this._hidePage(top_index, true);
         }
-        else do {
+        else do { // goin backwards
             top_index = this.stack.pop();
             this._hidePage(top_index, false);
         } while (top_index >  index);
@@ -85,7 +86,7 @@
       page.addClass('wizard-current').show();
       if (!page.hasClass('wizard-loaded')) 
         this._loadPage(page, index);
-      var bookmark = page.find('.wizard-bookmark').hide();
+      page.find('.wizard-bookmark').hide();
       page.find('.wizard-content,.wizard-nav').show();
       var offset = this.stack.length * this.bookmark_width + 6;
       page.css('left', offset+'px');
@@ -103,8 +104,14 @@
         page.find('.wizard-bookmark-title').text(page.find('.wizard-content').attr('title'));  
         page.find('.wizard-bookmark').show();
       }
-      else
+      else {
         page.find('.wizard-bookmark').hide();
+        var props = this.options.steps[index];
+        if (props.prev === 'clear') {
+          page.find('.wizard-content *').remove();
+          page.removeClass('wizard-loaded');
+        }
+      }
       page.find('.wizard-content,.wizard-nav').hide();
       page.removeClass('wizard-done');
     },
@@ -124,7 +131,6 @@
         object.css('left', content.css('left'));
         object.addClass('wizard-content');
         content.replaceWith(object);
-        self._createNavigation(page, props, index);
         page.addClass('wizard-loaded').removeClass('wizard-loading');
       });
     },
