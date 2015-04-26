@@ -16,6 +16,21 @@ audit_trail:
   access: admin
   url: /user/audit_trail
 
+calculate_days:
+  type: calculate_period
+  unit: day
+  prev_unit: hour
+  prev_unit_size: 24
+
+calculate_hours:
+  type: calculate_period
+  unit: hour
+  prev_unit: minute
+  prev_unit_size: 60
+
+calculate_period:
+  sql: select ceiling(timestampdiff($prev_unit,'$start_time', '$end_time')/$prev_unit_size)
+
 cellphone:
   desc: The cellphone number at which you can be contacted on
   valid: national_tel
@@ -121,7 +136,22 @@ manage_users:
 mobile_number:
   desc: The mobile number at which you can be contacted on
   valid: national_tel
-  
+
+month:
+  options:
+    - january
+    - february
+    - march
+    - april
+    - may
+    - june
+    - july
+    - august
+    - september
+    - october
+    - november
+    - december
+     
 mukoni_logo:
     desc: Visit our home page
     type: image
