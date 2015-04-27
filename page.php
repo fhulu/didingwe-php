@@ -500,6 +500,7 @@ class page
   static function merge_options($options1, $options2)
   {
     //return merge_options($options1, $options2);
+    if (!is_array($options2)) return $options1;
     if (!is_array($options1) || !is_assoc($options1) && is_assoc($options2)) return $options2;
     if (!is_assoc($options1)) {
       $new_values = array();
