@@ -110,7 +110,7 @@ $.fn.page = function(options, callback)
       page.load_links('css', field);
       page.load_links('script', field, function() {
         if (field.create) 
-          object.customCreate($.extend({types: types},field));
+          object.customCreate($.extend({types: types}, page.options, field));
         if (callback !== undefined) callback();
       });      
     },
@@ -156,7 +156,7 @@ $.fn.page = function(options, callback)
     append_sub_page: function(parent, regex, template, sub_page)
     {
       var tmp = $('<div></div>');
-      var object = tmp.page(sub_page);
+      var object = tmp.page($.extend({}, options, sub_page));
       var templated = this.get_template_html(template, sub_page.fields);
       parent.replace(regex, templated+'$1'); 
       this.replace(parent, object, object.attr('id'), 'field');
