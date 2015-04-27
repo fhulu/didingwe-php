@@ -407,7 +407,7 @@ text_input: {type: input }
 
 
 time:
-  type: input
+  html: <input id="$code" type="text" value="$value"></input>
   create: datetimepicker
   datepicker: false
   format: H:i
