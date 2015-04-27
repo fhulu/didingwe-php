@@ -54,7 +54,10 @@ $.fn.page = function(options, callback)
         value = value.replace('$code', parent_id);
         data[field] = page.expand_value(data, value, parent_id);
       });
-      data['html'] = data['html'].replace(/\$(value|desc)/, '');
+      if (data.html)
+        data.html = data.html.replace(/\$(value|desc)/, '');
+      else
+        console.log("no html for", data);
       return data;
     },
         
@@ -122,7 +125,7 @@ $.fn.page = function(options, callback)
       if (field === undefined || this.types === undefined) return field;
       if (type === undefined) type = field.type;
       if (type === undefined) return field;
-      if (typeof type === 'string') type = this.types[type];
+      if (typeof type === 'string') type = this.merge_type(this.types[type]);
       return merge(type, field);
     },
    
@@ -321,9 +324,10 @@ $.fn.page = function(options, callback)
       field.name = field.name || toTitleCase(id.replace(/[_\/]/g, ' '));
       field.key = page.options.key;
       if (!field.array) this.expand_fields(id, field);
+      if (!field.html) console.log("No html for ", field);
+      assert(field.html, "Invalid HTML for "+id); 
       field.html.replace('$tag', field.tag);
       var obj = $(field.html);
-      assert(obj.exists(), "Invalid HTML for "+id+": "+field.html); 
       var reserved = ['code','create','css','script','name', 'desc', 'data'];
       this.set_attr(obj, field);
       this.set_style(obj, field);
@@ -406,6 +410,15 @@ $.fn.page = function(options, callback)
       
       object.on('reload', function() {
         page.load_values(object, data);
+      });
+      
+      
+      object.on('create_child', function(event, field, parent) {
+        if (parent === undefined) parent = event.trigger;
+        var result = page.create(field, field.code, page.types);
+        var child = result[1];
+        child.appendTo(parent);
+        child.value(field.value);
       });
       var children = object.find("*");
       children.on('show', function(e, invoker,show) {
@@ -555,6 +568,9 @@ $.fn.page = function(options, callback)
       }
     },
     
+    
+    
+    
     respond: function(responses, invoker)
     {
       if (!$.isPlainObject(responses)) return this;
@@ -564,9 +580,10 @@ $.fn.page = function(options, callback)
         if (!parent.exists()) parent = this.parent;
       }
       var self = this;
-      $.each(responses, function(key, val) {
-        console.log("response", key, val);
-        switch(key) {
+      var handle = function(action, val)
+      {
+        console.log("response", action, val);
+        switch(action) {
           case 'alert': alert(val); break;
           case 'show_dialog': self.showDialog(val, responses.options); break;
           case 'close_dialog': self.closeDialog(parent); break;
@@ -579,9 +596,17 @@ $.fn.page = function(options, callback)
             if (val.sink) {
               sink = $(val.sink.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+self.id+"$2"));
             }
-            sink.trigger(event, [invoker, val.args[0]]);
+            var args = val.args || [];
+            sink.trigger(event, [invoker, args[0], args[1], args[2]]);
             break;
         }
+      }
+
+      $.each(responses, function(key, val) {
+        if (!$.isArray(val))
+          handle(key, val);
+        else for (var i in val) 
+          handle(key, val[i]);      
       });      
       return this;
     },
