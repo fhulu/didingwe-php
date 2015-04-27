@@ -35,14 +35,15 @@
     {
       this.expandFields(this.options.fields);
       this.expandFields(this.options.row_actions);
-      this.params = { 
-        path: this.options.path, 
-        key: this.options.key, 
-        sort: this.options.sort,
-        sort_order: this.options.sort_order,
-        page_num: this.options.page_num || 1,
-        page_size: this.options.page_size
-      };
+      this.params = { page_num: 1}; 
+      var exclude = [ 'create', 'action', 'css', 'code', 'content', 'disabled',
+          'html','name', 'page_id', 'position','script','slideSpeed','sql'];
+      for (var key in this.options) {
+        if (exclude.indexOf(key) >= 0) continue;
+        var val = this.options[key];
+        if ($.isPlainObject(val) || $.isArray(val)) continue;
+        this.params[key] = val;
+      }
       if (this.hasFlag('show_titles') || this.hasFlag('show_header')) {
         $('<thead></thead>').prependTo(this.element);
         if (this.hasFlag('show_header')) this.showHeader();
