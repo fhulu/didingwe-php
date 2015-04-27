@@ -84,8 +84,10 @@ class page
     $this->load();
     $this->result = $this->{$this->method}();
   
-    if ($echo && !is_null($this->result))
+    if ($echo && !is_null($this->result)) {
+      $this->result['request'] = $this->request;
       echo json_encode($this->result);
+    }
   }
   
   function read_user()
@@ -785,8 +787,15 @@ class page
   static function respond($response, $value=null)
   {
     global $page_output;
+    if (is_null($value)) $value = '';
     $result = &$page_output->values;
-    $result['_responses'][$response] = is_null($value)?'':$value;
+    $values = $result['_responses'][$response];
+    if (is_array($values))
+      $values[] = $value;
+    else
+      $values = array($value);
+    log::debug_json("RESPONSE ", $values);
+    $result['_responses'][$response] = $values;
   }
     
   static function alert($message)
