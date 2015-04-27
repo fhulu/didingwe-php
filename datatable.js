@@ -51,8 +51,18 @@
       }
       this.showFooterActions();
       this.load();
+      var self = this;
+      this.element.on('refresh', function(e, invoker, args) {
+        console.log("refreshed", invoker, args)
+        self.load(args);
+      })
     },
    
+    refresh: function(args)
+    {
+      this.element.trigger('refresh', [this.element, args]);
+    },
+    
     head: function()
     {
       return this.element.children('thead').eq(0);
@@ -63,12 +73,12 @@
       return this.element.children('tbody').eq(0);
     },
     
-    load: function()
+    load: function(args)
     {
       var start = new Date().getTime();
       var self = this;
       self.head().find('.paging [action]').attr('disabled','');
-      var data = $.extend({action: 'data'}, self.params);
+      var data = $.extend({}, args, {action: 'data'}, self.params);
       data.path = data.path +'/load';
       $.json('/', {data: data}, function(data) {
         var end = new Date().getTime();
@@ -145,7 +155,7 @@
       this.params.page_num = number;
       this.params.page_size = invoker.siblings('#page_size').val();
       invoker.siblings('#page_num').val(number);
-      this.load();
+      this.refresh();
     },
     
     page: function(invoker, offset)
@@ -160,7 +170,7 @@
       head.find(".paging [type='text']").bind('keyup input cut paste', function(e) {
         if (e.keyCode === 13) {
           self.params.page_size = $(this).val();
-          self.load();
+          self.refresh();
         }
       }); 
       
@@ -218,7 +228,7 @@
         th.attr('sort', order);
         self.params.sort = field;
         self.params.sort_order = order;
-        self.load();
+        self.refresh();
       });        
     },
     
@@ -610,7 +620,7 @@
           var val = field.hide? '': cols.eq(j++).find('input').val();
           self.params.filtered += val + '|';
         }
-        self.load();
+        self.refresh();
       });
       return filter;
     },
