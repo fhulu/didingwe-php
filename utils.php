@@ -69,6 +69,7 @@ function replace_vars($str, $values=null)
 }
 
 function is_assoc($array) {
+  if (is_null($array) || !is_array($array)) return false; 
   return (bool)count(array_filter(array_keys($array), 'is_string'));
 }
 
