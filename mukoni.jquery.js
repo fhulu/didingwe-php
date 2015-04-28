@@ -48,9 +48,15 @@ $.fn.setValue = function(val)
       this.attr('href', '');
    else
       this.attr('href', proto+val);
+    return this;
   }
+  var type = this.attr('type');
+  if (type === 'checkbox') 
+    this.attr('checked', val);
   else if (this.attr('value') === undefined)
     this.html(val);
+  else if (this.attr('customCreate') !== undefined) 
+    this.trigger('customValue', [val]);
   else
     this.val(val);
   return this;
@@ -447,6 +453,7 @@ $.fn.setChildren = function(result)
   if (result === null) return;
   $.each(result, function(key, val) {
     var filter = "#"+key+",[name='"+key+"']";
+    self.find(filter).value(val);
     self.find(filter).each(function() {
       var el = $(this);
       if (el.is("a")) {
