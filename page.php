@@ -65,9 +65,13 @@ class page
   var $user;
   var $page_offset;
   var $reply;
+  var $db;
 
-  function __construct($echo=true, $request=null)
+  function __construct($echo=true, $request=null, $user_db=null)
   {
+    global $db;
+    $this->db = is_null($user_db)?$db: $user_db;
+    
     if (is_null($request)) $request = $_REQUEST;
     log::debug_json("REQUEST",json_encode($request));
     $this->request = $request;
@@ -493,6 +497,7 @@ class page
       }
     }
     else $options = $this->request;
+    if (is_array($this->reply)) $options = array_merge($options, $this->reply);
     return call_user_func_array($function, array_merge(array($options), $params));
   }
   
@@ -691,15 +696,28 @@ class page
   
   function sql($sql, $assoc)
   {
-    $values = null_merge($this->request, $this->reply, false);
-    $sql = page::replace_sql($sql, db::quote($values));
-    global $db;
+    $sql = $this->translate_sql($sql);
     if (preg_match('/\s*select/i', $sql))
-      return $assoc?$db->page_through_names($sql): $db->page_through_indices($sql);    
-    return $db->exec($sql);
+      return $assoc?$this->db->page_through_names($sql): $this->db->page_through_indices($sql);    
+    return $this->db->exec($sql);
   }
   
-
+  function translate_sql($sql)
+  {
+    $values = null_merge($this->request, $this->reply, false);
+    return page::replace_sql($sql, db::quote($values));
+  }
+  
+  function sql_values($sql)
+  {
+    return $this->db->read_one($this->translate_sql($sql), MYSQL_ASSOC);
+  }
+  
+  function sql_exec($sql)
+  {
+    return $this->db->exec($this->translate_sql($sql));
+  }
+  
   function call($method)
   {
     $path_len = sizeof($this->path);
@@ -745,7 +763,8 @@ class page
     
     log::debug_json("REPLY", $actions);
    
-    $methods = array('sql', 'call');
+    $methods = array('alert', 'call', 'close_dialog', 'show', 'show_dialog', 
+      'redirect', 'sql', 'sql_exec','sql_rows','sql_values','trigger', 'update');
     foreach($actions as $action) {
       foreach($action as $method=>$parameter) {
         if (!in_array($method, $methods)) continue;
