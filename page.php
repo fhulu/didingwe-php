@@ -791,7 +791,7 @@ class page
     if (is_null($values)) 
       $values = $value;
     else if (is_assoc($values))
-      $values = array_merge($values, array($value));
+      $values = array_merge(array($values), array($value));
     else if (is_array($values))
       $values[] = $value;
     else 
