@@ -85,7 +85,6 @@ class page
     $this->result = $this->{$this->method}();
   
     if ($echo && !is_null($this->result)) {
-      $this->result['request'] = $this->request;
       echo json_encode($this->result);
     }
   }
@@ -740,12 +739,11 @@ class page
   function reply($actions, $assoc = true)
   {
     $this->reply = null;
-    log::debug_json("REPLY", $actions);
     $post = at($actions, 'post');
-    if (isset($post)) 
-      $actions = $post;
-    else 
-      $actions = array($actions);
+    if (isset($post)) $actions = $post;
+    if (is_assoc($actions))  $actions = array($actions);
+    
+    log::debug_json("REPLY", $actions);
    
     $methods = array('sql', 'call');
     foreach($actions as $action) {
@@ -753,7 +751,11 @@ class page
         if (!in_array($method, $methods)) continue;
         $result = $this->{$method}($parameter, $assoc);
         if ($result === false) return null;
-        $this->reply = page::merge_options($this->reply, $result);
+        if (is_null($result)) continue;
+        if (is_null($this->reply)) 
+          $this->reply = $result;
+        else
+          $this->reply = array_merge($this->reply, $result);
       }
     }
     return $this->reply;
@@ -777,12 +779,7 @@ class page
   {  
     $options = $this->load_field(null, array('field'));
     log::debug("VALUES ".json_encode($options));
-    $items = array();
-    foreach($options as $option) {
-      $items = null_merge($items, $this->reply($option), false);
-    }
-    
-    return $items;
+    return $this->reply($options);
   }
     
   static function respond($response, $value=null)
@@ -791,11 +788,14 @@ class page
     if (is_null($value)) $value = '';
     $result = &$page_output->values;
     $values = $result['_responses'][$response];
-    if (is_array($values))
+    if (is_null($values)) 
+      $values = $value;
+    else if (is_assoc($values))
+      $values = array_merge($values, array($value));
+    else if (is_array($values))
       $values[] = $value;
-    else
-      $values = array($value);
-    log::debug_json("RESPONSE ", $values);
+    else 
+      $values = array($values, $value);
     $result['_responses'][$response] = $values;
   }
     
