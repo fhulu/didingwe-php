@@ -12,40 +12,22 @@ require_once 'db.php';
 require_once 'user.php';
 require_once 'utils.php';
 
-class page_output
-{
-  var $values;
-  function __construct() 
-  {
-    $this->values = null;
-  }
-  
-  function __destruct() 
-  {
-    if ($this->values)
-      echo json_encode ($this->values);
-  }
-  
-}
+try {
+  global $page;
 
+  $page = new page();
+  $page->render();
+}
+catch (user_exception $exception) {
+  log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
+  log::stack($exception);
+  page::show_dialog('/breach');
+}
+catch (Exception $exception)
 {
-  global $page_output;
-  $page_output = new page_output();
-  
-  try {
-    $page = new page();
-  }
-  catch (user_exception $exception) {
-    log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
-    log::stack($exception);
-    page::show_dialog('/breach');
-  }
-  catch (Exception $exception)
-  {
-    log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
-    log::stack($exception);
-    page::show_dialog('/error_page');
-  }
+  log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
+  log::stack($exception);
+  page::show_dialog('/error_page');
 }
 
 class page
@@ -66,11 +48,14 @@ class page
   var $page_offset;
   var $reply;
   var $db;
-
+  var $echo;
+  
   function __construct($echo=true, $request=null, $user_db=null)
   {
     global $db;
     $this->db = is_null($user_db)?$db: $user_db;
+    $this->echo = $echo;
+    $this->result = null;
     
     if (is_null($request)) $request = $_REQUEST;
     log::debug_json("REQUEST",json_encode($request));
@@ -86,11 +71,21 @@ class page
     $this->types = array();
 
     $this->load();
-    $this->result = $this->{$this->method}();
+  }
   
-    if ($echo && !is_null($this->result)) {
+  function __destruct() 
+  {
+    if ($this->echo && !is_null($this->result)) {
       echo json_encode($this->result);
     }
+  }
+  
+  function render()
+  {
+    $result = $this->{$this->method}();
+    $this->result = null_merge($result, $this->result, false);
+    log::debug_json("RESULT in", $result);
+    log::debug_json("RESULT out", $this->result);
   }
   
   function read_user()
@@ -463,7 +458,7 @@ class page
     log::debug_json('field', $field); 
     $items = array();
     foreach($field as $item) {
-      $items = null_merge($items, $this->reply($item, false), false);
+      $items = null_merge($items, $this->reply($item), false);
     }
     return $items;
   }
@@ -694,11 +689,11 @@ class page
     return replace_vars($sql, $options);
   }
   
-  function sql($sql, $assoc)
+  function sql($sql)
   {
     $sql = $this->translate_sql($sql);
     if (preg_match('/\s*select/i', $sql))
-      return $assoc?$this->db->page_through_names($sql): $this->db->page_through_indices($sql);    
+      return $this->db->page_through_indices($sql);    
     return $this->db->exec($sql);
   }
   
@@ -754,7 +749,23 @@ class page
     return $this->call_method($matches[1], $matches[2], $context);    
   }
   
-  function reply($actions, $assoc = true)
+  function reply_method($method, $parameter=null)
+  {
+    $methods = array('alert', 'call', 'close_dialog', 'show', 'show_dialog', 
+      'redirect', 'sql', 'sql_exec','sql_rows','sql_values','trigger', 'update');
+    if (!in_array($method, $methods)) return null;
+    log::debug("REPLY METHOD $method $parameter");
+    $result = $this->{$method}($parameter);
+    if ($result === false) return false;
+    if (is_null($result)) return null;
+    if (is_null($this->reply)) 
+      $this->reply = $result;
+    else
+      $this->reply = array_merge($this->reply, $result);
+    return null;
+  }
+  
+  function reply($actions)
   {
     $this->reply = null;
     $post = at($actions, 'post');
@@ -766,16 +777,12 @@ class page
     $methods = array('alert', 'call', 'close_dialog', 'show', 'show_dialog', 
       'redirect', 'sql', 'sql_exec','sql_rows','sql_values','trigger', 'update');
     foreach($actions as $action) {
-      foreach($action as $method=>$parameter) {
-        if (!in_array($method, $methods)) continue;
-        $result = $this->{$method}($parameter, $assoc);
-        if ($result === false) return null;
-        if (is_null($result)) continue;
-        if (is_null($this->reply)) 
-          $this->reply = $result;
-        else
-          $this->reply = array_merge($this->reply, $result);
+      if (!is_array($action))
+        $result = $this->reply_method ($action);
+      else foreach($action as $method=>$parameter) {
+        $result = $this->reply_method($method, $parameter);
       }
+      if ($result === false) return null;
     }
     return $this->reply;
   }
@@ -803,9 +810,9 @@ class page
     
   static function respond($response, $value=null)
   {
-    global $page_output;
+    global $page;
     if (is_null($value)) $value = '';
-    $result = &$page_output->values;
+    $result = &$page->result;
     $values = $result['_responses'][$response];
     if (is_null($values)) 
       $values = $value;
@@ -848,22 +855,23 @@ class page
   
   static function update($name, $value=null)
   {
-    global $page_output;
-    $result = &$page_output->values;
+    global $page;
+    $result = &$page->result;
     $responses = &$result['_responses'];
     $updates = &$responses['update'];
     if (is_array($name))
-      null_merge ($updates, $name);
+      $updates = null_merge ($updates, $name);
     else
       $updates[$name] = $value;
   }
   
   static function error($name, $value)
   {
-    global $page_output;
+    global $page;
     log::debug("ERROR $name $value ");
-    $result = &$page_output->values;
+    $result = &$page->result;
     $errors = &$result['errors'];
+    log::debug_json("PAGE", $page);
     $errors[$name] = $value;
   }
   
@@ -878,8 +886,8 @@ class page
   
   static function has_errors()
   {
-    global $page_output;
-    $result = &$page_output->values;
+    global $page;
+    $result = &$page->errors;
     return !is_null(at($result, 'errors'));
   }
   
