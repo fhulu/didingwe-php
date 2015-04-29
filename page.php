@@ -749,21 +749,6 @@ class page
     return $this->call_method($matches[1], $matches[2], $context);    
   }
   
-  function reply_method($method, $parameter=null)
-  {
-    $methods = array('alert', 'call', 'close_dialog', 'show', 'show_dialog', 
-      'redirect', 'sql', 'sql_exec','sql_rows','sql_values','trigger', 'update');
-    if (!in_array($method, $methods)) return null;
-    log::debug("REPLY METHOD $method $parameter");
-    $result = $this->{$method}($parameter);
-    if ($result === false) return false;
-    if (is_null($result)) return null;
-    if (is_null($this->reply)) 
-      $this->reply = $result;
-    else
-      $this->reply = array_merge($this->reply, $result);
-    return null;
-  }
   
   function reply($actions)
   {
@@ -777,12 +762,20 @@ class page
     $methods = array('alert', 'call', 'close_dialog', 'show', 'show_dialog', 
       'redirect', 'sql', 'sql_exec','sql_rows','sql_values','trigger', 'update');
     foreach($actions as $action) {
-      if (!is_array($action))
-        $result = $this->reply_method ($action);
-      else foreach($action as $method=>$parameter) {
-        $result = $this->reply_method($method, $parameter);
+      foreach($action as $method=>$parameter) {
+        if ($method == 'code') {
+          $method = $parameter;
+          $parameter = null;
+        }
+        if (!in_array($method, $methods)) continue;
+        $result = $this->{$method}($parameter);
+        if ($result === false) return false;
+        if (is_null($result)) continue;
+        if (is_null($this->reply)) 
+          $this->reply = $result;
+        else
+          $this->reply = array_merge($this->reply, $result);
       }
-      if ($result === false) return null;
     }
     return $this->reply;
   }
