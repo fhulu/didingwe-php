@@ -48,13 +48,11 @@ class page
   var $page_offset;
   var $reply;
   var $db;
-  var $echo;
   
-  function __construct($echo=true, $request=null, $user_db=null)
+  function __construct($request=null, $user_db=null)
   {
     global $db;
     $this->db = is_null($user_db)?$db: $user_db;
-    $this->echo = $echo;
     $this->result = null;
     
     if (is_null($request)) $request = $_REQUEST;
@@ -73,19 +71,13 @@ class page
     $this->load();
   }
   
-  function __destruct() 
-  {
-    if ($this->echo && !is_null($this->result)) {
-      echo json_encode($this->result);
-    }
-  }
-  
-  function render()
+  function render($echo=true)
   {
     $result = $this->{$this->method}();
     $this->result = null_merge($result, $this->result, false);
-    log::debug_json("RESULT in", $result);
-    log::debug_json("RESULT out", $this->result);
+    if (!$echo || is_null($this->result)) return;
+    
+    echo json_encode($this->result);
   }
   
   function read_user()
@@ -324,7 +316,8 @@ class page
     array_walk_recursive($fields, function(&$value, $key) use ($request) {
       if ($key !== 'page') return;
       $request['path'] = $value;
-      $sub_page = new page(false, $request);
+      $sub_page = new page($request);
+      $sub_page->render(false);
       $value = $sub_page->result;
     });
   }
