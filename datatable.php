@@ -7,7 +7,7 @@
  */
 
 require_once '../common/page.php';
-require('pdf/fpdf.php');
+require_once('pdf/fpdf.php');
 
 class datatable 
 {
@@ -92,6 +92,7 @@ class datatable
     $offset = is_null($page_num) ? 0 : $page_size * ($page_num - 1);
     global $db;
     $sql =  page::replace_sql($options['sql'], $options);
+    if ($sql == '') return;
     $fields = datatable::get_sql_fields($sql);
     $sql = preg_replace('/^\s*(select )/i', '$1 SQL_CALC_FOUND_ROWS ', $sql, 1);
     datatable::filter($sql, $fields, $options);
