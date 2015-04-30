@@ -794,6 +794,16 @@ class page
     log::debug("VALUES ".json_encode($options));
     return $this->reply($options);
   }
+  
+  function upload()
+  {
+    $options = $this->load_field(null, array('field'));
+    log::debug_json("UPLOAD", $options);
+    require_once 'document.php';
+    $id = document::upload($options['code']."_file", $options['format']);
+    if (!is_null($id))
+      page::update("id", $id);
+  }
     
   static function respond($response, $value=null)
   {
