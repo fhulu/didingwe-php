@@ -123,7 +123,14 @@
       var path = this.options.path;
       path = path.substr(0, path.lastIndexOf('/')+1) + props.name;
       var tmp = $('<div></div>');
-      tmp.page({path: path, key: this.options.key});
+      var values = {};
+      if (this.stack.length) {
+        var selector = this.stack.map(function(v) {
+          return '.wizard-page:nth-child('+(v+1)+') *';
+        }).join();
+        values = this.element.find(selector).values();
+      }
+      tmp.page({path: path, key: this.options.key, parent_values: values});
       var self = this;
       var content = page.find('.wizard-content');
       tmp.on('read_'+path.replace(/\//, '_'), function(event, object) {
