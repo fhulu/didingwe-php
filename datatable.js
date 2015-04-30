@@ -78,9 +78,11 @@
       var start = new Date().getTime();
       var self = this;
       self.head().find('.paging [action]').attr('disabled','');
-      var data = $.extend({}, args, {action: 'data'}, self.params);
+      var data = $.extend(this.options.parent_values, args, {action: 'data'}, self.params);
       data.path = data.path +'/load';
       $.json('/', {data: data}, function(data) {
+        if (data._responses) 
+          self.element.trigger('server_response', data._responses);
         var end = new Date().getTime();
         console.log("Load: ", end - start);
         self.populate(data);
