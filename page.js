@@ -1,7 +1,7 @@
 $.fn.page = function(options, callback)
 {
   if (options instanceof Function) callback = options;
-
+  var post_methods = [ 'call', 'sql', 'sql_values', 'sql_rows' ];
   var self = this;  
   var page  = {
     parent: self,
@@ -210,7 +210,7 @@ $.fn.page = function(options, callback)
             };
             assert(item[id], "Invalid item " + JSON.stringify($.copy(item))); 
             item = item[id];
-            if (id === 'sql' || id === 'call') {
+            if (post_methods.indexOf(id) >= 0) {
               loading_data = true;
               this.load_data(parent, parent_field, name, types, defaults); 
               continue;
@@ -423,7 +423,7 @@ $.fn.page = function(options, callback)
       var children = object.find("*");
       children.on('show', function(e, invoker,show) {
         if (show === undefined) return false;
-        show?$(this).show():$(this).hide();
+        $(this).toggle(show);
       });
       
       children.on('refresh', function(e) {
@@ -504,7 +504,7 @@ $.fn.page = function(options, callback)
           obj.value(value);
           continue;
         }
-        if (array && id !== 'sql' && id !== 'call') continue;
+        if (array && !post_methods.indexOf(id) < 0) continue;
         page.load_values(parent, data);
       }
     },
@@ -516,7 +516,7 @@ $.fn.page = function(options, callback)
         if (result._responses) 
           page.respond(result._responses);
         else if ($.isPlainObject(result))
-          parent.setChildren(result[i]);
+          parent.setChildren(result);
         else for (var i in result) {
           parent.setChildren(result[i]);
         }
