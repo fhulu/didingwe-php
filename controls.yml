@@ -342,7 +342,13 @@ question_input_page:
 
 radio:
   html: <input name="$code" title="$desc" type="radio"></input>
-    
+  
+section_heading:
+  html: <p class="desc">$name</p>
+  style: 
+    width: 100%
+    text-align: center
+  
 span:
   html: <span id="$code">$name</span>
   
