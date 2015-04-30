@@ -14,9 +14,10 @@ $.fn.page = function(options, callback)
     load: function() 
     {
       if (options.path[0] === '/') options.path=options.path.substr(1);
-      options.action = 'read';      
-      $.json('/', { data: options}, function(result) {
-        if (result._responses) page.respond(result._responses);
+      options.action = 'read';  
+      var params = $.extend({}, options.parent_values, get_top(options));
+      $.json('/', { data: params}, function(result) {
+        page.trigger_response(result);
         result.values = $.extend({}, options.values, result.values ); 
         if (result.path) page.show(result);
       });
@@ -159,7 +160,7 @@ $.fn.page = function(options, callback)
     append_sub_page: function(parent, regex, template, sub_page)
     {
       var tmp = $('<div></div>');
-      var object = tmp.page($.extend({}, options, sub_page));
+      var object = tmp.page($.extend({}, options.values, options, sub_page));
       var templated = this.get_template_html(template, sub_page.fields);
       parent.replace(regex, templated+'$1'); 
       this.replace(parent, object, object.attr('id'), 'field');
@@ -328,6 +329,7 @@ $.fn.page = function(options, callback)
       assert(field.html, "Invalid HTML for "+id); 
       field.html.replace('$tag', field.tag);
       var obj = $(field.html);
+      
       var reserved = ['code','create','css','script','name', 'desc', 'data'];
       this.set_attr(obj, field);
       this.set_style(obj, field);
@@ -387,11 +389,16 @@ $.fn.page = function(options, callback)
       data.fields.path = data.path;
       var result = page.create(data.fields, this.id, data.types);
       var object = result[1];
+      page.object = object;
       data.fields = result[0];
       data.values = values;
       assert(object !== undefined, "Unable to create page "+this.id);
       object.addClass('page').appendTo(parent);   
       parent.trigger('read_'+this.id, [object, data.fields]);
+      
+      parent.on('server_response', function(event, response, invoker) {
+        page.respond(response, invoker);
+      });
       if (!page.loading)
         page.set_values(object, data);
       else parent.on('loaded', function() {
@@ -433,10 +440,16 @@ $.fn.page = function(options, callback)
       return this;
     },
     
+    trigger_response: function(result, invoker)
+    {
+      if (result && result._responses)
+        this.parent.trigger('server_response', [result._responses, invoker]);
+    },
+    
     load_data: function(object, field, name, types, defaults) 
     {
       
-      var params = {action: 'data', path: field.path+'/'+name, key: page.options.key};
+      var params = $.extend(this.options.values, {action: 'data', path: field.path+'/'+name});
       page.loading++;
       object.on('loaded', function(event,result) {
         if (--page.loading === 0)
@@ -457,10 +470,8 @@ $.fn.page = function(options, callback)
       });
       if (field.autoload || field.autoload === undefined) {
         $.json('/', {data:params}, function(result) {
-          if (result._responses)
-            page.respond(result._responses, object);
-          else
-            object.trigger('loaded', [result]);
+          page.trigger_response(result, object);
+          object.trigger('loaded', [result]);
         });
       }
       
@@ -481,10 +492,10 @@ $.fn.page = function(options, callback)
         page.accept(event, $(this), field);
       });      
     },
-
+    
     set_values: function(parent, data)
     {
-      var values = $.extend({}, data.fields.values, data.values);
+      var values = $.extend(this.options.values, data.fields.values, data.values);
       if (!values) return;
       for (var i in values) {
         var item = values[i];
@@ -511,11 +522,10 @@ $.fn.page = function(options, callback)
     
     load_values: function(parent, data)
     {
-      var params = { action: 'values', path: data.path+'/values', key: this.options.key } 
+      var params = $.extend(this.options.values, { action: 'values', path: data.path+'/values' });
       parent.find('*').json('/', {data: params }, function(result) {
-        if (result._responses) 
-          page.respond(result._responses);
-        else if ($.isPlainObject(result))
+        page.trigger_response(result);
+        if ($.isPlainObject(result))
           parent.setChildren(result);
         else for (var i in result) {
           parent.setChildren(result[i]);
@@ -544,14 +554,14 @@ $.fn.page = function(options, callback)
             selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+page_id+"$2");
             obj.jsonCheck(event, selector, '/', { data: data }, function(result) {
               if (result === null) result = undefined;
+              page.trigger_response(result, obj);
               obj.trigger('processed', [result]);
-              if (result) page.respond(result._responses, obj);
             });
             break;
           }
           $.json('/', {data: data}, function(result) {
+            page.trigger_response(result, obj);
             obj.trigger('processed', [result]);
-            if (result !== undefined) page.respond(result._responses, obj);
           });
           break;
         case 'trigger':
@@ -579,6 +589,8 @@ $.fn.page = function(options, callback)
          parent = invoker.parents('.ui-dialog-content').eq(0);
         if (!parent.exists()) parent = this.parent;
       }
+      else invoker = parent;
+      
       var self = this;
       var handle = function(action, val)
       {
