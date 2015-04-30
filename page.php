@@ -12,11 +12,9 @@ require_once 'db.php';
 require_once 'user.php';
 require_once 'utils.php';
 
+$page = new page();
 try {
-  global $page;
-
-  $page = new page();
-  $page->render();
+  $page->process();
 }
 catch (user_exception $exception) {
   log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
@@ -29,6 +27,7 @@ catch (Exception $exception)
   log::stack($exception);
   page::show_dialog('/error_page');
 }
+$page->output();
 
 class page
 {  
@@ -60,25 +59,30 @@ class page
     $this->request = $request;
     $this->path = explode('/', $request['path']);
     $this->method = $request['action'];
-    if (is_null($this->method))
-      throw new Exception("No method parameter in request");
 
-    $this->read_user();
     $this->page_offset = 1;
     
     $this->types = array();
 
-    $this->load();
   }
   
-  function render($echo=true)
+  function process()
   {
+    if (is_null($this->method))
+      throw new Exception("No method parameter in request");
+    
+    $this->read_user();
+    $this->load();
     $result = $this->{$this->method}();
     $this->result = null_merge($result, $this->result, false);
-    if (!$echo || is_null($this->result)) return;
-    
-    echo json_encode($this->result);
   }
+  
+  function output()
+  {
+    if (!is_null($this->result))     
+      echo json_encode($this->result);
+  }
+  
   
   function read_user()
   {
@@ -317,7 +321,7 @@ class page
       if ($key !== 'page') return;
       $request['path'] = $value;
       $sub_page = new page($request);
-      $sub_page->render(false);
+      $sub_page->process();
       $value = $sub_page->result;
     });
   }
@@ -448,12 +452,8 @@ class page
       $field = merge_options(at($this->fields, $type), $field);
       unset($field['type']);
     }
-    log::debug_json('field', $field); 
-    $items = array();
-    foreach($field as $item) {
-      $items = null_merge($items, $this->reply($item), false);
-    }
-    return $items;
+    log::debug("DATA ".json_encode($field));
+    return $this->reply($field);
   }
   
   function call_method($function, $params, $options=null)
@@ -658,11 +658,12 @@ class page
   {
     $invoker = $this->load_field(null, array('field'));
     log::debug_json("action INVOKER ", $invoker);
-    $fields = $this->fields[$this->page];
-    $this->expand_field($fields);
     $validate = at($invoker, 'validate');
-    if (!is_null($validate) && $validate != 'none' && !$this->validate($fields))
-      return null;
+    if (!is_null($validate) && $validate != 'none') {
+      $fields = $this->fields[$this->page];
+      $this->expand_field($fields);
+      if (!$this->validate($fields)) return null;
+    }
     
     $result = $this->reply($invoker);
     if (!page::has_errors() && array_key_exists('audit', $invoker))
