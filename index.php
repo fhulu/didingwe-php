@@ -62,10 +62,11 @@
   if (!is_null($page))  pre_load_custom($page);
   if ($content != $page && !is_null($content)) 
     pre_load_custom($content);
-  $params = array_merge($_GET, array('path'=>$page, 'content'=>$content));
+  $request = array_merge($_REQUEST, array('content'=>$content));
+  $options = array("path"=>$page, 'request'=>$request)
 ?>
 <script>
 $(function() {
-  $("body").page(<?=json_encode($params);?>);
+  $("body").page(<?=json_encode($options);?>);
 });
 </script>
