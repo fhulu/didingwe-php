@@ -167,7 +167,7 @@ class validator
     if (is_numeric($name)) $value = $title = $name; 
     if ($this->value < $value) return true;
     if (is_null($title)) $title = $this->title($name);
-    return "$this->title must be less than $title";
+    return "$this->title must be less than $title ($value)";
   }
   
   function less_equal($name, $title=null)
@@ -176,7 +176,7 @@ class validator
     if (is_numeric($name)) $value = $title = $name; 
     if ($this->value <= $value) return true;
     if (is_null($title)) $title = $this->title($name);
-    return "$this->title must not be greater than  $title";
+    return "$this->title must not be greater than $title ($value)";
   }
   
   function greater($name, $title=null)
@@ -185,7 +185,7 @@ class validator
     if (is_numeric($name)) $value = $title = $name; 
     if ($this->value > $value) return true;
     if (is_null($title)) $title = $this->title($name);
-    return "$this->title must be greater than $title";
+    return "$this->title must be greater than $title ($value)";
   }
   
   function greater_equal($name, $title=null)
@@ -194,7 +194,7 @@ class validator
     if (is_numeric($name)) $value = $title = $name; 
     if ($this->value >= $value) return true;
     if (is_null($title)) $title = $this->title($name);
-    return "$this->title must not be less than  $title";
+    return "$this->title must not be less than $title ($value)";
   }
   
   function password($min_length)
