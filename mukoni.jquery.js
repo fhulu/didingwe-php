@@ -182,10 +182,11 @@ $.fn.send = function(url, options, callback)
     callback = options;
     options = undefined;
   }
-  if (options !== undefined)
-    options.data = $.extend($(this).values(), options.data);
-  else
-    options = {data : $(this).values()};
+  var data = $(this).values();
+  if (options !== undefined) 
+    data = $.extend({}, options.data, data);
+  
+  options = $.extend({}, options, {data: data});
   return $.send(url, options, callback);  
 }
 
@@ -195,7 +196,6 @@ $.fn.json = function(url, options, callback)
     callback = options;
     options = undefined;
   }
-  
   var data = $(this).values();
   if (options !== undefined) 
     data = $.extend({}, options.data, data);
@@ -452,7 +452,6 @@ $.fn.setChildren = function(result)
   if (result === null) return;
   $.each(result, function(key, val) {
     var filter = "#"+key+",[name='"+key+"']";
-    console.log("setting", key, val, self.find(filter));
     self.find(filter).setValue(val);
   });
   return this;
