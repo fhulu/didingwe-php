@@ -17,16 +17,22 @@ $.fn.page = function(options, callback)
         page.respond(response, invoker);
       });
       
-      if (options.path[0] === '/') options.path=options.path.substr(1);
-      options.action = 'read';  
-      var params = $.extend({}, options.parent_values, get_top(options));
-      $.json('/', { data: params}, function(result) {
+      var path = options.path;
+      if  (path[0] === '/') path=options.path.substr(1);
+      $.json('/', this.server_params('read', path), function(result) {
         page.trigger_response(result);
         result.values = $.extend({}, options.values, result.values ); 
         if (result.path) page.show(result);
       });
     },
    
+    server_params: function(action, path, params)
+    {
+      if (!path) path = this.options.path;
+      return { data: $.extend({}, options.request, params, 
+        {key: options.key, action: action, path: path })};
+    },
+    
     expand_function: function(value, parent_id)
     {
       var matches = /(copy|css)\s*\((.+)\)/.exec(value);
@@ -450,7 +456,6 @@ $.fn.page = function(options, callback)
     load_data: function(object, field, name, types, defaults) 
     {
       
-      var params = $.extend(this.options.values, {action: 'data', path: field.path+'/'+name});
       page.loading++;
       object.on('loaded', function(event,result) {
         if (--page.loading === 0)
@@ -470,7 +475,7 @@ $.fn.page = function(options, callback)
           page.parent.trigger('loaded', result);
       });
       if (field.autoload || field.autoload === undefined) {
-        $.json('/', {data:params}, function(result) {
+        $.json('/', page.server_params('data', field.path+'/'+name), function(result) {
           page.trigger_response(result, object);
           object.trigger('loaded', [result]);
         });
@@ -496,7 +501,7 @@ $.fn.page = function(options, callback)
     
     set_values: function(parent, data)
     {
-      var values = $.extend(this.options.values, data.fields.values, data.values);
+      var values = $.extend({}, this.options.request, this.options.values, data.fields.values, data.values);
       if (!values) return;
       for (var i in values) {
         var item = values[i];
@@ -516,15 +521,14 @@ $.fn.page = function(options, callback)
           obj.value(value);
           continue;
         }
-        if (array && !post_methods.indexOf(id) < 0) continue;
-        page.load_values(parent, data);
+        if (post_methods.indexOf(id) > 0) 
+          page.load_values(parent, data);
       }
     },
     
     load_values: function(parent, data)
     {
-      var params = $.extend({},page.options.parent_values, { action: 'values', path: data.path+'/values', key: this.options.key });
-      $.json('/', {data: params }, function(result) {
+      $.json('/', this.server_params('values', data.path+'/values'), function(result) {
         page.trigger_response(result);
         if ($.isPlainObject(result))
           parent.setChildren(result);
@@ -537,7 +541,6 @@ $.fn.page = function(options, callback)
     accept: function(event, obj, field)
     {
       var action = field.action;
-      var data = {action: 'action', key: field.key, path: field.path};
       var page_id = field.page_id || obj.parents(".page").eq(0).attr('id');
       switch(action) {
         case 'dialog': page.showDialog(field.url, {key: field.key}); return;
@@ -550,17 +553,18 @@ $.fn.page = function(options, callback)
           document.location = url;
           break;
         case 'post':
+          var params = this.server_params('action', field.path);
           var selector = field.selector;
           if (selector !== undefined) {
             selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+page_id+"$2");
-            obj.jsonCheck(event, selector, '/', { data: data }, function(result) {
+            obj.jsonCheck(event, selector, '/', params, function(result) {
               if (result === null) result = undefined;
               page.trigger_response(result, obj);
               obj.trigger('processed', [result]);
             });
             break;
           }
-          $.json('/', {data: data}, function(result) {
+          $.json('/', params, function(result) {
             page.trigger_response(result, obj);
             obj.trigger('processed', [result]);
           });
