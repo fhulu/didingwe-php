@@ -13,6 +13,10 @@ $.fn.page = function(options, callback)
     loading: 0,
     load: function() 
     {
+      this.parent.on('server_response', function(event, response, invoker) {
+        page.respond(response, invoker);
+      });
+      
       if (options.path[0] === '/') options.path=options.path.substr(1);
       options.action = 'read';  
       var params = $.extend({}, options.parent_values, get_top(options));
@@ -396,9 +400,6 @@ $.fn.page = function(options, callback)
       object.addClass('page').appendTo(parent);   
       parent.trigger('read_'+this.id, [object, data.fields]);
       
-      parent.on('server_response', function(event, response, invoker) {
-        page.respond(response, invoker);
-      });
       if (!page.loading)
         page.set_values(object, data);
       else parent.on('loaded', function() {
@@ -522,8 +523,8 @@ $.fn.page = function(options, callback)
     
     load_values: function(parent, data)
     {
-      var params = $.extend(this.options.values, { action: 'values', path: data.path+'/values' });
-      parent.find('*').json('/', {data: params }, function(result) {
+      var params = $.extend({},page.options.parent_values, { action: 'values', path: data.path+'/values', key: this.options.key });
+      $.json('/', {data: params }, function(result) {
         page.trigger_response(result);
         if ($.isPlainObject(result))
           parent.setChildren(result);
