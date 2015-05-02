@@ -438,12 +438,12 @@ $.fn.page = function(options, callback)
       children.on('show', function(e, invoker,show) {
         if (show === undefined) return false;
         $(this).toggle(show);
+        e.stopImmediatePropagation();
       });
       
       children.on('refresh', function(e) {
         
       });
-      this.object = object;
       return this;
     },
     
@@ -501,29 +501,33 @@ $.fn.page = function(options, callback)
     
     set_values: function(parent, data)
     {
-      var values = $.extend({}, this.options.request, this.options.values, data.fields.values, data.values);
-      if (!values) return;
-      for (var i in values) {
-        var item = values[i];
-        var array = $.isNumeric(i);
-        if (array && !$.isPlainObject(item)) continue;
-         var id = i, value= item;
-        if (array) {
-          for (var key in item) {
-            if (!item.hasOwnProperty(key)) continue;
-            id = key;
-            value = item[key];
-            break;
-          };
+      var set = function(values) {
+        for (var i in values) {
+          var item = values[i];
+          var array = $.isNumeric(i);
+          if (array && !$.isPlainObject(item)) continue;
+           var id = i, value= item;
+          if (array) {
+            for (var key in item) {
+              if (!item.hasOwnProperty(key)) continue;
+              id = key;
+              value = item[key];
+              break;
+            };
+          }
+          var obj = parent.find('#'+id);
+          if (obj.exists()) {
+            obj.value(value);
+            continue;
+          }
+          if (post_methods.indexOf(id) > 0) 
+            page.load_values(parent, data);
         }
-        var obj = parent.find('#'+id);
-        if (obj.exists()) {
-          obj.value(value);
-          continue;
-        }
-        if (post_methods.indexOf(id) > 0) 
-          page.load_values(parent, data);
-      }
+      };
+      set(this.options.request);
+      set(this.options.values);
+      set(data.fields.values);
+      set(data.values);
     },
     
     load_values: function(parent, data)
@@ -591,7 +595,7 @@ $.fn.page = function(options, callback)
       if (!$.isPlainObject(responses)) return this;
       var parent = this.parent;
       if (invoker) {
-         parent = invoker.parents('.ui-dialog-content').eq(0);
+         parent = invoker.parents('#'+this.options.page_id).eq(0);
         if (!parent.exists()) parent = this.parent;
       }
       else invoker = parent;
