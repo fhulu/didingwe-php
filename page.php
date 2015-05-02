@@ -55,7 +55,7 @@ class page
     $this->result = null;
     
     if (is_null($request)) $request = $_REQUEST;
-    log::debug_json("REQUEST",json_encode($request));
+    log::debug_json("REQUEST",$request);
     $this->request = $request;
     $this->path = explode('/', $request['path']);
     $this->method = $request['action'];
@@ -86,7 +86,6 @@ class page
   
   function read_user()
   {
-    log::debug_json("SESSION",$_SESSION['instance']);
     if (!isset($_SESSION['instance'])) return;
     require_once 'session.php';
     global $session;
@@ -718,12 +717,10 @@ class page
     for (; $i < $path_len-1; ++$i) {
       $branch = $this->path[$i];
       if (is_assoc($context)) {
-       log::debug_json("ASSOC BRANCH $branch ", $context);
        $context = $context[$branch];
         continue;
       }
 
-      log::debug_json("ARRAY BRANCH $branch ", $context);
       foreach($context as $pair) {
         if(!isset($pair[$branch])) continue;
         $context = $pair[$branch];
@@ -731,7 +728,6 @@ class page
       }
     }
     $context = page::merge_options($this->fields[$branch], $context);
-    log::debug_json("CALL $invoker $path_len", $context);
     $method = preg_replace('/\$class([^\w]|$)/', "$this->object\$1", $method);
     $method = preg_replace('/\$page([^\w]|$)/', "$this->page\$1", $method); 
     $method = preg_replace('/\$invoker([^\w]|$)/', "$invoker\$1", $method);
@@ -868,7 +864,6 @@ class page
     log::debug("ERROR $name $value ");
     $result = &$page->result;
     $errors = &$result['errors'];
-    log::debug_json("PAGE", $page);
     $errors[$name] = $value;
   }
   
