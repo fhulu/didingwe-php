@@ -130,7 +130,7 @@
         }).join();
         values = this.element.find(selector).values();
       }
-      tmp.page({path: path, key: this.options.key, parent_values: values});
+      tmp.page({path: path, key: this.options.key, request: values});
       var self = this;
       var content = page.find('.wizard-content');
       tmp.on('read_'+path.replace(/\//, '_'), function(event, object) {

@@ -78,7 +78,7 @@
       var start = new Date().getTime();
       var self = this;
       self.head().find('.paging [action]').attr('disabled','');
-      var data = $.extend(this.options.parent_values, args, {action: 'data'}, self.params);
+      var data = $.extend(this.options.request, args, {action: 'data'}, self.params);
       data.path = data.path +'/load';
       $.json('/', {data: data}, function(data) {
         if (data._responses) 
