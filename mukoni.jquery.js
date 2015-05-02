@@ -52,14 +52,12 @@ $.fn.setValue = function(val)
   }
   var type = this.attr('type');
   if (type === 'checkbox') 
-    this.attr('checked', val);
-  else if (this.attr('value') === undefined)
-    this.html(val);
-  else if (this.attr('customCreate') !== undefined) 
-    this.trigger('customValue', [val]);
-  else
-    this.val(val);
-  return this;
+    return val?this.attr('checked', true): this.removeAttr('checked');
+  if (this.attr('value') !== undefined)
+    return this.val(val);
+  if (this.attr('customCreate') !== undefined) 
+    return this.trigger('customValue', [val]);
+  return this.html(val);
 }
 
 $.fn.getValue = function()
@@ -68,8 +66,7 @@ $.fn.getValue = function()
   if (name === undefined) return true;
   var type = this.attr('type');
   if ((type === 'radio' || type === 'checkbox')) return this.is(':checked')?1:0;
-  var val = this.val();
-  return val === undefined && !this.hasAttr('value')? this.text(): val;
+  return this.hasAttr('value')? this.val(): this.text();
 }
 
 $.fn.value = function(val)
@@ -198,10 +195,12 @@ $.fn.json = function(url, options, callback)
     callback = options;
     options = undefined;
   }
-  if (options !== undefined)
-    options.data = $.extend($(this).values(), options.data);
-  else
-    options = {data : $(this).values()};
+  
+  var data = $(this).values();
+  if (options !== undefined) 
+    data = $.extend({}, options.data, data);
+  
+  options = $.extend({}, options, {data: data});
   $.json(url, options, function(result){
     callback(result);
   });  
@@ -453,23 +452,8 @@ $.fn.setChildren = function(result)
   if (result === null) return;
   $.each(result, function(key, val) {
     var filter = "#"+key+",[name='"+key+"']";
-    self.find(filter).value(val);
-    self.find(filter).each(function() {
-      var el = $(this);
-      if (el.is("a")) {
-        var proto = el.attr('proto')==undefined? '': el.attr('proto');
-        if (val == null)
-          el.attr('href', '');
-       else
-          el.attr('href', proto+val);
-      }      
-      else if (el.attr('value') !== undefined)
-        el.val(val);
-      else if (el.attr('customCreate') !== undefined) 
-        el.trigger('customValue', [val]);
-      else
-        el.html(val);
-    });
+    console.log("setting", key, val, self.find(filter));
+    self.find(filter).setValue(val);
   });
   return this;
 }
