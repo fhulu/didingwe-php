@@ -10,6 +10,7 @@ class validator
   var $request;
   var $db;
   var $name;
+  var $last_name;
   var $title;
   var $value;
   var $error_cb;
@@ -36,8 +37,7 @@ class validator
   function regex($regex, $title=null)
   {
     if (preg_match($regex, $this->value)) return true;
-    if ($title == '') $title = "!Invalid $this->title.";
-    return $title;
+    return ($title == null)? $title = "!Invalid $this->title.": $title;
   }
   
   function country_code()
@@ -161,6 +161,11 @@ class validator
     return $this->match($name);
   }
   
+  function equals($value, $title=null) 
+  {
+    if ($this->value == $value) return true;
+    return $title==null?"$this->title must equal $value":$title;
+  }
   function less($name, $title=null)
   {
     $value = $this->request[$name];
@@ -323,6 +328,9 @@ class validator
     $this->name = $name;
     $this->title = $title;
     $this->value = trim(at($this->request,$name));
+    if ($this->last_name != $name)
+      $this->optional = false;
+    $this->last_name = $name;
     return $this;
   }
   
@@ -338,6 +346,8 @@ class validator
   
    // validate each argument
     $result = true;
+    $this->optional |= in_array('optional', $funcs);
+    if ($this->optional && $this->value == '') return true;
     foreach($funcs as $func) {
       $args = array($func);
       if ($func == 'optional') continue;
@@ -367,7 +377,6 @@ class validator
         $result = call_user_func_array(array($this, $func), $args); 
       if ($result === true) continue;
       if ($func == 'depends' || $result === false) return false;
-      if ($func == 'optional') return true;
       return $this->error($result);
     }
     return true;
