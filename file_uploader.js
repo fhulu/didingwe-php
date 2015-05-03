@@ -9,11 +9,10 @@
       var el = this.element.addClass('file_uploader');
       var id = el.attr('id');
       var form = $('<form method=POST></form>')
-              .attr('action',this.options.uploader)
+              .attr('action',this.options.uploader+'&path='+encodeURIComponent(this.options.path))
               .attr('target',id+'_target')
               .appendTo(el);
       var file = $('<input type=file></input>').attr('name',id+'_file').appendTo(form);
-      $('<input type=hidden name=path></input>').val(this.options.path).appendTo(form);
       var uploaded_id = $('<input type=hidden></input>').attr('name',id+'_id').appendTo(el);
       var button = $('<button>Upload</button>').appendTo(el).hide().click(function() {
         form.submit();
