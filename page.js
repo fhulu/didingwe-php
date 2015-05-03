@@ -275,7 +275,7 @@ $.fn.page = function(options, callback)
         if (item.hide || item.show === false) {
           templated.hide();
         }
-        templated.on('show_hide', function() {
+        templated.on('show_hide', function(event, invoker, condition) {
           $(this).is(':visible')? $(this).hide(): $(this).show();
         });
       }
@@ -660,6 +660,8 @@ $.fn.page = function(options, callback)
     {
       if (dialog.hasClass('ui-dialog-content'))
         dialog.dialog('destroy').remove();
+      else
+        dialog.parents('ui-dialog-content').eq(0).dialog('destroy').remove();
     }
         
   };
