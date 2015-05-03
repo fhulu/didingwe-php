@@ -749,7 +749,7 @@ class page
     
     log::debug_json("REPLY", $actions);
    
-    $methods = array('alert', 'call', 'close_dialog', 'show', 'show_dialog', 
+    $methods = array('alert', 'call', 'close_dialog', 'show_dialog', 
       'redirect', 'sql', 'sql_exec','sql_rows','sql_values','trigger', 'update');
     foreach($actions as $action) {
       foreach($action as $method=>$parameter) {
