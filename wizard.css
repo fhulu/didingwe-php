@@ -26,6 +26,16 @@
   left: 8px;
 }
 
+.wizard-nav .wizard-prev
+{
+  float: left;
+}
+
+.wizard-nav .wizard-next
+{
+  float: right;
+}
+
 .wizard-bookmark
 {
   background-color: darkcyan;
