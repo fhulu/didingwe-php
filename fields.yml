@@ -11,11 +11,19 @@ add_user:
 
 admin:
   name: Administrator
+
+agree_terms:
+  name: I have read and accepted the terms and conditions.
+  valid: equals(1, Must agree and accept to terms and conditions)
+  
   
 audit_trail:
   access: admin
   url: /user/audit_trail
 
+blank:
+  name: " "
+  
 calculate_days:
   type: calculate_period
   unit: day
@@ -41,6 +49,9 @@ change_password:
   action: dialog
   url: /user/start_reset_password
 
+confirm_details:
+  name: I confirm that the details provided are true and correct. 
+  valid: equals(1, Must confirm that details are true and correct)
     
 contacts:
   email: support@mukoni.co.za
@@ -103,11 +114,11 @@ developed_by:
   
 email:
   desc: Valid e-mail address
-  valid: email
+  valid: 
+    - email
 
 email_address:
-  desc: Valid e-mail address 
-  valid: email
+  type: email
 
 error_page:
   desc: Unexpected error occured. Please report to your System Administrator.
@@ -129,14 +140,16 @@ home:
   url: /home
      
 id:
-  name: Identity
-  
+  name: Reference #
+
 id_no:
   name: ID Number
+  desc: Valid South African ID number
+  valid: 
+    - za_id
 
 id_number:
-  name: ID Number
-  desc: Valid South African ID number
+  type: id_no
   
 inputs:
   - type: input
@@ -148,7 +161,8 @@ last_name:
     - alphabetic
 
 latitude:
-  valid: /^\d+\.\d+$/
+  valid: 
+    - /^\d+\.\d+$/
 
 login:
   desc: Log in to the system
@@ -166,7 +180,8 @@ logout:
   call: user::logout()
 
 longitude:
-  valid: /^\d+\.\d+$/
+  valid: 
+    - /^\d+\.\d+$/
 
 manage_user_group:
   access: user
