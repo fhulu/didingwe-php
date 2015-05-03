@@ -39,13 +39,13 @@
       this.bookmark_width = parseInt(bookmark.css('height'));
       $('<span class=wizard-bookmark-number>').appendTo(bookmark);
       $('<span class=wizard-bookmark-title>').appendTo(bookmark);
-      var height = parseInt(this.element.height());      
+      var height = parseInt(this.element.height()-16);      
       var content = $('<div class=wizard-content>').appendTo(page);
       var nav = $('<div class=wizard-nav>').appendTo(page);
       content.height(height-parseInt(nav.css('height')));
       bookmark.width(height);
-      bookmark.css('left', (-(height-this.bookmark_width+6)/2)+'px');
-      bookmark.css('top', (height/2-12)+'px');
+      bookmark.css('left', (-(height-this.bookmark_width+8)/2)+'px');
+      bookmark.css('top', (height/2-10)+'px');
       bookmark.hide();
       if (index > 0) {
         var prev = this.element.find('.wizard-page').eq(index-1);
