@@ -453,6 +453,26 @@ $.fn.page = function(options, callback)
         this.parent.trigger('server_response', [result._responses, invoker]);
     },
     
+    trigger: function(field, invoker)
+    {
+      var events = field.events;
+      if (!events) {
+        if (!field.event) {
+          console.log("WARNING: no event defined for field", field);
+          return;
+        }
+        events = [field.event];
+      }
+      var sink = invoker;
+      for (var i in events) {
+        var params = events[i].match(/^(\w[\w-]+)(?:\((.+)\))?$/);
+        if (field.sink) {
+          sink = $(field.sink.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+field.page_id+"$2"));
+        }
+        sink.trigger(params[1], [invoker, params[2], params[3], params[4]]);
+      }
+    },
+    
     load_data: function(object, field, name, types, defaults) 
     {
       
@@ -545,7 +565,7 @@ $.fn.page = function(options, callback)
     accept: function(event, obj, field)
     {
       var action = field.action;
-      var page_id = field.page_id || obj.parents(".page").eq(0).attr('id');
+      field.page_id = field.page_id || obj.parents(".page").eq(0).attr('id');
       switch(action) {
         case 'dialog': page.showDialog(field.url, {key: field.key}); return;
         case 'target':
@@ -560,7 +580,7 @@ $.fn.page = function(options, callback)
           var params = this.server_params('action', field.path);
           var selector = field.selector;
           if (selector !== undefined) {
-            selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+page_id+"$2");
+            selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+field.page_id+"$2");
             obj.jsonCheck(event, selector, '/', params, function(result) {
               if (result === null) result = undefined;
               page.trigger_response(result, obj);
@@ -574,12 +594,7 @@ $.fn.page = function(options, callback)
           });
           break;
         case 'trigger':
-          var event = field.event.split('<');
-          var sink = obj;
-          if (field.sink) {
-            sink = $(field.sink.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+page_id+"$2"));
-          }
-          sink.trigger(event[0], [obj, event[1]]);
+          page.trigger(field, obj);
           break;
         default:
           if (field.url)
