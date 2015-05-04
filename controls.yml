@@ -5,7 +5,9 @@ ajax_result:
   html: >
     <span class=ajax_result style="display: none;"></span>
 
-
+blank:
+  html: <span><span>
+  
 button: 
   html: <button id="$code" title="$desc" class=action>$name</button>
   
@@ -342,6 +344,9 @@ question_input_page:
 
 radio:
   html: <input name="$code" title="$desc" type="radio"></input>
+ 
+right_text:
+  html: $field <p class=right-text>$name</p>
   
 section_heading:
   html: <p class="desc">$name</p>
@@ -428,4 +433,13 @@ wizard:
   prev_name: Previous
   next_name: Next
 
+wizard_jump:
+  type: button
+  action: trigger
+  event: wizard-jump($code)
+  
+wizard_next:
+  type: button
+  action: trigger
+  event: wizard-next
 ...
