@@ -29,8 +29,8 @@ $.fn.page = function(options, callback)
     server_params: function(action, path, params)
     {
       if (!path) path = this.options.path;
-      return { data: $.extend({}, options.request, params, 
-        {key: options.key, action: action, path: path })};
+      return { data: $.extend({}, options.request, {key: options.key}, params, 
+        {action: action, path: path })};
     },
     
     expand_function: function(value, parent_id)
@@ -577,7 +577,7 @@ $.fn.page = function(options, callback)
           document.location = url;
           break;
         case 'post':
-          var params = this.server_params('action', field.path);
+          var params = this.server_params('action', field.path, {key: field.key});
           var selector = field.selector;
           if (selector !== undefined) {
             selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+field.page_id+"$2");
