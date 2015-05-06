@@ -308,6 +308,7 @@ class validator
       $param = trim($param);
       if ($param=='this') $param = $this->name;
       if (array_key_exists($param, $this->request)) $param = $this->request[$param];
+      $param = replace_vars ($param, $this->request);
     }
     return call_user_func_array($function, $params);
   }
