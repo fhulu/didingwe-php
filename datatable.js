@@ -81,8 +81,7 @@
       var data = $.extend(this.options.request, args, {action: 'data'}, self.params);
       data.path = data.path +'/load';
       $.json('/', {data: data}, function(data) {
-        if (data._responses) 
-          self.element.trigger('server_response', data._responses);
+         self.element.trigger('server_response', data);
         var end = new Date().getTime();
         console.log("Load: ", end - start);
         self.populate(data);
