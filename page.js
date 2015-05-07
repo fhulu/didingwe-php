@@ -13,14 +13,14 @@ $.fn.page = function(options, callback)
     loading: 0,
     load: function() 
     {
-      this.parent.on('server_response', function(event, response, invoker) {
-        page.respond(response, invoker);
+      this.parent.on('server_response', function(event, result, invoker) {
+        page.respond(result, invoker);
       });
       
       var path = options.path;
       if  (path[0] === '/') path=options.path.substr(1);
       $.json('/', this.server_params('read', path), function(result) {
-        page.trigger_response(result);
+        page.respond(result);
         result.values = $.extend({}, options.values, result.values ); 
         if (result.path) page.show(result);
       });
@@ -450,7 +450,7 @@ $.fn.page = function(options, callback)
     trigger_response: function(result, invoker)
     {
       if (result && result._responses)
-        this.parent.trigger('server_response', [result._responses, invoker]);
+        this.parent.trigger('server_response', [result, invoker]);
     },
     
     trigger: function(field, invoker)
@@ -496,7 +496,7 @@ $.fn.page = function(options, callback)
       });
       if (field.autoload || field.autoload === undefined) {
         $.json('/', page.server_params('data', field.path+'/'+name), function(result) {
-          page.trigger_response(result, object);
+          page.respond(result, object);
           object.trigger('loaded', [result]);
         });
       }
@@ -553,7 +553,7 @@ $.fn.page = function(options, callback)
     load_values: function(parent, data)
     {
       $.json('/', this.server_params('values', data.path+'/values'), function(result) {
-        page.trigger_response(result);
+        page.respond(result);
         if ($.isPlainObject(result))
           parent.setChildren(result);
         else for (var i in result) {
@@ -583,14 +583,14 @@ $.fn.page = function(options, callback)
             selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+field.page_id+"$2");
             obj.jsonCheck(event, selector, '/', params, function(result) {
               if (result === null) result = undefined;
-              page.trigger_response(result, obj);
               obj.trigger('processed', [result]);
+              page.respond(result, obj);
             });
             break;
           }
           $.json('/', params, function(result) {
-            page.trigger_response(result, obj);
             obj.trigger('processed', [result]);
+            page.respond(result, obj);
           });
           break;
         case 'trigger':
@@ -605,8 +605,10 @@ $.fn.page = function(options, callback)
     
     
     
-    respond: function(responses, invoker)
+    respond: function(result, invoker)
     {
+      if (!result) return this;
+      var responses = result._responses;
       if (!$.isPlainObject(responses)) return this;
       var parent = this.parent;
       if (invoker) {
@@ -638,12 +640,13 @@ $.fn.page = function(options, callback)
         }
       }
 
-      $.each(responses, function(key, val) {
+      for (var key in responses) {
+        var val = responses[key];
         if (!$.isArray(val))
           handle(key, val);
         else for (var i in val) 
           handle(key, val[i]);      
-      });      
+      }
       return this;
     },
 
@@ -673,10 +676,9 @@ $.fn.page = function(options, callback)
     
     closeDialog: function(dialog)
     {
-      if (dialog.hasClass('ui-dialog-content'))
-        dialog.dialog('destroy').remove();
-      else
-        dialog.parents('ui-dialog-content').eq(0).dialog('destroy').remove();
+      if (!dialog.hasClass('ui-dialog-content'))
+        dialog = dialog.parents('ui-dialog-content').eq(0);
+      dialog.dialog('destroy').remove();
     }
         
   };
