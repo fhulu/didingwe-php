@@ -727,7 +727,9 @@ class page
         break;
       }
     }
-    $context = page::merge_options($this->fields[$branch], $context);
+    if (is_array($context) && !is_assoc($context)) $context = $context[0];
+    $new_context = at($context, $invoker);
+    $context = page::merge_options($this->fields[$branch], $new_context?$new_context:$context);
     $method = preg_replace('/\$class([^\w]|$)/', "$this->object\$1", $method);
     $method = preg_replace('/\$page([^\w]|$)/', "$this->page\$1", $method); 
     $method = preg_replace('/\$invoker([^\w]|$)/', "$invoker\$1", $method);
