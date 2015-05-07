@@ -349,10 +349,7 @@ right_text:
   html: $field <p class=right-text>$name</p>
   
 section_heading:
-  html: <p class="desc">$name</p>
-  style: 
-    width: 100%
-    text-align: center
+  html: <p class="section-heading">$name</p>
   
 span:
   html: <span id="$code">$name</span>
