@@ -383,28 +383,43 @@ class validator
     return true;
   }
  
-  function relate_time($now, $type)
+  function relate_time($now, $relation)
   {
-    if ($type == 'future' && $this->value <= $now)
+    if ($relation == 'future' && $this->value <= $now)
       return "$this->title must be in the future";
 
-    if ($type == 'past' && $this->value >= $now)
+    if ($relation == 'past' && $this->value >= $now)
       return "$this->title must be in the past";
     return true;
   } 
 
-  function date($type)
+  function date($relation=null)
   {
     $result = $this->regex('/^\d{4}([-\/])(0\d|1[0-2])\1([0-2][0-9]|3[01])$/');
     if ($result !== true) return $result;
-    return $this->relate(Date('Y-m-d'), $type);
+    return $this->relate_time(Date('Y-m-d'), $relation);
+  }
+
+  function time($relation=null)
+  {
+    $result = $this->regex('/^\d\d:\d\d(:\d\d)?$/');
+    if ($result !== true) return $result;
+    return $this->relate_time(Date('H:i'), $relation);
   }
   
-  function datetime($type)
+  
+  function datetime($relation)
   {
     $result = $this->regex('/(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})(:(\d{2}))?/');
     if ($result !== true) return $result;
-    return $this->relate_time(Date('Y-m-d H:i:s'), $type);
+    return $this->relate_time(Date('Y-m-d H:i:s'), $relation);
+  }
+  
+  function same_month($field, $title=null)
+  {
+    if (substr($this->value,0,8) == substr($this->request[$field], 0, 8)) return true;
+    if (is_null($title)) $title = validator::title($field);
+    return "$this->title must be in the same month as $title";
   }
 
   function valid()
