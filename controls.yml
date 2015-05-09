@@ -178,7 +178,7 @@ h3:
   html: <h3 id="$code">$name</h3>
     
 hidden:  
-  html: <input id='$code' type=hidden></input>
+  html: <input id='$code' type=hidden value='$value'></input>
 
 image:
   html: <img id="$code" src="$src" title="$desc"></img>
