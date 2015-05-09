@@ -90,8 +90,11 @@ datatable:
 
 date:
   type: input
-  create: datepicker
-  dateFormat: yy-mm-dd
+  create: datetimepicker
+  timepicker: false
+  format: Y-m-d
+  script: /common/jquery.datetimepicker.js
+  css: /common/jquery.datetimepicker.css
   
 datetime:
   type: input
