@@ -620,7 +620,7 @@ class page
   static function decode_sql($message)
   {
     $matches = array();
-    preg_match_all('/sql\s*\(((?>[^()]|(?R))*)\)/', $message, $matches, PREG_SET_ORDER);
+    preg_match_all('/sql\s*\((.+)\)/', $message, $matches, PREG_SET_ORDER);
     global $db;
     foreach($matches as $match) {
       $data = $db->read_one($match[1], MYSQLI_NUM);
