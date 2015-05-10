@@ -9,7 +9,7 @@ activate:
 audit_trail:
 #  access: distributor_admin 
   type: datatable
-  sort: time
+  sort: when
   sort_order: desc
   page_size: 15
   flags: 
@@ -21,7 +21,7 @@ audit_trail:
     - print
     - export
   fields:
-    - time: { width: 4% }
+    - when: { width: 4%,name: time }
     - first_name: { width: 10% }
     - last_name: { width: 16% }
     - email: { width: 18% }
@@ -30,6 +30,7 @@ audit_trail:
   sql: |
     select t.create_time, u.first_name, u.last_name,u.email_address, t.action, t.detail 
       from audit_trail t join user u on t.user_id = u.id
+      where 1=1
         
 change_password:
   type: labelled_input_page
