@@ -225,7 +225,7 @@ profile:
     - role: { attr: disabled }
   values:
     - sql_values: |
-        select title,first_name,last_name,cellphone,email_address,r.name role 
+        select title,first_name,last_name,cellphone,email_address,r.code role 
         from user u left join user_role ur on u.id = ur.user_id 
         join role r on r.code = ur.role_code
         where id = $uid
