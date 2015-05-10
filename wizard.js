@@ -47,12 +47,6 @@
       bookmark.css('left', (-(height-this.bookmark_width+8)/2)+'px');
       bookmark.css('top', (height/2-10)+'px');
       bookmark.hide();
-      if (index > 0) {
-        var prev = this.element.find('.wizard-page').eq(index-1);
-        var color = prev.find('.wizard-bookmark').css('background-color');
-        color = darken(rgbToHex(color), 1.15);
-        bookmark.css('background-color', color);
-      }
       this._createNavigation(page, props, index);
     },
     
@@ -86,7 +80,13 @@
       page.addClass('wizard-current').show();
       if (!page.hasClass('wizard-loaded')) 
         this._loadPage(page, index);
-      page.find('.wizard-bookmark').hide();
+      var bookmark = page.find('.wizard-bookmark').hide();
+      if (index > 0) {
+        var prev = this.element.find('.wizard-page').eq(index-1);
+        var color = prev.find('.wizard-bookmark').css('background-color');
+        color = darken(rgbToHex(color), 1.15);
+        bookmark.css('background-color', color);
+      }
       page.find('.wizard-content,.wizard-nav').show();
       var offset = this.stack.length * this.bookmark_width + 6;
       page.css('left', offset+'px');
