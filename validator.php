@@ -22,6 +22,7 @@ class validator
     $this->request = is_null($request)? $_REQUEST: $request;
     $this->optional = false;
     $this->has_errors = false;
+    $this->output_errors = true;
     global $db;
     $this->db = is_null($conn)? $db: $conn;
   }
@@ -163,7 +164,8 @@ class validator
   
   function equals($value, $title=null) 
   {
-    if ($this->value == $value) return true;
+    $value = trim($value);
+    if ($this->value == $value || is_numeric($value) && (int)$this->value == $value) return true;
     return $title==null?"$this->title must equal $value":$title;
   }
   function less($name, $title=null)
@@ -255,8 +257,8 @@ class validator
   function exist($table=null)
   {
     return $this->in($table);
-
-    }
+  }
+  
   function exists($table=null)
   {
     return $this->in($table);
@@ -269,16 +271,24 @@ class validator
     return "$this->title already exists.";
   }
   
-  function depends($field)
+  function either()
+  {
+    $args = func_get_args();
+    if (in_array($this->value, $args)) return true;
+    return "$this->title must be either one of ".implode(',', $args);
+  }
+  
+  function depends($field, $arg)
   {
     if ($field == 'this') $field = $this->name;
-    $args = func_get_args();
-    $value =  at($args,1);
-    log::debug("DEPENDS($field,$value,$this->name): ". $this->request[$field]);
-    $dependant = trim($this->request[$field]);
-    if (sizeof($args) < 2) return $dependant != '';
-    $value = trim($value);
-    return $dependant == $value || is_numeric($value) && (int)$dependant == $value;
+    $validator = new validator($this->request, $this->table, $this->db);
+    $validator->output_errors = false;
+    log::debug("DEPENDS $field $arg");
+    $validator->check($field);
+    list($method) = explode('(',$arg);
+    if (method_exists($this,$method))
+      return $validator->is($arg);
+    return $validator->equals($arg);
   }
   
   function call($function)
@@ -340,6 +350,7 @@ class validator
     $this->title = $title;
     return $this;
   }
+  
   function is()
   {
     $funcs = func_get_args();
@@ -363,7 +374,9 @@ class validator
           throw new validator_exception("Invalid validator expression $func!");
 
         $func = $matches[1];
-        $args = explode(',', at($matches,2));
+        $args = array();
+        preg_match_all('/[^,]+\(.*\)|[^,]+/', $matches[2], $args);
+        $args = $args[0];
       }
       
       if (validator::is_static_method($func)) {
@@ -378,7 +391,7 @@ class validator
         $result = call_user_func_array(array($this, $func), $args); 
       if ($result === true) continue;
       if ($func == 'depends' || $result === false) return false;
-      return $this->error($result);
+      return $this->output_errors?$this->error($result):false;
     }
     return true;
   }
