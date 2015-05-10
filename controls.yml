@@ -201,9 +201,12 @@ info_page:
         </div>
       </div>
     lines: 
-      - type: disabled_input
+      - type: info_text
       - template: info_line
 
+info_text:
+  html: <div id='$code' class='info-text'>$value</div>
+  
 input: 
   html: <input id="$code" type="text" value="$value"></input>
 
