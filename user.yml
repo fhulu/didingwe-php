@@ -112,14 +112,12 @@ forgot_password:
 history:
   access: admin,manager
   type: datatable
-  sort: time
+  sort: when
   sort_order: desc
-  page_size: 15
   flags: 
-    - show_header
     - show_titles
   fields:
-    - time: { width: 4% }
+    - when : { width: 4%,name: Time }
     - action: { width: 30% }
     - detail: { width: 65% }
   sql: select create_time, action, detail from audit_trail where user_id = $key
@@ -174,7 +172,7 @@ list:
   expand:
     action:
       pages:
-        - user/my_audit_trail
+        - user/history
   sql: |
     select distinct u.id, u.create_time,email_address, u.first_name, u.last_name,
       u.cellphone, r.name, 
