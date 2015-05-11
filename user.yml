@@ -7,7 +7,7 @@ activate:
   audit: sql(select first_name, last_name, email_address from user where id = $key)
   
 audit_trail:
-#  access: distributor_admin 
+  access: admin 
   type: datatable
   sort: when
   sort_order: desc
@@ -211,6 +211,29 @@ modify:
         where id = $key
   actions:
     - update
+
+my_audit_trail:
+  name: My Audit Trail
+  access: reg 
+  type: datatable
+  sort: when
+  sort_order: desc
+  page_size: 15
+  flags: 
+    - filter
+    - show_header
+    - show_titles
+  report_title: My Audit Trail
+  actions:
+    - print
+    - export
+  fields:
+    - when: { name: time }
+    - action
+    - detail
+  sql: |
+    select create_time, action, detail 
+      from audit_trail where user_id = $uid
 
 profile:
   type: labelled_input_page
