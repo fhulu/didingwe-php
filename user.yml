@@ -204,7 +204,7 @@ modify:
         name: Assigned Role
         type: dropdown 
   values:
-    - sql: |
+    - sql_values: |
         select title,first_name,last_name,cellphone,email_address,r.code
         role  
         from user u left join user_role ur on u.id = ur.user_id
@@ -238,7 +238,6 @@ register:
   type: labelled_input_page
   desc: Register as a new user of the system
   width: 700
-  url: /user/register
   inputs: 
     - title: {type: dropdown}          
     - first_name
@@ -249,8 +248,8 @@ register:
     - password
     - confirm_password
   actions:
-    - submit
-    
+    - register  
+   
 reset_password:
   audit: Changed password
 
