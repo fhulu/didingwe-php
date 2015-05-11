@@ -638,15 +638,16 @@ class page
     if (is_null($name)) $name = ucwords (str_replace ('_', ' ',at($action, 'code')));
     $result = null_merge($fields, $result, false);
     $detail = at($action, 'audit');
-    if ($detail) {
-      $detail = replace_vars($detail, $result);
-      $detail = page::decode_field($detail);
-      $detail = page::decode_sql($detail);
-    }
     $user = $this->user;
     if (!$user) {
       global $session;
       $user = $session->user;
+    }
+    if ($detail) {
+      $detail = replace_vars($detail, (array)$user);
+      $detail = replace_vars($detail, $result);
+      $detail = page::decode_field($detail);
+      $detail = page::decode_sql($detail);
     }
     $name = addslashes($name);
     $detail = addslashes($detail);
