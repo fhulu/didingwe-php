@@ -182,8 +182,11 @@ $.fn.page = function(options, callback)
       var set = false;
       for (var i in names) {
         var name = names[i];
-        if (item[name] === undefined) continue;
-        if (name === 'type' || name === 'template')
+        var value = item[name];
+        if (value === undefined) continue;
+        if (name === 'template' && value === 'none')
+          defaults[name] = '$field';
+        else if (name === 'type' || name === 'template')
           defaults[name] = this.get_type_html(item[name]);
         else
           defaults[name] = item[name];
