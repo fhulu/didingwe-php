@@ -174,7 +174,7 @@ list:
   expand:
     action:
       pages:
-        - user/history
+        - user/my_audit_trail
   sql: |
     select distinct u.id, u.create_time,email_address, u.first_name, u.last_name,
       u.cellphone, r.name, 
