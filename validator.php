@@ -204,9 +204,8 @@ class validator
     return "$this->title must not be less than $title ($value)";
   }
   
-  function password($min_length)
+  function password($min_length=6)
   {
-    if ($min_length == 0) $min_length=6;
     $title = "$this->title must contain at least:
       <li>one upper case letter
       <li>one lower case letter
