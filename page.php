@@ -605,13 +605,14 @@ class page
   
   static function decode_field($message)
   {
+    global $db;
     $decodes = array();
     preg_match_all('/decode\(([^,]+)\s*,\s*([\w.]+)\.([^.]+)\s*,\s*(\w+)\)/', $message, $decodes, PREG_SET_ORDER);
     foreach($decodes as $decoded) {
       list($match,$key,$table,$key_field, $display_field) = $decoded;
       $key = addslashes($key);
       $display = $db->read_one_value("select $display_field from $table where $key_field = '$key'");
-      $message = str_replace($match, $display, $detail);
+      $message = str_replace($match, $display, $message);
     }
     return $message;
   }
