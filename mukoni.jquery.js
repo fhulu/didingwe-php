@@ -50,13 +50,14 @@ $.fn.setValue = function(val)
       this.attr('href', proto+val);
     return this;
   }
+  var create = this.attr('customCreate');
+  if (create !== undefined) 
+    return this[create]('option','value', val);
   var type = this.attr('type');
   if (type === 'checkbox') 
     return val?this.attr('checked', true): this.removeAttr('checked');
   if (this.attr('value') !== undefined)
     return this.val(val);
-  if (this.attr('customCreate') !== undefined) 
-    return this.trigger('customValue', [val]);
   return this.html(val);
 }
 
@@ -536,7 +537,7 @@ $.fn.customCreate = function(options)
 {
   var create = options.create;
   if (create === undefined) return;
-  this.attr('customCreate',true);
+  this.attr('customCreate',create);
   this[create](options);
 }
 
