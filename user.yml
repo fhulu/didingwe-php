@@ -104,6 +104,7 @@ delete:
 edit:
   access: admin
   audit: $title,$first_name,$last_name,$cellphone,$email_address,$assigned_role
+  action: dialog
   url: /user/modify
 
 forgot_password:
@@ -200,12 +201,14 @@ modify:
     - email_address
     - role: 
         name: Assigned Role
-        type: dropdown 
+        type: dropdown
+        valid: provided
   values:
     - sql_values: |
         select title,first_name,last_name,cellphone,email_address,r.code
         role  
         from user u left join user_role ur on u.id = ur.user_id
+        left join role r on r.code=ur.role_code
         where id = $key
   actions:
     - update
