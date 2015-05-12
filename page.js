@@ -556,6 +556,7 @@ $.fn.page = function(options, callback)
     load_values: function(parent, data)
     {
       $.json('/', this.server_params('values', data.path+'/values'), function(result) {
+        parent.trigger('loaded_values', [result]);
         page.respond(result);
         if ($.isPlainObject(result))
           parent.setChildren(result);
