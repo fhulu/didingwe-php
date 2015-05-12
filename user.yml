@@ -21,7 +21,7 @@ audit_trail:
     - print
     - export
   fields:
-    - when: { width: 4%,name: time }
+    - when: { width: 4%,name: Time }
     - first_name: { width: 10% }
     - last_name: { width: 16% }
     - email: { width: 18% }
