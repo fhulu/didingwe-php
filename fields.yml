@@ -145,10 +145,8 @@ id:
 id_no:
   name: ID Number
   desc: Valid South African ID number
-  question: Please specify your South African ID number or Passport
   valid:
-    - numeric
-    - at_least(10, characters)
+    - za_id
 
 id_number:
   type: id_no
