@@ -51,9 +51,9 @@
   }
 
   global $session;
-  log::debug(json_encode($_GET));
-  list($page) = explode('/', GET('path'));
-  $content = GET('content');
+  log::debug(json_encode($_REQUEST));
+  list($page) = explode('/', $_REQUEST['path']);
+  $content = $_REQUEST['content'];
   if (!is_null($content) && !in_array($content, array('logout','login')))
     $_SESSION['content'] = $content;
 
