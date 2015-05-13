@@ -569,6 +569,9 @@ class user
     $passwd = $request['password'];
     if ($passwd != '**********' && $passwd != '')    
       $db->exec("update user set password = password('$passwd') where id = $id");
+    $region = $request['region'];
+    $db->exec("insert into user_region (user_id,region_code,create_time) "
+            . "values($id,'$region',now()) on duplicate key update region_code = values(region_code)");
     page::close_dialog("User successfully updated");
   }
 
