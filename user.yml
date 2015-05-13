@@ -203,12 +203,14 @@ modify:
         name: Assigned Role
         type: dropdown
         valid: provided
+    - region: { type: dropdown}
   values:
     - sql_values: |
         select title,first_name,last_name,cellphone,email_address,r.code
-        role  
+        role,ureg.region_code  
         from user u left join user_role ur on u.id = ur.user_id
         left join role r on r.code=ur.role_code
+        left join user_region ureg on ureg.user_id = id
         where id = $key
   actions:
     - update
