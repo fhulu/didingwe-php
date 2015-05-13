@@ -48,7 +48,7 @@ class validator
   
   function name()
   {
-    return $this->regex('/^[a-z][a-z][a-z\s]*$/i');
+    return $this->regex('/^\w{2}[\w\s]*$/i');
   }
 
   function za_code()
