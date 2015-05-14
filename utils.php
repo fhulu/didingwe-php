@@ -137,9 +137,9 @@ function choose_value(&$array)
 function walk_recursive(&$array, $callback)
 {
   foreach($array as $key=>&$value) {
-    $callback($value, $key);
     if (is_array($value))
       walk_recursive ($value, $callback);
+    $callback($value, $key);
   }
 }
 
