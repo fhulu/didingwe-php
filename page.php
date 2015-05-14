@@ -316,12 +316,23 @@ class page
   function expand_sub_pages(&$fields)
   {
     $request = $this->request;
-    array_walk_recursive($fields, function(&$value, $key) use ($request) {
-      if ($key !== 'page') return;
-      $request['path'] = $value;
-      $sub_page = new page($request);
-      $sub_page->process();
-      $value = $sub_page->result;
+    walk_recursive($fields, function(&$value, $key) use ($request) {
+      $type = null;
+      if (is_array($value)) $type = $value['type'];
+      //log::debug_json("test expand $key : $type", $value);
+      if ($key === 'page' || $type === 'page') {
+        if ($key == 'page') 
+          $path = $value;
+        else 
+          $path = $key;
+        $request['path'] = $path;
+        if (is_array($value)) $type = $value['type'];
+        log::debug_json("append sub key $key type $type: ", $value);
+        $sub_page = new page($request);
+        $sub_page->process();
+        $value = $sub_page->result;
+        if ($type == 'page') $value['type'] = 'page';
+      }
     });
   }
   

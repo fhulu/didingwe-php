@@ -215,6 +215,7 @@ $.fn.page = function(options, callback)
             this.append_sub_page(parent, regex, defaults.template, item.page);
             continue;
           }
+
           
           if (item.code === undefined) {
             for (var key in item) {
@@ -224,6 +225,10 @@ $.fn.page = function(options, callback)
             };
             assert(item[id], "Invalid item " + JSON.stringify($.copy(item))); 
             item = item[id];
+            if (item.type === 'page') {
+              this.append_sub_page(parent, regex, defaults.template, item);
+              continue;
+            }            
             if (post_methods.indexOf(id) >= 0) {
               loading_data = true;
               this.load_data(parent, parent_field, name, types, defaults); 
