@@ -249,17 +249,18 @@
         if (code === 'actions') continue;
         if ($.isArray(field.name)) field.name = field.name[field.name.length-1];
         th.html(field.name || toTitleCase(code));
-        if (code === self.params.sort) 
-          th.attr('sort', self.params.sort_order);
-        else
-          th.attr('sort','');
+        if (self.hasFlag('sortable')) {
+          if (code === self.params.sort) 
+            th.attr('sort', self.params.sort_order);
+          else
+            th.attr('sort','');
+        }
         if (field.width !== undefined) {
           th.css('width', field.width);
-          if (j === 0 && self.options.expand) 
-            th.css('width',(parseInt(field.width)+10).toString()+'%');
         }
         ++j;
-        self.bindSort(th, code);
+        if (self.hasFlag('sortable'))
+          self.bindSort(th, code);
       };
       this.spanColumns(head.find('.header th'));
     },
