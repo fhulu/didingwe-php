@@ -273,11 +273,12 @@ list_item:
 menu:
   html: <ul id="$code">$items</ul>
   items:
-    - type: menu_item
+    - template: menu_item
+    - type: link
     - action: redirect
 
 menu_item:
-  html: <li><a title="$desc">$name</a></li>
+  html: <li>$field</li>
  
 one_cell_row:
   html: <tr><td>$field</td></tr>
