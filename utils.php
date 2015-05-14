@@ -133,3 +133,22 @@ function choose_value(&$array)
   }
   return null;
 }
+
+function walk_recursive(&$array, $callback)
+{
+  foreach($array as $key=>&$value) {
+    $callback($value, $key);
+    if (is_array($value))
+      walk_recursive ($value, $callback);
+  }
+}
+
+function walk_leaves(&$array, $callback)
+{
+  foreach($array as $key=>&$value) {
+    if (is_array($value))
+      walk_leaves($value, $callback);
+    else
+      $callback($value, $key);
+  }
+}
