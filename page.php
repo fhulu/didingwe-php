@@ -317,22 +317,19 @@ class page
   {
     $request = $this->request;
     walk_recursive($fields, function(&$value, $key) use ($request) {
-      $type = null;
-      if (is_array($value)) $type = $value['type'];
-      //log::debug_json("test expand $key : $type", $value);
-      if ($key === 'page' || $type === 'page') {
-        if ($key == 'page') 
-          $path = $value;
-        else 
-          $path = $key;
-        $request['path'] = $path;
-        if (is_array($value)) $type = $value['type'];
-        log::debug_json("append sub key $key type $type: ", $value);
-        $sub_page = new page($request);
-        $sub_page->process();
-        $value = $sub_page->result;
-        if ($type == 'page') $value['type'] = 'page';
-      }
+      if (!is_array($value) && $key !== 'page' 
+        || is_array($value) && $value['type'] !== 'page') return;
+      if ($key === 'page') 
+        $path = $value;
+      else if (!is_null($value['url']))
+        $path = $value['url'];
+      else 
+        $path = $key;
+      $request['path'] = $path;
+      $sub_page = new page($request);
+      $sub_page->process();
+      $value = $sub_page->result;
+      if ($key !== 'page') $value['type'] = 'page';
     });
   }
   
