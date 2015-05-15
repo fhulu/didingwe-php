@@ -764,20 +764,17 @@ class page
     $methods = array('alert', 'call', 'close_dialog', 'show_dialog', 
       'redirect', 'sql', 'sql_exec','sql_rows','sql_values','trigger', 'update');
     foreach($actions as $action) {
-      foreach($action as $method=>$parameter) {
-        if ($method == 'code') {
-          $method = $parameter;
-          $parameter = null;
-        }
-        if (!in_array($method, $methods)) continue;
-        $result = $this->{$method}($parameter);
-        if ($result === false) return false;
-        if (is_null($result)) continue;
-        if (is_null($this->reply)) 
-          $this->reply = $result;
-        else
-          $this->reply = array_merge($this->reply, $result);
-      }
+      list($method,$parameter) = assoc_element($action);
+      log::debug_json("METHOD $method", $action);
+      if (!in_array($method, $methods)) continue;
+      $parameter = replace_vars($parameter, $this->reply);
+      $result = $this->{$method}($parameter);
+      if ($result === false) return false;
+      if (is_null($result)) continue;
+      if (is_null($this->reply)) 
+        $this->reply = $result;
+      else
+        $this->reply = array_merge($this->reply, $result);
     }
     return $this->reply;
   }
@@ -895,11 +892,19 @@ class page
     return !is_null(at($result, 'errors'));
   }
   
-  static function trigger($event, $selector=null, $arg1=null)
+  static function trigger($event, $selector=null)
   {
+    if (strpos($event, ',') !== false) {
+      $args = explode(',',$event);
+      list($event, $selector) = $args;
+      log::debug_json("TRIGGER ", $args);
+    }
+    else {
+      $args = func_get_args();
+    }
     $options = array("event"=>$event);
     if (!is_null($selector)) $options['sink'] = $selector;
-    if (!is_null($arg1)) $options['args'] = array_slice(func_get_args(),2);
+    if (sizeof($args) > 2) $options['args'] = array_slice($args,2);
     page::respond('trigger', $options);    
   }
 }
