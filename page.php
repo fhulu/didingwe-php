@@ -764,17 +764,20 @@ class page
     $methods = array('alert', 'call', 'close_dialog', 'show_dialog', 
       'redirect', 'sql', 'sql_exec','sql_rows','sql_values','trigger', 'update');
     foreach($actions as $action) {
-      list($method,$parameter) = assoc_element($action);
-      log::debug_json("METHOD $method", $action);
-      if (!in_array($method, $methods)) continue;
-      $parameter = replace_vars($parameter, $this->reply);
-      $result = $this->{$method}($parameter);
-      if ($result === false) return false;
-      if (is_null($result)) continue;
-      if (is_null($this->reply)) 
-        $this->reply = $result;
-      else
-        $this->reply = array_merge($this->reply, $result);
+      foreach($action as $method=>$parameter) {
+      if ($method == 'code' && sizeof($action) == 1 ) {
+          $method = $parameter;
+          $parameter = null;
+        }
+        if (!in_array($method, $methods)) continue;
+        $result = $this->{$method}($parameter);
+        if ($result === false) return false;
+        if (is_null($result)) continue;
+        if (is_null($this->reply)) 
+          $this->reply = $result;
+        else
+          $this->reply = array_merge($this->reply, $result);
+      }
     }
     return $this->reply;
   }
