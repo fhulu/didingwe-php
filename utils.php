@@ -152,3 +152,10 @@ function walk_leaves(&$array, $callback)
       $callback($value, $key);
   }
 }
+
+function assoc_element($element)
+{
+  if (!is_array($element)) return array($element);
+  foreach($element as $key=>$value) {};
+  return array($key, $value);
+}
