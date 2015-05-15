@@ -207,7 +207,7 @@ modify:
   values:
     - sql_values: |
         select title,first_name,last_name,cellphone,email_address,r.code
-        role,ureg.region_code  
+        role,ureg.region_code region  
         from user u left join user_role ur on u.id = ur.user_id
         left join role r on r.code=ur.role_code
         left join user_region ureg on ureg.user_id = id
