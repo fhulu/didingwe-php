@@ -553,8 +553,6 @@ $.fn.page = function(options, callback)
         }
       };
       set(this.options.request);
-      set(this.options.values);
-      set(data.fields.values);
       set(data.values);
     },
     
