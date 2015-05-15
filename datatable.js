@@ -53,8 +53,7 @@
       this.load();
       var self = this;
       this.element.on('refresh', function(e, invoker, args) {
-        console.log("refreshed", invoker, args)
-        self.load(args);
+        self.load({args: args});
       })
     },
    
@@ -81,10 +80,12 @@
       var data = $.extend(this.options.request, args, {action: 'data'}, self.params);
       data.path = data.path +'/load';
       $.json('/', {data: data}, function(data) {
-         self.element.trigger('server_response', data);
+         self.element.trigger('refreshed', [data]);
         var end = new Date().getTime();
         console.log("Load: ", end - start);
         self.populate(data);
+        data.rows = undefined;
+        $.extend(self.params, data);
         console.log("Populate: ", new Date().getTime() - end);
       });
     },
