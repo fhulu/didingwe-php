@@ -463,7 +463,7 @@ class page
     return $this->reply($field);
   }
   
-  function call_method($function, $params, $options=null)
+  function call_method($function, $params)
   {
     log::debug("FUNCTION $function PARAMS:".$params);
     list($class, $method) = explode('::', $function);
@@ -485,6 +485,7 @@ class page
     }
     
     $params = explode(',', $params);
+    $options = $this->get_context();
     if (is_array($options)) {
       $options = array_merge($options, $this->request);
       foreach($params as &$param) {
@@ -666,7 +667,6 @@ class page
   function action()
   {
     $invoker = $this->load_field(null, array('field'));
-    log::debug_json("action INVOKER ", $invoker);
     $validate = at($invoker, 'validate');
     if (!is_null($validate) && $validate != 'none') {
       $fields = $this->fields[$this->page];
@@ -716,7 +716,16 @@ class page
     return $this->db->exec($this->translate_sql($sql));
   }
   
-  function call($method)
+  function update_context(&$options)
+  {
+    $context = page::merge_options($this->get_context(), $options);
+    array_walk_recursive($options, function(&$value) use(&$context) {
+      $value = replace_vars($value, $context);
+    });
+  }
+  
+ 
+  function get_context()
   {
     $path_len = sizeof($this->path);
     $invoker = $this->path[$path_len-1];
@@ -737,18 +746,29 @@ class page
         break;
       }
     }
+    if (!is_null($this->user)) {
+      $user = $this->user;
+      $context['user_full_name'] = "$user->first_name $user->last_name";
+      $context['user_email'] = $user->email;
+    }
     if (is_array($context) && !is_assoc($context)) $context = $context[0];
     $new_context = at($context, $invoker);
-    $context = page::merge_options($this->fields[$branch], $new_context?$new_context:$context);
+    return page::merge_options($this->fields[$branch], $new_context?$new_context:$context);
+  }
+  
+  function call($method)
+  {
     $method = preg_replace('/\$class([^\w]|$)/', "$this->object\$1", $method);
     $method = preg_replace('/\$page([^\w]|$)/', "$this->page\$1", $method); 
+    $path_len = sizeof($this->path);
+    $invoker = $this->path[$path_len-1];
     $method = preg_replace('/\$invoker([^\w]|$)/', "$invoker\$1", $method);
     $method = preg_replace('/\$default([^\w]|$)/', "$this->object::$this->page\$1", $method);
 
     $matches = array();
     if (!preg_match('/^([^\(]+)(?:\(([^\)]*)\))?/', $method, $matches) ) 
       throw new Exception("Invalid function spec $method");
-    return $this->call_method($matches[1], $matches[2], $context);    
+    return $this->call_method($matches[1], $matches[2]);    
   }
   
   
@@ -761,14 +781,16 @@ class page
     
     log::debug_json("REPLY", $actions);
    
-    $methods = array('alert', 'call', 'close_dialog', 'show_dialog', 
-      'redirect', 'sql', 'sql_exec','sql_rows','sql_values','trigger', 'update');
+    $methods = array('alert', 'call', 'close_dialog', 'show_dialog', 'redirect',
+      'send_email', 'sql', 'sql_exec','sql_rows','sql_values','trigger', 'update');
     foreach($actions as $action) {
+      if (!is_array($action)) $action = array("code"=>$action);
       foreach($action as $method=>$parameter) {
-      if ($method == 'code' && sizeof($action) == 1 ) {
+        if ($method == 'code') {
           $method = $parameter;
-          $parameter = null;
+          $parameter = sizeof($action) == 1? null: $action; 
         }
+        
         if (!in_array($method, $methods)) continue;
         $result = $this->{$method}($parameter);
         if ($result === false) return false;
@@ -909,5 +931,25 @@ class page
     if (!is_null($selector)) $options['sink'] = $selector;
     if (sizeof($args) > 2) $options['args'] = array_slice($args,2);
     page::respond('trigger', $options);    
+  }
+  
+  function send_email($options)
+  {
+    $options = page::merge_options($options, $this->reply);
+    $this->update_context($options);
+    log::debug_json("About to send email", $options);
+    $header_array = $options['headers'];
+    $header_string = "";
+    foreach($header_array as $header) {
+      $header = assoc_element($header);
+      $header_string .= $header[0] . ": " . $header[1] . "\r\n";
+    }
+    $from = $options['from'];
+    $header_string .= "from: $from";
+    $to = $options['to'];
+    $message = $options['message'];
+    $subject = $options ['subject'];
+    log::debug("Sending email subject '$subject' from $from to $to: $message");
+    mail($to, $subject, $message, $header_string);
   }
 }

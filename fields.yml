@@ -216,7 +216,7 @@ mukoni_logo:
     type: image
     src: mukoni.png
     url: http://www.mukoni.co.za
-    
+
 otp:
   name: OTP
   desc: One Time Pin
@@ -233,6 +233,13 @@ register:
   desc: Click here to register
   access: public
   url: /user/register
+
+send_email:
+  headers:
+    - MIME-Version: 1.0
+    - Content-type: text/html; charset=iso-8859-1    
+  from: $user_full_name <$user_email>
+  
 
 start_date:
   name: Start Date 
