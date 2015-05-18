@@ -945,11 +945,14 @@ class page
       $header_string .= $header[0] . ": " . $header[1] . "\r\n";
     }
     $from = $options['from'];
-    $header_string .= "from: $from";
+    $header_string .= "from: $from\r\n";
     $to = $options['to'];
     $message = $options['message'];
     $subject = $options ['subject'];
-    log::debug("Sending email subject '$subject' from $from to $to: $message");
-    mail($to, $subject, $message, $header_string);
+    log::debug("SENDMAIL from $from to $to");
+    log::debug("HEADERS: $header_string");
+    log::debug("SUBJECT: $subject");
+    $result = mail($to, $subject, $message, $header_string);
+    log::debug("RESULT: $result");
   }
 }
