@@ -158,7 +158,7 @@ last_name:
   desc: Your last name as written in your ID book
   valid:
     - at_least(2)
-    - alphabetic
+    - /[a-z '-]/i
 
 latitude:
   valid: 
@@ -236,7 +236,7 @@ register:
 
 send_email:
   headers:
-    - MIME-Version: 1.0
+    - MIME-Version: "1.0"
     - Content-type: text/html; charset=iso-8859-1    
   from: $user_full_name <$user_email>
   
