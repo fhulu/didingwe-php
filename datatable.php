@@ -151,7 +151,7 @@ class datatable
       $sheet->setCellValue($ref, $name);
       ++$col;
     }
-    $heading = $options['name'];
+    $heading = choose_value($options, 'report_title', 'name');
     global $session;
     $user = $session->user->first_name . " " . $session->user->last_name;
     $excel->getProperties()->setCreator($user)
@@ -179,7 +179,7 @@ class datatable
     $pdf->Footer('Council for Scientific and Industrial Research (CSIR)');
     $pdf->Ln(40);
     $options['page_size'] = 0;
-    $page_width = 190;
+    $page_width = 200;
     $flags = $options['flags'];
     $fields = $options['fields']; 
     $columns = array(array(),array()); // reserve space for heading and titles
