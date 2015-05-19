@@ -69,8 +69,6 @@ $.fn.page = function(options, callback)
       });
       if (data.html)
         data.html = data.html.replace(/\$(value|desc)/, '');
-      else
-        console.log("no html for", data);
       return data;
     },
         
@@ -585,13 +583,19 @@ $.fn.page = function(options, callback)
       field.page_id = field.page_id || obj.parents(".page").eq(0).attr('id');
       switch(action) {
         case 'dialog': page.showDialog(field.url, {key: field.key}); return;
-        case 'target':
-          var url = '/?action=action';
-          for (var key in field) {
-            if (key === 'action') continue;
-            url += '&'+key+'='+encodeURIComponent(field[key]);
-          }        
-          document.location = url;
+        case 'redirect':
+          var url = field.url;
+          if (!url) {
+            url = '/?action=action';
+            for (var key in field) {
+              if (key === 'action') continue;
+              url += '&'+key+'='+encodeURIComponent(field[key]);
+            }
+          }
+          if (field.target)
+            window.open(url, field.target);
+          else
+            document.location = url;
           break;
         case 'post':
           var params = this.server_params('action', field.path, {key: field.key});
