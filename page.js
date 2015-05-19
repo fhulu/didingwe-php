@@ -585,17 +585,20 @@ $.fn.page = function(options, callback)
         case 'dialog': page.showDialog(field.url, {key: field.key}); return;
         case 'redirect':
           var url = field.url;
-          if (!url) {
+          console.log("redirect", field)
+          if (url === undefined && (field.call || field.post)) {
             url = '/?action=action';
             for (var key in field) {
               if (key === 'action') continue;
               url += '&'+key+'='+encodeURIComponent(field[key]);
             }
           }
-          if (field.target)
-            window.open(url, field.target);
-          else
-            document.location = url;
+          if (url) {
+            if (field.target)
+              window.open(url, field.target);
+            else 
+              document.location = url;
+          }
           break;
         case 'post':
           var params = this.server_params('action', field.path, {key: field.key});
