@@ -494,6 +494,7 @@ class page
     }
     else $options = $this->request;
     if (is_array($this->reply)) $options = array_merge($options, $this->reply);
+    $options = page::merge_options($this->fields[$this->page], $options);
     return call_user_func_array($function, array_merge(array($options), $params));
   }
   
