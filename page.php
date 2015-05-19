@@ -702,8 +702,9 @@ class page
   
   function translate_sql($sql)
   {
+    $context = $this->get_context();
     $values = null_merge($this->request, $this->reply, false);
-    return page::replace_sql($sql, db::quote($values));
+    return page::replace_sql($sql, null_merge($context, $values));
   }
   
   function sql_values($sql)
