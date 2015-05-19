@@ -641,7 +641,7 @@ $.fn.page = function(options, callback)
         switch(action) {
           case 'alert': alert(val); break;
           case 'show_dialog': self.showDialog(val, responses.options); break;
-          case 'close_dialog': self.closeDialog(parent); break;
+          case 'close_dialog': self.closeDialog(parent, val); break;
           case 'redirect': location.href = val; break;
           case 'update': 
             parent.setChildren(val); break;
@@ -691,10 +691,11 @@ $.fn.page = function(options, callback)
       tmp.page(params);
     },
     
-    closeDialog: function(dialog)
+    closeDialog: function(dialog, message)
     {
-      if (!dialog.hasClass('ui-dialog-content'))
-        dialog = dialog.parents('ui-dialog-content').eq(0);
+      if (message) alert(message);
+      if (!dialog.hasClass('ui-dialog-content')) 
+        dialog = dialog.parents('.ui-dialog-content').eq(0);
       dialog.dialog('destroy').remove();
     }
         

@@ -877,8 +877,7 @@ class page
   
   static function close_dialog($message=null)
   {
-    if (!is_null($message)) page::alert($message);
-    page::respond('close_dialog');
+    page::respond('close_dialog', $message);
   }
   
   static function update($name, $value=null)
