@@ -53,7 +53,7 @@
       this.load();
       var self = this;
       this.element.on('refresh', function(e, invoker, args) {
-        self.load({args: args});
+        self.load(args);
       })
     },
    

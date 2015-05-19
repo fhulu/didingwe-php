@@ -60,6 +60,8 @@ $.fn.page = function(options, callback)
     
     expand_fields: function(parent_id, data)
     {
+      if (!data) return data;
+      var self = this;
       $.each(data, function(field, value) {
         if (typeof value !== 'string' || value.indexOf('$') < 0 || field === 'template' && field === 'attr') return;
         value = value.replace('$code', parent_id);
@@ -463,22 +465,30 @@ $.fn.page = function(options, callback)
     
     trigger: function(field, invoker)
     {
-      var events = field.events;
-      if (!events) {
-        if (!field.event) {
-          console.log("WARNING: no event defined for field", field);
-          return;
-        }
-        events = [field.event];
+      if (!field.event) {
+        console.log("WARNING: no event defined for field", field);
+        return;
       }
-      var sink = invoker;
-      for (var i in events) {
-        var params = events[i].match(/^(\w[\w-]+)(?:\((.+)\))?$/);
-        if (field.sink) {
-          sink = $(field.sink.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+field.page_id+"$2"));
-        }
-        sink.trigger(params[1], [invoker, params[2], params[3], params[4]]);
+      var sink;
+      var event = field.event;
+      var params;
+      if ($.isPlainObject(event)) {
+        sink = event.sink;
+        this.expand_fields(field.code, event.parameters);
+        params = event.parameters;
+        event = event.name;
       }
+      else {
+        sink = field.sink;
+        params = field.params;
+      }
+      
+      if (sink)
+        sink = $(sink.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+field.page_id+"$2"));
+      else
+        sink = invoker;
+
+      sink.trigger(event, [invoker, params]);
     },
     
     load_data: function(object, field, name, types, defaults) 

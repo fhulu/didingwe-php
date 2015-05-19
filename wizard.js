@@ -167,6 +167,8 @@
     {
       var self = this;
       this.element.on('wizard-jump', function(event, object, index) {
+        console.log("caught wizard-jump", index);
+        if ($.isPlainObject(index)) index = index.index;
         if (typeof index === 'string') {
           var page = self.element.find('.wizard-page[name="'+index+'"]');
           index = self.element.find('.wizard-page').index(page);
