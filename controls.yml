@@ -39,14 +39,6 @@ datatable:
     - call: datatable::read($key)
   position: top
   filter: all
-  # table-wide actions
-  export:
-    name: Export to Excel
-    desc: Export to an Excel spreadsheet
-    action:
-      validate: none
-      call: datatable::export($key)
-      target: _blank
   filter:
     name: ""
     desc: Filter by specific columns
@@ -80,14 +72,6 @@ datatable:
     name: ">"
     desc: Hide options
   slideSpeed: 100
-  #footer actions
-  print:
-      desc: "Print above contents"
-      action:
-        validate: none
-        call: datatable::pdf($key)
-        target: _blank
-
 date:
   type: input
   create: datetimepicker
@@ -135,10 +119,10 @@ element:
 export:
   name: Export to Excel
   desc: Export to an Excel spreadsheet
-  action:
-    validate: none
-    call: datatable::export($key)
-    target: _blank
+  action: redirect
+  validate: none
+  call: datatable::export($key)
+  target: _blank
 
 file:
   html: <div id="$code" name="$code"></div>
@@ -319,10 +303,10 @@ plain_text:
 # todo: fix back-end to contextualise
 print:
   desc: Print above contents
-  action:
-    validate: none
-    call: datatable::pdf($key)
-    target: _blank
+  action: redirect
+  validate: none
+  call: datatable::pdf($key)
+  target: _blank
 
 question_input:
   html: |
