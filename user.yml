@@ -162,8 +162,8 @@ list:
     - export
   fields:
     - key: { hide: yes }
-    - create_time: { width: 10% }
-    - email: { width: 24% }
+    - create_time: { width: 14% }
+    - email: { width: 20% }
     - first_name: { width: 13% }
     - last_name: { width: 13% }
     - cellphone: { width: 12% }
@@ -177,8 +177,8 @@ list:
   sql: |
     select distinct u.id, u.create_time,email_address, u.first_name, u.last_name,
       u.cellphone, r.name, 
-      if(u.active=1,'active','inactive') status,
-      if(u.active=1,'expand,slide,edit,deactivate','expand,slide,edit,activate') actions
+      if(u.active=1,'active','inactive'),
+      if(u.active=1,'expand,slide,edit,deactivate','expand,slide,edit,activate')
     from user u left join user_role ur on u.id = ur.user_id 
       left join role r on ur.role_code = r.code
       where r.code != 'super'
