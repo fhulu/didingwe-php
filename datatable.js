@@ -33,6 +33,7 @@
     
     _create: function()
     {
+      if (this.options.sort) this.options.flags.push('sortable');
       this.expandFields(this.options.fields);
       this.expandFields(this.options.row_actions);
       this.params = { page_num: 1}; 
