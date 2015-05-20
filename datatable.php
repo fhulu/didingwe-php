@@ -14,11 +14,11 @@ class datatable
   static function get_sql_fields($sql) 
   {
     $matches = array();
-
-    preg_match_all('/([^,]+),?/', substr(ltrim($sql), 7), $matches, PREG_SET_ORDER);
+    $sql = preg_replace('/^\s*select\s*(distinct\s*)?/i','',$sql);
+    preg_match_all('/[^,]+\(.*\)|[^,]+/', $sql, $matches);
     $fields = array();
-    foreach ($matches as $match) {
-      $fields[] = trim($match[1]);
+    foreach ($matches[0] as $match) {
+      $fields[] = trim($match);
     }
     return $fields;
   }
@@ -68,7 +68,7 @@ class datatable
     foreach (explode('|', $filter) as $value) {
       ++$index;
       if (trim($value) === '') continue;
-      list($field) = explode(' ', $fields[$index]);
+      $field = $fields[$index];
       $where .= " and $field like '%$value%' ";
     }
 
