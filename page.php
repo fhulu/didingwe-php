@@ -956,4 +956,14 @@ class page
     $result = mail($to, $subject, $message, $header_string);
     log::debug("RESULT: $result");
   }
+  
+  static function preg_match_test($req)
+  {
+    $pattern = $req['pattern'];
+    $subject = preg_replace("/[\r\n ]/m", ' ', $req['subject']);
+    $matches = array();
+    $result = preg_match_all($pattern, $subject, $matches);
+    page::update('result', $result);
+    page::update('matches', json_encode($matches));
+  }
 }
