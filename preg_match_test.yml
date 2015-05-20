@@ -1,0 +1,27 @@
+## YAML Template.
+---
+preg_match_test:
+  type: labelled_input_page
+  width: 600
+  inputs:
+    - type: textarea
+    - pattern
+    - subject
+  actions:
+    - test
+    - results: 
+        type: labelled_input_page
+        inputs:
+          - result
+          - matches: { type: textarea }
+    - actions
+      
+    
+
+test:
+  call: page::preg_match_test($pattern,$subject)
+
+ 
+textarea:
+  style:
+    height: 80px
