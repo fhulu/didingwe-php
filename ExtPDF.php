@@ -11,7 +11,7 @@
  *
  * @author luxolo
  */
-require('pdf/fpdf.php');
+require_once('pdf/fpdf.php');
 
 class ExtPDF extends FPDF {
 
