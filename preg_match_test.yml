@@ -7,19 +7,31 @@ preg_match_test:
     - type: textarea
     - pattern
     - subject
+    - type: datatable
+    - matches:
+        selector: "#pattern,#subject"
+        fields:
+          - match
+        load:
+          - call: page::preg_match_test()
   actions:
-    - test
-    - results: 
-        type: labelled_input_page
-        inputs:
-          - result
-          - matches: { type: textarea }
-    - actions
+    - preg_match:
+        action: trigger
+        event: refresh
+        sink: "#matches"
+        params: 
+          type: once
+
+    - preg_match_all:
+        action: trigger
+        event: refresh
+        sink: "#matches"
+        params: 
+          type: all
+
+       
       
     
-
-test:
-  call: page::preg_match_test($pattern,$subject)
 
  
 textarea:
