@@ -962,8 +962,13 @@ class page
     $pattern = $req['pattern'];
     $subject = preg_replace("/[\r\n ]/m", ' ', $req['subject']);
     $matches = array();
-    $result = preg_match_all($pattern, $subject, $matches);
+    if ($req['type'] === 'all')
+      $result = preg_match_all($pattern, $subject, $matches,PREG_SET_ORDER);
+    else {
+      $result = preg_match($pattern, $subject, $matches);
+      $matches = array($matches);
+    }
     page::update('result', $result);
-    page::update('matches', json_encode($matches));
+    return array("rows"=>$matches, "total"=>sizeof($matches));
   }
 }
