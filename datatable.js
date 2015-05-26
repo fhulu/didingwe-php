@@ -79,6 +79,10 @@
       var self = this;
       self.head().find('.paging [action]').attr('disabled','');
       var data = $.extend(this.options.request, args, {action: 'data'}, self.params);
+      var selector = this.options.selector;
+      if (selector !== undefined) {
+        $.extend(data, $(selector).values());
+      }
       data.path = data.path +'/load';
       $.json('/', {data: data}, function(data) {
          self.element.trigger('refreshed', [data]);
