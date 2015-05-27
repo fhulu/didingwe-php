@@ -579,51 +579,73 @@ $.fn.page = function(options, callback)
             
     accept: function(event, obj, field)
     {
-      var action = field.action;
-      field.page_id = field.page_id || obj.parents(".page").eq(0).attr('id');
-      switch(action) {
-        case 'dialog': page.showDialog(field.url, {key: field.key}); return;
-        case 'redirect':
-          var url = field.url;
-          console.log("redirect", field)
-          if (url === undefined && (field.call || field.post)) {
-            url = '/?action=action';
-            for (var key in field) {
-              if (key === 'action') continue;
-              url += '&'+key+'='+encodeURIComponent(field[key]);
+      var confirmed = function() {
+        var action = field.action;
+        field.page_id = field.page_id || obj.parents(".page").eq(0).attr('id');
+        switch(action) {
+          case 'dialog': page.showDialog(field.url, {key: field.key}); return;
+          case 'redirect':
+            var url = field.url;
+            if (url === undefined && (field.call || field.post)) {
+              url = '/?action=action';
+              for (var key in field) {
+                if (key === 'action') continue;
+                url += '&'+key+'='+encodeURIComponent(field[key]);
+              }
             }
-          }
-          if (url) {
-            if (field.target)
-              window.open(url, field.target);
-            else 
-              document.location = url;
-          }
-          break;
-        case 'post':
-          var params = this.server_params('action', field.path, {key: field.key});
-          var selector = field.selector;
-          if (selector !== undefined) {
-            selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+field.page_id+"$2");
-            obj.jsonCheck(event, selector, '/', params, function(result) {
-              if (result === null) result = undefined;
+            if (url) {
+              if (field.target === '_blank')
+                window.open(url, field.target);
+              else if (field.target) {
+                var target = $(field.target);
+                var parent = target.parent();
+                if (url[0] === '/') url = url.substr(1);
+                parent.page({path: url});
+                var id = url.replace('/','_');
+                parent.on('read_'+id, function() {
+                  target.remove();
+                });
+              }
+              else
+                document.location = url;
+            }
+            break;
+          case 'post':
+            var params = page.server_params('action', field.path, {key: field.key});
+            var selector = field.selector;
+            if (selector !== undefined) {
+              selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+field.page_id+"$2");
+              obj.jsonCheck(event, selector, '/', params, function(result) {
+                if (result === null) result = undefined;
+                obj.trigger('processed', [result]);
+                page.respond(result, obj);
+              });
+              break;
+            }
+            $.json('/', params, function(result) {
               obj.trigger('processed', [result]);
               page.respond(result, obj);
             });
             break;
-          }
-          $.json('/', params, function(result) {
-            obj.trigger('processed', [result]);
-            page.respond(result, obj);
-          });
-          break;
-        case 'trigger':
-          page.trigger(field, obj);
-          break;
-        default:
-          if (field.url)
-            document.location = field.url.replace('$key', field.key); 
+          case 'trigger':
+            page.trigger(field, obj);
+            break;
+          default:
+            if (field.url)
+              document.location = field.url.replace('$key', field.key); 
+        }
       }
+      
+      if (field.confirmation) {
+        page.showDialog('/confirm_dialog', {desc: field.confirmation}, function() {
+          $('#confirm_dialog .desc').text(field.confirmation);
+          $('#confirm_dialog .action').click(function() {
+            if ($(this).attr('id') === 'yes') confirmed();
+            $('#confirm_dialog').dialog('close');
+          })
+        });
+      }
+      else confirmed();
     },
     
     
@@ -674,7 +696,7 @@ $.fn.page = function(options, callback)
       return this;
     },
 
-    showDialog: function(path, field)
+    showDialog: function(path, field, callback)
     {
       // expecting a value not an array, if array given take the last value
       // bug or inconsistent implentation of array_merge_recursive
@@ -694,6 +716,7 @@ $.fn.page = function(options, callback)
           $(this).dialog('destroy').remove();
         }}, options);
         object.dialog(options);
+        if (callback) callback();
       });
       tmp.page(params);
     },
