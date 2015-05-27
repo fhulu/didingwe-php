@@ -195,7 +195,7 @@ PATTERN;
     $pdf->Footer('Council for Scientific and Industrial Research (CSIR)');
     $pdf->Ln(40);
     $options['page_size'] = 0;
-    $page_width = 200;
+    $page_width = 194;;
     $flags = $options['flags'];
     $fields = $options['fields']; 
     $columns = array(array(),array()); // reserve space for heading and titles
