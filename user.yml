@@ -229,7 +229,7 @@ my_audit_trail:
     - print
     - export
   fields:
-    - when: { name: time }
+    - when: { name: Time }
     - action
     - detail
   sql: |
