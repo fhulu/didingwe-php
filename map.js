@@ -27,6 +27,11 @@
       this.show();
     },
     
+    _setOption: function( key, value ) {
+      if (key === 'value') 
+        this.val(value);
+    },
+      
     addPoints: function(data)
     {
       var colors = this.options.colors;
