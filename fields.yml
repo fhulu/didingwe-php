@@ -110,8 +110,14 @@ day_of_week:
     - Thursday
     - Friday
     - Saturday
+    
+    
 developed_by:
   name: developed by Mukoni Software
+  action: redirect
+  url: http://www.mukoni.co.za
+  target: _blank
+ 
   
 email:
   desc: Valid e-mail address
