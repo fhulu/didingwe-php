@@ -6,8 +6,9 @@ actions:
  - action: post
 
 add_user: 
+  desc: Add a new user into the system
   access: admin
-  url: /user/create
+  url: /user/add
 
 admin:
   name: Administrator
@@ -289,6 +290,7 @@ view_profile:
 
 view_users:
   access: admin
+  desc: List all the users
   url: /user/list
 
 weekday:
