@@ -328,6 +328,7 @@ class page
       $request['path'] = $path;
       $sub_page = new page($request);
       $sub_page->process();
+      $sub_page->result['fields'] = page::merge_options($value, $sub_page->result['fields']);
       $value = $sub_page->result;
       if ($key !== 'page') $value['type'] = 'page';
     });
@@ -960,7 +961,7 @@ class page
   static function preg_match_test($req)
   {
     $pattern = $req['pattern'];
-    $subject = preg_replace("/[\r\n ]/m", ' ', $req['subject']);
+    $subject = preg_replace("/[\r\n ]/", ' ', $req['subject']);
     $matches = array();
     if ($req['type'] === 'all')
       $result = preg_match_all($pattern, $subject, $matches,PREG_SET_ORDER);
