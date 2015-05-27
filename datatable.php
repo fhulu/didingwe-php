@@ -14,11 +14,27 @@ class datatable
   static function get_sql_fields($sql) 
   {
     $matches = array();
-    $sql = preg_replace('/^\s*select\s*(distinct\s*)?/i','',$sql);
-    preg_match_all('/[^,]+\(.*\)|[^,]+/', $sql, $matches);
+    $sql = preg_replace('/[\n\r\s]/', ' ', $sql);
+    if (!preg_match('/^select (((?!from).)*)(?:from.+)?$/', $sql, $matches))
+      throw new Exception("Invalid or complex SQL while parsing fields");
+    $pattern = <<< PATTERN
+/[^,]*\((?>[^()]|(?R))*\)( [^,]+)?|[^,]*'(?>[^()]|(?R))*'( [^,]+)?|[^,]*"(?>[^()]|(?R))*"( [^,]+)?|[^,]+/
+PATTERN;
+    $fields_sql = $matches[1];
+    if (!preg_match_all($pattern, $fields_sql, $matches))
+      throw new Exception("Invalid or complex SQL while splitting fields $fields_sql");
+      
     $fields = array();
-    foreach ($matches[0] as $match) {
-      $fields[] = trim($match);
+    foreach ($matches[0] as $field) {
+      $aliases = array();
+      log::debug("SQL FIELD $field");
+      if (!preg_match('/^(.+end) +as .*$|^(.+end) .*$|^(.+) +as .*$|^(.+)$/', $field, $aliases)) 
+        throw new Exception ("Invalid SQL field $field");
+      array_shift($aliases);
+      foreach ($aliases as $alias) {
+        if ($alias!='') break;
+      }
+      $fields[] = trim($alias);
     }
     return $fields;
   }
