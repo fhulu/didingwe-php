@@ -40,14 +40,7 @@
     if (file_exists($file)) 
       require_once $file;
     else if (file_exists($common_file))
-      require_once $common_file;
-    
-    if (file_exists("$page.css")) { 
-      echo "<link type='text/css' rel='stylesheet' href='$page.css'></link>";
-    } 
-    if (file_exists("$page.js")) { 
-      echo "<script type='text/javascript' src='$page.js'></script>";
-    }
+      require_once $common_file;    
   }
 
   global $session;
