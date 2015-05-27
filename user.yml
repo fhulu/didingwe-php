@@ -21,12 +21,12 @@ audit_trail:
     - print
     - export
   fields:
-    - when: { width: 4%,name: Time }
+    - when: { width: 12%,name: Time }
     - first_name: { width: 10% }
     - last_name: { width: 16% }
     - email: { width: 18% }
     - action: { width: 18% }
-    - detail: { width: 40% }
+    - detail: { width: 35% }
   sql: |
     select t.create_time, u.first_name, u.last_name,u.email_address, t.action, t.detail 
       from audit_trail t join user u on t.user_id = u.id
@@ -118,9 +118,9 @@ history:
   flags: 
     - show_titles
   fields:
-    - when : { width: 4%,name: Time }
+    - when : { width: 14%,name: Time }
     - action: { width: 30% }
-    - detail: { width: 65% }
+    - detail: { width: 55% }
   sql: select create_time, action, detail from audit_trail where user_id = $key
   
 login:
