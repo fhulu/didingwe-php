@@ -351,6 +351,8 @@ sub_menu:
       <a id="$code">$name</a>
       <span>$sub_items</span>
     </li>
+  action: " "
+  template: $field
   sub_items:
     - action: redirect
     - type: link
