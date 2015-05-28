@@ -168,8 +168,9 @@ last_name:
     - /[a-z '-]/i
 
 latitude:
+  desc: Distance north or south from the equator
   valid: 
-    - /^\d+\.\d+$/
+    - decimal
 
 login:
   desc: Log in to the system
@@ -188,8 +189,9 @@ logout:
   call: user::logout()
 
 longitude:
+  desc: Angular distance east or west on the earth's surface  
   valid: 
-    - /^\d+\.\d+$/
+    - decimal
 
 manage_user_group:
   access: user
@@ -280,10 +282,6 @@ twitter:
   src: /twitter.png
   url: https://twitter.com
 
-users:
-  access: admin
-  url: /user/list
-
 validator:
   action: post
   validate: all
@@ -295,7 +293,7 @@ view_profile:
   action: dialog
 
 view_users:
-  access: admin
+  access: [ admin ]
   desc: List all the users
   url: /user/list
 
