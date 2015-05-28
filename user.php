@@ -533,12 +533,11 @@ class user
   
   static function update($request,$id)
   {
-    $request = table::remove_prefixes($request);
     $fields = array('email_address','first_name', 'last_name','title', 'cellphone','otp');
     $values = '';
     foreach($request as $key=>$value) {
-      if (in_array($key, $fields))
-        $values .= ", $key = '$value'";
+      if (in_array($key, $fields, true))
+        $values .= ", $key = '".addslashes($value)."'";
     }
     global $db, $session;
     $user  = $session->user;
@@ -557,7 +556,7 @@ class user
     }
     if ($old_id != '' || $active != 0) { 
       $time = time();
-      $db->exec("update user set email_address = 'overwritten-$time-$email' where id = $old_id");
+      #$db->exec("update user set email_address = 'overwritten-$time-$email' where id = $old_id");
     }
     
     $sql = "update user set ". substr($values,1). " where id = $id";
@@ -569,9 +568,6 @@ class user
     $passwd = $request['password'];
     if ($passwd != '**********' && $passwd != '')    
       $db->exec("update user set password = password('$passwd') where id = $id");
-    $region = $request['region'];
-    $db->exec("insert into user_region (user_id,region_code,create_time) "
-            . "values($id,'$region',now()) on duplicate key update region_code = values(region_code)");
     page::close_dialog("User successfully updated");
   }
 
