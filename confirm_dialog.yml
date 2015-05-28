@@ -1,0 +1,11 @@
+## YAML Template.
+---
+
+confirm_dialog:
+  width: 500
+  name: Confirm
+  type: labelled_input_page
+  desc: Are you sure?
+  actions:
+    - "yes"
+    - "no": { action: close_dialog }
