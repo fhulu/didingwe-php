@@ -632,7 +632,7 @@ class page
   static function decode_sql($message)
   {
     $matches = array();
-    preg_match_all('/sql\s*\((.+)\)/', $message, $matches, PREG_SET_ORDER);
+    preg_match_all('/sql\s*\((.+)\)/ims', $message, $matches, PREG_SET_ORDER);
     global $db;
     foreach($matches as $match) {
       $data = $db->read_one($match[1], MYSQLI_NUM);
@@ -961,7 +961,7 @@ class page
   static function preg_match_test($req)
   {
     $pattern = $req['pattern'];
-    $subject = preg_replace("/[\r\n ]/", ' ', $req['subject']);
+    $subject = $req['subject'];
     $matches = array();
     if ($req['type'] === 'all')
       $result = preg_match_all($pattern, $subject, $matches,PREG_SET_ORDER);
