@@ -237,6 +237,7 @@ my_audit_trail:
 
 profile:
   type: labelled_input_page
+  access: [reg]
   name: View Own Profile
   desc: $name
   width: 600
