@@ -25,12 +25,11 @@ audit_trail:
     - first_name: { width: 10% }
     - last_name: { width: 16% }
     - email: { width: 18% }
-    - action: { width: 18% }
+    - what: { width: 18%, name: Action }
     - detail: { width: 35% }
   sql: |
     select t.create_time, u.first_name, u.last_name,u.email_address, t.action, t.detail 
       from audit_trail t join user u on t.user_id = u.id
-      where 1=1
         
 change_password:
   type: labelled_input_page
