@@ -189,13 +189,21 @@ PATTERN;
   static function pdf($options, $key)
   {
     $pdf = new FPDF();
-    $pdf->AddPage();
-    $pdf->Image('ethekwini.png', 80, 10, 35);
+    $orientation = $options['report_orientation'];
+    $page_width = 196;
+    if ($orientation == 'landscape') {
+      $pdf->AddPage('L');
+      $page_width *= 4 / 3;
+    }
+    else 
+      $pdf->AddPage ('P');
+    
+    if (file_exists($options['report_image'])) {
+      $pdf->Image($options['report_image'], $page_width/2, 10, 35);
+      $pdf->Ln(40);
+    }
     $pdf->SetFont('Arial', 'B', 10);
-    $pdf->Footer('Council for Scientific and Industrial Research (CSIR)');
-    $pdf->Ln(40);
     $options['page_size'] = 0;
-    $page_width = 194;;
     $flags = $options['flags'];
     $fields = $options['fields']; 
     $columns = array(array(),array()); // reserve space for heading and titles
