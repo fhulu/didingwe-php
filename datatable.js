@@ -85,7 +85,9 @@
       }
       data.path = data.path +'/load';
       $.json('/', {data: data}, function(data) {
-         self.element.trigger('refreshed', [data]);
+        if (data._responses) 
+          self.element.trigger('server_response', data);
+        self.element.trigger('refreshed', [data]); 
         var end = new Date().getTime();
         console.log("Load: ", end - start);
         self.populate(data);
