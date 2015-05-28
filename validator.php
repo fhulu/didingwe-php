@@ -137,7 +137,7 @@ class validator
   }
   function decimal()
   {
-    return $this->regex('/^\d+\.\d+$/', "$this->title must be decimal");
+    return $this->regex('/^\d+(\.\d+)?$/', "$this->title must be decimal");
   }
   function alphabetic()
   {
