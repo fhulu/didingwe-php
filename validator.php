@@ -131,13 +131,17 @@ class validator
     return "$this->title must contain at least $length $units.";
   }
   
+  function digits()
+  {
+    return $this->regex('/^\d+$/', "$this->title must only contain digits");
+  }
   function numeric()
   {
-    return $this->regex('/^\d+$/', "$this->title must be numeric");
+    return $this->regex('/^-?\d+(\.\d+)?$/', "$this->title must be numeric");
   }
   function decimal()
   {
-    return $this->regex('/^\d+(\.\d+)?$/', "$this->title must be decimal");
+    return $this->regex('/^-?\d+\.\d+$/', "$this->title must be decimal");
   }
   function alphabetic()
   {
