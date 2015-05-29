@@ -915,7 +915,7 @@ class page
   static function has_errors()
   {
     global $page;
-    $result = &$page->errors;
+    $result = &$page->result;
     return !is_null(at($result, 'errors'));
   }
   
