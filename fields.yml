@@ -191,7 +191,6 @@ logout:
   post:
     - read_session: email
     - sql_exec: insert into audit_trail(user_id,action,detail) values($uid,'Logout','$email')
-    - alert: $email
     - call: session_destroy()
     - redirect: /home
     
