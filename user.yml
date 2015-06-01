@@ -191,7 +191,7 @@ login:
     - load_lineage: [roles,role,code,base_code]
     - sql_exec: update user set attempts = 0 where id = $uid
     - sql_exec: insert into audit_trail(user_id,action,detail) values($uid,'Login','$email')
-    - write_session: uid,partner_id,roles,email_address,first_name,last_name,full_name,cellphone
+    - write_session: uid,partner_id,roles,email,first_name,last_name,full_name,cellphone
     - close_dialog
     - redirect: /$page
       
