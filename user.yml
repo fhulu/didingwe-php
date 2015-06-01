@@ -70,7 +70,7 @@ confirm_registration:
   actions:
     - login: { action: dialog }
     
-add:
+create:
   type: labelled_input_page
   access: admin
   audit: >
@@ -106,8 +106,6 @@ edit:
   action: dialog
   url: /user/modify
 
-forgot_password:
-  desc: Click here if you have forgotten your password and you need to reset it
   
 history:
   access: admin,manager
@@ -122,23 +120,6 @@ history:
     - detail: { width: 55% }
   sql: select create_time, action, detail from audit_trail where user_id = $key
   
-login:
-  access: public
-  audit: $email
-  type: labelled_input_page
-  width: 500
-  desc: Fill in your credentials below and click Login to logon
-  inputs:
-    - email
-    - password:
-        type: password_input
-        valid: provided
-        
-  actions:
-    - login
-    - forgot_password: { action: dialog }
-
-    
 list:
   access: admin,manager
   type: datatable
@@ -182,11 +163,37 @@ list:
       left join role r on ur.role_code = r.code
       where r.code != 'super'
 
-logout:
-  audit: $email
-  type: link
-  action: post
-  call: user::logout()
+login:
+  access: public
+  type: labelled_input_page
+  width: 500
+  desc: Fill in your credentials below and click Login to logon
+  inputs:
+    - email
+    - password:
+        type: password_input
+        valid: provided
+  actions:
+    - login
+    - forgot_password: { action: dialog }
+  post:
+    - sql_exec: update user set attempts = attempts+1 where email_address='$email'
+    - sql_values:
+        select active, attempts>10 locked, password=password('$password') valid, 
+          id uid, partner_id, email_address email, first_name, last_name, 
+          concat(first_name, ' ', last_name) full_name,
+          cellphone, roles, groups, 'home' page
+          from user
+          where email_address='$email'
+    - if locked abort: [email, Account locked because of too many incorrect attempts. Please ask the administrator to unlock your account]
+    - if not active abort: [email, Account has been deactivated. Please ask the administrator to reactivate your account]
+    - if not valid abort: [email, Invalid user name or password for $email]
+    - load_lineage: [roles,role,code,base_code]
+    - sql_exec: update user set attempts = 0 where id = $uid
+    - sql_exec: insert into audit_trail(user_id,action,detail) values($uid,'Login','$email')
+    - write_session: uid,partner_id,roles,email_address,first_name,last_name,full_name,cellphone
+    - close_dialog
+    - redirect: /$page
       
 modify:
   type: labelled_input_page
