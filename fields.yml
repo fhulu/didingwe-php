@@ -8,7 +8,7 @@ actions:
 add_user: 
   desc: Add a new user into the system
   access: admin
-  url: /user/add
+  url: /user/create
 
 admin:
   name: Administrator
@@ -139,6 +139,10 @@ first_name:
   valid:
     - at_least(2)
     - alphabetic
+
+forgot_password:
+  desc: Click here if you have forgotten your password and you need to reset it  
+  url: /forgot_password
   
 goto:
   action: $page.html
@@ -175,24 +179,37 @@ latitude:
 login:
   desc: Log in to the system
   access: public
-  audit: $email
   action: dialog
   url: /user/login
   src: /logout_icon.jpg 
 
 logout:
-  desc: Log out
+  desc: Log out of the system
   access: reg 
-  audit: $email  
   src: /logout_icon.jpg
   action: post
-  call: user::logout()
+  post:
+    - read_session: email
+    - sql_exec: insert into audit_trail(user_id,action,detail) values($uid,'Logout','$email')
+    - alert: $email
+    - call: session_destroy()
+    - redirect: /home
+    
 
 longitude:
   desc: Angular distance east or west on the earth's surface  
   valid: 
     - decimal
 
+lineage_sql: >
+  select concat_ws(',',c.$key_name,p1.$key_name,p2.$key_name,p3.$key_name,p4.$key_name,p5.$key_name) from $table c 
+  left join $table p1 on c.$parent_key = p1.$key_name
+  left join $table p2 on p1.$parent_key = p2.$key_name
+  left join $table p3 on p2.$parent_key = p3.$key_name
+  left join $table p4 on p3.$parent_key = p4.$key_name
+  left join $table p5 on p4.$parent_key = p5.$key_name
+  where c.$key_name = '$key'
+  
 manage_user_group:
   access: user
   url: /user/groups
@@ -244,10 +261,12 @@ register:
   url: /user/register
 
 send_email:
+  support: Mukoni Support <support@mukoni.co.za>
   headers:
     - MIME-Version: "1.0"
     - Content-type: text/html; charset=iso-8859-1    
   from: $user_full_name <$user_email>
+  to: $user_full_name <$user_email>
   
 
 start_date:
@@ -266,7 +285,11 @@ submit_page:
   type: submit
   name: Submit
   call: $class::$page($key)
+
       
+support_email: Mukoni Support <support@mukoni.co.za>
+
+
 title:
   desc: A descriptive or distinctive appellation, especially one belonging to a person by right of rank, office, attainment
   options:
