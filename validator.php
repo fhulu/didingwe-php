@@ -381,7 +381,7 @@ class validator
 
         $func = $matches[1];
         $args = array();
-        preg_match_all('/[^,]+\(.*\)|[^,]+/', $matches[2], $args);
+        preg_match_all('/\(.*\)|[^,]+/', $matches[2], $args);
         $args = $args[0];
       }
       
@@ -450,6 +450,14 @@ class validator
   {
     $this->check($name);
     return $this->error($message);
+  }
+  
+  
+  function sql($sql)
+  {
+    $sql = replace_vars($sql, $this->request);
+    if ($this->db->exists($sql)) return true;
+    return "Invalid $this->title.";
   }
 };
 
