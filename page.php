@@ -416,7 +416,7 @@ class page
   {
     if (is_null($this->validator)) {
       $options = page::merge_options($this->request, $this->get_context());
-      $this->validator = new validator($options);
+      $this->validator = new validator(page::merge_options($_SESSION, $options));
     }
     //todo: validate only required fields;
     foreach($field as $code=>$values) {
@@ -769,10 +769,10 @@ class page
     
     log::debug_json("REPLY", $actions);
   
-    $methods = array('alert', 'abort', 'call', 'clear_values','close_dialog',
-      'load_lineage', 'read_session', 'redirect', 'send_email', 'show_dialog', 
-      'sql', 'sql_exec','sql_rows','sql_values', 'trigger', 'update', 
-      'write_session');
+    $methods = array('alert', 'abort', 'call', 'clear_session', 'clear_values',
+      'close_dialog', 'load_lineage', 'read_session', 'redirect', 'send_email', 
+      'show_dialog', 'sql', 'sql_exec','sql_rows','sql_values', 'trigger', 
+      'update', 'write_session');
     foreach($actions as $action) {      
       if (!is_array($action)) $action = array("code"=>$action);
       foreach($action as $method=>$parameter) {
@@ -970,19 +970,24 @@ class page
     return array("rows"=>$matches, "total"=>sizeof($matches));
   }
 
-  function write_session($vars)
+  function write_session()
   {
-    if (!is_array($vars)) $vars = explode (',', $vars);
+    $vars = func_get_args();
+    if (sizeof($vars) == 1) $vars = explode (',', $vars[0]);
+    log::debug_json("WRITE SESSION VARS", $vars);
 
     foreach($vars as $var) {
       if (isset($this->reply[$var]))
         $_SESSION[$var] = $this->reply[$var];
+      else if   (isset($this->request[$var]))
+        $_SESSION[$var] = $this->request[$var];
     }
   }
 
-  function read_session($vars)
+  function read_session()
   {
-    if (!is_array($vars)) $vars = explode (',', $vars);
+    $vars = func_get_args();
+    if (sizeof($vars) == 1) $vars = explode (',', $vars[0]);
 
     $values = array();
     foreach($vars as $var) {
@@ -990,6 +995,7 @@ class page
         $values[$var] = $_SESSION[$var];
     }
     return $values;
+    
   }
 
   static function abort($error_name, $error_message)
@@ -1017,4 +1023,18 @@ class page
   {
     $this->reply = null;
   }
+
+  
+  function clear_session()
+  {
+    $vars = func_get_args();
+    if (sizeof($vars) == 1) $vars = explode (',', $vars[0]);
+
+    $values = array();
+    foreach($vars as $var) {
+      if (isset($_SESSION[$var]))
+        unset($_SESSION[$var]);
+    }
+  }
+  
 }
