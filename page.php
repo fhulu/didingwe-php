@@ -553,10 +553,8 @@ class page
         if (null_at($element,'type'))
           $element = merge_options($default_type, $element);
         $type_value = at($this->types, $code);
-        log::debug("TYPE VALUE ".json_encode($type_value));
         $element = merge_options($type_value, $element);
         $value[$code] = $element;
-        log::debug("EXPANDED ".json_encode($value));
         continue;
       }
       if (!is_string($value) || preg_match('/\W/', $value)) continue;
