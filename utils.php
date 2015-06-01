@@ -159,3 +159,14 @@ function assoc_element($element)
   foreach($element as $key=>$value) {};
   return array($key, $value);
 }
+
+function replace_fields(&$options, $context)
+{
+  if (!is_array($options)) {
+    $options = replace_vars($options, $context);
+    return;
+  }
+  array_walk_recursive($options, function(&$value) use(&$context) {
+    $value = replace_vars($value, $context);
+  });
+}
