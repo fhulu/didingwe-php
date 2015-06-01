@@ -5,6 +5,8 @@ require_once 'validator.php';
 require_once 'db.php';
 require_once 'utils.php';
 
+class user_exception extends Exception {};
+
 $page = new page();
 try {
   $page->process();
@@ -538,6 +540,7 @@ class page
     $default_type = null;
     $length = sizeof($parent);
     $result = array();
+    $reserved = array('sql', 'action', 'template', 'attr');
     foreach($parent as &$value) {
       if (is_array($value)) {
         $type = at($value, 'type');
@@ -549,11 +552,13 @@ class page
           $code = $value['code'];
         else
           list($code, $element) = assoc_element ($value);
+        
+        if (in_array($code, $reserved)) continue;
 
-        if (null_at($element,'type'))
-          $element = merge_options($default_type, $element);
         $type_value = at($this->types, $code);
         $element = merge_options($type_value, $element);
+        if (null_at($element,'type'))
+          $element = merge_options($default_type, $element);
         $value[$code] = $element;
         continue;
       }
@@ -645,6 +650,7 @@ class page
   function action()
   {
     $invoker = $this->load_field(null, array('field'));
+    $this->check_access($invoker, true);
     $validate = at($invoker, 'validate');
     if (!is_null($validate) && $validate != 'none') {
       $fields = $this->fields[$this->page];
