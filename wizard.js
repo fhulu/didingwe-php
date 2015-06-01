@@ -121,7 +121,12 @@
       page.addClass('wizard-loading');
       var props = this.options.steps[index];
       var path = this.options.path;
-      path = path.substr(0, path.lastIndexOf('/')+1) + props.name;
+      if (props.url !== undefined) 
+        path = props.url;
+      else if (path.indexOf('/') === -1) 
+        path += '/' + props.name;
+      else
+        path = path.substr(0, path.lastIndexOf('/')+1) + props.name;
       var tmp = $('<div></div>');
       var values = {};
       if (this.stack.length) {
