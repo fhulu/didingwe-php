@@ -414,8 +414,10 @@ class page
    
   function validate($field)
   {
-    if (is_null($this->validator))
-      $this->validator = new validator($this->request);
+    if (is_null($this->validator)) {
+      $options = page::merge_options($this->request, $this->get_context());
+      $this->validator = new validator($options);
+    }
     //todo: validate only required fields;
     foreach($field as $code=>$values) {
       if (!is_array($values)) continue;
@@ -528,7 +530,10 @@ class page
   {
     if (is_null($type)) $type = at($field, 'type');
     if (is_null($type)) return $field;
-    $expanded = at($this->types, $type);
+    if (is_array($type))
+      $expanded = $type;
+    else 
+      $expanded = at($this->types, $type);
     if (is_null($expanded)) 
       throw new Exception("Unknown  type $type specified");
     $super_type = $this->merge_type($expanded);
@@ -557,8 +562,8 @@ class page
 
         $type_value = at($this->types, $code);
         $element = merge_options($type_value, $element);
-        if (null_at($element,'type'))
-          $element = merge_options($default_type, $element);
+        $my_type = at($element, 'type');
+        $element = page::merge_type($element, is_null($my_type)?$default_type: $my_type);
         $value[$code] = $element;
         continue;
       }
@@ -732,6 +737,7 @@ class page
       $user = $this->user;
       $context['user_full_name'] = $user['first_name'].  " ". $user['last_name'];
       $context['user_email'] = $user['email'];
+      $context['uid'] = $user['uid'];
     }
     if (is_array($context) && !is_assoc($context)) $context = $context[0];
     $new_context = at($context, $invoker);
