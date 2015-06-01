@@ -1,15 +1,8 @@
 <?php
+session_start();
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
-//require_once 'db.php';
 require_once 'validator.php';
 require_once 'db.php';
-require_once 'user.php';
 require_once 'utils.php';
 
 $page = new page();
@@ -86,11 +79,10 @@ class page
   
   function read_user()
   {
-    if (!isset($_SESSION['instance'])) return;
-    require_once 'session.php';
-    global $session;
-    $session = unserialize($_SESSION['instance']);
-    $this->user = $session->user;
+    log::debug_json("SESSION", $_SESSION);
+    $user = $this->read_session('uid,partner_id,roles,groups,email_address,first_name,last_name,cellphone');
+    if (is_null($user['roles'])) $user['roles'] = array('public');
+    $this->user = $user;
     log::debug_json("USER",$this->user);
   }
   
@@ -119,6 +111,23 @@ class page
     if (is_null($data))
       throw new Exception ("Unable to parse file $file");
     return $fields = merge_options($fields, $data);
+  }
+
+  
+  static function read_step($field, $step)
+  {
+    $step_field = at($field, $step);
+    if (!is_null($step_field)) return array($step=>$step_field);   
+    foreach($field as $values) {
+      if (is_string($values) && $values == $step) return $values;
+      $step_field = at($values, $step);
+      if (!is_null($step_field)) return array($step=>$step_field);
+      $code  = at($values, 'code');
+      if ($code == $step) return array($step=>$values);
+      if (is_array($values) && !is_assoc($values)) 
+        return page::read_step ($values, $step);
+    }
+    return null;
   }
 
   function load_field($path=null, $expand=array('html','field'))
@@ -161,18 +170,10 @@ class page
     log::debug_json("LOAD FIELD PATH", $path);
     foreach ($path as $step) {
       $this->field = $step;
-      $step_field = at($field, $step);
+      $step_field = page::read_step($field, $step);
       if (is_null($step_field)) {
-        foreach($field as $values) {
-          if (is_array($values) && (at($values, 'code') != $step)
-              || is_string($values) && $values != $step) continue;
-          $step_field = $values;
-          break;
-        }
-        if (is_null($step_field)) {
-          log::error("MISTEP ".json_encode($field));
-          throw new Exception("Invalid path step $step on ".implode('/', $path));
-        }
+        log::error("MISTEP ".json_encode($field));
+        throw new Exception("Invalid path step $step on ".implode('/', $path));
       }
       $field = $step_field;
       
@@ -188,7 +189,7 @@ class page
     }
     $this->expand_params($field);
       
-    return $field;
+    return is_null($step)?$field:$field[$step];
   }
 
   function get_field($name)
@@ -251,7 +252,7 @@ class page
     }
     if ($this->user) {
       $user = $this->user;
-      $fields['user_full_name'] = "$user->first_name $user->last_name";
+      $fields['user_full_name'] = "$user[first_name] $user[last_name]";
     }
     return array(
       'path'=>implode('/',$this->path),
@@ -268,21 +269,10 @@ class page
       $options[$key] = $value;
   }
   
-  function filter_access($options, $user_roles = null)
+  function filter_access($options)
   {
-    if (is_null($user_roles)) {
-      global $session;
-      require_once 'session.php';
-
-      $user_roles = array('public');
-      if (!is_null($session)) {
-        if (!is_null($session->roles)) $user_roles =  $session->roles;
-        if (in_array('super', $user_roles, true))
-          $user_roles = array('user','reg', 'viewer','admin','clerk','manager');
-      }
-      log::debug("ROLES ".json_encode($user_roles));
-    }
-    
+    $user_roles = $this->user['roles'];
+    if (in_array('super',$user_roles)) return $options;
     $filtered = array();
     foreach($options as $key=>$option)
     {
@@ -301,12 +291,12 @@ class page
       $allowed_roles = at($option, 'access');
       if (!is_null($allowed_roles)) {
         if (!is_array($allowed_roles)) $allowed_roles = explode(',', $allowed_roles);
-        $allowed = array_intersect($user_roles, $allowed_roles);      //log::debug("PERMITTED $key ".  json_encode($allowed));
+        $allowed = array_intersect($user_roles, $allowed_roles);      
         if (sizeof($allowed) == 0) continue;
       }
       $option = $original;
       if (is_array($option))
-        $option = $this->filter_access($option, $user_roles);
+        $option = $this->filter_access($option);
       if (sizeof($option) == 0) continue;
       page::allow_access($filtered, $key, $option);
     }
@@ -485,6 +475,9 @@ class page
       return;
     }
     
+    if ($params === '')
+      return call_user_func($function);
+    
     $params = explode(',', $params);
     $options = $this->get_context();
     if (is_array($options)) {
@@ -546,34 +539,28 @@ class page
     $length = sizeof($parent);
     $result = array();
     foreach($parent as &$value) {
-      $code = null;
       if (is_array($value)) {
-        //log::debug("EXPANDING VALUE ".json_encode($value));
         $type = at($value, 'type');
         if (!is_null($type)) {
           $default_type = at($this->types, $type);
           continue;
         }
-        if (null_at($value, 'code')) {
-          foreach ($value as $key=>$val) break;
-          if (!is_array($val)) continue;
-          $value = $val;
-          $value['code'] = $key;
-          //log::debug("EXPANDING overloaded ".json_encode($value));
-        }
-        if (null_at($value,'type'))
-          $value = merge_options($default_type, $value);
-        $type_value = at($this->types, $key);
-        //log::debug("TYPE VALUE ".json_encode($type_value));
-        $value = merge_options($type_value, $value);
-        //log::debug("EXPANDED ".json_encode($value));
+        if (!is_null($value['code']))
+          $code = $value['code'];
+        else
+          list($code, $element) = assoc_element ($value);
+
+        if (null_at($element,'type'))
+          $element = merge_options($default_type, $element);
+        $type_value = at($this->types, $code);
+        log::debug("TYPE VALUE ".json_encode($type_value));
+        $element = merge_options($type_value, $element);
+        $value[$code] = $element;
+        log::debug("EXPANDED ".json_encode($value));
         continue;
       }
       if (!is_string($value) || preg_match('/\W/', $value)) continue;
-      $code = $value;
-      $value = at($this->types, $code);
-      $value = merge_options($default_type, $value);
-      $value['code'] = $code;
+      $value = array($value=>merge_options($default_type, at($this->types, $value)));
     }
     
   }
@@ -598,12 +585,7 @@ class page
     if (is_array($allowed_roles)) $allowed_roles = last($allowed_roles);
     if ($allowed_roles == '') return true;
 
-    global $session;
-
-    $user_roles = array('public');
-    if (!is_null($session) && !is_null($session->user))
-      $user_roles = $session->user->roles;
-    
+    $user_roles = $this->user['roles'];    
     if (in_array('super', $user_roles)) return true;
     
     $allowed = array_intersect($user_roles, explode(',', $allowed_roles));    
@@ -650,12 +632,8 @@ class page
     $result = null_merge($fields, $result, false);
     $detail = at($action, 'audit');
     $user = $this->user;
-    if (!$user) {
-      global $session;
-      $user = $session->user;
-    }
     if ($detail) {
-      $detail = replace_vars($detail, (array)$user);
+      $detail = replace_vars($detail, $user);
       $detail = replace_vars($detail, $result);
       $detail = page::decode_field($detail);
       $detail = page::decode_sql($detail);
@@ -663,7 +641,7 @@ class page
     $name = addslashes($name);
     $detail = addslashes($detail);
     $db->insert("insert into audit_trail(user_id, action, detail)
-      values($user->id, '$name', '$detail')");
+      values(\$uid, '$name', '$detail')");
   }
   
   function action()
@@ -684,12 +662,12 @@ class page
   
   static function replace_sql($sql, $options) 
   {
-    global $session; 
-    require_once 'session.php';
-    $user = $session->user;
-    $user_id = $user->id;
+    global $page; 
+    $user = $page->user;
+    $user_id = $user['uid'];
     $key = $options['key'];
-    $sql = preg_replace('/\$uid([^\w]|$)/', "$user_id\$1", $sql);
+    if ($user_id)
+      $sql = preg_replace('/\$uid([^\w]|$)/', "$user_id\$1", $sql);
     $sql = preg_replace('/\$key([^\w]|$)/', "$key\$1", $sql);
     return replace_vars($sql, $options);
   }
@@ -722,12 +700,9 @@ class page
   function update_context(&$options)
   {
     $context = page::merge_options($this->get_context(), $options);
-    array_walk_recursive($options, function(&$value) use(&$context) {
-      $value = replace_vars($value, $context);
-    });
+    replace_fields($options, $context);
   }
-  
- 
+   
   function get_context()
   {
     $path_len = sizeof($this->path);
@@ -751,8 +726,8 @@ class page
     }
     if (!is_null($this->user)) {
       $user = $this->user;
-      $context['user_full_name'] = "$user->first_name $user->last_name";
-      $context['user_email'] = $user->email;
+      $context['user_full_name'] = $user['first_name'].  " ". $user['last_name'];
+      $context['user_email'] = $user['email'];
     }
     if (is_array($context) && !is_assoc($context)) $context = $context[0];
     $new_context = at($context, $invoker);
@@ -783,21 +758,33 @@ class page
     if (is_assoc($actions))  $actions = array($actions);
     
     log::debug_json("REPLY", $actions);
-   
-    $methods = array('alert', 'call', 'close_dialog', 'show_dialog', 'redirect',
-      'send_email', 'sql', 'sql_exec','sql_rows','sql_values','trigger', 'update');
-    foreach($actions as $action) {
+  
+    $methods = array('alert', 'abort', 'call', 'clear_values','close_dialog',
+      'load_lineage', 'read_session', 'redirect', 'send_email', 'show_dialog', 
+      'sql', 'sql_exec','sql_rows','sql_values', 'trigger', 'update', 
+      'write_session');
+    foreach($actions as $action) {      
       if (!is_array($action)) $action = array("code"=>$action);
       foreach($action as $method=>$parameter) {
         if ($method == 'code') {
           $method = $parameter;
           $parameter = sizeof($action) == 1? null: $action; 
         }
+        $matches = array();
+        if (preg_match('/^if( +not)? +(\w+) +(\w+)$/', $method, $matches)) {
+          $not = $matches[1] != '';
+          $check = $this->reply[$matches[2]];
+          if (!$check && !$not || $check && $not) continue;
+          $method = $matches[3];
+        }
         
         if (!in_array($method, $methods)) continue;
-        $result = $this->{$method}($parameter);
+        replace_fields($parameter, $this->reply);
+        if (!is_array($parameter) || is_assoc($parameter)) $parameter = array($parameter);
+        $result = call_user_func_array(array($this, $method), $parameter);
         if ($result === false) return false;
         if (is_null($result)) continue;
+        if (!is_array($result)) $result = array($result);
         if (is_null($this->reply)) 
           $this->reply = $result;
         else
@@ -939,7 +926,7 @@ class page
   {
     $options = page::merge_options($options, $this->reply);
     $this->update_context($options);
-    log::debug_json("About to send email", $options);
+    $options = page::merge_options($this->fields['send_email'], $options);
     $header_array = $options['headers'];
     $header_string = "";
     foreach($header_array as $header) {
@@ -971,5 +958,53 @@ class page
     }
     page::update('result', $result);
     return array("rows"=>$matches, "total"=>sizeof($matches));
+  }
+
+  function write_session($vars)
+  {
+    if (!is_array($vars)) $vars = explode (',', $vars);
+
+    foreach($vars as $var) {
+      if (isset($this->reply[$var]))
+        $_SESSION[$var] = $this->reply[$var];
+    }
+  }
+
+  function read_session($vars)
+  {
+    if (!is_array($vars)) $vars = explode (',', $vars);
+
+    $values = array();
+    foreach($vars as $var) {
+      if (isset($_SESSION[$var]))
+        $values[$var] = $_SESSION[$var];
+    }
+    return $values;
+  }
+
+  static function abort($error_name, $error_message)
+  {
+    page::error($error_name, $error_message);
+    return false;
+  }
+  
+  function load_lineage($key_name, $table, $name, $parent_name)
+  {
+    global $db;
+    $keys = $this->reply[$key_name];
+    if (!is_array($keys)) $keys = explode(',', $keys);
+    $loaded_values = array();
+    foreach ($keys as $value) {
+      $values = array($value);
+      $db->lineage($values, $name, $parent_name, $table);
+      $loaded_values = array_merge($loaded_values, $values);
+    }
+    return array($key_name=>$loaded_values);
+  }
+  
+  
+  function clear_values()
+  {
+    $this->reply = null;
   }
 }
