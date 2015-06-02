@@ -79,13 +79,15 @@ class page
   }
   
   
-  function read_user()
+  function read_user($reload = false)
   {
+    if (!$reload && $this->user && $this->user['uid']) return $this->user;
     log::debug_json("SESSION", $_SESSION);
     $user = $this->read_session('uid,partner_id,roles,groups,email_address,first_name,last_name,cellphone');
     if (is_null($user['roles'])) $user['roles'] = array('public');
     $this->user = $user;
     log::debug_json("USER",$this->user);
+    return $this->user;
   }
   
   function load()
@@ -646,10 +648,13 @@ class page
     global $db;
     $fields = $this->fields[$this->page];
     $name = at($action, 'name');
-    if (is_null($name)) $name = ucwords (str_replace ('_', ' ',at($action, 'code')));
+    if (is_null($name)) {
+      $code = at($action, 'code');
+      if (is_null($code)) $code = last($this->path);
+      $name = ucwords (str_replace ('_', ' ',$code));
+    }
     $result = null_merge($fields, $result, false);
     $detail = at($action, 'audit');
-    $user = $this->user;
     if ($detail) {
       $detail = replace_vars($detail, $user);
       $detail = replace_vars($detail, $result);
@@ -658,6 +663,7 @@ class page
     }
     $name = addslashes($name);
     $detail = addslashes($detail);
+    $user = $this->read_user(); 
     $user_id = $user['uid'];
     $db->insert("insert into audit_trail(user_id, action, detail)
       values($user_id, '$name', '$detail')");
