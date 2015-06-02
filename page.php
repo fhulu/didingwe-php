@@ -658,8 +658,9 @@ class page
     }
     $name = addslashes($name);
     $detail = addslashes($detail);
+    $user_id = $user['uid'];
     $db->insert("insert into audit_trail(user_id, action, detail)
-      values(\$uid, '$name', '$detail')");
+      values($user_id, '$name', '$detail')");
   }
   
   function action()
