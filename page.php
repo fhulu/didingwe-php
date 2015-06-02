@@ -482,18 +482,27 @@ class page
     if ($params === '')
       return call_user_func($function);
     
+   
     $params = explode(',', $params);
-    $options = $this->get_context();
-    if (is_array($options)) {
-      $options = array_merge($options, $this->request);
-      foreach($params as &$param) {
-        $param = replace_vars (trim($param), $options);
+    if (sizeof($params) > 0) {
+      $options = $this->get_context();
+      if (is_array($options)) {
+        $options = array_merge($options, $this->request);
+        foreach($params as &$param) {
+          $param = replace_vars (trim($param), $options);
+        }
       }
+      else $options = $this->request;
+      if (is_array($this->reply)) $options = array_merge($options, $this->reply);
+      $options = page::merge_options($this->fields[$this->page], $options);
+
+      $context = array_merge($_SESSION, $options, $this->request);
+      array_walk($params, function(&$val) use (&$context) {
+        if ($val == 'context') $val = $context;
+        if ($val == 'request') $val = $this->request;
+      }); 
     }
-    else $options = $this->request;
-    if (is_array($this->reply)) $options = array_merge($options, $this->reply);
-    $options = page::merge_options($this->fields[$this->page], $options);
-    return call_user_func_array($function, array_merge(array($options), $params));
+    return call_user_func_array($function, $params);
   }
   
   static function merge_options($options1, $options2)
