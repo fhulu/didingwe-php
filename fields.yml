@@ -180,6 +180,7 @@ login:
   desc: Log in to the system
   access: public
   action: dialog
+  audit: $email
   url: /user/login
   src: /logout_icon.jpg 
 
