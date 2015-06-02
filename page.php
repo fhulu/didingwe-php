@@ -482,7 +482,6 @@ class page
     if ($params === '')
       return call_user_func($function);
     
-   
     $params = explode(',', $params);
     if (sizeof($params) > 0) {
       $options = $this->get_context();
@@ -539,12 +538,14 @@ class page
   {
     if (is_null($type)) $type = at($field, 'type');
     if (is_null($type)) return $field;
-    if (is_array($type))
-      $expanded = $type;
-    else 
-      $expanded = at($this->types, $type);
-    if (is_null($expanded)) 
-      throw new Exception("Unknown  type $type specified");
+    $expanded = is_array($type)? $type: at($this->type, $type);
+
+    if (is_null($expanded)) {
+      $expanded = at(page::$all_fields, $type);
+      if (is_null($expanded)) 
+        throw new Exception("Unknown  type $type specified");
+      $this->type[$type] = $expanded;
+    }
     $super_type = $this->merge_type($expanded);
     return page::merge_options($super_type, $field);
   }
