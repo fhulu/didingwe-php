@@ -804,3 +804,9 @@ function get_top(options)
   };
   return result;
 }
+
+
+$.fn.valueFromCurrency = function()
+{
+  return this.value().replace(/\D/g,''); 
+}
