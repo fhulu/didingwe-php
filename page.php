@@ -620,11 +620,11 @@ class page
   {
     global $db;
     $decodes = array();
-    preg_match_all('/decode\(([^,]+)\s*,\s*([\w.]+)\.([^.]+)\s*,\s*(\w+)\)/', $message, $decodes, PREG_SET_ORDER);
+    preg_match_all('/decode\((\w+) *, *(\w+)\.(\w+)([=<>]|<>)([^)]+)\)/ms', $message, $decodes, PREG_SET_ORDER);
     foreach($decodes as $decoded) {
-      list($match,$key,$table,$key_field, $display_field) = $decoded;
+      list($match, $display_field, $table,$key_field, $compare, $key) = $decoded;
       $key = addslashes($key);
-      $display = $db->read_one_value("select $display_field from $table where $key_field = '$key'");
+      $display = $db->read_one_value("select $display_field from $table where $key_field $compare '$key'");
       $message = str_replace($match, $display, $message);
     }
     return $message;
