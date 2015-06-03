@@ -459,8 +459,9 @@ class validator
   }
   
   
-  function sql($sql)
+  function sql()
   {
+    $sql = implode(',', func_get_args());
     $sql = replace_vars($sql, $this->request);
     if ($this->db->exists($sql)) return true;
     return "Invalid $this->title.";
