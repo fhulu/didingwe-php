@@ -540,7 +540,7 @@ class page
   {
     if (is_null($type)) $type = at($field, 'type');
     if (is_null($type)) return $field;
-    $expanded = is_array($type)? $type: at($this->type, $type);
+    $expanded = is_array($type)? $type: at($this->types, $type);
 
     if (is_null($expanded)) {
       $expanded = at(page::$all_fields, $type);
@@ -572,7 +572,7 @@ class page
         
         if (in_array($code, $reserved)) continue;
 
-        $type_value = at($this->types, $code);
+        $type_value = $this->get_type($code);
         $element = merge_options($type_value, $element);
         $my_type = at($element, 'type');
         $element = page::merge_type($element, is_null($my_type)?$default_type: $my_type);
@@ -585,6 +585,16 @@ class page
     
   }
 
+  function get_type($type)
+  {
+    $expanded = at($this->types, $type);
+    if (is_null($expanded)) {
+      $expanded = at(page::$all_fields, $type);
+      if (is_null($expanded)) $this->types[$type] = $expanded;        
+    }
+    return $expanded;
+  }
+  
   function expand_field(&$field)
   {
     foreach ($field as $key=>&$value) {
@@ -593,7 +603,7 @@ class page
         break;
       }
       if (!is_array($value)) continue;
-      $type_value = at($this->types, $key);
+      $type_value = $this->get_type($key);
       $value = merge_options($type_value, $value);
       $this->expand_field($value);
     }
