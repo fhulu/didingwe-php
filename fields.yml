@@ -246,6 +246,9 @@ mukoni_logo:
 otp:
   name: OTP
   desc: One Time Pin
+  valid: sql(select 1 from dual where timestampdiff(minute, '$time_of_otp', now()) < 30 and '$otp'='$server_otp')
+    
+    
 
 password:
   desc: A secret combination of letters and number only known to you. Please do not give out your password.
