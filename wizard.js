@@ -128,16 +128,10 @@
       else
         path = path.substr(0, path.lastIndexOf('/')+1) + props.name;
       var tmp = $('<div></div>');
-      var values = {};
-      if (this.stack.length) {
-        var selector = this.stack.map(function(v) {
-          return '.wizard-page:nth-child('+(v+1)+') *';
-        }).join();
-        values = this.element.find(selector).values();
-      }
       tmp.page({path: path, key: this.options.key})//, request: values});
       var self = this;
       var content = page.find('.wizard-content');
+      if (path[0] === '/') path = path.substr(1);
       tmp.on('read_'+path.replace(/\//, '_'), function(event, object) {
         object.height(content.height());
         object.css('left', content.css('left'));
