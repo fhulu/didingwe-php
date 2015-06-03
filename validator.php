@@ -143,6 +143,12 @@ class validator
   {
     return $this->regex('/^-?\d+\.\d+$/', "$this->title must be decimal");
   }
+  
+  function currency()
+  {
+    return $this->regex('/^-?\w?\d+\.\d\d$/', "$this->title must be in currency form");
+  }
+  
   function alphabetic()
   {
     return $this->regex('/^[a-zA-Z]+$/', "$this->title must be alphabetic");
