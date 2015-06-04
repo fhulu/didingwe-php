@@ -245,6 +245,7 @@ mukoni_logo:
 
 next:
   call: ""
+  merge: true
 
 otp:
   name: OTP
