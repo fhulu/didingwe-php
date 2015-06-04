@@ -19,7 +19,7 @@ preg_match_test:
           - f5
           - f6
         load:
-          - call: page::preg_match_test()
+          - call: page::preg_match_test(request)
   actions:
     - preg_match:
         action: trigger
