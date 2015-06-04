@@ -92,6 +92,7 @@ confirm_details:
           last_name,cellphone,active,roles)
         values('$email',password('$password'),'$title', '$first_name',
           '$last_name','$cellphone',1,'reg')
+    - sql_values: select last_insert_id() uid
     - sql_exec: >
         insert into audit_trail(user_id, action, detail)
         values(last_insert_id(), 'Register', '$title $first_name $last_name $cellphone $email')
@@ -120,6 +121,21 @@ create:
     - role: { type: dropdown }
   actions:
     - create
+
+deactivate:
+  access: admin
+  desc: Deactivate this user
+  audit: sql(select first_name, last_name, email_address from user where id = $key)
+
+ 
+delete:
+  type: deactivate
+
+edit:
+  access: [admin]
+  audit: $title,$first_name,$last_name,$cellphone,$email_address,$assigned_role
+  action: dialog
+  url: /user/modify
 
 enter_credentials:
   name: User Credentials
@@ -153,21 +169,6 @@ enter_credentials:
                 Regards<br>
                 Customer Operations
           - clear_values
-
-deactivate:
-  access: admin
-  desc: Deactivate this user
-  audit: sql(select first_name, last_name, email_address from user where id = $key)
-
- 
-delete:
-  type: deactivate
-
-edit:
-  access: [admin]
-  audit: $title,$first_name,$last_name,$cellphone,$email_address,$assigned_role
-  action: dialog
-  url: /user/modify
 
   
 history:
