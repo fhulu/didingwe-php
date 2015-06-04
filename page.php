@@ -581,7 +581,7 @@ class page
         $element = merge_options($type_value, $element);
         $my_type = at($element, 'type');
         $element = page::merge_type($element, is_null($my_type)?$default_type: $my_type);
-        if (is_array($element) && $element['merge']) {
+        if (is_array($element) && $element['merge'] && $found[$code]) {
           $found[$code] = merge_options($found[$code], $element);
           continue;
         }
