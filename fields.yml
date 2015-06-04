@@ -243,10 +243,14 @@ mukoni_logo:
     src: mukoni.png
     url: http://www.mukoni.co.za
 
+next:
+  call: ""
+
 otp:
   name: OTP
   desc: One Time Pin
-  valid: sql(select 1 from dual where timestampdiff(minute, '$time_of_otp', now()) < 30 and '$otp'='$server_otp')
+  valid: >
+    sql(select 1 from dual where timestampdiff(minute, '$time_of_otp', now()) < 30 and '$otp'='$server_otp')
     
     
 
