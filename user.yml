@@ -48,18 +48,15 @@ change_password:
 
 check_otp:
   type: labelled_input_page
-  width: 700
   name: One Time Pin
-  desc: 
+  desc: >
     Please enter the OTP(One Time Pin) that you received on your email or cellphone.
   inputs:   
     - otp
   actions:
-    - validate
-      
-      
+    - next
 
-confirm_registration:
+complete_registration:
   type: labelled_input_page
   width: 700
   desc: |
@@ -69,6 +66,39 @@ confirm_registration:
     Please check your email for registration status.
   actions:
     - login: { action: dialog }
+
+confirm_details:
+  type: info_page
+  desc: |
+    Below is a list of all the information you have entered to register on the system.
+    If you are happy with everything, please accept the terms and conditions to 
+    complete the registration process.
+  lines:
+    - title
+    - first_name
+    - last_name
+    - cellphone
+    - email
+    - password: { value: "**************" }
+    - agree_terms: { type: checkbox, template: question_input }
+  values:
+    - read_session: title,first_name,last_name,cellphone,email
+  actions:
+    - confirm_details: { name: Submit, desc: "" }
+  post:
+    - read_session: title,first_name,last_name,cellphone,email,password
+    - sql_exec: >
+        insert into user(email_address, password, title, first_name,
+          last_name,cellphone,active,roles)
+        values('$email',password('$password'),'$title', '$first_name',
+          '$last_name','$cellphone',1,'reg')
+    - sql_exec: >
+        insert into audit_trail(user_id, action, detail)
+        values(last_insert_id(), 'Register', '$title $first_name $last_name $cellphone $email')
+    - trigger: "wizard-next,#user_confirm_details"
+
+              
+
     
 create:
   type: labelled_input_page
@@ -90,6 +120,39 @@ create:
     - role: { type: dropdown }
   actions:
     - create
+
+enter_credentials:
+  name: User Credentials
+  type: labelled_input_page
+  desc: Fill in user information used to uniquely identify the user on the system
+  email:
+    valid:
+      - unique(user.email_address)
+  inputs: 
+    - title: {type: dropdown}          
+    - first_name
+    - last_name
+    - cellphone
+    - email
+    - type: password_input
+    - password
+    - confirm_password
+  actions:
+    - next:
+        post:
+          - sql_values: select lpad(floor(rand()*9999),4,'0') server_otp, now() time_of_otp
+          - write_session: server_otp,time_of_otp,title,first_name,last_name,cellphone,email,password
+          - send_email:
+              subject: One Time Password
+              from: $support
+              to: $first_name $last_name <$email>
+              message: >
+                Good day<br><br>
+                Below is your one time password, required to continue with your application.<br><br>
+                Your One Time Password is : <b>$server_otp</b>. <br><br>
+                Regards<br>
+                Customer Operations
+          - clear_values
 
 deactivate:
   access: admin
@@ -119,6 +182,8 @@ history:
     - action: { width: 30% }
     - detail: { width: 55% }
   sql: select create_time, action, detail from audit_trail where user_id = $key
+ 
+  
   
 list:
   access: [admin]
@@ -179,15 +244,15 @@ login:
   post:
     - sql_exec: update user set attempts = attempts+1 where email_address='$email'
     - sql_values:
-        select active, attempts>10 locked, password=password('$password') valid, 
+        select active, attempts>10 locked, password=password('$password') and active valid, 
           id uid, partner_id, email_address email, first_name, last_name, 
           concat(first_name, ' ', last_name) full_name,
           cellphone, roles, groups, 'home' page
           from user
           where email_address='$email'
     - if locked abort: [email, Account locked because of too many incorrect attempts. Please ask the administrator to unlock your account]
-    - if not active abort: [email, Account has been deactivated. Please ask the administrator to reactivate your account]
     - if not valid abort: [email, Invalid user name or password for $email]
+    - if not active abort: [email, Account has been deactivated. Please ask the administrator to reactivate your account]
     - load_lineage: [roles,role,code,base_code]
     - sql_exec: update user set attempts = 0 where id = $uid
     - write_session: uid,partner_id,roles,email,first_name,last_name,full_name,cellphone
@@ -265,37 +330,18 @@ profile:
 
 register:
   access: public
-  type: labelled_input_page
+  type: wizard
+  name: Register User
   desc: Register as a new user of the system
+  height: 630
   width: 700
-  inputs: 
-    - title: {type: dropdown}          
-    - first_name
-    - last_name
-    - cellphone
-    - email
-    - type: password_input
-    - password
-    - confirm_password
-  actions:
-    - validate:
-        action: post
-        post:
-          - sql_values: select lpad(floor(rand()*9999),4,'0') server_otp, now() time_of_otp 
-          - write_session: server_otp,time_of_otp
-          - send_email:
-              subject: One Time Password
-              from: $support
-              to: $first_name $last_name <$email>
-              message: >
-                Good day<br><br>
-                Below is your one time password, required to continue with your application.<br><br>
-                Your One Time Password is : <b>$server_otp</b>. <br><br>
-                Regards<br>
-                Customer Operations          
-          - clear_values 
-          
-          
+  steps: 
+    - enter_credentials
+    - check_otp
+    - confirm_details: { next: false }
+    - complete_registration
+
+
 reset_password:
   audit: Changed password
 
