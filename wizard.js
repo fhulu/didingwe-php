@@ -185,7 +185,7 @@
       });
       
       this.element.on('processed', function(event, result) {
-        if (result || !self.stack.length || self.next_step) return;
+        if (result || !self.stack.length || !self.next_step) return;
         var index = self.stack[self.stack.length-1];
         self._hidePage(index, true);
         self._showPage(self.next_step);
