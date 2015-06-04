@@ -52,12 +52,12 @@ check_otp:
   name: One Time Pin
   desc: 
     Please enter the OTP(One Time Pin) that you received on your email or cellphone.
-  inputs:
-    - id: { type: hidden }
+  inputs:   
     - otp
   actions:
-    - confirm_registration
-    - resend_otp: { name: Resend OTP }
+    - validate
+      
+      
 
 confirm_registration:
   type: labelled_input_page
@@ -101,14 +101,14 @@ delete:
   type: deactivate
 
 edit:
-  access: admin
+  access: [admin]
   audit: $title,$first_name,$last_name,$cellphone,$email_address,$assigned_role
   action: dialog
   url: /user/modify
 
   
 history:
-  access: admin,manager
+  access: [admin]
   type: datatable
   sort: when
   sort_order: desc
@@ -121,7 +121,7 @@ history:
   sql: select create_time, action, detail from audit_trail where user_id = $key
   
 list:
-  access: admin,manager
+  access: [admin]
   type: datatable
   name: Users
   sort: create_time
@@ -278,8 +278,24 @@ register:
     - password
     - confirm_password
   actions:
-    - register  
-   
+    - validate:
+        action: post
+        post:
+          - sql_values: select lpad(floor(rand()*9999),4,'0') server_otp, now() time_of_otp 
+          - write_session: server_otp,time_of_otp
+          - send_email:
+              subject: One Time Password
+              from: $support
+              to: $first_name $last_name <$email>
+              message: >
+                Good day<br><br>
+                Below is your one time password, required to continue with your application.<br><br>
+                Your One Time Password is : <b>$server_otp</b>. <br><br>
+                Regards<br>
+                Customer Operations          
+          - clear_values 
+          
+          
 reset_password:
   audit: Changed password
 
