@@ -561,7 +561,7 @@ class page
     foreach($parent as &$value) {
       if (is_array($value)) {
         $type = at($value, 'type');
-        if (!is_null($type)) {
+        if (!is_null($type) && !is_array($type)) {
           $default_type = at($this->types, $type);
           continue;
         }
