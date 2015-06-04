@@ -225,6 +225,7 @@ $.fn.page = function(options, callback)
             };
             assert(item[id], "Invalid item " + JSON.stringify($.copy(item))); 
             item = item[id];
+            if (item.merge) continue;
             if (item.type === 'page') {
               this.append_sub_page(parent, regex, defaults.template, item);
               continue;
