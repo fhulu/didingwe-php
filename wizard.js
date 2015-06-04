@@ -52,17 +52,17 @@
     
     _jumpTo: function(index)
     { 
+      if ($.isPlainObject(index)) index = index.index;
+      if (typeof index === 'string') {
+        var page = this.element.find('.wizard-page[name="'+index+'"]');
+        index = this.element.find('.wizard-page').index(page);
+      }
+     
       this.next_step = index;
       if (this.stack.length) {
         var top_index = this.stack[this.stack.length-1];
         if (index === top_index) return;
         if (top_index < index) {  // going forward
-          var page = this.element.find('.wizard-page').eq(top_index);
-          var validator = page.find('#validate');
-          if (validator.exists()) {
-            validator.click();
-            return;
-          }
           this._hidePage(top_index, true);
         }
         else do { // goin backwards
@@ -128,16 +128,26 @@
       else
         path = path.substr(0, path.lastIndexOf('/')+1) + props.name;
       var tmp = $('<div></div>');
-      tmp.page({path: path, key: this.options.key})//, request: values});
-      var self = this;
+      tmp.page({path: path, key: this.options.key});
       var content = page.find('.wizard-content');
       if (path[0] === '/') path = path.substr(1);
+      var self = this;
       tmp.on('read_'+path.replace(/\//, '_'), function(event, object) {
         object.height(content.height());
         object.css('left', content.css('left'));
         object.addClass('wizard-content');
         content.replaceWith(object);
         page.addClass('wizard-loaded').removeClass('wizard-loading');
+        var actions = object.find(".action");
+        var nav = page.find('.wizard-nav');
+        if (!actions.exists()) return;
+        nav.append(actions);
+        var next = actions.filter('#next');
+        if (!next.exists()) return;
+        page.find('.wizard-next').hide();
+        next.bindFirst('click', function() {
+          self.next_step = typeof props.next === 'string'? props.next: index+1;
+        });
       });
     },
     
@@ -150,6 +160,7 @@
       var nav = parent.find('.wizard-nav');
       if (props.prev) 
         $('<button class="wizard-prev action">').text(this.options.prev_name).appendTo(nav);
+      
       if (props.next) 
         $('<button class="wizard-next action">').text(this.options.next_name).appendTo(nav);
       var self = this;
@@ -159,28 +170,27 @@
       nav.find('.wizard-next').click(function() {
         var dest = typeof props.next === 'string'? props.next: index+1;
         nav.trigger('wizard-jump', [$(this),dest]);
-      })
+      });
     },
     
     _bindActions: function()
     {
       var self = this;
       this.element.on('wizard-jump', function(event, object, index) {
-        console.log("caught wizard-jump", index);
-        if ($.isPlainObject(index)) index = index.index;
-        if (typeof index === 'string') {
-          var page = self.element.find('.wizard-page[name="'+index+'"]');
-          index = self.element.find('.wizard-page').index(page);
-        }
         self._jumpTo(index);
-      })
+      });
+      
+      this.element.on('wizard-next', function() {
+        self._jumpTo(self.stack[self.stack.length-1]+1);
+      });
       
       this.element.on('processed', function(event, result) {
-        if (result || !self.stack.length) return;
+        if (result || !self.stack.length || self.next_step) return;
         var index = self.stack[self.stack.length-1];
         self._hidePage(index, true);
         self._showPage(self.next_step);
-      })
+        self.next_step = undefined;
+      });
       
       this.element.find('.wizard-bookmark').click(function() {
         var index = parseInt($(this).find('.wizard-bookmark-number').text())-1;
