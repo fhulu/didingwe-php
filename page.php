@@ -557,7 +557,7 @@ class page
     $default_type = null;
     $length = sizeof($parent);
     $result = array();
-    $reserved = array('sql', 'action', 'template', 'attr');
+    $reserved = array('sql', 'action', 'template', 'attr','valid');
     foreach($parent as &$value) {
       if (is_array($value)) {
         $type = at($value, 'type');
@@ -597,7 +597,9 @@ class page
   
   function expand_field(&$field)
   {
+    $reserved = array('action','valid');
     foreach ($field as $key=>&$value) {
+      if (in_array($key, $reserved)) continue;
       if (is_numeric($key)) {
         $this->expand_contents($field);
         break;
@@ -773,6 +775,7 @@ class page
   
   function call($method)
   {
+    if ($method == '') return null;
     $method = preg_replace('/\$class([^\w]|$)/', "$this->object\$1", $method);
     $method = preg_replace('/\$page([^\w]|$)/', "$this->page\$1", $method); 
     $path_len = sizeof($this->path);
