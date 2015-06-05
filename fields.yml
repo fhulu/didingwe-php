@@ -338,4 +338,12 @@ weekday:
     - Friday
     - Saturday
     
+wizard_post:
+  type: button
+  selector: "#page *"
+  validate: all
+  call: $class::$invoker($key)
+  action: post
+  attr: {wizard-jump: $code}
+
     
