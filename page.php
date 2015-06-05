@@ -552,7 +552,7 @@ class page
       $this->type[$type] = $expanded;
     }
     $super_type = $this->merge_type($expanded);
-    return page::merge_options($super_type, $field);
+    return merge_options($super_type, $field);
   }
   
   function expand_contents(&$parent, $known)
@@ -599,7 +599,7 @@ class page
   {
     $expanded = at($this->types, $type);
     if (is_null($expanded)) {
-      $expanded = page::merge_options(at(page::$all_fields, $type), at($known, $type));
+      $expanded = merge_options(at(page::$all_fields, $type), at($known, $type));
       if (!is_null($expanded)) $this->types[$type] = $expanded;        
     }
     return $expanded;
@@ -703,7 +703,6 @@ class page
   function action()
   {
     $invoker = $this->load_field(null, array('field'));
-    log::debug_json("ACTION", $invoker);
     $this->check_access($invoker, true);
     $validate = at($invoker, 'validate');
     if (!is_null($validate) && $validate != 'none') {
@@ -1027,7 +1026,9 @@ class page
     log::debug_json("WRITE SESSION VARS", $vars);
 
     foreach($vars as $var) {
-      if (isset($this->reply[$var]))
+      if ($var == 'request' && !isset($this->request['request']))
+        call_user_func_array (array($this, 'write_session'), array_key($this->request));
+      else if (isset($this->reply[$var]))
         $_SESSION[$var] = $this->reply[$var];
       else if   (isset($this->request[$var]))
         $_SESSION[$var] = $this->request[$var];
