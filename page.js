@@ -564,7 +564,7 @@ $.fn.page = function(options, callback)
               break;
             };
           }
-          var obj = parent.find('#'+id);
+          var obj = parent.find('#'+id+',[name="',+id+'"');
           if (obj.exists()) {
             obj.value(value);
             continue;
