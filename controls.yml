@@ -334,9 +334,20 @@ question_input_page:
       - template: question_input
       - mandatory: "*"
 
-radio:
-  html: <input name="$code" title="$desc" type="radio"></input>
- 
+radiogroup:
+  html: <div>$options</div>
+  group: $code
+  inherit: [group]
+  options:
+    - template: labelled_radio
+    - type: radiobox
+
+radiobox:
+  html: <input name=$group title="$desc" type="radio" value="$code"></input>
+  
+labelled_radio:
+  html: <div class=radio><p>$name</p>$field</div>  
+  
 right_text:
   html: $field <p class=right-text>$name</p>
   
