@@ -1,7 +1,7 @@
 $.fn.page = function(options, callback)
 {
   if (options instanceof Function) callback = options;
-  var post_methods = [ 'call', 'sql', 'sql_values', 'sql_rows' ];
+  var post_methods = [ 'call', 'sql', 'sql_values', 'sql_rows','read_session' ];
   var self = this;  
   var page  = {
     parent: self,
@@ -264,6 +264,18 @@ $.fn.page = function(options, callback)
           item = defaults;
           item.array = array;
         }
+        if (parent_field.inherit) {
+          for (var i in parent_field.inherit) {
+            var key = parent_field.inherit[i];
+            var inherited = {};
+            inherited[key] = parent_field[key];
+            item = merge(inherited, item);
+          }
+        }
+        if (item.type === 'page') {
+          this.append_sub_page(parent, regex, defaults.template, item);
+          continue;
+        }
         
         if (path)
           item.path = path + '/' + id;
@@ -371,8 +383,8 @@ $.fn.page = function(options, callback)
         if ($.isArray(value)) {
           if (types[code] !== undefined)
             value = $.merge($.merge([], types[code]), value);
-            this.append_contents(obj, field, code, value, types);
-            continue;
+          this.append_contents(obj, field, code, value, types);
+          continue;
         }
         
         if (typeof value === 'string') {
