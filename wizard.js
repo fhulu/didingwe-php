@@ -9,7 +9,7 @@
       this._createPages();
       this._bindActions();
       this.stack = new Array();
-      this._jumpTo(0);
+      this.jumpTo(0);
     },
     
     _createPages: function()
@@ -50,15 +50,14 @@
       this._createNavigation(page, props, index);
     },
     
-    _jumpTo: function(index)
+    jumpTo: function(index)
     { 
       if ($.isPlainObject(index)) index = index.index;
       if (typeof index === 'string') {
         var page = this.element.find('.wizard-page[name="'+index+'"]');
+        if (!page.exists()) return;
         index = this.element.find('.wizard-page').index(page);
-      }
-     
-      this.next_step = index;
+      }     
       if (this.stack.length) {
         var top_index = this.stack[this.stack.length-1];
         if (index === top_index) return;
@@ -146,7 +145,8 @@
         if (!next.exists()) return;
         page.find('.wizard-next').hide();
         next.bindFirst('click', function() {
-          self.next_step = typeof props.next === 'string'? props.next: index+1;
+          if (self.next_step === undefined)
+            self.next_step = typeof props.next === 'string'? props.next: index+1;
         });
       });
     },
@@ -177,25 +177,28 @@
     {
       var self = this;
       this.element.on('wizard-jump', function(event, object, index) {
-        self._jumpTo(index);
+        self.jumpTo(index);
       });
       
       this.element.on('wizard-next', function() {
-        self._jumpTo(self.stack[self.stack.length-1]+1);
+        self.jumpTo(self.stack[self.stack.length-1]+1);
       });
       
       this.element.on('processed', function(event, result) {
         if (result || !self.stack.length || !self.next_step) return;
-        var index = self.stack[self.stack.length-1];
-        self._hidePage(index, true);
-        self._showPage(self.next_step);
+        self.jumpTo(self.next_step);
         self.next_step = undefined;
       });
       
       this.element.find('.wizard-bookmark').click(function() {
         var index = parseInt($(this).find('.wizard-bookmark-number').text())-1;
-        self._jumpTo(self.stack[index]);
-      })
-    }    
+        self.jumpTo(self.stack[index]);
+      });
+    },
+    
+    nextStep: function(step)
+    {
+      this.next_step = step;
+    }
   })
 }) (jQuery);
