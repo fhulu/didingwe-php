@@ -416,9 +416,10 @@ class page
    
   function validate($field)
   {
-    if (is_null($this->validator)) {
+    if (is_null($this->validator)) { 
       $options = page::merge_options($this->request, $this->get_context());
-      $this->validator = new validator(page::merge_options($_SESSION, $options));
+      $validators = page::load_yaml('validators.yml');
+      $this->validator = new validator(page::merge_options($_SESSION, $options), page::$all_fields, $validators);
     }
     //todo: validate only required fields;
     foreach($field as $code=>$values) {
@@ -435,13 +436,7 @@ class page
         $this->validate ($values);
         continue;
       }
-      
-      $name = at($values, 'name');
-      if ($name == '') $name = validator::title($code);
-      if (!is_array($valid)) $valid = array($valid);
-      foreach($valid as $check) {
-        if (!$this->validator->check($code, $name)->is($check)) break;
-      }
+      $this->validator->validate($code, $values);
     }
     
     return $this->validator->valid();
