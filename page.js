@@ -353,7 +353,7 @@ $.fn.page = function(options, callback)
       field.code = id;
       field.page_id = this.options.page_id;
       field = this.merge_type(field);
-      field.name = field.name || toTitleCase(id.replace(/[_\/]/g, ' '));
+      if (!field.name) field.name = toTitleCase(id.replace(/[_\/]/g, ' '));
       field.key = page.options.key;
       if (!field.array) this.expand_fields(id, field);
       if (!field.html) console.log("No html for ", field);
