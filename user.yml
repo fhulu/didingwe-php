@@ -141,15 +141,12 @@ enter_credentials:
   name: User Credentials
   type: labelled_input_page
   desc: Fill in user information used to uniquely identify the user on the system
-  email:
-    valid:
-      - unique(user.email_address)
   inputs: 
     - title: {type: dropdown}          
     - first_name
     - last_name
     - cellphone
-    - email
+    - email: { valid: [unique(user.email_address)] }
     - type: password_input
     - password
     - confirm_password
