@@ -254,7 +254,6 @@ class validator
     $args = array_slice(func_get_args(), 1);
     
     $predicate = $this->predicates[$func];
-    log::debug_json("VALIDATE CUSTOM $func",$args);
     
     if (!is_array($predicate)) {
       $this->replace_args($predicate, $args);
@@ -263,8 +262,6 @@ class validator
 
     replace_field_indices($predicate, $args);
     $valid = $predicate['valid'];
-    if ($func == 'password_common')
-      log::debug_json("$func VALID", $valid);
     if (is_array($valid)) 
       return $this->is($valid);
 
@@ -302,7 +299,6 @@ class validator
     $this->replace_args($error, $args, true);
     $this->error = replace_vars($error, $this->request);
     if (is_array($result)) $this->error = replace_vars ($this->error, $result);
-    log::debug("UPDATED $func ERROR $this->error");
   }
   
   function relate_time($format, $relation)
