@@ -170,3 +170,22 @@ function replace_fields(&$options, $context)
     $value = replace_vars($value, $context);
   });
 }
+
+function replace_indices($str, $values)
+{
+  if (is_null($values)) $values = $_REQUEST;
+  $i = 1;
+  foreach($values as $value) {
+    $str = str_replace('$'.$i, $value, $str);
+    ++$i;
+  }
+  return $str;
+}
+
+function replace_field_indices(&$options, $values)
+{
+  array_walk_recursive($options, function(&$value) use(&$values) {
+    $value = replace_indices($value, $values); 
+  });
+}
+
