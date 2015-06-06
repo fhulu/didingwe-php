@@ -87,7 +87,7 @@ class validator
       }
     }
     $value = addslashes($this->value);
-    return $this->sql("select $field from $table where $field = '$value'");
+    return $this->sql("select 1 from $table where $field = '$value'");
   }
 
   function in($table=null)
@@ -175,6 +175,14 @@ class validator
     return $this;
   }
   
+  function get_custom($func)
+  {
+    $found = $this->predicates[$func];
+    if ($found) return $found;
+    $found = $this->fields[$func];
+    if (!$found) return null;
+    return $found['valid']? $found: null;
+  }
   
   function is($funcs)
   {
@@ -188,21 +196,24 @@ class validator
     
     foreach($funcs as $func) {
       log::debug("VALIDATE FUNC $func");
+      $func = trim($func);
       if ($func[0] == '/') {
         $args = array($func);
         $func = 'regex';
       }
       else {
         $matches = array(); 
-        if (!preg_match('/^([^\(]+)(?:\((.*)\))?/', $func, $matches)) 
-          throw new validator_exception("Invalid validator expression $func!");
+        if (!preg_match('/^(\w+)(?:\((.*)\))?$/sm', $func, $matches)) 
+          throw new validator_exception("Invalid validator expression --$func--");
 
         $func = $matches[1];
         $args = array();
-        preg_match_all('/\(.*\)|[^,]+/', $matches[2], $args);
+        preg_match_all('/[^,]+|\(.*\)/', $matches[2], $args);
         $args = $args[0];
       }
-
+      
+      $this->update_args($args);
+      
       if (validator::is_static_method($func)) {
         array_unshift($args, $func);
         $func = 'call';
@@ -210,13 +221,13 @@ class validator
         array_shift($args);
       }
       else if (!method_exists($this, $func)) {
-        if (!array_key_exists($func, $this->predicates)) 
+        if (!$this->get_custom($func)) 
           throw new validator_exception("validator method $func does not exists!");
         array_unshift($args, $func);
         $result = call_user_func_array(array($this, 'custom'), $args);
         array_shift($args);
       }
-      else
+      else 
         $result = call_user_func_array(array($this, $func), $args);
       if ($result === true) continue;
       $this->update_error($func, $args, $result);
@@ -239,7 +250,7 @@ class validator
     
     $this->error = $field['error'];
     foreach($valid as $check) {
-      if ($this->is($check) || !$this->error) continue;
+      if ($this->is($check)===true || !$this->error) continue;
       $name = $this->title($code, $field);
       $this->error = str_replace('$name', $name, $this->error);
       page::error($code, $this->error);
@@ -253,13 +264,11 @@ class validator
   {
     $args = array_slice(func_get_args(), 1);
     
-    $predicate = $this->predicates[$func];
-    
+    $predicate = $this->get_custom($func);
     if (!is_array($predicate)) {
       $this->replace_args($predicate, $args);
       return $this->is($predicate);
     }
-
     replace_field_indices($predicate, $args);
     $valid = $predicate['valid'];
     if (is_array($valid)) 
@@ -274,16 +283,31 @@ class validator
   {
     $i = 1;
     foreach($args as $arg) {
+      if ($arg == 'this') $arg = $this->name;
       $field = $this->fields[$arg];
-      $name = $arg;
       if ($set_titles && isset($field))
         $name = $this->title($arg, $field);
+      else
+        $name = $arg;
+      
       $str = str_replace('$'.$i, $name, $str);
       if (is_array($field))
         $str = str_replace('$v'.$i, $this->request[$arg], $str);
       ++$i;
     }
     return $str;
+  }
+  
+  function update_args(&$args)
+  {
+    foreach($args as &$arg) {
+      if ($arg == 'this')
+        $arg = $this->value;
+     else if ($arg == '$name') 
+        $arg = $this->name;
+      else if ($arg == '$value')
+        $arg = $this->request[$arg];
+     }
   }
   
   function update_error($func, $args, $result=null)
@@ -294,11 +318,11 @@ class validator
     if (is_string($result)) $error = $result;
     if (is_null($error)) return;
     
+    if (is_array($result)) $error = replace_vars ($error, $result);
     $error = str_replace('$value', $this->value, $error);
     $error = replace_vars($error, $predicate);
     $this->replace_args($error, $args, true);
     $this->error = replace_vars($error, $this->request);
-    if (is_array($result)) $this->error = replace_vars ($this->error, $result);
   }
   
   function relate_time($format, $relation)
