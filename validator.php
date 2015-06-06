@@ -12,6 +12,7 @@ class validator
   var $value;
   var $predicates;
   var $error;
+  var $has_error;
   var $fields;
   function __construct($request, $fields, $predicates=null, $db_conn=null)
   {
@@ -20,6 +21,7 @@ class validator
     $this->predicates = $predicates;
     $this->optional = false;
     $this->error = null;
+    $this->has_error = false;
     global $db;
     $this->db = is_null($db_conn)? $db: $db_conn;
   }
@@ -179,18 +181,19 @@ class validator
     if (!is_array($funcs)) $funcs = array($funcs);
     log::debug("VALIDATE $this->name=$this->value FUNCTIONS: $func", $funcs);
     
-    if ($funcs[0] == 'optional') {
+    if ($funcs[0]== 'optional') {
       if  ($this->value === '') return true;
       array_shift($funcs);
     }
     
     foreach($funcs as $func) {
-      $args = array($func);
-      if ($func[0] == '/') 
+      log::debug("VALIDATE FUNC $func");
+      if ($func[0] == '/') {
+        $args = array($func);
         $func = 'regex';
+      }
       else {
         $matches = array(); 
-        log::debug("VALIDATE FUNC $func");
         if (!preg_match('/^([^\(]+)(?:\((.*)\))?/', $func, $matches)) 
           throw new validator_exception("Invalid validator expression $func!");
 
@@ -200,19 +203,24 @@ class validator
         $args = $args[0];
       }
 
-      $is_method = method_exists($this, $func);
       if (validator::is_static_method($func)) {
         array_unshift($args, $func);
         $func = 'call';
+        $result = call_user_func_array(array($this, $func), $args);
+        array_shift($args);
       }
-      else if (!$is_method) {
+      else if (!method_exists($this, $func)) {
         if (!array_key_exists($func, $this->predicates)) 
           throw new validator_exception("validator method $func does not exists!");
         array_unshift($args, $func);
-        $func = 'custom';
+        $result = call_user_func_array(array($this, 'custom'), $args);
+        array_shift($args);
       }
-      $result = call_user_func_array(array($this, $func), $args);
-      if (!$this->update_error($func, $args, $result)) return false;
+      else
+        $result = call_user_func_array(array($this, $func), $args);
+      if ($result === true) continue;
+      $this->update_error($func, $args, $result);
+      return $result;
     }
     return true;
   }
@@ -226,7 +234,7 @@ class validator
     $this->check($code);
     
     $first = $valid[0];  
-    if ($first != 'provided' && $first !== 'optional' && !preg_match('/^depends\(/', $first))
+    if ($first != 'provided' && $first != 'optional' && !preg_match('/^depends\(/', $first))
       array_unshift($valid, 'provided');
     
     $this->error = $field['error'];
@@ -235,6 +243,7 @@ class validator
       $name = $this->title($code, $field);
       $this->error = str_replace('$name', $name, $this->error);
       page::error($code, $this->error);
+      $this->has_error = true;
       return false;
     }
     return true;
@@ -247,26 +256,31 @@ class validator
     $predicate = $this->predicates[$func];
     log::debug_json("VALIDATE CUSTOM $func",$args);
     
-    if (is_array($predicate)) {
-      replace_field_indices($predicate, $args);
-      $valid = $predicate['valid'];
-      if (!is_array($valid)) {
-        $this->replace_args($valid, $args);
-        $valid = replace_vars($valid, $predicate);
-      }
+    if (!is_array($predicate)) {
+      $this->replace_args($predicate, $args);
+      return $this->is($predicate);
     }
-    else
-      $valid = $this->replace_args($predicate, $args);
-    if ($this->is($valid)) return true;
-    $this->update_error($func, $args);
+
+    replace_field_indices($predicate, $args);
+    $valid = $predicate['valid'];
+    if ($func == 'password_common')
+      log::debug_json("$func VALID", $valid);
+    if (is_array($valid)) 
+      return $this->is($valid);
+
+    $this->replace_args($valid, $args);
+    $valid = replace_vars($valid, $predicate);
+    return $this->is($valid);
   }
   
-  function replace_args(&$str, $args)
+  function replace_args(&$str, $args, $set_titles=false)
   {
     $i = 1;
     foreach($args as $arg) {
       $field = $this->fields[$arg];
-      $name = isset($field)?$this->title($arg, $field): $arg;
+      $name = $arg;
+      if ($set_titles && isset($field))
+        $name = $this->title($arg, $field);
       $str = str_replace('$'.$i, $name, $str);
       if (is_array($field))
         $str = str_replace('$v'.$i, $this->request[$arg], $str);
@@ -275,20 +289,21 @@ class validator
     return $str;
   }
   
-  function update_error($func, $args, $error=null)
+  function update_error($func, $args, $result=null)
   {
-    if ($error) return true;
     $predicate = &$this->predicates[$func];
-    if (!is_array($predicate)) return false;
-    if (!is_string($error)) $error = $predicate['error'];
-    if (!isset($error)) return false;
+    if (!is_array($predicate)) return;
+    $error = $predicate['error'];
+    if (is_string($result)) $error = $result;
+    if (is_null($error)) return;
     
     $error = str_replace('$value', $this->value, $error);
     $error = replace_vars($error, $predicate);
-    $this->replace_args($error, $args);
+    $this->replace_args($error, $args, true);
     $this->error = replace_vars($error, $this->request);
-    return false;
-}
+    if (is_array($result)) $this->error = replace_vars ($this->error, $result);
+    log::debug("UPDATED $func ERROR $this->error");
+  }
   
   function relate_time($format, $relation)
   {
@@ -308,13 +323,23 @@ class validator
 
   function valid()
   {
-    return !$this->error;
+    return !$this->has_error;
   }
    
   function sql()
   {
     $sql = implode(',', func_get_args());
-    return $this->db->exists(replace_vars($sql, $this->request));
+    $result = $this->db->read_one(replace_vars($sql, $this->request), MYSQLI_BOTH);
+    if (!$result) return false;
+    if ($result[0]) return true;
+    return $result;
   }
-    
+  
+  function not($predicate)
+  {
+    $result = $this->is($predicate);
+    $this->error = null;
+    return !$result;
+  }
+      
 }
