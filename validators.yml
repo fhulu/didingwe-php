@@ -52,10 +52,16 @@ equals:
   valid: /^\s*$1\s*$/
   error: $name must equal $1
   
+exists:
+  error: $name does not exist
+  
 extension: 
   valid: /\.$1$/i
   error: $name must have be of type '$1'
 
+find_in:
+  error: No such $name ($value)
+  
 future_time:
   error: $name must be in the future
   
@@ -64,6 +70,9 @@ greater:
   
 greater_equal:
   error: $name must not be less than $1 ($v1)
+  
+in:
+  error: No such $name ($value)
   
 int_tel:
   valid:
@@ -78,7 +87,7 @@ less_equal:
   error: $name must not be greater than $1 ($v1)
   
 match:
-  valid: /^$v1/
+  valid: /^$v1$/
   error: $name must be the same as $1
  
 matches: match($1)
@@ -102,6 +111,9 @@ national_tel:
     - at_least(10,digits)
   error: Please use national number format for $name, e.g. 0123456789
 
+not: 
+  error: Invalid $name
+  
 numeric: must_be(-?\d+(\.\d+)?,numeric)
 
 password: 
@@ -109,8 +121,16 @@ password:
     - at_least(6,characters)
     - contains_at_least([A-Z]+,one uppercase letter)
     - contains_at_least([a-z]+,one lowercase letter)
-    - contains_at_least(\W+,one digit or special character)
+    - contains_at_least([^a-zA-Z]+,one digit or special character)
+    - password_uncommon
 
+password_uncommon:
+  valid:
+    - not(/^p[a@]ssw[o0]rd$/i)
+    - not(/^pass(word)?\d+$/i)
+    - not(/^querty\d+$/i)
+  error: Password too simple or common
+  
 past_time:
   error: $name must be in the past
   
@@ -128,6 +148,9 @@ relate_time:
   
 same_month:
   error: $name must be in the same month as $1
+
+sql:
+  error: Invalid $name
   
 telephone: /^[+0]\d+$/
 
