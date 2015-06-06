@@ -29,12 +29,12 @@ currency:
 date:
   valid:
     - /^\d{4}([-\/])(0\d|1[0-2])\1([0-2][0-9]|3[01])$/
-    - relate_now(Y-m-d,$1)
+    - relate_time(Y-m-d,$1)
     
 datetime:
   valid:
     - /^\d{4}[-\/])(0\d|1[0-2])\1([0-2][0-9]|3[01]) \d\d:\d\d(:\d\d)?$/
-    - relate_now(Y-m-d H:i:s,$1)
+    - relate_time(Y-m-d H:i:s,$1)
 
 decimal: 
   valid: must_be(^-?\d+\.\d+,decimal)
@@ -100,7 +100,7 @@ national_tel:
   valid:
     - /^0\d+[- \d]*$/
     - at_least(10,digits)
-  error: Please use international number format for $name, e.g. +27123456789
+  error: Please use national number format for $name, e.g. 0123456789
 
 numeric: must_be(-?\d+(\.\d+)?,numeric)
 
@@ -122,6 +122,9 @@ provided:
   
 regex:
   error: Invalid $name
+  
+relate_time:
+  error: $name must be in the $2
   
 same_month:
   error: $name must be in the same month as $1

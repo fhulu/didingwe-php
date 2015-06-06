@@ -290,8 +290,9 @@ class validator
     return false;
 }
   
-  function relate_time($now, $relation)
+  function relate_time($format, $relation)
   {
+    $now = Date($format);
     if ($relation == 'future' && $this->value <= $now)
       return false;
 
@@ -299,28 +300,6 @@ class validator
       return false;
     return true;
   } 
-
-  function date($relation=null)
-  {
-    $result = $this->regex('/^\d{4}([-\/])(0\d|1[0-2])\1([0-2][0-9]|3[01])$/');
-    if ($result !== true) return $result;
-    return $this->relate_time(Date('Y-m-d'), $relation);
-  }
-
-  function time($relation=null)
-  {
-    $result = $this->regex('/^\d\d:\d\d(:\d\d)?$/');
-    if ($result !== true) return $result;
-    return $this->relate_time(Date('H:i'), $relation);
-  }
-  
-  
-  function datetime($relation)
-  {
-    $result = $this->regex('/(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})(:(\d{2}))?/');
-    if ($result !== true) return $result;
-    return $this->relate_time(Date('Y-m-d H:i:s'), $relation);
-  }
   
   function same_month($field)
   {
