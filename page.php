@@ -1022,7 +1022,7 @@ class page
 
     foreach($vars as $var) {
       if ($var == 'request' && !isset($this->request['request']))
-        call_user_func_array (array($this, 'write_session'), array_key($this->request));
+        call_user_func_array (array($this, 'write_session'), array_keys($this->request));
       else if (isset($this->reply[$var]))
         $_SESSION[$var] = $this->reply[$var];
       else if   (isset($this->request[$var]))
