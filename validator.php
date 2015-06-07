@@ -43,24 +43,28 @@ class validator
     return true;
   }
  
+  function value_of($name)
+  {
+    return is_numeric($name)? $name: $this->request[$name];
+  }
   function less($name)
   {
-    return $this->value < $this->request[$name];
+    return $this->value < $this->value_of($name);
   }
   
   function less_equal($name)
   {
-    return $this->value <= $this->request[$name];
+    return $this->value <= $this->value_of($name);
   }
   
   function greater($name)
   {
-    return $this->value > $this->request[$name];
+    return $this->value > $this->value_of($name);
   }
   
   function greater_equal($name)
   {
-    return $this->value >= $this->request[$name];
+    return $this->value >= $this->value_of($name);
   }
   
   
@@ -203,7 +207,7 @@ class validator
       }
       else {
         $matches = array(); 
-        if (!preg_match('/^(\w+)(?:\((.*)\))?$/sm', $func, $matches)) 
+        if (!preg_match('/^([\w:]+)(?:\((.*)\))?$/sm', $func, $matches)) 
           throw new validator_exception("Invalid validator expression --$func--");
 
         $func = $matches[1];
@@ -266,7 +270,7 @@ class validator
     
     $predicate = $this->get_custom($func);
     if (!is_array($predicate)) {
-      $this->replace_args($predicate, $args);
+      $this->replace_args($predicate, $args, false, true);
       return $this->is($predicate);
     }
     replace_field_indices($predicate, $args);
@@ -276,10 +280,11 @@ class validator
 
     $this->replace_args($valid, $args);
     $valid = replace_vars($valid, $predicate);
+    $this->replace_args($valid, $args, false, true);
     return $this->is($valid);
   }
   
-  function replace_args(&$str, $args, $set_titles=false)
+  function replace_args(&$str, $args, $set_titles=false, $force_value=false)
   {
     $i = 1;
     foreach($args as $arg) {
@@ -291,8 +296,11 @@ class validator
         $name = $arg;
       
       $str = str_replace('$'.$i, $name, $str);
-      if (is_array($field))
-        $str = str_replace('$v'.$i, $this->request[$arg], $str);
+      if (is_array($field)) {
+        $value = $this->request[$arg];
+        if (isset($value) && $force_value) $value = $arg;
+        $str = str_replace('$v'.$i, $value, $str);
+      }
       ++$i;
     }
     return $str;
@@ -301,9 +309,8 @@ class validator
   function update_args(&$args)
   {
     foreach($args as &$arg) {
-      if ($arg == 'this')
-        $arg = $this->value;
-     else if ($arg == '$name') 
+      $arg = trim($arg);
+      if ($arg == 'this' || $arg == '$name')
         $arg = $this->name;
       else if ($arg == '$value')
         $arg = $this->request[$arg];
