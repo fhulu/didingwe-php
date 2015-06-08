@@ -1,5 +1,10 @@
 ## YAML Template.
 ---
+after_period:
+  3: now()
+  valid: sql(select timestampdiff($2,$3,$value) <= $v1) 
+  error: $name must be after $v1 $v2
+
 alphabetic: must_be([a-zA-Z]+,alphabetic)
 
 at_least:
@@ -7,6 +12,15 @@ at_least:
   2: characters
   error: $name must be at least $1 $2
 
+before_period:
+  3: now()
+  valid: sql(select timestampdiff($2,$value,$3) <= $v1) 
+  error: $name must be before $v1 $v2
+  
+between:
+  valid: range($1,$2,$3)
+  error: $1 ($v1) must be between $v2 and $v3
+  
 contains_at_least:
   valid: /$1/
   error: $name must contain at least $2
@@ -77,6 +91,8 @@ int_tel:
     - at_least(10,digits)
   error: Please use national number format for $name, e.g. 0123456789 
 
+is: must_be($1)
+  
 less:
   error: $name must be less that $1 ($v1)
 
@@ -121,8 +137,17 @@ password:
     - contains_at_least([^a-zA-Z]+,one digit or special character)
     - password_uncommon
 
-password_uncommon:
+password_common:
   valid:
+    - or
+    - /^p[a@]ssw[o0]rd$/i
+    - /^pass(word)?\d+$/i
+    - /^querty\d+$/i
+    - /^\d+$/
+  error: Use a common password
+
+password_uncommon:
+  valid: 
     - not(/^p[a@]ssw[o0]rd$/i)
     - not(/^pass(word)?\d+$/i)
     - not(/^querty\d+$/i)
@@ -136,6 +161,16 @@ proc: /^([a-z_]+)(?:\((.*)\))*$/
 provided: 
   2: provided
   valid: must_be(.+,$2)
+
+quantity:
+  valid: digits
+  error: $name must be a quantity
+
+range:
+  valid:
+    - greater_equal($v2)
+    - less_equal($v3)
+  error: $1 ($v1) must be in range $v2 to $v3
   
 regex:
   error: Invalid $name
@@ -144,7 +179,12 @@ relate_time:
   error: $name must be in the $2
   
 same_month:
-  error: $name must be in the same month as $1
+  valid: sql(select substr('$value',1,8) = substr('$v1',1,8))
+  error: $name must be in the same month as $1 ($v1)
+
+same_year:
+  valid: sql(select substr('$value',1,4) = substr('$v1',1,4))
+  error: $name must be in the same year as $1 ($v1)
 
 sql:
   error: Invalid $name
