@@ -120,9 +120,7 @@ class validator
   {
     $validator = new validator($this->request, $this->fields, $this->predicates, $this->db);
     log::debug("DEPENDS $field $arg");
-    if ($validator->check($field)->is($arg)) return true;
-    $this->error = null;
-    return false;
+    return $validator->check($field)->is($arg);
   }
   
   function call($function)
@@ -145,6 +143,14 @@ class validator
     if (!is_callable($function)) {
       log::warn("Uncallable function $function");
       return;
+    }
+    
+    //replace_fields($params, $this->request);
+    foreach($params as &$param) {
+      $param = trim($param);
+      if ($param=='this') $param = $this->name;
+      if (array_key_exists($param, $this->request)) $param = $this->request[$param];
+      $param = replace_vars ($param, $this->request);
     }
     return call_user_func_array($function, $params);
   }
@@ -184,7 +190,7 @@ class validator
   function is($funcs)
   {
     if (!is_array($funcs)) $funcs = array($funcs);
-    log::debug_json("VALIDATE $this->name=$this->value FUNCTIONS: $func", $funcs);
+    log::debug_json("VALIDATE $this->name=$this->value FUNCTIONS: ", $funcs);
     
     if ($funcs[0]== 'optional') {
       if  ($this->value === '') return true;
@@ -246,7 +252,8 @@ class validator
     
     $this->error = $field['error'];
     foreach($valid as $check) {
-      if ($this->is($check)===true || !$this->error) continue;
+      if ($this->is($check)===true) continue;
+      if (!$this->error) return false;
       $name = $this->title($code, $field);
       $this->error = str_replace('$name', $name, $this->error);
       page::error($code, $this->error);
