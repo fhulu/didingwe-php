@@ -45,8 +45,10 @@ class validator
  
   function value_of($name)
   {
-    return is_numeric($name)? $name: $this->request[$name];
+    if (is_numeric($name) || !isset($this->request[$name])) return $name;
+    return $this->request[$name];
   }
+  
   function less($name)
   {
     return $this->value < $this->value_of($name);
@@ -116,7 +118,6 @@ class validator
   
   function depends($field, $arg)
   {
-    if ($field == 'this') $field = $this->name;
     $validator = new validator($this->request, $this->fields, $this->predicates, $this->db);
     log::debug("DEPENDS $field $arg");
     if ($validator->check($field)->is($arg)) return true;
@@ -144,14 +145,6 @@ class validator
     if (!is_callable($function)) {
       log::warn("Uncallable function $function");
       return;
-    }
-    
-
-    foreach($params as &$param) {
-      $param = trim($param);
-      if ($param=='this') $param = $this->name;
-      if (array_key_exists($param, $this->request)) $param = $this->request[$param];
-      $param = replace_vars ($param, $this->request);
     }
     return call_user_func_array($function, $params);
   }
@@ -191,7 +184,7 @@ class validator
   function is($funcs)
   {
     if (!is_array($funcs)) $funcs = array($funcs);
-    log::debug("VALIDATE $this->name=$this->value FUNCTIONS: $func", $funcs);
+    log::debug_json("VALIDATE $this->name=$this->value FUNCTIONS: $func", $funcs);
     
     if ($funcs[0]== 'optional') {
       if  ($this->value === '') return true;
@@ -199,7 +192,6 @@ class validator
     }
     
     foreach($funcs as $func) {
-      log::debug("VALIDATE FUNC $func");
       $func = trim($func);
       if ($func[0] == '/') {
         $args = array($func);
@@ -224,7 +216,7 @@ class validator
         $result = call_user_func_array(array($this, $func), $args);
         array_shift($args);
       }
-      else if (!method_exists($this, $func)) {
+      else if ($func == 'is' || !method_exists($this, $func)) {
         if (!$this->get_custom($func)) 
           throw new validator_exception("validator method $func does not exists!");
         array_unshift($args, $func);
@@ -286,8 +278,9 @@ class validator
   
   function replace_args(&$str, $args, $set_titles=false, $force_value=false)
   {
-    $i = 1;
+    $i = 0;
     foreach($args as $arg) {
+      ++$i;
       if ($arg == 'this') $arg = $this->name;
       $field = $this->fields[$arg];
       if ($set_titles && isset($field))
@@ -296,12 +289,11 @@ class validator
         $name = $arg;
       
       $str = str_replace('$'.$i, $name, $str);
-      if (is_array($field)) {
-        $value = $this->request[$arg];
-        if (isset($value) && $force_value) $value = $arg;
-        $str = str_replace('$v'.$i, $value, $str);
-      }
-      ++$i;
+      if (!is_array($field)) continue;
+      
+      $value = $this->request[$arg];
+      if (isset($value) && $force_value) $value = $arg;
+      $str = str_replace('$v'.$i, $value, $str);
     }
     return $str;
   }
@@ -313,7 +305,7 @@ class validator
       if ($arg == 'this' || $arg == '$name')
         $arg = $this->name;
       else if ($arg == '$value')
-        $arg = $this->request[$arg];
+        $arg = $this->value;
      }
   }
   
@@ -342,11 +334,6 @@ class validator
       return false;
     return true;
   } 
-  
-  function same_month($field)
-  {
-    return substr($this->value,0,8) == substr($this->request[$field], 0, 8);
-  }
 
   function valid()
   {
