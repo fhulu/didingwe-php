@@ -51,7 +51,7 @@ decimal:
   valid: must_be(^-?\d+\.\d+,decimal)
   
 digits: 
-  valid: contains_only(\d)
+  valid: contains_only(\d+)
 
 either:
   error: Invalid $name
