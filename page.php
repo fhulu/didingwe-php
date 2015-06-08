@@ -417,9 +417,10 @@ class page
   function validate($field)
   {
     if (is_null($this->validator)) { 
-      $options = page::merge_options($this->request, $this->get_context());
+      $options = merge_options($this->get_context(),$this->request);
       $validators = page::load_yaml('validators.yml');
-      $this->validator = new validator(page::merge_options($_SESSION, $options), page::$all_fields, $validators);
+      $fields = merge_options(page::$all_fields, $this->fields);
+      $this->validator = new validator(page::merge_options($_SESSION, $options), $fields, $validators);
     }
     //todo: validate only required fields;
     foreach($field as $code=>$values) {
