@@ -47,7 +47,7 @@
       bookmark.css('left', (-(height-this.bookmark_width+8)/2)+'px');
       bookmark.css('top', (height/2-10)+'px');
       bookmark.hide();
-      this._createNavigation(page, props, index);
+      //this._createNavigation(page, props, index);
     },
     
     jumpTo: function(index)
@@ -105,11 +105,6 @@
       }
       else {
         page.find('.wizard-bookmark').hide();
-        var props = this.options.steps[index];
-        if (props.prev === 'clear') {
-          page.find('.wizard-content *').remove();
-          page.removeClass('wizard-loaded');
-        }
       }
       page.find('.wizard-content,.wizard-nav').hide();
       page.removeClass('wizard-done');
@@ -141,22 +136,18 @@
         var nav = page.find('.wizard-nav');
         if (!actions.exists()) return;
         nav.append(actions);
-        var next = actions.filter('#next');
-        if (!next.exists()) return;
-        page.find('.wizard-next').hide();
-        next.bindFirst('click', function() {
+        actions.filter('#next').bindFirst('click', function() {
           if (self.next_step === undefined)
             self.next_step = typeof props.next === 'string'? props.next: index+1;
+        });
+        actions.filter('#prev').bindFirst('click', function() {
+          self.jumpTo(self.stack[self.stack.length-2]);
         });
       });
     },
     
     _createNavigation: function(parent, props, index)
     {
-      var num_steps = this.options.steps.length;
-      if (props.prev === undefined) props.prev = index > 0 && num_steps > 1;
-      if (props.next === undefined) props.next = index >= 0 && index < num_steps-1;
-      if (!props.prev && !props.next) return;
       var nav = parent.find('.wizard-nav');
       if (props.prev) 
         $('<button class="wizard-prev action">').text(this.options.prev_name).appendTo(nav);
@@ -182,6 +173,10 @@
       
       this.element.on('wizard-next', function() {
         self.jumpTo(self.stack[self.stack.length-1]+1);
+      });
+      
+      this.element.on('wizard-prev', function() {
+        self.jumpTo(self.stack[self.stack.length-2]);
       });
       
       this.element.on('processed', function(event, result) {
