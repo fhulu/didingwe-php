@@ -182,6 +182,25 @@ history:
   sql: select create_time, action, detail from audit_trail where user_id = $key
  
   
+is_active:
+  valid: sql(select active from user where email_address = '$value')
+  error: |
+    Account $value has been deactivated. 
+    Please ask the administrator to reactivate your account
+
+is_password_for:
+  valid: 
+    - depends(email,is_active)
+    - sql(update user set attempts = attempts+1 where email_address = '$v1')
+    - depends(email,is_unlocked)
+    - sql(select password=password('$value') from user where email_address = '$v1')
+  error: Invalid user name or password for $v1
+
+is_unlocked:
+  valid: sql(select attempts <= 10 from user where email_address = '$value')
+  error: |
+    Account $value locked because of too many incorrect attempts.
+    Please ask the administrator to unlock your account.
   
 list:
   access: [admin]
@@ -232,25 +251,21 @@ login:
   width: 500
   desc: Fill in your credentials below and click Login to logon
   inputs:
-    - email
+    - email: 
+        valid: [is_active,is_unlocked]
     - password:
         type: password_input
-        valid: provided
+        valid: is_password_for(email)
   actions:
     - login
     - forgot_password: { action: dialog }
   post:
-    - sql_exec: update user set attempts = attempts+1 where email_address='$email'
     - sql_values:
-        select active, attempts>10 locked, password=password('$password') and active valid, 
-          id uid, partner_id, email_address email, first_name, last_name, 
+        select id uid, partner_id, email_address email, first_name, last_name, 
           concat(first_name, ' ', last_name) full_name,
           cellphone, roles, groups, 'home' page
-          from user
-          where email_address='$email'
-    - if locked abort: [email, Account locked because of too many incorrect attempts. Please ask the administrator to unlock your account]
-    - if not valid abort: [email, Invalid user name or password for $email]
-    - if not active abort: [email, Account has been deactivated. Please ask the administrator to reactivate your account]
+        from user
+        where email_address='$email'
     - load_lineage: [roles,role,code,base_code]
     - sql_exec: update user set attempts = 0 where id = $uid
     - write_session: uid,partner_id,roles,email,first_name,last_name,full_name,cellphone
