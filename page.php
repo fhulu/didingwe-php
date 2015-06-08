@@ -42,6 +42,7 @@ class page
   var $page_offset;
   var $reply;
   var $db;
+  var $validated;
   
   function __construct($request=null, $user_db=null)
   {
@@ -56,9 +57,8 @@ class page
     $this->method = $request['action'];
 
     $this->page_offset = 1;
-    
     $this->types = array();
-
+    $this->validated = array();
   }
   
   function process()
@@ -424,7 +424,7 @@ class page
     }
     //todo: validate only required fields;
     foreach($field as $code=>$values) {
-      if (!is_array($values)) continue;
+      if (!is_array($values) || in_array($code, $this->validated)) continue;
       if (is_numeric($code)) {
         $code = at($values, 'code');
         if (is_null($code)) {
@@ -433,6 +433,7 @@ class page
         }
       }
       $valid = at($values,'valid');
+      $this->validated[] = $code;
       if ($valid == '') {
         $this->validate ($values);
         continue;
