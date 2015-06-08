@@ -270,6 +270,7 @@ class validator
     $predicate = $this->get_custom($func);
     if (!is_array($predicate)) {
       $this->replace_args($predicate, $args, false, true);
+      $predicate = replace_vars($predicate, $this->request);
       return $this->is($predicate);
     }
     replace_field_indices($predicate, $args);
@@ -279,6 +280,7 @@ class validator
 
     $this->replace_args($valid, $args);
     $valid = replace_vars($valid, $predicate);
+    $valid = replace_vars($valid, $this->request);
     $this->replace_args($valid, $args, false, true);
     return $this->is($valid);
   }
@@ -296,12 +298,14 @@ class validator
         $name = $arg;
       
       $str = str_replace('$'.$i, $name, $str);
-      if (!is_array($field)) continue;
+      if (is_numeric($arg)) continue;
       
       $value = $this->request[$arg];
       if (isset($value) && $force_value) $value = $arg;
       $str = str_replace('$v'.$i, $value, $str);
     }
+    
+    $str = str_replace('$value', $this->value, $str);
     return $str;
   }
   
