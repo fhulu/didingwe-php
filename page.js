@@ -13,8 +13,8 @@ $.fn.page = function(options, callback)
     loading: 0,
     load: function() 
     {
-      this.parent.on('server_response', function(event, result, invoker) {
-        page.respond(result, invoker);
+      this.parent.on('server_response', function(event, result) {
+        page.respond(result);
       });
       
       var path = options.path;
@@ -669,10 +669,10 @@ $.fn.page = function(options, callback)
       if (!result) return this;
       var responses = result._responses;
       if (!$.isPlainObject(responses)) return this;
-      var parent = this.parent;
+      var parent = page.object;
       if (invoker) {
          parent = invoker.parents('#'+this.options.page_id).eq(0);
-        if (!parent.exists()) parent = this.parent;
+        if (!parent.exists()) parent = page.object;
       }
       else invoker = parent;
       
