@@ -51,7 +51,7 @@ decimal:
   valid: must_be(^-?\d+\.\d+,decimal)
   
 digits: 
-  valid: contains_only(\d+)
+  valid: contains_only(\d+,digits)
 
 either:
   error: Invalid $name
@@ -132,9 +132,9 @@ numeric: must_be(-?\d+(\.\d+)?,numeric)
 password: 
   valid:
     - at_least(6,characters)
-    - contains_at_least([A-Z]+,one uppercase letter)
-    - contains_at_least([a-z]+,one lowercase letter)
-    - contains_at_least([^a-zA-Z]+,one digit or special character)
+    - contains_at_least([A-Z],one uppercase letter)
+    - contains_at_least([a-z],one lowercase letter)
+    - contains_at_least([^a-zA-Z],one digit or special character)
     - password_uncommon
 
 password_common:
@@ -159,8 +159,7 @@ past_time:
 proc: /^([a-z_]+)(?:\((.*)\))*$/
 
 provided: 
-  2: provided
-  valid: must_be(.+,$2)
+  valid: must_be(.+,provided)
 
 quantity:
   valid: digits
@@ -179,7 +178,7 @@ relate_time:
   error: $name must be in the $2
   
 same_month:
-  valid: sql(select substr('$value',1,8) = substr('$v1',1,8))
+  valid: sql(select substr('$value',1,7) = substr('$v1',1,7))
   error: $name must be in the same month as $1 ($v1)
 
 same_year:
