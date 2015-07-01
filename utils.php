@@ -1,4 +1,4 @@
-<?php
+  <?php
 
 function at($array, $index) 
 {
@@ -53,7 +53,7 @@ function remove_nulls(&$array)
   return $array;
 }
 
-function replace_vars($str, $values=null)
+function replace_vars($str, $values=null, $ignore=array())
 {
   if (is_null($values)) $values = $_REQUEST;
   $matches = array();
@@ -61,6 +61,7 @@ function replace_vars($str, $values=null)
 
   foreach($matches as $match) {
     $key = $match[1];
+    if (in_array($key, $ignore, true)) continue;
     $value = at($values, $key);
     if (!is_null($value))
       $str = str_replace('$'.$key, $value, $str);
@@ -68,9 +69,10 @@ function replace_vars($str, $values=null)
   return $str;
 }
 
-function is_assoc($array) {
+function is_assoc($array) 
+{
   if (is_null($array) || !is_array($array)) return false; 
-  return (bool)count(array_filter(array_keys($array), 'is_string'));
+  return !(bool)count(array_filter(array_keys($array), 'is_int'));
 }
 
 function compress_array($array)
@@ -108,7 +110,7 @@ function merge_options($options1, $options2)
 {
   if (!is_array($options1)|| $options1 == $options2) return $options2;
   if (!is_array($options2)) return $options1;
-  if (!is_assoc($options1)) return array_merge($options1, $options2);
+  if (!is_assoc($options1) && !is_assoc($options2)) return array_merge($options1, $options2);
 
   $result = $options2;
   foreach($options1 as $key=>$value ) {
@@ -134,13 +136,25 @@ function choose_value(&$array)
   return null;
 }
 
-function walk_recursive(&$array, $callback)
+function walk_recursive(&$array, $callback, $done_callback = null)
 {
   foreach($array as $key=>&$value) {
     if (is_array($value))
-      walk_recursive ($value, $callback);
-    $callback($value, $key);
+      walk_recursive ($value, $callback, $done_callback);
+    $callback($value, $key, $array);
   }
+  if ($done_callback)
+    $done_callback($array);
+}
+function walk_recursive_down(&$array, $callback, $done_callback = null)
+{
+  foreach($array as $key=>&$value) {
+    $result = $callback($value, $key, $array);
+    if ($result !== false && is_array($value))
+      walk_recursive_down ($value, $callback, $done_callback);
+  }
+  if ($done_callback)
+    $done_callback($array);
 }
 
 function walk_leaves(&$array, $callback)
@@ -149,7 +163,7 @@ function walk_leaves(&$array, $callback)
     if (is_array($value))
       walk_leaves($value, $callback);
     else
-      $callback($value, $key);
+      $callback($value, $key, $array);
   }
 }
 
@@ -187,5 +201,29 @@ function replace_field_indices(&$options, $values)
   array_walk_recursive($options, function(&$value) use(&$values) {
     $value = replace_indices($value, $values); 
   });
+}
+
+function replace_keys($array, $key1, $key2)
+{
+    $keys = array_keys($array,null, true);
+    $index = array_search($key1, $keys);
+
+    if ($index !== false) {
+        $keys[$index] = $key2;
+        $array = array_combine($keys, $array);
+    }
+
+    return $array;
+}
+
+function find_assoc_element($array, $key)
+{
+  $index = 0;
+  foreach($array as $element) {
+    list($k, $value) = assoc_element($element);
+    if ($k == $key) return array($value, $index);
+    ++$index;
+  }
+  return null;
 }
 

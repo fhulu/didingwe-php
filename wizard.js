@@ -71,6 +71,7 @@
       }
       
       this._showPage(index);
+      this.next_step = undefined;
     },
     
     _showPage: function(index)
@@ -132,7 +133,7 @@
         object.addClass('wizard-content');
         content.replaceWith(object);
         page.addClass('wizard-loaded').removeClass('wizard-loading');
-        var actions = object.find(".action");
+        var actions = object.find(".wizard-jump");
         var nav = page.find('.wizard-nav');
         if (!actions.exists()) return;
         nav.append(actions);
@@ -180,9 +181,9 @@
       });
       
       this.element.on('processed', function(event, result) {
+        console.log('processed', self.stack_length, self.next_step, result);
         if (result || !self.stack.length || !self.next_step) return;
         self.jumpTo(self.next_step);
-        self.next_step = undefined;
       });
       
       this.element.find('.wizard-bookmark').click(function() {

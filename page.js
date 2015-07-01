@@ -50,7 +50,7 @@ $.fn.page = function(options, callback)
       $.each(values, function(code, subst) {
         if (typeof subst === 'string' && value !== null) {
           subst = page.expand_function(subst, parent_id)
-          value = value.replace(new RegExp('\\$'+code, 'g'), subst);
+          value = value.replace(new RegExp('\\$'+code+"([\b\W]|$)?", 'g'), subst+'$1');
           values[code] = subst;
           if (value.indexOf('$') < 0) return;
         }
@@ -68,7 +68,7 @@ $.fn.page = function(options, callback)
         data[field] = page.expand_value(data, value, parent_id);
       });
       if (data.html)
-        data.html = data.html.replace(/\$(value|desc)/, '');
+        data.html = data.html.replace(/\$(value|desc)(\b|\W|$)?/, '$2');
       return data;
     },
         
@@ -149,7 +149,7 @@ $.fn.page = function(options, callback)
     
     get_template_html: function(template, item)
     {
-      if (item.type === 'hidden' || item.template === "none") return '$field';
+      if (template === undefined || item.type === 'hidden' || item.template === "none") return '$field';
       var result = template;
       if (typeof template !== 'string') {
         item = $.extend({}, template, item);
@@ -162,18 +162,23 @@ $.fn.page = function(options, callback)
         var code = matches[i];
         if (code === 'field') continue;
         var value = item[code] || '';          
-        result = result.replace('$'+code, value);
+        result = result.replace(new RegExp('\\$'+code+'([\b\W]|$)?','g'), value+'$1');
       }
       return result;
     },
     
-    append_sub_page: function(parent, regex, template, sub_page)
+    create_sub_page: function(field)
     {
       var tmp = $('<div></div>');
-      var object = tmp.page($.extend({}, options.values, options, sub_page));
-      var templated = this.get_template_html(template, sub_page.fields);
-      parent.replace(regex, templated+'$1'); 
-      this.replace(parent, object, object.attr('id'), 'field');
+      field.path = field.url? field.url: field.code;
+      tmp.page(field);
+      tmp.on('read_'+field.code, function(e, obj) {
+        if (field.style) 
+          page.set_style(obj, field);
+        var parent = obj.parents().eq(0);
+        parent.replaceWith(obj);
+      });
+      return tmp;
     },
     
     set_defaults: function(defaults, item)
@@ -187,7 +192,7 @@ $.fn.page = function(options, callback)
         if (name === 'template' && value === 'none')
           defaults[name] = '$field';
         else if (name === 'type' || name === 'template')
-          defaults[name] = this.get_type_html(item[name]);
+          defaults[name] = this.get_type_html(value);
         else
           defaults[name] = item[name];
         set = true;
@@ -207,16 +212,9 @@ $.fn.page = function(options, callback)
         var item = items[i];
         var id;
         var array;
+        var template;
         if ($.isPlainObject(item)) {
-          if (this.set_defaults(defaults, item)) continue;          
-          
-          if (item.page !== undefined) {
-            item.page.key = this.options.key;
-            this.append_sub_page(parent, regex, defaults.template, item.page);
-            continue;
-          }
-
-          
+          if (this.set_defaults(defaults, item)) continue;   
           if (item.code === undefined) {
             for (var key in item) {
               if (!item.hasOwnProperty(key)) continue;
@@ -226,10 +224,6 @@ $.fn.page = function(options, callback)
             assert(item[id], "Invalid item " + JSON.stringify($.copy(item))); 
             item = item[id];
             if (item.merge) continue;
-            if (item.type === 'page') {
-              this.append_sub_page(parent, regex, defaults.template, item);
-              continue;
-            }            
             if (post_methods.indexOf(id) >= 0) {
               loading_data = true;
               this.load_data(parent, parent_field, name, types, defaults); 
@@ -241,6 +235,7 @@ $.fn.page = function(options, callback)
             }            
             if (!item.action && defaults.action) item.action = defaults.action;
             if (!item.attr && defaults.attr) item.attr = defaults.attr;
+            template = item.template;
             if (!item.type && defaults.type) item = merge(defaults.type, item);
             item = merge(types[id], item);
           }
@@ -272,14 +267,10 @@ $.fn.page = function(options, callback)
             item = merge(inherited, item);
           }
         }
-        if (item.type === 'page') {
-          this.append_sub_page(parent, regex, defaults.template, item);
-          continue;
-        }
-        
         if (path)
           item.path = path + '/' + id;
         parent.replace(regex,new_item_html+'$1');
+        if (!template) item.template = defaults.template; 
         var created = this.create(item, id, types, array);        
         item = created[0];
         var obj = created[1];
@@ -356,11 +347,13 @@ $.fn.page = function(options, callback)
       if (!field.name) field.name = toTitleCase(id.replace(/[_\/]/g, ' '));
       field.key = page.options.key;
       if (!field.array) this.expand_fields(id, field);
+      if (field.page) 
+        return [field, page.create_sub_page(field)];
+
       if (!field.html) console.log("No html for ", field);
       assert(field.html, "Invalid HTML for "+id); 
       field.html.replace('$tag', field.tag);
       var obj = $(field.html);
-      
       var reserved = ['code','create','css','script','name', 'desc', 'data'];
       this.set_attr(obj, field);
       this.set_style(obj, field);
@@ -381,7 +374,7 @@ $.fn.page = function(options, callback)
         }
         
         if ($.isArray(value)) {
-          if (types[code] !== undefined)
+          if (types[code] !== undefined) 
             value = $.merge($.merge([], types[code]), value);
           this.append_contents(obj, field, code, value, types);
           continue;
@@ -397,7 +390,7 @@ $.fn.page = function(options, callback)
         var result = this.create(value, code, types);
         this.replace(obj, result[1], code);
       }
-     
+      
       page.init_links(obj, field, types);
       obj.on('loaded', function() {
         page.init_events(obj, field);
@@ -629,6 +622,7 @@ $.fn.page = function(options, callback)
             if (selector !== undefined) {
               selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+field.page_id+"$2");
               obj.jsonCheck(event, selector, '/', params, function(result) {
+                console.log('check processed', result)
                 if (result === null) result = undefined;
                 obj.trigger('processed', [result]);
                 page.respond(result, obj);
@@ -636,7 +630,7 @@ $.fn.page = function(options, callback)
               break;
             }
             $.json('/', params, function(result) {
-              obj.trigger('processed', [result]);
+              obj.trigger('straight processed', [result]);
               page.respond(result, obj);
             });
             break;
@@ -645,7 +639,7 @@ $.fn.page = function(options, callback)
             break;
           default:
             if (field.url)
-              document.location = field.url.replace('$key', field.key); 
+              document.location = field.url.replace(/\$key(\b|\W|$)?/, field.key+"$1"); 
         }
       }
       

@@ -4,7 +4,9 @@
 activate:
   access: admin
   desc: Activate inactive user
-  audit: sql(select first_name, last_name, email_address from user where id = $key)
+  audit: sql(select first_name, last_name, email_address from user where id = '$key')
+  post: 
+    - sql_exec: update user set active = 1 where id = '$key'
   
 audit_trail:
   access: admin 
@@ -51,10 +53,31 @@ check_otp:
   name: One Time Pin
   desc: >
     Please enter the OTP(One Time Pin) that you received on your email or cellphone.
+    It is possible that the OTP email was sent to the Junk folder on your mail
   inputs:   
     - otp
+  values:
+    - sql_values: select lpad(floor(rand()*9999),4,'0') server_otp, now() time_of_otp
+    - write_session: server_otp,time_of_otp
+    - clear_values
   actions:
-    - next
+    - next:
+        post:
+          - sql_values: select lpad(floor(rand()*9999),4,'0') server_otp, now() time_of_otp
+          - write_session: server_otp,time_of_otp
+          - send_email:
+              subject: One Time Password
+              from: $support
+              to: $first_name $last_name <$email>
+              message: >
+                Good day<br><br>
+                You are currently trying to change your email address. 
+                If you have not requested this, please inform the System Adminstrator.<br><br>
+                Your One Time Password is : <b>$otp</b>. <br><br>
+                Regards<br>
+                Customer Operations
+          - clear_values
+
 
 complete_registration:
   type: labelled_input_page
@@ -190,14 +213,25 @@ is_active:
 
 is_password_for:
   valid: 
+    - depends(email,is_registered)
     - depends(email,is_active)
-    - sql(update user set attempts = attempts+1 where email_address = '$v1')
     - depends(email,is_unlocked)
     - sql(select password=password('$value') from user where email_address = '$v1')
-  error: Invalid user name or password for $v1
+  error: 
+    - sql_exec: update user set attempts = attempts+1 where email_address = '$v1'
+    - sql_exec: >
+        insert into audit_trail(user_id, action, detail) 
+          select id, 'Failed Login Attempt', '$v1' from user where email_address = '$v1'
+    - error: Invalid user name or password for $v1
 
+is_registered:
+  valid: sql(select 1 from user where email_address = '$value')
+  error: >
+    There is no such email '$value' registered on the system.<br>
+    Click on <b>Register</b> if you would like to register to use the system.
+  
 is_unlocked:
-  valid: sql(select attempts <= 10 from user where email_address = '$value')
+  valid: sql(select attempts < 5 from user where email_address = '$value')
   error: |
     Account $value locked because of too many incorrect attempts.
     Please ask the administrator to unlock your account.
@@ -249,13 +283,11 @@ login:
   access: public
   type: labelled_input_page
   width: 500
+  validate: all
   desc: Fill in your credentials below and click Login to logon
   inputs:
-    - email: 
-        valid: [is_active,is_unlocked]
-    - password:
-        type: password_input
-        valid: is_password_for(email)
+    - email: { valid: [is_registered, is_active, is_unlocked] }
+    - password: { type: password_input, valid: is_password_for(email) }
   actions:
     - login
     - forgot_password: { action: dialog }
@@ -318,6 +350,13 @@ my_audit_trail:
   sql: |
     select create_time, action, detail 
       from audit_trail where user_id = $uid
+
+otp:
+  name: OTP
+  desc: One Time Pin
+  valid: >
+    sql(select 1 from dual where timestampdiff(minute, '$time_of_otp', now()) < 30 and '$otp'='$server_otp')
+
 
 profile:
   type: labelled_input_page

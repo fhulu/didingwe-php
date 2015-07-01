@@ -27,7 +27,6 @@ PATTERN;
     $fields = array();
     foreach ($matches[0] as $field) {
       $aliases = array();
-      log::debug("SQL FIELD $field");
       if (!preg_match('/^(.+end) +as .*$|^(.+end) .*$|^(.+) +as .*$|^(.+)$/', $field, $aliases)) 
         throw new Exception ("Invalid SQL field $field");
       array_shift($aliases);

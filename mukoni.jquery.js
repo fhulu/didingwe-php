@@ -108,7 +108,7 @@ $.send = function(url, options, callback)
     error: undefined,
     event: undefined
   }, options);
-  if (options.event !== undefined) options.async = false;
+  //if (options.event !== undefined) options.async = false;
   var ret = this;
   if (options.invoker !== undefined) 
     options.invoker.prop('disabled', true);
@@ -143,34 +143,10 @@ $.send = function(url, options, callback)
     cache: false,
     dataType: options.dataType,
     success: function(data) {
-      if (data != null) {
-        if ((options.showResult === true && data != '') || data[0] == '!') {
-          if (progress.timeout !== undefined) clearTimeout(progress.timeout);
-          
-          var p = $('<p></p>');
-          if(data[0] == '!') {
-            p.html(data.substr(1));
-            p.addClass('error');
-            if (options.event !== undefined) {
-              options.event.stopImmediatePropagation();
-              ret = false;
-            }
-          }
-          else 
-            p.html(data);
-          progress.box.html('')
-            .append(p)
-            .show();
-          var timeout = setTimeout(function() {progress.box.fadeOut(2000);}, 8000);
-                   
-        }
-        else if (progress.box !== undefined) 
-          progress.box.hide();
-
-      }
+      if (progress.timeout !== undefined) clearTimeout(progress.timeout);
+      if (progress.box !== undefined) progress.box.hide();
       if (callback !== undefined) callback(data, options.event);
       if (options.invoker !== undefined) options.invoker.prop('disabled', false);
-      if (progress.timeout !== undefined) clearTimeout(progress.timeout);
     }
   });
   return ret;
@@ -337,6 +313,7 @@ $.fn.jsonCheck = function(event, controls, url, options, callback)
   var params = $.extend({invoker: this, event: event, async: true }, options);
   $(controls).siblings(".error").remove();
   $(controls).json(url, params, function(result) {
+    console.log('jsonCheck', result)
     if (result != null)
       $.reportAllErrors(event, result);
     if (callback !== undefined)

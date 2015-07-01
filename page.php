@@ -26,12 +26,15 @@ $page->output();
 
 class page
 {  
+  static $fields_stack = array(); 
+  static $post_items = array('audit','post', 'valid');
+  static $atomic_items = array('action', 'css', 'html', 'script', 'style', 'template', 'valid');
+  static $user_roles = array('public');
   var $request;
   var $object;
   var $method;
   var $page;
   var $field;
-  static $all_fields; 
   var $fields;
   var $types;
   var $validator;
@@ -44,6 +47,12 @@ class page
   var $db;
   var $validated;
   
+  var $rendering;
+  var $page_stack;
+  var $page_fields;
+  var $expanding;
+  var $context;
+  
   function __construct($request=null, $user_db=null)
   {
     global $db;
@@ -53,12 +62,16 @@ class page
     if (is_null($request)) $request = $_REQUEST;
     log::debug_json("REQUEST",$request);
     $this->request = $request;
-    $this->path = explode('/', $request['path']);
+    $this->path = $request['path'];
     $this->method = $request['action'];
-
     $this->page_offset = 1;
+    $this->fields = array();
+    $this->page_fields = array();
+    $this->page_stack = array();
     $this->types = array();
     $this->validated = array();
+    $this->rendering = $request['action'] == 'read';
+    $this->context = array();
   }
   
   function process()
@@ -67,9 +80,33 @@ class page
       throw new Exception("No method parameter in request");
     
     $this->read_user();
+    
+    $path = $this->path;
+    if ($path[0] == '/') $path = substr ($path, 1);
+    
+    $path = explode('/', $path);
+    if (last($path) == '') array_pop($path);
+    
+    $this->object = $this->page = $path[0];
+    $this->path = $path;
     $this->load();
+    
+    log::debug_json("PATH".sizeof($path), $path);
+    $this->root = $path[0];    
+    if (sizeof($path) > 1) {
+      $level1 = $this->page_fields[$this->root];
+      if (!isset($level1) || !array_key_exists($path[1], $level1)) {
+        $this->root = $path[1];
+        $this->page = $this->root;
+        array_shift($path);
+      }
+    }
+    $reading = $this->method == 'read';
+    $this->set_fields($reading);
+    if (!$reading)
+      $this->set_context($path);
     $result = $this->{$this->method}();
-    $this->result = null_merge($result, $this->result, false);
+    return $this->result = null_merge($result, $this->result, false);
   }
   
   function output()
@@ -84,249 +121,268 @@ class page
     if (!$reload && $this->user && $this->user['uid']) return $this->user;
     log::debug_json("SESSION", $_SESSION);
     $user = $this->read_session('uid,partner_id,roles,groups,email_address,first_name,last_name,cellphone');
+    $user['full_name'] = $user['first_name'] . " ". $user['last_name'];
     if (is_null($user['roles'])) $user['roles'] = array('public');
     $this->user = $user;
     log::debug_json("USER",$this->user);
     return $this->user;
   }
   
-  function load()
+  static function load_yaml($file)
   {
-    if (sizeof(page::$all_fields) > 0) return;
-    $this->load_yaml('controls.yml', false, page::$all_fields); //todo cache common controls
-    $this->load_yaml('fields.yml', false, page::$all_fields); //todo cache common fields
-  }
-
-  static function load_yaml($file, $strict=false, &$fields=array(), $loading = false)
-  {
-    if (!$loading) {
-      page::load_yaml("../common/$file", false, $fields, true); 
-      $strict &= (sizeof($fields) == 0);
-      return page::load_yaml($file, $strict, $fields, true);
-    }
-      
     log::debug("YAML LOAD $file");
-    if (!file_exists($file)) {
-      if ($strict) throw new Exception("Unable to load file $file");
-      return $fields;
-    }
+    if (!file_exists($file))
+      return null;
     
     $data = yaml_parse_file($file); 
     if (is_null($data))
       throw new Exception ("Unable to parse file $file");
-    return $fields = merge_options($fields, $data);
+    return $data;
   }
-
   
-  static function read_step($field, $step)
+  function load_field_stack($file, &$fields=array(), $search_paths=array('../common', '.'))
   {
-    $step_field = at($field, $step);
-    if (!is_null($step_field)) return array($step=>$step_field);   
-    foreach($field as $values) {
-      if (is_string($values) && $values == $step) return $values;
-      $step_field = at($values, $step);
-      if (!is_null($step_field)) return array($step=>$step_field);
-      $code  = at($values, 'code');
-      if ($code == $step) return array($step=>$values);
-      if (is_array($values) && !is_assoc($values)) 
-        return page::read_step ($values, $step);
+    $i = 0;
+    $path_size = sizeof($search_paths);
+    
+    $read_one = false;
+    foreach($search_paths as $path) {
+      $data = page::load_yaml("$path/$file", ++$i != $path_size);
+      if (is_null($data)) continue;
+      $read_one = true;
+      
+      $this->replace_keys($data);
+      $fields[] = $data;
     }
-    return null;
+    if (!$read_one)
+      throw new Exception("Unable to load file $file"); 
+    return $fields;
   }
 
-  function load_field($path=null, $expand=array('html','field'))
+  function load()
   {
-    if (is_null($path))
-      $path = $this->path;
-    else if (!is_array($path))
-      $path = explode('/', $path);
     
-    if (sizeof($path) == 1)
-      array_unshift ($path, $path[0]);
+    if (sizeof(page::$fields_stack) == 0) {
+      $this->load_field_stack('controls.yml', page::$fields_stack);
+      $this->load_field_stack('fields.yml', page::$fields_stack); 
+    }
+
+    if (sizeof($this->page_stack) != 0) return;
+    
+    $this->load_field_stack($this->path[0] . ".yml", $this->page_stack);
+    $this->page_fields = $this->merge_stack($this->page_stack);
+  }
+  
+  function load_fields($file)
+  {
+    $stack = $this->load_field_stack($file);
+    return $this->merge_stack($stack);
+  }
+  
+  function allowed($field, $throw=false)
+  {
+    if (!is_array($field)) return true;
+    $access = $field['access'];
+    if (!isset($access)) return true;
+      
+    if (!is_array($access)) $access = explode (',', $access);
+    
+    $allowed_roles = array_intersect($this->user['roles'], $access);  
+    if (sizeof($allowed_roles) > 0) return true;
+    if (!$throw) return false;
+    throw new user_exception("Unauthorized access to PATH ".implode('/', $this->path) );
+  }
+
+  function verify_access($field)
+  {
+    $this->allowed($field, true);
+  }
+    
+  
+  function expand_type($type, &$added = array()  )
+  {
+    $expanded = $this->types[$type];
+    if (isset($expanded)) return $expanded;
+    $expanded = $this->get_expanded_field($type);
+    if (!is_array($expanded)) return null;
+    $added[] = $type;
+    return $this->types[$type] = $this->merge_type($expanded);
+  }
+  
+  function merge_type(&$field, &$added = array())
+  {
+    $type = $field['type'];
+    if (!isset($type)) return $field;    
+    $expanded = $this->expand_type($type, $added);
+    if (is_null($expanded))
+      throw new Exception("Unknown type $type");
+    if (isset($expanded['type']))
+      $field = merge_options($this->merge_type($expanded, $added), $field);
+    else
+      $field = merge_options($expanded, $field);
+    
+    return $field;
+  }
+  
+  function throw_invalid_path()
+  {
+    throw new Exception("Invalid path ".implode('/', $this->path));
+  }
    
-    $this->object = array_shift($path);
-    $this->fields = $this->load_yaml("$this->object.yml", true);
-    $this->page = array_shift($path);
-    $field  = at($this->fields, $this->page);
-    if (is_null($field)) {
-      $this->page_offset = 0;
-      array_unshift($path, $this->page);
-      $this->page = $this->object;
-      $field = at($this->fields, $this->page);
-    }   
+ 
+  function find_array_field($array, $code)
+  {
+    $type = null;
+    foreach($array as $value) {
+      $values = $own_type = null;
+      if (is_assoc($value)) 
+        list($key, $values) = assoc_element($value);
+      else 
+        $key = $value;
 
-    $this->set_types($this->fields, $field);
-    $this->set_types(page::$all_fields, $field);
-    $type = at($field, 'type');
-    if (!is_null($type)) {
-      $field = merge_options(at(page::$all_fields, $type), $field);
-      $field = merge_options(at($this->fields, $type), $field);
-      unset($field['type']);
-    }
-    $this->check_access($field);
-    if (in_array('html', $expand)) {
-      $this->expand_html($field, 'html');
-      $this->expand_html($field, 'template');
-    }
-    if (in_array('field', $expand))
-      $this->expand_field($field);
-    
-    log::debug_json("LOAD FIELD PATH", $path);
-    foreach ($path as $step) {
-      $this->field = $step;
-      $step_field = page::read_step($field, $step);
-      if (is_null($step_field)) {
-        log::error("MISTEP ".json_encode($field));
-        throw new Exception("Invalid path step $step on ".implode('/', $path));
+      if ($key == 'type') {
+        $type = $this->get_merged_field($values);
+        continue;
       }
-      $field = $step_field;
       
-      $this->set_types($this->fields, $field);
-      $this->set_types(page::$all_fields, $field);
-      if (in_array('html', $expand)) {
-        $this->expand_html($field, 'html');
-        $this->expand_html($field, 'template');
-      }
-
-      if (in_array('field', $expand))
-        $this->expand_field($field);
-    }
-    $this->expand_params($field);
+      if ($key != $code) continue;
+      if (is_assoc($values))
+        $own_type = $values['type'];
+      $merged = $this->get_merged_field($key, $values);
       
-    return is_null($step)?$field:$field[$step];
-  }
-
-  function get_field($name)
-  {
-    return merge_options(at(page::$all_fields, $name), at($this->fields, $name));
-  }
-
-  function read_field($path=null)
-  {
-    if (is_null($path))
-      $path = $this->path;
-    else if (!is_array($path))
-      $path = explode('/', $path);
-    
-    $this->object = array_shift($path);
-    $this->fields = $this->load_yaml("$this->object.yml", true);
-    if (sizeof($path) == 0) {
-      array_unshift($path, $this->object);
-    }
-    $this->page = $path[0];
-    $global_field = $this->traverse_field(page::$all_fields, $path);
-    log::debug("GLOBAL FIELD ".json_encode($global_field));
-    $local_field = $this->traverse_field($this->fields, $path);
-    log::debug("LOCAL FIELD ".json_encode($local_field));
-  }
-  
-  function traverse_field($fields, $path, $name=null)
-  {
-    if (is_null($fields)) return null;
-    if (is_null($name)) $name = last($path);
-    log::debug("TRAVERSE $name ".implode('/',$path). " ".json_encode($fields));
-    $parent = array_shift($path);
-    if (is_assoc($fields)) {
-      $value = at($fields, $name);
-      $sub_field = at($fields, $parent);
-      if (is_null($sub_field)) return null;
-      return null_merge($value, $this->traverse_field($sub_field, $path, $name),false);
-    }
-    
-    foreach($fields as $value) {
-      if ($value === $parent) return null;
-      if (!is_array($value)) continue;
-      foreach($value as $key=>$sub_val) {
-        if ($key == $parent)
-          return null_merge($value, $this->traverse_field ($value, $path, $name), false);
-      }
+      if (is_null($own_type) && !is_null($type)) 
+        return merge_options($merged, $type);      
+      return $merged;
     }
     return null;
   }
   
-  
-  function read($expand='html')
-  {    
-    $fields = $this->load_field(null, array($expand));
-    $this->check_access($fields, true);
-    $fields = $this->filter_access($fields);
-    if ($expand === 'html') {
-      page::empty_fields($fields);
-      $this->expand_sub_pages($fields);
+  function merge_stack($stack)
+  {
+    $fields = null;
+    foreach ($stack as $level) {
+      $fields = merge_options($fields, $level);
     }
+    
+    return $fields;
+  }
+
+ function get_stack_field(&$stack, $code, &$base_field = null)
+  {
+    foreach ($stack as $fields) {
+      $child_field = $fields[$code];
+      if (!isset($child_field)) continue;
+      $base_field = merge_options($base_field, $child_field);
+    }
+    
+    return $base_field;
+  }
+
+  function get_expanded_field($code)
+  {
+    $field = $this->get_stack_field(page::$fields_stack, $code);
+    $this->get_stack_field($this->page_stack, $code, $field);
+    return $field;
+  }
+  
+  function get_merged_field($code, &$field=null)
+  {
+    $field = merge_options($this->expand_type($code), $field);
+    return $this->merge_type($field); 
+  }
+      
+  function follow_path($path)
+  {
+    $field = $this->fields;
+    foreach($path as $branch) {
+      if (is_assoc($field)) 
+        $field = $this->get_merged_field($branch, $field[$branch]);
+      else
+        $field = $this->find_array_field($field, $branch);
+      if (is_null($field))
+        $this->throw_invalid_path ();
+      $this->verify_access($field);
+    } 
+    return $field;
+  }
+  
+  function replace_keys(&$fields)
+  {
+    foreach($fields as $key=>&$value) {
+      if (is_array($value)) 
+        $this->replace_keys($value);
+      if (is_numeric($key)) continue;
+      if ($key[0] != '$') continue;
+      $new_key = $this->request[substr($key,1)];
+      $fields[$new_key] = $value;
+      unset($fields[$key]);
+    };
+  }
+  
+  function expand_types(&$fields, $filter_access)
+  {
+    walk_recursive_down($fields, function($value, $key, &$parent) use($filter_access) {
+      if (!is_assoc($parent)) 
+        list($type, $value) = assoc_element($value);
+      else 
+        $type = $key;
+      if ($type == $this->page) return;
+      
+      if ($type == 'type' || $type == 'template') {
+        $type = $value;
+        $value = null;
+      }
+      if (is_string($value)) return;
+      if (isset($this->types[$type])) return;
+      
+      $added_types = array();
+      $expanded = $this->expand_type($type, $added_types);
+
+      if (!is_null($expanded))
+        $this->merge_type($expanded, $added_types);
+      
+      $expanded = is_array($value)? merge_options($expanded, $value): $expanded;
+      if (is_null($expanded)) return;
+      
+      if ($this->allowed($expanded)) {
+        $this->expand_types($expanded, $filter_access);
+        return;
+      }
+      
+      if (!$filter_access) return;
+      
+      unset($parent[$key]);
+      foreach($added_types as $type) {
+        unset($this->types[$type]);
+      }
+      
+    },
+    function (&$array) {
+      if (!is_assoc($array))
+        $array = array_values($array);
+    });
+  }
+    
+  function set_fields($filter_access)
+  {
+    $this->fields = $this->get_stack_field(page::$fields_stack, $this->root);
+    $this->get_stack_field($this->page_stack, $this->root, $this->fields);
+    $this->verify_access($this->fields);
+    $this->expand_types($this->fields, $filter_access);
+  }
+  
+  function read()
+  {
     if ($this->user) {
-      $user = $this->user;
-      $fields['user_full_name'] = "$user[first_name] $user[last_name]";
+      $this->fields['user_full_name'] = $this->user['full_name'];
     }
     return array(
       'path'=>implode('/',$this->path),
-      'fields'=>$fields,
-      'types'=>$this->filter_access($this->types)
+      'fields'=>$this->fields,
+      'types'=>$this->types
     );
-  }
-    
-  static function allow_access(&$options, $key, $value)
-  {
-    if (is_numeric($key))
-      $options[] = $value;
-    else
-      $options[$key] = $value;
-  }
+  }   
   
-  function filter_access($options)
-  {
-    $user_roles = $this->user['roles'];
-    if (in_array('super',$user_roles)) return $options;
-    $filtered = array();
-    foreach($options as $key=>$option)
-    {
-      $original = $option;
-      $expanded = false;
-      if (is_numeric($key) && is_string($option)) {
-        $option = at($this->types, $option);
-      }
-      if (!is_array($option)) {
-        page::allow_access($filtered, $key, $original);
-        continue;
-      }
-      if (!is_numeric($key)) {
-        $option = merge_options(at($this->types, $key), $option);
-      }
-      $allowed_roles = at($option, 'access');
-      if (!is_null($allowed_roles)) {
-        if (!is_array($allowed_roles)) $allowed_roles = explode(',', $allowed_roles);
-        $allowed = array_intersect($user_roles, $allowed_roles);      
-        if (sizeof($allowed) == 0) continue;
-      }
-      $option = $original;
-      if (is_array($option))
-        $option = $this->filter_access($option);
-      if (sizeof($option) == 0) continue;
-      page::allow_access($filtered, $key, $option);
-    }
-    return $filtered;
-  }
-  
-  function expand_sub_pages(&$fields)
-  {
-    $request = $this->request;
-    walk_recursive($fields, function(&$value, $key) use ($request) {
-      if (!is_array($value) && $key !== 'page' 
-        || is_array($value) && $value['type'] !== 'page') return;
-      if ($key === 'page') 
-        $path = $value;
-      else if (!is_null($value['url']))
-        $path = $value['url'];
-      else 
-        $path = $key;
-      $request['path'] = $path;
-      $sub_page = new page($request);
-      $sub_page->process();
-      $sub_page->result['fields'] = page::merge_options($value, $sub_page->result['fields']);
-      $value = $sub_page->result;
-      if ($key !== 'page') $value['type'] = 'page';
-    });
-  }
   
   function expand_params(&$fields)
   {
@@ -337,124 +393,70 @@ class page
     });
   }
     
-  function set_types($parent, $field)
-  {
-    if (is_null($field)) return false;
-    if (!is_array($field)) {
-      if (!array_key_exists($field, $parent)) return false;
-      if (array_key_exists($field, $this->types)) {
-        $this->types[$field] = merge_options($this->types[$field], $parent[$field]); 
-        return true;
-      }
-
-      $this->types[$field] = $value = $parent[$field];
-      if (is_array($value)) $this->set_types($parent, $value);
-      return true;
-    }
-    
-    $known_keys = array('name','desc','html','src', 'href', 'url', 
-      'sql','values', 'valid', 'attr', 'sort');
-    foreach($field as $key=>&$value) {
-      if (in_array($key, $known_keys, 1)) continue;
-      
-      if (!is_numeric($value) && !is_bool($value))  //todo: check for scalar
-        $this->set_types($parent, $value);        
-      
-      if (!is_numeric($key))
-        $this->set_types($parent, $key);
-    }
-    
-    return true;
-  }
      
-  function expand_html($field, $html_type)
+  function expand_html($field)
   {
-    $html = at($field, $html_type);
-    if (is_null($html)) {
-      $type = at($field, 'type');
-      if ($this->set_types($this->fields, $type) || $this->set_types(page::$all_fields, $type)) 
-        $this->expand_html(at($this->types, $type), $html_type);
-      return;
-    };
-    $matches = array();
-    if (!preg_match_all('/\$(\w+)/', $html, $matches, PREG_SET_ORDER)) return;
+    if (!is_array($field)) return;
     
+    $expandables = array('html','template');
     $exclude = array('code','name','desc', 'field');
-    foreach($matches as $match) {
-      $var = $match[1]; 
-      if (in_array($var, $exclude, true)) continue;
-      if ($this->set_types($this->fields, $var) || $this->set_types(page::$all_fields, $var)) {
-        $this->expand_html(at($this->types, $var), $html_type);
+    foreach($field as $key=>$value) {
+      if (!in_array($key, $expandables, true)) continue;
+      $matches = array();
+      if (!preg_match_all('/\$(\w+)\b/', $value, $matches, PREG_SET_ORDER)) continue;
+      
+      foreach($matches as $match) {
+        $var = $match[1];
+        if (in_array($var, $exclude, true)) continue;
+        $this->expand_type($var);
       }
-    }
-  }
-
-
-  static function expand_values(&$row, $exclusions=array())
-  {
-    if (!is_array($row)) return;
-    foreach($row as $key1=>&$value1) {
-      if (is_array($value1) || in_array($key1, $exclusions)) continue;
-      foreach ($row as $key2=>$value2) {
-        if (!is_array($value2))
-          $value1 = preg_replace('/\$'.$key2.'([^\w]*)/', "$value2\$1", $value1);
-      }
-    }
-  }
-  
-  static function empty_fields(&$options, $fields=array('call','sql'))
-  {
-    foreach($options as $key=>&$option)
-    {
-      if (is_numeric($key)) continue;
-      if (in_array($key, $fields, true)) 
-        $option = "";
-      else if (is_array($option))
-        page::empty_fields($option, $fields);
     }
   }
    
   function validate($field)
   {
-    if (is_null($this->validator)) { 
-      $options = merge_options($this->get_context(),$this->request);
-      $validators = page::load_yaml('validators.yml');
-      $fields = merge_options(page::$all_fields, $this->fields);
-      $this->validator = new validator(page::merge_options($_SESSION, $options), $fields, $validators);
-    }
-    //todo: validate only required fields;
-    foreach($field as $code=>$values) {
-      if (!is_array($values) || in_array($code, $this->validated)) continue;
-      if (is_numeric($code)) {
-        $code = at($values, 'code');
-        if (is_null($code)) {
-          $this->validate($values);
-          continue;
-        }
-      }
-      $valid = at($values,'valid');
-      $this->validated[] = $code;
-      if ($valid == '') {
-        $this->validate ($values);
-        continue;
-      }
-      $this->validator->validate($code, $values);
-    }
+    $options = merge_options($this->context,$this->request);
+    $validators = $this->load_fields('validators.yml');
+    $fields = merge_options($this->page_fields, $this->fields);
+    $this->validator = new validator(page::merge_options($_SESSION, $options), $fields, $validators);
+
+    $exclude = array('css','post','script','stype','valid');
+    $validated = array();
     
+    walk_recursive_down($field, function($value, $key, $parent) use (&$exclude, &$validated) {
+      if (!is_assoc($parent)) 
+        list($code, $value) = assoc_element($value);
+      else
+        $code = $key;
+      if (in_array($code, $validated, true)) return false;
+      if (in_array($code, $exclude, true)) return false;
+      if (!is_null($value) && !is_array($value)) return false;
+      
+      
+      $this->get_merged_field($code, $value);
+      $valid = $value['valid'];
+      if (!isset($valid)) return;
+      
+      $validated[] = $code;
+      $validator = &$this->validator;
+      $result = $validator->check($code, $value)->is($valid);
+      if ($result === true) return;
+      
+      $error = $validator->error;
+      if (is_array($error)) {
+        list($error) = find_assoc_element($error, 'error');
+        $this->reply($validator->error);
+      }
+      page::error($code, $error);
+      
+    });
     return $this->validator->valid();
   }
 
   function data()
   {
-    $field = $this->load_field(null, array('field'));
-    $type = at($field, 'type');
-    if (!is_null($type)) {
-      $field = merge_options(at(page::$all_fields, $type), $field);
-      $field = merge_options(at($this->fields, $type), $field);
-      unset($field['type']);
-    }
-    log::debug("DATA ".json_encode($field));
-    return $this->reply($field);
+    log::debug_json("DATA ".last($this->path), $this->context);
+    return $this->reply($this->context);
   }
   
   function call_method($function, $params)
@@ -482,23 +484,14 @@ class page
       return call_user_func($function);
     
     $params = explode(',', $params);
-    if (sizeof($params) > 0) {
-      $options = $this->get_context();
-      if (is_array($options)) {
-        $options = array_merge($options, $this->request);
-        foreach($params as &$param) {
-          $param = replace_vars (trim($param), $options);
-        }
-      }
-      else $options = $this->request;
-      if (is_array($this->reply)) $options = array_merge($options, $this->reply);
-      $options = page::merge_options($this->fields[$this->page], $options);
-
-      $context = array_merge($_SESSION, $options, $this->request);
-      array_walk($params, function(&$val) use (&$context) {
-        if ($val == 'context') $val = $context;
-        if ($val == 'request') $val = $this->request;
-      }); 
+    $context = merge_options($this->fields, $this->request);
+    replace_fields($context, $this->request);
+    replace_fields($params, $this->request);
+    replace_fields($params, $context);
+    log::debug_json("PARAMS", $params);
+    foreach($params as &$val) {
+      if ($val == 'context') $val = $context;
+      if ($val == 'request') $val = $this->request;
     }
     return call_user_func_array($function, $params);
   }
@@ -536,113 +529,6 @@ class page
   }  
   
 
-  function merge_type($field, $type=null)
-  {
-    if (is_null($type)) $type = at($field, 'type');
-    if (is_null($type)) return $field;
-    $expanded = is_array($type)? $type: at($this->types, $type);
-
-    if (is_null($expanded)) {
-      $expanded = at(page::$all_fields, $type);
-      if (is_null($expanded)) 
-        throw new Exception("Unknown  type $type specified");
-      $this->type[$type] = $expanded;
-    }
-    $super_type = $this->merge_type($expanded);
-    return merge_options($super_type, $field);
-  }
-  
-  function expand_contents(&$parent, $known)
-  {
-    $default_type = null;
-    $length = sizeof($parent);
-    $result = array();
-    $reserved = array('sql', 'action', 'template', 'attr','valid');
-    $found = array();
-    foreach($parent as &$value) {
-      if (is_array($value)) {
-        $type = at($value, 'type');
-        if (!is_null($type) && !is_array($type)) {
-          $default_type = at($this->types, $type);
-          continue;
-        }
-
-        if (!is_null($value['code']))
-          $code = $value['code'];
-        else
-          list($code, $element) = assoc_element ($value);
-        
-        if (in_array($code, $reserved)) continue;
-
-        $type_value = $this->get_type($code);
-        $element = merge_options($type_value, $element);
-        $my_type = at($element, 'type');
-        $element = page::merge_type($element, is_null($my_type)?$default_type: $my_type);
-        if (is_array($element) && $element['merge'] && $found[$code]) {
-          $found[$code] = merge_options($found[$code], $element);
-          continue;
-        }
-        $value[$code] = $element;
-        $found[$code] = &$value[$code];
-        continue;
-      }
-      if (!is_string($value) || preg_match('/\W/', $value)) continue;
-      $value = array($value=>merge_options($default_type, at($this->types, $value)));
-    }
-    
-  }
-
-  function get_type($type, $known=array())
-  {
-    $expanded = at($this->types, $type);
-    if (is_null($expanded)) {
-      $expanded = merge_options(at(page::$all_fields, $type), at($known, $type));
-      if (!is_null($expanded)) $this->types[$type] = $expanded;        
-    }
-    return $expanded;
-  }
-  
-  function expand_field(&$field, $known=array())
-  {
-    $reserved = array('action','valid');
-    foreach ($field as $key=>&$value) {
-      if (in_array($key, $reserved)) continue;
-      if (is_numeric($key)) {
-        $this->expand_contents($field, $known);
-        break;
-      }
-      $known_value = $known[$key];
-      
-      if (!is_array($value)) {
-        if (!$known_value) continue;
-        $value = $known_value;
-      }
-      else if ($known_value) {
-        $value = page::merge_options ($known_value, $value);
-      }
-      $type_value = $this->get_type($key);
-      $value = merge_options($type_value, $value);
-      $this->expand_field($value, $known);
-      $known[$key] = $value;
-    }
-  }
-
-  function check_access($field, $throw=false)
-  {
-    $allowed_roles = at($field, 'access');
-    if (is_array($allowed_roles)) $allowed_roles = last($allowed_roles);
-    if ($allowed_roles == '') return true;
-
-    $user_roles = $this->user['roles'];    
-    if (in_array('super', $user_roles)) return true;
-    
-    $allowed = array_intersect($user_roles, explode(',', $allowed_roles));    
-    if (sizeof($allowed) > 0) return true;
-    if (!$throw) return false;
-    $code = $field['code'];
-    $path = implode('/', $this->path);
-    throw new user_exception("Unauthorized access to PATH $path FIELD $code");
-  }
   
   static function decode_field($message)
   {
@@ -699,13 +585,11 @@ class page
   
   function action()
   {
-    $invoker = $this->load_field(null, array('field'));
-    $this->check_access($invoker, true);
+    $invoker = $this->context;
+    log::debug_json("ACTION ".last($this->path), $invoker);
     $validate = at($invoker, 'validate');
     if (!is_null($validate) && $validate != 'none') {
-      $fields = $this->fields[$this->page];
-      $this->expand_field($fields);
-      if (!$this->validate($fields)) return null;
+      if (!$this->validate($this->fields)) return null;
     }
     
     $result = $this->reply($invoker);
@@ -736,9 +620,8 @@ class page
   
   function translate_sql($sql)
   {
-    $context = $this->get_context();
     $values = null_merge($this->request, $this->reply, false);
-    return page::replace_sql($sql, null_merge($context, $values));
+    return page::replace_sql($sql, null_merge($this->context, $values));
   }
   
   function sql_values($sql)
@@ -753,40 +636,20 @@ class page
   
   function update_context(&$options)
   {
-    $context = page::merge_options($this->get_context(), $options);
+    $context = page::merge_options($this->context, $options);
     replace_fields($options, $context);
   }
    
-  function get_context()
-  {
-    $path_len = sizeof($this->path);
-    $invoker = $this->path[$path_len-1];
-    $context = $this->fields[$this->page];
-    log::debug_json("PATH $this->page", $this->path);
-    $i = $this->page_offset+1;
-    $branch = $this->path[$i];
-    for (; $i < $path_len-1; ++$i) {
-      $branch = $this->path[$i];
-      if (is_assoc($context)) {
-       $context = $context[$branch];
-        continue;
-      }
-
-      foreach($context as $pair) {
-        if(!isset($pair[$branch])) continue;
-        $context = $pair[$branch];
-        break;
-      }
-    }
-    if (!is_null($this->user)) {
+  function set_context($path)
+  {  
+    $context = $this->follow_path($path);
+    if (!is_null($this->user) && is_assoc($context)) {
       $user = $this->user;
       $context['user_full_name'] = $user['first_name'].  " ". $user['last_name'];
       $context['user_email'] = $user['email'];
       $context['uid'] = $user['uid'];
     }
-    if (is_array($context) && !is_assoc($context)) $context = $context[0];
-    $new_context = at($context, $invoker);
-    return page::merge_options($this->fields[$branch], $new_context?$new_context:$context);
+    $this->context = $context;
   }
   
   function call($method)
@@ -805,7 +668,6 @@ class page
     return $this->call_method($matches[1], $matches[2]);    
   }
   
-  
   function reply($actions)
   {
     $this->reply = null;
@@ -816,9 +678,9 @@ class page
     log::debug_json("REPLY", $actions);
   
     $methods = array('alert', 'abort', 'call', 'clear_session', 'clear_values',
-      'close_dialog', 'load_lineage', 'read_session', 'redirect', 'send_email', 
-      'show_dialog', 'sql', 'sql_exec','sql_rows','sql_values', 'trigger', 
-      'update', 'write_session');
+      'close_dialog', 'load_lineage', 'read_session', 'redirect', 
+      'send_email', 'show_dialog', 'sql', 'sql_exec','sql_rows','sql_values', 
+      'trigger', 'update', 'write_session');
     foreach($actions as $action) {      
       if (!is_array($action)) $action = array("code"=>$action);
       foreach($action as $method=>$parameter) {
@@ -850,33 +712,18 @@ class page
     return $this->reply;
   }
   
-  static function check_field($options, $field)
-  {
-    $value = $options[$field];
-    if (isset($value)) return $value;
-    
-    log::warn("No $field parameter provided");
-    return false;
-  }
-  
-  function fields()
-  {
-    return $this->read('field');
-  }
-  
   function values()   
   {  
-    $options = $this->load_field(null, array('field'));
-    log::debug("VALUES ".json_encode($options));
-    return $this->reply($options);
+    log::debug_json("VALUES '$this->root'", $this->context);
+    return $this->reply($this->context);
   }
   
   function upload()
   {
-    $options = $this->load_field(null, array('field'));
-    log::debug_json("UPLOAD", $options);
     require_once 'document.php';
-    $id = document::upload($options['code']."_file", $options['format']);
+    $this->fields = $this->expand_field($this->path[0], $this->path);
+    $code = last($this->path);
+    $id = document::upload($code."_file", $this->fields['format']);
     if (!is_null($id))
       page::update("id", $id);
   }

@@ -1,10 +1,6 @@
 ## YAML Template.
 ---
 
-actions:
- - type: submit
- - action: post
-
 add_user: 
   desc: Add a new user into the system
   access: admin
@@ -126,7 +122,10 @@ email:
     - email
 
 email_address:
-  type: email
+  desc: Valid e-mail address
+  name: Email Address
+  valid: 
+    - email
 
 error_page:
   desc: Unexpected error occured. Please report to your System Administrator.
@@ -141,7 +140,7 @@ first_name:
 
 forgot_password:
   desc: Click here if you have forgotten your password and you need to reset it  
-  url: /forgot_password
+  url: /password_changer/forgot
   
 goto:
   action: $page.html
@@ -161,9 +160,6 @@ id_no:
 id_number:
   type: id_no
   
-inputs:
-  - type: input
-  
 last_name:
   desc: Your last name as written in your ID book
   valid: name
@@ -176,7 +172,6 @@ latitude:
 login:
   desc: Log in to the system
   access: public
-  action: dialog
   audit: $email
   url: /user/login
   src: /logout_icon.jpg 
@@ -243,15 +238,10 @@ mukoni_logo:
 next:
   call: ""
   merge: true
-
-otp:
-  name: OTP
-  desc: One Time Pin
-  valid: >
-    sql(select 1 from dual where timestampdiff(minute, '$time_of_otp', now()) < 30 and '$otp'='$server_otp')
+  attr: 
+    class: action wizard-jump
     
     
-
 password:
   desc: A secret combination of letters and number only known to you. Please do not give out your password.
   valid: password
@@ -270,8 +260,8 @@ send_email:
   headers:
     - MIME-Version: "1.0"
     - Content-type: text/html; charset=iso-8859-1    
-  from: $user_full_name <$user_email>
-  to: $user_full_name <$user_email>
+  from: $from_user <$from_email>
+  to: $to_user <$to_email>
   
 
 start_date:
@@ -279,13 +269,6 @@ start_date:
   desc: Date Effective From
   
     
-submit:
-  type: button
-  selector: "#page *"
-  validate: all
-  call: $class::$invoker($key)
-  action: post
-
 submit_page:
   type: submit
   name: Submit
@@ -321,7 +304,7 @@ view_profile:
   action: dialog
 
 view_users:
-  access: [ admin ]
+  access: admin
   desc: List all the users
   url: /user/list
 

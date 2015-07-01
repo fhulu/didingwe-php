@@ -1104,7 +1104,8 @@ class user
     
     return $db->read($sql, MYSQLI_ASSOC);
   }
-  
+
+/*  
   static function login() 
   {
     $email = REQUEST('email');
@@ -1116,10 +1117,12 @@ class user
     page::close_dialog();
     page::redirect("/$page");
   }
- 
+*/
   static function logout()
   {
     session::logout();
     page::redirect('/home');
-  }
+  } 
+ 
+
 }
