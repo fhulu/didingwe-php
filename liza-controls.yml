@@ -1,0 +1,462 @@
+# html controls
+---  
+
+ajax_result:
+  html: >
+    <span class=ajax_result style="display: none;"></span>
+
+blank:
+  html: <span><span>
+  
+button: 
+  html: <button id="$code" title="$desc" class=action>$name</button>
+
+
+captioned_image:
+  html: >
+    <div id="$code" class=captioned-image>
+      <img src="$src" title="$title"></img>
+      <p>$caption</p>
+    </div>
+  title: $name
+  src: $code.png
+  caption: $name
+
+
+checkbox: 
+  html: <input id="$code" title="$desc" type='checkbox'></input>
+
+container: 
+  html: <div id="$code">$contents</div>
+  contents: 
+    - template: $field
+    
+control:
+  html: <$tag id="$code" title="$desc" $attrs $attr>$text<$tag>
+  
+container_without_id:
+  html: <div>$contents</div>
+  contents: 
+    - template: $field
+    
+datatable:
+  html: |
+    <table id="$code" class=data>
+      <tbody></tbody>
+    </table>
+  create: datatable
+  script: /common/datatable.js
+  css: /datatable.css
+  load:
+    - call: datatable::read(context,$key)
+  position: top
+  filter: all
+  filter:
+    name: ""
+    desc: Filter by specific columns
+  #paging
+  goto_first:
+    name: First
+    desc: Go to first page
+  goto_prev:
+    name: "<"
+    desc: Go to previous page
+  goto_next:
+    name: ">"
+    desc: Go to next page
+  goto_last:
+    name: Last
+    desc: Go to last page
+    
+  # row actions
+  row_actions:
+    - type: query
+  collapse:
+    name: "-"
+    desc: Hide details
+  expand:
+    name: +
+    desc: More details ...
+  slide: 
+    name: "<"
+    desc: More options...
+  slideoff: 
+    name: ">"
+    desc: Hide options
+  slideSpeed: 100
+  
+date:
+  type: input
+  create: datetimepicker
+  timepicker: false
+  format: Y-m-d
+  script: /common/jquery.datetimepicker.js
+  css: /common/jquery.datetimepicker.css
+  
+datetime:
+  type: input
+  create: datetimepicker
+  format: Y-m-d H:i
+  script: /common/jquery.datetimepicker.js
+  css: /common/jquery.datetimepicker.css
+  
+date_time:
+  type: date_time
+  
+disabled_text_input:
+  type: input
+  attr: disabled
+
+disabled_input:
+  type: input
+  attr: disabled
+  
+dropdown:
+  unselected: --Select $name--
+  html: |
+    <select id="$code">
+      <option value=''>$unselected</option>
+      $options
+    </select>
+  options:
+    - type: dropdown_option
+
+dropdown_option:
+  html: <option value="$code">$name</option>
+  
+element:
+  text: ""
+  html: <$tag>$text</$tag>
+  
+#todo: fix backend inheritance
+export:
+  name: Export to Excel
+  desc: Export to an Excel spreadsheet
+  action: redirect
+  validate: none
+  call: datatable::export(context,$key)
+  target: _blank
+
+file:
+  html: <div id="$code" name="$code"></div>
+  create: file_uploader
+  script: /common/file_uploader.js,/common/jquery.form.js
+  css: /common/file_uploader.css
+  uploader: /?action=upload
+  max_size: 100
+
+form:
+  html: <form id="$code"></form>
+
+#footer_actions:
+#  - type: submit
+
+google_map:
+  html: <div id='$code'></div>
+  create: mapper
+  script: /common/map.js
+  zoom: 5
+  pin: blue_map_marker
+  icon_path: /
+  colors: 
+   - blue
+   - green
+   - yellow
+   - orange
+   - pink
+
+h1:
+  html: <h1 id="$code">$name</h1>
+    
+h2:
+  html: <h2 id="$code">$name</h2>
+    
+h3:
+  html: <h3 id="$code">$name</h3>
+    
+hidden:  
+  html: <input id='$code' type=hidden value='$value'></input>
+
+image:
+  html: <img id="$code" src="$src" title="$desc"></img>
+
+info_line:
+  html: |
+    <div class=info-line>
+      <label>$name</label>
+      <div class=info-text>$field</div>
+    </div>  
+
+info_page:
+    html: |
+      <div id="$code" page="$name" title="$name">
+        <p class="desc">$desc</p>
+        <span class=ajax_result style="display: none;"></span>
+        <div class="form">
+          $lines
+          <p></p>$actions
+          $navigate
+        </div>
+      </div>
+    lines: 
+      - type: info_text
+      - template: info_line
+
+info_text:
+  html: <div id='$code' class='info-text'>$value</div>
+  
+input: 
+  html: <input id="$code" type="text" value="$value"></input>
+
+inline_input:
+  html: <a class=input>$field<span class="input">$desc</span></a>
+  attr: placeholder="$name"
+
+inline_input_page:
+  html: |
+    <div id='$code'>
+      $input_page_header
+      <div class="form">
+        $inputs
+        $actions
+      </div>
+    </div>
+  inputs: 
+    - template: inline_input
+
+input_page_header: 
+  html: |
+    <div id="$code" page="$name">
+      <p class="desc">$desc</p>
+      <span class=ajax_result style="display: none;"></span>
+    </div>
+label:
+  html: <label id='$code'>$name</label>
+  
+labelled_input:
+  html: |
+    <div class=labelled-input>
+      <span class=label>$name$label_suffix</span>
+      <a class=input>
+        $field
+        <span class=hint>$desc</span>
+      </a>
+    </div>  
+  label_suffix: ":"
+
+labelled_input_page:
+    html: |
+      <div id="$code" page="$name" title="$name">
+        <p class="desc">$desc</p>
+        <span class=ajax_result style="display: none;"></span>
+        <div class="form">
+          $inputs
+          <p></p>$actions
+        </div>
+      </div>
+    inputs: 
+      - type: input
+      - template: labelled_input
+      - mandatory: "*"
+
+line:
+  html: <hr></hr>
+  
+link:
+  html: <a id="$code" title="$desc">$name</a>
+
+list_item:
+  html: <li id="$code">$name</li>
+  
+menu:
+  html: <ul id="$code">$items</ul>
+  items:
+    - template: menu_item
+    - type: link
+    - action: redirect
+
+menu_item:
+  html: <li>$field</li>
+ 
+one_cell_row:
+  html: <tr><td>$field</td></tr>
+
+one_column_table:
+  html: <table id='$code' title="$name">$items</table>
+  items: 
+    - template: one_cell_row
+
+one_row_table:
+  html: <table id='$code'><tr>$items</tr></table>
+  items:
+    - template: table_cell
+
+p:
+  html: <p id="$code">$name</p>
+
+page_title:
+  html: <title>$name</title>
+
+paragraph:
+  html: <p id="$code">$name</p>
+
+password:
+  html: <input type="password" id="$code"></input>
+  valid: password
+
+password_input:
+  html: <input type="password" id="$code" ></input>
+  valid: password
+
+plain:
+  html: $name
+
+plain_text:
+  type: plain
+
+# todo: fix back-end to contextualise
+print:
+  desc: Print above contents
+  action: redirect
+  validate: none
+  call: datatable::pdf(context, $key)
+  target: _blank
+
+question_input:
+  html: |
+    <div class=question-input name="$name">
+      <div class=question>$question</div>
+      <a class=input>
+        $field
+      </a>
+    </div>  
+
+question_input_page:
+    html: |
+      <div id="$code" page="$name" title="$name">
+          <h2>$name</h2>
+        <p class="desc">$desc</p>
+        <span class=ajax_result style="display: none;"></span>
+        <div class="form">
+          $inputs
+          $actions
+          $navigate
+        </div>
+      </div>
+    inputs: 
+      - type: input
+      - template: question_input
+      - mandatory: "*"
+
+radio:
+  html: <input name="$code" title="$desc" type="radio"></input>
+ 
+right_text:
+  html: $field <p class=right-text>$name</p>
+  
+section_heading:
+  html: <p class="section-heading">$name</p>
+  
+span:
+  html: <span id="$code">$name</span>
+  
+sub_menu: 
+  html: |
+    <li>
+      <a id="$code">$name</a>
+      <span>$sub_items</span>
+    </li>
+  action: " "
+  template: $field
+  sub_items:
+    - action: redirect
+    - type: link
+    
+table:
+  html: <table id="$code"><thead></thead><tbody>$rows</tbody></table>
+  rows:
+    - template: table_row
+    
+table_cell:
+  html: <td>$field</td>
+
+table_input:
+  html: |
+    <tr class=input>
+      <td>$name</td>
+      <td>
+        <a class=input>
+          $field
+          <span>$desc</span>
+        </a>
+      </td>
+    </tr>
+    
+table_input_page:
+  html: | 
+    <div id='$code'>
+      $input_page_header
+      <table class=form>
+        $inputs
+        <tr>
+          <td></td>
+          <td>$actions</td>
+        </tr>
+      </table>
+    </div>
+  inputs: [template: table_input]
+
+table_page:
+  html: <table id='$code' title="$name">$children</table>
+  children: [template: one_cell_row]
+
+table_row:
+  html: <tr>$columns</tr>
+  columns: [template: table_cell]
+
+text: { type: input } 
+
+textarea:
+  html: <textarea id="$code"></textarea>
+
+text_input: {type: input }
+
+
+time:
+  html: <input id="$code" type="text" value="$value"></input>
+  create: datetimepicker
+  datepicker: false
+  format: H:i
+  script: /common/jquery.datetimepicker.js
+  css: /common/jquery.datetimepicker.css
+
+titled_paragraph:
+  html: >
+    <div class=title-paragraph>
+      <p class=heading>$heading</p>
+      <p class=text>$text</p>
+    </div>
+  heading: $name
+  text: " "
+
+wizard:
+  create: wizard
+  script: /common/wizard.js
+  css: /common/wizard.css
+  html: <div id=$code class=wizard></div>
+  prev_name: Previous
+  next_name: Next
+
+wizard_jump:
+  type: button
+  action: trigger
+  event: 
+    name: wizard-jump
+    parameters: { index: $code }
+ 
+  
+wizard_next:
+  type: button
+  action: trigger
+  event: wizard-next
+...

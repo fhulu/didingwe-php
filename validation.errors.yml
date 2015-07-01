@@ -1,0 +1,29 @@
+## YAML Template.
+---
+at_least: $name must contain at least $1 $units.
+alphabetic: $name must be alphabetic
+exists: No such $name "$value" found
+extension: $name must be of type $1
+find_in: No such $name found
+future_time: $name must be in the future
+greater: $name must be greater than $1
+greater_equal: $name must not be less than $1
+int_tel: Please use international format for $name, e.g. +27821234567
+invalid: Invalid $name
+less_equal: $name must not be greater than $1
+less: $name must be less than $1
+match: $name do not match $1
+national_tel: Please use national format for $name, e.g. 0821234567
+numeric: $name must be numeric
+optional: Either $name or $1 must be provided
+password: >
+  $name must contain at least:
+    <li>one upper case letter
+    <li>one lower case letter
+    <li>one number or special character
+    <li>at least $min_length characters
+past_time: $name must be in the past   
+provided: $name must be provided
+unique: $name ($value) already exists
+url: $name $value is not accessible
+
