@@ -1,5 +1,5 @@
-# html controls
----  
+                                                                                                                                                                                                                                                                                                                                                                                                                                              # html controls
+---
 
 ajax_result:
   html: >
@@ -7,26 +7,36 @@ ajax_result:
 
 blank:
   html: <span><span>
-  
-button: 
+
+button:
   html: <button id="$code" title="$desc" class=action>$name</button>
-  
-checkbox: 
+
+captioned_image:
+  html: >
+    <div id="$code" class=captioned-image>
+      <img src="$src" title="$title"></img>
+      <p>$caption</p>
+    </div>
+  title: $name
+  src: $code.png
+  caption: $name
+
+checkbox:
   html: <input id="$code" title="$desc" type='checkbox'></input>
 
-container: 
+container:
   html: <div id="$code">$contents</div>
-  contents: 
+  contents:
     - template: $field
-    
+
 control:
   html: <$tag id="$code" title="$desc" $attrs $attr>$text<$tag>
-  
+
 container_without_id:
   html: <div>$contents</div>
-  contents: 
+  contents:
     - template: $field
-    
+
 datatable:
   html: |
     <table id="$code" class=data>
@@ -55,7 +65,7 @@ datatable:
   goto_last:
     name: Last
     desc: Go to last page
-    
+
   # row actions
   row_actions:
     - type: query
@@ -65,14 +75,14 @@ datatable:
   expand:
     name: +
     desc: More details ...
-  slide: 
+  slide:
     name: "<"
     desc: More options...
-  slideoff: 
+  slideoff:
     name: ">"
     desc: Hide options
   slideSpeed: 100
-  
+
 date:
   type: input
   create: datetimepicker
@@ -80,17 +90,17 @@ date:
   format: Y-m-d
   script: /common/jquery.datetimepicker.js
   css: /common/jquery.datetimepicker.css
-  
+
 datetime:
   type: input
   create: datetimepicker
   format: Y-m-d H:i
   script: /common/jquery.datetimepicker.js
   css: /common/jquery.datetimepicker.css
-  
+
 date_time:
   type: date_time
-  
+
 disabled_text_input:
   type: input
   attr: disabled
@@ -98,7 +108,7 @@ disabled_text_input:
 disabled_input:
   type: input
   attr: disabled
-  
+
 dropdown:
   unselected: --Select $name--
   html: |
@@ -111,11 +121,11 @@ dropdown:
 
 dropdown_option:
   html: <option value="$code">$name</option>
-  
+
 element:
   text: ""
   html: <$tag>$text</$tag>
-  
+
 #todo: fix backend inheritance
 export:
   name: Export to Excel
@@ -146,7 +156,7 @@ google_map:
   zoom: 5
   pin: blue_map_marker
   icon_path: /
-  colors: 
+  colors:
    - blue
    - green
    - yellow
@@ -155,14 +165,14 @@ google_map:
 
 h1:
   html: <h1 id="$code">$name</h1>
-    
+
 h2:
   html: <h2 id="$code">$name</h2>
-    
+
 h3:
   html: <h3 id="$code">$name</h3>
-    
-hidden:  
+
+hidden:
   html: <input id='$code' type=hidden value='$value'></input>
 
 image:
@@ -173,7 +183,7 @@ info_line:
     <div class=info-line>
       <label>$name</label>
       <div class=info-text>$field</div>
-    </div>  
+    </div>
 
 info_page:
     html: |
@@ -183,16 +193,17 @@ info_page:
         <div class="form">
           $lines
           <p></p>$actions
+          $navigate
         </div>
       </div>
-    lines: 
+    lines:
       - type: info_text
       - template: info_line
 
 info_text:
   html: <div id='$code' class='info-text'>$value</div>
-  
-input: 
+
+input:
   html: <input id="$code" type="text" value="$value"></input>
 
 inline_input:
@@ -208,10 +219,10 @@ inline_input_page:
         $actions
       </div>
     </div>
-  inputs: 
+  inputs:
     - template: inline_input
 
-input_page_header: 
+input_page_header:
   html: |
     <div id="$code" page="$name">
       <p class="desc">$desc</p>
@@ -219,7 +230,7 @@ input_page_header:
     </div>
 label:
   html: <label id='$code'>$name</label>
-  
+
 labelled_input:
   html: |
     <div class=labelled-input>
@@ -228,7 +239,7 @@ labelled_input:
         $field
         <span class=hint>$desc</span>
       </a>
-    </div>  
+    </div>
   label_suffix: ":"
 
 labelled_input_page:
@@ -241,20 +252,23 @@ labelled_input_page:
           <p></p>$actions
         </div>
       </div>
-    inputs: 
+    inputs:
       - type: input
       - template: labelled_input
       - mandatory: "*"
 
 line:
   html: <hr></hr>
-  
+
 link:
   html: <a id="$code" title="$desc">$name</a>
 
 list_item:
   html: <li id="$code">$name</li>
-  
+
+list_text:
+  html: <li>$code</li>
+
 menu:
   html: <ul id="$code">$items</ul>
   items:
@@ -264,13 +278,13 @@ menu:
 
 menu_item:
   html: <li>$field</li>
- 
+
 one_cell_row:
   html: <tr><td>$field</td></tr>
 
 one_column_table:
   html: <table id='$code' title="$name">$items</table>
-  items: 
+  items:
     - template: one_cell_row
 
 one_row_table:
@@ -287,8 +301,13 @@ page_title:
 paragraph:
   html: <p id="$code">$name</p>
 
+password:
+  html: <input type="password" id="$code"></input>
+  valid: password
+
 password_input:
   html: <input type="password" id="$code" ></input>
+  valid: password
 
 plain:
   html: $name
@@ -311,7 +330,7 @@ question_input:
       <a class=input>
         $field
       </a>
-    </div>  
+    </div>
 
 question_input_page:
     html: |
@@ -322,37 +341,27 @@ question_input_page:
         <div class="form">
           $inputs
           $actions
+          $navigate
         </div>
       </div>
-    inputs: 
+    inputs:
       - type: input
       - template: question_input
       - mandatory: "*"
 
-radiogroup:
-  html: <div>$options</div>
-  group: $code
-  inherit: [group]
-  options:
-    - template: labelled_radio
-    - type: radiobox
+radio:
+  html: <input name="$code" title="$desc" type="radio"></input>
 
-radiobox:
-  html: <input name=$group title="$desc" type="radio" value="$code"></input>
-  
-labelled_radio:
-  html: <div class=radio><p>$name</p>$field</div>  
-  
 right_text:
   html: $field <p class=right-text>$name</p>
-  
+
 section_heading:
   html: <p class="section-heading">$name</p>
-  
+
 span:
   html: <span id="$code">$name</span>
-  
-sub_menu: 
+
+sub_menu:
   html: |
     <li>
       <a id="$code">$name</a>
@@ -363,12 +372,12 @@ sub_menu:
   sub_items:
     - action: redirect
     - type: link
-    
+
 table:
   html: <table id="$code"><thead></thead><tbody>$rows</tbody></table>
   rows:
     - template: table_row
-    
+
 table_cell:
   html: <td>$field</td>
 
@@ -383,9 +392,9 @@ table_input:
         </a>
       </td>
     </tr>
-    
+
 table_input_page:
-  html: | 
+  html: |
     <div id='$code'>
       $input_page_header
       <table class=form>
@@ -406,7 +415,7 @@ table_row:
   html: <tr>$columns</tr>
   columns: [template: table_cell]
 
-text: { type: input } 
+text: { type: input }
 
 textarea:
   html: <textarea id="$code"></textarea>
@@ -422,6 +431,15 @@ time:
   script: /common/jquery.datetimepicker.js
   css: /common/jquery.datetimepicker.css
 
+titled_paragraph:
+  html: >
+    <div class=titled-paragraph>
+      <p class=heading>$heading</p>
+      <p class=text>$text</p>
+    </div>
+  heading: $name
+  text: " "
+
 wizard:
   create: wizard
   script: /common/wizard.js
@@ -433,10 +451,11 @@ wizard:
 wizard_jump:
   type: button
   action: trigger
-  event: 
+  event:
     name: wizard-jump
     parameters: { index: $code }
-  
+
+
 wizard_next:
   type: button
   action: trigger

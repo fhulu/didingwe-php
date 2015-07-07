@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+                                                                                                                                                                                                            <!DOCTYPE html>
 <style>
 
 div.head
 {
   text-align: center;
-}  
+}
 div.head p
 {
   color: #0033CC;
@@ -15,12 +15,12 @@ div.head img
   width: 150px;
 }
 
-select.about 
+select.about
 {
 	height: 100px;
 	width: 100%;
 }
-select.fpbteam 
+select.fpbteam
 {
 	height: 50px;
 	width: 100%;
@@ -45,14 +45,14 @@ $(function() {
 	<p><b>Online Submission Tool</b></p>
   </div>
   <div class=center >
-	<p> Commissioned by Film and Publication Board </p> 
+	<p> Commissioned by Film and Publication Board </p>
 	<p><b>FPB Team:</b></p>
 	<select class=fpbteam size=3>
 	  <option>Mmapula Fisha</option>
 	  <option>Yewande Langa</option>
 	  <option>Cornelius Maesela</option>
 	</select>
-	<p>Developed by Mukoni Software</p>        
+	<p>Developed by Mukoni Software</p>
 	<p>Development Team:</p>
 	<select class=about size=9>
 	  <option>Fhulu Lidzhade</option>
@@ -67,4 +67,3 @@ $(function() {
 	</select>
   </div>
 </div>
-
