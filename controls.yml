@@ -1,5 +1,6 @@
 # html controls
----
+---  
+
 ajax_result:
   html: >
     <span class=ajax_result style="display: none;"></span>
@@ -10,7 +11,6 @@ blank:
 button:
   html: <button id="$code" title="$desc" class=action>$name</button>
 
-
 captioned_image:
   html: >
     <div id="$code" class=captioned-image>
@@ -20,7 +20,6 @@ captioned_image:
   title: $name
   src: $code.png
   caption: $name
-
 
 checkbox:
   html: <input id="$code" title="$desc" type='checkbox'></input>
@@ -269,6 +268,9 @@ link:
 list_item:
   html: <li id="$code">$name</li>
 
+list_text:
+  html: <li>$code</li>
+
 menu:
   html: <ul id="$code">$items</ul>
   items:
@@ -440,6 +442,7 @@ textarea:
 
 text_input: {type: input }
 
+
 time:
   html: <input id="$code" type="text" value="$value"></input>
   create: datetimepicker
@@ -450,7 +453,7 @@ time:
 
 titled_paragraph:
   html: >
-    <div class=title-paragraph>
+    <div class=titled-paragraph>
       <p class=heading>$heading</p>
       <p class=text>$text</p>
     </div>
