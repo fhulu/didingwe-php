@@ -5,11 +5,17 @@ ajax_result:
   html: >
     <span class=ajax_result style="display: none;"></span>
 
+action_control:
+  type: control
+  class: [action]
+
 blank:
   html: <span><span>
 
 button:
-  html: <button id="$code" title="$desc" class=action>$name</button>
+  type: action_control
+  html: <button>$name</button>
+
 
 captioned_image:
   html: >
@@ -29,7 +35,12 @@ container:
   contents: []
 
 control:
-  html: <$tag id="$code" title="$desc">$text<$tag>
+  desc: ""
+  attr:
+    id: $code
+    title: $desc
+  class: []
+
 
 container_without_id:
   html: <div>$contents</div>

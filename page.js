@@ -330,6 +330,17 @@ $.fn.page = function(options, callback)
       });
     },
 
+    set_class: function(obj, field)
+    {
+      var cls = field.class;
+      if (cls === undefined) return;
+      if (typeof cls === 'string') cls = [cls];
+      for (var i in cls) {
+        obj.addClass(cls[i]);
+      }
+    },
+
+
     set_style: function(obj, field)
     {
       var style = field.style;
@@ -367,6 +378,7 @@ $.fn.page = function(options, callback)
       var obj = $(field.html);
       var reserved = ['code','create','css','script','name', 'desc', 'data'];
       this.set_attr(obj, field);
+      this.set_class(obj, field);
       this.set_style(obj, field);
       var values = $.extend({}, this.globals, types, field);
       var matches = getMatches(obj.html(), /\$(\w+)/g);
