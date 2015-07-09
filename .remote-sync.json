@@ -6,7 +6,7 @@
   "ignore": [
     ".git/**"
   ],
-  "uploadOnSave": true,
   "username": "fhulu",
-  "password": "thendo11"
+  "password": "thendo11",
+  "uploadOnSave": true
 }
