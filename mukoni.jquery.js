@@ -3,8 +3,8 @@ $.fn.exists = function()
   return this.get(0) != undefined;
 }
 
-$.fn.hasAttr = function(name) 
-{  
+$.fn.hasAttr = function(name)
+{
   return this.attr(name) !== undefined;
 }
 
@@ -51,10 +51,10 @@ $.fn.setValue = function(val)
     return this;
   }
   var create = this.attr('customCreate');
-  if (create !== undefined) 
+  if (create !== undefined)
     return this[create]('option','value', val);
   var type = this.attr('type');
-  if (type === 'checkbox') 
+  if (type === 'checkbox')
     return val?this.attr('checked', true): this.removeAttr('checked');
   if (this.hasAttr('value'))
     return this.val(val);
@@ -110,7 +110,7 @@ $.send = function(url, options, callback)
   }, options);
   //if (options.event !== undefined) options.async = false;
   var ret = this;
-  if (options.invoker !== undefined) 
+  if (options.invoker !== undefined)
     options.invoker.prop('disabled', true);
   var progress =  {};
   if (options.progress !== false) {
@@ -118,15 +118,15 @@ $.send = function(url, options, callback)
     progress.box.click(function() {
       $(this).fadeOut('slow');
     });
-    
+
     progress.timeout = setTimeout(function() {
       progress.box.html('<p>'+options.progress+'</p').show();
     }, 500);
-    
+
     if (options.error ===undefined) {
-      options.error = function(jqHXR, status, text) 
+      options.error = function(jqHXR, status, text)
       {
-        progress.box.html('<p class=error>Status:'+status+'<br>Text:'+text+'</p').show();        
+        progress.box.html('<p class=error>Status:'+status+'<br>Text:'+text+'</p').show();
         if (options.event !== undefined) {
           options.event.stopImmediatePropagation();
           ret = false;
@@ -160,11 +160,11 @@ $.fn.send = function(url, options, callback)
     options = undefined;
   }
   var data = $(this).values();
-  if (options !== undefined) 
+  if (options !== undefined)
     data = $.extend({}, options.data, data);
-  
+
   options = $.extend({}, options, {data: data});
-  return $.send(url, options, callback);  
+  return $.send(url, options, callback);
 }
 
 $.fn.json = function(url, options, callback)
@@ -174,13 +174,13 @@ $.fn.json = function(url, options, callback)
     options = undefined;
   }
   var data = $(this).values();
-  if (options !== undefined) 
+  if (options !== undefined)
     data = $.extend({}, options.data, data);
-  
+
   options = $.extend({}, options, {data: data});
   $.json(url, options, function(result){
     callback(result);
-  });  
+  });
   return this;
 }
 
@@ -195,7 +195,7 @@ $.fn.sendOnSet = function(controls, url, options, callback)
   else if (options !== undefined && options.optional !== undefined)
     this.enableOnSet(controls).filter(':not('+options.optional+')');
   else this.enableOnSet(controls);
-  
+
   this.click(function(e) {
     return $(controls).send(url, $.extend({invoker: self, event: e}, options), callback);
   });
@@ -252,7 +252,7 @@ $.fn.confirmOnSet = function(controls,url, options, callback)
 
   var self = this;
   this.enableOnSet(controls);
-  
+
   this.click(function(event) {
     var params = $.extend({invoker: self, event: event}, options);
     var result = $(controls).confirm(url, params);
@@ -309,7 +309,7 @@ $.fn.jsonCheck = function(event, controls, url, options, callback)
     callback = options;
     options = {};
   }
-  
+
   var params = $.extend({invoker: this, event: event, async: true }, options);
   $(controls).siblings(".error").remove();
   $(controls).json(url, params, function(result) {
@@ -317,7 +317,7 @@ $.fn.jsonCheck = function(event, controls, url, options, callback)
     if (result != null)
       $.reportAllErrors(event, result);
     if (callback !== undefined)
-      callback(result, event);      
+      callback(result, event);
   });
   return this;
 }
@@ -335,7 +335,7 @@ $.fn.asyncCheckOnClick = function(controls,url, options, callback)
   if (options instanceof Function) {
     callback = options;
     options = {};
-  } 
+  }
   else if (options=== undefined)
     options = {};
   options.async = true;
@@ -383,12 +383,12 @@ $.fn.loadOptions = function(url, options, callback)
   return this;
 }
 
-$.json = function(url, options, callback) 
+$.json = function(url, options, callback)
 {
   if (options instanceof Function) {
     callback = options;
     options = {dataType: 'json'};
-  } 
+  }
   else options = $.extend(options, {dataType: 'json'});
   return $.send(url, options, callback);
 }
@@ -399,11 +399,11 @@ $.fn.jsonLoadOptions = function(url, options, callback)
     callback = url;
     url = undefined;
     options = {};
-  } 
+  }
   else if (options instanceof Function) {
     callback = options;
     options = {};
-  } 
+  }
   var self = $(this);
   self.html('<option>loading...</option>');
   var thisUrl = url === undefined? "/?a=json/ref/items&list="+self.attr('list'): url;
@@ -415,7 +415,7 @@ $.fn.jsonLoadOptions = function(url, options, callback)
     var def = self.attr('default');
     if (def !== undefined) {
       var selected = self.find("[value='"+def+"']");
-      if (selected.length == 0) 
+      if (selected.length == 0)
         selected = $('<option>'+def+'</option>').prependTo(self);
       selected.prop('selected', true);
     }
@@ -470,8 +470,8 @@ $.urlParam = function(name){
     return results[1] || 0;
 }
 
-$.fn.insertAtCursor = function(myValue) 
-{ 
+$.fn.insertAtCursor = function(myValue)
+{
   var pos = this.getCursorPosition();
   var val = this.val();
   this.val(val.substr(0, pos)+ ' ' +myValue+ ' '+val.substr(pos));
@@ -500,10 +500,10 @@ $.copy = function(src)
 $.fn.bookmarkOnClick = function() {
   // Mozilla Firefox Bookmark
   this.click(function() {
-    if ('sidebar' in window && 'addPanel' in window.sidebar) { 
+    if ('sidebar' in window && 'addPanel' in window.sidebar) {
         window.sidebar.addPanel(location.href,document.title,"");
     } else if( /*@cc_on!@*/false) { // IE Favorite
-        window.external.AddFavorite(location.href,document.title); 
+        window.external.AddFavorite(location.href,document.title);
     } else { // webkit - safari/chrome
         alert('Press ' + (navigator.userAgent.toLowerCase().indexOf('mac') != - 1 ? 'Command/Cmd' : 'CTRL') + ' + D to bookmark this page.');
     }
@@ -534,8 +534,8 @@ function delegate(scope, func, data, isTimeout)
         //this needs to be removed otherwise your handler receives more arguments than you expected.
                 //NOTE : This uses jQuery for browser detection, you can add whatever browser detection you like and replace the below.
         if (isTimeout && $.browser.mozilla)
-            args.shift();  
- 
+            args.shift();
+
         func.apply(scope, args);
     }
 }
@@ -581,17 +581,17 @@ function loadLink(link,type)
   }
   document.getElementsByTagName("head")[0].appendChild(ref);
 }
- 
+
  function loadCSS(link)
  {
    loadFile(link,'link');
  }
- 
+
  function loadScript(link)
  {
    loadFile(link,'script');
  }
- 
+
 $.jsonSize = function(object)
 {
   var i=0;
@@ -612,16 +612,16 @@ function isNumber(n) {
 }
 
 
-function toTitleCase(str) 
+function toTitleCase(str)
 {
   str = str.replace(/[_\/]/g, ' ');
-  return str.replace(/\w\S*/g,  function (txt) { 
-    return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase(); 
+  return str.replace(/\w\S*/g,  function (txt) {
+    return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
   });
 }
-  
- 
-// from stackoverflow: Mathias Bynens 
+
+
+// from stackoverflow: Mathias Bynens
 function getMatches(string, regex, index) {
     index || (index = 1); // default to the first capturing group
     var matches = [];
@@ -630,7 +630,7 @@ function getMatches(string, regex, index) {
         matches.push(match[index]);
     }
     return matches;
-}  
+}
 
 // Gary Haran => gary@talkerapp.com
 // This code is released under MIT licence
@@ -697,8 +697,8 @@ function merge(a1, a2)
       continue;
     }
     var v1 = r[i];
-    if (typeof v1 !== typeof v2 
-            || $.isArray(v1) && !$.isArray(v2) 
+    if (typeof v1 !== typeof v2
+            || $.isArray(v1) && !$.isArray(v2)
             || $.isPlainObject(v1) && !$.isPlainObject(v2)) {
       r[i] = v2;
       continue;
@@ -709,9 +709,9 @@ function merge(a1, a2)
       //note: no deep copying arrays, only objects
       continue;
     }
-    if ($.isPlainObject(v1)) 
+    if ($.isPlainObject(v1))
       r[i] = merge(v1, v2);
-    else 
+    else
       r[i] = v2;
   }
   return r;
@@ -785,10 +785,10 @@ function get_top(options)
 
 $.fn.valueFromCurrency = function()
 {
-  return this.value().replace(/\D/g,''); 
+  return this.value().replace(/\D/g,'');
 }
 // from stackoverflow: Anurag
-$.fn.bindFirst = function(name, fn) 
+$.fn.bindFirst = function(name, fn)
 {
   // bind as you normally would
   // don't want to miss out on any jQuery magic

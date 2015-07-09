@@ -1,5 +1,5 @@
 # html controls
----  
+---
 
 ajax_result:
   html: >
@@ -29,12 +29,11 @@ container:
   contents: []
 
 control:
-  html: <$tag id="$code" title="$desc" $attrs $attr>$text<$tag>
+  html: <$tag id="$code" title="$desc">$text<$tag>
 
 container_without_id:
   html: <div>$contents</div>
-  contents:
-    - template: $field
+  contents: []
 
 datatable:
   html: |
@@ -164,9 +163,11 @@ google_map:
 
 h1:
   html: <h1 id="$code">$name</h1>
+  name: $code
 
 h2:
   html: <h2 id="$code">$name</h2>
+  name: $code
 
 h3:
   html: <h3 id="$code">$name</h3>
@@ -351,19 +352,26 @@ question_input_page:
     actions:
       - type: submit
 
+radiobox:
+  html: <input title="$desc" type="radio" value="$code"></input>
+
+radiobox_leftlabel:
+  html: <div class=radio><span>$name</span>$field</div>
+
+radiobox_rightlabel:
+  html: <div class=radio>$field<span>$name</span></div>
+
+radiobox_toplabel:
+  html: <div class=radio><p>$name</p>$field</div>
+
 radiogroup:
   html: <div> $options</div>
   group: $code
   inherit: [group]
   options:
-    - template: radiolabel
+    - template: radiobox_leftlabel
     - type: radiobox
-
-radiobox:
-  html: <input name="$group" title="$desc" type="radio" value="$code"></input>
-
-radiolabel:
-  html: <div class=radio><p>$name</p>$field</div>
+    - attr: { name: $group }
 
 right_text:
   html: $field <p class=right-text>$name</p>
