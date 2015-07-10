@@ -1,6 +1,5 @@
 # html controls
 ---
-
 ajax_result:
   html: >
     <span class=ajax_result style="display: none;"></span>
@@ -31,26 +30,25 @@ checkbox:
   html: <input id="$code" title="$desc" type='checkbox'></input>
 
 container:
-  html: <div id="$code">$contents</div>
+  type: control
+  html: <div>$contents</div>
   contents: []
 
 control:
-  desc: ""
   attr:
     id: $code
     title: $desc
   class: []
 
-
-container_without_id:
-  html: <div>$contents</div>
-  contents: []
+control_template:
+  desc: ""
+  attr: {title: $desc }
+  class: []
 
 datatable:
-  html: |
-    <table id="$code" class=data>
-      <tbody></tbody>
-    </table>
+  type: control
+  html: <table><tbody></tbody></table>
+  class: [data]
   create: datatable
   script: /common/datatable.js
   css: /datatable.css
@@ -121,15 +119,18 @@ disabled_input:
 dropdown:
   unselected: --Select $name--
   html: |
-    <select id="$code">
+    <select>
       <option value=''>$unselected</option>
       $options
     </select>
+  inherit: [$unselected]
   options:
     - type: dropdown_option
 
 dropdown_option:
-  html: <option value="$code">$name</option>
+  type: control
+  html: <option>$name</option>
+  attr: { value: $code }
 
 element:
   text: ""
@@ -153,13 +154,15 @@ file:
   max_size: 100
 
 form:
-  html: <form id="$code"></form>
+  type: control
+  html: <form></form>
 
 #footer_actions:
 #  - type: submit
 
 google_map:
-  html: <div id='$code'></div>
+  type: control
+  html: <div></div>
   create: mapper
   script: /common/map.js
   zoom: 5
@@ -173,21 +176,27 @@ google_map:
    - pink
 
 h1:
-  html: <h1 id="$code">$name</h1>
+  type: control
+  html: <h1>$name</h1>
   name: $code
 
 h2:
-  html: <h2 id="$code">$name</h2>
+  type: control
+  html: <h2>$name</h2>
   name: $code
 
 h3:
-  html: <h3 id="$code">$name</h3>
+  type: control
+  html: <h3>$name</h3>
 
 hidden:
-  html: <input id='$code' type=hidden value='$value'></input>
+  type: input
+  attr: { type: hidden }
 
 image:
-  html: <img id="$code" src="$src" title="$desc"></img>
+  type: control
+  html: <img></img>
+  attr: {src: $src}
 
 info_line:
   html: |
@@ -197,8 +206,9 @@ info_line:
     </div>
 
 info_page:
+    type: control
     html: |
-      <div id="$code" page="$name" title="$name">
+      <div>
         <p class="desc">$desc</p>
         <span class=ajax_result style="display: none;"></span>
         <div class="form">
@@ -206,25 +216,40 @@ info_page:
           <p></p>$actions
         </div>
       </div>
+    attr:
+      page: $name
+      title: $name
     lines:
       - type: info_text
       - template: info_line
     actions:
       - type: submit
 
+
 info_text:
-  html: <div id='$code' class='info-text'>$value</div>
+  type: control
+  html: <div>$value</div>
+  class: [info_text]
 
 input:
-  html: <input id="$code" type="text" value="$value"></input>
+  type: control
+  html: <input></input>
+  value: ""
+  attr:
+    type: text
+    value: $value
 
 inline_input:
-  html: <a class=input>$field<span class="input">$desc</span></a>
-  attr: placeholder="$name"
+  type: control_template
+  html: <a>$field<span class="input">$desc</span></a>
+  class: [input]
+  attr:
+    placeholder: "$name"
 
 inline_input_page:
+  type: control
   html: |
-    <div id='$code'>
+    <div>
       $input_page_header
       <div class="form">
         $inputs
@@ -235,17 +260,23 @@ inline_input_page:
     - template: inline_input
 
 input_page_header:
+  type: control
   html: |
-    <div id="$code" page="$name">
+    <div>
       <p class="desc">$desc</p>
       <span class=ajax_result style="display: none;"></span>
     </div>
+  attr: { page: $name}
+
 label:
-  html: <label id='$code'>$name</label>
+  type: control
+  html: <label>$name</label>
 
 labelled_input:
+  type: control_template
+  class: [labelled-input]
   html: |
-    <div class=labelled-input>
+    <div>
       <span class=label>$name$label_suffix</span>
       <a class=input>
         $field
@@ -255,36 +286,40 @@ labelled_input:
   label_suffix: ":"
 
 labelled_input_page:
-    html: |
-      <div id="$code" page="$name" title="$name">
-        <p class="desc">$desc</p>
-        <span class=ajax_result style="display: none;"></span>
-        <div class="form">
-          $inputs
-          <p></p>$actions
-        </div>
+  type: page_control
+  html: |
+    <div>
+      <p class="desc">$desc</p>
+      <span class=ajax_result style="display: none;"></span>
+      <div class="form">
+        $inputs
+        <p></p>$actions
       </div>
-    inputs:
-      - type: input
-      - template: labelled_input
-      - mandatory: "*"
-    actions:
-      - type: submit
+    </div>
+  inputs:
+    - type: input
+    - template: labelled_input
+    - mandatory: "*"
+  actions:
+    - type: submit
 
 line:
   html: <hr></hr>
 
 link:
-  html: <a id="$code" title="$desc">$name</a>
+  type: control
+  html: <a>$name</a>
 
 list_item:
-  html: <li id="$code">$name</li>
+  type: control
+  html: <li>$name</li>
 
 list_text:
   html: <li>$code</li>
 
 menu:
-  html: <ul id="$code">$items</ul>
+  type: control
+  html: <ul>$items</ul>
   items:
     - template: menu_item
     - type: link
@@ -297,30 +332,40 @@ one_cell_row:
   html: <tr><td>$field</td></tr>
 
 one_column_table:
-  html: <table id='$code' title="$name">$items</table>
+  type: control
+  html: <table>$items</table>
   items:
     - template: one_cell_row
 
 one_row_table:
-  html: <table id='$code'><tr>$items</tr></table>
+  type: control
+  html: <table><tr>$items</tr></table>
   items:
     - template: table_cell
 
 p:
-  html: <p id="$code">$name</p>
+  type: paragraph
+  html: <p>$name</p>
 
 page:
   page: $code
 
+page_control:
+  type: control
+  attr:
+    page: $code
+    title: $name
 
 page_title:
   html: <title>$name</title>
 
 paragraph:
-  html: <p id="$code">$name</p>
+  type: control
+  html: <p>$name</p>
 
 password_input:
-  html: <input type="password" id="$code" ></input>
+  type: input
+  attr: { type: password }
 
 plain:
   html: $name
@@ -337,8 +382,11 @@ print:
   target: _blank
 
 question_input:
+  type: control_template
+  class: [question_input]
+  attr: { name: $name}
   html: |
-    <div class=question-input name="$name">
+    <div>
       <div class=question>$question</div>
       <a class=input>
         $field
@@ -346,34 +394,42 @@ question_input:
     </div>
 
 question_input_page:
-    html: |
-      <div id="$code" page="$name" title="$name">
-          <h2>$name</h2>
-        <p class="desc">$desc</p>
-        <span class=ajax_result style="display: none;"></span>
-        <div class="form">
-          $inputs
-          $actions
-        </div>
+  type: page_control
+  html: |
+    <div>
+        <h2>$name</h2>
+      <p class="desc">$desc</p>
+      <span class=ajax_result style="display: none;"></span>
+      <div class="form">
+        $inputs
+        $actions
       </div>
-    inputs:
-      - type: input
-      - template: question_input
-      - mandatory: "*"
-    actions:
-      - type: submit
+    </div>
+  inputs:
+    - type: input
+    - template: question_input
+    - mandatory: "*"
+  actions:
+    - type: submit
 
 radiobox:
-  html: <input title="$desc" type="radio" value="$code"></input>
+  type: input
+  attr: { type: radio, value: $code}
 
 radiobox_leftlabel:
-  html: <div class=radio><span>$name</span>$field</div>
+  type: control_template
+  class: [radio]
+  html: <div><span>$name</span>$field</div>
 
 radiobox_rightlabel:
-  html: <div class=radio>$field<span>$name</span></div>
+  type: control_template
+  class: [radio]
+  html: <div>$field<span>$name</span></div>
 
 radiobox_toplabel:
-  html: <div class=radio><p>$name</p>$field</div>
+  type: control_template
+  class: [radio]
+  html: <div><p>$name</p>$field</div>
 
 radiogroup:
   html: <div> $options</div>
@@ -391,7 +447,8 @@ section_heading:
   html: <p class="section-heading">$name</p>
 
 span:
-  html: <span id="$code">$name</span>
+  type: control
+  html: <span>$name</span>
 
 submit:
   type: button
@@ -413,7 +470,8 @@ sub_menu:
     - type: link
 
 table:
-  html: <table id="$code"><thead></thead><tbody>$rows</tbody></table>
+  type: control
+  html: <table><thead></thead><tbody>$rows</tbody></table>
   rows:
     - template: table_row
 
@@ -433,8 +491,9 @@ table_input:
     </tr>
 
 table_input_page:
+  type: page_control
   html: |
-    <div id='$code'>
+    <div>
       $input_page_header
       <table class=form>
         $inputs
@@ -447,7 +506,8 @@ table_input_page:
   inputs: [template: table_input]
 
 table_page:
-  html: <table id='$code' title="$name">$children</table>
+  type: page_control
+  html: <table>$children</table>
   children: [template: one_cell_row]
 
 table_row:
@@ -457,13 +517,14 @@ table_row:
 text: { type: input }
 
 textarea:
-  html: <textarea id="$code"></textarea>
+  type: control
+  html: <textarea></textarea>
 
 text_input: {type: input }
 
 
 time:
-  html: <input id="$code" type="text" value="$value"></input>
+  type: input
   create: datetimepicker
   datepicker: false
   format: H:i

@@ -147,24 +147,18 @@ $.fn.page = function(options, callback)
       return this.merge_type(this.types[type]);
     },
 
-    get_template_html: function(template, item)
+    get_template: function(template, item)
     {
-      if (template === undefined || item.type === 'hidden' || item.template === "none") return '$field';
-      var result = template;
-      if (typeof template !== 'string') {
-        item = $.extend({}, template, item);
-        assert(template.html);
-        result = template.html;
+      if (template === undefined || item.type === 'hidden' || item.template === "none" || template == '$field') return '$field';
+      var untyped = this.merge_type(item);
+      untyped.type = undefined;
+      if (typeof template === 'string')
+        template = $.extend({}, untyped, { html: template});
+      else {
+        untyped.html = template.html;
+        template = merge(template, untyped);
       }
-      if (!$.isPlainObject(item)) return result;
-      var matches = getMatches(result, /\$(\w+)/g);
-      for (var i in matches) {
-        var code = matches[i];
-        if (code === 'field') continue;
-        var value = item[code] || '';
-        result = result.replace(new RegExp('\\$'+code+'([\b\W]|$)?','g'), value+'$1');
-      }
-      return result;
+      return this.create(template)[1];
     },
 
     create_sub_page: function(field)
@@ -282,15 +276,14 @@ $.fn.page = function(options, callback)
           item.path = path + '/' + id;
         parent.replace(regex,new_item_html+'$1');
         if (!template) item.template = defaults.template;
-        var created = this.create(item, id, types, array);
+        var created = this.create(item, id, types);
         item = created[0];
         var obj = created[1];
-        var templated = this.get_template_html(item.template || defaults.template, item);
+        var templated = this.get_template(item.template || defaults.template, item);
         if (templated === '$field') {
           templated = obj;
         }
         else {
-          templated = $(templated);
           this.replace(templated, obj, id, 'field');
         }
         parent.find('#'+new_item_name).replaceWith(templated);
