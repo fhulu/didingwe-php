@@ -1,6 +1,6 @@
   <?php
 
-function at($array, $index) 
+function at($array, $index)
 {
   return isset($array[$index])? $array[$index]: null;
 }
@@ -12,7 +12,7 @@ function SESSION($item) { return at($_SESSION, $item); }
 function null_at($array, $index) { return is_null(at($array,$index)); }
 function valid_at($array, $index) { return !is_null(at($array,$index)); }
 
-function set_valid(&$dest, $source, $index = null) 
+function set_valid(&$dest, $source, $index = null)
 {
   if (is_null($source)) return $dest;
   if (is_null($index)) return $dest = $source;
@@ -20,7 +20,7 @@ function set_valid(&$dest, $source, $index = null)
   if (!is_null($val)) $dest[$index] = $val;
 }
 
-function last($array) 
+function last($array)
 {
   if (is_null($array)) return null;
   $length = is_array($array)?sizeof($array): strlen($array);
@@ -28,12 +28,12 @@ function last($array)
 }
 
 
-function null_merge($array1, $array2, $recurse = true) 
+function null_merge($array1, $array2, $recurse = true)
 {
   if (!is_array($array2)) return $array1;
 
-  
-  if (is_array($array1)) 
+
+  if (is_array($array1))
     return $recurse? array_merge_recursive($array1, $array2): array_merge($array1, $array2);
 
   return $array2;
@@ -69,9 +69,9 @@ function replace_vars($str, $values=null, $ignore=array())
   return $str;
 }
 
-function is_assoc($array) 
+function is_assoc($array)
 {
-  if (is_null($array) || !is_array($array)) return false; 
+  if (is_null($array) || !is_array($array)) return false;
   return !(bool)count(array_filter(array_keys($array), 'is_int'));
 }
 
@@ -84,7 +84,7 @@ function compress_array($array)
   }
   return $compressed;
 }
-  
+
 function caught_error($errNo, $errStr, $errFile, $errLine) {
   $msg = "$errStr in $errFile on line $errLine";
   if ($errNo == E_NOTICE) return;
@@ -104,7 +104,7 @@ function caught_fatal(){
 set_error_handler('caught_error');
 
 register_shutdown_function('caught_fatal');
- 
+
 
 function merge_options($options1, $options2)
 {
@@ -123,7 +123,7 @@ function merge_options($options1, $options2)
     if (!is_array($value2)) continue;
     $result[$key] = merge_options($value, $value2);
   }
-  return $result; 
+  return $result;
 }
 
 function choose_value(&$array)
@@ -199,7 +199,7 @@ function replace_indices($str, $values)
 function replace_field_indices(&$options, $values)
 {
   array_walk_recursive($options, function(&$value) use(&$values) {
-    $value = replace_indices($value, $values); 
+    $value = replace_indices($value, $values);
   });
 }
 
@@ -227,3 +227,20 @@ function find_assoc_element($array, $key)
   return null;
 }
 
+function expand_function($func)
+{
+  $matches = array();
+  if (!preg_match('/^([\w:]+)(?:\((.*)\))?$/sm', trim($func), $matches))
+    throw new Exception("Invalid function specification --$func--");
+
+  array_shift($matches);
+  return $matches;
+}
+
+function array_find(&$array, $callback)
+{
+  foreach ($array as $key=>&$value) {
+    if ($callback($value, $key)) return $key;
+  }
+  return false;
+}
