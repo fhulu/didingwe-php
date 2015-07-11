@@ -27,7 +27,7 @@ $page->output();
 class page
 {
   static $fields_stack = array();
-  static $post_items = array('access', 'audit', 'call', 'post', 'sql', 'sql_values', 'valid', 'validate');
+  static $post_items = array('audit', 'call', 'post', 'sql', 'sql_values', 'valid', 'validate');
   static $atomic_items = array('action', 'css', 'html', 'script', 'style', 'template', 'valid');
   static $user_roles = array('public');
   var $request;
@@ -205,7 +205,7 @@ class page
     $expanded = $this->get_expanded_field($type);
     if (!is_array($expanded)) return null;
     $added[] = $type;
-    $this->remove_post_items($expanded);
+    $this->remove_items($expanded);
     $result = $this->types[$type] = $expanded;
     $this->merge_type($expanded);
     return $result;
@@ -322,7 +322,7 @@ class page
 
   function expand_types(&$fields)
   {
-    $this->remove_post_items($fields);
+    $this->remove_items($fields);
     walk_recursive_down($fields, function($value, $key, &$parent) {
       if (!is_assoc($parent))
         list($type, $value) = assoc_element($value);
@@ -366,6 +366,9 @@ class page
     function (&$array) {
       array_compact($array);
     });
+
+    if ($this->rendering)
+      $this->remove_items($fields, array('access'));
   }
 
   function set_fields()
@@ -376,11 +379,14 @@ class page
     $this->expand_types($this->fields);
   }
 
-  function remove_post_items(&$fields)
+  function remove_items(&$fields, $keys=null)
   {
-    if (!$this->rendering) return;
-    walk_recursive_down($fields, function(&$value, $key, &$parent) {
-      if (is_assoc($parent) && in_array($key, page::$post_items, true))
+    if (is_null($keys)) {
+      if (!$this->rendering) return;
+      $keys = page::$post_items;
+    }
+    walk_recursive_down($fields, function(&$value, $key, &$parent) use($keys){
+      if (is_assoc($parent) && in_array($key, $keys, true))
         unset($parent[$key]);
     });
 
