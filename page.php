@@ -27,7 +27,7 @@ $page->output();
 class page
 {
   static $fields_stack = array();
-  static $post_items = array('audit','post', 'valid');
+  static $post_items = array('access', 'audit', 'call', 'post', 'sql', 'sql_values', 'valid', 'validate');
   static $atomic_items = array('action', 'css', 'html', 'script', 'style', 'template', 'valid');
   static $user_roles = array('public');
   var $request;
@@ -70,7 +70,7 @@ class page
     $this->page_stack = array();
     $this->types = array();
     $this->validated = array();
-    $this->rendering = $request['action'] == 'read';
+    $this->rendering = $this->method == 'read';
     $this->context = array();
   }
 
@@ -101,9 +101,8 @@ class page
         array_shift($path);
       }
     }
-    $reading = $this->method == 'read';
-    $this->set_fields($reading);
-    if (!$reading)
+    $this->set_fields();
+    if (!$this->rendering)
       $this->set_context($path);
     $result = $this->{$this->method}();
     return $this->result = null_merge($result, $this->result, false);
@@ -199,13 +198,14 @@ class page
   }
 
 
-  function expand_type($type, &$added = array()  )
+  function expand_type($type, &$added = array() )
   {
     $expanded = $this->types[$type];
     if (isset($expanded)) return $expanded;
     $expanded = $this->get_expanded_field($type);
     if (!is_array($expanded)) return null;
     $added[] = $type;
+    $this->remove_post_items($expanded);
     $result = $this->types[$type] = $expanded;
     $this->merge_type($expanded);
     return $result;
@@ -222,7 +222,6 @@ class page
       $field = merge_options($this->merge_type($expanded, $added), $field);
     else
       $field = merge_options($expanded, $field);
-
     return $field;
   }
 
@@ -321,13 +320,19 @@ class page
     };
   }
 
-  function expand_types(&$fields, $filter_access)
+  function expand_types(&$fields)
   {
-    walk_recursive_down($fields, function($value, $key, &$parent) use($filter_access) {
+    $this->remove_post_items($fields);
+    walk_recursive_down($fields, function($value, $key, &$parent) {
       if (!is_assoc($parent))
         list($type, $value) = assoc_element($value);
+      else if ($this->rendering && in_array($key, page::$post_items, true)) {
+        unset($parent[$key]);
+        return;
+      }
       else
         $type = $key;
+
       if ($type == $this->page) return;
 
       if ($type == 'type' || $type == 'template') {
@@ -347,30 +352,38 @@ class page
       if (is_null($expanded)) return;
 
       if ($this->allowed($expanded)) {
-        $this->expand_types($expanded, $filter_access);
+        $this->expand_types($expanded);
         return;
       }
 
-      if (!$filter_access) return;
+      if (!$this->rendering) return;
 
       unset($parent[$key]);
       foreach($added_types as $type) {
         unset($this->types[$type]);
       }
-
     },
     function (&$array) {
-      if (!is_assoc($array))
-        $array = array_values($array);
+      array_compact($array);
     });
   }
 
-  function set_fields($filter_access)
+  function set_fields()
   {
     $this->fields = $this->merge_stack_field(page::$fields_stack, $this->root);
     $this->merge_stack_field($this->page_stack, $this->root, $this->fields);
     $this->verify_access($this->fields);
-    $this->expand_types($this->fields, $filter_access);
+    $this->expand_types($this->fields);
+  }
+
+  function remove_post_items(&$fields)
+  {
+    if (!$this->rendering) return;
+    walk_recursive_down($fields, function(&$value, $key, &$parent) {
+      if (is_assoc($parent) && in_array($key, page::$post_items, true))
+        unset($parent[$key]);
+    });
+
   }
 
   function read()
@@ -378,6 +391,7 @@ class page
     if ($this->user) {
       $this->fields['user_full_name'] = $this->user['full_name'];
     }
+
     return array(
       'path'=>implode('/',$this->path),
       'fields'=>$this->fields,

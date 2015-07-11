@@ -146,6 +146,7 @@ function walk_recursive(&$array, $callback, $done_callback = null)
   if ($done_callback)
     $done_callback($array);
 }
+
 function walk_recursive_down(&$array, $callback, $done_callback = null)
 {
   foreach($array as $key=>&$value) {
@@ -243,4 +244,10 @@ function array_find(&$array, $callback)
     if ($callback($value, $key)) return $key;
   }
   return false;
+}
+
+function array_compact(&$array)
+{
+  if (!is_assoc($array))
+    $array = array_values($array);
 }
