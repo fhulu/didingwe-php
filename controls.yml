@@ -1,19 +1,11 @@
 # html controls
 ---
-ajax_result:
-  type: control
-  tag: span
-  class: [ajax_result]
-  style: { display: none }
-  html: >
-    <span class=ajax_result style="display: none;"></span>
-
 actioner:
   type: control
   class: [action]
 
 blank:
-  type: control
+  type: template
   tag: span
   text: ""
 
@@ -29,7 +21,7 @@ captioned_image:
     <img src="$src" title="$title"></img>
     <p>$caption</p>
   title: $name
-  src: $code.png
+  src: $id.png
   caption: $name
 
 checkbox:
@@ -45,7 +37,7 @@ container:
 control:
   html: <$tag>$text</$tag>
   tag: div
-  attr: { id: $code }
+  attr: { id: $id }
   class: []
   text: $name
 
@@ -135,7 +127,7 @@ dropdown:
 dropdown_option:
   type: control
   html: <option>$name</option>
-  attr: { value: $code }
+  attr: { value: $id }
 
 element:
   text: ""
@@ -151,7 +143,7 @@ export:
   target: _blank
 
 file:
-  html: <div id="$code" name="$code"></div>
+  html: <div id="$id" name="$id"></div>
   create: file_uploader
   script: /common/file_uploader.js,/common/jquery.form.js
   css: /common/file_uploader.css
@@ -194,7 +186,7 @@ h3:
 heading:
   tag: h1
   type: control
-  name: $code
+  name: $id
 
 hidden:
   type: input
@@ -204,7 +196,7 @@ image:
   type: control
   tag: img
   attr: {src: $src}
-  src: $code.png
+  src: $id.png
   text: ""
 
 info_line:
@@ -240,15 +232,6 @@ info_text:
   text: $value
   class: [info_text]
 
-input:
-  type: control
-  tag: input
-  text: ""
-  value: ""
-  attr:
-    type: text
-    value: $value
-
 inline_input:
   type: template
   tag: a
@@ -270,14 +253,24 @@ inline_input_page:
   inputs:
     - template: inline_input
 
-input_page_header:
+input:
   type: control
-  html: |
-    <div>
-      <p class="desc">$desc</p>
-      <span class=ajax_result style="display: none;"></span>
-    </div>
-  attr: { page: $name}
+  tag: input
+  text: ""
+  value: ""
+  attr:
+    type: text
+    value: $value
+
+input_page:
+  type: page
+  inherit: [desc]
+  loading: { type: processing }
+  synopsis: { type: section_heading, text: $desc}
+  inputs:
+    - type: input
+  actions:
+    - type: submit
 
 label:
   type: control
@@ -295,22 +288,16 @@ labelled_input:
   label_suffix: ":"
 
 labelled_input_page:
-  type: page
-  html: |
-    <div>
-      <p class="desc">$desc</p>
-      <span class=ajax_result style="display: none;"></span>
-      <div class="form">
-        $inputs
-        <p></p>$actions
-      </div>
+  type: input_page
+  text: |
+    $loading
+    $synopsis
+    <div class="form">
+      $inputs
+      <p></p>$actions
     </div>
   inputs:
-    - type: input
     - template: labelled_input
-    - mandatory: "*"
-  actions:
-    - type: submit
 
 line:
   tag: hr
@@ -326,7 +313,7 @@ list_item:
 
 list_text:
   tag: li
-  text: $code
+  text: $id
 
 menu:
   type: container
@@ -360,7 +347,8 @@ one_row_table:
     - template: table_cell
 
 p:
-  type: paragraph
+  type: control
+  tag: p
 
 page:
   type: control
@@ -372,8 +360,7 @@ page_title:
   html: <title>$name</title>
 
 paragraph:
-  type: control
-  tag: p
+  type: p
 
 password_input:
   type: input
@@ -392,6 +379,13 @@ print:
   validate: none
   call: datatable::pdf(context, $key)
   target: _blank
+
+processing:
+  type: template
+  tag: span
+  class: [ajax_result]
+  style: { display: none }
+
 
 question_input:
   type: template
@@ -426,7 +420,7 @@ question_input_page:
 
 radiobox:
   type: input
-  attr: { type: radio, value: $code}
+  attr: { type: radio, value: $id}
 
 radiobox_template:
   type: template
@@ -447,7 +441,7 @@ radiobox_toplabel:
 radiogroup:
   type: control
   text: $options
-  group: $code
+  group: $id
   inherit: [group]
   options:
     - template: radiobox_leftlabel
@@ -458,7 +452,7 @@ right_text:
   html: $field <p class=right-text>$name</p>
 
 section_heading:
-  type: template
+  type: control
   tag: p
   class: [section-heading]
 
@@ -476,7 +470,7 @@ submit:
 sub_menu:
   type: template
   text: |
-    <a id="$code">$name</a>
+    <a id="$id">$name</a>
     <span>$sub_items</span>
   action: " "
   template: $field
@@ -506,35 +500,37 @@ table_cell:
   tag: td
 
 table_input:
-  html: |
-    <tr class=input>
-      <td>$name</td>
-      <td>
-        <a class=input>
-          $field
-          <span>$desc</span>
-        </a>
-      </td>
-    </tr>
+  type: template
+  class: [input]
+  tag: tr
+  text: |
+    <td style="width:25%;">$name</td>
+    <td>
+      <a class=input style="width:98%">
+        $field
+        <span>$desc</span>
+      </a>
+    </td>
 
 table_input_page:
-  type: page
-  html: |
-    <div>
-      $input_page_header
-      <table class=form>
-        $inputs
-        <tr>
-          <td></td>
-          <td>$actions</td>
-        </tr>
-      </table>
-    </div>
-  inputs: [template: table_input]
+  type: input_page
+  text: |
+    $processing
+    $synopsis
+    <table class=form>
+      $inputs
+      <tr>
+        <td></td>
+        <td>$actions</td>
+      </tr>
+    </table>
+  inputs:
+    - template: table_input
 
 table_page:
   type: page
-  html: <table>$children</table>
+  tag: table
+  text: $children
   children: [template: one_cell_row]
 
 table_row:
@@ -546,6 +542,7 @@ table_row:
 template:
   type: control
   text: $field
+  attr: {id: ""}
 
 text: { type: input }
 
@@ -574,10 +571,11 @@ titled_paragraph:
   text: " "
 
 wizard:
+  type: control
   create: wizard
   script: /common/wizard.js
   css: /common/wizard.css
-  html: <div id=$code class=wizard></div>
+  class: [wizard]
   prev_name: Previous
   next_name: Next
 
@@ -586,7 +584,7 @@ wizard_jump:
   action: trigger
   event:
     name: wizard-jump
-    parameters: { index: $code }
+    parameters: { index: $id }
 
 wizard_next:
   type: button

@@ -64,11 +64,9 @@ $.fn.page = function(options, callback)
       var self = this;
       $.each(data, function(field, value) {
         if (typeof value !== 'string' || value.indexOf('$') < 0 || field === 'template' && field === 'attr') return;
-        value = value.replace('$code', parent_id);
+        value = value.replace('$id', parent_id);
         data[field] = page.expand_value(data, value, parent_id);
       });
-      if (data.html)
-        data.html = data.html.replace(/\$(value|desc)(\b|\W|$)?/, '$2');
       return data;
     },
 
@@ -119,12 +117,12 @@ $.fn.page = function(options, callback)
       });
     },
 
-    init_links: function(object, field, types, callback)
+    init_links: function(object, field, callback)
     {
       page.load_links('css', field);
       page.load_links('script', field, function() {
         if (field.create)
-          object.customCreate($.extend({types: types}, page.options, field));
+          object.customCreate($.extend({types: page.types}, page.options, field));
         if (callback !== undefined) callback();
       });
     },
@@ -151,26 +149,24 @@ $.fn.page = function(options, callback)
     {
       if (template === undefined || item.type === 'hidden' || item.template === "none" || template == '$field') return '$field';
       var untyped = $.copy(this.merge_type(item));
+      untyped.type = untyped.attr = untyped.class = undefined;
       if (typeof template === 'string') {
-        untyped.type = undefined;
-        template = $.extend({}, untyped, { html: template});
+        template = {html: template};
       }
       else {
         template = this.merge_type(template);
         template.type = undefined;
-        template = merge(untyped, template);
       }
-      template = this.create(template)[1];
-      template.removeAttr('id');
-      return template;
+      template = merge(untyped, template);
+      return this.create(template)[1];
     },
 
     create_sub_page: function(field)
     {
       var tmp = $('<div></div>');
-      field.path = field.url? field.url: field.code;
+      field.path = field.url? field.url: field.id;
       tmp.page(field);
-      tmp.on('read_'+field.code, function(e, obj) {
+      tmp.on('read_'+field.id, function(e, obj) {
         if (field.style)
           page.set_style(obj, field);
         var parent = obj.parents().eq(0);
@@ -208,7 +204,7 @@ $.fn.page = function(options, callback)
       return set;
     },
 
-    append_contents: function(parent, parent_field, name, items, types, defaults)
+    append_contents: function(parent, parent_field, name, items, defaults)
     {
       if (!defaults) defaults = { template: "$field" };
       var loading_data = false;
@@ -223,7 +219,7 @@ $.fn.page = function(options, callback)
         var template;
         if ($.isPlainObject(item)) {
           if (this.set_defaults(defaults, item)) continue;
-          if (item.code === undefined) {
+          if (item.id === undefined) {
             for (var key in item) {
               if (!item.hasOwnProperty(key)) continue;
               id = key;
@@ -234,7 +230,7 @@ $.fn.page = function(options, callback)
             if (item.merge) continue;
             if (post_methods.indexOf(id) >= 0) {
               loading_data = true;
-              this.load_data(parent, parent_field, name, types, defaults);
+              this.load_data(parent, parent_field, name, defaults);
               continue;
             }
 
@@ -246,13 +242,13 @@ $.fn.page = function(options, callback)
             if (defaults.attr) item.attr = merge(item.attr,defaults.attr);
             template = item.template;
             if (!item.type && defaults.type) item = merge(defaults.type, item);
-            item = merge(types[id], item);
+            item = merge(this.types[id], item);
           }
         }
         else if (typeof item === 'string') {
-          if (types[item] !== undefined) {
+          if (this.types[item] !== undefined) {
             id = item;
-            item = merge(types[item], defaults.type);
+            item = merge(this.types[item], defaults.type);
           }
           else {
             if (defaults.type === undefined) continue;  // todo take care of undefined types
@@ -268,19 +264,11 @@ $.fn.page = function(options, callback)
           item = defaults;
           item.array = array;
         }
-        if (parent_field.inherit) {
-          for (var i in parent_field.inherit) {
-            var key = parent_field.inherit[i];
-            var inherited = {};
-            inherited[key] = parent_field[key];
-            item = merge(inherited, item);
-          }
-        }
         if (path)
           item.path = path + '/' + id;
         parent.replace(regex,new_item_html+'$1');
         if (!template) item.template = defaults.template;
-        var created = this.create(item, id, types);
+        var created = this.create(item, id, parent_field);
         item = created[0];
         var obj = created[1];
         var templated = this.get_template(item.template || defaults.template, item);
@@ -359,12 +347,25 @@ $.fn.page = function(options, callback)
       return child;
     },
 
-    create: function(field, id, types)
+    inherit_parent: function(parent, field)
     {
-      if (!types) types = this.types;
-      field.code = id;
+      if (!parent || !parent.inherit) return field;
+      for (var i in parent.inherit) {
+        var key = parent.inherit[i];
+        var inherited = {};
+        inherited[key] = parent[key];
+        field = merge(inherited, field);
+      }
+      return field;
+    },
+
+    create: function(field, id, parent)
+    {
+      field.id = id;
       field.page_id = this.options.page_id;
       field = this.merge_type(field);
+      field = this.inherit_parent(parent,field);
+
       if (!field.name) field.name = toTitleCase(id.replace(/[_\/]/g, ' '));
       field.key = page.options.key;
       if (!field.array) this.expand_fields(id, field);
@@ -375,11 +376,11 @@ $.fn.page = function(options, callback)
       assert(field.html, "Invalid HTML for "+id);
       field.html.replace(/\$tag(\W)/, field.tag+'$1');
       var obj = $(field.html);
-      var reserved = ['code', 'create', 'css', 'script', 'name', 'desc', 'data'];
+      var reserved = ['id', 'create', 'css', 'script', 'name', 'desc', 'data'];
       this.set_attr(obj, field);
       this.set_class(obj, field);
       this.set_style(obj, field);
-      var values = $.extend({}, this.globals, types, field);
+      var values = $.extend({}, this.globals, this.types, field);
       var matches = getMatches(obj.html(), /\$(\w+)/g);
       for (var i = 0; i< matches.length; ++i) {
         var code = matches[i];
@@ -396,9 +397,9 @@ $.fn.page = function(options, callback)
         }
 
         if ($.isArray(value)) {
-          if (types[code] !== undefined)
-            value = $.merge($.merge([], types[code]), value);
-          this.append_contents(obj, field, code, value, types);
+          if (this.types[code] !== undefined)
+            value = $.merge($.merge([], this.types[code]), value);
+          this.append_contents(obj, field, code, value);
           continue;
         }
 
@@ -409,11 +410,11 @@ $.fn.page = function(options, callback)
         }
 
         value.path = field.path+'/'+code;
-        var result = this.create(value, code, types);
+        var result = this.create(value, code, field);
         this.replace(obj, result[1], code);
       }
-
-      page.init_links(obj, field, types);
+      if (obj.attr('id') === '') obj.removeAttr('id');
+      page.init_links(obj, field);
       obj.on('loaded', function() {
         page.init_events(obj, field);
       });
@@ -434,7 +435,7 @@ $.fn.page = function(options, callback)
       var values = data.fields.values || data.values;
       data.fields.path = data.path;
       data.fields.sub_page = false;
-      var result = page.create(data.fields, this.id, data.types);
+      var result = page.create(data.fields, this.id);
       var object = result[1];
       page.object = object;
       data.fields = result[0];
@@ -466,7 +467,7 @@ $.fn.page = function(options, callback)
 
       object.on('create_child', function(event, field, parent) {
         if (parent === undefined) parent = event.trigger;
-        var result = page.create(field, field.code, page.types);
+        var result = page.create(field, field.id);
         var child = result[1];
         child.appendTo(parent);
         child.value(field.value);
@@ -501,7 +502,7 @@ $.fn.page = function(options, callback)
       var params;
       if ($.isPlainObject(event)) {
         sink = event.sink;
-        this.expand_fields(field.code, event.parameters);
+        this.expand_fields(field.id, event.parameters);
         params = event.parameters;
         event = event.name;
       }
@@ -535,7 +536,7 @@ $.fn.page = function(options, callback)
         if (object.find('[loaded]').exists()) {
           object.find('[loaded]').replaceWith('$'+name);
         }
-        page.append_contents(object, field, name, result, types, defaults);
+        page.append_contents(object, field, name, result, defaults);
         if (page.loading === 0)
           page.parent.trigger('loaded', result);
       });
