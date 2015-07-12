@@ -306,6 +306,7 @@ line:
 link:
   type: control
   tag: a
+  attr: { title: $desc }
 
 list_item:
   type: control
