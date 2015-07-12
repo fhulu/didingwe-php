@@ -150,15 +150,19 @@ $.fn.page = function(options, callback)
     get_template: function(template, item)
     {
       if (template === undefined || item.type === 'hidden' || item.template === "none" || template == '$field') return '$field';
-      var untyped = this.merge_type(item);
-      untyped.type = undefined;
-      if (typeof template === 'string')
+      var untyped = $.copy(this.merge_type(item));
+      if (typeof template === 'string') {
+        untyped.type = undefined;
         template = $.extend({}, untyped, { html: template});
-      else {
-        untyped.html = template.html;
-        template = merge(template, untyped);
       }
-      return this.create(template)[1];
+      else {
+        template = this.merge_type(template);
+        template.type = undefined;
+        template = merge(untyped, template);
+      }
+      template = this.create(template)[1];
+      template.removeAttr('id');
+      return template;
     },
 
     create_sub_page: function(field)
@@ -321,6 +325,7 @@ $.fn.page = function(options, callback)
           obj.attr(attr.name, attr.value.replace(/\$(\w+)/g, value));
         }
       });
+      if (obj.attr('id') === '') obj.removeAttr('id');
     },
 
     set_class: function(obj, field)
@@ -356,20 +361,21 @@ $.fn.page = function(options, callback)
 
     create: function(field, id, types)
     {
+      if (!types) types = this.types;
       field.code = id;
       field.page_id = this.options.page_id;
       field = this.merge_type(field);
       if (!field.name) field.name = toTitleCase(id.replace(/[_\/]/g, ' '));
       field.key = page.options.key;
       if (!field.array) this.expand_fields(id, field);
-      if (field.page)
+      if (field.sub_page)
         return [field, page.create_sub_page(field)];
 
       if (!field.html) console.log("No html for ", field);
       assert(field.html, "Invalid HTML for "+id);
-      field.html.replace('$tag', field.tag);
+      field.html.replace(/\$tag(\W)/, field.tag+'$1');
       var obj = $(field.html);
-      var reserved = ['code','create','css','script','name', 'desc', 'data'];
+      var reserved = ['code', 'create', 'css', 'script', 'name', 'desc', 'data'];
       this.set_attr(obj, field);
       this.set_class(obj, field);
       this.set_style(obj, field);
@@ -427,6 +433,7 @@ $.fn.page = function(options, callback)
       this.id = options.page_id = data.path.replace('/','_');
       var values = data.fields.values || data.values;
       data.fields.path = data.path;
+      data.fields.sub_page = false;
       var result = page.create(data.fields, this.id, data.types);
       var object = result[1];
       page.object = object;
@@ -732,6 +739,8 @@ $.fn.page = function(options, callback)
         params.key = field.key;
       }
       var tmp = $('body');
+      tmp.page(params);
+
       var id = path.replace('/','_');
       tmp.on('read_'+id, function(event, object, options) {
         object.attr('title', options.name);
@@ -741,7 +750,6 @@ $.fn.page = function(options, callback)
         object.dialog(options);
         if (callback) callback();
       });
-      tmp.page(params);
     },
 
     closeDialog: function(dialog, message)

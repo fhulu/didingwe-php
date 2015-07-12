@@ -1,53 +1,58 @@
 # html controls
 ---
 ajax_result:
+  type: control
+  tag: span
+  class: [ajax_result]
+  style: { display: none }
   html: >
     <span class=ajax_result style="display: none;"></span>
 
-action_control:
+actioner:
   type: control
   class: [action]
 
 blank:
-  html: <span><span>
+  type: control
+  tag: span
+  text: ""
 
 button:
-  type: action_control
-  html: <button>$name</button>
-
+  type: actioner
+  tag: button
+  attr: { title: $desc }
 
 captioned_image:
-  html: >
-    <div id="$code" class=captioned-image>
-      <img src="$src" title="$title"></img>
-      <p>$caption</p>
-    </div>
+  type: control
+  class: [captioned-image]
+  text: |
+    <img src="$src" title="$title"></img>
+    <p>$caption</p>
   title: $name
   src: $code.png
   caption: $name
 
 checkbox:
-  html: <input id="$code" title="$desc" type='checkbox'></input>
+  type: input
+  type: checkbox
 
 container:
   type: control
-  html: <div>$contents</div>
+  tag: div
+  text: $contents
   contents: []
 
 control:
-  attr:
-    id: $code
-    title: $desc
+  html: <$tag>$text</$tag>
+  tag: div
+  attr: { id: $code }
   class: []
-
-control_template:
-  desc: ""
-  attr: {title: $desc }
-  class: []
+  text: $name
 
 datatable:
   type: control
-  html: <table><tbody></tbody></table>
+  tag: table
+  text: <tbody></tbody>
   class: [data]
   create: datatable
   script: /common/datatable.js
@@ -176,18 +181,20 @@ google_map:
    - pink
 
 h1:
-  type: control
-  html: <h1>$name</h1>
-  name: $code
+  type: heading
 
 h2:
-  type: control
-  html: <h2>$name</h2>
-  name: $code
+  type: heading
+  tag: h2
 
 h3:
+  type: heading
+  tag: h3
+
+heading:
+  tag: h1
   type: control
-  html: <h3>$name</h3>
+  name: $code
 
 hidden:
   type: input
@@ -195,8 +202,10 @@ hidden:
 
 image:
   type: control
-  html: <img></img>
+  tag: img
   attr: {src: $src}
+  src: $code.png
+  text: ""
 
 info_line:
   html: |
@@ -228,20 +237,22 @@ info_page:
 
 info_text:
   type: control
-  html: <div>$value</div>
+  text: $value
   class: [info_text]
 
 input:
   type: control
-  html: <input></input>
+  tag: input
+  text: ""
   value: ""
   attr:
     type: text
     value: $value
 
 inline_input:
-  type: control_template
-  html: <a>$field<span class="input">$desc</span></a>
+  type: template
+  tag: a
+  text: $field<span class="input">$desc</span>
   class: [input]
   attr:
     placeholder: "$name"
@@ -270,23 +281,21 @@ input_page_header:
 
 label:
   type: control
-  html: <label>$name</label>
+  tag: label
 
 labelled_input:
-  type: control_template
+  type: template
   class: [labelled-input]
-  html: |
-    <div>
+  text: |
       <span class=label>$name$label_suffix</span>
       <a class=input>
         $field
         <span class=hint>$desc</span>
       </a>
-    </div>
   label_suffix: ":"
 
 labelled_input_page:
-  type: page_control
+  type: page
   html: |
     <div>
       <p class="desc">$desc</p>
@@ -304,64 +313,67 @@ labelled_input_page:
     - type: submit
 
 line:
-  html: <hr></hr>
+  tag: hr
+  text: ""
 
 link:
   type: control
-  html: <a>$name</a>
+  tag: a
 
 list_item:
   type: control
-  html: <li>$name</li>
+  tag: li
 
 list_text:
-  html: <li>$code</li>
+  tag: li
+  text: $code
 
 menu:
-  type: control
-  html: <ul>$items</ul>
+  type: container
+  tag: ul
+  contents: $items
   items:
     - template: menu_item
     - type: link
     - action: redirect
 
 menu_item:
-  html: <li>$field</li>
+  type: template
+  tag: li
 
 one_cell_row:
-  html: <tr><td>$field</td></tr>
+  type: template
+  text: <td>$field</td>
 
 one_column_table:
-  type: control
-  html: <table>$items</table>
+  type: container
+  tag: table
+  contents: $items
   items:
     - template: one_cell_row
 
 one_row_table:
   type: control
-  html: <table><tr>$items</tr></table>
+  tag: table
+  text: <tr>$items</tr>
   items:
     - template: table_cell
 
 p:
   type: paragraph
-  html: <p>$name</p>
 
 page:
-  page: $code
-
-page_control:
   type: control
-  attr:
-    page: $code
-    title: $name
+  attr: { title: $name }
+  sub_page: true
+  class: [page]
 
 page_title:
   html: <title>$name</title>
 
 paragraph:
   type: control
-  html: <p>$name</p>
+  tag: p
 
 password_input:
   type: input
@@ -382,7 +394,7 @@ print:
   target: _blank
 
 question_input:
-  type: control_template
+  type: template
   class: [question_input]
   attr: { name: $name}
   html: |
@@ -394,7 +406,7 @@ question_input:
     </div>
 
 question_input_page:
-  type: page_control
+  type: page
   html: |
     <div>
         <h2>$name</h2>
@@ -416,23 +428,25 @@ radiobox:
   type: input
   attr: { type: radio, value: $code}
 
-radiobox_leftlabel:
-  type: control_template
+radiobox_template:
+  type: template
   class: [radio]
-  html: <div><span>$name</span>$field</div>
+
+radiobox_leftlabel:
+  type: radiobox_template
+  text: <span>$name</span>$field
 
 radiobox_rightlabel:
-  type: control_template
-  class: [radio]
-  html: <div>$field<span>$name</span></div>
+  type: radiobox_template
+  text: $field<span>$name</span>
 
 radiobox_toplabel:
-  type: control_template
-  class: [radio]
-  html: <div><p>$name</p>$field</div>
+  type: radiobox_template
+  text: <p>$name</p>$field
 
 radiogroup:
-  html: <div> $options</div>
+  type: control
+  text: $options
   group: $code
   inherit: [group]
   options:
@@ -444,11 +458,13 @@ right_text:
   html: $field <p class=right-text>$name</p>
 
 section_heading:
-  html: <p class="section-heading">$name</p>
+  type: template
+  tag: p
+  class: [section-heading]
 
 span:
   type: control
-  html: <span>$name</span>
+  tag: span
 
 submit:
   type: button
@@ -458,11 +474,10 @@ submit:
   action: post
 
 sub_menu:
-  html: |
-    <li>
-      <a id="$code">$name</a>
-      <span>$sub_items</span>
-    </li>
+  type: template
+  text: |
+    <a id="$code">$name</a>
+    <span>$sub_items</span>
   action: " "
   template: $field
   sub_items:
@@ -471,12 +486,24 @@ sub_menu:
 
 table:
   type: control
-  html: <table><thead></thead><tbody>$rows</tbody></table>
+  tag: table
+  head: $table_head
+  body: $table_body
+  text: $head$body
   rows:
     - template: table_row
 
+table_head:
+  type: template
+  tag: thead
+
+table_body:
+  type: template
+  tag: tbody
+
 table_cell:
-  html: <td>$field</td>
+  type: template
+  tag: td
 
 table_input:
   html: |
@@ -491,7 +518,7 @@ table_input:
     </tr>
 
 table_input_page:
-  type: page_control
+  type: page
   html: |
     <div>
       $input_page_header
@@ -506,19 +533,25 @@ table_input_page:
   inputs: [template: table_input]
 
 table_page:
-  type: page_control
+  type: page
   html: <table>$children</table>
   children: [template: one_cell_row]
 
 table_row:
-  html: <tr>$columns</tr>
+  type: control
+  tag: td
+  text: $columns
   columns: [template: table_cell]
+
+template:
+  type: control
+  text: $field
 
 text: { type: input }
 
 textarea:
   type: control
-  html: <textarea></textarea>
+  tag: textarea
 
 text_input: {type: input }
 
