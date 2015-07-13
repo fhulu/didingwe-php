@@ -2,7 +2,7 @@
 // Author     : Fhulu Lidzhade
 // Date       : 17/06/2012   20:39
 // Description:
-//   table.js defines a jquery ui extension enhancing html tables. It adds featues 
+//   table.js defines a jquery ui extension enhancing html tables. It adds featues
 //   such as:
 //    1) sorting by field on column header click
 //    2) paging with adjustable page size
@@ -30,25 +30,18 @@
       name: 'Untitled',
       flags: [],
     },
-    
+
     _create: function()
     {
       if (this.options.sort) this.options.flags.push('sortable');
-      this.expandFields(this.options.fields);
+      //this.expandFields(this.options.fields);
       this.expandFields(this.options.row_actions);
-      this.params = { page_num: 1}; 
-      var exclude = [ 'create', 'action', 'css', 'code', 'content', 'disabled',
-          'html','name', 'page_id', 'position','script','slideSpeed','sql'];
-      for (var key in this.options) {
-        if (exclude.indexOf(key) >= 0) continue;
-        var val = this.options[key];
-        if ($.isPlainObject(val) || $.isArray(val)) continue;
-        this.params[key] = val;
-      }
+      this._promote_fields(this.options.fields);
+      this._init_params();
       if (this.hasFlag('show_titles') || this.hasFlag('show_header')) {
         $('<thead></thead>').prependTo(this.element);
         if (this.hasFlag('show_header')) this.showHeader();
-        if (this.hasFlag('show_titles')) this.showTitles();
+        //if (this.hasFlag('show_titles')) this.showTitles();
       }
       this.showFooterActions();
       this.load();
@@ -57,22 +50,43 @@
         self.load(args);
       })
     },
-   
+
+    _init_params: function()
+    {
+      this.params = { page_num: 1};
+      var exclude = [ 'create', 'action', 'css', 'code', 'content', 'disabled',
+          'html','name', 'page_id', 'position','script','slideSpeed'];
+      for (var key in this.options) {
+        if (exclude.indexOf(key) >= 0) continue;
+        var val = this.options[key];
+        if ($.isPlainObject(val) || $.isArray(val)) continue;
+        this.params[key] = val;
+      }
+    },
+
+    _promote_fields: function(fields)
+    {
+      $.each(fields, function(i, val) {
+        if (!$.isPlainObject(val))
+          fields[i] = $.toObject(val);
+      });
+    },
+
     refresh: function(args)
     {
       this.element.trigger('refresh', [this.element, args]);
     },
-    
+
     head: function()
     {
       return this.element.children('thead').eq(0);
     },
-    
+
     body: function()
     {
       return this.element.children('tbody').eq(0);
     },
-    
+
     load: function(args)
     {
       var start = new Date().getTime();
@@ -85,9 +99,9 @@
       }
       data.path = data.path +'/load';
       $.json('/', {data: data}, function(data) {
-        if (data._responses) 
+        if (data._responses)
           self.element.trigger('server_response', data);
-        self.element.trigger('refreshed', [data]); 
+        self.element.trigger('refreshed', [data]);
         var end = new Date().getTime();
         console.log("Load: ", end - start);
         self.populate(data);
@@ -96,7 +110,7 @@
         console.log("Populate: ", new Date().getTime() - end);
       });
     },
-    
+
     populate: function(data)
     {
       if (data === undefined || data === null) {
@@ -107,28 +121,28 @@
       if (this.options.page_size !== undefined) this.showPaging(parseInt(data.total));
       this.adjustActionsHeight();
     },
-    
-        
+
+
     hasFlag: function(flag)
     {
       return this.options.flags.indexOf(flag) >= 0;
     },
-    
+
     hasHeader: function()
     {
       var opts = this.options;
       return opts.name !== undefined && opts.page_size !== undefined;
     },
-    
+
     showHeader: function()
-    {      
+    {
       var head = this.head();
       head.html('');
       var tr = $('<tr class=header></tr>').appendTo(head);
       var th = $('<th></th>').appendTo(tr);
       if (this.options.name !== undefined)
         $('<div class=heading></div>').html(this.options.name).appendTo(th);
-      
+
       var self = this;
       if (this.hasFlag('filter')) {
         this.createAction('filter').appendTo(th);
@@ -136,7 +150,7 @@
       }
       if (this.options.page_size !== undefined) this.createPaging(th);
     },
-    
+
     createPaging: function(th)
     {
       var paging = $('<div class=paging></div>').appendTo(th);
@@ -154,7 +168,7 @@
       this.createAction('goto_prev').attr('disabled','').appendTo(paging);
       $('<input id=page_num type=text></input>').val(1).appendTo(paging);
       this.createAction('goto_next').attr('disabled','').appendTo(paging);
-      this.createAction('goto_last').attr('disabled','').appendTo(paging);   
+      this.createAction('goto_last').attr('disabled','').appendTo(paging);
       this.bindPaging();
     },
 
@@ -166,12 +180,12 @@
       invoker.siblings('#page_num').val(number);
       this.refresh();
     },
-    
+
     page: function(invoker, offset)
-    {      
+    {
       this.pageTo(invoker, parseInt(invoker.siblings('#page_num').val())+offset);
     },
-    
+
     bindPaging: function()
     {
       var self = this;
@@ -181,8 +195,8 @@
           self.params.page_size = $(this).val();
           self.refresh();
         }
-      }); 
-      
+      });
+
       var page = head.find('#page_num');
       this.element.on('goto_first', function(e, invoker) {
         self.pageTo(invoker, 1);
@@ -199,7 +213,7 @@
         self.pageTo(invoker, Math.floor(total/size)+1);
       })
     },
-    
+
     showPaging: function(total)
     {
       var head = this.head();
@@ -213,36 +227,37 @@
         prev.attr('disabled','');
         head.find('#page_num').val(1);
       }
-      
+
       if (size >= total) head.find('#page_num').val(1);
 
       head.find('#page_from').text((page-1)*size+1);
       head.find('#page_to').text(Math.min(page*size,total));
-      if (page >= total/size) 
+      if (page >= total/size)
         next.attr('disabled','');
       else
         next.removeAttr('disabled');
-        
+
       if (page > 1) prev.removeAttr('disabled');
     },
-    
+
     bindSort: function(th, field)
     {
       var self = this;
       th.click(function() {
         th.siblings().attr('sort','');
         var order = 'asc';
-        if (self.params.sort === field) 
+        if (self.params.sort === field)
           order = th.attr('sort')==='asc'?'desc':'asc';
         th.attr('sort', order);
         self.params.sort = field;
         self.params.sort_order = order;
         self.refresh();
-      });        
+      });
     },
-    
+
     showTitles: function()
-    {      
+    {
+
       var head = this.head();
       var tr = head.find('.titles').empty();
       if (!tr.exists()) tr = $('<tr class=titles></tr>').appendTo(head);
@@ -258,7 +273,7 @@
         if ($.isArray(field.name)) field.name = field.name[field.name.length-1];
         th.html(field.name || toTitleCase(code));
         if (self.hasFlag('sortable')) {
-          if (code === self.params.sort) 
+          if (code === self.params.sort)
             th.attr('sort', self.params.sort_order);
           else
             th.attr('sort','');
@@ -272,14 +287,32 @@
       };
       this.spanColumns(head.find('.header th'));
     },
-    
+
     spanColumns: function(td)
     {
       var tr = this.head().find('.titles');
       if (!tr.exists()) tr = this.body().children('tr').eq(0);
       td.attr('colspan', tr.children().length);
     },
-    
+
+    showRow: function(data)
+    {
+      var body = this.body();
+      var fields =  [].concat(this.options.fields);
+      for (var i in fields) {
+        var val = $.firstElement(fields[i]);
+        val.value = data[i];
+      }
+      var options = {
+        fields: { type: 'table_row', columns: fields},
+        types: this.options.types,
+        path: ""
+      };
+      console.log("reset", fields);
+      body.page(options);
+//      var tmp = $('<tr>$</tr>');//.appendTo(body);
+    },
+
     showData: function(data)
     {
       var self = this;
@@ -288,6 +321,8 @@
       var fields = this.options.fields;
       var tr;
       for(var i in data.rows) {
+        this.showRow(data.rows[i]);
+        continue;
         var row = data.rows[i];
         if (tr) {
           self.bindRowActions(tr);
@@ -305,9 +340,9 @@
             cell = cell.split(',');
             for (var l in cell) {
               var attr = cell[l].split(':');
-              if (attr[0] === 'class') 
+              if (attr[0] === 'class')
                 tr.addClass(attr[1]);
-              else 
+              else
                 tr.attr(attr[0],attr[1]);
             };
             continue;
@@ -318,13 +353,13 @@
             tr.attr('_key', key);
           }
           if (field.hide) continue;
-          
+
           var td = $('<td></td>').appendTo(tr);
           if (field.code === 'actions') {
             self.setRowActions(tr, td, cell);
             continue;
           }
-          
+
           self.showCell(field, td, cell, key);
           if (expanded) continue;
           expanded = true;
@@ -336,11 +371,11 @@
           self.bindRowActions(tr);
           tr.appendTo(body);
         }
-      this.spanColumns(this.head().find('.header>th'));      
+      this.spanColumns(this.head().find('.header>th'));
     },
-    
+
     showCell: function(field, td, value, key)
-    {      
+    {
       var entity;
       if (!$.valid(field.html)) {
         td.html(value);
@@ -367,7 +402,7 @@
         entity.customCreate(create_opts);
       }
     },
-    
+
     expandFields: function(fields)
     {
       if (!fields) return;
@@ -396,19 +431,19 @@
         }
         else if (typeof item === 'string') {
           id = item;
-          if (types[item] !== undefined) 
+          if (types[item] !== undefined)
             item = merge(types[item], default_type);
-          else if (default_type !== undefined) 
+          else if (default_type !== undefined)
             item = $.copy(default_type);
           else
             item = {};
         }
-        
+
         item.code = id;
         fields[i] = item;
       }
     },
-    
+
     bindAction: function(obj, props, sink, path)
     {
       if (sink === undefined) sink = this.element;
@@ -428,16 +463,16 @@
         listener.trigger('child_action', [obj,options]);
       });
     },
-    
+
     findField: function(name, fields)
     {
       for (var i in fields) {
         if (name === fields[i].code) return fields[i];
       }
     },
-    
+
     createAction: function(action, actions, sink, path)
-    { 
+    {
       var props;
       if (actions) {
         props = this.findField(action, actions);
@@ -460,7 +495,7 @@
       this.bindAction(div, props, sink, path);
       return div;
     },
-    
+
     setRowActions: function(tr, td, row_actions)
     {
       if (!$.isArray(row_actions)) row_actions = row_actions.split(',');
@@ -479,13 +514,13 @@
       };
       //this.bindRowActions(tr);
     },
-    
+
     slide: function(parent)
     {
        parent.find('.slide').animate({width:'toggle'}, this.options.slideSpeed);
     },
-    
-    bindRowActions: function(tr) 
+
+    bindRowActions: function(tr)
     {
       var self = this;
       var key = tr.attr('_key');
@@ -531,7 +566,7 @@
 //        alert('deleted successfullyy ' + JSON.toString(result));
       });
     },
-    
+
     adjustActionsHeight: function()
     {
       this.element.find("tbody>tr").each(function() {
@@ -540,7 +575,7 @@
         row.find('.slide,[action]').height(height).css('line-height', height);
       });
     },
-    
+
     updateWidths: function(row, widths)
     {
       row.children().each(function(i) {
@@ -551,7 +586,7 @@
           widths[i] = width;
       })
     },
-    
+
     getWidths: function()
     {
       var widths = [];
@@ -563,7 +598,7 @@
       });
       return widths;
     },
-    
+
     adjustWidths: function(editor)
     {
       var widths = this.getWidths();
@@ -580,7 +615,7 @@
       });
       editor.find('input:last-child').css('width','99%');
     },
-    
+
     createEditor: function(template, fields, type, cell)
     {
       var editables = this.options[type];
@@ -603,17 +638,17 @@
         $('<input type=text></input>').css('width','10px').appendTo(td);
         td.appendTo(editor);
       });
-      
-      editor.insertAfter(template); 
+
+      editor.insertAfter(template);
       this.adjustWidths(editor);
       return editor;
     },
-    
+
     createFilter: function()
     {
       var filter = this.head().find('.filter');
       if (filter.exists()) return filter;
-      
+
       var self = this;
       var titles = self.head().find('.titles');
       var fields = self.options.fields;
@@ -634,7 +669,7 @@
       });
       return filter;
     },
-    
+
     showFilter: function()
     {
       var filter = this.createFilter();
@@ -642,7 +677,7 @@
       if (filter.is(':visible'))
         this.adjustWidths(filter);
     },
-    
+
     showFooterActions: function()
     {
       var actions = this.options.footer_actions;
@@ -658,6 +693,6 @@
       }
       this.spanColumns(td);
     }
-    
+
   })
 }) (jQuery);

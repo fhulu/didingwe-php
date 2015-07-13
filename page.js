@@ -212,11 +212,13 @@ $.fn.page = function(options, callback)
       var new_item_name = '_new_'+name;
       var new_item_html = '<div id="'+new_item_name+'"></div>';
       var path = parent_field.path+'/'+name;
+      var parent_is_table = ['table','tr'].indexOf(parent_field.tag) >= 0;
       for(var i in items) {
         var item = items[i];
         var id;
         var array;
         var template;
+        var type;
         if ($.isPlainObject(item)) {
           if (this.set_defaults(defaults, item)) continue;
           if (item.id === undefined) {
@@ -243,6 +245,7 @@ $.fn.page = function(options, callback)
             template = item.template;
             if (!item.type && defaults.type) item = merge(defaults.type, item);
             item = merge(this.types[id], item);
+            type = item.type;
           }
         }
         else if (typeof item === 'string') {
@@ -266,19 +269,24 @@ $.fn.page = function(options, callback)
         }
         if (path)
           item.path = path + '/' + id;
-        parent.replace(regex,new_item_html+'$1');
-        if (!template) item.template = defaults.template;
+        if (!template) template = item.template = defaults.template;
+        var is_table = parent_is_table || ['tr','td'].indexOf(item.tag) >= 0 || ['tr','td'].indexOf(template.tag) >= 0;
+        if (!is_table)
+           parent.replace(regex,new_item_html+'$1');
         var created = this.create(item, id, parent_field);
         item = created[0];
         var obj = created[1];
-        var templated = this.get_template(item.template || defaults.template, item);
+        var templated = this.get_template(template, item);
         if (templated === '$field') {
           templated = obj;
         }
         else {
           this.replace(templated, obj, id, 'field');
         }
-        parent.find('#'+new_item_name).replaceWith(templated);
+        if (is_table)
+          parent.append(templated);
+        else
+          parent.find('#'+new_item_name).replaceWith(templated);
         this.init_events(obj, item);
         if (item.hide || item.show === false) {
           templated.hide();
@@ -287,7 +295,7 @@ $.fn.page = function(options, callback)
           $(this).is(':visible')? $(this).hide(): $(this).show();
         });
       }
-      if (!loading_data)
+      if (!loading_data && !parent_is_table)
         parent.replace(regex, '');
     },
 
@@ -372,7 +380,7 @@ $.fn.page = function(options, callback)
       if (field.sub_page)
         return [field, page.create_sub_page(field)];
 
-      if (!field.html) console.log("No html for ", field);
+      if (!field.html) console.log("No html for ", id, field);
       assert(field.html, "Invalid HTML for "+id);
       field.html.replace(/\$tag(\W)/, field.tag+'$1');
       var obj = $(field.html);
@@ -381,7 +389,7 @@ $.fn.page = function(options, callback)
       this.set_class(obj, field);
       this.set_style(obj, field);
       var values = $.extend({}, this.globals, this.types, field);
-      var matches = getMatches(obj.html(), /\$(\w+)/g);
+      var matches = getMatches(field.html, /\$(\w+)/g);
       for (var i = 0; i< matches.length; ++i) {
         var code = matches[i];
         var value;
@@ -441,7 +449,7 @@ $.fn.page = function(options, callback)
       data.fields = result[0];
       data.values = values;
       assert(object !== undefined, "Unable to create page "+this.id);
-      object.addClass('page').appendTo(parent);
+      object.appendTo(parent);
       parent.trigger('read_'+this.id, [object, data.fields]);
 
       if (!page.loading)
