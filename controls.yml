@@ -313,6 +313,7 @@ list_item:
   tag: li
 
 list_text:
+  type: control
   tag: li
   text: $id
 
@@ -350,6 +351,7 @@ one_row_table:
 p:
   type: control
   tag: p
+  name: $id
 
 page:
   type: control
