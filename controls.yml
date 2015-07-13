@@ -1,45 +1,51 @@
 # html controls
 ---
-
-ajax_result:
-  html: >
-    <span class=ajax_result style="display: none;"></span>
+actioner:
+  type: control
+  class: [action]
 
 blank:
-  html: <span><span>
+  type: template
+  tag: span
+  text: ""
 
 button:
-  html: <button id="$code" title="$desc" class=action>$name</button>
+  type: actioner
+  tag: button
+  attr: { title: $desc }
 
 captioned_image:
-  html: >
-    <div id="$code" class=captioned-image>
-      <img src="$src" title="$title"></img>
-      <p>$caption</p>
-    </div>
+  type: control
+  class: [captioned-image]
+  text: |
+    <img src="$src" title="$title"></img>
+    <p>$caption</p>
   title: $name
-  src: $code.png
+  src: $id.png
   caption: $name
 
 checkbox:
-  html: <input id="$code" title="$desc" type='checkbox'></input>
+  type: input
+  type: checkbox
 
 container:
-  html: <div id="$code">$contents</div>
+  type: control
+  tag: div
+  text: $contents
   contents: []
 
 control:
-  html: <$tag id="$code" title="$desc">$text<$tag>
-
-container_without_id:
-  html: <div>$contents</div>
-  contents: []
+  html: <$tag>$text</$tag>
+  tag: div
+  attr: { id: $id }
+  class: []
+  text: $name
 
 datatable:
-  html: |
-    <table id="$code" class=data>
-      <tbody></tbody>
-    </table>
+  type: control
+  tag: table
+  text: <tbody></tbody>
+  class: [data]
   create: datatable
   script: /common/datatable.js
   css: /datatable.css
@@ -110,15 +116,18 @@ disabled_input:
 dropdown:
   unselected: --Select $name--
   html: |
-    <select id="$code">
+    <select>
       <option value=''>$unselected</option>
       $options
     </select>
+  inherit: [$unselected]
   options:
     - type: dropdown_option
 
 dropdown_option:
-  html: <option value="$code">$name</option>
+  type: control
+  html: <option>$name</option>
+  attr: { value: $id }
 
 element:
   text: ""
@@ -134,7 +143,7 @@ export:
   target: _blank
 
 file:
-  html: <div id="$code" name="$code"></div>
+  html: <div id="$id" name="$id"></div>
   create: file_uploader
   script: /common/file_uploader.js,/common/jquery.form.js
   css: /common/file_uploader.css
@@ -142,13 +151,15 @@ file:
   max_size: 100
 
 form:
-  html: <form id="$code"></form>
+  type: control
+  html: <form></form>
 
 #footer_actions:
 #  - type: submit
 
 google_map:
-  html: <div id='$code'></div>
+  type: control
+  html: <div></div>
   create: mapper
   script: /common/map.js
   zoom: 5
@@ -162,21 +173,31 @@ google_map:
    - pink
 
 h1:
-  html: <h1 id="$code">$name</h1>
-  name: $code
+  type: heading
 
 h2:
-  html: <h2 id="$code">$name</h2>
-  name: $code
+  type: heading
+  tag: h2
 
 h3:
-  html: <h3 id="$code">$name</h3>
+  type: heading
+  tag: h3
+
+heading:
+  tag: h1
+  type: control
+  name: $id
 
 hidden:
-  html: <input id='$code' type=hidden value='$value'></input>
+  type: input
+  attr: { type: hidden }
 
 image:
-  html: <img id="$code" src="$src" title="$desc"></img>
+  type: control
+  tag: img
+  attr: {src: $src}
+  src: $id.png
+  text: ""
 
 info_line:
   html: |
@@ -186,8 +207,9 @@ info_line:
     </div>
 
 info_page:
+    type: control
     html: |
-      <div id="$code" page="$name" title="$name">
+      <div>
         <p class="desc">$desc</p>
         <span class=ajax_result style="display: none;"></span>
         <div class="form">
@@ -195,25 +217,33 @@ info_page:
           <p></p>$actions
         </div>
       </div>
+    attr:
+      page: $name
+      title: $name
     lines:
       - type: info_text
       - template: info_line
     actions:
       - type: submit
 
-info_text:
-  html: <div id='$code' class='info-text'>$value</div>
 
-input:
-  html: <input id="$code" type="text" value="$value"></input>
+info_text:
+  type: control
+  text: $value
+  class: [info_text]
 
 inline_input:
-  html: <a class=input>$field<span class="input">$desc</span></a>
-  attr: placeholder="$name"
+  type: template
+  tag: a
+  text: $field<span class="input">$desc</span>
+  class: [input]
+  attr:
+    placeholder: "$name"
 
 inline_input_page:
+  type: control
   html: |
-    <div id='$code'>
+    <div>
       $input_page_header
       <div class="form">
         $inputs
@@ -223,93 +253,119 @@ inline_input_page:
   inputs:
     - template: inline_input
 
-input_page_header:
-  html: |
-    <div id="$code" page="$name">
-      <p class="desc">$desc</p>
-      <span class=ajax_result style="display: none;"></span>
-    </div>
+input:
+  type: control
+  tag: input
+  text: ""
+  value: ""
+  attr:
+    type: text
+    value: $value
+
+input_page:
+  type: page
+  inherit: [desc]
+  loading: { type: processing }
+  synopsis: { type: section_heading, text: $desc}
+  inputs:
+    - type: input
+  actions:
+    - type: submit
+
 label:
-  html: <label id='$code'>$name</label>
+  type: control
+  tag: label
 
 labelled_input:
-  html: |
-    <div class=labelled-input>
+  type: template
+  class: [labelled-input]
+  text: |
       <span class=label>$name$label_suffix</span>
       <a class=input>
         $field
         <span class=hint>$desc</span>
       </a>
-    </div>
   label_suffix: ":"
 
 labelled_input_page:
-    html: |
-      <div id="$code" page="$name" title="$name">
-        <p class="desc">$desc</p>
-        <span class=ajax_result style="display: none;"></span>
-        <div class="form">
-          $inputs
-          <p></p>$actions
-        </div>
-      </div>
-    inputs:
-      - type: input
-      - template: labelled_input
-      - mandatory: "*"
-    actions:
-      - type: submit
+  type: input_page
+  text: |
+    $loading
+    $synopsis
+    <div class="form">
+      $inputs
+      <p></p>$actions
+    </div>
+  inputs:
+    - template: labelled_input
 
 line:
-  html: <hr></hr>
+  tag: hr
+  text: ""
 
 link:
-  html: <a id="$code" title="$desc">$name</a>
+  type: control
+  tag: a
+  attr: { title: $desc }
 
 list_item:
-  html: <li id="$code">$name</li>
+  type: control
+  tag: li
 
 list_text:
-  html: <li>$code</li>
+  tag: li
+  text: $id
 
 menu:
-  html: <ul id="$code">$items</ul>
+  type: container
+  tag: ul
+  contents: $items
   items:
     - template: menu_item
     - type: link
     - action: redirect
 
 menu_item:
-  html: <li>$field</li>
+  type: template
+  tag: li
 
 one_cell_row:
-  html: <tr><td>$field</td></tr>
+  type: template
+  text: <td>$field</td>
 
 one_column_table:
-  html: <table id='$code' title="$name">$items</table>
+  type: container
+  tag: table
+  contents: $items
   items:
     - template: one_cell_row
 
 one_row_table:
-  html: <table id='$code'><tr>$items</tr></table>
+  type: control
+  tag: table
+  text: <tr>$items</tr>
   items:
     - template: table_cell
 
 p:
-  html: <p id="$code">$name</p>
+  type: control
+  tag: p
 
 page:
-  page: $code
-
+  type: control
+  attr: { title: $name }
+  sub_page: true
+  class: [page]
 
 page_title:
   html: <title>$name</title>
 
 paragraph:
-  html: <p id="$code">$name</p>
+  type: p
 
 password_input:
-  html: <input type="password" id="$code" ></input>
+  type: input
+  attr: { type: password }
 
 plain:
   html: $name
@@ -325,9 +381,19 @@ print:
   call: datatable::pdf(context, $key)
   target: _blank
 
+processing:
+  type: template
+  tag: span
+  class: [ajax_result]
+  style: { display: none }
+
+
 question_input:
+  type: template
+  class: [question_input]
+  attr: { name: $name}
   html: |
-    <div class=question-input name="$name">
+    <div>
       <div class=question>$question</div>
       <a class=input>
         $field
@@ -335,38 +401,48 @@ question_input:
     </div>
 
 question_input_page:
-    html: |
-      <div id="$code" page="$name" title="$name">
-          <h2>$name</h2>
-        <p class="desc">$desc</p>
-        <span class=ajax_result style="display: none;"></span>
-        <div class="form">
-          $inputs
-          $actions
-        </div>
+  type: page
+  html: |
+    <div>
+        <h2>$name</h2>
+      <p class="desc">$desc</p>
+      <span class=ajax_result style="display: none;"></span>
+      <div class="form">
+        $inputs
+        $actions
       </div>
-    inputs:
-      - type: input
-      - template: question_input
-      - mandatory: "*"
-    actions:
-      - type: submit
+    </div>
+  inputs:
+    - type: input
+    - template: question_input
+    - mandatory: "*"
+  actions:
+    - type: submit
 
 radiobox:
-  html: <input title="$desc" type="radio" value="$code"></input>
+  type: input
+  attr: { type: radio, value: $id}
+
+radiobox_template:
+  type: template
+  class: [radio]
 
 radiobox_leftlabel:
-  html: <div class=radio><span>$name</span>$field</div>
+  type: radiobox_template
+  text: <span>$name</span>$field
 
 radiobox_rightlabel:
-  html: <div class=radio>$field<span>$name</span></div>
+  type: radiobox_template
+  text: $field<span>$name</span>
 
 radiobox_toplabel:
-  html: <div class=radio><p>$name</p>$field</div>
+  type: radiobox_template
+  text: <p>$name</p>$field
 
 radiogroup:
-  html: <div> $options</div>
-  group: $code
+  type: control
+  text: $options
+  group: $id
   inherit: [group]
   options:
     - template: radiobox_leftlabel
@@ -377,10 +453,13 @@ right_text:
   html: $field <p class=right-text>$name</p>
 
 section_heading:
-  html: <p class="section-heading">$name</p>
+  type: control
+  tag: p
+  class: [section-heading]
 
 span:
-  html: <span id="$code">$name</span>
+  type: control
+  tag: span
 
 submit:
   type: button
@@ -390,11 +469,10 @@ submit:
   action: post
 
 sub_menu:
-  html: |
-    <li>
-      <a id="$code">$name</a>
-      <span>$sub_items</span>
-    </li>
+  type: template
+  text: |
+    <a id="$id">$name</a>
+    <span>$sub_items</span>
   action: " "
   template: $field
   sub_items:
@@ -402,57 +480,82 @@ sub_menu:
     - type: link
 
 table:
-  html: <table id="$code"><thead></thead><tbody>$rows</tbody></table>
+  type: control
+  tag: table
+  head: $table_head
+  body: $table_body
+  text: $head$body
   rows:
     - template: table_row
 
+table_head:
+  type: template
+  tag: thead
+
+table_body:
+  type: template
+  tag: tbody
+
 table_cell:
-  html: <td>$field</td>
+  type: template
+  tag: td
 
 table_input:
-  html: |
-    <tr class=input>
-      <td>$name</td>
-      <td>
-        <a class=input>
-          $field
-          <span>$desc</span>
-        </a>
-      </td>
-    </tr>
+  type: template
+  class: [input]
+  tag: tr
+  text: |
+    <td style="width:25%;">$name</td>
+    <td>
+      <a class=input style="width:98%">
+        $field
+        <span>$desc</span>
+      </a>
+    </td>
 
 table_input_page:
-  html: |
-    <div id='$code'>
-      $input_page_header
-      <table class=form>
-        $inputs
-        <tr>
-          <td></td>
-          <td>$actions</td>
-        </tr>
-      </table>
-    </div>
-  inputs: [template: table_input]
+  type: input_page
+  text: |
+    $processing
+    $synopsis
+    <table class=form>
+      $inputs
+      <tr>
+        <td></td>
+        <td>$actions</td>
+      </tr>
+    </table>
+  inputs:
+    - template: table_input
 
 table_page:
-  html: <table id='$code' title="$name">$children</table>
+  type: page
+  tag: table
+  text: $children
   children: [template: one_cell_row]
 
 table_row:
-  html: <tr>$columns</tr>
+  type: control
+  tag: td
+  text: $columns
   columns: [template: table_cell]
+
+template:
+  type: control
+  text: $field
+  attr: {id: ""}
 
 text: { type: input }
 
 textarea:
-  html: <textarea id="$code"></textarea>
+  type: control
+  tag: textarea
 
 text_input: {type: input }
 
 
 time:
-  html: <input id="$code" type="text" value="$value"></input>
+  type: input
   create: datetimepicker
   datepicker: false
   format: H:i
@@ -469,10 +572,11 @@ titled_paragraph:
   text: " "
 
 wizard:
+  type: control
   create: wizard
   script: /common/wizard.js
   css: /common/wizard.css
-  html: <div id=$code class=wizard></div>
+  class: [wizard]
   prev_name: Previous
   next_name: Next
 
@@ -481,7 +585,7 @@ wizard_jump:
   action: trigger
   event:
     name: wizard-jump
-    parameters: { index: $code }
+    parameters: { index: $id }
 
 wizard_next:
   type: button

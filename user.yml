@@ -5,16 +5,16 @@ activate:
   access: admin
   desc: Activate inactive user
   audit: sql(select first_name, last_name, email_address from user where id = '$key')
-  post: 
+  post:
     - sql_exec: update user set active = 1 where id = '$key'
-  
+
 audit_trail:
-  access: admin 
+  access: admin
   type: datatable
   sort: when
   sort_order: desc
   page_size: 15
-  flags: 
+  flags:
     - filter
     - show_header
     - show_titles
@@ -30,13 +30,13 @@ audit_trail:
     - what: { width: 18%, name: Action }
     - detail: { width: 35% }
   sql: |
-    select t.create_time, u.first_name, u.last_name,u.email_address, t.action, t.detail 
+    select t.create_time, u.first_name, u.last_name,u.email_address, t.action, t.detail
       from audit_trail t join user u on t.user_id = u.id
-        
+
 change_password:
   type: labelled_input_page
   width: 700
-  desc: 
+  desc:
     Please enter your new password as well as the OTP (One Time Pin) that you received on your email or cellphone.
   inputs:
     - otp
@@ -54,7 +54,7 @@ check_otp:
   desc: >
     Please enter the OTP(One Time Pin) that you received on your email or cellphone.
     It is possible that the OTP email was sent to the Junk folder on your mail
-  inputs:   
+  inputs:
     - otp
   values:
     - sql_values: select lpad(floor(rand()*9999),4,'0') server_otp, now() time_of_otp
@@ -71,7 +71,7 @@ check_otp:
               to: $first_name $last_name <$email>
               message: >
                 Good day<br><br>
-                You are currently trying to change your email address. 
+                You are currently trying to change your email address.
                 If you have not requested this, please inform the System Adminstrator.<br><br>
                 Your One Time Password is : <b>$otp</b>. <br><br>
                 Regards<br>
@@ -94,7 +94,7 @@ confirm_details:
   type: info_page
   desc: |
     Below is a list of all the information you have entered to register on the system.
-    If you are happy with everything, please accept the terms and conditions to 
+    If you are happy with everything, please accept the terms and conditions to
     complete the registration process.
   lines:
     - title
@@ -121,9 +121,9 @@ confirm_details:
         values(last_insert_id(), 'Register', '$title $first_name $last_name $cellphone $email')
     - trigger: "wizard-next,#user_confirm_details"
 
-              
 
-    
+
+
 create:
   type: labelled_input_page
   access: admin
@@ -132,8 +132,8 @@ create:
   width: 500
   name: Add User
   desc:  Add a new user
-  inputs: 
-    - title: {type: dropdown}          
+  inputs:
+    - title: {type: dropdown}
     - first_name
     - last_name
     - cellphone
@@ -150,7 +150,7 @@ deactivate:
   desc: Deactivate this user
   audit: sql(select first_name, last_name, email_address from user where id = $key)
 
- 
+
 delete:
   type: deactivate
 
@@ -164,8 +164,8 @@ enter_credentials:
   name: User Credentials
   type: labelled_input_page
   desc: Fill in user information used to uniquely identify the user on the system
-  inputs: 
-    - title: {type: dropdown}          
+  inputs:
+    - title: {type: dropdown}
     - first_name
     - last_name
     - cellphone
@@ -190,37 +190,37 @@ enter_credentials:
                 Customer Operations
           - clear_values
 
-  
+
 history:
   access: [admin]
   type: datatable
   sort: when
   sort_order: desc
-  flags: 
+  flags:
     - show_titles
   fields:
     - when : { width: 14%,name: Time }
     - action: { width: 30% }
     - detail: { width: 55% }
   sql: select create_time, action, detail from audit_trail where user_id = $key
- 
-  
+
+
 is_active:
   valid: sql(select active from user where email_address = '$value')
   error: |
-    Account $value has been deactivated. 
+    Account $value has been deactivated.
     Please ask the administrator to reactivate your account
 
 is_password_for:
-  valid: 
+  valid:
     - depends(email,is_registered)
     - depends(email,is_active)
     - depends(email,is_unlocked)
     - sql(select password=password('$value') from user where email_address = '$v1')
-  error: 
+  error:
     - sql_exec: update user set attempts = attempts+1 where email_address = '$v1'
     - sql_exec: >
-        insert into audit_trail(user_id, action, detail) 
+        insert into audit_trail(user_id, action, detail)
           select id, 'Failed Login Attempt', '$v1' from user where email_address = '$v1'
     - error: Invalid user name or password for $v1
 
@@ -229,13 +229,13 @@ is_registered:
   error: >
     There is no such email '$value' registered on the system.<br>
     Click on <b>Register</b> if you would like to register to use the system.
-  
+
 is_unlocked:
   valid: sql(select attempts < 5 from user where email_address = '$value')
   error: |
     Account $value locked because of too many incorrect attempts.
     Please ask the administrator to unlock your account.
-  
+
 list:
   access: [admin]
   type: datatable
@@ -243,7 +243,7 @@ list:
   sort: create_time
   sort_order: desc
   page_size: 15
-  flags: 
+  flags:
     - filter
     - show_header
     - show_titles
@@ -272,10 +272,10 @@ list:
         - user/history
   sql: |
     select distinct u.id, u.create_time,email_address, u.first_name, u.last_name,
-      u.cellphone, r.name, 
+      u.cellphone, r.name,
       if(u.active=1,'active','inactive'),
       if(u.active=1,'expand,slide,edit,deactivate','expand,slide,edit,activate')
-    from user u left join user_role ur on u.id = ur.user_id 
+    from user u left join user_role ur on u.id = ur.user_id
       left join role r on ur.role_code = r.code
       where r.code != 'super'
 
@@ -293,7 +293,7 @@ login:
     - forgot_password: { action: dialog }
   post:
     - sql_values:
-        select id uid, partner_id, email_address email, first_name, last_name, 
+        select id uid, partner_id, email_address email, first_name, last_name,
           concat(first_name, ' ', last_name) full_name,
           cellphone, roles, groups, 'home' page
         from user
@@ -303,25 +303,25 @@ login:
     - write_session: uid,partner_id,roles,email,first_name,last_name,full_name,cellphone
     - close_dialog
     - redirect: /$page
-      
+
 modify:
   type: labelled_input_page
   desc: Change user details
   width: 600
-  inputs: 
-    - title: {type: dropdown}          
+  inputs:
+    - title: {type: dropdown}
     - first_name
     - last_name
     - cellphone
     - email_address
-    - role: 
+    - role:
         name: Assigned Role
         type: dropdown
         valid: provided
   values:
     - sql_values: |
         select title,first_name,last_name,cellphone,email_address,r.code
-        role  
+        role
         from user u left join user_role ur on u.id = ur.user_id
         left join role r on r.code=ur.role_code
         where id = $key
@@ -330,12 +330,12 @@ modify:
 
 my_audit_trail:
   name: My Audit Trail
-  access: reg 
+  access: reg
   type: datatable
   sort: when
   sort_order: desc
   page_size: 15
-  flags: 
+  flags:
     - filter
     - show_header
     - show_titles
@@ -348,7 +348,7 @@ my_audit_trail:
     - action
     - detail
   sql: |
-    select create_time, action, detail 
+    select create_time, action, detail
       from audit_trail where user_id = $uid
 
 otp:
@@ -364,8 +364,8 @@ profile:
   name: View Own Profile
   desc: $name
   width: 600
-  inputs: 
-    - title: {type: dropdown}          
+  inputs:
+    - title: {type: dropdown}
     - first_name
     - last_name
     - cellphone
@@ -373,8 +373,8 @@ profile:
     - role: { attr: disabled }
   values:
     - sql_values: |
-        select title,first_name,last_name,cellphone,email_address,r.code role 
-        from user u left join user_role ur on u.id = ur.user_id 
+        select title,first_name,last_name,cellphone,email_address,r.code role
+        from user u left join user_role ur on u.id = ur.user_id
         join role r on r.code = ur.role_code
         where id = $uid
   actions:
@@ -387,7 +387,7 @@ register:
   desc: Register as a new user of the system
   height: 630
   width: 700
-  steps: 
+  steps:
     - enter_credentials
     - check_otp
     - confirm_details: { next: false }
@@ -402,15 +402,14 @@ start_reset_password:
   width: 600
   name: Reset Password
   desc: Start reset password process
-  type: labelled_input_page    
-  inputs: 
-    - email    
+  type: labelled_input_page
+  inputs:
+    - email
   actions:
     - next:
         call: user::start_reset_pw()
         action: post
-   
+
 
 update:
   audit: $title $first_name $last_name $cellphone $role $email_address
-  
