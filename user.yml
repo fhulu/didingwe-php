@@ -213,6 +213,7 @@ is_active:
 
 is_password_for:
   valid:
+    - depends(email,email)
     - depends(email,is_registered)
     - depends(email,is_active)
     - depends(email,is_unlocked)
