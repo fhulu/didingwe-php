@@ -494,6 +494,7 @@ $.fn.getCursorPosition = function() {
 
 $.copy = function(src)
 {
+  if ($.isArray(src)) return [].concat(src);
   return $.extend(true, {}, src);;
 }
 
@@ -804,3 +805,39 @@ $.fn.bindFirst = function(name, fn)
       handlers.splice(0, 0, handler);
   });
 };
+
+$.firstElement = function(obj)
+{
+  for (var key in obj) {
+    if (!obj.hasOwnProperty(key)) continue;
+    return [key, obj[key] ];
+  };
+  return undefined;
+}
+
+$.firstValue = function(obj)
+{
+  for (var key in obj) {
+    if (!obj.hasOwnProperty(key)) continue;
+    return obj[key];
+  };
+}
+
+$.firstKey = function(obj)
+{
+  return $.firsetElement(obj)[0];
+}
+
+$.toObject = function(val)
+{
+  var result = {};
+  result[val] = {};
+  return result;
+}
+
+$.deleteKeys = function(obj, keys)
+{
+  for (var i in keys) {
+    delete obj[keys[i]];
+  }
+}
