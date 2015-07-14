@@ -309,15 +309,12 @@ class page
 
   function replace_keys(&$fields)
   {
-    foreach($fields as $key=>&$value) {
-      if (is_array($value))
-        $this->replace_keys($value);
-      if (is_numeric($key)) continue;
-      if ($key[0] != '$') continue;
+    walk_recursive_down($fields, function($value, $key, &$parent) {
+      if (is_numeric($key) || $key[0] != '$') return;
       $new_key = $this->request[substr($key,1)];
-      $fields[$new_key] = $value;
-      unset($fields[$key]);
-    };
+      $parent[$new_key] = $value;
+      unset($parent[$key]);
+    });
   }
 
   function expand_types(&$fields)
@@ -817,10 +814,10 @@ class page
 
   static function collapse($field)
   {
-    if (!is_array($field))  return array('code'=>$field);
+    if (!is_array($field))  return array('id'=>$field);
     foreach($field as $key=>$value) break;
     $field = $field[$key];
-    $field['code'] = $key;
+    $field['id'] = $key;
     return $field;
   }
 

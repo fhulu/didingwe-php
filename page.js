@@ -148,16 +148,15 @@ $.fn.page = function(options, callback)
     get_template: function(template, item)
     {
       if (template === undefined || item.type === 'hidden' || item.template === "none" || template == '$field') return '$field';
-      var untyped = $.copy(this.merge_type(item));
-      untyped.type = untyped.attr = untyped.class = undefined;
+      var field = $.copy(this.merge_type(item));
       if (typeof template === 'string') {
         template = {html: template};
       }
       else {
         template = this.merge_type(template);
-        template.type = undefined;
+        $.deleteKeys(field, ['type', 'attr', 'class', 'tag', 'html']);
       }
-      template = merge(untyped, template);
+      template = merge(field, template);
       return this.create(template)[1];
     },
 
@@ -165,6 +164,7 @@ $.fn.page = function(options, callback)
     {
       var tmp = $('<div></div>');
       field.path = field.url? field.url: field.id;
+      field.sub_page = undefined;
       tmp.page(field);
       tmp.on('read_'+field.id, function(e, obj) {
         if (field.style)
@@ -218,48 +218,29 @@ $.fn.page = function(options, callback)
         var id;
         var array;
         var template;
-        var type;
+        if (typeof item==='string') item = $.toObject(item);
         if ($.isPlainObject(item)) {
           if (this.set_defaults(defaults, item)) continue;
           if (item.id === undefined) {
-            for (var key in item) {
-              if (!item.hasOwnProperty(key)) continue;
-              id = key;
-              break;
-            };
-            assert(item[id], "Invalid item " + JSON.stringify($.copy(item)));
-            item = item[id];
-            if (item.merge) continue;
-            if (post_methods.indexOf(id) >= 0) {
-              loading_data = true;
-              this.load_data(parent, parent_field, name, defaults);
-              continue;
-            }
-
-            if (typeof item === 'string') {
-              item = { code: id, name: item };
-            }
-            if (!item.action && defaults.action) item.action = defaults.action;
-            this.promote_attr(item);
-            if (defaults.attr) item.attr = merge(item.attr,defaults.attr);
-            template = item.template;
-            if (!item.type && defaults.type) item = merge(defaults.type, item);
-            item = merge(this.types[id], item);
-            type = item.type;
+            var a = $.firstElement(item);
+            id = a[0];
+            item = a[1];
           }
-        }
-        else if (typeof item === 'string') {
-          if (this.types[item] !== undefined) {
-            id = item;
-            item = merge(this.types[item], defaults.type);
+          if (item.merge) continue;
+          if (post_methods.indexOf(id) >= 0) {
+            loading_data = true;
+            this.load_data(parent, parent_field, name, defaults);
+            continue;
           }
-          else {
-            if (defaults.type === undefined) continue;  // todo take care of undefined types
-            id = item;
-            item = $.copy(defaults.type);
+          if (typeof item === 'string') {
+            item = { name: item };
           }
-          if (defaults.action) item.action = defaults.action;
+          if (!item.action && defaults.action) item.action = defaults.action;
+          this.promote_attr(item);
           if (defaults.attr) item.attr = merge(item.attr,defaults.attr);
+          template = item.template;
+          if (!item.type && defaults.type) item = merge(defaults.type, item);
+          item = merge(this.types[id], item);
         }
         else if ($.isArray(item)) {
           array = item;
@@ -267,13 +248,14 @@ $.fn.page = function(options, callback)
           item = defaults;
           item.array = array;
         }
+        item.id = id;
         if (path)
           item.path = path + '/' + id;
         if (!template) template = item.template = defaults.template;
         var is_table = parent_is_table || ['tr','td'].indexOf(item.tag) >= 0 || ['tr','td'].indexOf(template.tag) >= 0;
         if (!is_table)
            parent.replace(regex,new_item_html+'$1');
-        var created = this.create(item, id, parent_field);
+        var created = this.create(item, parent_field);
         item = created[0];
         var obj = created[1];
         var templated = this.get_template(template, item);
@@ -367,14 +349,13 @@ $.fn.page = function(options, callback)
       return field;
     },
 
-    create: function(field, id, parent)
+    create: function(field, parent)
     {
-      field.id = id;
+      var id = field.id;
       field.page_id = this.options.page_id;
       field = this.merge_type(field);
       field = this.inherit_parent(parent,field);
-
-      if (!field.name) field.name = toTitleCase(id.replace(/[_\/]/g, ' '));
+      if (field.name === undefined && id) field.name = toTitleCase(id.replace(/[_\/]/g, ' '));
       field.key = page.options.key;
       if (!field.array) this.expand_fields(id, field);
       if (field.sub_page)
@@ -418,7 +399,8 @@ $.fn.page = function(options, callback)
         }
 
         value.path = field.path+'/'+code;
-        var result = this.create(value, code, field);
+        value.id = code;
+        var result = this.create(value, field);
         this.replace(obj, result[1], code);
       }
       if (obj.attr('id') === '') obj.removeAttr('id');
@@ -443,7 +425,8 @@ $.fn.page = function(options, callback)
       var values = data.fields.values || data.values;
       data.fields.path = data.path;
       data.fields.sub_page = false;
-      var result = page.create(data.fields, this.id);
+      data.fields.id = this.id;
+      var result = page.create(data.fields);
       var object = result[1];
       page.object = object;
       data.fields = result[0];
@@ -475,7 +458,7 @@ $.fn.page = function(options, callback)
 
       object.on('create_child', function(event, field, parent) {
         if (parent === undefined) parent = event.trigger;
-        var result = page.create(field, field.id);
+        var result = page.create(field);
         var child = result[1];
         child.appendTo(parent);
         child.value(field.value);
