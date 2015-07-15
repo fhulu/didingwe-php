@@ -375,7 +375,8 @@ $.fn.page = function(options, callback)
         var code = matches[i];
         var value;
         if (field.array) {
-          value = field.array[i+1];
+          if (!field.array.length) continue;
+          value = field.array[i];
         }
         else {
           value = values[code];
@@ -432,7 +433,7 @@ $.fn.page = function(options, callback)
       data.fields = result[0];
       data.values = values;
       assert(object !== undefined, "Unable to create page "+this.id);
-      object.appendTo(parent);
+      object.addClass('page').appendTo(parent);
       parent.trigger('read_'+this.id, [object, data.fields]);
 
       if (!page.loading)
@@ -510,7 +511,7 @@ $.fn.page = function(options, callback)
       sink.trigger(event, [invoker, params]);
     },
 
-    load_data: function(object, field, name, types, defaults)
+    load_data: function(object, field, name, defaults)
     {
 
       page.loading++;

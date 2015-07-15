@@ -129,9 +129,7 @@ dropdown:
     - type: dropdown_option
 
 dropdown_option:
-  type: control
-  html: <option>$name</option>
-  attr: { value: $id }
+  html: <option value='$id'>$name</option>
 
 element:
   text: ""
