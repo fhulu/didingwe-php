@@ -384,6 +384,9 @@ class page
     }
     walk_recursive_down($fields, function(&$value, $key, &$parent) use($keys){
       if (is_assoc($parent) && in_array($key, $keys, true))
+      if (strpos($key, 'sql') !== false)
+        $value = "";
+      else
         unset($parent[$key]);
     });
 
