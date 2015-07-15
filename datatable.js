@@ -295,12 +295,12 @@
       td.attr('colspan', tr.children().length);
     },
 
-    showRow: function(data)
+    appendRow: function(data)
     {
       var body = this.body();
       var fields =  [].concat(this.options.fields);
       for (var i in fields) {
-        var val = $.firstElement(fields[i]);
+        var val = $.firstValue(fields[i]);
         val.value = data[i];
       }
       var options = {
@@ -321,7 +321,7 @@
       var fields = this.options.fields;
       var tr;
       for(var i in data.rows) {
-        this.showRow(data.rows[i]);
+        this.appendRow(data.rows[i]);
         continue;
         var row = data.rows[i];
         if (tr) {
