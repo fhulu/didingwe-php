@@ -456,7 +456,7 @@ $.fn.page = function(options, callback)
       data.fields = result[0];
       data.values = values;
       assert(object !== undefined, "Unable to create page "+this.id);
-      object.appendTo(parent);
+      object.addClass('page').appendTo(parent);
       parent.trigger('read_'+this.id, [object, data.fields]);
 
       if (!page.loading)
