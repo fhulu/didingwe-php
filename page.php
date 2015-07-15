@@ -382,9 +382,11 @@ class page
       if (!$this->rendering) return;
       $keys = page::$post_items;
     }
-    walk_recursive_down($fields, function(&$value, $key, &$parent) use($keys){
-      if (is_assoc($parent) && in_array($key, $keys, true))
-        unset($parent[$key]);
+    walk_recursive_down($fields, function(&$value, $key, &$parent) use($keys) {
+      if (!in_array($key, $keys, true)) return;
+      unset($parent[$key]);
+      if ($this->rendering && strpos($key, "sql") !== false)
+        $parent['query'] = " ";
     });
 
   }
@@ -395,6 +397,7 @@ class page
       $this->fields['user_full_name'] = $this->user['full_name'];
     }
 
+    $this->types['control'] = $this->get_expanded_field('control');
     return array(
       'path'=>implode('/',$this->path),
       'fields'=>$this->fields,

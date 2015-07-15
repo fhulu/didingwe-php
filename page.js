@@ -70,6 +70,17 @@ $.fn.page = function(options, callback)
       return data;
     },
 
+    expand_array: function(item)
+    {
+      $.each(item, function(key, value) {
+        var matches = getMatches(value, /\$(\d+)/g);
+        for (var i in matches) {
+          var match = matches[i];
+          item[key] = value.replace('$'+match, item.array[parseInt(match)-1]);
+        }
+      });
+    },
+
     load_link: function(link,type, callback)
     {
       var element;
@@ -133,6 +144,7 @@ $.fn.page = function(options, callback)
     {
       if (field === undefined || this.types === undefined) return field;
       if (type === undefined) type = field.type;
+      if (type === undefined && field.html === undefined && field.tag) type = 'control';
       if (type === undefined) return field;
       if (typeof type === 'string') type = this.merge_type(this.types[type]);
       return merge(type, field);
@@ -227,7 +239,7 @@ $.fn.page = function(options, callback)
             item = a[1];
           }
           if (item.merge) continue;
-          if (post_methods.indexOf(id) >= 0) {
+          if (id == 'query') {
             loading_data = true;
             this.load_data(parent, parent_field, name, defaults);
             continue;
@@ -253,7 +265,7 @@ $.fn.page = function(options, callback)
           item.path = path + '/' + id;
         if (!template) template = item.template = defaults.template;
         var is_table = parent_is_table || ['tr','td'].indexOf(item.tag) >= 0 || ['tr','td'].indexOf(template.tag) >= 0;
-        if (!is_table)
+        if (!is_table && item.type != 'plain')
            parent.replace(regex,new_item_html+'$1');
         var created = this.create(item, parent_field);
         item = created[0];
@@ -349,21 +361,32 @@ $.fn.page = function(options, callback)
       return field;
     },
 
-    create: function(field, parent)
+    init_field: function(field)
     {
-      var id = field.id;
       field.page_id = this.options.page_id;
       field = this.merge_type(field);
-      field = this.inherit_parent(parent,field);
-      if (field.name === undefined && id) field.name = toTitleCase(id.replace(/[_\/]/g, ' '));
-      field.key = page.options.key;
-      if (!field.array) this.expand_fields(id, field);
+      field = this.inherit_parent(parent, field);
+
+      var id = field.id;
+      if ((field.name === undefined || field.name[0] === '$') && id)
+        field.name = toTitleCase(id.replace(/[_\/]/g, ' '));
+      field.key = this.options.key;
+      if (field.array)
+        this.expand_array(field);
+      this.expand_fields(id, field);
+      return field;
+    },
+
+    create: function(field, parent)
+    {
+      field = this.init_field(field, parent);
       if (field.sub_page)
         return [field, page.create_sub_page(field)];
 
+      var id = field.id;
       if (!field.html) console.log("No html for ", id, field);
       assert(field.html, "Invalid HTML for "+id);
-      field.html.replace(/\$tag(\W)/, field.tag+'$1');
+      field.html = field.html.replace(/\$tag(\W)/, field.tag+'$1');
       var obj = $(field.html);
       var reserved = ['id', 'create', 'css', 'script', 'name', 'desc', 'data'];
       this.set_attr(obj, field);
@@ -375,7 +398,8 @@ $.fn.page = function(options, callback)
         var code = matches[i];
         var value;
         if (field.array) {
-          value = field.array[i+1];
+          if (!field.array.length) continue;
+          value = field.array[i];
         }
         else {
           value = values[code];
@@ -510,7 +534,7 @@ $.fn.page = function(options, callback)
       sink.trigger(event, [invoker, params]);
     },
 
-    load_data: function(object, field, name, types, defaults)
+    load_data: function(object, field, name, defaults)
     {
 
       page.loading++;
@@ -540,7 +564,7 @@ $.fn.page = function(options, callback)
 
       object.on('reload', function() {
         field.autoload = true;
-        page.load_data(object, field, name, types, defaults);
+        page.load_data(object, field, name, defaults);
         if (field.values)
           page.load_values(object, field);
       })
@@ -577,8 +601,7 @@ $.fn.page = function(options, callback)
             obj.value(value);
             continue;
           }
-          if (post_methods.indexOf(id) > 0)
-            page.load_values(parent, data);
+          //page.load_values(parent, data);
         }
       };
       set(this.options.request);

@@ -1,7 +1,7 @@
 # html controls
 ---
 actioner:
-  type: control
+  tag: div
   class: [action]
 
 blank:
@@ -15,7 +15,7 @@ button:
   attr: { title: $desc }
 
 captioned_image:
-  type: control
+  tag: div
   class: [captioned-image]
   text: |
     <img src="$src" title="$title"></img>
@@ -29,7 +29,6 @@ checkbox:
   type: checkbox
 
 container:
-  type: control
   tag: div
   text: $contents
   contents: []
@@ -42,7 +41,6 @@ control:
   text: $name
 
 datatable:
-  type: control
   tag: table
   text: <tbody></tbody>
   class: [data]
@@ -129,8 +127,9 @@ dropdown:
     - type: dropdown_option
 
 dropdown_option:
-  type: control
-  html: <option>$name</option>
+  tag: option
+  value: $1
+  name: $2
   attr: { value: $id }
 
 element:
@@ -155,15 +154,13 @@ file:
   max_size: 100
 
 form:
-  type: control
-  html: <form></form>
+  tag: form
 
 #footer_actions:
 #  - type: submit
 
 google_map:
-  type: control
-  html: <div></div>
+  tag: div
   create: mapper
   script: /common/map.js
   zoom: 5
@@ -189,7 +186,6 @@ h3:
 
 heading:
   tag: h1
-  type: control
   name: $id
 
 hidden:
@@ -197,7 +193,6 @@ hidden:
   attr: { type: hidden }
 
 image:
-  type: control
   tag: img
   attr: {src: $src}
   src: $id.png
@@ -211,7 +206,6 @@ info_line:
     </div>
 
 info_page:
-    type: control
     html: |
       <div>
         <p class="desc">$desc</p>
@@ -232,7 +226,6 @@ info_page:
 
 
 info_text:
-  type: control
   text: $value
   class: [info_text]
 
@@ -245,20 +238,17 @@ inline_input:
     placeholder: "$name"
 
 inline_input_page:
-  type: control
-  html: |
-    <div>
-      $input_page_header
-      <div class="form">
-        $inputs
-        $actions
-      </div>
+  tag: div
+  text: |
+    $input_page_header
+    <div class="form">
+      $inputs
+      $actions
     </div>
   inputs:
     - template: inline_input
 
 input:
-  type: control
   tag: input
   text: ""
   value: ""
@@ -277,7 +267,6 @@ input_page:
     - type: submit
 
 label:
-  type: control
   tag: label
 
 labelled_input:
@@ -308,16 +297,13 @@ line:
   text: ""
 
 link:
-  type: control
   tag: a
   attr: { title: $desc }
 
 list_item:
-  type: control
   tag: li
 
 list_text:
-  type: control
   tag: li
   text: $id
 
@@ -346,19 +332,16 @@ one_column_table:
     - template: one_cell_row
 
 one_row_table:
-  type: control
   tag: table
   text: <tr>$items</tr>
   items:
     - template: table_cell
 
 p:
-  type: control
   tag: p
-  name: $id
 
 page:
-  type: control
+  tag: div
   attr: { title: $name }
   sub_page: true
   class: [page]
@@ -374,7 +357,6 @@ password_input:
   attr: { type: password }
 
 plain:
-  type: control
   value: $name
   text: $value
 
@@ -448,7 +430,7 @@ radiobox_toplabel:
   text: <p>$name</p>$field
 
 radiogroup:
-  type: control
+  tag: div
   text: $options
   group: $id
   inherit: [group]
@@ -461,12 +443,10 @@ right_text:
   html: $field <p class=right-text>$name</p>
 
 section_heading:
-  type: control
   tag: p
   class: [section-heading]
 
 span:
-  type: control
   tag: span
 
 submit:
@@ -488,7 +468,6 @@ sub_menu:
     - type: link
 
 table:
-  type: control
   tag: table
   head: $table_head
   body: $table_body
@@ -542,20 +521,19 @@ table_page:
   children: [template: one_cell_row]
 
 table_row:
-  type: control
   tag: tr
   text: $columns
-  columns: [template: table_cell]
+  columns:
+    - template: table_cell
 
 template:
-  type: control
+  tag: div
   text: $field
   attr: {id: ""}
 
 text: { type: input }
 
 textarea:
-  type: control
   tag: textarea
 
 text_input: {type: input }
@@ -579,7 +557,7 @@ titled_paragraph:
   text: " "
 
 wizard:
-  type: control
+  tag: div
   create: wizard
   script: /common/wizard.js
   css: /common/wizard.css
