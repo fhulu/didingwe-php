@@ -48,7 +48,11 @@ datatable:
   class: [data]
   create: datatable
   script: /common/datatable.js
+  row_creator: { type: table_row }
   css: /datatable.css
+  flags: []
+    # - editall
+    #
   load:
     - call: datatable::read(context,$key)
   position: top
@@ -368,7 +372,9 @@ password_input:
   attr: { type: password }
 
 plain:
-  html: $name
+  type: control
+  value: $name
+  text: $value
 
 plain_text:
   type: plain
@@ -518,13 +524,12 @@ table_input_page:
   text: |
     $processing
     $synopsis
-    <table class=form>
-      $inputs
-      <tr>
-        <td></td>
-        <td>$actions</td>
-      </tr>
-    </table>
+    $form
+  inherit: [inputs,actions]
+  form:
+    type: table
+    class: [form]
+    text: $inputs $actions
   inputs:
     - template: table_input
 
@@ -536,7 +541,7 @@ table_page:
 
 table_row:
   type: control
-  tag: td
+  tag: tr
   text: $columns
   columns: [template: table_cell]
 
