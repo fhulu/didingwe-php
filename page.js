@@ -300,7 +300,7 @@ $.fn.page = function(options, callback)
         for (var j in matches) {
           var value = field[matches[j]];
           if (value === undefined || typeof value !== 'string') continue;
-          obj.attr(attr.name, attr.value.replace(/\$(\w+)/g, value));
+          obj.attr(attr.name, attr.value.replace(/\$\w+([\b\W]|$)/g, value+'$1'));
         }
       });
       if (obj.attr('id') === '') obj.removeAttr('id');
@@ -393,7 +393,7 @@ $.fn.page = function(options, callback)
         }
 
         if (typeof value === 'string') {
-          obj.replace("\\$"+code, value);
+          obj.replace(new RegExp('\\$'+code+"([\b\W]|$)?", 'g'), value+'$1');
           this.globals[code] = value;
           continue;
         }
