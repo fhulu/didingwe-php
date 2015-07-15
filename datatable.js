@@ -34,14 +34,14 @@
     _create: function()
     {
       if (this.options.sort) this.options.flags.push('sortable');
-      //this.expandFields(this.options.fields);
+      this.expandFields(this.options.fields);
       this.expandFields(this.options.row_actions);
       this._promote_fields(this.options.fields);
       this._init_params();
       if (this.hasFlag('show_titles') || this.hasFlag('show_header')) {
         $('<thead></thead>').prependTo(this.element);
         if (this.hasFlag('show_header')) this.showHeader();
-        //if (this.hasFlag('show_titles')) this.showTitles();
+        if (this.hasFlag('show_titles')) this.showTitles();
       }
       this.showFooterActions();
       this.load();
@@ -54,7 +54,7 @@
     _init_params: function()
     {
       this.params = { page_num: 1};
-      var exclude = [ 'create', 'action', 'css', 'code', 'content', 'disabled',
+      var exclude = [ 'create', 'action', 'css', 'id', 'content', 'disabled',
           'html','name', 'page_id', 'position','script','slideSpeed'];
       for (var key in this.options) {
         if (exclude.indexOf(key) >= 0) continue;
@@ -266,14 +266,14 @@
       var j = 0;
       for (var i in fields) {
         var field = fields[i];
-        if (field.hide || field.code === 'attr') continue;
-        var code = field.code;
+        if (field.hide || field.id === 'attr') continue;
+        var id = field.id;
         var th = $('<th></th>').appendTo(tr);
-        if (code === 'actions') continue;
+        if (id === 'actions') continue;
         if ($.isArray(field.name)) field.name = field.name[field.name.length-1];
-        th.html(field.name || toTitleCase(code));
+        th.html(field.name || toTitleCase(id));
         if (self.hasFlag('sortable')) {
-          if (code === self.params.sort)
+          if (id === self.params.sort)
             th.attr('sort', self.params.sort_order);
           else
             th.attr('sort','');
@@ -283,7 +283,7 @@
         }
         ++j;
         if (self.hasFlag('sortable'))
-          self.bindSort(th, code);
+          self.bindSort(th, id);
       };
       this.spanColumns(head.find('.header th'));
     },
@@ -321,8 +321,6 @@
       var fields = this.options.fields;
       var tr;
       for(var i in data.rows) {
-        this.showRow(data.rows[i]);
-        continue;
         var row = data.rows[i];
         if (tr) {
           self.bindRowActions(tr);
@@ -336,7 +334,7 @@
         for (var j in row) {
           var cell = row[j];
           var field = fields[k++];
-          if (field.code === 'attr') {
+          if (field.id === 'attr') {
             cell = cell.split(',');
             for (var l in cell) {
               var attr = cell[l].split(':');
@@ -347,15 +345,15 @@
             };
             continue;
           }
-          if (field.type && !field.code) field = fields[k++];
-          if (field.code === 'key' || field.key) {
+          if (field.type && !field.id) field = fields[k++];
+          if (field.id === 'key' || field.key) {
             key = cell;
             tr.attr('_key', key);
           }
           if (field.hide) continue;
 
           var td = $('<td></td>').appendTo(tr);
-          if (field.code === 'actions') {
+          if (field.id === 'actions') {
             self.setRowActions(tr, td, cell);
             continue;
           }
@@ -382,7 +380,7 @@
         entity = td;
       }
       else {
-        var html = field.html.replace('$code', key+'_'+field.code);
+        var html = field.html.replace('$id', key+'_'+field.id);
         entity = $(html)
               .css('width','100%')
               .css('height','100%')
@@ -417,7 +415,7 @@
             item.hide = true;
             continue;
           }
-          if (item.code === undefined) {
+          if (item.id === undefined) {
             for (var key in item) {
               if (!item.hasOwnProperty(key)) continue;
               id = key;
@@ -439,7 +437,7 @@
             item = {};
         }
 
-        item.code = id;
+        item.id = id;
         fields[i] = item;
       }
     },
@@ -449,13 +447,13 @@
       if (sink === undefined) sink = this.element;
       var self = this;
       obj.click(function() {
-        var action = props.code;
+        var action = props.id;
         sink.trigger('action',[obj,action,props.action]);
         sink.trigger(action, [obj,props.action]);
         if (props.action === undefined) return;
         var key = sink.attr('_key');
         if (key === undefined) key = self.options.key;
-        var options = $.extend({},self.params, props, {code: action, action: props.action, key: key });
+        var options = $.extend({},self.params, props, {id: action, action: props.action, key: key });
         var listener = self.element.closest('.page').eq(0);
         options.path += '/';
         if (path !== undefined) options.path += path + '/';
@@ -467,7 +465,7 @@
     findField: function(name, fields)
     {
       for (var i in fields) {
-        if (name === fields[i].code) return fields[i];
+        if (name === fields[i].id) return fields[i];
       }
     },
 
@@ -480,7 +478,7 @@
       }
       else if ($.isPlainObject(action)) {
         props = action;
-        action = props.code;
+        action = props.id;
       }
       else
         props = this.options[action];
@@ -491,7 +489,7 @@
       div.html(props.name);
       div.attr('title', props.desc);
       div.attr('action', action);
-      props.code = action;
+      props.id = action;
       this.bindAction(div, props, sink, path);
       return div;
     },
@@ -628,7 +626,7 @@
       var td;
       template.children().each(function(i) {
         var field = fields[i];
-        if (field.code === 'attr' || field.code === 'actions') {
+        if (field.id === 'attr' || field.id === 'actions') {
           var colspan = td.attr('colspan');
           if (!colspan) colspan = 1;
           td.attr('colspan', parseInt(colspan)+1);
@@ -661,7 +659,7 @@
         var j = 0;
         for (var i in fields) {
           var field = fields[i];
-          if (field.code === 'actions' || field.code === 'attr') continue;
+          if (field.id === 'actions' || field.id === 'attr') continue;
           var val = field.hide? '': cols.eq(j++).find('input').val();
           self.params.filtered += val + '|';
         }
