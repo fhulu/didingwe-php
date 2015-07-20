@@ -107,13 +107,13 @@ datetime:
 date_time:
   type: date_time
 
-disabled_text_input:
-  type: input
-  attr: disabled
-
 disabled_input:
   type: input
   attr: disabled
+
+disabled_text_input:
+  type: disabled_input
+
 
 dropdown:
   unselected: --Select $name--
@@ -143,6 +143,7 @@ export:
   action: redirect
   validate: none
   call: datatable::export(context,$key)
+  query: " "
   target: _blank
 
 file:
@@ -369,6 +370,7 @@ print:
   action: redirect
   validate: none
   call: datatable::pdf(context, $key)
+  query: " "
   target: _blank
 
 processing:

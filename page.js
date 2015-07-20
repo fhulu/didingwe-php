@@ -198,7 +198,7 @@ $.fn.page = function(options, callback)
 
     set_defaults: function(defaults, item)
     {
-      var names = [ 'type', 'template', 'mandatory', 'action', 'attr' ];
+      var names = [ 'type', 'template', 'mandatory', 'action'];
       var set = false;
       for (var i in names) {
         var name = names[i];
@@ -630,10 +630,11 @@ $.fn.page = function(options, callback)
           case 'dialog': page.showDialog(field.url, {key: field.key}); return;
           case 'redirect':
             var url = field.url;
-            if (url === undefined && (field.call || field.post)) {
+            if (url === undefined && field.query) {
               url = '/?action=action';
+              var exclude = ['action','query', 'id', 'page_id', 'name','desc', 'tag','type','html','text','user_full_name']
               for (var key in field) {
-                if (key === 'action') continue;
+                if (exclude.indexOf(key) === 0) continue;
                 url += '&'+key+'='+encodeURIComponent(field[key]);
               }
             }
@@ -680,10 +681,9 @@ $.fn.page = function(options, callback)
               document.location = field.url.replace(/\$key(\b|\W|$)?/, field.key+"$1");
         }
       }
-
       if (field.confirmation) {
-        page.showDialog('/confirm_dialog', {desc: field.confirmation}, function() {
-          $('#confirm_dialog .desc').text(field.confirmation);
+        page.showDialog('/confirm_dialog', {}, function() {
+          $('#confirm_dialog #synopsis').text(field.confirmation);
           $('#confirm_dialog .action').click(function() {
             if ($(this).attr('id') === 'yes') confirmed();
             $('#confirm_dialog').dialog('close');

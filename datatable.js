@@ -36,7 +36,6 @@
       if (this.options.sort) this.options.flags.push('sortable');
       this.expandFields(this.options.fields);
       this.expandFields(this.options.row_actions);
-      this._promote_fields(this.options.fields);
       this._init_params();
       if (this.hasFlag('show_titles') || this.hasFlag('show_header')) {
         $('<thead></thead>').prependTo(this.element);
@@ -105,7 +104,7 @@
         var end = new Date().getTime();
         console.log("Load: ", end - start);
         self.populate(data);
-        data.rows = undefined;
+        delete data.rows;
         $.extend(self.params, data);
         console.log("Populate: ", new Date().getTime() - end);
       });

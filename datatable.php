@@ -56,9 +56,9 @@ PATTERN;
       $field = page::collapse($field);
       log::debug_json($index, $field);
       if ($field['hide']) continue;
-      if ($field['code'] == $code ) break;
+      if ($field['id'] == $code ) return $index;
     }
-    return $index;
+    throw new Exception("No such sort field $code");
   }
 
   static function sort(&$sql, $fields, $options)
@@ -123,7 +123,7 @@ PATTERN;
   static function get_display_field($code)
   {
     $field = page::collapse($code);
-    if ($field['hide'] || in_array($field['code'], array('attr','actions'), true)) return false;
+    if ($field['hide'] || in_array($field['id'], array('attr','actions'), true)) return false;
     return $field;
   }
 
@@ -131,7 +131,7 @@ PATTERN;
   {
       $name = at($field,'name');
       if (!is_null($name)) return $name;
-      return ucwords(preg_replace('/[_\/]/', ' ',at($field,'code')));
+      return ucwords(preg_replace('/[_\/]/', ' ',at($field,'id')));
   }
 
   static function export($options, $key) {
