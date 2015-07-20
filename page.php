@@ -169,6 +169,7 @@ class page
     if (sizeof($this->page_stack) != 0) return;
 
     $this->load_field_stack($this->path[0] . ".yml", $this->page_stack);
+    $this->page_stack[] = $this->request;
     $this->page_fields = $this->merge_stack($this->page_stack);
   }
 
