@@ -1,7 +1,6 @@
 $.fn.page = function(options, callback)
 {
   if (options instanceof Function) callback = options;
-  var post_methods = [ 'call', 'sql', 'sql_values', 'sql_rows','read_session' ];
   var self = this;
   var page  = {
     parent: self,
@@ -150,6 +149,14 @@ $.fn.page = function(options, callback)
       return merge(type, field);
     },
 
+    merge_types: function()
+    {
+      var self = this;
+      $.each(this.types, function(key, value) {
+        self.types[key] = self.merge_type(value);
+      })
+    },
+
     get_type_html: function(type)
     {
       if ($.isPlainObject(type)) return type;
@@ -198,7 +205,7 @@ $.fn.page = function(options, callback)
 
     set_defaults: function(defaults, item)
     {
-      var names = [ 'type', 'template', 'mandatory', 'action'];
+      var names = [ 'type', 'template', 'mandatory', 'action', 'attr'];
       var set = false;
       for (var i in names) {
         var name = names[i];
@@ -225,6 +232,7 @@ $.fn.page = function(options, callback)
       var new_item_html = '<div id="'+new_item_name+'"></div>';
       var path = parent_field.path+'/'+name;
       var parent_is_table = ['table','tr'].indexOf(parent_field.tag) >= 0;
+
       for(var i in items) {
         var item = items[i];
         var id;
@@ -251,8 +259,9 @@ $.fn.page = function(options, callback)
           this.promote_attr(item);
           if (defaults.attr) item.attr = merge(item.attr,defaults.attr);
           template = item.template;
-          if (!item.type && defaults.type) item = merge(defaults.type, item);
+          var has_type = item.type !== undefined;
           item = merge(this.types[id], item);
+          if (!has_type && defaults.type) item = merge(defaults.type, item);
         }
         else if ($.isArray(item)) {
           array = item;
@@ -265,7 +274,7 @@ $.fn.page = function(options, callback)
           item.path = path + '/' + id;
         if (!template) template = item.template = defaults.template;
         var is_table = parent_is_table || ['tr','td'].indexOf(item.tag) >= 0 || ['tr','td'].indexOf(template.tag) >= 0;
-        if (!is_table && item.type != 'plain')
+        if (!is_table)
            parent.replace(regex,new_item_html+'$1');
         var created = this.create(item, parent_field);
         item = created[0];
@@ -361,7 +370,7 @@ $.fn.page = function(options, callback)
       return field;
     },
 
-    init_field: function(field)
+    init_field: function(field, parent)
     {
       field.page_id = this.options.page_id;
       field = this.merge_type(field);
@@ -444,6 +453,7 @@ $.fn.page = function(options, callback)
       });
       this.data = data;
       this.types = this.data.types;
+      this.merge_types();
       var parent = page.parent;
       this.id = options.page_id = data.path.replace('/','_');
       var values = data.fields.values || data.values;
@@ -661,7 +671,6 @@ $.fn.page = function(options, callback)
             if (selector !== undefined) {
               selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+field.page_id+"$2");
               obj.jsonCheck(event, selector, '/', params, function(result) {
-                console.log('check processed', result)
                 if (result === null) result = undefined;
                 obj.trigger('processed', [result]);
                 page.respond(result, obj);
