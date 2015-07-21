@@ -213,6 +213,7 @@ is_active:
 
 is_password_for:
   valid:
+    - depends(email,email)
     - depends(email,is_registered)
     - depends(email,is_active)
     - depends(email,is_unlocked)
@@ -231,7 +232,8 @@ is_registered:
     Click on <b>Register</b> if you would like to register to use the system.
 
 is_unlocked:
-  valid: sql(select attempts < 5 from user where email_address = '$value')
+  max_attempts: 5
+  valid: sql(select attempts < $max_attempts from user where email_address = '$value')
   error: |
     Account $value locked because of too many incorrect attempts.
     Please ask the administrator to unlock your account.

@@ -169,6 +169,7 @@ class page
     if (sizeof($this->page_stack) != 0) return;
 
     $this->load_field_stack($this->path[0] . ".yml", $this->page_stack);
+    $this->page_stack[] = $this->request;
     $this->page_fields = $this->merge_stack($this->page_stack);
   }
 
@@ -309,15 +310,12 @@ class page
 
   function replace_keys(&$fields)
   {
-    foreach($fields as $key=>&$value) {
-      if (is_array($value))
-        $this->replace_keys($value);
-      if (is_numeric($key)) continue;
-      if ($key[0] != '$') continue;
+    walk_recursive_down($fields, function($value, $key, &$parent) {
+      if (is_numeric($key) || $key[0] != '$') return;
       $new_key = $this->request[substr($key,1)];
-      $fields[$new_key] = $value;
-      unset($fields[$key]);
-    };
+      $parent[$new_key] = $value;
+      unset($parent[$key]);
+    });
   }
 
   function expand_types(&$fields)
@@ -385,9 +383,11 @@ class page
       if (!$this->rendering) return;
       $keys = page::$post_items;
     }
-    walk_recursive_down($fields, function(&$value, $key, &$parent) use($keys){
-      if (is_assoc($parent) && in_array($key, $keys, true))
-        unset($parent[$key]);
+    walk_recursive_down($fields, function(&$value, $key, &$parent) use($keys) {
+      if (!in_array($key, $keys, true)) return;
+      unset($parent[$key]);
+      if ($this->rendering && strpos($key, "sql") !== false)
+        $parent['query'] = " ";
     });
 
   }
@@ -398,6 +398,7 @@ class page
       $this->fields['user_full_name'] = $this->user['full_name'];
     }
 
+    $this->types['control'] = $this->get_expanded_field('control');
     return array(
       'path'=>implode('/',$this->path),
       'fields'=>$this->fields,
@@ -817,10 +818,10 @@ class page
 
   static function collapse($field)
   {
-    if (!is_array($field))  return array('code'=>$field);
+    if (!is_array($field))  return array('id'=>$field);
     foreach($field as $key=>$value) break;
     $field = $field[$key];
-    $field['code'] = $key;
+    $field['id'] = $key;
     return $field;
   }
 
