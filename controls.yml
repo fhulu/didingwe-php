@@ -55,7 +55,6 @@ datatable:
     - call: datatable::read(context,$key)
   position: top
   filter: all
-  fields: [type: plain]
   filter:
     name: ""
     desc: Filter by specific columns
