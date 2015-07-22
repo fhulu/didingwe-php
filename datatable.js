@@ -404,6 +404,7 @@
     {
       if (!fields) return;
       var default_type;
+      var action;
       var types = this.options.types;
       for (var i in fields) {
         var item = fields[i];
@@ -412,6 +413,10 @@
           if (item.type !== undefined) {
             default_type = types[item.type];
             item.hide = true;
+            continue;
+          }
+          if (item.action !== undefined) {
+            action = item.action;
             continue;
           }
           if (item.id === undefined) {
@@ -437,6 +442,7 @@
         }
 
         item.id = id;
+        if (action && !item.action) item.action = action;
         fields[i] = item;
       }
     },
