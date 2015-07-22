@@ -74,7 +74,7 @@ datatable:
 
   # row actions
   row_actions:
-    - type: query
+    - action: post
   collapse:
     name: "-"
     desc: Hide details
