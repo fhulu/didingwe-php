@@ -380,7 +380,7 @@ profile:
         join role r on r.code = ur.role_code
         where id = $uid
   actions:
-    - update
+    - update_profile
 
 register:
   access: public
@@ -413,5 +413,14 @@ start_reset_password:
         action: post
 
 
-update:
-  audit: $title $first_name $last_name $cellphone $role $email_address
+update_profile:
+  name: Update
+  audit: $title $first_name $last_name $cellphone $email_address
+  post:
+    - sql_exec: |
+        update user
+        set
+          title='$title', first_name='$first_name', last_name='$last_name',
+          cellphone='$cellphone', email_address = '$email_address'
+        where id = '$uid'
+    - close_dialog: Successfully updated
