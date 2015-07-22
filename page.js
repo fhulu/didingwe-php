@@ -592,30 +592,24 @@ $.fn.page = function(options, callback)
 
     set_values: function(parent, data)
     {
-      var set = function(values) {
-        for (var i in values) {
-          var item = values[i];
-          var array = $.isNumeric(i);
-          if (array && !$.isPlainObject(item)) continue;
-           var id = i, value= item;
-          if (array) {
-            for (var key in item) {
-              if (!item.hasOwnProperty(key)) continue;
-              id = key;
-              value = item[key];
-              break;
-            };
-          }
-          var obj = parent.find('#'+id+',[name="',+id+'"');
-          if (obj.exists()) {
-            obj.value(value);
-            continue;
-          }
-          //page.load_values(parent, data);
+      for (var i in data.values) {
+        var item = data.values[i];
+        var array = $.isNumeric(i);
+        if (array && !$.isPlainObject(item)) continue;
+         var id = i, value= item;
+        if (array) {
+          var el = $.firstElement(item);
+          id = el[0];
+          item = el[1];
         }
-      };
-      set(this.options.request);
-      set(data.values);
+        var obj = parent.find('#'+id+',[name="',+id+'"');
+        if (obj.exists()) {
+          obj.value(value);
+          continue;
+        }
+        if (id === "query");
+          page.load_values(parent, data);
+      }
     },
 
     load_values: function(parent, data)
