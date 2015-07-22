@@ -55,6 +55,7 @@ datatable:
     - call: datatable::read(context,$key)
   position: top
   filter: all
+  fields: [type: plain]
   filter:
     name: ""
     desc: Filter by specific columns
@@ -270,6 +271,21 @@ input_page:
 label:
   tag: label
 
+label_template:
+  type: template
+  tag: span
+label_left:
+  type: label_template
+  text: <label>$name</label>$field
+
+label_right:
+  type: label_template
+  text: $field<label>$name</label>
+
+label_top:
+  type: label_template
+  text: <p>$name</p>$field
+
 labelled_input:
   type: template
   class: [labelled-input]
@@ -358,6 +374,7 @@ password_input:
   attr: { type: password }
 
 plain:
+  tag: div
   value: $name
   text: $value
 
@@ -415,34 +432,16 @@ radiobox:
   type: input
   attr: { type: radio, value: $id}
 
-radiobox_template:
-  type: template
-  class: [radio]
-
-radiobox_leftlabel:
-  type: radiobox_template
-  text: <span>$name</span>$field
-
-radiobox_rightlabel:
-  type: radiobox_template
-  text: $field<span>$name</span>
-
-radiobox_toplabel:
-  type: radiobox_template
-  text: <p>$name</p>$field
-
 radiogroup:
   tag: div
+  class: radio
   text: $options
   group: $id
   inherit: [group]
   options:
-    - template: radiobox_leftlabel
+    - template: label_left
     - type: radiobox
     - attr: { name: $group }
-
-right_text:
-  html: $field <p class=right-text>$name</p>
 
 section_heading:
   tag: p
