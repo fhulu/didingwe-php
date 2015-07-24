@@ -232,7 +232,9 @@ $.fn.page = function(options, callback)
       var new_item_html = '<div id="'+new_item_name+'"></div>';
       var path = parent_field.path+'/'+name;
       var parent_is_table = ['table','tr'].indexOf(parent_field.tag) >= 0;
-
+      var pushed = [];
+      var first;
+      var last;
       for(var i in items) {
         var item = items[i];
         var id;
@@ -286,7 +288,10 @@ $.fn.page = function(options, callback)
         else {
           this.replace(templated, obj, id, 'field');
         }
-        if (is_table)
+        templated.attr('for', id);
+        if (item.push)
+          pushed.push([item.push,templated]);
+        else if (is_table)
           parent.append(templated);
         else
           parent.find('#'+new_item_name).replaceWith(templated);
@@ -297,6 +302,19 @@ $.fn.page = function(options, callback)
         templated.on('show_hide', function(event, invoker, condition) {
           $(this).is(':visible')? $(this).hide(): $(this).show();
         });
+        if (!first) first = templated;
+        last = templated;
+      }
+      for (var i in pushed) {
+        var pop = pushed[i];
+        var pos = pop[0];
+        var templated = pop[1];
+        if (pos === 'first' && templated !== first)
+          templated.insertBefore(first);
+        else if (pos === 'last' && templated !== last)
+          templated.insertAfter(last);
+        else
+          templated.insertBefore(parent.find('[for="'+pos+'"'));
       }
       if (!loading_data && !parent_is_table)
         parent.replace(regex, '');

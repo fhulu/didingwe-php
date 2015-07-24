@@ -117,12 +117,10 @@ disabled_text_input:
 
 dropdown:
   unselected: --Select $name--
-  html: |
-    <select>
-      <option value=''>$unselected</option>
-      $options
-    </select>
-  inherit: [$unselected]
+  tag: select
+  text: |
+    <option value=''>$unselected</option>
+    $options
   options:
     - type: dropdown_option
 
@@ -259,20 +257,25 @@ input:
 
 input_page:
   type: page
-  inherit: [desc]
+  inherit: [desc, actions]
   loading: { type: processing }
   synopsis: { type: section_heading, text: $desc}
+  text: $loading $synopsis $inputs #$actions
   inputs:
+    - template: labelled_input
     - type: input
+    - actions:
+        push: last
+        type: template
+        template: none
+        class: [actions]
+        text: $actions
   actions:
     - type: submit
 
 label:
   tag: label
 
-label_template:
-  type: template
-  tag: span
 label_left:
   type: label_template
   text: <label>$name</label>$field
@@ -281,12 +284,17 @@ label_right:
   type: label_template
   text: $field<label>$name</label>
 
+label_template:
+  type: template
+  tag: span
+
 label_top:
   type: label_template
   text: <p>$name</p>$field
 
 labelled_input:
   type: template
+  css: [/common/labelled_input.css]
   class: [labelled-input]
   text: |
       <span class=label>$name$label_suffix</span>
@@ -298,15 +306,6 @@ labelled_input:
 
 labelled_input_page:
   type: input_page
-  text: |
-    $loading
-    $synopsis
-    <div class="form">
-      $inputs
-      <p></p>$actions
-    </div>
-  inputs:
-    - template: labelled_input
 
 line:
   tag: hr

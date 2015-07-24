@@ -1,0 +1,30 @@
+.labelled-input
+{
+  margin-bottom: 6px;
+  width: 100%
+}
+
+.labelled-input>.label
+{
+  vertical-align: top;
+  text-align: right;
+  width: 22%;
+  right: 22%;
+  display: inline-block;
+  font-size: 11pt;
+  font-weight: 100;
+}
+
+.labelled-input>.input
+{
+  display: inline-block;
+  width: 72%;
+
+}
+
+.labelled-input+.actions
+{
+  margin-top: 12px;
+  margin-left: 22%;
+  margin-bottom: 12px;
+}
