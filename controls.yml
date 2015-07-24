@@ -241,6 +241,7 @@ inline_input_page:
 
 inplace_input:
   type: template
+  css: [/common/inplace_input.css]
   class: [inplace-input]
   text: |
       <a class=input>

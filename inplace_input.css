@@ -1,0 +1,18 @@
+.inplace-input
+{
+  margin-bottom: 6px;
+  width: 100%;
+}
+
+.inplace-input>.input
+{
+  width: 100%;
+  display: block;
+}
+
+.inplace-input+.actions
+{
+  width: 100%;
+  margin-top: 12px;
+  margin-bottom: 12px;
+}

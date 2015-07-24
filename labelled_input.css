@@ -1,15 +1,14 @@
 .labelled-input
 {
   margin-bottom: 6px;
-  width: 100%
+  width: 100%;
 }
 
 .labelled-input>.label
 {
   vertical-align: top;
   text-align: right;
-  width: 22%;
-  right: 22%;
+  width: 24%;
   display: inline-block;
   font-size: 11pt;
   font-weight: 100;
@@ -18,13 +17,14 @@
 .labelled-input>.input
 {
   display: inline-block;
-  width: 72%;
-
+  margin-left: 1%;
+  width: 74%;
 }
 
 .labelled-input+.actions
 {
   margin-top: 12px;
-  margin-left: 22%;
   margin-bottom: 12px;
+  margin-left: 26%;
+  width: 74%;
 }
