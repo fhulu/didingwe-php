@@ -110,8 +110,7 @@ class page
 
   function output()
   {
-    if (!is_null($this->result))
-      echo json_encode($this->result);
+    echo json_encode($this->result);
   }
 
 
@@ -316,6 +315,15 @@ class page
       $parent[$new_key] = $value;
       unset($parent[$key]);
     });
+  }
+
+  function inherit_parent($parent, &$field)
+  {
+    $inherit = $parent['inherit'];
+    if (isset($inherit)) return;
+    foreach($inherit as $key) {
+      $field = merge_options($parent[$key], $field);
+    }
   }
 
   function expand_types(&$fields)
