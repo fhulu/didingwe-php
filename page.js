@@ -453,7 +453,6 @@ $.fn.page = function(options, callback)
       });
       this.data = data;
       this.types = this.data.types;
-      this.merge_types();
       var parent = page.parent;
       this.id = options.page_id = data.path.replace('/','_');
       var values = data.fields.values || data.values;
