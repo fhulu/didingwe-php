@@ -228,14 +228,6 @@ info_text:
   text: $value
   class: [info_text]
 
-inline_input:
-  type: template
-  tag: a
-  text: $field<span class="input">$desc</span>
-  class: [input]
-  attr:
-    placeholder: "$name"
-
 inline_input_page:
   tag: div
   text: |
@@ -246,6 +238,17 @@ inline_input_page:
     </div>
   inputs:
     - template: inline_input
+
+inplace_input:
+  type: template
+  class: [inplace-input]
+  text: |
+      <a class=input>
+        $field
+        <span class=hint>$desc</span>
+      </a>
+  subject:
+    attr: { placeholder: $name }
 
 input:
   tag: input

@@ -275,6 +275,7 @@ $.fn.page = function(options, callback)
         if (path)
           item.path = path + '/' + id;
         if (!template) template = item.template = defaults.template;
+        if (template && template.subject) item = merge(template.subject, item);
         var is_table = parent_is_table || ['tr','td'].indexOf(item.tag) >= 0 || ['tr','td'].indexOf(template.tag) >= 0;
         if (!is_table)
            parent.replace(regex,new_item_html+'$1');
