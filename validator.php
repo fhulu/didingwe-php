@@ -309,7 +309,7 @@ class validator
       if ($arg == 'this') $arg = $this->name;
       $field = $this->fields[$arg];
       if ($set_titles && isset($field))
-        $name = $this->title($arg, $field);
+        $name = $this->get_title($arg, $field);
       else
         $name = $arg;
 
