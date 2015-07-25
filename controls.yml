@@ -225,17 +225,6 @@ info_page:
 
 info_text: { text: $value }
 
-inline_input_page:
-  tag: div
-  text: |
-    $input_page_header
-    <div class="form">
-      $inputs
-      $actions
-    </div>
-  inputs:
-    - template: inline_input
-
 inplace_input:
   type: template
   css: [/common/inplace_input.css]
@@ -257,6 +246,7 @@ input:
 
 input_page:
   type: page
+  css: [/common/input_page.css]
   inherit: [desc, actions]
   loading: { type: processing }
   synopsis: { type: section_heading, text: $desc}
@@ -294,7 +284,6 @@ label_top:
 
 labelled_input:
   type: template
-  css: [/common/labelled_input.css]
   text: |
       <label>$name$label_suffix</label>
       <a class=input>
@@ -395,33 +384,13 @@ processing:
 
 question_input:
   type: template
-  attr: { name: $name}
-  html: |
-    <div>
-      <div class=question>$question</div>
-      <a class=input>
-        $field
-      </a>
-    </div>
+  text: <label>$question</label>$field
+  subject: { class: [input] }
 
 question_input_page:
-  type: page
-  html: |
-    <div>
-        <h2>$name</h2>
-      <p class="desc">$desc</p>
-      <span class=ajax_result style="display: none;"></span>
-      <div class="form">
-        $inputs
-        $actions
-      </div>
-    </div>
+  type: input_page
   inputs:
-    - type: input
     - template: question_input
-    - mandatory: "*"
-  actions:
-    - type: submit
 
 radiobox:
   type: input
