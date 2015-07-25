@@ -198,11 +198,10 @@ image:
   text: ""
 
 info_line:
-  html: |
-    <div class=info-line>
-      <label>$name</label>
-      <div class=info-text>$field</div>
-    </div>
+  type: template
+  text: |
+    <label>$name</label>
+    <div class=info-text>$field</div>
 
 info_page:
     html: |
@@ -224,9 +223,7 @@ info_page:
       - type: submit
 
 
-info_text:
-  text: $value
-  class: [info_text]
+info_text: { text: $value }
 
 inline_input_page:
   tag: div
@@ -242,7 +239,6 @@ inline_input_page:
 inplace_input:
   type: template
   css: [/common/inplace_input.css]
-  class: [inplace-input]
   text: |
       <a class=input>
         $field
@@ -299,7 +295,6 @@ label_top:
 labelled_input:
   type: template
   css: [/common/labelled_input.css]
-  class: [labelled-input]
   text: |
       <span class=label>$name$label_suffix</span>
       <a class=input>
@@ -401,7 +396,6 @@ processing:
 
 question_input:
   type: template
-  class: [question_input]
   attr: { name: $name}
   html: |
     <div>
@@ -447,7 +441,6 @@ radiogroup:
 
 section_heading:
   tag: p
-  class: [section-heading]
 
 span:
   tag: span

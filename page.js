@@ -157,11 +157,13 @@ $.fn.page = function(options, callback)
       })
     },
 
-    get_type_html: function(type)
+    expand_type: function(type, set_class)
     {
       if ($.isPlainObject(type)) return type;
       if (type.search(/\W/) >= 0) return {html: type};
-      return this.merge_type(this.types[type]);
+      var field = {};
+      if (set_class) field.class = [type.replace('_','-')];
+      return this.merge_type(field, type);
     },
 
     get_template: function(template, item)
@@ -214,7 +216,7 @@ $.fn.page = function(options, callback)
         if (name === 'template' && value === 'none')
           defaults[name] = '$field';
         else if (name === 'type' || name === 'template')
-          defaults[name] = this.get_type_html(value);
+          defaults[name] = this.expand_type(value, name==='template');
         else
           defaults[name] = item[name];
         set = true;
