@@ -4,7 +4,7 @@
   width: 100%;
 }
 
-.labelled-input>.label
+.labelled-input>label
 {
   vertical-align: top;
   text-align: right;

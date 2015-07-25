@@ -296,7 +296,7 @@ labelled_input:
   type: template
   css: [/common/labelled_input.css]
   text: |
-      <span class=label>$name$label_suffix</span>
+      <label>$name$label_suffix</label>
       <a class=input>
         $field
         <span class=hint>$desc</span>
@@ -351,8 +351,7 @@ one_row_table:
   items:
     - template: table_cell
 
-p:
-  tag: p
+p: { tag: p}
 
 page:
   tag: div
@@ -441,6 +440,7 @@ radiogroup:
 
 section_heading:
   tag: p
+  class: [section-heading]
 
 span:
   tag: span
@@ -529,8 +529,8 @@ template:
 
 text: { type: input }
 
-textarea:
-  tag: textarea
+textarea: { tag: textarea }
+text_area: { type: textarea}
 
 text_input: {type: input }
 
