@@ -247,19 +247,13 @@ input:
 input_page:
   type: page
   css: [/common/input_page.css]
-  inherit: [desc, actions]
+  inherit: [desc]
   loading: { type: processing }
   synopsis: { type: section_heading, text: $desc}
-  text: $loading $synopsis $inputs #$actions
+  text: $loading $synopsis $inputs $actions
   inputs:
     - template: labelled_input
     - type: input
-    - actions:
-        push: last
-        type: template
-        template: none
-        class: [actions]
-        text: $actions
   actions:
     - type: submit
 
