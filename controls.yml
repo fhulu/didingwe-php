@@ -223,7 +223,9 @@ info_page:
       - type: submit
 
 
-info_text: { text: $value }
+info_text:
+  tag: div
+  text: $value
 
 inplace_input:
   type: template
