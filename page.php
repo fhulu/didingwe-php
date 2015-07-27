@@ -110,8 +110,7 @@ class page
 
   function output()
   {
-    if (!is_null($this->result))
-      echo json_encode($this->result);
+    echo json_encode($this->result);
   }
 
 
@@ -169,6 +168,7 @@ class page
     if (sizeof($this->page_stack) != 0) return;
 
     $this->load_field_stack($this->path[0] . ".yml", $this->page_stack);
+    $this->page_stack[] = $this->request;
     $this->page_fields = $this->merge_stack($this->page_stack);
   }
 
@@ -317,6 +317,15 @@ class page
     });
   }
 
+  function inherit_parent($parent, &$field)
+  {
+    $inherit = $parent['inherit'];
+    if (isset($inherit)) return;
+    foreach($inherit as $key) {
+      $field = merge_options($parent[$key], $field);
+    }
+  }
+
   function expand_types(&$fields)
   {
     $this->remove_items($fields);
@@ -382,12 +391,11 @@ class page
       if (!$this->rendering) return;
       $keys = page::$post_items;
     }
-    walk_recursive_down($fields, function(&$value, $key, &$parent) use($keys){
-      if (is_assoc($parent) && in_array($key, $keys, true))
-      if (strpos($key, 'sql') !== false)
-        $value = "";
-      else
-        unset($parent[$key]);
+    walk_recursive_down($fields, function(&$value, $key, &$parent) use($keys) {
+      if (!in_array($key, $keys, true)) return;
+      unset($parent[$key]);
+      if ($this->rendering && strpos($key, "sql") !== false)
+        $parent['query'] = " ";
     });
 
   }
@@ -398,6 +406,7 @@ class page
       $this->fields['user_full_name'] = $this->user['full_name'];
     }
 
+    $this->types['control'] = $this->get_expanded_field('control');
     return array(
       'path'=>implode('/',$this->path),
       'fields'=>$this->fields,
@@ -629,7 +638,9 @@ class page
     if ($user_id)
       $sql = preg_replace('/\$uid([^\w]|$)/', "$user_id\$1", $sql);
     $sql = preg_replace('/\$key([^\w]|$)/', "$key\$1", $sql);
-    return replace_vars($sql, $options);
+    return replace_vars($sql, $options, function(&$val) {
+      $val = addslashes($val);
+    });
   }
 
   function sql($sql)

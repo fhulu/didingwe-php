@@ -36,7 +36,6 @@
       if (this.options.sort) this.options.flags.push('sortable');
       this.expandFields(this.options.fields);
       this.expandFields(this.options.row_actions);
-      this._promote_fields(this.options.fields);
       this._init_params();
       if (this.hasFlag('show_titles') || this.hasFlag('show_header')) {
         $('<thead></thead>').prependTo(this.element);
@@ -105,7 +104,7 @@
         var end = new Date().getTime();
         console.log("Load: ", end - start);
         self.populate(data);
-        data.rows = undefined;
+        delete data.rows;
         $.extend(self.params, data);
         console.log("Populate: ", new Date().getTime() - end);
       });
@@ -295,12 +294,12 @@
       td.attr('colspan', tr.children().length);
     },
 
-    showRow: function(data)
+    appendRow: function(data)
     {
       var body = this.body();
       var fields =  [].concat(this.options.fields);
       for (var i in fields) {
-        var val = $.firstElement(fields[i]);
+        var val = $.firstValue(fields[i]);
         val.value = data[i];
       }
       var options = {
@@ -405,6 +404,7 @@
     {
       if (!fields) return;
       var default_type;
+      var action;
       var types = this.options.types;
       for (var i in fields) {
         var item = fields[i];
@@ -413,6 +413,10 @@
           if (item.type !== undefined) {
             default_type = types[item.type];
             item.hide = true;
+            continue;
+          }
+          if (item.action !== undefined) {
+            action = item.action;
             continue;
           }
           if (item.id === undefined) {
@@ -438,6 +442,7 @@
         }
 
         item.id = id;
+        if (action && !item.action) item.action = action;
         fields[i] = item;
       }
     },

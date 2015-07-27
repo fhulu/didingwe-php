@@ -9,9 +9,9 @@
 require_once '../common/page.php';
 require_once('pdf/fpdf.php');
 
-class datatable 
+class datatable
 {
-  static function get_sql_fields($sql) 
+  static function get_sql_fields($sql)
   {
     $matches = array();
     $sql = preg_replace('/[\n\r\s]/', ' ', $sql);
@@ -23,11 +23,11 @@ PATTERN;
     $fields_sql = $matches[1];
     if (!preg_match_all($pattern, $fields_sql, $matches))
       throw new Exception("Invalid or complex SQL while splitting fields $fields_sql");
-      
+
     $fields = array();
     foreach ($matches[0] as $field) {
       $aliases = array();
-      if (!preg_match('/^(.+end) +as .*$|^(.+end) .*$|^(.+) +as .*$|^(.+)$/', $field, $aliases)) 
+      if (!preg_match('/^(.+end) +as .*$|^(.+end) .*$|^(.+) +as .*$|^(.+)$/', $field, $aliases))
         throw new Exception ("Invalid SQL field $field");
       array_shift($aliases);
       foreach ($aliases as $alias) {
@@ -38,7 +38,7 @@ PATTERN;
     return $fields;
   }
 
-  static function field_named($fields, $name) 
+  static function field_named($fields, $name)
   {
     foreach ($fields as $field) {
       $props = db::parse_column_name($field);
@@ -56,12 +56,12 @@ PATTERN;
       $field = page::collapse($field);
       log::debug_json($index, $field);
       if ($field['hide']) continue;
-      if ($field['code'] == $code ) break;
+      if ($field['id'] == $code ) return $index;
     }
-    return $index;
+    throw new Exception("No such sort field $code");
   }
-  
-  static function sort(&$sql, $fields, $options) 
+
+  static function sort(&$sql, $fields, $options)
   {
     $sort_field = at($options, 'sort');
     if (is_null($sort_field))
@@ -97,7 +97,7 @@ PATTERN;
       $sql = substr($sql, 0, $where_pos + 6) . "$where and " . substr($sql, $where_pos + 6);
   }
 
-  static function read($options, $key, $callback=null) 
+  static function read($options, $key, $callback=null)
   {
     log::debug("KEY $key");
     $page_size = at($options, 'page_size');
@@ -119,21 +119,21 @@ PATTERN;
     $total = $db->row_count();
     return array('rows' => $rows, 'total' => $total);
   }
-  
+
   static function get_display_field($code)
   {
     $field = page::collapse($code);
-    if ($field['hide'] || in_array($field['code'], array('attr','actions'), true)) return false;
+    if ($field['hide'] || in_array($field['id'], array('attr','actions'), true)) return false;
     return $field;
   }
-  
+
   static function get_display_name($field)
   {
       $name = at($field,'name');
       if (!is_null($name)) return $name;
-      return ucwords(preg_replace('/[_\/]/', ' ',at($field,'code')));
+      return ucwords(preg_replace('/[_\/]/', ' ',at($field,'id')));
   }
-  
+
   static function export($options, $key) {
     ini_set('memory_limit', '512M');
     require_once '../PHPExcel/Classes/PHPExcel.php';
@@ -184,7 +184,7 @@ PATTERN;
     $objWriter = PHPExcel_IOFactory::createWriter($excel, 'Excel5');
     $objWriter->save('php://output');
   }
-  
+
   static function pdf($options, $key)
   {
     $pdf = new FPDF();
@@ -194,9 +194,9 @@ PATTERN;
       $pdf->AddPage('L');
       $page_width *= 4 / 3;
     }
-    else 
+    else
       $pdf->AddPage ('P');
-    
+
     if (file_exists($options['report_image'])) {
       $pdf->Image($options['report_image'], $page_width/2, 10, 35);
       $pdf->Ln(40);
@@ -204,9 +204,9 @@ PATTERN;
     $pdf->SetFont('Arial', 'B', 10);
     $options['page_size'] = 0;
     $flags = $options['flags'];
-    $fields = $options['fields']; 
+    $fields = $options['fields'];
     $columns = array(array(),array()); // reserve space for heading and titles
-    $data = datatable::read($options, $key, function($row_data, $pagenum, $index) use (&$columns, $page_width, $fields) {     
+    $data = datatable::read($options, $key, function($row_data, $pagenum, $index) use (&$columns, $page_width, $fields) {
       $fill_color = $index % 2 === 0? '225,225,225': '255,255,255';
       $col = array();
       $index = 0;
@@ -218,7 +218,7 @@ PATTERN;
       }
       $columns[] = $col;
     });
-       
+
     $titles = &$columns[1];
     $index = 0;
     $total_width = 0;
@@ -228,7 +228,7 @@ PATTERN;
       $name = datatable::get_display_name($field);
         $titles[] = array('text' => $name, 'width' => $width, 'height' => '5', 'align' => 'L', 'font_name' => 'Arial', 'font_size' => '8', 'font_style' => 'B', 'fillcolor' => '128,128,128', 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linewidth' => '0.1', 'linearea' => 'LTBR');
     }
-    
+
     $heading = &$columns[0];
     $now = new DateTime();
     $now->getTimestamp();

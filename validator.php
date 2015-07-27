@@ -309,7 +309,7 @@ class validator
       if ($arg == 'this') $arg = $this->name;
       $field = $this->fields[$arg];
       if ($set_titles && isset($field))
-        $name = $this->title($arg, $field);
+        $name = $this->get_title($arg, $field);
       else
         $name = $arg;
 
@@ -340,11 +340,11 @@ class validator
   function subst_error(&$error, $predicate, $args, $result)
   {
     $ignore = array('name');
-    if (is_array($result)) $error = replace_vars ($error, $result, $ignore);
+    if (is_array($result)) $error = replace_vars_except ($error, $result, $ignore);
     $error = str_replace('$value', $this->value, $error);
     $error = replace_vars($error, $predicate);
     $this->replace_args($error, $args, true);
-    $error = replace_vars($error, $this->request, $ignore);
+    $error = replace_vars_except($error, $this->request, $ignore);
     $error = str_replace('$name', $this->title, $error);
   }
 

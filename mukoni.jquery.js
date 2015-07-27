@@ -263,7 +263,7 @@ $.fn.confirmOnSet = function(controls,url, options, callback)
 
 $.reportError = function(field, error)
 {
-  var sibling = $('#'+field+",[name='"+field+"']").parent('a');
+  var sibling = $('#'+field+",[name='"+field+"']").parent();
   if (sibling.length == 0)
     sibling = $('#'+field+",[name='"+field+"']");
   if (sibling.length == 0) {

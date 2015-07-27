@@ -1,7 +1,7 @@
 # html controls
 ---
 actioner:
-  type: control
+  tag: div
   class: [action]
 
 blank:
@@ -15,7 +15,7 @@ button:
   attr: { title: $desc }
 
 captioned_image:
-  type: control
+  tag: div
   class: [captioned-image]
   text: |
     <img src="$src" title="$title"></img>
@@ -29,7 +29,6 @@ checkbox:
   type: checkbox
 
 container:
-  type: control
   tag: div
   text: $contents
   contents: []
@@ -42,7 +41,6 @@ control:
   text: $name
 
 datatable:
-  type: control
   tag: table
   text: <tbody></tbody>
   class: [data]
@@ -76,7 +74,7 @@ datatable:
 
   # row actions
   row_actions:
-    - type: query
+    - action: post
   collapse:
     name: "-"
     desc: Hide details
@@ -109,27 +107,28 @@ datetime:
 date_time:
   type: date_time
 
-disabled_text_input:
-  type: input
-  attr: disabled
-
 disabled_input:
   type: input
   attr: disabled
 
+disabled_text_input:
+  type: disabled_input
+
+
 dropdown:
   unselected: --Select $name--
-  html: |
-    <select>
-      <option value=''>$unselected</option>
-      $options
-    </select>
-  inherit: [$unselected]
+  tag: select
+  text: |
+    <option value=''>$unselected</option>
+    $options
   options:
     - type: dropdown_option
 
 dropdown_option:
-  html: <option value='$id'>$name</option>
+  tag: option
+  value: $1
+  name: $2
+  attr: { value: $id }
 
 element:
   text: ""
@@ -142,6 +141,7 @@ export:
   action: redirect
   validate: none
   call: datatable::export(context,$key)
+  query: " "
   target: _blank
 
 file:
@@ -153,15 +153,13 @@ file:
   max_size: 100
 
 form:
-  type: control
-  html: <form></form>
+  tag: form
 
 #footer_actions:
 #  - type: submit
 
 google_map:
-  type: control
-  html: <div></div>
+  tag: div
   create: mapper
   script: /common/map.js
   zoom: 5
@@ -187,7 +185,6 @@ h3:
 
 heading:
   tag: h1
-  type: control
   name: $id
 
 hidden:
@@ -195,21 +192,18 @@ hidden:
   attr: { type: hidden }
 
 image:
-  type: control
   tag: img
   attr: {src: $src}
   src: $id.png
   text: ""
 
 info_line:
-  html: |
-    <div class=info-line>
-      <label>$name</label>
-      <div class=info-text>$field</div>
-    </div>
+  type: template
+  text: |
+    <label>$name</label>
+    <div class=info-text>$field</div>
 
 info_page:
-    type: control
     html: |
       <div>
         <p class="desc">$desc</p>
@@ -229,34 +223,20 @@ info_page:
       - type: submit
 
 
-info_text:
-  type: control
-  text: $value
-  class: [info_text]
+info_text: { text: $value }
 
-inline_input:
+inplace_input:
   type: template
-  tag: a
-  text: $field<span class="input">$desc</span>
-  class: [input]
-  attr:
-    placeholder: "$name"
-
-inline_input_page:
-  type: control
-  html: |
-    <div>
-      $input_page_header
-      <div class="form">
-        $inputs
-        $actions
-      </div>
-    </div>
-  inputs:
-    - template: inline_input
+  css: [/common/inplace_input.css]
+  text: |
+      <a class=input>
+        $field
+        <span class=hint>$desc</span>
+      </a>
+  subject:
+    attr: { placeholder: $name }
 
 input:
-  type: control
   tag: input
   text: ""
   value: ""
@@ -266,23 +246,46 @@ input:
 
 input_page:
   type: page
-  inherit: [desc]
+  css: [/common/input_page.css]
+  inherit: [desc, actions]
   loading: { type: processing }
   synopsis: { type: section_heading, text: $desc}
+  text: $loading $synopsis $inputs #$actions
   inputs:
+    - template: labelled_input
     - type: input
+    - actions:
+        push: last
+        type: template
+        template: none
+        class: [actions]
+        text: $actions
   actions:
     - type: submit
 
 label:
-  type: control
   tag: label
+
+label_left:
+  type: label_template
+  text: <label>$name</label>$field
+
+label_right:
+  type: label_template
+  text: $field<label>$name</label>
+
+label_template:
+  type: template
+  tag: span
+
+label_top:
+  type: label_template
+  text: <p>$name</p>$field
 
 labelled_input:
   type: template
-  class: [labelled-input]
   text: |
-      <span class=label>$name$label_suffix</span>
+      <label>$name$label_suffix</label>
       <a class=input>
         $field
         <span class=hint>$desc</span>
@@ -291,31 +294,19 @@ labelled_input:
 
 labelled_input_page:
   type: input_page
-  text: |
-    $loading
-    $synopsis
-    <div class="form">
-      $inputs
-      <p></p>$actions
-    </div>
-  inputs:
-    - template: labelled_input
 
 line:
   tag: hr
   text: ""
 
 link:
-  type: control
   tag: a
   attr: { title: $desc }
 
 list_item:
-  type: control
   tag: li
 
 list_text:
-  type: control
   tag: li
   text: $id
 
@@ -344,19 +335,15 @@ one_column_table:
     - template: one_cell_row
 
 one_row_table:
-  type: control
   tag: table
   text: <tr>$items</tr>
   items:
     - template: table_cell
 
-p:
-  type: control
-  tag: p
-  name: $id
+p: { tag: p}
 
 page:
-  type: control
+  tag: div
   attr: { title: $name }
   sub_page: true
   class: [page]
@@ -372,7 +359,7 @@ password_input:
   attr: { type: password }
 
 plain:
-  type: control
+  tag: div
   value: $name
   text: $value
 
@@ -385,6 +372,7 @@ print:
   action: redirect
   validate: none
   call: datatable::pdf(context, $key)
+  query: " "
   target: _blank
 
 processing:
@@ -396,75 +384,34 @@ processing:
 
 question_input:
   type: template
-  class: [question_input]
-  attr: { name: $name}
-  html: |
-    <div>
-      <div class=question>$question</div>
-      <a class=input>
-        $field
-      </a>
-    </div>
+  text: <label>$question</label>$field
+  subject: { class: [input] }
 
 question_input_page:
-  type: page
-  html: |
-    <div>
-        <h2>$name</h2>
-      <p class="desc">$desc</p>
-      <span class=ajax_result style="display: none;"></span>
-      <div class="form">
-        $inputs
-        $actions
-      </div>
-    </div>
+  type: input_page
   inputs:
-    - type: input
     - template: question_input
-    - mandatory: "*"
-  actions:
-    - type: submit
 
 radiobox:
   type: input
   attr: { type: radio, value: $id}
 
-radiobox_template:
-  type: template
-  class: [radio]
-
-radiobox_leftlabel:
-  type: radiobox_template
-  text: <span>$name</span>$field
-
-radiobox_rightlabel:
-  type: radiobox_template
-  text: $field<span>$name</span>
-
-radiobox_toplabel:
-  type: radiobox_template
-  text: <p>$name</p>$field
-
 radiogroup:
-  type: control
+  tag: div
+  class: radio
   text: $options
   group: $id
   inherit: [group]
   options:
-    - template: radiobox_leftlabel
+    - template: label_left
     - type: radiobox
     - attr: { name: $group }
 
-right_text:
-  html: $field <p class=right-text>$name</p>
-
 section_heading:
-  type: control
   tag: p
   class: [section-heading]
 
 span:
-  type: control
   tag: span
 
 submit:
@@ -486,7 +433,6 @@ sub_menu:
     - type: link
 
 table:
-  type: control
   tag: table
   head: $table_head
   body: $table_body
@@ -540,21 +486,20 @@ table_page:
   children: [template: one_cell_row]
 
 table_row:
-  type: control
   tag: tr
   text: $columns
-  columns: [template: table_cell]
+  columns:
+    - template: table_cell
 
 template:
-  type: control
+  tag: div
   text: $field
   attr: {id: ""}
 
 text: { type: input }
 
-textarea:
-  type: control
-  tag: textarea
+textarea: { tag: textarea }
+text_area: { type: textarea}
 
 text_input: {type: input }
 
@@ -577,7 +522,7 @@ titled_paragraph:
   text: " "
 
 wizard:
-  type: control
+  tag: div
   create: wizard
   script: /common/wizard.js
   css: /common/wizard.css

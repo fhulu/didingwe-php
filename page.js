@@ -1,7 +1,6 @@
 $.fn.page = function(options, callback)
 {
   if (options instanceof Function) callback = options;
-  var post_methods = [ 'call', 'sql', 'sql_values', 'sql_rows','read_session' ];
   var self = this;
   var page  = {
     parent: self,
@@ -70,6 +69,17 @@ $.fn.page = function(options, callback)
       return data;
     },
 
+    expand_array: function(item)
+    {
+      $.each(item, function(key, value) {
+        var matches = getMatches(value, /\$(\d+)/g);
+        for (var i in matches) {
+          var match = matches[i];
+          item[key] = value.replace('$'+match, item.array[parseInt(match)-1]);
+        }
+      });
+    },
+
     load_link: function(link,type, callback)
     {
       var element;
@@ -133,16 +143,27 @@ $.fn.page = function(options, callback)
     {
       if (field === undefined || this.types === undefined) return field;
       if (type === undefined) type = field.type;
+      if (type === undefined && field.html === undefined && field.tag) type = 'control';
       if (type === undefined) return field;
       if (typeof type === 'string') type = this.merge_type(this.types[type]);
       return merge(type, field);
     },
 
-    get_type_html: function(type)
+    merge_types: function()
+    {
+      var self = this;
+      $.each(this.types, function(key, value) {
+        self.types[key] = self.merge_type(value);
+      })
+    },
+
+    expand_type: function(type, set_class)
     {
       if ($.isPlainObject(type)) return type;
       if (type.search(/\W/) >= 0) return {html: type};
-      return this.merge_type(this.types[type]);
+      var field = {};
+      if (set_class) field.class = [type.replace('_','-')];
+      return this.merge_type(field, type);
     },
 
     get_template: function(template, item)
@@ -186,7 +207,7 @@ $.fn.page = function(options, callback)
 
     set_defaults: function(defaults, item)
     {
-      var names = [ 'type', 'template', 'mandatory', 'action', 'attr' ];
+      var names = [ 'type', 'template', 'mandatory', 'action', 'attr'];
       var set = false;
       for (var i in names) {
         var name = names[i];
@@ -195,7 +216,7 @@ $.fn.page = function(options, callback)
         if (name === 'template' && value === 'none')
           defaults[name] = '$field';
         else if (name === 'type' || name === 'template')
-          defaults[name] = this.get_type_html(value);
+          defaults[name] = this.expand_type(value, name==='template');
         else
           defaults[name] = item[name];
         set = true;
@@ -213,6 +234,9 @@ $.fn.page = function(options, callback)
       var new_item_html = '<div id="'+new_item_name+'"></div>';
       var path = parent_field.path+'/'+name;
       var parent_is_table = ['table','tr'].indexOf(parent_field.tag) >= 0;
+      var pushed = [];
+      var first;
+      var last;
       for(var i in items) {
         var item = items[i];
         var id;
@@ -227,7 +251,7 @@ $.fn.page = function(options, callback)
             item = a[1];
           }
           if (item.merge) continue;
-          if (post_methods.indexOf(id) >= 0) {
+          if (id == 'query') {
             loading_data = true;
             this.load_data(parent, parent_field, name, defaults);
             continue;
@@ -239,8 +263,9 @@ $.fn.page = function(options, callback)
           this.promote_attr(item);
           if (defaults.attr) item.attr = merge(item.attr,defaults.attr);
           template = item.template;
-          if (!item.type && defaults.type) item = merge(defaults.type, item);
+          var has_type = item.type !== undefined;
           item = merge(this.types[id], item);
+          if (!has_type && defaults.type) item = merge(defaults.type, item);
         }
         else if ($.isArray(item)) {
           array = item;
@@ -252,6 +277,7 @@ $.fn.page = function(options, callback)
         if (path)
           item.path = path + '/' + id;
         if (!template) template = item.template = defaults.template;
+        if (template && template.subject) item = merge(template.subject, item);
         var is_table = parent_is_table || ['tr','td'].indexOf(item.tag) >= 0 || ['tr','td'].indexOf(template.tag) >= 0;
         if (!is_table)
            parent.replace(regex,new_item_html+'$1');
@@ -265,7 +291,10 @@ $.fn.page = function(options, callback)
         else {
           this.replace(templated, obj, id, 'field');
         }
-        if (is_table)
+        templated.attr('for', id);
+        if (item.push)
+          pushed.push([item.push,templated]);
+        else if (is_table)
           parent.append(templated);
         else
           parent.find('#'+new_item_name).replaceWith(templated);
@@ -276,6 +305,19 @@ $.fn.page = function(options, callback)
         templated.on('show_hide', function(event, invoker, condition) {
           $(this).is(':visible')? $(this).hide(): $(this).show();
         });
+        if (!first) first = templated;
+        last = templated;
+      }
+      for (var i in pushed) {
+        var pop = pushed[i];
+        var pos = pop[0];
+        var templated = pop[1];
+        if (pos === 'first' && templated !== first)
+          templated.insertBefore(first);
+        else if (pos === 'last' && templated !== last)
+          templated.insertAfter(last);
+        else
+          templated.insertBefore(parent.find('[for="'+pos+'"'));
       }
       if (!loading_data && !parent_is_table)
         parent.replace(regex, '');
@@ -349,21 +391,32 @@ $.fn.page = function(options, callback)
       return field;
     },
 
-    create: function(field, parent)
+    init_field: function(field, parent)
     {
-      var id = field.id;
       field.page_id = this.options.page_id;
       field = this.merge_type(field);
-      field = this.inherit_parent(parent,field);
-      if (field.name === undefined && id) field.name = toTitleCase(id.replace(/[_\/]/g, ' '));
-      field.key = page.options.key;
-      if (!field.array) this.expand_fields(id, field);
+      field = this.inherit_parent(parent, field);
+
+      var id = field.id;
+      if ((field.name === undefined || field.name[0] === '$') && id)
+        field.name = toTitleCase(id.replace(/[_\/]/g, ' '));
+      field.key = this.options.key;
+      if (field.array)
+        this.expand_array(field);
+      this.expand_fields(id, field);
+      return field;
+    },
+
+    create: function(field, parent)
+    {
+      field = this.init_field(field, parent);
       if (field.sub_page)
         return [field, page.create_sub_page(field)];
 
+      var id = field.id;
       if (!field.html) console.log("No html for ", id, field);
       assert(field.html, "Invalid HTML for "+id);
-      field.html.replace(/\$tag(\W)/, field.tag+'$1');
+      field.html = field.html.replace(/\$tag(\W)/, field.tag+'$1');
       var obj = $(field.html);
       var reserved = ['id', 'create', 'css', 'script', 'name', 'desc', 'data'];
       this.set_attr(obj, field);
@@ -541,7 +594,7 @@ $.fn.page = function(options, callback)
 
       object.on('reload', function() {
         field.autoload = true;
-        page.load_data(object, field, name, types, defaults);
+        page.load_data(object, field, name, defaults);
         if (field.values)
           page.load_values(object, field);
       })
@@ -559,31 +612,24 @@ $.fn.page = function(options, callback)
 
     set_values: function(parent, data)
     {
-      var set = function(values) {
-        for (var i in values) {
-          var item = values[i];
-          var array = $.isNumeric(i);
-          if (array && !$.isPlainObject(item)) continue;
-           var id = i, value= item;
-          if (array) {
-            for (var key in item) {
-              if (!item.hasOwnProperty(key)) continue;
-              id = key;
-              value = item[key];
-              break;
-            };
-          }
-          var obj = parent.find('#'+id+',[name="',+id+'"');
-          if (obj.exists()) {
-            obj.value(value);
-            continue;
-          }
-          if (post_methods.indexOf(id) > 0)
-            page.load_values(parent, data);
+      for (var i in data.values) {
+        var item = data.values[i];
+        var array = $.isNumeric(i);
+        if (array && !$.isPlainObject(item)) continue;
+         var id = i, value= item;
+        if (array) {
+          var el = $.firstElement(item);
+          id = el[0];
+          item = el[1];
         }
-      };
-      set(this.options.request);
-      set(data.values);
+        var obj = parent.find('#'+id+',[name="',+id+'"');
+        if (obj.exists()) {
+          obj.value(value);
+          continue;
+        }
+        if (id === "query");
+          page.load_values(parent, data);
+      }
     },
 
     load_values: function(parent, data)
@@ -608,10 +654,11 @@ $.fn.page = function(options, callback)
           case 'dialog': page.showDialog(field.url, {key: field.key}); return;
           case 'redirect':
             var url = field.url;
-            if (url === undefined && (field.call || field.post)) {
+            if (url === undefined && field.query) {
               url = '/?action=action';
+              var exclude = ['action','query', 'id', 'page_id', 'name','desc', 'tag','type','html','text','user_full_name']
               for (var key in field) {
-                if (key === 'action') continue;
+                if (exclude.indexOf(key) === 0) continue;
                 url += '&'+key+'='+encodeURIComponent(field[key]);
               }
             }
@@ -638,7 +685,6 @@ $.fn.page = function(options, callback)
             if (selector !== undefined) {
               selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+field.page_id+"$2");
               obj.jsonCheck(event, selector, '/', params, function(result) {
-                console.log('check processed', result)
                 if (result === null) result = undefined;
                 obj.trigger('processed', [result]);
                 page.respond(result, obj);
@@ -658,10 +704,9 @@ $.fn.page = function(options, callback)
               document.location = field.url.replace(/\$key(\b|\W|$)?/, field.key+"$1");
         }
       }
-
       if (field.confirmation) {
-        page.showDialog('/confirm_dialog', {desc: field.confirmation}, function() {
-          $('#confirm_dialog .desc').text(field.confirmation);
+        page.showDialog('/confirm_dialog', {}, function() {
+          $('#confirm_dialog #synopsis').text(field.confirmation);
           $('#confirm_dialog .action').click(function() {
             if ($(this).attr('id') === 'yes') confirmed();
             $('#confirm_dialog').dialog('close');
