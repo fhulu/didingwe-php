@@ -8,6 +8,7 @@ require_once 'utils.php';
 class user_exception extends Exception {};
 
 $page = new page();
+$throwing = false;
 try {
   $page->process();
 }
@@ -20,7 +21,8 @@ catch (Exception $exception)
 {
   log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
   log::stack($exception);
-  page::show_dialog('/error_page');
+  if ($_REQUEST['path'] != 'error_page')
+    page::show_dialog('/error_page');
 }
 $page->output();
 
@@ -341,7 +343,7 @@ class page
 
       if ($type == $this->page) return;
 
-      if ($type == 'type' || $type == 'template') {
+      if ($type == 'type' || $type == 'template' || $type == 'wrap') {
         $type = $value;
         $value = null;
       }
