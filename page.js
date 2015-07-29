@@ -157,11 +157,13 @@ $.fn.page = function(options, callback)
       })
     },
 
-    get_type_html: function(type)
+    expand_type: function(type, set_class)
     {
       if ($.isPlainObject(type)) return type;
       if (type.search(/\W/) >= 0) return {html: type};
-      return this.merge_type(this.types[type]);
+      var field = {};
+      if (set_class) field.class = [type.replace('_','-')];
+      return this.merge_type(field, type);
     },
 
     get_template: function(template, item)
@@ -214,7 +216,7 @@ $.fn.page = function(options, callback)
         if (name === 'template' && value === 'none')
           defaults[name] = '$field';
         else if (name === 'type' || name === 'template')
-          defaults[name] = this.get_type_html(value);
+          defaults[name] = this.expand_type(value, name==='template');
         else
           defaults[name] = item[name];
         set = true;
@@ -232,7 +234,9 @@ $.fn.page = function(options, callback)
       var new_item_html = '<div id="'+new_item_name+'"></div>';
       var path = parent_field.path+'/'+name;
       var parent_is_table = ['table','tr'].indexOf(parent_field.tag) >= 0;
-
+      var pushed = [];
+      var first;
+      var last;
       for(var i in items) {
         var item = items[i];
         var id;
@@ -273,6 +277,7 @@ $.fn.page = function(options, callback)
         if (path)
           item.path = path + '/' + id;
         if (!template) template = item.template = defaults.template;
+        if (template && template.subject) item = merge(template.subject, item);
         var is_table = parent_is_table || ['tr','td'].indexOf(item.tag) >= 0 || ['tr','td'].indexOf(template.tag) >= 0;
         if (!is_table)
            parent.replace(regex,new_item_html+'$1');
@@ -286,7 +291,10 @@ $.fn.page = function(options, callback)
         else {
           this.replace(templated, obj, id, 'field');
         }
-        if (is_table)
+        templated.attr('for', id);
+        if (item.push)
+          pushed.push([item.push,templated]);
+        else if (is_table)
           parent.append(templated);
         else
           parent.find('#'+new_item_name).replaceWith(templated);
@@ -297,6 +305,19 @@ $.fn.page = function(options, callback)
         templated.on('show_hide', function(event, invoker, condition) {
           $(this).is(':visible')? $(this).hide(): $(this).show();
         });
+        if (!first) first = templated;
+        last = templated;
+      }
+      for (var i in pushed) {
+        var pop = pushed[i];
+        var pos = pop[0];
+        var templated = pop[1];
+        if (pos === 'first' && templated !== first)
+          templated.insertBefore(first);
+        else if (pos === 'last' && templated !== last)
+          templated.insertAfter(last);
+        else
+          templated.insertBefore(parent.find('[for="'+pos+'"'));
       }
       if (!loading_data && !parent_is_table)
         parent.replace(regex, '');
@@ -453,7 +474,6 @@ $.fn.page = function(options, callback)
       });
       this.data = data;
       this.types = this.data.types;
-      this.merge_types();
       var parent = page.parent;
       this.id = options.page_id = data.path.replace('/','_');
       var values = data.fields.values || data.values;
@@ -592,30 +612,24 @@ $.fn.page = function(options, callback)
 
     set_values: function(parent, data)
     {
-      var set = function(values) {
-        for (var i in values) {
-          var item = values[i];
-          var array = $.isNumeric(i);
-          if (array && !$.isPlainObject(item)) continue;
-           var id = i, value= item;
-          if (array) {
-            for (var key in item) {
-              if (!item.hasOwnProperty(key)) continue;
-              id = key;
-              value = item[key];
-              break;
-            };
-          }
-          var obj = parent.find('#'+id+',[name="',+id+'"');
-          if (obj.exists()) {
-            obj.value(value);
-            continue;
-          }
-          //page.load_values(parent, data);
+      for (var i in data.values) {
+        var item = data.values[i];
+        var array = $.isNumeric(i);
+        if (array && !$.isPlainObject(item)) continue;
+         var id = i, value= item;
+        if (array) {
+          var el = $.firstElement(item);
+          id = el[0];
+          item = el[1];
         }
-      };
-      set(this.options.request);
-      set(data.values);
+        var obj = parent.find('#'+id+',[name="',+id+'"');
+        if (obj.exists()) {
+          obj.value(value);
+          continue;
+        }
+        if (id === "query");
+          page.load_values(parent, data);
+      }
     },
 
     load_values: function(parent, data)

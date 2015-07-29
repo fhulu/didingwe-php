@@ -1,0 +1,74 @@
+.actions
+{
+  width: 100%;
+  margin-top: 12px;
+  margin-bottom: 12px;
+}
+
+.input
+{
+  width: 100%;
+  position: relative;
+  display: block;
+}
+
+.input>span
+{
+  display: none;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 5px;
+  position: absolute;
+  bottom: 30px;
+  left: 0px;
+  font-size: 11px;
+  font-weight: normal;
+  font-style: italic;
+  border: 1px solid grey;
+  border-radius: 8px;
+  background: #FFFFC0;
+}
+
+.input:focus>span,
+.input:hover>span
+{
+  z-index: 1000;
+  display: block;
+}
+
+.labelled-input
+{
+  margin-bottom: 6px;
+  width: 100%;
+}
+
+.labelled-input>label
+{
+  vertical-align: top;
+  text-align: right;
+  width: 24%;
+  display: inline-block;
+  font-size: 11pt;
+  font-weight: 100;
+}
+
+.labelled-input>.input
+{
+  display: inline-block;
+  margin-left: 1%;
+  width: 74%;
+}
+
+.labelled-input+.actions
+{
+  margin-top: 12px;
+  margin-bottom: 12px;
+  margin-left: 26%;
+  width: 74%;
+}
+
+.inplace-input
+{
+  margin-bottom: 6px;
+  width: 100%;
+}

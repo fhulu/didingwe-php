@@ -55,7 +55,6 @@ datatable:
     - call: datatable::read(context,$key)
   position: top
   filter: all
-  fields: [type: plain]
   filter:
     name: ""
     desc: Filter by specific columns
@@ -75,7 +74,7 @@ datatable:
 
   # row actions
   row_actions:
-    - type: query
+    - action: post
   collapse:
     name: "-"
     desc: Hide details
@@ -118,12 +117,10 @@ disabled_text_input:
 
 dropdown:
   unselected: --Select $name--
-  html: |
-    <select>
-      <option value=''>$unselected</option>
-      $options
-    </select>
-  inherit: [$unselected]
+  tag: select
+  text: |
+    <option value=''>$unselected</option>
+    $options
   options:
     - type: dropdown_option
 
@@ -201,11 +198,10 @@ image:
   text: ""
 
 info_line:
-  html: |
-    <div class=info-line>
-      <label>$name</label>
-      <div class=info-text>$field</div>
-    </div>
+  type: template
+  text: |
+    <label>$name</label>
+    <div class=info-text>$field</div>
 
 info_page:
     html: |
@@ -228,27 +224,19 @@ info_page:
 
 
 info_text:
-  text: $value
-  class: [info_text]
-
-inline_input:
-  type: template
-  tag: a
-  text: $field<span class="input">$desc</span>
-  class: [input]
-  attr:
-    placeholder: "$name"
-
-inline_input_page:
   tag: div
+  text: $value
+
+inplace_input:
+  type: template
+  css: [/common/inplace_input.css]
   text: |
-    $input_page_header
-    <div class="form">
-      $inputs
-      $actions
-    </div>
-  inputs:
-    - template: inline_input
+      <a class=input>
+        $field
+        <span class=hint>$desc</span>
+      </a>
+  subject:
+    attr: { placeholder: $name }
 
 input:
   tag: input
@@ -260,10 +248,13 @@ input:
 
 input_page:
   type: page
+  css: [/common/input_page.css]
   inherit: [desc]
   loading: { type: processing }
   synopsis: { type: section_heading, text: $desc}
+  text: $loading $synopsis $inputs $actions
   inputs:
+    - template: labelled_input
     - type: input
   actions:
     - type: submit
@@ -271,9 +262,6 @@ input_page:
 label:
   tag: label
 
-label_template:
-  type: template
-  tag: span
 label_left:
   type: label_template
   text: <label>$name</label>$field
@@ -282,15 +270,18 @@ label_right:
   type: label_template
   text: $field<label>$name</label>
 
+label_template:
+  type: template
+  tag: span
+
 label_top:
   type: label_template
   text: <p>$name</p>$field
 
 labelled_input:
   type: template
-  class: [labelled-input]
   text: |
-      <span class=label>$name$label_suffix</span>
+      <label>$name$label_suffix</label>
       <a class=input>
         $field
         <span class=hint>$desc</span>
@@ -299,15 +290,6 @@ labelled_input:
 
 labelled_input_page:
   type: input_page
-  text: |
-    $loading
-    $synopsis
-    <div class="form">
-      $inputs
-      <p></p>$actions
-    </div>
-  inputs:
-    - template: labelled_input
 
 line:
   tag: hr
@@ -354,8 +336,7 @@ one_row_table:
   items:
     - template: table_cell
 
-p:
-  tag: p
+p: { tag: p}
 
 page:
   tag: div
@@ -399,34 +380,13 @@ processing:
 
 question_input:
   type: template
-  class: [question_input]
-  attr: { name: $name}
-  html: |
-    <div>
-      <div class=question>$question</div>
-      <a class=input>
-        $field
-      </a>
-    </div>
+  text: <label>$question</label>$field
+  subject: { class: [input] }
 
 question_input_page:
-  type: page
-  html: |
-    <div>
-        <h2>$name</h2>
-      <p class="desc">$desc</p>
-      <span class=ajax_result style="display: none;"></span>
-      <div class="form">
-        $inputs
-        $actions
-      </div>
-    </div>
+  type: input_page
   inputs:
-    - type: input
     - template: question_input
-    - mandatory: "*"
-  actions:
-    - type: submit
 
 radiobox:
   type: input
@@ -534,8 +494,8 @@ template:
 
 text: { type: input }
 
-textarea:
-  tag: textarea
+textarea: { tag: textarea }
+text_area: { type: textarea}
 
 text_input: {type: input }
 

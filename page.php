@@ -110,8 +110,7 @@ class page
 
   function output()
   {
-    if (!is_null($this->result))
-      echo json_encode($this->result);
+    echo json_encode($this->result);
   }
 
 
@@ -316,6 +315,15 @@ class page
       $parent[$new_key] = $value;
       unset($parent[$key]);
     });
+  }
+
+  function inherit_parent($parent, &$field)
+  {
+    $inherit = $parent['inherit'];
+    if (isset($inherit)) return;
+    foreach($inherit as $key) {
+      $field = merge_options($parent[$key], $field);
+    }
   }
 
   function expand_types(&$fields)
@@ -630,7 +638,9 @@ class page
     if ($user_id)
       $sql = preg_replace('/\$uid([^\w]|$)/', "$user_id\$1", $sql);
     $sql = preg_replace('/\$key([^\w]|$)/', "$key\$1", $sql);
-    return replace_vars($sql, $options);
+    return replace_vars($sql, $options, function(&$val) {
+      $val = addslashes($val);
+    });
   }
 
   function sql($sql)

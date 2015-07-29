@@ -53,20 +53,27 @@ function remove_nulls(&$array)
   return $array;
 }
 
-function replace_vars($str, $values=null, $ignore=array())
+function replace_vars($str, $values, $callback=null)
 {
-  if (is_null($values)) $values = $_REQUEST;
   $matches = array();
   if (!preg_match_all('/\$(\w+)/', $str, $matches, PREG_SET_ORDER)) return  $str;
 
   foreach($matches as $match) {
     $key = $match[1];
-    if (in_array($key, $ignore, true)) continue;
     $value = at($values, $key);
-    if (!is_null($value))
-      $str = str_replace('$'.$key, $value, $str);
+    if (is_null($value)) continue;
+    if ($callback && $callback($value, $key) === false) continue;
+    if ($escape) $value = addslashes($value);
+    $str = str_replace('$'.$key, $value, $str);
   }
   return $str;
+}
+
+function replace_vars_except($str, $values, $exceptions)
+{
+  return replace_vars($str, $values, function($v, $key) use ($exceptions) {
+    return !in_array($key, $exceptions, true);
+  });
 }
 
 function is_assoc($array)
