@@ -75,7 +75,7 @@ $.fn.page = function(options, callback)
         var matches = getMatches(value, /\$(\d+)/g);
         for (var i in matches) {
           var match = matches[i];
-          item[key] = value.replace('$'+match, item.array[parseInt(match)-1]);
+          item[key] = value.replace(new RegExp("\\$"+match+"([^\d]?)", 'g'), item.array[parseInt(match)-1]+'$1');
         }
       });
     },
@@ -207,7 +207,7 @@ $.fn.page = function(options, callback)
 
     set_defaults: function(defaults, item)
     {
-      var names = [ 'type', 'template', 'mandatory', 'action', 'attr'];
+      var names = [ 'type', 'template', 'mandatory', 'action', 'attr', 'wrap'];
       var set = false;
       for (var i in names) {
         var name = names[i];
@@ -215,7 +215,9 @@ $.fn.page = function(options, callback)
         if (value === undefined) continue;
         if (name === 'template' && value === 'none')
           defaults[name] = '$field';
-        else if (name === 'type' || name === 'template')
+        else if (name === 'wrap' && $.isPlainObject(value))
+          defaults[name] = $.extend({}, {tag: 'div'}, value);
+        else if (name === 'type' || name === 'template' || name === 'wrap')
           defaults[name] = this.expand_type(value, name==='template');
         else
           defaults[name] = item[name];
@@ -237,6 +239,7 @@ $.fn.page = function(options, callback)
       var pushed = [];
       var first;
       var last;
+      var wrap;
       for(var i in items) {
         var item = items[i];
         var id;
@@ -278,9 +281,7 @@ $.fn.page = function(options, callback)
           item.path = path + '/' + id;
         if (!template) template = item.template = defaults.template;
         if (template && template.subject) item = merge(template.subject, item);
-        var is_table = parent_is_table || ['tr','td'].indexOf(item.tag) >= 0 || ['tr','td'].indexOf(template.tag) >= 0;
-        if (!is_table)
-           parent.replace(regex,new_item_html+'$1');
+        parent.replace(regex,new_item_html+'$1');
         var created = this.create(item, parent_field);
         item = created[0];
         var obj = created[1];
@@ -294,8 +295,16 @@ $.fn.page = function(options, callback)
         templated.attr('for', id);
         if (item.push)
           pushed.push([item.push,templated]);
-        else if (is_table)
-          parent.append(templated);
+        else if (wrap)
+          wrap.append(templated);
+        else if (defaults.wrap) {
+          defaults.wrap.id = name;
+          wrap = this.create(defaults.wrap, parent_field)[1];
+          wrap.html('');
+          delete defaults.wrap;
+          parent.find('#'+new_item_name).replaceWith(wrap);
+          wrap.append(templated);
+        }
         else
           parent.find('#'+new_item_name).replaceWith(templated);
         this.init_events(obj, item);
@@ -319,7 +328,7 @@ $.fn.page = function(options, callback)
         else
           templated.insertBefore(parent.find('[for="'+pos+'"'));
       }
-      if (!loading_data && !parent_is_table)
+      if (!loading_data)
         parent.replace(regex, '');
     },
 
@@ -363,9 +372,7 @@ $.fn.page = function(options, callback)
     {
       var style = field.style;
       if (!style) return;
-      for (var key in style) {
-        obj.css(key, style[key]);
-      }
+      obj.css(field.style);
     },
 
     replace: function(parent, child, id, field)
@@ -612,6 +619,7 @@ $.fn.page = function(options, callback)
 
     set_values: function(parent, data)
     {
+      var query_values;
       for (var i in data.values) {
         var item = data.values[i];
         var array = $.isNumeric(i);
@@ -627,9 +635,10 @@ $.fn.page = function(options, callback)
           obj.value(value);
           continue;
         }
-        if (id === "query");
-          page.load_values(parent, data);
+        if (id === "query") query_values = true;
       }
+      if (query_values)
+        page.load_values(parent, data);
     },
 
     load_values: function(parent, data)
