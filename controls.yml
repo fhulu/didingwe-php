@@ -1,16 +1,12 @@
 # html controls
 ---
-actioner:
-  tag: div
-  class: [action]
-
 blank:
   type: template
   tag: span
   text: ""
 
 button:
-  type: actioner
+  class: [action]
   tag: button
   attr: { title: $desc }
 
@@ -123,18 +119,26 @@ div: {tag: div}
 
 dropdown:
   unselected: --Select $name--
+  inherit: [unselected,default]
   tag: select
-  text: |
-    <option>$unselected</option>
-    $options
+  text: $options
+  default:
+    value: ""
+    text: $unselected
   options:
     - type: dropdown_option
+    - dropdown_default
 
 dropdown_option:
   tag: option
   value: $1
-  text: $2
+  name: $2
+  text: $name
   attr: { value: $value }
+
+dropdown_default:
+  value: ""
+  text: $unselected
 
 element:
   text: ""
@@ -245,7 +249,6 @@ input:
 
 input_page:
   type: page
-  css: [/common/input_page.css]
   label_width: 24%
   input_width: 73%
   label_suffix: ":"
@@ -267,7 +270,8 @@ label:
 label_left:
   type: label_template
   label_suffix: ""
-  text: <label>$name$label_suffix</label>$field
+  pack: inline
+  text: "<label style='display: $pack'>$name$label_suffix</label>$field"
   subject:
     style: { margin-right: 20px }
 
@@ -280,8 +284,8 @@ label_template:
   tag: span
 
 label_top:
-  type: label_template
-  text: <p>$name</p>$field
+  type: label_left
+  pack: block
 
 labelled_input:
   type: template
@@ -386,7 +390,6 @@ processing:
 question_input:
   type: template
   text: <label>$question</label>$field
-  subject: { class: [input] }
 
 question_input_page:
   type: input_page
