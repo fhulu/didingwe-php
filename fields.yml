@@ -278,13 +278,13 @@ support_email: Mukoni Support <support@mukoni.co.za>
 title:
   desc: A descriptive or distinctive appellation, especially one belonging to a person by right of rank, office, attainment
   options:
-    - Dr
-    - Miss
-    - Mr
-    - Mrs
-    - Ms
-    - Prof
-    - Rev
+    - dr
+    - miss
+    - mr
+    - mrs
+    - ms
+    - prof
+    - rev
 
 twitter:
   src: /twitter.png
