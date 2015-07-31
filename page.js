@@ -38,10 +38,8 @@ $.fn.page = function(options, callback)
       if (!matches || matches.length < 1) return value;
       var source = matches[2];
       if (matches[1] === 'copy')
-        source = $('#'+source+' #'+parent_id+',[name='+source+'] #'+parent_id);
-      else
-        source = $(source);
-      return source.value();
+        source = '#'+source+' #'+parent_id+',[name='+source+'] #'+parent_id;
+      return $(source).value();
     },
 
     expand_value: function(values,value,parent_id)
@@ -74,10 +72,22 @@ $.fn.page = function(options, callback)
       $.each(item, function(key, value) {
         var matches = getMatches(value, /\$(\d+)/g);
         for (var i in matches) {
-          var match = matches[i];
-          item[key] = value.replace(new RegExp("\\$"+match+"([^\d]?)", 'g'), item.array[parseInt(match)-1]+'$1');
+          var index = parseInt(matches[i]);
+          value = value.replace(new RegExp("\\$"+index+"([^\d]?)", 'g'), item.array[index-1]+'$1');
         }
+        item[key] = value;
       });
+    },
+
+    remove_subscripts: function(item)
+    {
+      var removed = [];
+      $.each(item, function(key, value) {
+        if (typeof value !== 'string') return;
+        if (value.match(/^\$\d+$/)) removed.push(key);
+      })
+      $.deleteKeys(item, removed);
+      return item;
     },
 
     load_link: function(link,type, callback)
@@ -405,11 +415,13 @@ $.fn.page = function(options, callback)
       field = this.inherit_parent(parent, field);
 
       var id = field.id;
-      if ((field.name === undefined || field.name[0] === '$') && id)
-        field.name = toTitleCase(id.replace(/[_\/]/g, ' '));
       field.key = this.options.key;
       if (field.array)
         this.expand_array(field);
+      else
+        field = this.remove_subscripts(field);
+      if (id && field.name === undefined)
+        field.name = toTitleCase(id.replace(/[_\/]/g, ' '));
       this.expand_fields(id, field);
       return field;
     },
