@@ -496,6 +496,8 @@ $.fn.page = function(options, callback)
       var parent = page.parent;
       this.id = options.page_id = data.path.replace('/','_');
       var values = data.fields.values || data.values;
+      if (data.fields.name === undefined)
+        data.fields.name = toTitleCase(data.path.split('/').pop().replace('_',' '));
       data.fields.path = data.path;
       data.fields.sub_page = false;
       data.fields.id = this.id;
