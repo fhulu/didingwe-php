@@ -185,7 +185,7 @@ $.fn.page = function(options, callback)
       }
       else {
         template = this.merge_type(template);
-        $.deleteKeys(field, ['type', 'attr', 'class', 'tag', 'html']);
+        $.deleteKeys(field, ['type', 'attr', 'class', 'tag', 'html', 'style']);
       }
       template = merge(field, template);
       return this.create(template)[1];
