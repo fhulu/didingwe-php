@@ -328,6 +328,11 @@ menu_item:
   type: template
   tag: li
 
+next:
+  call: ""
+  merge: true
+  class: [action,wizard-jump]
+
 one_cell_row:
   type: template
   text: <td>$field</td>
@@ -370,6 +375,11 @@ plain:
 
 plain_text:
   type: plain
+
+prev:
+  call: ""
+  merge: true
+  class: [action,wizard-jump]
 
 # todo: fix back-end to contextualise
 print:
@@ -531,8 +541,9 @@ titled_paragraph:
 wizard:
   tag: div
   create: wizard
-  script: /common/wizard.js
-  css: /common/wizard.css
+  text: ""
+  script: [/common/wizard.js]
+  css: [/common/wizard.css]
   class: [wizard]
   prev_name: Previous
   next_name: Next

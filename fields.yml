@@ -61,7 +61,7 @@ confirm_password:
 country:
   options:
     - sql: SELECT item_code,item_name item_code from ref_list WHERE list_name = "country"
- 
+
 
 day_of_month:
   options:
@@ -231,13 +231,6 @@ mukoni_logo:
     type: image
     src: mukoni.png
     url: http://www.mukoni.co.za
-
-next:
-  call: ""
-  merge: true
-  attr:
-    class: action wizard-jump
-
 
 password:
   desc: A secret combination of letters and number only known to you. Please do not give out your password.
