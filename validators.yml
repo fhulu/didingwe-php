@@ -2,7 +2,7 @@
 ---
 after_period:
   3: now()
-  valid: sql(select timestampdiff($2,'$3','$value') <= $1)
+  valid: sql(select timestampdiff($2,$3,'$value') > $1)
   error: $name must be after $1 $2
 
 alphabetic: must_be([a-zA-Z]+,alphabetic)
@@ -14,7 +14,7 @@ at_least:
 
 before_period:
   3: now()
-  valid: sql(select timestampdiff($2,'$value',$3) <= '$1')
+  valid: sql(select timestampdiff($2,'$value',$3) < '$1')
   error: $name must be before $1 $2
 
 between:
