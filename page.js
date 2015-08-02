@@ -541,7 +541,7 @@ $.fn.page = function(options, callback)
       var children = object.find("*");
       children.on('show', function(e, invoker,show) {
         if (show === undefined) return false;
-        $(this).toggle(show);
+        $(this).toggle(parseInt(show) === 1 || show === true);
         e.stopImmediatePropagation();
       });
 
