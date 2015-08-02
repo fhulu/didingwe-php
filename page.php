@@ -8,7 +8,6 @@ require_once 'utils.php';
 class user_exception extends Exception {};
 
 $page = new page();
-$throwing = false;
 try {
   $page->process();
 }
@@ -480,7 +479,8 @@ class page
         list($error) = find_assoc_element($error, 'error');
         $this->reply($validator->error);
       }
-      page::error($code, $error);
+      if (!is_null($error))
+        page::error($code, $error);
 
     });
     return $this->validator->valid();
