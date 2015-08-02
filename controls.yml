@@ -515,7 +515,11 @@ template:
 
 text: { type: input }
 
-textarea: { tag: textarea }
+textarea:
+  tag: textarea
+  value: ""
+  text: $value
+
 text_area: { type: textarea}
 
 text_input: {type: input }
