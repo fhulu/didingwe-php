@@ -51,7 +51,7 @@ datatable:
   flags: []
     # - editall
     #
-  load:
+  post:
     - call: datatable::read(context,$key)
   position: top
   filter: all
@@ -122,9 +122,6 @@ dropdown:
   inherit: [unselected,default]
   tag: select
   text: $options
-  default:
-    value: ""
-    text: $unselected
   options:
     - type: dropdown_option
     - dropdown_default
@@ -134,7 +131,7 @@ dropdown_option:
   value: $1
   name: $2
   text: $name
-  attr: { value: $value }
+  attr: { value: $id }
 
 dropdown_default:
   value: ""
