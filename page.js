@@ -185,7 +185,7 @@ $.fn.page = function(options, callback)
       }
       else {
         template = this.merge_type(template);
-        $.deleteKeys(field, ['type', 'attr', 'class', 'tag', 'html', 'style']);
+        $.deleteKeys(field, ['type', 'attr', 'class', 'tag', 'html', 'style', 'create']);
       }
       template = merge(field, template);
       return this.create(template)[1];
@@ -300,9 +300,9 @@ $.fn.page = function(options, callback)
           templated = obj;
         }
         else {
+          templated.attr('for', id);
           this.replace(templated, obj, id, 'field');
         }
-        templated.attr('for', id);
         if (item.push)
           pushed.push([item.push,templated]);
         else if (wrap)
@@ -542,7 +542,6 @@ $.fn.page = function(options, callback)
       children.on('show', function(e, invoker,show) {
         if (show === undefined) return false;
         $(this).toggle(parseInt(show) === 1 || show === true);
-        e.stopImmediatePropagation();
       });
 
       children.on('refresh', function(e) {
@@ -657,7 +656,7 @@ $.fn.page = function(options, callback)
 
     load_values: function(parent, data)
     {
-      $.json('/', this.server_params('values', data.path+'/values'), function(result) {
+      $.json('/', this.server_params('values', data.path), function(result) {
         parent.trigger('loaded_values', [result]);
         page.respond(result);
         if ($.isPlainObject(result))

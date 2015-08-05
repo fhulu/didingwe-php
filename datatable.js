@@ -96,8 +96,9 @@
       if (selector !== undefined) {
         $.extend(data, $(selector).values());
       }
-      data.path = data.path +'/load';
+      data.action = 'data';
       $.json('/', {data: data}, function(data) {
+        if (!data) return;
         if (data._responses)
           self.element.trigger('server_response', data);
         self.element.trigger('refreshed', [data]);
