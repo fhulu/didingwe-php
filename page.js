@@ -38,10 +38,8 @@ $.fn.page = function(options, callback)
       if (!matches || matches.length < 1) return value;
       var source = matches[2];
       if (matches[1] === 'copy')
-        source = $('#'+source+' #'+parent_id+',[name='+source+'] #'+parent_id);
-      else
-        source = $(source);
-      return source.value();
+        source = '#'+source+' #'+parent_id+',[name='+source+'] #'+parent_id;
+      return $(source).value();
     },
 
     expand_value: function(values,value,parent_id)
@@ -74,10 +72,22 @@ $.fn.page = function(options, callback)
       $.each(item, function(key, value) {
         var matches = getMatches(value, /\$(\d+)/g);
         for (var i in matches) {
-          var match = matches[i];
-          item[key] = value.replace('$'+match, item.array[parseInt(match)-1]);
+          var index = parseInt(matches[i]);
+          value = value.replace(new RegExp("\\$"+index+"([^\d]?)", 'g'), item.array[index-1]+'$1');
         }
+        item[key] = value;
       });
+    },
+
+    remove_subscripts: function(item)
+    {
+      var removed = [];
+      $.each(item, function(key, value) {
+        if (typeof value !== 'string') return;
+        if (value.match(/^\$\d+$/)) removed.push(key);
+      })
+      $.deleteKeys(item, removed);
+      return item;
     },
 
     load_link: function(link,type, callback)
@@ -175,7 +185,7 @@ $.fn.page = function(options, callback)
       }
       else {
         template = this.merge_type(template);
-        $.deleteKeys(field, ['type', 'attr', 'class', 'tag', 'html']);
+        $.deleteKeys(field, ['type', 'attr', 'class', 'tag', 'html', 'style', 'create']);
       }
       template = merge(field, template);
       return this.create(template)[1];
@@ -207,7 +217,7 @@ $.fn.page = function(options, callback)
 
     set_defaults: function(defaults, item)
     {
-      var names = [ 'type', 'template', 'mandatory', 'action', 'attr'];
+      var names = [ 'type', 'template', 'mandatory', 'action', 'attr', 'wrap'];
       var set = false;
       for (var i in names) {
         var name = names[i];
@@ -215,7 +225,9 @@ $.fn.page = function(options, callback)
         if (value === undefined) continue;
         if (name === 'template' && value === 'none')
           defaults[name] = '$field';
-        else if (name === 'type' || name === 'template')
+        else if (name === 'wrap' && $.isPlainObject(value))
+          defaults[name] = $.extend({}, {tag: 'div'}, value);
+        else if (name === 'type' || name === 'template' || name === 'wrap')
           defaults[name] = this.expand_type(value, name==='template');
         else
           defaults[name] = item[name];
@@ -237,6 +249,7 @@ $.fn.page = function(options, callback)
       var pushed = [];
       var first;
       var last;
+      var wrap;
       for(var i in items) {
         var item = items[i];
         var id;
@@ -278,9 +291,7 @@ $.fn.page = function(options, callback)
           item.path = path + '/' + id;
         if (!template) template = item.template = defaults.template;
         if (template && template.subject) item = merge(template.subject, item);
-        var is_table = parent_is_table || ['tr','td'].indexOf(item.tag) >= 0 || ['tr','td'].indexOf(template.tag) >= 0;
-        if (!is_table)
-           parent.replace(regex,new_item_html+'$1');
+        parent.replace(regex,new_item_html+'$1');
         var created = this.create(item, parent_field);
         item = created[0];
         var obj = created[1];
@@ -289,13 +300,21 @@ $.fn.page = function(options, callback)
           templated = obj;
         }
         else {
+          templated.attr('for', id);
           this.replace(templated, obj, id, 'field');
         }
-        templated.attr('for', id);
         if (item.push)
           pushed.push([item.push,templated]);
-        else if (is_table)
-          parent.append(templated);
+        else if (wrap)
+          wrap.append(templated);
+        else if (defaults.wrap) {
+          defaults.wrap.id = name;
+          wrap = this.create(defaults.wrap, parent_field)[1];
+          wrap.html('');
+          delete defaults.wrap;
+          parent.find('#'+new_item_name).replaceWith(wrap);
+          wrap.append(templated);
+        }
         else
           parent.find('#'+new_item_name).replaceWith(templated);
         this.init_events(obj, item);
@@ -319,7 +338,7 @@ $.fn.page = function(options, callback)
         else
           templated.insertBefore(parent.find('[for="'+pos+'"'));
       }
-      if (!loading_data && !parent_is_table)
+      if (!loading_data)
         parent.replace(regex, '');
     },
 
@@ -363,9 +382,7 @@ $.fn.page = function(options, callback)
     {
       var style = field.style;
       if (!style) return;
-      for (var key in style) {
-        obj.css(key, style[key]);
-      }
+      obj.css(field.style);
     },
 
     replace: function(parent, child, id, field)
@@ -398,11 +415,13 @@ $.fn.page = function(options, callback)
       field = this.inherit_parent(parent, field);
 
       var id = field.id;
-      if ((field.name === undefined || field.name[0] === '$') && id)
-        field.name = toTitleCase(id.replace(/[_\/]/g, ' '));
       field.key = this.options.key;
       if (field.array)
         this.expand_array(field);
+      else
+        field = this.remove_subscripts(field);
+      if (id && field.name === undefined)
+        field.name = toTitleCase(id.replace(/[_\/]/g, ' '));
       this.expand_fields(id, field);
       return field;
     },
@@ -477,6 +496,8 @@ $.fn.page = function(options, callback)
       var parent = page.parent;
       this.id = options.page_id = data.path.replace('/','_');
       var values = data.fields.values || data.values;
+      if (data.fields.name === undefined)
+        data.fields.name = toTitleCase(data.path.split('/').pop().replace('_',' '));
       data.fields.path = data.path;
       data.fields.sub_page = false;
       data.fields.id = this.id;
@@ -520,8 +541,7 @@ $.fn.page = function(options, callback)
       var children = object.find("*");
       children.on('show', function(e, invoker,show) {
         if (show === undefined) return false;
-        $(this).toggle(show);
-        e.stopImmediatePropagation();
+        $(this).toggle(parseInt(show) === 1 || show === true);
       });
 
       children.on('refresh', function(e) {
@@ -612,6 +632,7 @@ $.fn.page = function(options, callback)
 
     set_values: function(parent, data)
     {
+      var query_values;
       for (var i in data.values) {
         var item = data.values[i];
         var array = $.isNumeric(i);
@@ -627,14 +648,15 @@ $.fn.page = function(options, callback)
           obj.value(value);
           continue;
         }
-        if (id === "query");
-          page.load_values(parent, data);
+        if (id === "query") query_values = true;
       }
+      if (query_values)
+        page.load_values(parent, data);
     },
 
     load_values: function(parent, data)
     {
-      $.json('/', this.server_params('values', data.path+'/values'), function(result) {
+      $.json('/', this.server_params('values', data.path), function(result) {
         parent.trigger('loaded_values', [result]);
         page.respond(result);
         if ($.isPlainObject(result))

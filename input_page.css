@@ -12,7 +12,39 @@
   display: block;
 }
 
-.input>span
+.input>label+*
+{
+  position: relative;
+  width: 100%;
+  left: 0px;
+  font-weight: 100;
+  border-radius: 6px;
+  height: 32px;
+}
+
+.input>*
+{
+  width: 100%;
+  border-radius: 6px;
+  height: 32px;
+  vertical-align: middle;
+}
+
+.input>input[type=radio],
+.input>input[type=checkbox]
+{
+  width: 24px;
+  height: 24px;
+}
+
+.input>*:first-child:focus
+{
+  -moz-box-shadow: 3px 3px 4px #3f3f3f;
+  -webkit-box-shadow: 3px 3px 4px #3f3f3f;
+  box-shadow: 3px 3px 4px #3f3f3f;
+}
+
+.hint
 {
   display: none;
   margin-left: auto;
@@ -29,8 +61,8 @@
   background: #FFFFC0;
 }
 
-.input:focus>span,
-.input:hover>span
+.input:focus>.hint,
+.input:hover>.hint
 {
   z-index: 1000;
   display: block;
@@ -40,13 +72,13 @@
 {
   margin-bottom: 6px;
   width: 100%;
+  position: relative;
 }
 
 .labelled-input>label
 {
   vertical-align: top;
   text-align: right;
-  width: 24%;
   display: inline-block;
   font-size: 11pt;
   font-weight: 100;
@@ -56,7 +88,7 @@
 {
   display: inline-block;
   margin-left: 1%;
-  width: 74%;
+  width: 73%;
 }
 
 .labelled-input+.actions
@@ -64,11 +96,76 @@
   margin-top: 12px;
   margin-bottom: 12px;
   margin-left: 26%;
-  width: 74%;
+  width: 73%;
 }
 
 .inplace-input
 {
   margin-bottom: 6px;
   width: 100%;
+  font-weight: 100;
+  border-radius: 6px;
+  height: 32px;
+}
+
+.info-line
+{
+  margin-bottom: 2px;
+  font-size: 10pt;
+  display: block;
+  position: relative;
+}
+
+.info-line>label
+{
+  vertical-align: top;
+  text-align: right;
+  width: 32%;
+  display: inline-block;
+  font-size: 9pt;
+  font-weight: lighter;
+  padding-right: 8px;
+}
+
+.info-line>label+*
+{
+  display: inline-block;
+  background: lightgrey;
+  font-weight: bold;
+  width: 58%;
+}
+
+.question-input
+{
+  margin-bottom: 16px;
+  width: 100%;
+  position: relative;
+}
+
+.question-input>label
+{
+  vertical-align: top;
+  text-align: left;
+  display: block;
+  font-size: 11pt;
+  font-weight: 100;
+  margin-bottom: 3px;
+}
+
+.question-input>label+*
+{
+  display: block;
+  width: 100%;
+  font-weight: 100;
+  border-radius: 6px;
+  height: 32px;
+}
+.question-input>input[type=checkbox]
+{
+  width: 24px;
+}
+
+select>option
+{
+  height: 32px;
 }

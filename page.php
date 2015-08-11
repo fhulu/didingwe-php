@@ -20,7 +20,8 @@ catch (Exception $exception)
 {
   log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
   log::stack($exception);
-  page::show_dialog('/error_page');
+  if ($_REQUEST['path'] != 'error_page')
+    page::show_dialog('/error_page');
 }
 $page->output();
 
@@ -341,7 +342,7 @@ class page
 
       if ($type == $this->page) return;
 
-      if ($type == 'type' || $type == 'template') {
+      if ($type == 'type' || $type == 'template' || $type == 'wrap') {
         $type = $value;
         $value = null;
       }
@@ -361,6 +362,7 @@ class page
         $this->expand_types($expanded);
         return;
       }
+
 
       if (!$this->rendering) return;
 
@@ -478,7 +480,8 @@ class page
         list($error) = find_assoc_element($error, 'error');
         $this->reply($validator->error);
       }
-      page::error($code, $error);
+      if (!is_null($error))
+        page::error($code, $error);
 
     });
     return $this->validator->valid();
@@ -515,7 +518,7 @@ class page
       return call_user_func($function);
 
     $params = explode(',', $params);
-    $context = merge_options($this->fields, $this->request);
+    $context = merge_options($this->fields, $this->context, $this->request);
     replace_fields($context, $this->request);
     replace_fields($params, $this->request);
     replace_fields($params, $context);
@@ -748,7 +751,9 @@ class page
   function values()
   {
     log::debug_json("VALUES '$this->root'", $this->context);
-    return $this->reply($this->context);
+    $values = $this->context['values'];
+    if (is_null($values)) $values = $this->context;
+    return $this->reply($values);
   }
 
   function upload()
@@ -899,12 +904,16 @@ class page
   function write_session()
   {
     $vars = func_get_args();
-    if (sizeof($vars) == 1) $vars = explode (',', $vars[0]);
+    if (sizeof($vars) == 1 && is_string($vars[0])) $vars = explode (',', $vars[0]);
     log::debug_json("WRITE SESSION VARS", $vars);
 
     foreach($vars as $var) {
       if ($var == 'request' && !isset($this->request['request']))
         call_user_func_array (array($this, 'write_session'), array_keys($this->request));
+      else if (is_array($var)) {
+        list($var,$value) = assoc_element($var);
+        $_SESSION[$var] = $value;
+      }
       else if (isset($this->reply[$var]))
         $_SESSION[$var] = $this->reply[$var];
       else if   (isset($this->request[$var]))

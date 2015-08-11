@@ -1,16 +1,12 @@
 # html controls
 ---
-actioner:
-  tag: div
-  class: [action]
-
 blank:
   type: template
   tag: span
   text: ""
 
 button:
-  type: actioner
+  class: [action]
   tag: button
   attr: { title: $desc }
 
@@ -26,7 +22,11 @@ captioned_image:
 
 checkbox:
   type: input
-  type: checkbox
+  attr: { type: checkbox }
+
+class:
+  type: template
+  class: $id
 
 container:
   tag: div
@@ -51,7 +51,7 @@ datatable:
   flags: []
     # - editall
     #
-  load:
+  post:
     - call: datatable::read(context,$key)
   position: top
   filter: all
@@ -115,20 +115,27 @@ disabled_text_input:
   type: disabled_input
 
 
+div: {tag: div}
+
 dropdown:
   unselected: --Select $name--
+  inherit: [unselected,default]
   tag: select
-  text: |
-    <option value=''>$unselected</option>
-    $options
+  text: $options
   options:
     - type: dropdown_option
+    - dropdown_default
 
 dropdown_option:
   tag: option
   value: $1
   name: $2
+  text: $name
   attr: { value: $id }
+
+dropdown_default:
+  value: ""
+  text: $unselected
 
 element:
   text: ""
@@ -198,38 +205,29 @@ image:
   text: ""
 
 info_line:
-  type: template
-  text: |
-    <label>$name</label>
-    <div class=info-text>$field</div>
+  type: label_left
+  label_suffix: ":"
+  class: [info-line]
 
 info_page:
-    html: |
-      <div>
-        <p class="desc">$desc</p>
-        <span class=ajax_result style="display: none;"></span>
-        <div class="form">
-          $lines
-          <p></p>$actions
-        </div>
-      </div>
-    attr:
-      page: $name
-      title: $name
-    lines:
-      - type: info_text
-      - template: info_line
-    actions:
-      - type: submit
-
+  type: input_page
+  lines: $inputs
+  inherit: [label_suffix]
+  label_suffix: ":"
+  inputs:
+    - type: info_text
+    - template: info_line
 
 info_text:
   tag: div
+  class: [info-text]
+  value: ""
   text: $value
 
 inplace_input:
   type: template
   css: [/common/inplace_input.css]
+  style: { display: $pack }
   text: |
       <a class=input>
         $field
@@ -248,8 +246,11 @@ input:
 
 input_page:
   type: page
-  css: [/common/input_page.css]
-  inherit: [desc]
+  label_width: 24%
+  input_width: 73%
+  label_suffix: ":"
+  pack: inline
+  inherit: [desc, input_width, label_width, label_suffix, pack]
   loading: { type: processing }
   synopsis: { type: section_heading, text: $desc}
   text: $loading $synopsis $inputs $actions
@@ -257,6 +258,7 @@ input_page:
     - template: labelled_input
     - type: input
   actions:
+    - wrap: class
     - type: submit
 
 label:
@@ -264,7 +266,11 @@ label:
 
 label_left:
   type: label_template
-  text: <label>$name</label>$field
+  label_suffix: ""
+  pack: inline
+  text: "<label style='display: $pack'>$name$label_suffix</label>$field"
+  subject:
+    style: { margin-right: 20px }
 
 label_right:
   type: label_template
@@ -275,18 +281,18 @@ label_template:
   tag: span
 
 label_top:
-  type: label_template
-  text: <p>$name</p>$field
+  type: label_left
+  pack: block
 
 labelled_input:
   type: template
+  style: { display: $pack }
   text: |
-      <label>$name$label_suffix</label>
-      <a class=input>
+      <label style="width: $label_width">$name$label_suffix</label>
+      <a class=input style="width: $input_width">
         $field
         <span class=hint>$desc</span>
       </a>
-  label_suffix: ":"
 
 labelled_input_page:
   type: input_page
@@ -318,6 +324,11 @@ menu:
 menu_item:
   type: template
   tag: li
+
+next:
+  call: ""
+  merge: true
+  class: [action,wizard-jump]
 
 one_cell_row:
   type: template
@@ -362,12 +373,17 @@ plain:
 plain_text:
   type: plain
 
+prev:
+  call: ""
+  merge: true
+  class: [action,wizard-jump]
+
 # todo: fix back-end to contextualise
 print:
   desc: Print above contents
   action: redirect
   validate: none
-  call: datatable::pdf(context, $key)
+  call: datatable::pdf(context,$key)
   query: " "
   target: _blank
 
@@ -381,7 +397,6 @@ processing:
 question_input:
   type: template
   text: <label>$question</label>$field
-  subject: { class: [input] }
 
 question_input_page:
   type: input_page
@@ -391,6 +406,9 @@ question_input_page:
 radiobox:
   type: input
   attr: { type: radio, value: $id}
+  style:
+    width: 24px
+    height: 24px
 
 radiogroup:
   tag: div
@@ -494,7 +512,11 @@ template:
 
 text: { type: input }
 
-textarea: { tag: textarea }
+textarea:
+  tag: textarea
+  value: ""
+  text: $value
+
 text_area: { type: textarea}
 
 text_input: {type: input }
@@ -520,8 +542,9 @@ titled_paragraph:
 wizard:
   tag: div
   create: wizard
-  script: /common/wizard.js
-  css: /common/wizard.css
+  text: ""
+  script: [/common/wizard.js]
+  css: [/common/wizard.css]
   class: [wizard]
   prev_name: Previous
   next_name: Next
