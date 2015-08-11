@@ -510,8 +510,6 @@ template:
   text: $field
   attr: {id: ""}
 
-text: { type: input }
-
 textarea:
   tag: textarea
   value: ""
