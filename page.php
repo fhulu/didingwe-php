@@ -608,6 +608,7 @@ class page
       $detail = replace_vars($detail, $result);
       $detail = page::decode_field($detail);
       $detail = page::decode_sql($detail);
+      $detail = replace_vars($detail,$this->request);
     }
     $name = addslashes($name);
     $detail = addslashes($detail);
