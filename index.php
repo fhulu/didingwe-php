@@ -52,6 +52,7 @@
     $_SESSION['content'] = $content;
 
   $page = $content==''? config::$landing_page: 'index';
+  if ($page == 'index' && $content == '') $content = 'home';
   if (!is_null($page))  pre_load_custom($page);
   if ($content != $page && !is_null($content))
     pre_load_custom($content);
