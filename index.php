@@ -51,13 +51,15 @@
   if (!is_null($content) && !in_array($content, array('logout','login')))
     $_SESSION['content'] = $content;
 
-  if ($content == '') $content = 'home';
-  if ($page == '') $page = 'index';
+  $page = $content==''? config::$landing_page: 'index';
   if (!is_null($page))  pre_load_custom($page);
   if ($content != $page && !is_null($content))
     pre_load_custom($content);
-  $request = array_merge($_REQUEST, array('content'=>$content));
-  $options = array("path"=>$page, 'request'=>$request)
+  $request = $_REQUEST;
+  if (!is_null($content)) $request['content'] = $content;
+  unset($request['path']);
+  $options = array("path"=>$page);
+  if (!empty($request)) $options['request']=$request;
 ?>
 <script>
 $(function() {
