@@ -1,7 +1,6 @@
 # html controls
 ---
 blank:
-  type: template
   tag: span
   text: ""
 
@@ -11,8 +10,7 @@ button:
   attr: { title: $desc }
 
 captioned_image:
-  tag: div
-  class: [captioned-image]
+  classes: div
   text: |
     <img src="$src" title="$title"></img>
     <p>$caption</p>
@@ -25,7 +23,8 @@ checkbox:
   attr: { type: checkbox }
 
 class:
-  type: template
+  tag: div
+  attr: { id: ""}
   class: $id
 
 container:
@@ -114,9 +113,6 @@ disabled_input:
 disabled_text_input:
   type: disabled_input
 
-
-div: {tag: div}
-
 dropdown:
   unselected: --Select $name--
   inherit: [unselected,default]
@@ -140,6 +136,10 @@ dropdown_default:
 element:
   text: ""
   html: <$tag>$text</$tag>
+
+email:
+  type: input
+  attr: { type: email }
 
 #todo: fix backend inheritance
 export:
@@ -219,13 +219,12 @@ info_page:
     - template: info_line
 
 info_text:
-  tag: div
-  class: [info-text]
+  classes: div
   value: ""
   text: $value
 
 inplace_input:
-  type: template
+  templates: div
   css: [/common/inplace_input.css]
   style: { display: $pack }
   text: |
@@ -265,7 +264,7 @@ label:
   tag: label
 
 label_left:
-  type: label_template
+  template: span
   label_suffix: ""
   pack: inline
   text: "<label style='display: $pack'>$name$label_suffix</label>$field"
@@ -273,19 +272,18 @@ label_left:
     style: { margin-right: 20px }
 
 label_right:
-  type: label_template
+  template: span
   text: $field<label>$name</label>
 
 label_template:
-  type: template
-  tag: span
+  template: span
 
 label_top:
   type: label_left
   pack: block
 
 labelled_input:
-  type: template
+  templates: div
   style: { display: $pack }
   text: |
       <label style="width: $label_width">$name$label_suffix</label>
@@ -321,9 +319,7 @@ menu:
     - type: link
     - action: redirect
 
-menu_item:
-  type: template
-  tag: li
+menu_item: { templates: li }
 
 next:
   call: ""
@@ -331,7 +327,7 @@ next:
   class: [action,wizard-jump]
 
 one_cell_row:
-  type: template
+  templates: div
   text: <td>$field</td>
 
 one_column_table:
@@ -350,10 +346,9 @@ one_row_table:
 p: { tag: p}
 
 page:
-  tag: div
+  classes: div
   attr: { title: $name }
   sub_page: true
-  class: [page]
 
 page_title:
   html: <title>$name</title>
@@ -361,9 +356,12 @@ page_title:
 paragraph:
   type: p
 
-password_input:
+password:
   type: input
   attr: { type: password }
+
+password_input:
+  type: password
 
 plain:
   tag: div
@@ -388,14 +386,12 @@ print:
   target: _blank
 
 processing:
-  type: template
-  tag: span
-  class: [ajax_result]
+  classes: span
   style: { display: none }
 
 
 question_input:
-  type: template
+  templates: div
   text: <label>$question</label>$field
 
 question_input_page:
@@ -422,8 +418,7 @@ radiogroup:
     - attr: { name: $group }
 
 section_heading:
-  tag: p
-  class: [section-heading]
+  classes: p
 
 span:
   tag: span
@@ -436,7 +431,7 @@ submit:
   action: post
 
 sub_menu:
-  type: template
+  templates: div
   text: |
     <a id="$id">$name</a>
     <span>$sub_items</span>
@@ -454,22 +449,15 @@ table:
   rows:
     - template: table_row
 
-table_head:
-  type: template
-  tag: thead
+table_head: { templates: thead }
 
-table_body:
-  type: template
-  tag: tbody
+table_body: { templates: tbody }
 
-table_cell:
-  type: template
-  tag: td
+table_cell: { templates: td }
 
 table_input:
-  type: template
+  templates: tr
   class: [input]
-  tag: tr
   text: |
     <td style="width:25%;">$name</td>
     <td>
@@ -508,7 +496,7 @@ table_row:
 template:
   tag: div
   text: $field
-  attr: {id: ""}
+  attr: {for: $id, id: ""}
 
 textarea:
   tag: textarea
@@ -538,12 +526,11 @@ titled_paragraph:
   text: " "
 
 wizard:
-  tag: div
+  classes: div
   create: wizard
   text: ""
   script: [/common/wizard.js]
   css: [/common/wizard.css]
-  class: [wizard]
   prev_name: Previous
   next_name: Next
 

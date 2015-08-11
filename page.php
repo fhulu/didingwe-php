@@ -409,6 +409,7 @@ class page
     }
 
     $this->types['control'] = $this->get_expanded_field('control');
+    $this->types['template'] = $this->get_expanded_field('template');
     return array(
       'path'=>implode('/',$this->path),
       'fields'=>$this->fields,
