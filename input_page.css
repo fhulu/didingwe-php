@@ -72,6 +72,7 @@
 {
   margin-bottom: 6px;
   width: 100%;
+  position: relative;
 }
 
 .labelled-input>label
@@ -112,6 +113,7 @@
   margin-bottom: 2px;
   font-size: 10pt;
   display: block;
+  position: relative;
 }
 
 .info-line>label
@@ -136,7 +138,8 @@
 .question-input
 {
   margin-bottom: 16px;
-  width: 100%
+  width: 100%;
+  position: relative;
 }
 
 .question-input>label
