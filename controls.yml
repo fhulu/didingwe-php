@@ -264,7 +264,7 @@ label:
   tag: label
 
 label_left:
-  template: span
+  templates: span
   label_suffix: ""
   pack: inline
   text: "<label style='display: $pack'>$name$label_suffix</label>$field"
@@ -272,11 +272,9 @@ label_left:
     style: { margin-right: 20px }
 
 label_right:
-  template: span
+  templates: span
   text: $field<label>$name</label>
 
-label_template:
-  template: span
 
 label_top:
   type: label_left
@@ -407,7 +405,7 @@ radiobox:
     height: 24px
 
 radiogroup:
-  tag: div
+  templates: div
   class: radio
   text: $options
   group: $id

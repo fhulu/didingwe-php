@@ -157,12 +157,12 @@ $.fn.page = function(options, callback)
       if (type === undefined && field.html === undefined) {
         if (field.tag)
           type = 'control';
-        else if (field.classes) {
+        else if (field.classes && prev) {
           type = 'control';
           field.tag = field.classes;
           field.class = prev.replace('_','-');
         }
-        else if (field.templates) {
+        else if (field.templates && prev) {
           type = 'template';
           field.tag = field.templates;
           field.class = prev.replace('_','-');
@@ -198,7 +198,7 @@ $.fn.page = function(options, callback)
       }
       else {
         template = this.merge_type(template);
-        $.deleteKeys(field, ['type', 'attr', 'class', 'tag', 'html', 'style', 'create']);
+        $.deleteKeys(field, ['type', 'attr', 'class', 'tag', 'html', 'style', 'create','classes','templates']);
       }
       template = merge(field, template);
       return this.create(template)[1];
