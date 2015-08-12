@@ -250,7 +250,6 @@ input_page:
   label_suffix: ":"
   pack: inline
   inherit: [desc, input_width, label_width, label_suffix, pack]
-  synopsis: { type: section_heading, text: $desc}
   text: $processing $synopsis $inputs $actions
   inputs:
     - template: labelled_input
@@ -437,6 +436,10 @@ sub_menu:
   sub_items:
     - action: redirect
     - type: link
+
+synopsis:
+  type: section_heading
+  text: $desc
 
 table:
   tag: table
