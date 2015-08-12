@@ -283,13 +283,13 @@ list:
 
 login:
   access: public
-  type: labelled_input_page
+  type: input_page
   width: 500
   validate: all
   desc: Fill in your credentials below and click Login to logon
   inputs:
     - email: { valid: [is_registered, is_active, is_unlocked] }
-    - password: { type: password_input, valid: is_password_for(email) }
+    - password: { valid: is_password_for(email) }
   actions:
     - login
     - forgot_password: { action: dialog }
@@ -361,10 +361,10 @@ otp:
 
 
 profile:
-  type: labelled_input_page
+  type: input_page
   access: [reg]
   name: View Own Profile
-  desc: $name
+  desc: These are your details on the system. You can make changes here to update them.
   width: 600
   inputs:
     - title: {type: dropdown}
@@ -380,7 +380,20 @@ profile:
         join role r on r.code = ur.role_code
         where id = $uid
   actions:
-    - update_profile
+    - profile_update
+
+profile_update:
+  name: Update Profile
+  audit: $title $first_name $last_name $cellphone $email_address
+  post:
+    - sql_exec: |
+        update user
+        set
+          title='$title', first_name='$first_name', last_name='$last_name',
+          cellphone='$cellphone', email_address = '$email_address'
+        where id = '$uid'
+    - close_dialog: Successfully updated
+
 
 register:
   access: public
@@ -411,16 +424,3 @@ start_reset_password:
     - next:
         call: user::start_reset_pw()
         action: post
-
-
-update_profile:
-  name: Update
-  audit: $title $first_name $last_name $cellphone $email_address
-  post:
-    - sql_exec: |
-        update user
-        set
-          title='$title', first_name='$first_name', last_name='$last_name',
-          cellphone='$cellphone', email_address = '$email_address'
-        where id = '$uid'
-    - close_dialog: Successfully updated

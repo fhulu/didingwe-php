@@ -20,6 +20,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <link href="/jquery/smoothness/ui.css" media="screen" rel="stylesheet" type="text/css" />
+<link href="/common/input_page.css?<?=$tag?>" media="screen" rel="stylesheet" type="text/css" />
 <link href="/default.style.css?<?=$tag?>" media="screen" rel="stylesheet" type="text/css" />
 
 <script type='text/javascript' src='/jquery/min.js'></script>
@@ -51,6 +52,7 @@
     $_SESSION['content'] = $content;
 
   $page = $content==''? config::$landing_page: 'index';
+  if ($page == 'index' && $content == '') $content = 'home';
   if (!is_null($page))  pre_load_custom($page);
   if ($content != $page && !is_null($content))
     pre_load_custom($content);
