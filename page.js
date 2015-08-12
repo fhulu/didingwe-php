@@ -44,6 +44,7 @@ $.fn.page = function(options, callback)
 
     expand_value: function(values,value,parent_id)
     {
+      var self = this;
       $.each(values, function(code, subst) {
         if (typeof subst === 'string' && value !== null) {
           subst = page.expand_function(subst, parent_id)
@@ -149,13 +150,27 @@ $.fn.page = function(options, callback)
 
 
 
-    merge_type: function(field, type)
+    merge_type: function(field, type, id)
     {
       if (field === undefined || this.types === undefined) return field;
       if (type === undefined) type = field.type;
-      if (type === undefined && field.html === undefined && field.tag) type = 'control';
+      if (type === undefined && field.html === undefined) {
+        if (!id) id = field.id;
+        if (field.tag)
+          type = 'control';
+        else if (field.classes && id) {
+          type = 'control';
+          field.tag = field.classes;
+          field.class = id.replace('_','-');
+        }
+        else if (field.templates && id) {
+          type = 'template';
+          field.tag = field.templates;
+          field.class = id.replace('_','-');
+        }
+      }
       if (type === undefined) return field;
-      if (typeof type === 'string') type = this.merge_type(this.types[type]);
+      if (typeof type === 'string') type = this.merge_type(this.types[type], undefined, type);
       return merge(type, field);
     },
 
@@ -167,12 +182,11 @@ $.fn.page = function(options, callback)
       })
     },
 
-    expand_type: function(type, set_class)
+    expand_type: function(type)
     {
       if ($.isPlainObject(type)) return type;
       if (type.search(/\W/) >= 0) return {html: type};
       var field = {};
-      if (set_class) field.class = [type.replace('_','-')];
       return this.merge_type(field, type);
     },
 
@@ -185,7 +199,7 @@ $.fn.page = function(options, callback)
       }
       else {
         template = this.merge_type(template);
-        $.deleteKeys(field, ['type', 'attr', 'class', 'tag', 'html', 'style', 'create']);
+        $.deleteKeys(field, ['type', 'attr', 'class', 'tag', 'html', 'style', 'create','classes','templates']);
       }
       template = merge(field, template);
       return this.create(template)[1];
@@ -228,7 +242,7 @@ $.fn.page = function(options, callback)
         else if (name === 'wrap' && $.isPlainObject(value))
           defaults[name] = $.extend({}, {tag: 'div'}, value);
         else if (name === 'type' || name === 'template' || name === 'wrap')
-          defaults[name] = this.expand_type(value, name==='template');
+          defaults[name] = this.expand_type(value);
         else
           defaults[name] = item[name];
         set = true;
@@ -300,7 +314,6 @@ $.fn.page = function(options, callback)
           templated = obj;
         }
         else {
-          templated.attr('for', id);
           this.replace(templated, obj, id, 'field');
         }
         if (item.push)

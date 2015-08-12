@@ -327,6 +327,20 @@ class page
     }
   }
 
+  function expand_value($value)
+  {
+    $matches = array();
+    if (!preg_match_all('/\$(\w+)\b/', $value, $matches, PREG_SET_ORDER)) return;
+
+    $exclude = array('classes', 'code', 'id', 'text', 'name','desc', 'field', 'templates');
+    foreach($matches as $match) {
+      $var = $match[1];
+      if (in_array($var, $exclude, true)) continue;
+      $this->expand_type($var);
+    }
+  }
+
+
   function expand_types(&$fields)
   {
     $this->remove_items($fields);
@@ -346,7 +360,10 @@ class page
         $type = $value;
         $value = null;
       }
-      if (is_string($value)) return;
+      if (is_string($value)) {
+        $this->expand_value($value);
+        return;
+      }
       if (isset($this->types[$type])) return;
 
       $added_types = array();
@@ -409,6 +426,7 @@ class page
     }
 
     $this->types['control'] = $this->get_expanded_field('control');
+    $this->types['template'] = $this->get_expanded_field('template');
     return array(
       'path'=>implode('/',$this->path),
       'fields'=>$this->fields,
@@ -608,6 +626,7 @@ class page
       $detail = replace_vars($detail, $result);
       $detail = page::decode_field($detail);
       $detail = page::decode_sql($detail);
+      $detail = replace_vars($detail,$this->request);
     }
     $name = addslashes($name);
     $detail = addslashes($detail);

@@ -113,9 +113,9 @@ set_error_handler('caught_error');
 register_shutdown_function('caught_fatal');
 
 
-function merge_options($options1, $options2)
+function merge_options()
 {
-  $merge = function($options1, $options2) {
+  $merge = function($options1, $options2) use(&$merge) {
     if (!is_array($options1)|| $options1 == $options2) return $options2;
     if (!is_array($options2)) return $options1;
     if (!is_assoc($options1) && !is_assoc($options2)) return array_merge($options1, $options2);
@@ -129,17 +129,18 @@ function merge_options($options1, $options2)
       if (!is_array($value)) continue;
       $value2 = $result[$key];
       if (!is_array($value2)) continue;
-      $result[$key] = merge_options($value, $value2);
+      $result[$key] = $merge($value, $value2);
     }
     return $result;
-  }
+  };
+
   $args = func_get_args();
 
   $result = array_shift($args);
-  do {
+  while(sizeof($args) > 0) {
     $next = array_shift($args);
     $result = $merge($result, $next);
-  } while (sizeof($args) > 0);
+  }
   return $result;
 }
 
