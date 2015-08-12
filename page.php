@@ -863,6 +863,7 @@ class page
     $options = page::merge_options($options, $this->reply);
     $this->update_context($options);
     $options = page::merge_options($this->fields['send_email'], $options);
+    $options = page::merge_options($this->get_expanded_field('send_email'), $options);
     $header_array = $options['headers'];
     $header_string = "";
     foreach($header_array as $header) {
