@@ -250,9 +250,8 @@ input_page:
   label_suffix: ":"
   pack: inline
   inherit: [desc, input_width, label_width, label_suffix, pack]
-  loading: { type: processing }
   synopsis: { type: section_heading, text: $desc}
-  text: $loading $synopsis $inputs $actions
+  text: $processing $synopsis $inputs $actions
   inputs:
     - template: labelled_input
     - type: input
