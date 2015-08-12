@@ -495,7 +495,7 @@ $.fn.getCursorPosition = function() {
 $.copy = function(src)
 {
   if ($.isArray(src)) return [].concat(src);
-  return $.extend(true, {}, src);;
+  return $.extend(true, {}, src);
 }
 
 $.fn.bookmarkOnClick = function() {

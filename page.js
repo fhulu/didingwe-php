@@ -150,22 +150,23 @@ $.fn.page = function(options, callback)
 
 
 
-    merge_type: function(field, type, prev)
+    merge_type: function(field, type, id)
     {
       if (field === undefined || this.types === undefined) return field;
       if (type === undefined) type = field.type;
       if (type === undefined && field.html === undefined) {
+        if (!id) id = field.id;
         if (field.tag)
           type = 'control';
-        else if (field.classes && prev) {
+        else if (field.classes && id) {
           type = 'control';
           field.tag = field.classes;
-          field.class = prev.replace('_','-');
+          field.class = id.replace('_','-');
         }
-        else if (field.templates && prev) {
+        else if (field.templates && id) {
           type = 'template';
           field.tag = field.templates;
-          field.class = prev.replace('_','-');
+          field.class = id.replace('_','-');
         }
       }
       if (type === undefined) return field;
