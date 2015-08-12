@@ -26,7 +26,7 @@ captioned_image:
 
 checkbox:
   type: input
-  type: checkbox
+  attr: { type: checkbox }
 
 container:
   tag: div
