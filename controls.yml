@@ -1,5 +1,18 @@
 # html controls
 ---
+accordion:
+  create: accordion
+  type: container
+  contents: $items
+  items:
+    - template: accordion_div
+
+accordion_div:
+  type: template
+  text: <h3>$name</h3> <div>$field</div>
+  class: [group]
+  attr: { header: "> div > h3" }
+  
 blank:
   tag: span
   text: ""
