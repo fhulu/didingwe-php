@@ -156,18 +156,18 @@ $.fn.page = function(options, callback)
       if (type === undefined) type = field.type;
       if (type === undefined && field.html === undefined) {
         if (!id) id = field.id;
-        if (field.tag)
-          type = 'control';
-        else if (field.classes && id) {
+        if (field.classes) {
           type = 'control';
           field.tag = field.classes;
-          field.class = id.replace('_','-');
+          if (id) field.class = id.replace('_','-');
         }
-        else if (field.templates && id) {
+        else if (field.templates) {
           type = 'template';
           field.tag = field.templates;
-          field.class = id.replace('_','-');
+          if (id) field.class = id.replace('_','-');
         }
+        else if (field.tag)
+          type = 'control';
       }
       if (type === undefined) return field;
       if (typeof type === 'string') type = this.merge_type(this.types[type], undefined, type);
@@ -186,8 +186,8 @@ $.fn.page = function(options, callback)
     {
       if ($.isPlainObject(type)) return type;
       if (type.search(/\W/) >= 0) return {html: type};
-      var field = {};
-      return this.merge_type(field, type);
+      var field = {type: type};
+      return this.merge_type(field, undefined, type);
     },
 
     get_template: function(template, item)
@@ -199,7 +199,7 @@ $.fn.page = function(options, callback)
       }
       else {
         template = this.merge_type(template);
-        $.deleteKeys(field, ['type', 'attr', 'class', 'tag', 'html', 'style', 'create','classes','templates']);
+        $.deleteKeys(field, ['type', 'attr', 'class', 'tag', 'html', 'style', 'create','classes','template', 'templates']);
       }
       template = merge(field, template);
       return this.create(template)[1];
@@ -231,7 +231,7 @@ $.fn.page = function(options, callback)
 
     set_defaults: function(defaults, item)
     {
-      var names = [ 'type', 'template', 'mandatory', 'action', 'attr', 'wrap'];
+      var names = [ 'type', 'template', 'action', 'attr', 'wrap'];
       var set = false;
       for (var i in names) {
         var name = names[i];
