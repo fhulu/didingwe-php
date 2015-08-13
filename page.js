@@ -186,8 +186,8 @@ $.fn.page = function(options, callback)
     {
       if ($.isPlainObject(type)) return type;
       if (type.search(/\W/) >= 0) return {html: type};
-      var field = {type: type};
-      return this.merge_type(field, undefined, type);
+      var field = {};
+      return this.merge_type(field, type);
     },
 
     get_template: function(template, item)
