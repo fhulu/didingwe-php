@@ -156,18 +156,19 @@ $.fn.page = function(options, callback)
       if (type === undefined) type = field.type;
       if (type === undefined && field.html === undefined) {
         if (!id) id = field.id;
-        var cls = id.replace('_', '-');
+        var cls;
+        if (id) cls = id.replace('_', '-');
         if (field.tag)
           type = 'control';
         else if (field.classes && id) {
           type = 'control';
           field.tag = field.classes;
-          field.class = $.appendArray(field.class, cls);
+          if (cls) field.class = $.appendArray(field.class, cls);
         }
         else if (field.templates && id) {
           type = 'template';
           field.tag = field.templates;
-          field.class = $.appendArray(field.class, cls);
+          if (cls) field.class = $.appendArray(field.class, cls);
         }
       }
       if (type === undefined) return field;
