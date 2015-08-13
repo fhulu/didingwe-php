@@ -60,8 +60,8 @@ confirm_password:
 
 country:
   options:
-    - sql: SELECT item_code,item_name item_code from ref_list WHERE list_name = "country"
-
+    - sql: SELECT item_code,item_name from ref_list WHERE list_name = "country"
+ 
 
 day_of_month:
   options:
@@ -232,6 +232,13 @@ mukoni_logo:
     src: mukoni.png
     url: http://www.mukoni.co.za
 
+next:
+  call: ""
+  merge: true
+  attr:
+    class: action wizard-jump
+
+
 password:
   desc: A secret combination of letters and number only known to you. Please do not give out your password.
   valid: password
@@ -271,13 +278,13 @@ support_email: Mukoni Support <support@mukoni.co.za>
 title:
   desc: A descriptive or distinctive appellation, especially one belonging to a person by right of rank, office, attainment
   options:
-    - dr
-    - miss
-    - mr
-    - mrs
-    - ms
-    - prof
-    - rev
+    - Dr
+    - Miss
+    - Mr
+    - Mrs
+    - Ms
+    - Prof
+    - Rev
 
 twitter:
   src: /twitter.png
