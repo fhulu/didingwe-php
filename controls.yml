@@ -1,18 +1,24 @@
 # html controls
 ---
 accordion:
-  create: accordion
-  type: container
-  contents: $items
-  items:
-    - template: accordion_div
+  tag: div
+  inherit: [tabs]
+  text: $child
+  create: resizable
+  child:
+    create: accordion
+    header: "> div > h3"
+    type: container
+    contents: $tabs
+  tabs:
+    - template: accordion_tab
 
-accordion_div:
-  type: template
-  text: <h3>$name</h3> <div>$field</div>
-  class: [group]
-  attr: { header: "> div > h3" }
-  
+accordion_tab:
+  templates: div
+  text: >
+      <h3>$name</h3>
+      <div style="height: $height">$field</div>
+
 blank:
   tag: span
   text: ""
