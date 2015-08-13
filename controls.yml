@@ -2,22 +2,17 @@
 ---
 accordion:
   tag: div
-  inherit: [tabs]
-  text: $child
-  create: resizable
-  child:
-    create: accordion
-    header: "> div > h3"
-    type: container
-    contents: $tabs
+  text: $tabs
+  create: accordion
+  header: "> div > h3"
+  autoHeight: false
+  collapsible: true
   tabs:
     - template: accordion_tab
 
 accordion_tab:
   templates: div
-  text: >
-      <h3>$name</h3>
-      <div style="height: $height">$field</div>
+  text: <h3>$name</h3>$field
 
 blank:
   tag: span
@@ -131,7 +126,6 @@ disabled_input:
 
 disabled_text_input:
   type: disabled_input
-
 
 dropdown:
   unselected: --Select $name--
@@ -294,9 +288,6 @@ label_right:
   templates: span
   text: $field<label>$name</label>
 
-label_template:
-  type: template
-  tag: span
 
 label_top:
   type: label_left
@@ -311,7 +302,6 @@ labelled_input:
         $field
         <span class=hint>$desc</span>
       </a>
-  label_suffix: ":"
 
 labelled_input_page:
   type: input_page
@@ -414,7 +404,6 @@ processing:
 question_input:
   templates: div
   text: <label>$question</label>$field
-  subject: { class: [input] }
 
 question_input_page:
   type: input_page
