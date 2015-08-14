@@ -331,12 +331,6 @@ $.fn.page = function(options, callback)
         else
           parent.find('#'+new_item_name).replaceWith(templated);
         this.init_events(obj, item);
-        if (item.hide || item.show === false) {
-          templated.hide();
-        }
-        templated.on('show_hide', function(event, invoker, condition) {
-          $(this).is(':visible')? $(this).hide(): $(this).show();
-        });
         if (!first) first = templated;
         last = templated;
       }
@@ -489,6 +483,15 @@ $.fn.page = function(options, callback)
         var result = this.create(value, field);
         this.replace(obj, result[1], code);
       }
+
+      var template = obj.parents('[for='+id+']')
+      var sink = template.exists()? template: obj;
+      if (field.hide || field.show === false) 
+        sink.hide();
+
+      sink.on('show_hide', function(event, invoker, condition) {
+        $(this).is(':visible')? $(this).hide(): $(this).show();
+      });
       if (obj.attr('id') === '') obj.removeAttr('id');
       page.init_links(obj, field);
       obj.on('loaded', function() {
@@ -769,7 +772,7 @@ $.fn.page = function(options, callback)
       var self = this;
       var handle = function(action, val)
       {
-        console.log("response", action, val);
+        console.log("response", self.id, action, val);
         switch(action) {
           case 'alert': alert(val); break;
           case 'show_dialog': self.showDialog(val, responses.options); break;
