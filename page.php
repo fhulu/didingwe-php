@@ -952,7 +952,12 @@ class page
         $values[$var] = $_SESSION[$var];
     }
     return $values;
+  }
 
+  function read_session_list()
+  {
+    $values = call_user_func_array(array($this, 'read_session'), func_get_args());
+    return array_values($values);
   }
 
   static function abort($error_name, $error_message)
