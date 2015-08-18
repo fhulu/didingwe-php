@@ -26,7 +26,7 @@ class db
 
   function __construct($dbname,$user,$passwd,$hostname="localhost")
   {
-    $this->handle = null;
+    $this->mysqli = null;
     $this->dbname = $dbname;
     $this->user = $user;
     $this->passwd = $passwd;
@@ -39,7 +39,7 @@ class db
     log::debug("MySQL connect to $this->hostname with user $this->user");
     $this->mysqli = new mysqli($this->hostname,$this->user,$this->passwd, $this->dbname);
     if ($this->mysqli->connect_errno) throw new db_exception("Could not connect to '$this->dbname' :" . $this->mysqli->connect_error);
-    $this->mysqli->set_charset('utf8');    
+    $this->mysqli->set_charset('utf8');
     log::debug("User $this->user connected to MySQL on $this->hostname");
   }
 
@@ -49,14 +49,14 @@ class db
     $this->mysqli = null;
     log::debug("User $this->user disconnected to MySQL on $this->hostname");
   }
-  
+
   function reconnect()
   {
     if ($this->connected()) $this->disconnect();
     $this->connect();
   }
-  
-  function connected() { return $this->handle != null; }
+
+  function connected() { return $this->mysqli != null; }
 
   function dup($newlink=false)
   {
@@ -72,13 +72,14 @@ class db
     if ($start=='') $start = 0;
     if ($max_rows > 0) $q .= " limit $start, $max_rows";
     log::debug("SQL: $q");
+    $this->connect();
     $this->result = $this->mysqli->query($q);
     if (!$this->result) throw new db_exception("SQL='$q', ERROR=".$this->mysqli->error);
     if ($this->result === true) {
       $this->rows_affected = $this->mysqli->affected_rows;
       return;
     }
-    
+
     $this->fields = $this->result->fetch_fields();
     $this->field_names = array();
     foreach($this->fields as $field) {
@@ -102,7 +103,7 @@ class db
   {
     $this->exec($q, $max_rows);
 
-    $this->row = $this->result->fetch_array($fetch_type);     
+    $this->row = $this->result->fetch_array($fetch_type);
     if ($this->row == null) return false;
 
     $this->id = $this->row[0];
@@ -131,14 +132,13 @@ class db
   {
     return $this->read_one_value("select found_rows()");
   }
-  
-  static function connect_default()
+
+  static function init_default()
   {
     global $db;
     $default_db = isset(config::$default_db)?config::$default_db:config::$audit_db;
-    if ($db == null || !$db->connected()) {
+    if ($db == null) {
       $db = new db($default_db, config::$audit_user, config::$audit_passwd);
-      $db->connect();
     }
   }
 
@@ -148,7 +148,7 @@ class db
     $this->each($sql, function($index, $row) use (&$rows) {
       $rows[] = $row;
     }, array('fetch'=>$fetch_type, 'size'=>$max_rows, 'start'=>$start));
-    
+
     return $rows;
   }
 
@@ -166,7 +166,7 @@ class db
     }
     $this->exec($sql, $size, $start);
     $index = 0;
-    
+
     while (($row = $this->result->fetch_array( $fetch))) {
       if ($callback($index, $row)===false) break;
       ++$index;
@@ -179,7 +179,7 @@ class db
     $options['size'] = $size;
     $rows = array();
     $this->each($sql, function($index, $row) use (&$rows,$callback) {
-      if ($callback) 
+      if ($callback)
         $callback($index, $row);
       else
         $rows[] = $row;
@@ -192,19 +192,19 @@ class db
     $options['fetch'] = MYSQLI_ASSOC;
     return $this->page($sql, $size, $start, $callback, $options);
   }
-  
+
   function page_indices($sql, $size, $start=0, $callback=null, $options=null)
   {
     $options['fetch'] = MYSQLI_NUM;
     return $this->page($sql, $size, $start, $callback, $options);
   }
-  
-  
+
+
   function page_through($sql, $size, $offset=0, $callback=null, $options=null)
   {
     $options['size'] = $size;
     $options['start'] = $offset;
-    $pagenum = 0; 
+    $pagenum = 0;
     $rows = array();
     do {
       $paged = false;
@@ -235,7 +235,7 @@ class db
     $options['fetch'] = MYSQLI_NUM;
     return $this->page_through($sql, $size, $offset, $callback, $options);
   }
-  
+
   function read_column($sql, $column_idx=0)
   {
     $this->exec($sql);
@@ -249,7 +249,7 @@ class db
     $rows = db::read($sql, $fetch_type, 1);
     return at($rows,0);
   }
-  
+
   function read_one_value($sql)
   {
     $this->exec($sql, 1);
@@ -257,11 +257,11 @@ class db
     return at($row,0);
   }
 
-  function json($sql, $max_rows=0, $fetch_type=MYSQLI_ASSOC) 
+  function json($sql, $max_rows=0, $fetch_type=MYSQLI_ASSOC)
   {
     return json_encode($this->read($sql, $fetch_type, $max_rows));
   }
-  
+
   function lineage(&$values, $key, $parent_key, $table, $other='')
   {
     $value = $values[sizeof($values)-1];
@@ -271,7 +271,7 @@ class db
     $values[] = $value;
     $this->lineage($values, $key, $parent_key, $table, $other);
   }
-  
+
   function listing($sql, $separator=',')
   {
     return implode($separator, $this->read_column($sql));
@@ -286,7 +286,7 @@ class db
     }
     return $result;
   }
-  
+
   static function addslashes($array)
   {
     $output = array();
@@ -295,7 +295,7 @@ class db
     }
     return $output;
   }
-  
+
   static function quote($array)
   {
     return db::addslashes($array);
@@ -308,22 +308,22 @@ class db
     }
     return $output;
   }
-  
+
   static function unquote($array)
   {
     return db::stripslashes($array);
   }
-  
+
   static function parse_column_name($name)
   {
     $list = explode(' ',$name); //todo: use regex for calculated fields
     $spec = $list[0];
     $alias = at($list,1);
-    $parts = explode('.', $spec); 
+    $parts = explode('.', $spec);
     $schema = null;
     $table = null;
     switch(sizeof($parts)) {
-      case 0: 
+      case 0:
       case 1: $column = $spec; break;
       case 2: list($table, $column)= $parts; break;
       case 3: list($schema, $table, $column)= $parts; break;
@@ -335,6 +335,6 @@ class db
 }
 
 $db = null;
-if (!isset($daemon_mode)) db::connect_default();
+if (!isset($daemon_mode)) db::init_default();
 
 ?>
