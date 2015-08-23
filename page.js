@@ -170,7 +170,11 @@ $.fn.page = function(options, callback)
           type = 'control';
       }
       if (type === undefined) return field;
-      if (typeof type === 'string') type = this.merge_type(this.types[type], undefined, type);
+      if (typeof type === 'string')
+        type = this.merge_type(this.types[type], undefined, type);
+      else
+        type = this.merge_type(type);
+      
       return merge(type, field);
     },
 
@@ -229,9 +233,10 @@ $.fn.page = function(options, callback)
       field.attr = val;
     },
 
-    set_defaults: function(defaults, item)
+    set_defaults: function(defaults, item, parent)
     {
       var names = [ 'type', 'template', 'action', 'attr', 'wrap'];
+      var inherit = parent.inherit;
       var set = false;
       for (var i in names) {
         var name = names[i];
@@ -245,8 +250,11 @@ $.fn.page = function(options, callback)
           defaults[name] = this.expand_type(value);
         else
           defaults[name] = item[name];
+        if (inherit && inherit.indexOf(value) >=0 )
+          defaults[name] = merge(parent[value], defaults[value]);
         set = true;
       }
+
       this.promote_attr(defaults);
       return set;
     },
@@ -272,7 +280,7 @@ $.fn.page = function(options, callback)
         var template;
         if (typeof item==='string') item = $.toObject(item);
         if ($.isPlainObject(item)) {
-          if (this.set_defaults(defaults, item)) continue;
+          if (this.set_defaults(defaults, item, parent_field)) continue;
           if (item.id === undefined) {
             var a = $.firstElement(item);
             id = a[0];
@@ -287,6 +295,8 @@ $.fn.page = function(options, callback)
           if (typeof item === 'string') {
             item = { name: item };
           }
+          if (inherit && inherit.indexOf(id) >=0 )
+            item = merge(parent_field[id], item);
           if (!item.action && defaults.action) item.action = defaults.action;
           this.promote_attr(item);
           if (defaults.attr) item.attr = merge(item.attr,defaults.attr);
@@ -302,8 +312,6 @@ $.fn.page = function(options, callback)
           item.array = array;
         }
         item.id = id;
-        if (inherit && inherit.indexOf(id) >=0 )
-          item = merge(parent_field[id], item);
 
         if (path)
           item.path = path + '/' + id;

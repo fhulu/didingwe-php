@@ -12,7 +12,7 @@ accordion_div:
   text: <h3>$name</h3> <div>$field</div>
   class: [group]
   attr: { header: "> div > h3" }
-  
+
 blank:
   tag: span
   text: ""
@@ -128,24 +128,22 @@ disabled_text_input:
 
 
 dropdown:
-  unselected: --Select $name--
-  inherit: [unselected,default]
   tag: select
+  unselected: --Select $name--
+  default:
+    value: ""
+    text: $unselected
+  inherit: [unselected,default,option]
+  option:
+    tag: option
+    value: $1
+    name: $2
+    text: $name
+    attr: { value: $id }
   text: $options
   options:
-    - type: dropdown_option
-    - dropdown_default
-
-dropdown_option:
-  tag: option
-  value: $1
-  name: $2
-  text: $name
-  attr: { value: $id }
-
-dropdown_default:
-  value: ""
-  text: $unselected
+    - type: option
+    - default
 
 element:
   text: ""
@@ -363,6 +361,8 @@ page:
   classes: div
   attr: { title: $name }
   sub_page: true
+  text: $items
+  items: []
 
 page_title:
   html: <title>$name</title>
@@ -553,15 +553,35 @@ wizard:
   prev_name: Previous
   next_name: Next
 
-wizard_jump:
-  type: button
+wizard_action:
+  classes: button
   action: trigger
   event:
     name: wizard-jump
     parameters: { index: $id }
 
+wizard_jump:
+  type: wizard_action
+  event:
+    name: wizard-jump
+    parameters: { index: $id }
+
 wizard_next:
-  type: button
-  action: trigger
+  type: wizard_action
   event: wizard-next
+  name: Next
+
+wizard_page:
+  type: input_page
+  text: $processing $synopsis $inputs $actions $navigate
+  inherit: [prev,next]
+  navigate:
+    - prev
+    - next
+
+wizard_prev:
+  type: wizard_action
+  event: wizard-prev
+  name: Previous
+
 ...
