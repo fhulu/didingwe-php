@@ -264,6 +264,7 @@ $.fn.page = function(options, callback)
       var first;
       var last;
       var wrap;
+      var inherit = parent_field.inherit;
       for(var i in items) {
         var item = items[i];
         var id;
@@ -301,6 +302,9 @@ $.fn.page = function(options, callback)
           item.array = array;
         }
         item.id = id;
+        if (inherit && inherit.indexOf(id) >=0 )
+          item = merge(parent_field[id], item);
+
         if (path)
           item.path = path + '/' + id;
         if (!template) template = item.template = defaults.template;
@@ -486,7 +490,7 @@ $.fn.page = function(options, callback)
 
       var template = obj.parents('[for='+id+']')
       var sink = template.exists()? template: obj;
-      if (field.hide || field.show === false) 
+      if (field.hide || field.show === false)
         sink.hide();
 
       sink.on('show_hide', function(event, invoker, condition) {
