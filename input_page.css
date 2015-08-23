@@ -46,6 +46,7 @@
 .hint
 {
   display: none;
+  height: auto;
   margin-left: auto;
   margin-right: auto;
   padding: 5px;
