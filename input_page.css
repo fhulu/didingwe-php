@@ -51,13 +51,13 @@
   padding: 5px;
   position: absolute;
   bottom: 30px;
-  left: 0px;
   font-size: 11px;
-  font-weight: normal;
+  font-weight: bold;
   font-style: italic;
   border: 1px solid grey;
   border-radius: 8px;
-  background: #FFFFC0;
+  background: rgba(0,0,0,0.6);
+  color: rgb(225,225,225);
 }
 
 .input:focus>.hint,
@@ -65,6 +65,11 @@
 {
   z-index: 1000;
   display: block;
+}
+
+.hint:hover
+{
+  display: none !important  ;
 }
 
 .labelled-input
