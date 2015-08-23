@@ -841,3 +841,15 @@ $.deleteKeys = function(obj, keys)
     delete obj[keys[i]];
   }
 }
+
+$.appendArray = function(arr,item)
+{
+  if ($.isArray(arr))
+    arr.push(item);
+  else if (arr)
+    arr = [a, item];
+  else
+    arr = [item];
+
+  return arr;
+}
