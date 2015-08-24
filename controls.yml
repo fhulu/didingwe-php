@@ -227,10 +227,10 @@ info_line:
 
 info_page:
   type: input_page
-  lines: $inputs
+  inputs: $lines
   inherit: [label_suffix]
   label_suffix: ":"
-  inputs:
+  lines:
     - type: info_text
     - template: info_line
 
