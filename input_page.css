@@ -55,9 +55,16 @@
   font-size: 11px;
   font-weight: normal;
   font-style: italic;
-  border: 1px solid grey;
-  border-radius: 8px;
-  background: #FFFFC0;
+  height: auto;
+  background-color: rgba(255,255,255,0.85);
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+  -webkit-box-shadow: 0px 0px 3px #222;
+  -moz-box-shadow: 0px 0px 3px #222;
+  box-shadow: 0px 0px 3px #222;
+  color: #444;
+  padding-left: 10px;
 }
 
 .input:focus>.hint,
@@ -65,6 +72,39 @@
 {
   z-index: 1000;
   display: block;
+}
+
+.input > input:hover{
+  box-shadow: 0px 0px 6px rgb(50, 204, 204);
+}
+.input > input{
+  border-style: none;
+  border-radius: 3px;
+  font-size: 18px;
+}
+
+.hint::before{
+  content: ' ';
+	position: absolute;
+	width: 0;
+	height: 0;
+	left: 30px;
+  bottom: -20px;
+	border: 10px solid;
+	border-color: #222 transparent transparent #222;
+
+}
+
+.hint::after{
+  content: ' ';
+	position: absolute;
+	width: 0;
+	height: 0;
+	left: 30px;
+  bottom: -20px;
+	border: 10px solid;
+	border-color: #FFF transparent transparent #FFF;
+
 }
 
 .labelled-input
