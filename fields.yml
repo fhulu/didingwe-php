@@ -37,7 +37,9 @@ calculate_period:
   sql: select ceiling(timestampdiff($prev_unit,'$start_time', '$end_time')/$prev_unit_size)
 
 cellphone:
-  desc: The cellphone number at which you can be contacted on
+  desc: |
+    The active cellphone or mobile number at which you can be contacted on.
+    This number will be used to for OTP verification.
   valid: national_tel
 
 change_password:
@@ -61,7 +63,7 @@ confirm_password:
 country:
   options:
     - sql: SELECT item_code,item_name from ref_list WHERE list_name = "country"
- 
+
 
 day_of_month:
   options:
@@ -116,7 +118,11 @@ developed_by:
 
 
 email:
-  desc: Valid e-mail address
+  desc: |
+    The active email address at which you can be contacted on.
+    This address will be used to for OTP verification and any system generated
+    communication
+
   name: Email Address
   valid:
     - email
@@ -158,7 +164,7 @@ id_number:
   type: id_no
 
 last_name:
-  desc: Your last name as written in your ID book
+  desc: Your last name or surname as written in your ID book
   valid: name
 
 latitude:
@@ -278,13 +284,14 @@ support_email: Mukoni Support <support@mukoni.co.za>
 title:
   desc: A descriptive or distinctive appellation, especially one belonging to a person by right of rank, office, attainment
   options:
-    - Dr
-    - Miss
-    - Mr
-    - Mrs
-    - Ms
-    - Prof
-    - Rev
+    - dr
+    - miss
+    - mr
+    - mrs
+    - ms
+    - prof
+    - rev
+    - sir
 
 twitter:
   src: /twitter.png
