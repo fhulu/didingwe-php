@@ -129,21 +129,22 @@ disabled_text_input:
 
 dropdown:
   tag: select
-  unselected: --Select $name--
-  default:
-    value: ""
-    text: $unselected
   inherit: [unselected,default,option]
+  unselected: --Select $name--
   option:
     tag: option
     value: $1
     name: $2
     text: $name
     attr: { value: $id }
+  default:
+    classes: option
+    text: $unselected
+    attr: { value: ""}
   text: $options
   options:
-    - type: option
     - default
+    - type: option
 
 element:
   text: ""
@@ -328,11 +329,6 @@ menu:
     - action: redirect
 
 menu_item: { templates: li }
-
-next:
-  call: ""
-  merge: true
-  class: [action,wizard-jump]
 
 one_cell_row:
   templates: div
@@ -542,11 +538,12 @@ titled_paragraph:
 wizard:
   classes: div
   create: wizard
-  text: ""
   script: [/common/wizard.js]
   css: [/common/wizard.css]
-  prev_name: Previous
-  next_name: Next
+  text: $bookmarks
+  bookmarks: []
+  steps: []
+
 
 wizard_action:
   classes: button
@@ -569,10 +566,16 @@ wizard_next:
 wizard_page:
   type: input_page
   text: $processing $synopsis $inputs $actions $navigate
-  inherit: [prev,next]
+  sub_page: false
+  prev:
+    type: button
+    name: Previous
+  inherit: [next,prev]
   navigate:
+    - wrap: class
     - prev
-    - next
+    - next: { type: submit }
+    - type: submit
 
 wizard_prev:
   type: wizard_action

@@ -176,7 +176,7 @@ $.fn.page = function(options, callback)
         type = this.merge_type(this.types[type], undefined, type);
       else
         type = this.merge_type(type);
-      
+
       return merge(type, field);
     },
 
@@ -198,7 +198,7 @@ $.fn.page = function(options, callback)
 
     get_template: function(template, item)
     {
-      if (template === undefined || item.type === 'hidden' || item.template === "none" || template == '$field') return '$field';
+      if (template === undefined || item.template === "none" || template == '$field') return '$field';
       var field = $.copy(this.merge_type(item));
       if (typeof template === 'string') {
         template = {html: template};
@@ -313,6 +313,9 @@ $.fn.page = function(options, callback)
           item = defaults;
           item.array = array;
         }
+        else {
+          console.log("Unhandled item", item, parent_field);
+        }
         item.id = id;
 
         if (path)
@@ -320,14 +323,16 @@ $.fn.page = function(options, callback)
         if (!template) template = item.template = defaults.template;
         if (template && template.subject) item = merge(template.subject, item);
         parent.replace(regex,new_item_html+'$1');
-        var created = this.create(item, parent_field);
+        var created = this.create(item, parent_field, template !== undefined && template !== '$field');
         item = created[0];
         var obj = created[1];
         var templated = this.get_template(template, item);
+        var sink = obj;
         if (templated === '$field') {
           templated = obj;
         }
         else {
+          sink = templated;
           this.replace(templated, obj, id, 'field');
         }
         if (item.push)
@@ -347,6 +352,7 @@ $.fn.page = function(options, callback)
         this.init_events(obj, item);
         if (!first) first = templated;
         last = templated;
+        this.init_show(item, sink);
       }
       for (var i in pushed) {
         var pop = pushed[i];
@@ -361,6 +367,16 @@ $.fn.page = function(options, callback)
       }
       if (!loading_data)
         parent.replace(regex, '');
+    },
+
+    init_show: function(field, sink)
+    {
+      if (field.hide || field.show === false)
+        sink.hide();
+
+      sink.on('show_hide', function(event, invoker, condition) {
+        $(this).is(':visible')? $(this).hide(): $(this).show();
+      });
     },
 
     set_attr: function(obj, field)
@@ -447,7 +463,7 @@ $.fn.page = function(options, callback)
       return field;
     },
 
-    create: function(field, parent)
+    create: function(field, parent, has_template)
     {
       field = this.init_field(field, parent);
       if (field.sub_page)
@@ -497,15 +513,7 @@ $.fn.page = function(options, callback)
         var result = this.create(value, field);
         this.replace(obj, result[1], code);
       }
-
-      var template = obj.parents('[for='+id+']')
-      var sink = template.exists()? template: obj;
-      if (field.hide || field.show === false)
-        sink.hide();
-
-      sink.on('show_hide', function(event, invoker, condition) {
-        $(this).is(':visible')? $(this).hide(): $(this).show();
-      });
+      if (!has_template || field.template === 'none') this.init_show(field, obj);
       if (obj.attr('id') === '') obj.removeAttr('id');
       page.init_links(obj, field);
       obj.on('loaded', function() {

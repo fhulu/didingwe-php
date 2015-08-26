@@ -1,4 +1,4 @@
-/* 
+/*
     Document   : wizard
     Created on : 27 Jul 2012, 12:18:39 PM
     Author     : fhulu
@@ -7,7 +7,7 @@
 */
 
 .wizard-page
-{ 
+{
   display: block;
   position: absolute;
   top: 0px;
@@ -31,9 +31,14 @@
   float: right;
 }
 
-.wizard-nav #prev
+.navigate #prev
 {
   float: left;
+}
+
+.navigate>*
+{
+  float: right;
 }
 
 .wizard-bookmark
@@ -70,9 +75,10 @@
 .wizard-content
 {
   width: 100%;
+  height: 100%;
   top: -10px;
   left: 10px;
-  position: relative;
+  position: absolute;
 }
 
 .wizard-content #validate
@@ -80,3 +86,11 @@
   display: none;
 }
 
+.wizard .navigate
+{
+  position: absolute;
+  border-top: 1px solid lightgrey;
+  bottom: 0px;
+  padding-top: 10px;
+  width: 100%;
+}
