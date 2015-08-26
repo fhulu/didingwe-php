@@ -138,10 +138,6 @@
         var prev = object.find('#prev');
         if (props.prev === false || index === 0)
           prev.hide();
-        else prev.bindFirst('click', function() {
-          self.jumpTo(self.stack[self.stack.length-2]);
-        });
-
 
         var next = object.find('#next');
         if (props.next === false && index === self.options.steps.length-1)

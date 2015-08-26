@@ -377,11 +377,6 @@ plain:
 plain_text:
   type: plain
 
-prev:
-  call: ""
-  merge: true
-  class: [action,wizard-jump]
-
 # todo: fix back-end to contextualise
 print:
   desc: Print above contents
@@ -545,23 +540,12 @@ wizard:
   steps: []
 
 
-wizard_action:
+wizard_jump:
   classes: button
   action: trigger
   event:
     name: wizard-jump
     parameters: { index: $id }
-
-wizard_jump:
-  type: wizard_action
-  event:
-    name: wizard-jump
-    parameters: { index: $id }
-
-wizard_next:
-  type: wizard_action
-  event: wizard-next
-  name: Next
 
 wizard_page:
   type: input_page
@@ -569,13 +553,15 @@ wizard_page:
   sub_page: false
   prev:
     type: button
-    name: Previous
+    name: Previuous
+    action: trigger
+    event: wizard-prev
   inherit: [next,prev]
   navigate:
     - wrap: class
     - prev
-    - next: { type: submit }
     - type: submit
+    - next
 
 wizard_prev:
   type: wizard_action
