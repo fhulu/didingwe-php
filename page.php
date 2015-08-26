@@ -28,7 +28,7 @@ $page->output();
 class page
 {
   static $fields_stack = array();
-  static $post_items = array('audit', 'call', 'post', 'sql', 'sql_values', 'valid', 'validate');
+  static $post_items = array('audit', 'call', 'post', 'read_session', 'sql', 'sql_values', 'valid', 'validate');
   static $atomic_items = array('action', 'css', 'html', 'script', 'style', 'template', 'valid');
   static $user_roles = array('public');
   var $request;
@@ -418,7 +418,7 @@ class page
     walk_recursive_down($fields, function(&$value, $key, &$parent) use($keys) {
       if (!in_array($key, $keys, true)) return;
       unset($parent[$key]);
-      if ($this->rendering && strpos($key, "sql") !== false)
+      if ($this->rendering && (strpos($key, "sql") !== false || $key === 'read_session'))
         $parent['query'] = " ";
     });
 
@@ -955,6 +955,7 @@ class page
     foreach($vars as $var) {
       if (isset($_SESSION[$var]))
         $values[$var] = $_SESSION[$var];
+          log::debug_json("VALUES", $values[$var]);
     }
     return $values;
   }

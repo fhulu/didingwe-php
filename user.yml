@@ -169,7 +169,8 @@ enter_credentials:
     - first_name
     - last_name
     - cellphone
-    - email: { valid: [unique(user.email_address)] }
+    - email
+    # - email: { valid: [unique(user.email_address)] }
     - type: password_input
     - password
     - confirm_password
