@@ -114,7 +114,7 @@ $.send = function(url, options, callback)
     options.invoker.prop('disabled', true);
   var progress =  {};
   if (options.progress !== false) {
-    progress.box = $('.ajax_result');
+    progress.box = $('.processing');
     progress.box.click(function() {
       $(this).fadeOut('slow');
     });
@@ -263,9 +263,10 @@ $.fn.confirmOnSet = function(controls,url, options, callback)
 
 $.reportError = function(field, error)
 {
-  var sibling = $('#'+field+",[name='"+field+"']").parent();
+  var subject = $('#'+field+",[name='"+field+"']");
+  var sibling = subject.parent();
   if (sibling.length == 0)
-    sibling = $('#'+field+",[name='"+field+"']");
+    sibling = subject;
   if (sibling.length == 0) {
     if (field == "alert") alert(error);
     return;
@@ -847,7 +848,7 @@ $.appendArray = function(arr,item)
   if ($.isArray(arr))
     arr.push(item);
   else if (arr)
-    arr = [a, item];
+    arr = [arr, item];
   else
     arr = [item];
 
