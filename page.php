@@ -232,7 +232,7 @@ class page
   }
 
 
-  function find_array_field($array, $code)
+  function find_array_field($array, $code, $parent)
   {
     $type = null;
     foreach($array as $value) {
@@ -250,6 +250,7 @@ class page
       if ($key != $code) continue;
       if (is_assoc($values))
         $own_type = $values['type'];
+      $this->inherit_parent($parent, $key, $values);
       $merged = $this->get_merged_field($key, $values);
 
       if (is_null($own_type) && !is_null($type))
@@ -296,11 +297,16 @@ class page
   function follow_path($path)
   {
     $field = $this->fields;
+    $parent = $field;
     foreach($path as $branch) {
-      if (is_assoc($field))
-        $field = $this->get_merged_field($branch, $field[$branch]);
+      if (is_assoc($field)) {
+        $new_parent = $field;
+        $field = $this->inherit_parent($parent, $branch, $field[$branch]);
+        $field = $this->get_merged_field($branch, $field);
+        $parent = $new_parent;
+      }
       else
-        $field = $this->find_array_field($field, $branch);
+        $field = $this->find_array_field($field, $branch, $parent);
       if (is_null($field))
         $this->throw_invalid_path ();
       $this->verify_access($field);
@@ -318,13 +324,12 @@ class page
     });
   }
 
-  function inherit_parent($parent, &$field)
+  function inherit_parent($parent, $key, &$field)
   {
     $inherit = $parent['inherit'];
-    if (isset($inherit)) return;
-    foreach($inherit as $key) {
-      $field = merge_options($parent[$key], $field);
-    }
+    if (!isset($inherit)) return $field;
+    if (!in_array($key, $inherit, true)) return $field;
+    return $field = merge_options($parent[$key], $field);
   }
 
   function expand_value($value)
