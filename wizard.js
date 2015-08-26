@@ -36,15 +36,16 @@
       var props = this.options.steps[index];
       var page = $('<div class=wizard-page>').attr('name',props.name).hide().appendTo(this.element);
       var bookmark = $('<div class=wizard-bookmark>').appendTo(page);
-      this.bookmark_width = parseInt(bookmark.css('height'));
+      this.bookmark_width = bookmark.outerHeight();
       $('<span class=wizard-bookmark-number>').appendTo(bookmark);
       $('<span class=wizard-bookmark-title>').appendTo(bookmark);
       var height = parseInt(this.element.height());
       var content = $('<div class=wizard-content>').appendTo(page);
       content.height(height);
       bookmark.width(height);
-      bookmark.css('left', (-(height-this.bookmark_width+8)/2)+'px');
-      bookmark.css('top', (height/2-10)+'px');
+      var offset = (height - this.bookmark_width)/2;
+      bookmark.css('left', (-offset)+'px');
+      bookmark.css('top', offset+'px');
       bookmark.hide();
     },
 
@@ -89,7 +90,7 @@
         bookmark.css('background-color', color);
       }
       page.find('.wizard-content,.wizard-nav').show();
-      var offset = this.stack.length * this.bookmark_width + 6;
+      var offset = this.stack.length * this.bookmark_width - 6;
       page.css('left', offset+'px');
       page.width(this.element.width()-offset);
       this.stack.push(index);
