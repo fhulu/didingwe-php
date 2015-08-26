@@ -140,11 +140,12 @@ $.fn.page = function(options, callback)
 
     init_links: function(object, field, callback)
     {
-      page.load_links('css', field);
-      page.load_links('script', field, function() {
-        if (field.create)
-          object.customCreate($.extend({types: page.types}, page.options, field));
-        if (callback !== undefined) callback();
+      page.load_links('css', field, function() {
+        page.load_links('script', field, function() {
+          if (field.create)
+            object.customCreate($.extend({types: page.types}, page.options, field));
+          if (callback !== undefined) callback();
+        });
       });
     },
 
