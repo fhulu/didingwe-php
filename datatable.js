@@ -34,8 +34,14 @@
     _create: function()
     {
       if (this.options.sort) this.options.flags.push('sortable');
-      this.expandFields(this.options.fields);
-      this.expandFields(this.options.row_actions);
+      this.render = new mkn.render({
+        parent: this.element,
+        types: this.options.types,
+        id: this.element.id,
+        key: this.options.key
+      });
+      this.render.expandFields(this.options, "fields", this.options.fields);
+      this.render.expandFields(this.options, "row_actions", this.options.row_actions);
       this._init_params();
       if (this.hasFlag('show_titles') || this.hasFlag('show_header')) {
         $('<thead></thead>').prependTo(this.element);
@@ -54,12 +60,12 @@
     {
       this.params = { page_num: 1};
       var exclude = [ 'create', 'action', 'css', 'id', 'content', 'disabled',
-          'html','name', 'page_id', 'position','script','slideSpeed'];
+          'html','name', 'page_id', 'position','script','slideSpeed', 'text', 'tag', 'type'];
       for (var key in this.options) {
         if (exclude.indexOf(key) >= 0) continue;
         var val = this.options[key];
-        if ($.isPlainObject(val) || $.isArray(val)) continue;
-        this.params[key] = val;
+        if (typeof val === 'string' || typeof val === "number")
+          this.params[key] = val;
       }
     },
 
@@ -266,9 +272,9 @@
       var j = 0;
       for (var i in fields) {
         var field = fields[i];
-        if (field.hide || field.id === 'attr') continue;
         var id = field.id;
-        var th = $('<th></th>').appendTo(tr);
+        if (field.hide || field.show === false  || id === 'attr') continue;
+          var th = $('<th></th>').appendTo(tr);
         if (id === 'actions') continue;
         if ($.isArray(field.name)) field.name = field.name[field.name.length-1];
         th.html(field.name || toTitleCase(id));
@@ -345,7 +351,7 @@
             };
             continue;
           }
-          if (field.type && !field.id) field = fields[k++];
+          //if (field.type && !field.id) field = fields[k++];
           if (field.id === 'key' || field.key) {
             key = cell;
             tr.attr('_key', key);
@@ -374,78 +380,18 @@
 
     showCell: function(field, td, value, key)
     {
-      var entity;
-      if (!$.valid(field.html)) {
+      if (field.html === undefined) {
         td.html(value);
-        entity = td;
+        return;
       }
-      else {
-        var html = field.html.replace('$id', key+'_'+field.id);
-        entity = $(html)
-              .css('width','100%')
-              .css('height','100%')
-              .value(value)
-              .appendTo(td);
+      field.key = key;
+      var created = this.render.create(field)[1];
+      if (key !== undefined) {
+        var id = created.attr('id');
+        if (id !== undefined)
+          created.attr('id', key+"_"+id);
       }
-
-      var style = field.style;
-      if (style) {
-        for (var attr in style) entity.css(attr, style[attr]);
-      }
-      if (field.action) {
-        this.bindAction(entity, field, td.parents('tr').eq(0));
-      }
-      if (field.create !== undefined && field.create !== null) {
-        var create_opts = $.extend({key: key}, field);
-        entity.customCreate(create_opts);
-      }
-    },
-
-    expandFields: function(fields)
-    {
-      if (!fields) return;
-      var default_type;
-      var action;
-      var types = this.options.types;
-      for (var i in fields) {
-        var item = fields[i];
-        var id;
-        if ($.isPlainObject(item)) {
-          if (item.type !== undefined) {
-            default_type = types[item.type];
-            item.hide = true;
-            continue;
-          }
-          if (item.action !== undefined) {
-            action = item.action;
-            continue;
-          }
-          if (item.id === undefined) {
-            for (var key in item) {
-              if (!item.hasOwnProperty(key)) continue;
-              id = key;
-              break;
-            };
-            item = item[id];
-            if (!item.type && default_type)
-              item = merge(default_type, item);
-            item = merge(types[id], item);
-          }
-        }
-        else if (typeof item === 'string') {
-          id = item;
-          if (types[item] !== undefined)
-            item = merge(types[item], default_type);
-          else if (default_type !== undefined)
-            item = $.copy(default_type);
-          else
-            item = {};
-        }
-
-        item.id = id;
-        if (action && !item.action) item.action = action;
-        fields[i] = item;
-      }
+      td.append(created);
     },
 
     bindAction: function(obj, props, sink, path)
@@ -689,7 +635,7 @@
       var footer = $('<tfoot></tfoot>').appendTo(this.element);
       var tr = $('<tr></tr>').addClass('actions').appendTo(footer);
       var td = $('<td>').appendTo(tr);
-      this.expandFields(actions);
+      this.render.expandFields(actions);
       for (var i in actions) {
         var action = actions[i];
         if (!action.hide)
