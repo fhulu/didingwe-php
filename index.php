@@ -26,6 +26,8 @@
 <script type='text/javascript' src='/jquery/min.js'></script>
 <script type='text/javascript' src='/jquery/ui-min.js'></script>
 <script type="text/javascript" src='/common/mukoni.jquery.js?<?=$tag?>'></script>
+<script type='text/javascript' src="/common/mkn.js?<?=$tag?>"></script>
+<script type='text/javascript' src="/common/mkn.render.js?<?=$tag?>"></script>
 <script type='text/javascript' src="/common/page.js?<?=$tag?>"></script>
 <script>
   var request_method = '<?=config::$request_method;?>';
