@@ -98,4 +98,26 @@ var mkn = new function() {
     dialog.dialog('destroy').remove();
   }
 
+  this.firstElement = function(obj)
+  {
+    for (var key in obj) {
+      if (!obj.hasOwnProperty(key)) continue;
+      return [key, obj[key] ];
+    };
+    return undefined;
+  }
+
+  this.firstValue = function(obj)
+  {
+    for (var key in obj) {
+      if (!obj.hasOwnProperty(key)) continue;
+      return obj[key];
+    };
+  }
+
+  this.firstKey = function(obj)
+  {
+    return this.firstElement(obj)[0];
+  }
+
 }

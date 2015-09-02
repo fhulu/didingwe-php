@@ -568,32 +568,6 @@ function getQueryParams(qs) {
     return params;
 }
 
-function loadLink(link,type)
-{
-  if (type === 'css') type = 'link';
-  var ref=document.createElement(type);
-  if (type === 'link') {
-    ref.setAttribute("rel", "stylesheet");
-    ref.setAttribute("type", "text/css");
-    ref.setAttribute("href", file);
-  }
-  else if (type === 'script') {
-    ref.setAttribute("type","text/javascript");
-    ref.setAttribute("src", link);
-  }
-  document.getElementsByTagName("head")[0].appendChild(ref);
-}
-
- function loadCSS(link)
- {
-   loadFile(link,'link');
- }
-
- function loadScript(link)
- {
-   loadFile(link,'script');
- }
-
 $.jsonSize = function(object)
 {
   var i=0;
@@ -806,51 +780,3 @@ $.fn.bindFirst = function(name, fn)
       handlers.splice(0, 0, handler);
   });
 };
-
-$.firstElement = function(obj)
-{
-  for (var key in obj) {
-    if (!obj.hasOwnProperty(key)) continue;
-    return [key, obj[key] ];
-  };
-  return undefined;
-}
-
-$.firstValue = function(obj)
-{
-  for (var key in obj) {
-    if (!obj.hasOwnProperty(key)) continue;
-    return obj[key];
-  };
-}
-
-$.firstKey = function(obj)
-{
-  return $.firsetElement(obj)[0];
-}
-
-$.toObject = function(val)
-{
-  var result = {};
-  result[val] = {};
-  return result;
-}
-
-$.deleteKeys = function(obj, keys)
-{
-  for (var i in keys) {
-    delete obj[keys[i]];
-  }
-}
-
-$.appendArray = function(arr,item)
-{
-  if ($.isArray(arr))
-    arr.push(item);
-  else if (arr)
-    arr = [arr, item];
-  else
-    arr = [item];
-
-  return arr;
-}
