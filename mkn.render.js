@@ -6,6 +6,7 @@ mkn.render = function(options)
   me.id = options.id;
   me.options = options;
   me.sink = undefined;
+  me.parent = options.parent;
   me.known = {};
 
   var array_defaults = [ 'type', 'template', 'action', 'attr', 'wrap'];
@@ -87,7 +88,7 @@ mkn.render = function(options)
       if ($.isPlainObject(item)) {
         if (setDefaults(defaults, item, parent_field)) continue;
         if (item.id === undefined) {
-          var a = $.firstElement(item);
+          var a = mkn.firstElement(item);
           id = a[0];
           item = a[1];
         }
@@ -125,8 +126,10 @@ mkn.render = function(options)
         item.wrap.id = name;
         delete defaults.wrap;
       }
+      item = this.initField(item, parent);
       if (item.push)
         pushed.push(item);
+
       items[i] = item;
       last_pos++;
       delete removed[removed.length-1];
@@ -317,7 +320,6 @@ mkn.render = function(options)
       setValues(obj, field);
       initEvents(obj, field);
     });
-    console.log("me.sink", this.sink);
     return [field, obj];
   }
 
@@ -431,7 +433,7 @@ mkn.render = function(options)
 
   var serverParams = function(action, path, params)
   {
-    if (!path) path = this.path;
+    if (!path) path = me.path;
     return { data: $.extend({}, options.request, {key: options.key}, params,
       {action: action, path: path })};
   }
@@ -468,7 +470,7 @@ mkn.render = function(options)
     loadLinks('css', field, function() {
       loadLinks('script', field, function() {
         if (field.create)
-          object.customCreate($.extend({types: this.types}, this.options, field));
+          object.customCreate($.extend({types: me.types}, me.options, field));
         if (callback !== undefined) callback();
       });
     });
@@ -693,7 +695,7 @@ mkn.render = function(options)
 
     var handle = function(action, val)
     {
-      console.log("response", me.id, action, val, parent, me.sink, invoker);
+      console.log("response", me.id, action, val);
       switch(action) {
         case 'alert': alert(val); break;
         case 'show_dialog': mkn.showDialog(val, responses.options); break;
@@ -720,7 +722,6 @@ mkn.render = function(options)
       else for (var i in val)
         handle(key, val[i]);
     }
-    return this;
   }
 
   var setValues = function(parent, data)
@@ -732,7 +733,7 @@ mkn.render = function(options)
       if (array && !$.isPlainObject(item)) continue;
        var id = i, value= item;
       if (array) {
-        var el = $.firstElement(item);
+        var el = mkn.firstElement(item);
         id = el[0];
         item = el[1];
       }
