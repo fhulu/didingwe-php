@@ -360,7 +360,7 @@
 
           var td = $('<td></td>').appendTo(tr);
           if (field.id === 'actions') {
-            self.setRowActions(tr, td, cell);
+            self.createRowActions(tr, td, cell);
             continue;
           }
 
@@ -446,23 +446,27 @@
       return div;
     },
 
-    setRowActions: function(tr, td, row_actions)
+    createRowActions: function(tr, td, row_actions)
     {
       if (!$.isArray(row_actions)) row_actions = row_actions.split(',');
-      var self = this;
+      if (row_actions.indexOf('slide') >= 0)
+        row_actions.push('slideoff');
+
       td.addClass('actions');
       var parent = td;
       var all_actions = this.options.row_actions;
-      for (var i in row_actions) {
-        var action = row_actions[i];
-        if (action === 'expand') continue;
-        self.createAction(action, all_actions, tr, 'row_actions').appendTo(parent);
-        if (action === 'slide') {
+      for (var i in all_actions) {
+        var action = all_actions[i];
+        var id = action.id;
+        if (row_actions.indexOf(id) < 0) continue;
+        var btn = this.render.create(action)[1];
+        btn.appendTo(parent);
+        if (id === 'slide')
           parent = $('<span class="slide">').toggle(false).appendTo(parent);
-          self.createAction('slideoff', all_actions, tr).appendTo(parent);
-        }
+        else btn.click(function() {
+          parent.trigger('action',[btn,id,action.action]);
+        });
       };
-      //this.bindRowActions(tr);
     },
 
     slide: function(parent)

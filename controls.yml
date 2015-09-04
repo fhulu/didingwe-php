@@ -87,20 +87,35 @@ datatable:
     desc: Go to last page
 
   # row actions
+  row_action:
+    tag: span
+    attr: { action: $id}
+
+  inherit: [row_action,slide,slideoff]
   row_actions:
+    - type: row_action
+    - action: trigger
+    - slide
+    - slideoff
     - action: post
+
   collapse:
     name: "-"
     desc: Hide details
   expand:
     name: +
     desc: More details ...
+
   slide:
+    event: slide
     name: "<"
     desc: More options...
+
   slideoff:
+    event: slideoff
     name: ">"
     desc: Hide options
+
   slideSpeed: 100
 
 date:
