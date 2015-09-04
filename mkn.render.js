@@ -1,3 +1,5 @@
+mkn.links = {};
+
 mkn.render = function(options)
 {
   var me = this
@@ -97,17 +99,17 @@ mkn.render = function(options)
           item = { name: item };
         }
         if (id == 'query') {
-          item.defaults = $.copy(defaults);
+          item.defaults = mkn.copy(defaults);
         }
         if (inherit && inherit.indexOf(id) >=0 )
-          item = merge(parent_field[id], item);
+          item = mkn.merge(parent_field[id], item);
         if (!item.action && defaults.action) item.action = defaults.action;
         promoteAttr(item);
-        if (defaults.attr) item.attr = merge(item.attr,defaults.attr);
+        if (defaults.attr) item.attr = mkn.merge(item.attr,defaults.attr);
         template = item.template;
         var has_type = item.type !== undefined;
-        item = merge(this.types[id], item);
-        if (!has_type && defaults.type) item = merge(defaults.type, item);
+        item = mkn.merge(this.types[id], item);
+        if (!has_type && defaults.type) item = mkn.merge(defaults.type, item);
       }
       else if ($.isArray(item)) {
         array = item;
@@ -123,7 +125,7 @@ mkn.render = function(options)
       if (path)
         item.path = path + '/' + id;
       if (!template) template = item.template = defaults.template;
-      if (template && template.subject) item = merge(template.subject, item);
+      if (template && template.subject) item = mkn.merge(template.subject, item);
       if (defaults.wrap) {
         item.wrap = defaults.wrap;
         item.wrap.id = name;
@@ -161,7 +163,7 @@ mkn.render = function(options)
   this.createTemplate = function(template, item)
   {
     if (template === undefined || item.template === "none" || template == '$field') return undefined;
-    var field = $.copy(this.mergeType(item));
+    var field = mkn.copy(this.mergeType(item));
     if (typeof template === 'string') {
       template = {html: template};
     }
@@ -547,7 +549,7 @@ mkn.render = function(options)
       else
         defaults[name] = item[name];
       if (inherit && inherit.indexOf(value) >=0 )
-        defaults[name] = merge(parent[value], defaults[value]);
+        defaults[name] = mkn.merge(parent[value], defaults[value]);
       set = true;
     }
 
@@ -557,6 +559,11 @@ mkn.render = function(options)
 
   var loadLink = function(link,type, callback)
   {
+    if (mkn.links[link] !== undefined) {
+      if (callback !== undefined) callback();
+      return;
+    }
+    mkn.links[link] = link;
     var element;
     if (type == 'css') {
       element = document.createElement('link');
