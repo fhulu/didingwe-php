@@ -72,6 +72,9 @@ datatable:
   filter:
     name: ""
     desc: Filter by specific columns
+
+  fields:
+    - type: none
   #paging
   goto_first:
     name: First

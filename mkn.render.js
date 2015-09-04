@@ -137,7 +137,7 @@ mkn.render = function(options)
 
       items[i] = item;
       last_pos++;
-      delete removed[removed.length-1];
+      removed.pop();
     }
     for (var i in pushed) {
       var item = pushed[i];
@@ -155,8 +155,9 @@ mkn.render = function(options)
       items.splice(pos, 1);
     }
 
+    var offset = 0;
     for (var i in removed) {
-      delete items[removed[i]];
+      items.splice(removed[i]-i,1);
     }
   }
 

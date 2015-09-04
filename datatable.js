@@ -339,22 +339,10 @@
         var k = 0;
         for (var j in row) {
           var cell = row[j];
-          var field = fields[k++];
-          if (field.id === 'attr') {
-            cell = cell.split(',');
-            for (var l in cell) {
-              var attr = cell[l].split(':');
-              if (attr[0] === 'class')
-                tr.addClass(attr[1]);
-              else
-                tr.attr(attr[0],attr[1]);
-            };
-            continue;
-          }
-          //if (field.type && !field.id) field = fields[k++];
-          if (field.id === 'key' || field.key) {
+          var field = fields[j];
+          if (key === undefined && (field.id === 'key' || field.key)) {
             key = cell;
-            tr.attr('_key', key);
+            tr.attr('key', key);
           }
           if (field.hide) continue;
 
@@ -370,11 +358,12 @@
           self.createAction('expand', undefined, tr).prependTo(td);
           self.createAction('collapse', undefined, tr).prependTo(td).hide();
         }
+        key = undefined;
       }
-        if (tr) {
-          self.bindRowActions(tr);
-          tr.appendTo(body);
-        }
+      if (tr) {
+        self.bindRowActions(tr);
+        tr.appendTo(body);
+      }
       this.spanColumns(this.head().find('.header>th'));
     },
 
@@ -403,7 +392,7 @@
         sink.trigger('action',[obj,action,props.action]);
         sink.trigger(action, [obj,props.action]);
         if (props.action === undefined) return;
-        var key = sink.attr('_key');
+        var key = sink.attr('key');
         if (key === undefined) key = self.options.key;
         var options = $.extend({},self.params, props, {id: action, action: props.action, key: key });
         var listener = self.element.closest('.page').eq(0);
@@ -477,7 +466,7 @@
     bindRowActions: function(tr)
     {
       var self = this;
-      var key = tr.attr('_key');
+      var key = tr.attr('key');
       tr.on('slide', function(e,btn) {
         btn.toggle();
         self.slide(tr);
