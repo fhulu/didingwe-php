@@ -654,39 +654,6 @@ function assert(condition, message) {
   }
 }
 
-function merge(a1, a2)
-{
-  if (a1 === undefined || a1 === null) return a2;
-  if (a2 === undefined || a2 === null) return a1;
-  var r = $.copy(a1);
-  for (var i in a2) {
-    if (!a2.hasOwnProperty(i)) continue;
-    var v2 = a2[i];
-    if (!a1.hasOwnProperty(i)) {
-      r[i] = v2;
-      continue;
-    }
-    var v1 = r[i];
-    if (typeof v1 !== typeof v2
-            || $.isArray(v1) && !$.isArray(v2)
-            || $.isPlainObject(v1) && !$.isPlainObject(v2)) {
-      r[i] = v2;
-      continue;
-    }
-
-    if ($.isArray(v1)) {
-      r[i] = $.merge( $.merge([], v1), v2);
-      //note: no deep copying arrays, only objects
-      continue;
-    }
-    if ($.isPlainObject(v1))
-      r[i] = merge(v1, v2);
-    else
-      r[i] = v2;
-  }
-  return r;
-}
-
 function rgbToHex(color) {
     if (color.substr(0, 1) === "#") {
         return color;

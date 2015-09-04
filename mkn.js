@@ -32,7 +32,7 @@ var mkn = new function() {
   {
     if (a1 === undefined || a1 === null) return a2;
     if (a2 === undefined || a2 === null) return a1;
-    var r = $.copy(a1);
+    var r = mkn.copy(a1);
     for (var i in a2) {
       if (!a2.hasOwnProperty(i)) continue;
       var v2 = a2[i];
@@ -119,7 +119,7 @@ var mkn = new function() {
   {
     return this.firstElement(obj)[0];
   }
-  
+
   this.copy = function(src)
   {
     if ($.isArray(src)) return [].concat(src);
