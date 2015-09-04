@@ -92,9 +92,12 @@ mkn.render = function(options)
           id = a[0];
           item = a[1];
         }
-        if (item.merge || id == 'query') continue;
+        if (item.merge) continue;
         if (typeof item === 'string') {
           item = { name: item };
+        }
+        if (id == 'query') {
+          item.defaults = $.copy(defaults);
         }
         if (inherit && inherit.indexOf(id) >=0 )
           item = merge(parent_field[id], item);
@@ -170,13 +173,6 @@ mkn.render = function(options)
     return this.create(template)[1];
   };
 
-  this.key =  function(val)
-  {
-    if (val === undefined) return this._key;
-    this._key = val;
-    return this;
-  }
-
   this.expandFunction = function(value, parent_id)
   {
     var matches = /(copy|css)\s*\((.+)\)/.exec(value);
@@ -250,7 +246,6 @@ mkn.render = function(options)
     field = this.inheritParent(parent, field);
 
     var id = field.id;
-    field.key = this._key;
     if (field.array)
       this.expandArray(field);
     else
@@ -351,7 +346,7 @@ mkn.render = function(options)
       var id = item.id;
       if (id == 'query') {
         loading_data = true;
-        this.loadData(parent, parent_field, name, defaults);
+        this.loadData(parent, parent_field, name, item.defaults);
         continue;
       }
       parent.replace(regex,new_item_html+'$1');
@@ -412,13 +407,13 @@ mkn.render = function(options)
       if (object.find('[loaded]').exists()) {
         object.find('[loaded]').replaceWith('$'+name);
       }
-      me.append_contents(object, field, name, result, defaults);
+      me.createItems(object, field, name, result, defaults);
       if (me.loading === 0)
         me.parent.trigger('loaded', result);
     });
     if (field.autoload || field.autoload === undefined) {
       $.json('/', serverParams('data', field.path+'/'+name), function(result) {
-        me.respond(result, object);
+        respond(result, object);
         object.trigger('loaded', [result]);
       });
     }
@@ -443,10 +438,14 @@ mkn.render = function(options)
     if (field.hide || field.show === false)
       sink.hide();
 
-    sink.on('show_hide', function(event, invoker, condition) {
+    me.sink.on('show_hide', function(event, invoker, condition) {
       $(this).is(':visible')? $(this).hide(): $(this).show();
     });
-  };
+    me.sink.on('show', function(e, invoker,show) {
+      if (show === undefined) return false;
+      $(this).toggle(parseInt(show) === 1 || show === true);
+    });
+   };
 
   var initEvents = function(obj, field)
   {
@@ -662,7 +661,7 @@ mkn.render = function(options)
           });
           break;
         case 'trigger':
-          me.trigger(field, obj);
+          trigger(field, obj);
           break;
         default:
           if (field.url)
@@ -707,7 +706,8 @@ mkn.render = function(options)
           var event = val.event;
           var sink = parent;
           if (val.sink) {
-            sink = $(val.sink.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+self.id+"$2"));
+            val.sink = val.sink.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+me.id+"$2");
+            sink = $(val.sink)
           }
           var args = val.args || [];
           sink.trigger(event, [invoker, args[0], args[1], args[2]]);
