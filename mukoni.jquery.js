@@ -493,12 +493,6 @@ $.fn.getCursorPosition = function() {
     return pos;
 }
 
-$.copy = function(src)
-{
-  if ($.isArray(src)) return [].concat(src);
-  return $.extend(true, {}, src);
-}
-
 $.fn.bookmarkOnClick = function() {
   // Mozilla Firefox Bookmark
   this.click(function() {

@@ -119,5 +119,11 @@ var mkn = new function() {
   {
     return this.firstElement(obj)[0];
   }
+  
+  this.copy = function(src)
+  {
+    if ($.isArray(src)) return [].concat(src);
+    return $.extend(true, {}, src);
+  }
 
 }
