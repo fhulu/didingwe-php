@@ -374,6 +374,7 @@
         return;
       }
       field.key = key;
+      field.value = value;
       var created = this.render.create(field)[1];
       if (key !== undefined) {
         var id = created.attr('id');
@@ -486,7 +487,6 @@
           tmp.page({path: path, key: key});
           path = path.replace(/\//, '_');
           tmp.on('read_'+path, function(event, object) {
-            console.log("read", object)
             td.append(object);
           });
         });
