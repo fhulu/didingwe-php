@@ -560,11 +560,16 @@ mkn.render = function(options)
 
   var loadLink = function(link,type, callback)
   {
-    if (mkn.links[link] !== undefined && type != 'css') {
-      if (callback !== undefined) callback();
+    var cache = mkn.links[link];
+    if (cache !== undefined) {
+      if (cache.loaded)
+        callback();
+      else if (callback !== undefined)
+        cache.callbacks.push(callback);
       return;
     }
-    mkn.links[link] = link;
+
+    mkn.links[link] = { loaded: false, callbacks: [] };
     var element;
     if (type == 'css') {
       element = document.createElement('link');
@@ -581,7 +586,15 @@ mkn.render = function(options)
     assert(element !== undefined, "Error loading "+link);
     var loaded = false;
     if (callback !== undefined) element.onreadystatechange = element.onload = function() {
-      if (!loaded) callback();
+      if (!loaded) {
+        callback();
+        cache = mkn.links[link];
+        cache.loaded = true;
+        for (var i in cache.callbacks) {
+          cache.callbacks[i]();
+        }
+        cache.callbacks = [];
+      }
       loaded = true;
     }
     var head = document.getElementsByTagName('head')[0];
