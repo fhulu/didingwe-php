@@ -574,7 +574,7 @@ wizard_page:
   sub_page: false
   prev:
     type: button
-    name: Previuous
+    name: Previous
     action: trigger
     event: wizard-prev
   inherit: [next,prev]
