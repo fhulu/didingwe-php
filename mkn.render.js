@@ -560,7 +560,7 @@ mkn.render = function(options)
 
   var loadLink = function(link,type, callback)
   {
-    if (mkn.links[link] !== undefined) {
+    if (mkn.links[link] !== undefined && type != 'css') {
       if (callback !== undefined) callback();
       return;
     }

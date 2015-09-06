@@ -3,9 +3,8 @@
     _create: function() {
       this.stack = new Array();
       var self = this;
-      this.width =  this.options.width;
+      this.width = this.element.width();
       var num_steps = this.options.steps.length;
-      this.page_width = this.options.width - (num_steps*10);
       this._createPages();
       this._bindActions();
       this.stack = new Array();
@@ -34,7 +33,7 @@
     _createPage: function(index)
     {
       var props = this.options.steps[index];
-      var page = $('<div class=wizard-page>').attr('name',props.name).hide().appendTo(this.element);
+      var page = $('<div class=wizard-page>').attr('name',props.name).hide().css('width','100%').appendTo(this.element);
       var bookmark = $('<div class=wizard-bookmark>').appendTo(page);
       this.bookmark_width = bookmark.outerHeight();
       $('<span class=wizard-bookmark-number>').appendTo(bookmark);
@@ -76,7 +75,6 @@
     _showPage: function(index)
     {
       var page = this.element.find('.wizard-page').eq(index);
-      page.addClass('wizard-current').show();
       if (!page.hasClass('wizard-loaded'))
         this._loadPage(page, index);
       else
@@ -92,7 +90,8 @@
       page.find('.wizard-content,.wizard-nav').show();
       var offset = this.stack.length * this.bookmark_width - 6;
       page.css('left', offset+'px');
-      page.width(this.element.width()-offset);
+      page.width(this.width-offset);
+      page.addClass('wizard-current').show();
       this.stack.push(index);
     },
 
