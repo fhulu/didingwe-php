@@ -75,7 +75,8 @@
     _showPage: function(index)
     {
       var page = this.element.find('.wizard-page').eq(index);
-      if (!page.hasClass('wizard-loaded'))
+      var props = this.options.steps[index];
+      if (!page.hasClass('wizard-loaded') || props.clear)
         this._loadPage(page, index);
       else
         page.find('.wizard-content').trigger('reload');
