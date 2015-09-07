@@ -28,7 +28,8 @@ $page->output();
 class page
 {
   static $fields_stack = array();
-  static $post_items = array('audit', 'call', 'post', 'read_session', 'sql', 'sql_values', 'valid', 'validate');
+  static $post_items = array('audit', 'call', 'clear_values', 'post',
+    'read_session', 'read_values', 'sql', 'sql_values', 'valid', 'validate');
   static $atomic_items = array('action', 'css', 'html', 'script', 'style', 'template', 'valid');
   static $user_roles = array('public');
   var $request;
@@ -418,7 +419,7 @@ class page
     walk_recursive_down($fields, function(&$value, $key, &$parent) use($keys) {
       if (!in_array($key, $keys, true)) return;
       unset($parent[$key]);
-      if ($this->rendering && (strpos($key, "sql") !== false || $key === 'read_session'))
+      if ($this->rendering && in_array($key, page::$post_items, true))
         $parent['query'] = " ";
     });
 
@@ -738,7 +739,7 @@ class page
     log::debug_json("REPLY", $actions);
 
     $methods = array('alert', 'abort', 'call', 'clear_session', 'clear_values',
-      'close_dialog', 'load_lineage', 'read_session', 'redirect',
+      'close_dialog', 'load_lineage', 'read_session', 'read_values', 'redirect',
       'send_email', 'show_dialog', 'sql', 'sql_exec','sql_rows','sql_values',
       'trigger', 'update', 'write_session');
     foreach($actions as $action) {
@@ -966,6 +967,12 @@ class page
     return array_values($values);
   }
 
+  function read_values($values)
+  {
+    log::debug_json("READ VALUES", $values);
+    return $values;
+  }
+
   static function abort($error_name, $error_message)
   {
     page::error($error_name, $error_message);
@@ -989,7 +996,15 @@ class page
 
   function clear_values()
   {
-    $this->reply = null;
+    $args = func_get_args();
+    if (sizeof($args) == 0) {
+      $this->reply = null;
+      return;
+    }
+    foreach($args as $arg)
+    {
+      unset($this->reply[$arg]);
+    }
   }
 
 
