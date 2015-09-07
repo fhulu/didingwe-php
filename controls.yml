@@ -233,6 +233,10 @@ image:
   text: ""
 
 info_line:
+  tag: div
+  pack: inline-block
+  label_width: 34%
+  input_width: 63%
   type: label_left
   label_suffix: ":"
   class: [info-line]
@@ -293,7 +297,7 @@ label_left:
   templates: span
   label_suffix: ""
   pack: inline
-  text: "<label style='display: $pack'>$name$label_suffix</label>$field"
+  text: "<label style='display: $pack; width: $label_width' >$name$label_suffix</label>$field"
   subject:
     style: { margin-right: 20px }
 
