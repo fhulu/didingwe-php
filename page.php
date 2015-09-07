@@ -542,7 +542,7 @@ class page
       return call_user_func($function);
 
     $params = explode(',', $params);
-    $context = merge_options($this->fields, $this->context, $this->request);
+    $context = merge_options($this->fields, $this->context, $_SESSION, $this->reply, $this->request);
     replace_fields($context, $this->request);
     replace_fields($params, $this->request);
     replace_fields($params, $context);
