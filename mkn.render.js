@@ -129,9 +129,10 @@ mkn.render = function(options)
       if (defaults.wrap) {
         item.wrap = defaults.wrap;
         item.wrap.id = name;
+        item.wrap = this.initField(item.wrap, parent_field);
         delete defaults.wrap;
       }
-      item = this.initField(item, parent);
+      item = this.initField(item, parent_field);
       if (item.push)
         pushed.push(item);
 
@@ -161,19 +162,24 @@ mkn.render = function(options)
     }
   }
 
+  var isTemplate = function(t)
+  {
+    return t !== undefined && t !== "none" && t !== '$field';
+  }
+
   this.createTemplate = function(template, item)
   {
-    if (template === undefined || item.template === "none" || template == '$field') return undefined;
+    if (!isTemplate(template)) return undefined;
     var field = mkn.copy(this.mergeType(item));
     if (typeof template === 'string') {
       template = {html: template};
     }
     else {
       template = this.mergeType(template);
-      mkn.deleteKeys(field, ['type', 'attr', 'class', 'tag', 'html', 'style', 'create','classes','template', 'templates', 'text']);
+      mkn.deleteKeys(field, ['type', 'attr', 'action', 'class', 'tag', 'html', 'style', 'create','classes','template', 'templates', 'text']);
     }
-    template = mkn.merge(field, template);
-    return this.create(template)[1];
+    template = this.initField(mkn.merge(field, template));
+    return this.create(template);
   };
 
   this.expandFunction = function(value, parent_id)
@@ -259,11 +265,10 @@ mkn.render = function(options)
     return field;
   }
 
-  this.create =  function(field, parent, has_template)
+  this.create =  function(field, templated)
   {
-    field = this.initField(field, parent);
     if (field.sub_page)
-      return [field, this.createSubPage(field)];
+      return this.createSubPage(field);
 
     var id = field.id;
     if (!field.html) console.log("No html for ", id, field);
@@ -307,18 +312,18 @@ mkn.render = function(options)
 
       value.path = field.path+'/'+code;
       value.id = code;
-      var result = this.create(value, field);
-      this.replace(obj, result[1], code);
+      value = this.initField(value, field);
+      this.replace(obj, this.create(value), code);
     }
-    if (!has_template || field.template === 'none') initShow(field, obj);
     if (obj.attr('id') === '') obj.removeAttr('id');
+    if (!templated) initShow(field, obj);
 
     initLinks(obj, field, function() {
       //if (field.value !== undefined) obj.value(field.value)
       setValues(obj, field);
       initEvents(obj, field);
     });
-    return [field, obj];
+    return obj;
   }
 
   this.createSubPage = function(field)
@@ -354,22 +359,18 @@ mkn.render = function(options)
       }
       parent.replace(regex,new_item_html+'$1');
       var template = item.template;
-      var created = this.create(item, parent_field, template !== undefined && template !== '$field');
-      item = created[0];
-      var obj = created[1];
-      var templated = this.createTemplate(template, item);
-      var sink = obj;
-      if (!templated)
-        templated = obj;
-      else {
+      var hasTemplate = isTemplate(template);
+      var obj = this.create(item, hasTemplate);
+      var templated = obj;
+      if (hasTemplate) {
+        templated = this.createTemplate(template, item);
         this.replace(templated, obj, id, 'field');
-        sink = templated;
       }
 
       if (wrap)
         wrap.append(templated);
       else if (item.wrap) {
-        wrap = this.create(item.wrap, parent_field)[1];
+        wrap = this.create(item.wrap);
         wrap.html('');
         parent.find('#'+new_item_name).replaceWith(wrap);
         wrap.append(templated);
@@ -377,7 +378,6 @@ mkn.render = function(options)
       }
       else
         parent.find('#'+new_item_name).replaceWith(templated);
-      initShow(item, sink);
     }
     if (!loading_data)
       parent.replace(regex, '');
@@ -441,12 +441,14 @@ mkn.render = function(options)
     if (field.hide || field.show === false)
       sink.hide();
 
-    sink.on('show_hide', function(event, invoker, condition) {
+    sink.on('show_hide', function() {
       $(this).is(':visible')? $(this).hide(): $(this).show();
-    });
-    me.sink.on('show', function(e, invoker,show) {
+      return false;
+    })
+    .on('show', function(e, invoker,show) {
       if (show === undefined) return false;
       $(this).toggle(parseInt(show) === 1 || show === true);
+      return false;
     });
    };
 

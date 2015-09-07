@@ -41,34 +41,13 @@ $.fn.page = function(options, callback)
       data.fields.sub_page = false;
       data.fields.id = this.id;
       var r = new mkn.render({invoker: page.parent, types: data.types, id: this.id, key: options.key} );
-      var result = r.create(data.fields);
-      var object = result[1];
+      data.fields = r.initField(data.fields);
+      var object = r.create(data.fields);
       page.object = object;
-      data.fields = result[0];
       data.values = values;
       assert(object !== undefined, "Unable to create page "+this.id);
       object.addClass('page').appendTo(parent);
       parent.trigger('read_'+this.id, [object, data.fields]);
-
-
-      object.on('create_child', function(event, field, parent) {
-        if (parent === undefined) parent = event.trigger;
-        var result = page.create(field);
-        var child = result[1];
-        child.appendTo(parent);
-        child.value(field.value);
-      });
-
-      var children = object.find("*");
-      children.on('show', function(e, invoker,show) {
-        if (show === undefined) return false;
-        $(this).toggle(parseInt(show) === 1 || show === true);
-        e.stopImmediatePropagation();
-      });
-
-      children.on('refresh', function(e) {
-
-      });
       return this;
     },
 

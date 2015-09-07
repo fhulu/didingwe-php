@@ -375,7 +375,7 @@
       }
       field.key = key;
       field.value = value;
-      var created = this.render.create(field)[1];
+      var created = this.render.create(field);
       if (key !== undefined) {
         var id = created.attr('id');
         if (id !== undefined)
@@ -449,7 +449,7 @@
         var action = all_actions[i];
         var id = action.id;
         if (row_actions.indexOf(id) < 0) continue;
-        var btn = this.render.create(action)[1];
+        var btn = this.render.create(action);
         btn.appendTo(parent);
         if (id === 'slide')
           parent = $('<span class="slide">').toggle(false).appendTo(parent);
