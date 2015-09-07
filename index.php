@@ -20,11 +20,12 @@
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <link href="/jquery/smoothness/ui.css" media="screen" rel="stylesheet" type="text/css" />
+<link href="/common/jquery.datetimepicker.css" media="screen" rel="stylesheet" type="text/css" />
 <link href="/common/input_page.css?<?=$tag?>" media="screen" rel="stylesheet" type="text/css" />
 <link href="/default.style.css?<?=$tag?>" media="screen" rel="stylesheet" type="text/css" />
-
 <script type='text/javascript' src='/jquery/min.js'></script>
 <script type='text/javascript' src='/jquery/ui-min.js'></script>
+<script type='text/javascript' src='/common/jquery.datetimepicker.js'></script>
 <script type="text/javascript" src='/common/mukoni.jquery.js?<?=$tag?>'></script>
 <script type='text/javascript' src="/common/mkn.js?<?=$tag?>"></script>
 <script type='text/javascript' src="/common/mkn.render.js?<?=$tag?>"></script>
