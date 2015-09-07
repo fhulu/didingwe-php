@@ -139,7 +139,7 @@
           prev.hide();
 
         var next = object.find('#next');
-        if (props.next === false && index === self.options.steps.length-1)
+        if (props.next === false || index === self.options.steps.length-1)
           next.hide();
         else next.bindFirst('click', function() {
           if (self.next_step === undefined)
