@@ -28,8 +28,8 @@ $page->output();
 class page
 {
   static $fields_stack = array();
-  static $post_items = array('audit', 'call', 'clear_values', 'post',
-    'read_session', 'read_values', 'sql', 'sql_values', 'valid', 'validate');
+  static $post_items = array('audit', 'call', 'clear_values', 'post', 'valid', 'validate');
+  static $query_items = array('read_session', 'read_values', 'sql', 'sql_values');
   static $atomic_items = array('action', 'css', 'html', 'script', 'style', 'template', 'valid');
   static $user_roles = array('public');
   var $request;
@@ -414,12 +414,12 @@ class page
   {
     if (is_null($keys)) {
       if (!$this->rendering) return;
-      $keys = page::$post_items;
+      $keys = array_merge(page::$post_items,page::$query_items);
     }
     walk_recursive_down($fields, function(&$value, $key, &$parent) use($keys) {
       if (!in_array($key, $keys, true)) return;
       unset($parent[$key]);
-      if ($this->rendering && in_array($key, page::$post_items, true))
+      if ($this->rendering && in_array($key, page::$query_items, true))
         $parent['query'] = " ";
     });
 
