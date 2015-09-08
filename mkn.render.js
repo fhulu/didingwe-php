@@ -1,3 +1,5 @@
+mkn.links = {};
+
 mkn.render = function(options)
 {
   var me = this
@@ -6,6 +8,7 @@ mkn.render = function(options)
   me.id = options.id;
   me.options = options;
   me.sink = undefined;
+  me.parent = options.parent;
   me.known = {};
 
   var array_defaults = [ 'type', 'template', 'action', 'attr', 'wrap'];
@@ -87,23 +90,26 @@ mkn.render = function(options)
       if ($.isPlainObject(item)) {
         if (setDefaults(defaults, item, parent_field)) continue;
         if (item.id === undefined) {
-          var a = $.firstElement(item);
+          var a = mkn.firstElement(item);
           id = a[0];
           item = a[1];
         }
-        if (item.merge || id == 'query') continue;
+        if (item.merge) continue;
         if (typeof item === 'string') {
           item = { name: item };
         }
+        if (id == 'query') {
+          item.defaults = mkn.copy(defaults);
+        }
         if (inherit && inherit.indexOf(id) >=0 )
-          item = merge(parent_field[id], item);
+          item = mkn.merge(parent_field[id], item);
         if (!item.action && defaults.action) item.action = defaults.action;
         promoteAttr(item);
-        if (defaults.attr) item.attr = merge(item.attr,defaults.attr);
+        if (defaults.attr) item.attr = mkn.merge(item.attr,defaults.attr);
         template = item.template;
         var has_type = item.type !== undefined;
-        item = merge(this.types[id], item);
-        if (!has_type && defaults.type) item = merge(defaults.type, item);
+        item = mkn.merge(this.types[id], item);
+        if (!has_type && defaults.type) item = mkn.merge(defaults.type, item);
       }
       else if ($.isArray(item)) {
         array = item;
@@ -119,17 +125,20 @@ mkn.render = function(options)
       if (path)
         item.path = path + '/' + id;
       if (!template) template = item.template = defaults.template;
-      if (template && template.subject) item = merge(template.subject, item);
+      if (template && template.subject) item = mkn.merge(template.subject, item);
       if (defaults.wrap) {
         item.wrap = defaults.wrap;
         item.wrap.id = name;
+        item.wrap = this.initField(item.wrap, parent_field);
         delete defaults.wrap;
       }
+      item = this.initField(item, parent_field);
       if (item.push)
         pushed.push(item);
+
       items[i] = item;
       last_pos++;
-      delete removed[removed.length-1];
+      removed.pop();
     }
     for (var i in pushed) {
       var item = pushed[i];
@@ -147,32 +156,31 @@ mkn.render = function(options)
       items.splice(pos, 1);
     }
 
+    var offset = 0;
     for (var i in removed) {
-      delete items[removed[i]];
+      items.splice(removed[i]-i,1);
     }
+  }
+
+  var isTemplate = function(t)
+  {
+    return t !== undefined && t !== "none" && t !== '$field';
   }
 
   this.createTemplate = function(template, item)
   {
-    if (template === undefined || item.template === "none" || template == '$field') return undefined;
-    var field = $.copy(this.mergeType(item));
+    if (!isTemplate(template)) return undefined;
+    var field = mkn.copy(this.mergeType(item));
     if (typeof template === 'string') {
       template = {html: template};
     }
     else {
       template = this.mergeType(template);
-      mkn.deleteKeys(field, ['type', 'attr', 'class', 'tag', 'html', 'style', 'create','classes','template', 'templates', 'text']);
+      mkn.deleteKeys(field, ['type', 'attr', 'action', 'class', 'tag', 'html', 'style', 'create','classes','template', 'templates', 'text']);
     }
-    template = mkn.merge(field, template);
-    return this.create(template)[1];
+    template = this.initField(mkn.merge(field, template));
+    return this.create(template);
   };
-
-  this.key =  function(val)
-  {
-    if (val === undefined) return this._key;
-    this._key = val;
-    return this;
-  }
 
   this.expandFunction = function(value, parent_id)
   {
@@ -247,7 +255,6 @@ mkn.render = function(options)
     field = this.inheritParent(parent, field);
 
     var id = field.id;
-    field.key = this._key;
     if (field.array)
       this.expandArray(field);
     else
@@ -258,11 +265,10 @@ mkn.render = function(options)
     return field;
   }
 
-  this.create =  function(field, parent, has_template)
+  this.create =  function(field, templated)
   {
-    field = this.initField(field, parent);
     if (field.sub_page)
-      return [field, this.createSubPage(field)];
+      return this.createSubPage(field);
 
     var id = field.id;
     if (!field.html) console.log("No html for ", id, field);
@@ -306,19 +312,18 @@ mkn.render = function(options)
 
       value.path = field.path+'/'+code;
       value.id = code;
-      var result = this.create(value, field);
-      this.replace(obj, result[1], code);
+      value = this.initField(value, field);
+      this.replace(obj, this.create(value), code);
     }
-    if (!has_template || field.template === 'none') initShow(field, obj);
     if (obj.attr('id') === '') obj.removeAttr('id');
+    if (!templated) initShow(field, obj);
 
     initLinks(obj, field, function() {
       //if (field.value !== undefined) obj.value(field.value)
       setValues(obj, field);
       initEvents(obj, field);
     });
-    console.log("me.sink", this.sink);
-    return [field, obj];
+    return obj;
   }
 
   this.createSubPage = function(field)
@@ -349,27 +354,23 @@ mkn.render = function(options)
       var id = item.id;
       if (id == 'query') {
         loading_data = true;
-        this.loadData(parent, parent_field, name, defaults);
+        this.loadData(parent, parent_field, name, item.defaults);
         continue;
       }
       parent.replace(regex,new_item_html+'$1');
       var template = item.template;
-      var created = this.create(item, parent_field, template !== undefined && template !== '$field');
-      item = created[0];
-      var obj = created[1];
-      var templated = this.createTemplate(template, item);
-      var sink = obj;
-      if (!templated)
-        templated = obj;
-      else {
+      var hasTemplate = isTemplate(template);
+      var obj = this.create(item, hasTemplate);
+      var templated = obj;
+      if (hasTemplate) {
+        templated = this.createTemplate(template, item);
         this.replace(templated, obj, id, 'field');
-        sink = templated;
       }
 
       if (wrap)
         wrap.append(templated);
       else if (item.wrap) {
-        wrap = this.create(item.wrap, parent_field)[1];
+        wrap = this.create(item.wrap);
         wrap.html('');
         parent.find('#'+new_item_name).replaceWith(wrap);
         wrap.append(templated);
@@ -377,7 +378,6 @@ mkn.render = function(options)
       }
       else
         parent.find('#'+new_item_name).replaceWith(templated);
-      initShow(item, sink);
     }
     if (!loading_data)
       parent.replace(regex, '');
@@ -410,13 +410,13 @@ mkn.render = function(options)
       if (object.find('[loaded]').exists()) {
         object.find('[loaded]').replaceWith('$'+name);
       }
-      me.append_contents(object, field, name, result, defaults);
+      me.createItems(object, field, name, result, defaults);
       if (me.loading === 0)
         me.parent.trigger('loaded', result);
     });
     if (field.autoload || field.autoload === undefined) {
       $.json('/', serverParams('data', field.path+'/'+name), function(result) {
-        me.respond(result, object);
+        respond(result, object);
         object.trigger('loaded', [result]);
       });
     }
@@ -431,7 +431,7 @@ mkn.render = function(options)
 
   var serverParams = function(action, path, params)
   {
-    if (!path) path = this.path;
+    if (!path) path = me.path;
     return { data: $.extend({}, options.request, {key: options.key}, params,
       {action: action, path: path })};
   }
@@ -441,10 +441,16 @@ mkn.render = function(options)
     if (field.hide || field.show === false)
       sink.hide();
 
-    sink.on('show_hide', function(event, invoker, condition) {
+    sink.on('show_hide', function() {
       $(this).is(':visible')? $(this).hide(): $(this).show();
+      return false;
+    })
+    .on('show', function(e, invoker,show) {
+      if (show === undefined) return false;
+      $(this).toggle(parseInt(show) === 1 || show === true);
+      return false;
     });
-  };
+   };
 
   var initEvents = function(obj, field)
   {
@@ -468,7 +474,7 @@ mkn.render = function(options)
     loadLinks('css', field, function() {
       loadLinks('script', field, function() {
         if (field.create)
-          object.customCreate($.extend({types: this.types}, this.options, field));
+          object.customCreate($.extend({types: me.types}, me.options, field));
         if (callback !== undefined) callback();
       });
     });
@@ -546,7 +552,7 @@ mkn.render = function(options)
       else
         defaults[name] = item[name];
       if (inherit && inherit.indexOf(value) >=0 )
-        defaults[name] = merge(parent[value], defaults[value]);
+        defaults[name] = mkn.merge(parent[value], defaults[value]);
       set = true;
     }
 
@@ -660,7 +666,7 @@ mkn.render = function(options)
           });
           break;
         case 'trigger':
-          me.trigger(field, obj);
+          trigger(field, obj);
           break;
         default:
           if (field.url)
@@ -693,7 +699,7 @@ mkn.render = function(options)
 
     var handle = function(action, val)
     {
-      console.log("response", me.id, action, val, parent, me.sink, invoker);
+      console.log("response", me.id, action, val);
       switch(action) {
         case 'alert': alert(val); break;
         case 'show_dialog': mkn.showDialog(val, responses.options); break;
@@ -705,7 +711,8 @@ mkn.render = function(options)
           var event = val.event;
           var sink = parent;
           if (val.sink) {
-            sink = $(val.sink.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+self.id+"$2"));
+            val.sink = val.sink.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+me.id+"$2");
+            sink = $(val.sink)
           }
           var args = val.args || [];
           sink.trigger(event, [invoker, args[0], args[1], args[2]]);
@@ -720,7 +727,6 @@ mkn.render = function(options)
       else for (var i in val)
         handle(key, val[i]);
     }
-    return this;
   }
 
   var setValues = function(parent, data)
@@ -732,7 +738,7 @@ mkn.render = function(options)
       if (array && !$.isPlainObject(item)) continue;
        var id = i, value= item;
       if (array) {
-        var el = $.firstElement(item);
+        var el = mkn.firstElement(item);
         id = el[0];
         item = el[1];
       }
