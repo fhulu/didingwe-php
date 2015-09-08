@@ -653,10 +653,11 @@ mkn.render = function(options)
           var selector = field.selector;
           if (selector !== undefined) {
             selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+field.page_id+"$2");
-            obj.jsonCheck(event, selector, '/', params, function(result) {
-              if (result === null) result = undefined;
+            params = $.extend(params, {invoker: obj, event: event, async: true });
+            me.sink.find(".error").remove();
+            $(selector).json('/', params, function(result) {
               obj.trigger('processed', [result]);
-              respond(result, obj);
+              respond(result, obj, event);
             });
             break;
           }
@@ -685,9 +686,39 @@ mkn.render = function(options)
     else confirmed();
   }
 
-  var respond = function(result, invoker)
+  var reportError = function(field, error)
+  {
+    var subject = me.sink.find('#'+field+",[name='"+field+"']");
+    var sibling = subject.parent();
+    if (sibling.length == 0)
+      sibling = subject;
+    if (sibling.length == 0) {
+      if (field == "alert") alert(error);
+      return;
+    }
+    var box = $("<div class=error>"+error+"</div>");
+    sibling.after(box);
+    box.fadeIn('slow').click(function() { $(this).fadeOut('slow') });
+  }
+
+  var reportAllErrors = function(result, event)
+  {
+    $.each(result, function(key, row) {
+      if (key == 'errors') {
+        console.log("has errors", row);
+        $.each(row, function(field, error) {
+          reportError(field, error);
+        });
+        if (event) event.stopImmediatePropagation();
+      }
+    });
+  }
+
+
+  var respond = function(result, invoker, event)
   {
     if (!result) return;
+    reportAllErrors(result, event);
     var responses = result._responses;
     if (!$.isPlainObject(responses)) return this;
     var parent = me.sink;
