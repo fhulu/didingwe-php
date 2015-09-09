@@ -494,7 +494,7 @@ mkn.render = function(options)
         obj.attr(key,val);
       });
     }
-    $.each(obj[0].attributes, function(i, attr) {
+    if (obj[0]) $.each(obj[0].attributes, function(i, attr) {
       var matches = getMatches(attr.value, /\$(\w+)/g)
       for (var j in matches) {
         var value = field[matches[j]];
