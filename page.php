@@ -884,7 +884,7 @@ class page
     }
     $options = array("event"=>$event);
     if (!is_null($selector)) $options['sink'] = $selector;
-    if (sizeof($args) > 2) $options['args'] = array_slice($args,2);
+    if (sizeof($args) > 2) $options['params'] = array_slice($args,2);
     page::respond('trigger', $options);
   }
 

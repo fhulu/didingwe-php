@@ -316,7 +316,8 @@ mkn.render = function(options)
       this.replace(obj, this.create(value), code);
     }
     if (obj.attr('id') === '') obj.removeAttr('id');
-    if (!templated) initShow(field, obj);
+    if (!templated && (field.hide || field.show === false))
+      obj.hide();
 
     initLinks(obj, field, function() {
       //if (field.value !== undefined) obj.value(field.value)
@@ -436,37 +437,19 @@ mkn.render = function(options)
       {action: action, path: path })};
   }
 
-  var initShow = function(field, sink)
-  {
-    if (field.hide || field.show === false)
-      sink.hide();
-
-    sink.on('show_hide', function() {
-      $(this).is(':visible')? $(this).hide(): $(this).show();
-      return false;
-    })
-    .on('show', function(e, invoker,show) {
-      if (show === undefined) return false;
-      $(this).toggle(parseInt(show) === 1 || show === true);
-      return false;
-    });
-   };
-
   var initEvents = function(obj, field)
   {
     if (!field.action) return;
     field.page_id = me.page_id;
     obj.click(function(event) {
       accept(event, $(this), field);
-    });
-
-    obj.on('reload', function() {
+    })
+    .on('reload', function() {
       loadValues(obj, field);
-    });
-
-    obj.on('server_response', function(event, result) {
+    })
+    .on('server_response', function(event, result) {
       respond(result);
-    });
+    })
   };
 
   var initLinks = function(object, field, callback)
@@ -736,18 +719,8 @@ mkn.render = function(options)
         case 'show_dialog': mkn.showDialog(val, responses.options); break;
         case 'close_dialog': mkn.closeDialog(parent, val); break;
         case 'redirect': location.href = val; break;
-        case 'update':
-          parent.setChildren(val); break;
-        case 'trigger':
-          var event = val.event;
-          var sink = parent;
-          if (val.sink) {
-            val.sink = val.sink.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+me.id+"$2");
-            sink = $(val.sink)
-          }
-          var args = val.args || [];
-          sink.trigger(event, [invoker, args[0], args[1], args[2]]);
-          break;
+        case 'update': parent.setChildren(val); break;
+        case 'trigger': trigger(val, parent); break;
       }
     }
 
@@ -815,14 +788,25 @@ mkn.render = function(options)
     else {
       sink = field.sink;
       params = field.params;
+      if (params !== undefined && !$.isArray(params))
+        params = [params];
+      if (event === 'show' || event  == 'show_hide')
+        event = '.toggle';
+      if (event == 'toggle' || event == '.toggle' && params !== undefined)
+        params = [parseInt(params[0]) === 1 || params[0] === true];
     }
 
     if (sink)
-      sink = $(sink.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+field.page_id+"$2"));
+      sink = $(sink.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+me.id+"$2"));
     else
       sink = invoker;
-
-    sink.trigger(event, [invoker, params]);
+    if (event[0] === '.') {
+      sink[event.substring(1)].apply(sink,params);
+      return;
+    }
+    event = $.Event(event);
+    event.target = invoker[0];
+    sink.trigger(event, params);
   }
 
 }
