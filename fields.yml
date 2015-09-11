@@ -62,8 +62,7 @@ confirm_password:
 
 country:
   options:
-    - sql: SELECT item_code,item_name from ref_list WHERE list_name = "country"
-
+    - sql: select code ,name  from country
 
 day_of_month:
   options:
