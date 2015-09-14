@@ -759,7 +759,10 @@ class page
 
         if (!in_array($method, $methods)) continue;
         replace_fields($parameter, $this->reply);
-        if (!is_array($parameter) || is_assoc($parameter)) $parameter = array($parameter);
+        if (is_null($parameter))
+          $parameter = array();
+        else if (!is_array($parameter) || is_assoc($parameter))
+          $parameter = array($parameter);
         $result = call_user_func_array(array($this, $method), $parameter);
         if ($result === false) return false;
         if (is_null($result)) continue;
