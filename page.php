@@ -542,7 +542,7 @@ class page
       return call_user_func($function);
 
     $params = explode(',', $params);
-    $context = merge_options($this->fields, $this->context, $_SESSION, $this->reply, $this->request);
+    $context = merge_options($this->fields, $this->context, $_SESSION, $this->request, $this->reply);
     replace_fields($context, $this->request);
     replace_fields($params, $this->request);
     replace_fields($params, $context);
@@ -884,7 +884,7 @@ class page
     }
     $options = array("event"=>$event);
     if (!is_null($selector)) $options['sink'] = $selector;
-    if (sizeof($args) > 2) $options['args'] = array_slice($args,2);
+    if (sizeof($args) > 2) $options['params'] = array_slice($args,2);
     page::respond('trigger', $options);
   }
 

@@ -14,19 +14,7 @@
 
 (function( $ ) {
   $.widget( "ui.datatable", {
-    options: {/*
-      titles: null,
-      fields: null, //todo: 'underscores'
-      filter: null, //todo: all
-      sortable: null, //todo: all
-      sort_field: null,
-      heading: null,
-      page_size: null,
-      expandable: null,
-      actions: null,
-      row_actions: null,
-      url: '/?a=page/read&page=mytable
-      rows: null*/
+    options: {
       name: 'Untitled',
       flags: [],
     },
@@ -51,7 +39,7 @@
       this.showFooterActions();
       this.load();
       var self = this;
-      this.element.on('refresh', function(e, invoker, args) {
+      this.element.on('refresh', function(e, args) {
         self.load(args);
       })
     },
@@ -79,7 +67,7 @@
 
     refresh: function(args)
     {
-      this.element.trigger('refresh', [this.element, args]);
+      this.element.trigger('refresh', [args]);
     },
 
     head: function()
@@ -204,19 +192,19 @@
       });
 
       var page = head.find('#page_num');
-      this.element.on('goto_first', function(e, invoker) {
-        self.pageTo(invoker, 1);
+      this.element.on('goto_first', function(e) {
+        self.pageTo($(e.target), 1);
       })
-      .on('goto_prev', function(e, invoker) {
-        self.page(invoker, -1);
+      .on('goto_prev', function(e) {
+        self.page($(e.target), -1);
       })
-      .on('goto_next', function(e, invoker) {
-        self.page(invoker, 1);
+      .on('goto_next', function(e) {
+        self.page($(e.target), 1);
       })
-      .on('goto_last', function(e, invoker) {
+      .on('goto_last', function(e) {
         var size = parseInt(head.find('#page_size').val());
         var total = parseInt(head.find('#page_total').html());
-        self.pageTo(invoker, Math.floor(total/size)+1);
+        self.pageTo($(e.target), Math.floor(total/size)+1);
       })
     },
 
@@ -459,17 +447,17 @@
       };
     },
 
-    slide: function(parent)
+    slide: function(tr)
     {
-       parent.find('.slide').animate({width:'toggle'}, this.options.slideSpeed);
+      tr.find('.slide').animate({width:'toggle'}, this.options.slideSpeed);
     },
 
     bindRowActions: function(tr)
     {
       var self = this;
       var key = tr.attr('key');
-      tr.on('slide', function(e,btn) {
-        btn.toggle();
+      tr.on('slide', function(e) {
+        $(e.target).toggle();
         self.slide(tr);
       });
       tr.on('expand', function(event, button, action) {
@@ -491,8 +479,8 @@
           });
         });
       });
-      tr.on('collapse', function(event, button) {
-        button.hide();
+      tr.on('collapse', function(e) {
+        $(e.target).hide();
         tr.find('[action=expand]').show();
         var next = tr.next();
         if (next.attr('class') === 'expanded') next.remove();
@@ -504,7 +492,7 @@
         tr.find('[action=slide]').toggle();
       });
 
-      tr.on('processed_delete', function(result) {
+      tr.on('processed_delete', function() {
         tr.remove();
 //        alert('deleted successfullyy ' + JSON.toString(result));
       });
