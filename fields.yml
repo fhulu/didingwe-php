@@ -252,6 +252,9 @@ query:
   type: button
   call: $class::$invoker($key)
 
+redirect:
+  type: link
+  
 register:
   desc: Click here to register
   access: public

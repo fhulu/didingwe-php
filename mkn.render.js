@@ -597,6 +597,35 @@ mkn.render = function(options)
     return field;
   }
 
+  var redirect = function(field)
+  {
+    if (!$.isPlainObject(field)) field = { url: field };
+    var url = field.url;
+    if (url === undefined && field.query) {
+      url = '/?action=action';
+      var exclude = ['action','query', 'id', 'page_id', 'name','desc', 'tag','type','html','text','user_full_name']
+      for (var key in field) {
+        if (exclude.indexOf(key) === 0) continue;
+        url += '&'+key+'='+encodeURIComponent(field[key]);
+      }
+    }
+    if (!url) return;
+    if (field.target === '_blank')
+      window.open(url, field.target);
+    else if (field.target) {
+      var target = $(field.target);
+      var parent = target.parent();
+      if (url[0] === '/') url = url.substr(1);
+      parent.page({path: url});
+      var id = url.replace('/','_');
+      parent.on('read_'+id, function() {
+        target.remove();
+      });
+    }
+    else
+      document.location = url;
+  }
+
   var accept = function(event, obj, field)
   {
     var confirmed = function() {
@@ -604,33 +633,7 @@ mkn.render = function(options)
       field.page_id = field.page_id || obj.parents(".page").eq(0).attr('id');
       switch(action) {
         case 'dialog': mkn.showDialog(field.url, {key: field.key}); return;
-        case 'redirect':
-          var url = field.url;
-          if (url === undefined && field.query) {
-            url = '/?action=action';
-            var exclude = ['action','query', 'id', 'page_id', 'name','desc', 'tag','type','html','text','user_full_name']
-            for (var key in field) {
-              if (exclude.indexOf(key) === 0) continue;
-              url += '&'+key+'='+encodeURIComponent(field[key]);
-            }
-          }
-          if (url) {
-            if (field.target === '_blank')
-              window.open(url, field.target);
-            else if (field.target) {
-              var target = $(field.target);
-              var parent = target.parent();
-              if (url[0] === '/') url = url.substr(1);
-              parent.page({path: url});
-              var id = url.replace('/','_');
-              parent.on('read_'+id, function() {
-                target.remove();
-              });
-            }
-            else
-              document.location = url;
-          }
-          break;
+        case 'redirect': redirect(field); break;
         case 'post':
             var params = serverParams('action', field.path, {key: field.key});
           var selector = field.selector;
@@ -718,7 +721,7 @@ mkn.render = function(options)
         case 'alert': alert(val); break;
         case 'show_dialog': mkn.showDialog(val, responses.options); break;
         case 'close_dialog': mkn.closeDialog(parent, val); break;
-        case 'redirect': location.href = val; break;
+        case 'redirect': redirect(val); break;
         case 'update': parent.setChildren(val); break;
         case 'trigger': trigger(val, parent); break;
       }

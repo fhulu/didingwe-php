@@ -427,10 +427,6 @@ class page
 
   function read()
   {
-    if ($this->user) {
-      $this->fields['user_full_name'] = $this->user['full_name'];
-    }
-
     $this->types['control'] = $this->get_expanded_field('control');
     $this->types['template'] = $this->get_expanded_field('template');
     return array(
@@ -818,6 +814,7 @@ class page
 
   static function redirect($url)
   {
+    if (!is_array($url)) $url = array("url"=>$url);
     page::respond('redirect', $url);
   }
 
