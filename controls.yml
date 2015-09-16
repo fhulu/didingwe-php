@@ -257,7 +257,6 @@ info_text:
 
 inplace_input:
   templates: div
-  css: [/common/inplace_input.css]
   style: { display: $pack }
   text: |
       <a class=input>
@@ -277,14 +276,13 @@ input:
 
 input_page:
   type: page
-  label_width: 24%
-  input_width: 73%
-  label_suffix: ":"
   pack: inline
-  inherit: [desc, input_width, label_width, label_suffix, pack]
+  inherit: [desc]
   text: $processing $synopsis $inputs $actions
+  inputs_template:
+    type: labelled_input
   inputs:
-    - template: labelled_input
+    - template: $inputs_template
     - type: input
   actions:
     - wrap: class
@@ -313,6 +311,9 @@ label_top:
 labelled_input:
   templates: div
   style: { display: $pack }
+  label_width: 24%
+  input_width: 73%
+  label_suffix: ":"
   text: |
       <label style="width: $label_width">$name$label_suffix</label>
       <a class=input style="width: $input_width">

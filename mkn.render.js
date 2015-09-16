@@ -54,8 +54,7 @@ mkn.render = function(options)
   {
     if ($.isPlainObject(type)) return type;
     if (type.search(/\W/) >= 0) return {html: type};
-    var field = {};
-    return me.mergeType(field, type);
+    return me.mergeType({type: type} );
   };
 
 
@@ -205,9 +204,10 @@ mkn.render = function(options)
     return value;
   }
 
-  this.expandValues = function(parent_id, data)
+  this.expandValues = function(data, parent_id)
   {
     if (!data) return data;
+    if (parent_id === undefined) parent_id = data.id;
     var expanded;
     var count = 0;
     do {
@@ -246,7 +246,7 @@ mkn.render = function(options)
       field = mkn.merge(inherited, field);
     }
     return field;
-  },
+  }
 
   this.initField = function(field, parent)
   {
@@ -261,7 +261,7 @@ mkn.render = function(options)
       field = removeSubscripts(field);
     if (id && field.name === undefined)
       field.name = toTitleCase(id.replace(/[_\/]/g, ' '));
-    this.expandValues(id, field);
+    this.expandValues(field);
     return field;
   }
 
@@ -526,16 +526,20 @@ mkn.render = function(options)
       var name = array_defaults[i];
       var value = item[name];
       if (value === undefined) continue;
-      if (name === 'template' && value === 'none')
-        defaults[name] = '$field';
-      else if (name === 'wrap' && $.isPlainObject(value))
-        defaults[name] = $.extend({}, {tag: 'div'}, value);
-      else if (name === 'type' || name === 'template' || name === 'wrap')
-        defaults[name] = me.expandType(value);
-      else
-        defaults[name] = item[name];
+      if (value[0] == '$')
+        value = parent[value.substring(1)];
       if (inherit && inherit.indexOf(value) >=0 )
-        defaults[name] = mkn.merge(parent[value], defaults[value]);
+        value = mkn.merge(parent[value], defaults[name]);
+      if (name === 'template' && value === 'none')
+        value = '$field';
+      else if (name === 'wrap' && $.isPlainObject(value))
+        value = $.extend({}, {tag: 'div'}, value);
+      else if (name === 'type' || name === 'template' || name === 'wrap')
+        value = me.expandType(value);
+      if (name == 'template')
+        value =me.initField(value);
+
+      defaults[name] = value;
       set = true;
     }
 
@@ -784,7 +788,7 @@ mkn.render = function(options)
     var params;
     if ($.isPlainObject(event)) {
       sink = event.sink;
-      me.expandValues(field.id, event.parameters);
+      me.expandValues(event.parameters, field.id);
       params = event.parameters;
       event = event.name;
     }
