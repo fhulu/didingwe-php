@@ -18,8 +18,8 @@ catch (user_exception $exception) {
 }
 catch (Exception $exception)
 {
-  log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
   log::stack($exception);
+  log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
   if ($_REQUEST['path'] != 'error_page')
     page::show_dialog('/error_page');
 }
@@ -295,9 +295,9 @@ class page
     return $this->merge_type($field);
   }
 
-  function follow_path($path)
+  function follow_path($path, $field = null)
   {
-    $field = $this->fields;
+    if (is_null($field))  $field = $this->fields;
     $parent = $field;
     foreach($path as $branch) {
       if (is_assoc($field)) {
@@ -400,6 +400,33 @@ class page
 
     if ($this->rendering)
       $this->remove_items($fields, array('access'));
+  }
+
+  function merge_fields(&$fields)
+  {
+  //  if (is_null($fields)) return $fields;
+    if (is_assoc($fields)) {
+      foreach($fields as $key=>&$value) {
+        if (!is_array($value)) continue;
+        $value = $this->get_merged_field($key, $value);
+        $this->merge_fields($value);
+      }
+      return $fields;
+    }
+    $default_type = null;
+    foreach($fields as &$value) {
+      list($key, $field) = assoc_element($value);
+      if ($key == 'type') {
+        $default_type = $field;
+        continue;
+      }
+      if (!is_array($field)) continue;
+      if (!is_null($default_type) && !isset($field['type']))
+        $field['type'] = $default_type;
+      $field = $this->get_merged_field($key, $field);
+      $value = array($key=>$this->merge_fields($field));
+    }
+    return $fields;
   }
 
   function set_fields()
@@ -730,7 +757,9 @@ class page
     $this->reply = null;
     $post = at($actions, 'post');
     if (isset($post)) $actions = $post;
+    if (is_null($actions)) return null;
     if (is_assoc($actions))  $actions = array($actions);
+    $this->merge_fields($actions);
 
     log::debug_json("REPLY", $actions);
 
@@ -739,35 +768,34 @@ class page
       'send_email', 'show_dialog', 'sql', 'sql_exec','sql_rows','sql_values',
       'trigger', 'update', 'write_session');
     foreach($actions as $action) {
-      if (!is_array($action)) $action = array("code"=>$action);
-      foreach($action as $method=>$parameter) {
-        if ($method == 'code') {
-          $method = $parameter;
-          $parameter = sizeof($action) == 1? null: $action;
-        }
-        $matches = array();
-        if (preg_match('/^if( +not)? +(\w+) +(\w+)$/', $method, $matches)) {
-          $not = $matches[1] != '';
-          $check = $this->reply[$matches[2]];
-          if (!$check && !$not || $check && $not) continue;
-          $method = $matches[3];
-        }
-
-        if (!in_array($method, $methods)) continue;
-        replace_fields($parameter, $this->reply);
-        if (is_null($parameter))
-          $parameter = array();
-        else if (!is_array($parameter) || is_assoc($parameter))
-          $parameter = array($parameter);
-        $result = call_user_func_array(array($this, $method), $parameter);
-        if ($result === false) return false;
-        if (is_null($result)) continue;
-        if (!is_array($result)) $result = array($result);
-        if (is_null($this->reply))
-          $this->reply = $result;
-        else
-          $this->reply = array_merge($this->reply, $result);
+      if (is_array($action)) {
+        list($method, $parameter) = assoc_element($action);
       }
+      else {
+        $method = $action;
+        $parameter = array();
+      }
+      $matches = array();
+      if (preg_match('/^if( +not)? +(\w+) +(\w+)$/', $method, $matches)) {
+        $not = $matches[1] != '';
+        $check = $this->reply[$matches[2]];
+        if (!$check && !$not || $check && $not) continue;
+        $method = $matches[3];
+      }
+      if (!in_array($method, $methods)) continue;
+      replace_fields($parameter, $this->reply);
+      if (is_null($parameter))
+        $parameter = array();
+      else if (!is_array($parameter) || is_assoc($parameter))
+        $parameter = array($parameter);
+      $result = call_user_func_array(array($this, $method), $parameter);
+      if ($result === false) return false;
+      if (is_null($result)) continue;
+      if (!is_array($result)) $result = array($result);
+      if (is_null($this->reply))
+        $this->reply = $result;
+      else
+        $this->reply = array_merge($this->reply, $result);
     }
     return $this->reply;
   }
@@ -815,6 +843,7 @@ class page
   static function redirect($url)
   {
     if (!is_array($url)) $url = array("url"=>$url);
+    log::debug_json("REDIRECT", $url);
     page::respond('redirect', $url);
   }
 
@@ -956,7 +985,6 @@ class page
     foreach($vars as $var) {
       if (isset($_SESSION[$var]))
         $values[$var] = $_SESSION[$var];
-          log::debug_json("VALUES", $values[$var]);
     }
     return $values;
   }
