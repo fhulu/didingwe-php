@@ -433,8 +433,10 @@
       td.addClass('actions');
       var parent = td;
       var all_actions = this.options.row_actions;
+      var key = tr.attr('key');
       for (var i in all_actions) {
         var action = all_actions[i];
+        action.key = key;
         var id = action.id;
         if (row_actions.indexOf(id) < 0) continue;
         var btn = this.render.create(action);
