@@ -78,7 +78,7 @@ function replace_vars_except($str, $values, $exceptions)
 
 function is_assoc($array)
 {
-  if (is_null($array) || !is_array($array)) return false;
+  if (is_null($array) || !is_array($array) || sizeof($array) == 0) return false;
   return !(bool)count(array_filter(array_keys($array), 'is_int'));
 }
 
