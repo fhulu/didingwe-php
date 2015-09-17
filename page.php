@@ -500,7 +500,7 @@ class page
     $fields = merge_options($this->page_fields, $this->fields);
     $this->validator = new validator(page::merge_options($_SESSION, $options), $fields, $validators);
 
-    $exclude = array('css','post','script','stype','valid');
+    $exclude = array('css','post','script','stype','valid','values');
     $validated = array();
 
     walk_recursive_down($field, function($value, $key, $parent) use (&$exclude, &$validated) {
@@ -669,6 +669,7 @@ class page
   {
     $invoker = $this->context;
     log::debug_json("ACTION ".last($this->path), $invoker);
+    log::debug_json("FIELDS ", $this->fields);
     $validate = at($invoker, 'validate');
     if (!is_null($validate) && $validate != 'none') {
       if (!$this->validate($this->fields)) return null;
