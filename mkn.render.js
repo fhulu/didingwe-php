@@ -329,7 +329,7 @@ mkn.render = function(options)
 
   this.createSubPage = function(field)
   {
-    var tmp = $('<div></div>');
+    var tmp = $('<span></span>');
     field.path = field.url? field.url: field.id;
     field.sub_page = undefined;
     tmp.page(field);
