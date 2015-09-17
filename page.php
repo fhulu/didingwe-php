@@ -249,14 +249,17 @@ class page
       }
 
       if ($key != $code) continue;
-      if (is_assoc($values))
+      if (is_assoc($values)) {
         $own_type = $values['type'];
+        if (is_null($own_type) && !is_null($type))
+          $values = merge_options($type, $values);
+      }
+      else {
+        $values = $type;
+      }
+      $values = $this->get_merged_field($key, $values);
       $this->inherit_parent($parent, $key, $values);
-      $merged = $this->get_merged_field($key, $values);
-
-      if (is_null($own_type) && !is_null($type))
-        return merge_options($merged, $type);
-      return $merged;
+      return $values;
     }
     return null;
   }
