@@ -398,9 +398,12 @@ class validator
 
   function not($predicate)
   {
+    $had_error = $this->has_error;
     $result = $this->is($predicate);
     $this->error = null;
-    return !$result;
+    if ($result) return false;
+    $this->has_error = $had_error;
+    return true;
   }
 
 }
