@@ -503,16 +503,15 @@ class page
     $this->validator = new validator(page::merge_options($_SESSION, $options), $fields, $validators);
 
     $exclude = array('css','post','script','stype','valid','values');
-    if ($include != 'all' && !is_array($include))
+    if ($include != '' &&!is_array($include))
       $include = explode(',', $include);
     $validated = array();
-
-    walk_recursive_down($field, function($value, $key, $parent) use (&$exclude, &$validated, $include) {
+    walk_recursive_down($field, function($value, $key, $parent) use (&$exclude, &$validated, &$include) {
       if (!is_assoc($parent))
         list($code, $value) = assoc_element($value);
       else
         $code = $key;
-      if ($include != 'all' && !in_array($code, $include)) return true;
+      if (is_array($include) && !in_array($code, $include, true)) return;
       if (in_array($code, $validated, true)) return false;
       if (in_array($code, $exclude, true)) return false;
       if (!is_null($value) && !is_array($value)) return false;
@@ -675,7 +674,7 @@ class page
     $invoker = $this->context;
     log::debug_json("ACTION ".last($this->path), $invoker);
     $validate = at($invoker, 'validate');
-    if (!is_null($validate) && $validate != 'none') {
+    if ($validate != 'none') {
       if (!$this->validate($this->fields, $validate)) return null;
     }
 

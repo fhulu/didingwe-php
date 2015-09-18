@@ -279,8 +279,7 @@ input_page:
   pack: inline
   inherit: [desc]
   text: $processing $synopsis $inputs $actions
-  inputs_template:
-    type: labelled_input
+  inputs_template: { type: labelled_input }
   inputs:
     - template: $inputs_template
     - type: input
@@ -448,7 +447,6 @@ span:
 submit:
   type: button
   selector: "#page *"
-  validate: all
   call: $class::$invoker($key)
   action: post
 
