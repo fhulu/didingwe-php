@@ -10,8 +10,9 @@ admin:
   name: Administrator
 
 agree_terms:
-  name: I have read and accepted the terms and conditions.
-  valid: equals(1, Must agree and accept to terms and conditions)
+  question: I have read and accepted the terms and conditions.
+  valid: equals(1)
+  error: Must accept and agree to terms and conditions)
 
 
 audit_trail:
@@ -254,7 +255,7 @@ query:
 
 redirect:
   type: link
-  
+
 register:
   desc: Click here to register
   access: public

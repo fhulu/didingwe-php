@@ -170,7 +170,6 @@ class page
     if (sizeof($this->page_stack) != 0) return;
 
     $this->load_field_stack($this->path[0] . ".yml", $this->page_stack);
-    $this->page_stack[] = $this->request;
     $this->page_fields = $this->merge_stack($this->page_stack);
   }
 
@@ -500,13 +499,12 @@ class page
   {
     $options = merge_options($this->context,$this->request);
     $validators = $this->load_fields('validators.yml');
-    $fields = merge_options($this->page_fields, $this->fields);
+    $fields = merge_options($this->merge_stack(page::$fields_stack), $this->page_fields, $this->fields);
     $this->validator = new validator(page::merge_options($_SESSION, $options), $fields, $validators);
 
     $exclude = array('css','post','script','stype','valid','values');
     if ($include != 'all' && !is_array($include))
       $include = explode(',', $include);
-
     $validated = array();
 
     walk_recursive_down($field, function($value, $key, $parent) use (&$exclude, &$validated, $include) {

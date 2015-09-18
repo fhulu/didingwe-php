@@ -353,6 +353,8 @@ class validator
     if ($this->failed_auto_provided) $func = 'provided';
     $predicate = $this->get_custom($func);
     if (!is_array($predicate)) return;
+    $field = $this->fields[$this->name];
+    if (is_array($field) && $field['error'] != '') $predicate = $field;
     $error = $predicate['error'];
     if (is_string($result)) $error = $result;
     if (is_null($error)) return;
