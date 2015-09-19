@@ -28,9 +28,9 @@ $page->output();
 class page
 {
   static $fields_stack = array();
-  static $post_items = array('audit', 'call', 'clear_values', 'post', 'valid', 'validate');
+  static $post_items = array('audit', 'call', 'clear_session', 'clear_values', 'post', 'valid', 'validate', 'write_session');
   static $query_items = array('read_session', 'read_values', 'sql', 'sql_values');
-  static $atomic_items = array('action', 'css', 'html', 'script', 'style', 'template', 'valid');
+  static $atomic_items = array('action', 'attr', 'css', 'html', 'script', 'sql', 'style', 'template', 'valid');
   static $user_roles = array('public');
   var $request;
   var $object;
@@ -60,6 +60,7 @@ class page
     global $db;
     $this->db = is_null($user_db)?$db: $user_db;
     $this->result = null;
+    $this->non_mergeable = array_merge(page::$post_items,page::$query_items,page::$atomic_items);
 
     if (is_null($request)) $request = $_REQUEST;
     log::debug_json("REQUEST",$request);
@@ -215,7 +216,7 @@ class page
   function merge_type(&$field, &$added = array())
   {
     $type = $field['type'];
-    if (!isset($type)) return $field;
+    if (!isset($type) || $type == 'none') return $field;
     $expanded = $this->expand_type($type, $added);
     if (is_null($expanded))
       throw new Exception("Unknown type $type");
@@ -293,6 +294,7 @@ class page
 
   function get_merged_field($code, &$field=null)
   {
+    if (in_array($code, page::$atomic_items, true)) return $field;
     $field = merge_options($this->expand_type($code), $field);
     return $this->merge_type($field);
   }
@@ -404,29 +406,38 @@ class page
       $this->remove_items($fields, array('access'));
   }
 
-  function merge_fields(&$fields)
+  function merge_fields(&$fields, $merged = array())
   {
-  //  if (is_null($fields)) return $fields;
     if (is_assoc($fields)) {
+      if (isset($fields['type']))
+        $this->merge_type($fields);
       foreach($fields as $key=>&$value) {
-        if (!is_array($value)) continue;
+        if (!is_array($value) || in_array($key, $this->non_mergeable, true)) continue;
         $value = $this->get_merged_field($key, $value);
-        $this->merge_fields($value);
+        if (!in_array($key, $merged, true)) {
+          $merged[] = $key;
+          $this->merge_fields($value, $merged);
+        }
       }
       return $fields;
     }
     $default_type = null;
     foreach($fields as &$value) {
       list($key, $field) = assoc_element($value);
+      if (in_array($key, $this->non_mergeable, true)) continue;
       if ($key == 'type') {
         $default_type = $field;
         continue;
       }
-      if (!is_array($field)) continue;
-      if (!is_null($default_type) && !isset($field['type']))
+      if (!is_array($field) && !is_null($field)) continue;
+      if (is_array($field) && !is_null($default_type) && !isset($field['type']))
         $field['type'] = $default_type;
       $field = $this->get_merged_field($key, $field);
-      $value = array($key=>$this->merge_fields($field));
+      if (is_array($field) && !in_array($key, $merged, true)  ) {
+        $merged[] = $key;
+        $this->merge_fields($field, $merged);
+      }
+      $value = array($key=>$field);
     }
     return $fields;
   }
@@ -500,7 +511,7 @@ class page
     $options = merge_options($this->context,$this->request);
     $validators = $this->load_fields('validators.yml');
     $fields = merge_options($this->merge_stack(page::$fields_stack), $this->page_fields, $this->fields);
-    $this->validator = new validator(page::merge_options($_SESSION, $options), $fields, $validators);
+    $this->validator = new validator(page::merge_options($_SESSION, $this->request), $fields, $validators);
 
     $exclude = array('css','post','script','stype','valid','values');
     if ($include != '' &&!is_array($include))
@@ -674,9 +685,10 @@ class page
     $invoker = $this->context;
     log::debug_json("ACTION ".last($this->path), $invoker);
     $validate = at($invoker, 'validate');
-    if ($validate != 'none') {
-      if (!$this->validate($this->fields, $validate)) return null;
-    }
+    $this->merge_fields($this->fields);
+    log::debug_json("FIELDS", $this->fields);
+    if ($validate != 'none' && !$this->validate($this->fields, $validate))
+      return null;
 
     $result = $this->reply($invoker);
     if (!page::has_errors() && array_key_exists('audit', $invoker))
