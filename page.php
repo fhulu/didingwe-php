@@ -28,10 +28,15 @@ $page->output();
 class page
 {
   static $fields_stack = array();
-  static $post_items = array('audit', 'call', 'clear_session', 'clear_values', 'post', 'valid', 'validate', 'write_session');
+  static $post_items = array('audit', 'call', 'clear_session', 'clear_values', 'post',
+    'send_email', 'valid', 'validate', 'write_session');
   static $query_items = array('read_session', 'read_values', 'sql', 'sql_values');
-  static $atomic_items = array('action', 'attr', 'css', 'html', 'script', 'sql', 'style', 'template', 'valid');
+  static $atomic_items = array('action', 'attr', 'css', 'html', 'script', 'sql',
+    'style', 'template', 'valid');
   static $user_roles = array('public');
+  static $non_mergeable = array('action', 'attr', 'audit', 'call', 'clear_session',
+    'clear_values', 'post', 'read_session', 'show_dialog', 'style', 'trigger', 'valid',
+    'validate', 'write_session');
   var $request;
   var $object;
   var $method;
@@ -60,7 +65,6 @@ class page
     global $db;
     $this->db = is_null($user_db)?$db: $user_db;
     $this->result = null;
-    $this->non_mergeable = array_merge(page::$post_items,page::$query_items,page::$atomic_items);
 
     if (is_null($request)) $request = $_REQUEST;
     log::debug_json("REQUEST",$request);
@@ -294,7 +298,7 @@ class page
 
   function get_merged_field($code, &$field=null)
   {
-    if (in_array($code, page::$atomic_items, true)) return $field;
+    if (page::not_mergeable($code)) return $field;
     $field = merge_options($this->expand_type($code), $field);
     return $this->merge_type($field);
   }
@@ -406,13 +410,18 @@ class page
       $this->remove_items($fields, array('access'));
   }
 
+  static function not_mergeable($key)
+  {
+    return preg_match('/^if /', $key) || in_array($key, page::$non_mergeable, true);
+  }
+
   function merge_fields(&$fields, $merged = array())
   {
     if (is_assoc($fields)) {
       if (isset($fields['type']))
         $this->merge_type($fields);
       foreach($fields as $key=>&$value) {
-        if (!is_array($value) || in_array($key, $this->non_mergeable, true)) continue;
+        if (!is_array($value) || page::not_mergeable($key)) continue;
         $value = $this->get_merged_field($key, $value);
         if (!in_array($key, $merged, true)) {
           $merged[] = $key;
@@ -424,7 +433,7 @@ class page
     $default_type = null;
     foreach($fields as &$value) {
       list($key, $field) = assoc_element($value);
-      if (in_array($key, $this->non_mergeable, true)) continue;
+      if (page::not_mergeable($key)) continue;
       if ($key == 'type') {
         $default_type = $field;
         continue;
@@ -686,7 +695,6 @@ class page
     log::debug_json("ACTION ".last($this->path), $invoker);
     $validate = at($invoker, 'validate');
     $this->merge_fields($this->fields);
-    log::debug_json("FIELDS", $this->fields);
     if ($validate != 'none' && !$this->validate($this->fields, $validate))
       return null;
 
@@ -791,10 +799,13 @@ class page
         $method = $action;
         $parameter = array();
       }
+
+      $values = null_merge($this->request, $this->reply);
+      replace_fields($method, $values);
       $matches = array();
       if (preg_match('/^if( +not)? +(\w+) +(\w+)$/', $method, $matches)) {
         $not = $matches[1] != '';
-        $check = $this->reply[$matches[2]];
+        $check = $matches[2];
         if (!$check && !$not || $check && $not) continue;
         $method = $matches[3];
       }
