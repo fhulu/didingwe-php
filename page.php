@@ -35,8 +35,8 @@ class page
     'style', 'template', 'valid');
   static $user_roles = array('public');
   static $non_mergeable = array('action', 'attr', 'audit', 'call', 'clear_session',
-    'clear_values', 'post', 'read_session', 'show_dialog', 'style', 'trigger', 'valid',
-    'validate', 'write_session');
+    'clear_values', 'load_lineage', 'post', 'read_session', 'show_dialog', 'style',
+    'trigger', 'valid', 'validate', 'write_session');
   var $request;
   var $object;
   var $method;
@@ -446,7 +446,8 @@ class page
         $merged[] = $key;
         $this->merge_fields($field, $merged);
       }
-      $value = array($key=>$field);
+      if (is_array($field))
+        $value = array($key=>$field);
     }
     return $fields;
   }
