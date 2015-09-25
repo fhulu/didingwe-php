@@ -229,7 +229,6 @@ hidden:
 image:
   tag: img
   attr: {src: $src}
-  src: $id.png
   text: ""
 
 info_line:

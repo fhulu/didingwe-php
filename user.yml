@@ -289,7 +289,7 @@ login:
   desc: Fill in your credentials below and click Login to logon
   inputs:
     - email: { valid: [is_registered, is_active, is_unlocked] }
-    - password: { valid: is_password_for(email) }
+    - password: { type: password, valid: is_password_for(email) }
   actions:
     - login
     - forgot_password: { action: dialog }

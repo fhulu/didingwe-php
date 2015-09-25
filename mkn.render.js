@@ -108,7 +108,7 @@ mkn.render = function(options)
         template = item.template;
         var has_type = item.type !== undefined;
         item = mkn.merge(this.types[id], item);
-        if (!has_type && defaults.type) item = mkn.merge(defaults.type, item);
+        if (!has_type && defaults.type) item = mkn.merge(item, defaults.type);
       }
       else if ($.isArray(item)) {
         array = item;
