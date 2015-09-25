@@ -263,7 +263,7 @@
         var id = field.id;
         if (field.hide || field.show === false  || id === 'attr') continue;
           var th = $('<th></th>').appendTo(tr);
-        if (id === 'actions') continue;
+        if (id === 'actions' || id == 'style') continue;
         if ($.isArray(field.name)) field.name = field.name[field.name.length-1];
         th.html(field.name || toTitleCase(id));
         if (self.hasFlag('sortable')) {
@@ -332,11 +332,16 @@
             key = cell;
             tr.attr('key', key);
           }
-          if (field.hide) continue;
+          if (field.hide || field.show !== undefined && !field.show) continue;
 
           var td = $('<td></td>').appendTo(tr);
           if (field.id === 'actions') {
             self.createRowActions(tr, td, cell);
+            continue;
+          }
+
+          if (field.id === 'style') {
+            tr.addClass(cell);
             continue;
           }
 
