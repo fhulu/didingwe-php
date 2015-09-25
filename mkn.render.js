@@ -108,7 +108,10 @@ mkn.render = function(options)
         template = item.template;
         var has_type = item.type !== undefined;
         item = mkn.merge(this.types[id], item);
-        if (!has_type && defaults.type) item = mkn.merge(item, defaults.type);
+        if (!has_type && defaults.type) {
+          delete item.type;
+          item = mkn.merge(item, defaults.type);
+        }
       }
       else if ($.isArray(item)) {
         array = item;
@@ -282,6 +285,7 @@ mkn.render = function(options)
     setStyle(obj, field);
     var values = $.extend({}, this.known, this.types, field);
     var matches = getMatches(field.html, /\$(\w+)/g);
+    var subitem_count = 0;
     for (var i = 0; i< matches.length; ++i) {
       var code = matches[i];
       var value;
@@ -300,7 +304,8 @@ mkn.render = function(options)
       if ($.isArray(value)) {
         if (this.types[code] !== undefined)
           value = $.merge($.merge([], this.types[code]), value);
-        this.createItems(obj, field, code, value);
+        this.expandFields(field, code, value);
+        subitem_count += this.createItems(obj, field, code, value);
         continue;
       }
 
@@ -314,6 +319,7 @@ mkn.render = function(options)
       value.id = code;
       value = this.initField(value, field);
       this.replace(obj, this.create(value), code);
+      ++subitem_count;
     }
     if (obj.attr('id') === '') obj.removeAttr('id');
     if (!templated && (field.hide || field.show === false))
@@ -321,7 +327,7 @@ mkn.render = function(options)
 
     initLinks(obj, field, function() {
       //if (field.value !== undefined) obj.value(field.value)
-      setValues(obj, field);
+      if (subitem_count) setValues(obj, field);
       initEvents(obj, field);
     });
     return obj;
@@ -342,14 +348,14 @@ mkn.render = function(options)
     return tmp;
   }
 
-  this.createItems =  function(parent, parent_field, name, items, defaults)
+  this.createItems = function(parent, parent_field, name, items, defaults)
   {
-    this.expandFields(parent_field, name, items, defaults);
     var loading_data = false;
-    var regex = new RegExp('(\\$'+name+')');
+    var regex = name === undefined? undefined: new RegExp('(\\$'+name+')');
     var new_item_name = '_new_'+name;
     var new_item_html = '<div id="'+new_item_name+'"></div>';
     var wrap;
+    var count = 0;
     for(var i in items) {
       var item = items[i];
       var id = item.id;
@@ -358,7 +364,9 @@ mkn.render = function(options)
         this.loadData(parent, parent_field, name, item.defaults);
         continue;
       }
-      parent.replace(regex,new_item_html+'$1');
+      ++count;
+      if (name !== undefined)
+        parent.replace(regex,new_item_html+'$1');
       var template = item.template;
       var hasTemplate = isTemplate(template);
       var obj = this.create(item, hasTemplate);
@@ -367,7 +375,6 @@ mkn.render = function(options)
         templated = this.createTemplate(template, item);
         this.replace(templated, obj, id, 'field');
       }
-
       if (wrap)
         wrap.append(templated);
       else if (item.wrap) {
@@ -377,11 +384,14 @@ mkn.render = function(options)
         wrap.append(templated);
         delete item.wrap;
       }
-      else
+      else if (name !== undefined)
         parent.find('#'+new_item_name).replaceWith(templated);
+      else
+        parent.append(templated);
     }
     if (!loading_data)
       parent.replace(regex, '');
+    return count;
   }
 
   this.replace = function(parent, child, id, field)
@@ -519,6 +529,7 @@ mkn.render = function(options)
 
   var setDefaults = function(defaults, item, parent)
   {
+    if (mkn.size(item) != 1) return false;
     var names = [ 'type', 'template', 'action', 'attr', 'wrap'];
     var inherit = parent.inherit;
     var set = false;
@@ -528,16 +539,19 @@ mkn.render = function(options)
       if (value === undefined) continue;
       if (value[0] == '$')
         value = parent[value.substring(1)];
+      if (value === undefined) continue;
       if (inherit && inherit.indexOf(value) >=0 )
         value = mkn.merge(parent[value], defaults[name]);
       if (name === 'template' && value === 'none')
         value = '$field';
       else if (name === 'wrap' && $.isPlainObject(value))
         value = $.extend({}, {tag: 'div'}, value);
-      else if (name === 'type' || name === 'template' || name === 'wrap')
+      else if (name === 'type' || name === 'template' || name === 'wrap') {
+        if (value === undefined) { console.log("undefiend value", name, item)}
         value = me.expandType(value);
+      }
       if (name == 'template')
-        value =me.initField(value);
+        value = me.initField(value);
 
       defaults[name] = value;
       set = true;

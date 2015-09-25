@@ -431,23 +431,31 @@
         row_actions.push('slideoff');
 
       td.addClass('actions');
-      var parent = td;
       var all_actions = this.options.row_actions;
       var key = tr.attr('key');
+      var normal_actions = [];
+      var slide_actions = [];
+      var actions = normal_actions;
       for (var i in all_actions) {
-        var action = all_actions[i];
-        action.key = key;
+        var action = mkn.copy(all_actions[i]);
         var id = action.id;
         if (row_actions.indexOf(id) < 0) continue;
-        var btn = this.render.create(action);
-        btn.appendTo(parent);
-        if (id === 'slide')
-          parent = $('<span class="slide">').toggle(false).appendTo(parent);
-        else btn.click(function() {
-          parent.trigger('action',[btn,id,action.action]);
-        });
-      };
-    },
+        action.key = key;
+        actions.push(action);
+        if (id == 'slide')
+          actions = slide_actions;
+      }
+      if (normal_actions.length)
+        this.render.createItems(td, {}, undefined, normal_actions);
+
+      if (!slide_actions.length) return;
+
+      var slider = $('<span class="slide">').toggle(false).appendTo(td);
+      this.render.createItems(slider, {}, undefined, slide_actions);
+      slider.find('[action]').click(function() {
+        td.trigger('action',[$(this),id,action.action]);
+      });
+   },
 
     slide: function(tr)
     {
