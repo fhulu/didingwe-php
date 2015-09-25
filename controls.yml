@@ -75,7 +75,17 @@ datatable:
 
   fields:
     - type: none
+
+  inherit: [actioner,slide,slideoff]
+
+  actioner:
+    tag: span
+    attr: { action: $id}
   #paging
+  paging:
+    - statics
+    - type: actioner
+    - wrap: class
   goto_first:
     name: First
     desc: Go to first page
@@ -90,17 +100,16 @@ datatable:
     desc: Go to last page
 
   # row actions
-  row_action:
-    tag: span
-    attr: { action: $id}
-
-  inherit: [row_action,slide,slideoff]
   row_actions:
-    - type: row_action
+    - type: actioner
     - action: trigger
     - slide
     - slideoff
     - action: post
+
+  footer_actions:
+    - type: actioner
+
 
   collapse:
     name: "-"

@@ -460,7 +460,7 @@
       slider.find('[action]').click(function() {
         td.trigger('action',[$(this),id,action.action]);
       });
-   },
+    },
 
     slide: function(tr)
     {
@@ -626,17 +626,13 @@
 
     showFooterActions: function()
     {
+      this.render.expandFields(this.options, "footer_actions", this.options.footer_actions);
       var actions = this.options.footer_actions;
-      if (actions === undefined) return;
-      var footer = $('<tfoot></tfoot>').appendTo(this.element);
-      var tr = $('<tr></tr>').addClass('actions').appendTo(footer);
+      if (!actions.length) return;
+      var footer = $('<tfoot>').appendTo(this.element);
+      var tr = $('<tr>').addClass('actions').appendTo(footer);
       var td = $('<td>').appendTo(tr);
-      this.render.expandFields(actions);
-      for (var i in actions) {
-        var action = actions[i];
-        if (!action.hide)
-          this.createAction(action, undefined, tr, 'footer_actions').appendTo(td);
-      }
+      this.render.createItems(td, this.options, undefined, actions);
       this.spanColumns(td);
     }
 
