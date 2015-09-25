@@ -68,7 +68,6 @@ datatable:
   post:
     - call: datatable::read(context,$key)
   position: top
-  filter: all
   filter:
     name: ""
     desc: Filter by specific columns
