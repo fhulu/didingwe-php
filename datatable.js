@@ -311,7 +311,7 @@
     {
       var self = this;
       var body = self.body().empty();
-      var expandable = this.options.expand.action !== undefined;
+      var expandable = this.options.expand.pages.length > 0;
       var fields = this.options.fields;
       var tr;
       for(var i in data.rows) {
@@ -383,8 +383,8 @@
       var self = this.element;
       obj.click(function() {
         var action = props.id;
-        sink.trigger('action',[obj,action,props.action]);
-        sink.trigger(action, [obj,props.action]);
+        sink.trigger('action',[obj,action,props]);
+        sink.trigger(action, [obj,props]);
         if (props.action === undefined) return;
         var key = sink.attr('key');
         if (key === undefined) key = self.options.key;
@@ -475,22 +475,21 @@
         $(e.target).toggle();
         self.slide(tr);
       });
-      tr.on('expand', function(event, button, action) {
-        console.log(action)
-        if (!action || !action.pages) return;
-        button.hide();
+      tr.on('expand', function(e, btn, item) {
+        if (!item.pages) return;
+        btn.hide();
         tr.find('[action=collapse]').show();
         var expanded = $('<tr class=expanded></tr>');
         var td = $('<td></td>')
                 .attr('colspan', tr.children('td').length)
                 .prependTo(expanded);
         expanded.insertAfter(tr);
-        $.each(action.pages, function(i, path) {
+        $.each(item.pages, function(i, path) {
           var tmp = $('<div></div>');
           tmp.page({path: path, key: key});
           path = path.replace(/\//, '_');
-          tmp.on('read_'+path, function(event, object) {
-            td.append(object);
+          tmp.on('read_'+path, function(e, obj) {
+            td.append(obj);
           });
         });
       });

@@ -116,6 +116,7 @@ datatable:
   expand:
     name: +
     desc: More details ...
+    pages: []
 
   slide:
     event: slide
