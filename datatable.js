@@ -192,19 +192,19 @@
       });
 
       var page = head.find('#page_num');
-      this.element.on('goto_first', function(e) {
-        self.pageTo($(e.target), 1);
+      this.element.on('goto_first', function(e, btn) {
+        self.pageTo(btn, 1);
       })
-      .on('goto_prev', function(e) {
-        self.page($(e.target), -1);
+      .on('goto_prev', function(e, btn) {
+        self.page(btn, -1);
       })
-      .on('goto_next', function(e) {
-        self.page($(e.target), 1);
+      .on('goto_next', function(e, btn) {
+        self.page(btn, 1);
       })
-      .on('goto_last', function(e) {
+      .on('goto_last', function(e, btn) {
         var size = parseInt(head.find('#page_size').val());
         var total = parseInt(head.find('#page_total').html());
-        self.pageTo($(e.target), Math.floor(total/size)+1);
+        self.pageTo(btn, Math.floor(total/size)+1);
       })
     },
 
@@ -380,7 +380,7 @@
     bindAction: function(obj, props, sink, path)
     {
       if (sink === undefined) sink = this.element;
-      var self = this;
+      var self = this.element;
       obj.click(function() {
         var action = props.id;
         sink.trigger('action',[obj,action,props.action]);
