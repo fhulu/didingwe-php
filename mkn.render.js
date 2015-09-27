@@ -106,8 +106,12 @@ mkn.render = function(options)
         promoteAttr(item);
         if (defaults.attr) item.attr = mkn.merge(item.attr,defaults.attr);
         template = item.template;
-        if (item.type === undefined && defaults.type) item = mkn.merge(defaults.type, item);
-        item = mkn.merge(this.types[id], item);
+        var base = mkn.copy(this.types[id]);
+        if (!item.type && defaults.type) {
+          item = mkn.merge(defaults.type, item);
+          delete base.type;
+        }
+        item = mkn.merge(base, item);
       }
       else if ($.isArray(item)) {
         array = item;
