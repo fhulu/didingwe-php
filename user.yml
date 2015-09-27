@@ -285,7 +285,6 @@ login:
   access: public
   type: input_page
   width: 500
-  validate: all
   desc: Fill in your credentials below and click Login to logon
   inputs:
     - email: { valid: [is_registered, is_active, is_unlocked] }
