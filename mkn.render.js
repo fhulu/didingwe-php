@@ -106,12 +106,8 @@ mkn.render = function(options)
         promoteAttr(item);
         if (defaults.attr) item.attr = mkn.merge(item.attr,defaults.attr);
         template = item.template;
-        var has_type = item.type !== undefined;
+        if (item.type === undefined && defaults.type) item = mkn.merge(defaults.type, item);
         item = mkn.merge(this.types[id], item);
-        if (!has_type && defaults.type) {
-          delete item.type;
-          item = mkn.merge(item, defaults.type);
-        }
       }
       else if ($.isArray(item)) {
         array = item;
@@ -421,6 +417,7 @@ mkn.render = function(options)
       if (object.find('[loaded]').exists()) {
         object.find('[loaded]').replaceWith('$'+name);
       }
+      me.expandFields(field, name, result, defaults)
       me.createItems(object, field, name, result, defaults);
       if (me.loading === 0)
         me.parent.trigger('loaded', result);
