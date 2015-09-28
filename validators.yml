@@ -7,6 +7,8 @@ after_period:
 
 alphabetic: must_be([a-zA-Z]+,alphabetic)
 
+alphaspace: must_be([a-zA-Z ]+,alphaspace)
+
 at_least:
   valid: /^.{$1,}$/
   2: characters
