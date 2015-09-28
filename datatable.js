@@ -91,7 +91,7 @@
         $.extend(data, $(selector).values());
       }
       data.action = 'data';
-      $.json('/', {data: data}, function(data) {
+      $.json('/', {data: mkn.plainValues(data)}, function(data) {
         if (!data) return;
         if (data._responses)
           self.element.trigger('server_response', data);

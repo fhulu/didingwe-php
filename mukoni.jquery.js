@@ -623,18 +623,6 @@ function darken( hexColor, factor ) {
  }
 
 
-function get_top(options)
-{
-  var result = {}
-  for (var key in options) {
-    var val = options[key];
-    if ($.isPlainObject(val) || $.isArray(val)) continue;
-    result[key] = val;
-  };
-  return result;
-}
-
-
 $.fn.valueFromCurrency = function()
 {
   return this.value().replace(/\D/g,'');

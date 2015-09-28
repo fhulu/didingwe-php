@@ -126,7 +126,7 @@ var mkn = new function() {
     return $.extend(true, {}, src);
   }
 
-  this.size = function(obj) 
+  this.size = function(obj)
   {
       var size = 0, key;
       for (key in obj) {
@@ -134,5 +134,18 @@ var mkn = new function() {
       }
       return size;
   };
+
+  this.plainValues = function(options)
+  {
+    var result = {}
+    for (var key in options) {
+      var val = options[key];
+      if ($.isPlainObject(val) || $.isArray(val)) continue;
+      result[key] = val;
+    };
+    return result;
+  }
+
+
 
 }

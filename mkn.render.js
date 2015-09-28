@@ -622,9 +622,10 @@ mkn.render = function(options)
     var url = field.url;
     if (url === undefined && field.query) {
       url = '/?action=action';
-      var exclude = ['action','query', 'id', 'page_id', 'name','desc', 'tag','type','html','text','user_full_name']
+      var exclude = ['action', 'desc', 'html', 'id', 'name', 'page_id', 'query', 'tag', 'text', 'type', 'template']
       for (var key in field) {
-        if (exclude.indexOf(key) === 0) continue;
+        var val = field[key];
+        if ($.isPlainObject(val) || $.isArray(val) || exclude.indexOf(key) >= 0) continue;
         url += '&'+key+'='+encodeURIComponent(field[key]);
       }
     }
