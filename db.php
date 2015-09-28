@@ -336,5 +336,3 @@ class db
 
 $db = null;
 if (!isset($daemon_mode)) db::init_default();
-
-?>

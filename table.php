@@ -688,4 +688,3 @@ HEREDOC;
    echo json_encode($result);
   }
 }
-?>

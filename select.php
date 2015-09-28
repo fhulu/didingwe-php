@@ -82,4 +82,3 @@ class select
     echo $db->json($sql);
   }
 }
-?>

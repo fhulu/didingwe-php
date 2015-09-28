@@ -339,4 +339,3 @@ class db_record
   }
 }
 
-?>

@@ -3,10 +3,7 @@ require_once('session.php');
 
 require_once('db.php');
 require_once('config.php');
-require_once('table.php');
-require_once('select.php');
 require_once('validator.php');
-require_once('select.php');
 require_once('curl.php');
 
 class user_exception extends Exception {};

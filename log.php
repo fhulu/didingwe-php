@@ -69,7 +69,7 @@ class log
   static function stack($exception)
   {
     $index = 0;
-    $stack = array_reverse($exception->getTrace()); 
+    $stack = array_reverse($exception->getTrace());
     foreach($stack as $trace) {
       log::error("TRACE $index. ".$trace['file']." line ".$trace['line']." function ".$trace['class'] ."::".$trace['function'] ."(".json_encode($trace['args']).')');
       ++$index;
@@ -87,4 +87,3 @@ class log
   static function debug($message) { log::log(self::DEBUG, $message); }
   static function trace($message) { log::log(self::TRACE, $message); }
 }
-?>

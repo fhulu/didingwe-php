@@ -60,4 +60,4 @@ function WordWrap(&$text, $maxwidth)
     return $count;
 }
 }
-?>
+

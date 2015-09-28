@@ -6,8 +6,8 @@
  * and open the template in the editor.
  */
 
-require_once '../common/page.php';
-require_once('pdf/fpdf.php');
+require_once 'page.php';
+require_once 'pdf/fpdf.php';
 
 class datatable
 {
@@ -48,15 +48,15 @@ PATTERN;
     return null;
   }
 
-  static function get_field_index($options, $code)
+  static function get_field_index($fields, $code)
   {
     $index = -1;
-    foreach($options['fields'] as $field) {
+    foreach($fields as $field) {
       ++$index;
-      $field = page::collapse($field);
+      list($id, $values) = assoc_element($field);
       log::debug_json($index, $field);
       if ($field['hide']) continue;
-      if ($field['id'] == $code ) return $index;
+      if ($id == $code ) return $index;
     }
     throw new Exception("No such sort field $code");
   }
@@ -66,7 +66,7 @@ PATTERN;
     $sort_field = at($options, 'sort');
     if (is_null($sort_field))
       return;
-    $index = datatable::get_field_index($options, $sort_field);
+    $index = datatable::get_field_index($options['fields'], $sort_field);
     $db_sort_field = at($fields, $index);
     $sort_order = at($options, 'sort_order');
     if (is_array($sort_order)) $sort_order = last($sort_order);
@@ -122,8 +122,8 @@ PATTERN;
 
   static function get_display_field($code)
   {
-    $field = page::collapse($code);
-    if ($field['hide'] || in_array($field['id'], array('attr','actions'), true)) return false;
+    list($id) = assoc_element($field);
+    if ($field['hide'] || in_array($id, array('style','actions'), true)) return false;
     return $field;
   }
 
@@ -131,12 +131,13 @@ PATTERN;
   {
       $name = at($field,'name');
       if (!is_null($name)) return $name;
-      return ucwords(preg_replace('/[_\/]/', ' ',at($field,'id')));
+      list($id) = assoc_element($field);
+      return ucwords(preg_replace('/[_\/]/', ' ',$id));
   }
 
   static function export($options, $key) {
     ini_set('memory_limit', '512M');
-    require_once '../PHPExcel/Classes/PHPExcel.php';
+    require_once 'PHPExcel/Classes/PHPExcel.php';
 
     $excel = new PHPExcel();
     $sheet = $excel->setActiveSheetIndex(0);
@@ -176,6 +177,7 @@ PATTERN;
       ->setDescription($heading)
       ->setKeywords($heading)
       ->setCategory($heading);
+
     // Redirect output to a client’s web browser (Excel5)
     header('Content-Type: application/vnd.ms-excel');
     header("Content-Disposition: attachment;filename=\"$heading.xls\"");
@@ -183,6 +185,8 @@ PATTERN;
 
     $objWriter = PHPExcel_IOFactory::createWriter($excel, 'Excel5');
     $objWriter->save('php://output');
+    
+    return false;
   }
 
   static function pdf($options, $key)

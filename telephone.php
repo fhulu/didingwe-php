@@ -193,4 +193,3 @@ class telephone extends db_record
   }
 }
 
-?>

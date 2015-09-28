@@ -117,7 +117,8 @@ class page
 
   function output()
   {
-    echo json_encode($this->result);
+    if ($this->result !== false)
+      echo json_encode($this->result);
   }
 
 
@@ -800,7 +801,7 @@ class page
         $method = $action;
         $parameter = array();
       }
-
+      log::debug_json("reply action $method", $actions);
       $values = null_merge($this->request, $this->reply);
       replace_fields($method, $values);
       $matches = array();
@@ -811,6 +812,7 @@ class page
         $method = $matches[3];
       }
       if (!in_array($method, $methods)) continue;
+      log::debug_json("reply action preg $method", $parameter);
       replace_fields($parameter, $this->reply);
       if (is_null($parameter))
         $parameter = array();
