@@ -117,7 +117,7 @@ must_be:
 name:
   valid:
     - at_least(2,characters)
-    - /^[\w\d']{2}[\w\d\s'-]*$/
+    - /^[\w\d'][\w\d\s'-]*$/
     - /^((?!'').)*$/
 
 national_tel:
