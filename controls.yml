@@ -66,7 +66,7 @@ datatable:
     # - editall
     #
   post:
-    - call: datatable::read(context,$key)
+    call: datatable::read(context,$key)
   position: top
   filter:
     name: ""
@@ -184,7 +184,8 @@ export:
   desc: Export to an Excel spreadsheet
   action: redirect
   validate: none
-  call: datatable::export(context,$key)
+  post:
+    call: datatable::export(context,$key)
   query: " "
   target: _blank
 
@@ -409,7 +410,8 @@ print:
   desc: Print above contents
   action: redirect
   validate: none
-  call: datatable::pdf(context,$key)
+  post:
+    - call: datatable::pdf(context,$key)
   query: " "
   target: _blank
 
