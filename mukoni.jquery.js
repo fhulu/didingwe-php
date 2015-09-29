@@ -80,7 +80,10 @@ $.fn.values = function()
     var ctrl = $(this);
     var name = ctrl.hasAttr('name')? ctrl.attr('name'): ctrl.attr('id');
     if (name === undefined) return true;
-    data[name] = ctrl.value();
+    if (ctrl.attr('type') !== 'radio')
+      data[name] = ctrl.value();
+    else if (ctrl.is(':checked'))
+      data[name] = ctrl.attr('value');
   });
   return data;
 }
