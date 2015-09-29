@@ -12,7 +12,7 @@ admin:
 agree_terms:
   question: I have read and accepted the terms and conditions.
   valid: equals(1)
-  error: Must accept and agree to terms and conditions)
+  error: Must accept and agree to terms and conditions.
 
 
 audit_trail:
