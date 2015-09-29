@@ -1,4 +1,4 @@
-<?php
+<?php session_start();
   require_once '../common/log.php';
   log::init('index', log::DEBUG);
   require_once('../common/utils.php');
@@ -13,7 +13,6 @@
   global  $session;
   $tag = is_null($session)?time(): $session->id;
 ?>
-
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 

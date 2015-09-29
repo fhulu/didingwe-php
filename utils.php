@@ -1,4 +1,4 @@
-  <?php
+<?php
 
 function at($array, $index)
 {

@@ -30,4 +30,4 @@ class image {
     rename($new_path, $path);
   }
 }
-?>
+

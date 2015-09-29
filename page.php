@@ -1,6 +1,4 @@
 <?php
-session_start();
-
 require_once 'validator.php';
 require_once 'db.php';
 require_once 'utils.php';
