@@ -1076,4 +1076,12 @@ class page
     }
   }
 
+  static function is_displayable($field)
+  {
+    if (!is_array($field)) return true;
+    if (isset($field['hide']) && $field['hide']) return false;
+    if (isset($field['show']) && !$field['show']) return false;
+    return true;
+  }
+
 }

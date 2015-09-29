@@ -52,10 +52,11 @@ PATTERN;
   {
     $index = -1;
     foreach($fields as $field) {
-      ++$index;
+
       list($id, $values) = assoc_element($field);
-      log::debug_json($index, $field);
-      if ($field['hide']) continue;
+      if (in_array($id, array('type','template'))) continue;
+      ++$index;
+      if (is_array($field) && $field['hide']) continue;
       if ($id == $code ) return $index;
     }
     throw new Exception("No such sort field $code");
@@ -99,7 +100,6 @@ PATTERN;
 
   static function read($options, $key, $callback=null)
   {
-    log::debug("KEY $key");
     $page_size = at($options, 'page_size');
     if (is_null($page_size))
       $page_size = 0;
@@ -120,18 +120,22 @@ PATTERN;
     return array('rows' => $rows, 'total' => $total);
   }
 
-  static function get_display_field($code)
+  static function is_display($field)
+  {
+    return page::is_displayable($field) && !in_array($field, array('style','actions'), true);
+  }
+
+  static function is_data($field)
   {
     list($id) = assoc_element($field);
-    if ($field['hide'] || in_array($id, array('style','actions'), true)) return false;
-    return $field;
+    return !in_array($id, array('type', 'template'));
   }
 
   static function get_display_name($field)
   {
-      $name = at($field,'name');
+      list($id, $field) = assoc_element($field);
+      $name = $field['name'];
       if (!is_null($name)) return $name;
-      list($id) = assoc_element($field);
       return ucwords(preg_replace('/[_\/]/', ' ',$id));
   }
 
@@ -143,25 +147,29 @@ PATTERN;
     $sheet = $excel->setActiveSheetIndex(0);
     $options['page_size'] = 0;
     $fields = $options['fields'];
-    $data = datatable::read($options, $key, function($row_data, $pagenum, $index) use ($sheet, $fields) {
+    $data = datatable::read($options, $key, function($row_data, $pagenum, $index) use (&$sheet, &$fields) {
       $row = 2 + $pagenum * 1000 + $index;
       $col = 'A';
-      $col_index = 0;
-      foreach ($row_data as $cell) {
-        if (!datatable::get_display_field($fields[$col_index++])) continue;
+      $data_idx = -1;
+      foreach($fields as $field) {
+        if (!datatable::is_data($field)) continue;
+        ++$data_idx;
+        if (!datatable::is_display($field)) continue;
+        $cell = $row_data[$data_idx];
         $sheet->getStyle("$col")->getAlignment()->setWrapText(true);
         $sheet->setCellValue("$col$row", $cell);
         $sheet->getColumnDimension($col)->setAutoSize(true);
         $sheet->getRowDimension($row)->setRowHeight(20);
         ++$col;
       }
+
       $sheet->setCellValue("$col$row", ''); // take care of PHPExcel bug which fails to remove the last column
       return true;
     });
     $col = 'A';
-    foreach ($fields as $code) {
+    foreach ($fields as $field) {
+      if (!datatable::is_data($field) || !datatable::is_display($field)) continue;
       $ref = $col . "1";
-      if (!($field = datatable::get_display_field($code))) continue;
       $sheet->getStyle($ref)->getFont()->setBold(true);
       $name = datatable::get_display_name($field);
       $sheet->setCellValue($ref, $name);
@@ -185,7 +193,7 @@ PATTERN;
 
     $objWriter = PHPExcel_IOFactory::createWriter($excel, 'Excel5');
     $objWriter->save('php://output');
-    
+
     return false;
   }
 
@@ -214,9 +222,13 @@ PATTERN;
       $fill_color = $index % 2 === 0? '225,225,225': '255,255,255';
       $col = array();
       $index = 0;
-      $col_index = 0;
-      foreach ($row_data as $value) {
-        if (!($field = datatable::get_display_field($fields[$col_index++]))) continue;
+      $data_idx = -1;
+      foreach($fields as $field) {
+        if (!datatable::is_data($field)) continue;
+        ++$data_idx;
+        if (!datatable::is_display($field)) continue;
+        $value = $row_data[$data_idx];
+        list($id, $field) = assoc_element($field);
         $width = max(5,$page_width*(float)$field['width']/100);
         $col[] = array('text' => $value, 'width' =>  $width, 'height' => '5', 'align' => 'L', 'font_name' => 'Arial', 'font_size' => '7', 'font_style' => '', 'fillcolor' => "$fill_color", 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linewidth' => '0.1', 'linearea' => 'LTBR');
       }
@@ -226,10 +238,11 @@ PATTERN;
     $titles = &$columns[1];
     $index = 0;
     $total_width = 0;
-    foreach ($fields as $code) {
-      if (!($field = datatable::get_display_field($code))) continue;
-      $width = max(5,$page_width*(float)$field['width']/100);
+    foreach ($fields as $field) {
+      if (!datatable::is_data($field) || !datatable::is_display($field)) continue;
       $name = datatable::get_display_name($field);
+      list($id, $field) = assoc_element($field);
+      $width = max(5,$page_width*(float)$field['width']/100);
         $titles[] = array('text' => $name, 'width' => $width, 'height' => '5', 'align' => 'L', 'font_name' => 'Arial', 'font_size' => '8', 'font_style' => 'B', 'fillcolor' => '128,128,128', 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linewidth' => '0.1', 'linearea' => 'LTBR');
     }
 
