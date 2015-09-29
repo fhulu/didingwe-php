@@ -142,6 +142,11 @@ mkn.render = function(options)
       last_pos++;
       removed.pop();
     }
+
+    for (var i in removed) {
+      items.splice(removed[i]-i,1);
+    }
+
     for (var i in pushed) {
       var item = pushed[i];
       var push = item.push;
@@ -153,15 +158,11 @@ mkn.render = function(options)
         if (pos === last_pos) continue;
       }
       var new_pos = mkn.indexOfKey(items, 'id', item.push);
-      items.splice(new_pos, 0, item);
-      if (new_pos < pos) ++pos;
+      item = mkn.copy(item);
       items.splice(pos, 1);
+      items.splice(new_pos, 0, item);
     }
 
-    var offset = 0;
-    for (var i in removed) {
-      items.splice(removed[i]-i,1);
-    }
   }
 
   var isTemplate = function(t)
