@@ -28,7 +28,7 @@ class page
   static $fields_stack = array();
   static $post_items = array('audit', 'call', 'clear_session', 'clear_values', 'post',
     'send_email', 'valid', 'validate', 'write_session');
-  static $query_items = array('read_session', 'read_values', 'sql', 'sql_values');
+  static $query_items = array('call', 'read_session', 'read_values', 'sql', 'sql_values');
   static $atomic_items = array('action', 'attr', 'css', 'html', 'script', 'sql',
     'style', 'template', 'valid');
   static $user_roles = array('public');
@@ -48,9 +48,10 @@ class page
   var $result;
   var $user;
   var $page_offset;
-  var $reply;
+  var $answer;
   var $db;
   var $validated;
+  var $aborted;
 
   var $rendering;
   var $page_stack;
@@ -77,6 +78,8 @@ class page
     $this->validated = array();
     $this->rendering = $this->method == 'read';
     $this->context = array();
+    $this->aborted = false;
+    $this->answer = null;
   }
 
   function process()
@@ -360,7 +363,7 @@ class page
     walk_recursive_down($fields, function($value, $key, &$parent) {
       if (!is_assoc($parent))
         list($type, $value) = assoc_element($value);
-      else if ($this->rendering && in_array($key, page::$post_items, true)) {
+      else if ($this->rendering && !$this->is_render_item($key)) {
         unset($parent[$key]);
         return;
       }
@@ -414,6 +417,13 @@ class page
     return preg_match('/^if /', $key) || in_array($key, page::$non_mergeable, true);
   }
 
+  static function is_render_item($key)
+  {
+    return !preg_match('/^if /', $key)
+      && !in_array($key, page::$post_items, true)
+      && !in_array($key, page::$query_items, true);
+  }
+
   function merge_fields(&$fields, $merged = array())
   {
     if (is_assoc($fields)) {
@@ -459,17 +469,17 @@ class page
     $this->expand_types($this->fields);
   }
 
-  function remove_items(&$fields, $keys=null)
+  function remove_items(&$fields, $keys=array())
   {
-    if (is_null($keys)) {
-      if (!$this->rendering) return;
-      $keys = array_merge(page::$post_items,page::$query_items);
-    }
     walk_recursive_down($fields, function(&$value, $key, &$parent) use($keys) {
-      if (!in_array($key, $keys, true)) return;
-      unset($parent[$key]);
-      if ($this->rendering && in_array($key, page::$query_items, true))
-        $parent['query'] = " ";
+      if ($this->rendering) {
+        if (!$this->is_render_item($key))
+          unset($parent[$key]);
+        if (in_array($key, page::$query_items, true))
+          $parent['query'] = " ";
+      }
+      if (in_array($key, $keys, true))
+        unset($parent[$key]);
     });
 
   }
@@ -589,7 +599,7 @@ class page
       return call_user_func($function);
 
     $params = explode(',', $params);
-    $context = merge_options($this->fields, $this->context, $_SESSION, $this->request, $this->reply);
+    $context = merge_options($this->fields, $this->context, $_SESSION, $this->request, $this->answer);
     replace_fields($context, $this->request);
     replace_fields($params, $this->request);
     replace_fields($params, $context);
@@ -728,7 +738,7 @@ class page
 
   function translate_sql($sql)
   {
-    $values = null_merge($this->request, $this->reply, false);
+    $values = null_merge($this->request, $this->answer, false);
     return page::replace_sql($sql, null_merge($this->context, $values));
   }
 
@@ -776,22 +786,32 @@ class page
     return $this->call_method($matches[1], $matches[2]);
   }
 
+  function reply_if($method, $args)
+  {
+    $matches = array();
+    if (!preg_match('/^if\s+(.+)\s*$/', $method, $matches)) return false;
+    if (sizeof($args) < 1) throw new Exception("Invalid number of parameters for 'if'");
+    $condition = $matches[1];
+    if ($condition[0] == '!') $condition = !$condition;
+    if ($condition) $this->reply($args);
+    return true;
+  }
+
   function reply($actions)
   {
-    $this->reply = null;
     $post = at($actions, 'post');
     if (isset($post)) $actions = $post;
     if (is_null($actions)) return null;
     if (is_assoc($actions))  $actions = array($actions);
     $this->merge_fields($actions);
 
-    log::debug_json("REPLY", $actions);
 
     $methods = array('alert', 'abort', 'call', 'clear_session', 'clear_values',
       'close_dialog', 'load_lineage', 'read_session', 'read_values', 'redirect',
       'send_email', 'show_dialog', 'sql', 'sql_exec','sql_rows','sql_values',
       'trigger', 'update', 'write_session');
     foreach($actions as $action) {
+      if ($this->aborted) return false;
       if (is_array($action)) {
         list($method, $parameter) = assoc_element($action);
       }
@@ -799,33 +819,29 @@ class page
         $method = $action;
         $parameter = array();
       }
-      log::debug_json("reply action $method", $actions);
-      $values = null_merge($this->request, $this->reply);
-      replace_fields($method, $values);
-      $matches = array();
-      if (preg_match('/^if( +not)? +(\w+) +(\w+)$/', $method, $matches)) {
-        $not = $matches[1] != '';
-        $check = $matches[2];
-        if (!$check && !$not || $check && $not) continue;
-        $method = $matches[3];
-      }
-      if (!in_array($method, $methods)) continue;
-      log::debug_json("reply action preg $method", $parameter);
-      replace_fields($parameter, $this->reply);
       if (is_null($parameter))
         $parameter = array();
       else if (!is_array($parameter) || is_assoc($parameter))
         $parameter = array($parameter);
+      $values = null_merge($this->request, $this->answer);
+      replace_fields($parameter, $values);
+      replace_fields($method, $values);
+      log::debug_json("REPLY ACTION $method", $parameter);
+      if ($this->reply_if($method, $parameter)) continue;
+      if (!in_array($method, $methods)) continue;
       $result = call_user_func_array(array($this, $method), $parameter);
-      if ($result === false) return false;
+      if ($result === false) {
+        $this->aborted = true;
+        return false;
+      };
       if (is_null($result)) continue;
       if (!is_array($result)) $result = array($result);
-      if (is_null($this->reply))
-        $this->reply = $result;
+      if (is_null($this->answer))
+        $this->answer = $result;
       else
-        $this->reply = array_merge($this->reply, $result);
+        $this->answer = array_merge($this->answer, $result);
     }
-    return $this->reply;
+    return $this->answer;
   }
 
   function values()
@@ -947,7 +963,7 @@ class page
 
   function send_email($options)
   {
-    $options = page::merge_options($options, $this->reply);
+    $options = page::merge_options($options, $this->answer);
     $this->update_context($options);
     $options = page::merge_options($this->fields['send_email'], $options);
     $options = page::merge_options($this->get_expanded_field('send_email'), $options);
@@ -988,7 +1004,6 @@ class page
   {
     $vars = func_get_args();
     if (sizeof($vars) == 1 && is_string($vars[0])) $vars = explode (',', $vars[0]);
-    log::debug_json("WRITE SESSION VARS", $vars);
 
     foreach($vars as $var) {
       if ($var == 'request' && !isset($this->request['request']))
@@ -997,8 +1012,8 @@ class page
         list($var,$value) = assoc_element($var);
         $_SESSION[$var] = $value;
       }
-      else if (isset($this->reply[$var]))
-        $_SESSION[$var] = $this->reply[$var];
+      else if (isset($this->answer[$var]))
+        $_SESSION[$var] = $this->answer[$var];
       else if   (isset($this->request[$var]))
         $_SESSION[$var] = $this->request[$var];
     }
@@ -1038,7 +1053,7 @@ class page
   function load_lineage($key_name, $table, $name, $parent_name)
   {
     global $db;
-    $keys = $this->reply[$key_name];
+    $keys = $this->answer[$key_name];
     if (!is_array($keys)) $keys = explode(',', $keys);
     $loaded_values = array();
     foreach ($keys as $value) {
@@ -1054,12 +1069,12 @@ class page
   {
     $args = func_get_args();
     if (sizeof($args) == 0) {
-      $this->reply = null;
+      $this->answer = null;
       return;
     }
     foreach($args as $arg)
     {
-      unset($this->reply[$arg]);
+      unset($this->answer[$arg]);
     }
   }
 
