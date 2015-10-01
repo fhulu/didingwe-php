@@ -228,6 +228,13 @@ h3:
   type: heading
   tag: h3
 
+half_width:
+  type: template
+  style:
+    display: inline-block
+    width: 48%
+    margin-left: 1%
+
 heading:
   tag: h1
   name: $id
@@ -450,6 +457,14 @@ radiogroup:
 
 section_heading:
   classes: p
+  style:
+    text-align: center
+    font-size: 13pt
+    font-weight: 100
+    border-bottom: 1px solid grey
+    width: 100%
+    margin-top: 8px
+    margin-bottom: 0px
 
 span:
   tag: span
