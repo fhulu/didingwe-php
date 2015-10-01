@@ -166,7 +166,6 @@
       });
 
       this.element.on('processed', function(event, result) {
-        console.log('processed', self.stack.length, self.next_step, result);
         if (result || !self.stack.length || !self.next_step) return;
         self.jumpTo(self.next_step);
       });

@@ -12,12 +12,14 @@
     _create: function()
     {
       var self = this;
+      this.markers = {};
+      this.hints = {};
       this.element.on('customValue', function(event, value) {
         self.val(value);
       });
       if (this.options.center)
         this.location(this.options.center[0], this.options.center[1]);
-      
+
       if (this.options.load) {
         var data = { action: 'data', path: this.options.path + '/load' };
         $.json('/', {data: data}, function(data) {
@@ -26,12 +28,12 @@
       }
       this.show();
     },
-    
+
     _setOption: function( key, value ) {
-      if (key === 'value') 
+      if (key === 'value')
         this.val(value);
     },
-      
+
     addPoints: function(data)
     {
       var colors = this.options.colors;
@@ -40,25 +42,29 @@
       var map = this.map;
       var icon_path = this.options.icon_path;
       data.forEach(function(value) {
-        var position = new google.maps.LatLng(parseFloat(value[0]), parseFloat(value[1]));
-        var color = value[2];
+        var position = new google.maps.LatLng(parseFloat(value[1]), parseFloat(value[2]));
+        var color = value[3];
         var icon = icon_path+colors[color]+'-dot.png';
+
+        var id = value[0];
         var marker = new google.maps.Marker({
           position: position,
           map: self.map,
-          icon: icon
+          icon: icon,
+          id: id
         });
+        self.markers[id] = marker;
+        if (value.length < 4) return;
+        self.hints[id] =  new google.maps.InfoWindow({content: value[4]});
         google.maps.event.addDomListener(marker, 'mouseover', function() {
-          hint = new google.maps.InfoWindow({content: value[3]});
-          hint.open(self.map, marker);
+          self.hints[marker.id].open(self.map, marker);
         });
         google.maps.event.addDomListener(marker, 'mouseout', function() {
-          if (hint !== null)
-            hint.close();
+          self.hints[marker.id].close();
         });
       });
     },
-    
+
     show: function()
     {
       this.options.zoom = parseInt(this.options.zoom);
@@ -68,33 +74,52 @@
         mapTypeId: google.maps.MapTypeId.ROADMAP
       };
       this.map = new google.maps.Map(document.getElementById(this.element.attr('id')), props);
-      this.map.setZoom(this.options.zoom);
-      this.marker(google.maps.Animation.DROP);
+      this.zoom(this.options.zoom);
     },
+
     location: function(latitude, longitude, show)
     {
       this.position = new google.maps.LatLng(latitude, longitude);
       if (show === undefined || show === true)
         this.show();
     },
+
     val: function(value)
     {
       if (value === undefined) {
         return join([this.position.lat(), this.position.lng()]);
       }
-      var position = value.split(',');
+      var position = $.isArray(value)? value: value.split(',');
       this.location(position[0], position[1]);
       return this;
     },
-    marker: function(value)
+
+    toggleBounce: function(id, on, animation)
     {
-      if (value === undefined)
-        return this.marker;
-        this.options.marker = new google.maps.Marker({
-        map: this.map,
-        position: this.position,
-        animation: value
-      });
+      var marker = this.markers[id];
+      if (on===undefined) on = marker.getAnimation() != null;
+      if (animation === undefined) animation = google.maps.Animation.BOUNCE;
+      marker.setAnimation(on? animation: null);
+      return this;
     },
+
+    bounce: function(id)
+    {
+      return this.toggleBounce(id, true);
+    },
+
+    center: function(id)
+    {
+      var marker = this.markers[id];
+      this.map.setCenter(marker.position);
+      return this;
+    },
+
+    zoom: function(level)
+    {
+      this.map.setZoom(level);
+      return this;
+    }
+
   })
 })(jQuery);
