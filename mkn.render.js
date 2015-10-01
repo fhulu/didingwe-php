@@ -71,7 +71,6 @@ mkn.render = function(options)
   {
     if (!defaults) defaults = { template: "$field" };
     var path = parent_field.path+'/'+name;
-    var parent_is_table = ['table','tr'].indexOf(parent_field.tag) >= 0;
     var pushed = [];
     var first;
     var last;
@@ -269,6 +268,10 @@ mkn.render = function(options)
     return field;
   }
 
+  var isTableTag = function(tag)
+  {
+    return ['table','thead','th','tbody','tr','td'].indexOf(tag) >= 0;
+  }
   this.create =  function(field, templated)
   {
     if (field.sub_page)
@@ -277,8 +280,9 @@ mkn.render = function(options)
     var id = field.id;
     if (!field.html) console.log("No html for ", id, field);
     assert(field.html, "Invalid HTML for "+id);
-    field.html = field.html.replace(/\$tag(\W)/, field.tag+'$1');
-    var obj = $(field.html);
+    field.html = field.html.trim().replace(/\$tag(\W)/, field.tag+'$1');
+    var table_tag = isTableTag(field.tag);
+    var obj = table_tag? $('<'+field.tag+'>'): $(field.html);
     if (this.sink === undefined) this.sink = obj;
     var reserved = ['id', 'create', 'css', 'script', 'name', 'desc', 'data'];
     setAttr(obj, field);
@@ -319,7 +323,13 @@ mkn.render = function(options)
       value.path = field.path+'/'+code;
       value.id = code;
       value = this.initField(value, field);
-      this.replace(obj, this.create(value), code);
+      var child = this.create(value);
+      if (table_tag)
+        obj.append(child)
+      if (field.html == '$'+code)
+        obj.html('').append(child);
+      else
+        this.replace(obj, child, code);
       ++subitem_count;
     }
     if (obj.attr('id') === '') obj.removeAttr('id');
@@ -352,7 +362,9 @@ mkn.render = function(options)
   this.createItems = function(parent, parent_field, name, items, defaults)
   {
     var loading_data = false;
-    var regex = name === undefined? undefined: new RegExp('(\\$'+name+')');
+    var regex;
+    if (name !== undefined && parent_field.html.trim() !=='$'+name && !isTableTag(parent_field.tag))
+      regex = new RegExp('(\\$'+name+')');
     var new_item_name = '_new_'+name;
     var new_item_html = '<div id="'+new_item_name+'"></div>';
     var wrap;
@@ -366,7 +378,7 @@ mkn.render = function(options)
         continue;
       }
       ++count;
-      if (name !== undefined)
+      if (regex)
         parent.replace(regex,new_item_html+'$1');
       var template = item.template;
       var hasTemplate = isTemplate(template);
@@ -374,7 +386,10 @@ mkn.render = function(options)
       var templated = obj;
       if (hasTemplate) {
         templated = this.createTemplate(template, item);
-        this.replace(templated, obj, id, 'field');
+        if (isTableTag(template.tag))
+          templated.append(obj);
+        else
+          this.replace(templated, obj, id, 'field');
       }
       if (wrap)
         wrap.append(templated);
@@ -385,12 +400,12 @@ mkn.render = function(options)
         wrap.append(templated);
         delete item.wrap;
       }
-      else if (name !== undefined)
+      else if (regex)
         parent.find('#'+new_item_name).replaceWith(templated);
       else
         parent.append(templated);
     }
-    if (!loading_data)
+    if (!loading_data && regex)
       parent.replace(regex, '');
     return count;
   }
@@ -515,6 +530,15 @@ mkn.render = function(options)
   {
     var style = field.style;
     if (!style) return;
+    for (var key in style) {
+      var val = style[key];
+      var matches = getMatches(val, /\$(\w+)/g);
+      for (var i in matches) {
+        var match = matches[i];
+        style[key] = val.replace(new RegExp('\\$'+match+"([\b\W]|$)?", 'g'), field[match]+'$1');
+      }
+    }
+    field[style] = style;
     obj.css(field.style);
   }
 

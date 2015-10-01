@@ -55,8 +55,8 @@ control:
   text: $name
 
 datatable:
-  tag: table
-  text: <tbody></tbody>
+  head: ""
+  type: table
   class: [data]
   create: datatable
   script: /common/datatable.js
@@ -325,7 +325,12 @@ label_top:
 
 labelled_input:
   templates: div
-  style: { display: $pack }
+  style:
+    display: $pack
+    margin-top: 6px
+    width: 100%
+    position: relative
+
   label_width: 24%
   input_width: 73%
   label_suffix: ":"
@@ -378,7 +383,13 @@ one_column_table:
 
 one_row_table:
   tag: table
-  text: <tr>$items</tr>
+  text: $row
+  cell_width: 33%
+  inherit: [items,cell_width]
+  row:
+    templates: tr
+    inherit: [cell_width]
+    field: $items
   items:
     - template: table_cell
 
@@ -431,6 +442,10 @@ question_input:
   templates: div
   text: <label>$question</label>$field
   subject: { class: [input] }
+  style:
+    margin-top: 16px
+    width: 100%
+    position: relative
 
 question_input_page:
   type: input_page
@@ -492,17 +507,25 @@ synopsis:
 
 table:
   tag: table
-  head: $table_head
-  body: $table_body
-  text: $head$body
+  head: { type: table_head }
+  body: { type: table_body }
+  text: $head $body
+  inherit: [rows]
   rows:
-    - template: table_row
+    - type: table_row
 
 table_head: { templates: thead }
 
-table_body: { templates: tbody }
+table_body:
+  templates: tbody
+  field: $rows
 
-table_cell: { templates: td }
+table_cell:
+  templates: td
+  cell_width: 20%
+  style:
+    width: $cell_width
+    vertical-align: top
 
 table_input:
   templates: tr

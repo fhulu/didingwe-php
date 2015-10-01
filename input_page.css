@@ -111,15 +111,6 @@
   font-size: 18px;
 }
 
-
-
-.labelled-input
-{
-  margin-bottom: 6px;
-  width: 100%;
-  position: relative;
-}
-
 .labelled-input>label
 {
   vertical-align: top;
@@ -178,13 +169,6 @@
   background: lightgrey;
   font-weight: bold;
   width: 58%;
-}
-
-.question-input
-{
-  margin-top: 16px;
-  width: 100%;
-  position: relative;
 }
 
 .question-input>label
