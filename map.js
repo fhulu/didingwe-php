@@ -14,6 +14,7 @@
       var self = this;
       this.markers = {};
       this.hints = {};
+      this.bouncing = null;
       this.element.on('customValue', function(event, value) {
         self.val(value);
       });
@@ -97,6 +98,7 @@
     toggleBounce: function(id, on, animation)
     {
       var marker = this.markers[id];
+      if (!marker) return this;
       if (on===undefined) on = marker.getAnimation() != null;
       if (animation === undefined) animation = google.maps.Animation.BOUNCE;
       marker.setAnimation(on? animation: null);
@@ -105,13 +107,21 @@
 
     bounce: function(id)
     {
+      this.bouncing = id;
       return this.toggleBounce(id, true);
+    },
+
+    bounceOff: function()
+    {
+      if (!this.bouncing) return this;
+      return this.toggleBounce(this.bouncing, false);
     },
 
     center: function(id)
     {
       var marker = this.markers[id];
-      this.map.setCenter(marker.position);
+      if (marker)
+        this.map.setCenter(marker.position);
       return this;
     },
 
