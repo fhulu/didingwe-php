@@ -131,15 +131,26 @@ datatable:
   slideSpeed: 100
 
 date:
-  type: input
+  type: datetime
   create: datetimepicker
   timepicker: false
   format: Y-m-d
+
+date_future:
+  type: date
+  minDate: 0
 
 datetime:
   type: input
   create: datetimepicker
   format: Y-m-d H:i
+  validateOnBlur: false
+  non_inherit: [next,prev]
+  allowBlanks: false
+
+datetime_future:
+  type: datetime
+  minDate: 0
 
 date_time:
   type: date_time

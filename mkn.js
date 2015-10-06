@@ -145,14 +145,38 @@ var mkn = new function() {
     };
     return result;
   }
+
+  this.selector = {
+    id: function(v)
+    {
+      return '#'+v;
+    },
+
+    idName: function(v)
+    {
+      return "#?,[name='?']".replace('?',v);
+    },
+
+    name: function(v)
+    {
+      return "[name='?']".replace('?',v);
+    },
+
+    attr: function(name, value)
+    {
+      return "[?='_']".replace('?',name).replace('_',value);
+    }
+  }
+
+  this.selectId
 }
 
 if (!String.prototype.trim) {
-    (function() {
-        // Make sure we trim BOM and NBSP
-        var rtrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g;
-        String.prototype.trim = function() {
-            return this.replace(rtrim, '');
-        };
-    })();
+  (function() {
+    // Make sure we trim BOM and NBSP
+    var rtrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g;
+    String.prototype.trim = function() {
+        return this.replace(rtrim, '');
+    };
+  })();
 }

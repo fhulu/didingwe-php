@@ -578,9 +578,9 @@ function rgbToHex(color) {
     }
     var nums = /(.*?)rgb\((\d+),\s*(\d+),\s*(\d+)\)/i.exec(color);
     if (!nums) return color;
-    r = parseInt(nums[2], 10).toString(16),
-    g = parseInt(nums[3], 10).toString(16),
-    b = parseInt(nums[4], 10).toString(16);
+    var r = parseInt(nums[2], 10).toString(16);
+    var g = parseInt(nums[3], 10).toString(16);
+    var b = parseInt(nums[4], 10).toString(16);
     return "#"+ (
         (r.length == 1 ? "0"+ r : r) +
         (g.length == 1 ? "0"+ g : g) +

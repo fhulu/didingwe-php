@@ -197,6 +197,7 @@ mkn.render = function(options)
   this.expandValue = function(values,value,parent_id)
   {
     $.each(values, function(code, subst) {
+      if ($.isNumeric(code)) return;
       if (typeof subst === 'string' && value !== null) {
         subst = me.expandFunction(subst, parent_id)
         value = value.replace(new RegExp('\\$'+code+"([\b\W]|$)?", 'g'), subst+'$1');
@@ -216,9 +217,10 @@ mkn.render = function(options)
     do {
       expanded = false;
       for (var field in data) {
+        if ($.isNumeric(field)) continue;
         var value = data[field];
         if (typeof value !== 'string' || value.indexOf('$') < 0 || field === 'template' && field === 'attr') continue;
-        old_value = value = value.replace('$id', parent_id);
+        var old_value = value = value.replace('$id', parent_id);
         data[field] = value = me.expandValue(data, value, parent_id);
         expanded = old_value !== value;
       }
@@ -242,8 +244,10 @@ mkn.render = function(options)
   this.inheritParent =  function(parent, field)
   {
     if (!parent || !parent.inherit) return field;
+    var ignore = field.non_inherit;
     for (var i in parent.inherit) {
       var key = parent.inherit[i];
+      if (ignore && ignore.indexOf(key) >= 0) continue;
       var inherited = {};
       inherited[key] = parent[key];
       field = mkn.merge(inherited, field);
@@ -576,7 +580,7 @@ mkn.render = function(options)
         if (value === undefined) { console.log("undefiend value", name, item)}
         value = me.expandType(value);
       }
-      if (name == 'template')
+      if (name == 'template' && $.isPlainObject(value))
         value = me.initField(value);
 
       defaults[name] = value;
@@ -633,7 +637,7 @@ mkn.render = function(options)
 
   var promoteAttr = function(field)
   {
-    attr = field.attr;
+    var attr = field.attr;
     if (attr === undefined || $.isPlainObject(attr)) return;
     var val = {};
     val[attr] = attr;
@@ -794,7 +798,7 @@ mkn.render = function(options)
         id = el[0];
         item = el[1];
       }
-      var obj = parent.find('#'+id+',[name="',+id+'"');
+      var obj = parent.find(mkn.selector.idName(id));
       if (obj.exists()) {
         obj.value(value);
         continue;
