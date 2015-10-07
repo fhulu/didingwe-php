@@ -549,7 +549,7 @@ class page
 
       $this->get_merged_field($code, $value);
       $valid = $value['valid'];
-      if (!isset($valid)) return;
+      if ($valid == "") return;
 
       $validated[] = $code;
       $validator = &$this->validator;

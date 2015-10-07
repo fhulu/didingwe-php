@@ -352,19 +352,19 @@ class validator
   {
     if ($this->failed_auto_provided) $func = 'provided';
     $predicate = $this->get_custom($func);
-    if (!is_array($predicate)) return;
     $field = $this->fields[$this->name];
     if (is_array($field) && $field['error'] != '') $predicate = $field;
-    $error = $predicate['error'];
+    if (is_array($predicate)) $error = $predicate['error'];
     if (is_string($result)) $error = $result;
     if (is_null($error)) return;
 
-    if (is_string($error))
-      $this->subst_error($error, $predicate, $args, $result);
-    else walk_leaves($error, function(&$value) use ($predicate, $args, $result) {
-      $this->subst_error($value, $predicate, $args, $result);
-    });
-
+    if (is_array($predicate)) {
+      if (is_string($error))
+        $this->subst_error($error, $predicate, $args, $result);
+      else walk_leaves($error, function(&$value) use ($predicate, $args, $result) {
+        $this->subst_error($value, $predicate, $args, $result);
+      });
+    }
     $this->error = $error;
   }
 
