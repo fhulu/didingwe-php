@@ -686,7 +686,8 @@ class page
     $detail = at($action, 'audit');
     if ($detail) {
       $detail = replace_vars($detail, $user);
-      $detail = replace_vars($detail, $result);
+      $context = merge_options($this->fields, $this->context, $_SESSION, $this->request, $result);
+      $detail = replace_vars($detail, $context);
       $detail = page::decode_field($detail);
       $detail = page::decode_sql($detail);
       $detail = replace_vars($detail,$this->request);
