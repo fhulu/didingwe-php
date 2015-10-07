@@ -14,6 +14,9 @@ accordion_tab:
   templates: div
   text: <h3>$name</h3>$field
 
+actioner:
+  tag: span
+  attr: { action: $id}
 
 blank:
   tag: span
@@ -72,19 +75,15 @@ datatable:
     name: ""
     desc: Filter by specific columns
 
-  fields:
-    - type: none
+  fields: [ type: none ]
+  inherit: [slide,slideoff]
 
-  inherit: [actioner,slide,slideoff]
-
-  actioner:
-    tag: span
-    attr: { action: $id}
   #paging
   paging:
     - statics
     - type: actioner
     - wrap: class
+
   goto_first:
     name: First
     desc: Go to first page
