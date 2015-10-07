@@ -649,7 +649,7 @@ mkn.render = function(options)
   {
     if (!$.isPlainObject(field)) field = { url: field };
     var url = field.url;
-    if (url === undefined && field.query) {
+    if (url === undefined && field.target === '_blank') {
       url = '/?action=action';
       var exclude = ['action', 'desc', 'html', 'id', 'name', 'page_id', 'query', 'tag', 'text', 'type', 'template']
       for (var key in field) {
