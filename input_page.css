@@ -166,9 +166,13 @@
 .info-line>label+*
 {
   display: inline-block;
+  width: 58%;
+}
+
+.info-text
+{
   background: lightgrey;
   font-weight: bold;
-  width: 58%;
 }
 
 .question-input>label
