@@ -330,27 +330,12 @@ modify:
     - update
 
 my_audit_trail:
+  type: audit_trail
   name: My Audit Trail
   access: reg
-  type: datatable
-  sort: when
-  sort_order: desc
-  page_size: 15
-  flags:
-    - filter
-    - show_header
-    - show_titles
-  report_title: My Audit Trail
-  actions:
-    - print
-    - export
-  fields:
-    - when: { name: Time }
-    - action
-    - detail
   sql: |
-    select create_time, action, detail
-      from audit_trail where user_id = $uid
+    select t.create_time, u.first_name, u.last_name,u.email_address, t.action, t.detail
+      from audit_trail t join user u on t.user_id = u.id and t.user_id = $uid
 
 otp:
   name: OTP
