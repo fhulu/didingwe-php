@@ -723,16 +723,22 @@ mkn.render = function(options)
 
   var reportError = function(field, error)
   {
-    var subject = me.sink.find('#'+field+",[name='"+field+"']");
-    var sibling = subject.parent();
-    if (sibling.length == 0)
-      sibling = subject;
-    if (sibling.length == 0) {
-      if (field == "alert") alert(error);
+    if (field == "alert") {
+      alert(error);
       return;
     }
+    var subject = me.sink.find('#'+field+",[name='"+field+"']");
+    var parents = subject.parents("[for='"+field+"']");
+    var parent;
+    if (parents.length)
+      parent = parents.eq(0);
+    else
+      parent = subject.parent();
+    if (parent.length == 0)
+      parent = subject;
+
     var box = $("<div class=error>"+error+"</div>");
-    sibling.after(box);
+    parent.after(box);
     box.fadeIn('slow').click(function() { $(this).fadeOut('slow') });
   }
 
