@@ -2,7 +2,7 @@
   require_once '../common/log.php';
   log::init('index', log::DEBUG);
   require_once('../common/utils.php');
-  require_once('config.php');
+  $config = load_yaml("config.yml", true);
   $action = GET('action');
   if (!is_null($action)) {
     require_once('../common/page.php');
@@ -30,7 +30,7 @@
 <script type='text/javascript' src="/common/mkn.render.js?<?=$tag?>"></script>
 <script type='text/javascript' src="/common/page.js?<?=$tag?>"></script>
 <script>
-  var request_method = '<?=config::$request_method;?>';
+  var request_method = '<?=$config['request_method'];?>';
 </script>
 <?php
   require_once ('../common/log.php');
@@ -53,7 +53,7 @@
   if (!is_null($content) && !in_array($content, array('logout','login')))
     $_SESSION['content'] = $content;
 
-  $page = $content==''? config::$landing_page: 'index';
+  $page = $content==''? $config['landing_page']: 'index';
   if ($page == 'index' && $content == '') $content = 'home';
   if (!is_null($page))  pre_load_custom($page);
   if ($content != $page && !is_null($content))

@@ -135,18 +135,6 @@ class page
     return $this->user;
   }
 
-  static function load_yaml($file)
-  {
-    log::debug("YAML LOAD $file");
-    if (!file_exists($file))
-      return null;
-
-    $data = yaml_parse_file($file);
-    if (is_null($data))
-      throw new Exception ("Unable to parse file $file");
-    return $data;
-  }
-
   function load_field_stack($file, &$fields=array(), $search_paths=array('../common', '.'))
   {
     $i = 0;
@@ -154,7 +142,7 @@ class page
 
     $read_one = false;
     foreach($search_paths as $path) {
-      $data = page::load_yaml("$path/$file", ++$i != $path_size);
+      $data = load_yaml("$path/$file", ++$i == $path_size);
       if (is_null($data)) continue;
       $read_one = true;
 

@@ -272,3 +272,17 @@ function array_compact(&$array)
   if (!is_assoc($array))
     $array = array_values($array);
 }
+
+function load_yaml($file, $must_exist=false)
+{
+  log::debug("YAML LOAD $file");
+  if (!file_exists($file)) {
+    if (!$must_exist) return null;
+    throw new Exception ("File $file does not exist");
+  }
+
+  $data = yaml_parse_file($file);
+  if (is_null($data))
+    throw new Exception ("Unable to parse file $file");
+  return $data;
+}
