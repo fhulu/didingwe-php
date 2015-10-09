@@ -311,7 +311,6 @@
     {
       var self = this;
       var body = self.body().empty();
-      var expandable = this.options.expand.pages.length > 0;
       var fields = this.options.fields;
       var tr;
       for(var i in data.rows) {
@@ -323,7 +322,7 @@
         tr = $('<tr></tr>');//.appendTo(body);
         var key;
         if (i % 2 === 0) tr.addClass('alt');
-        var expanded = !expandable;
+        var expandable = false;
         var k = 0;
         for (var j in row) {
           var cell = row[j];
@@ -334,22 +333,24 @@
           }
           if (field.hide || field.show !== undefined && !field.show) continue;
 
-          var td = $('<td></td>').appendTo(tr);
-          if (field.id === 'actions') {
-            self.createRowActions(tr, td, cell);
-            continue;
-          }
-
           if (field.id === 'style') {
             tr.addClass(cell);
             continue;
           }
 
+          var td = $('<td></td>').appendTo(tr);
+          if (field.id === 'actions') {
+            var actions = cell.split(',');
+            var expandable = actions.indexOf('expand') >= 0;
+            self.createRowActions(tr, td, actions);
+            if (!expandable) continue;
+            td = tr.children().eq(0);
+            self.createAction('expand', undefined, tr).prependTo(td);
+            self.createAction('collapse', undefined, tr).prependTo(td).hide();
+            continue;
+          }
+
           self.showCell(field, td, cell, key);
-          if (expanded) continue;
-          expanded = true;
-          self.createAction('expand', undefined, tr).prependTo(td);
-          self.createAction('collapse', undefined, tr).prependTo(td).hide();
         }
         key = undefined;
       }
@@ -573,7 +574,8 @@
       var td;
       template.children().each(function(i) {
         var field = fields[i];
-        if (field.id === 'attr' || field.id === 'actions') {
+        if (field.hide) return;
+        if (field.id === 'style' || field.id === 'actions') {
           var colspan = td.attr('colspan');
           if (!colspan) colspan = 1;
           td.attr('colspan', parseInt(colspan)+1);
@@ -606,7 +608,7 @@
         var j = 0;
         for (var i in fields) {
           var field = fields[i];
-          if (field.id === 'actions' || field.id === 'attr') continue;
+          if (field.id === 'actions' || field.id === 'style') continue;
           var val = field.hide? '': cols.eq(j++).find('input').val();
           self.params.filtered += val + '|';
         }
