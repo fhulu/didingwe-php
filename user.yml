@@ -199,8 +199,8 @@ history:
   flags:
     - show_titles
   fields:
-    - when : { width: 14%,name: Time }
-    - action: { width: 30% }
+    - when : { width: 14%, name: Time }
+    - what: { width: 30%, name: Action }
     - detail: { width: 55% }
   sql: select create_time, action, detail from audit_trail where user_id = $key
 
@@ -253,8 +253,8 @@ list:
   slide: { access: admin }
   row_actions:
     - edit
-    - activate: { access: admin }
-    - deactivate: { access: admin }
+    - activate
+    - deactivate
   footer_actions:
     - print
     - export
@@ -265,21 +265,22 @@ list:
     - first_name: { width: 13% }
     - last_name: { width: 13% }
     - cellphone: { width: 12% }
-    - role: { width: 9% }
+    - roles: { width: 9% }
     - status: { width: 8% }
+    - style
     - actions
   expand:
-    action:
-      pages:
-        - user/history
-  sql: |
-    select distinct u.id, u.create_time,email_address, u.first_name, u.last_name,
-      u.cellphone, r.name,
-      if(u.active=1,'active','inactive'),
-      if(u.active=1,'expand,slide,edit,deactivate','expand,slide,edit,activate')
-    from user u left join user_role ur on u.id = ur.user_id
-      left join role r on ur.role_code = r.code
-      where r.code != 'super'
+    pages:
+      - user/history
+  sql: >
+    select id, create_time, email_address, first_name, last_name, cellphone, roles, status, status, actions from (
+       select u.id, u.create_time,email_address, u.first_name, u.last_name,
+        u.cellphone, group_concat(r.name) roles,
+        if(u.active=1,'active','inactive') status,
+        if(u.active=1,'expand,slide,edit,deactivate','expand,slide,edit,activate') actions
+      from user u left join role r on find_in_set(r.code,u.roles)
+      group by u.id
+    ) tmp where 1 = 1
 
 login:
   access: public
