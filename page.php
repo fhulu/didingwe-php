@@ -137,12 +137,9 @@ class page
 
   function load_field_stack($file, &$fields=array(), $search_paths=array('../common', '.'))
   {
-    $i = 0;
-    $path_size = sizeof($search_paths);
-
     $read_one = false;
     foreach($search_paths as $path) {
-      $data = load_yaml("$path/$file", ++$i == $path_size);
+      $data = load_yaml("$path/$file");
       if (is_null($data)) continue;
       $read_one = true;
 
