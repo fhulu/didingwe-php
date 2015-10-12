@@ -36,7 +36,7 @@ country:
   valid: in(mukonin_contact.country.code)
 
 currency:
-  valid: /^-?\D{,2}\d+\.\d\d$/
+  valid: /^-?\d+\.\d\d$/
   error: $name must be in currency form
 
 date:
