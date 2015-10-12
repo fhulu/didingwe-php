@@ -63,8 +63,7 @@ $.fn.getValue = function()
   var type = this.attr('type');
   if (type === 'checkbox') return this.is(':checked')?1:0;
   if (type === 'radio') return this.filter(':checked').val();
-  var val = this.val();
-  return val !== undefined? val: this.text();
+  return this.is('input,select,textarea')? this.val(): this.text();
 }
 
 $.fn.value = function(val)
@@ -628,7 +627,7 @@ function darken( hexColor, factor ) {
 
 $.fn.valueFromCurrency = function()
 {
-  return this.value().replace(/\D/g,'');
+  return this.value().replace(/[^\d.]/g,'');
 }
 // from stackoverflow: Anurag
 $.fn.bindFirst = function(name, fn)
