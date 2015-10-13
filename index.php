@@ -2,7 +2,6 @@
   require_once '../common/log.php';
   log::init('index', log::DEBUG);
   require_once('../common/utils.php');
-  $config = load_yaml("config.yml", true);
   $action = GET('action');
   if (!is_null($action)) {
     require_once('../common/page.php');

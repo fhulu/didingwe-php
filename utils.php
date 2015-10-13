@@ -1,4 +1,5 @@
 <?php
+$config = load_yaml("config.yml", true);
 
 function at($array, $index)
 {

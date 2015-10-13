@@ -1,5 +1,6 @@
 <?php
 require_once('log.php');
+require_once('utils.php');
 
 class db_exception extends Exception {
    public function __construct($message, $code = 0)//, Exception $previous = null)
