@@ -209,8 +209,10 @@ class page
     $type = $field['type'];
     if (!isset($type) || $type == 'none') return $field;
     $expanded = $this->expand_type($type, $added);
-    if (is_null($expanded))
-      throw new Exception("Unknown type $type");
+    if (is_null($expanded)) {
+      log::warn("Unknown type $type");
+      return $field;
+    }
     if (isset($expanded['type']))
       $field = merge_options($this->merge_type($expanded, $added), $field);
     else
