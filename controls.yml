@@ -69,7 +69,7 @@ datatable:
     # - editall
     #
   post:
-    call: datatable::read(context,$key)
+    - call: datatable::read(context,$key)
   position: top
   filter:
     name: ""

@@ -95,10 +95,11 @@
         if (!data) return;
         if (data._responses)
           self.element.trigger('server_response', data);
-        self.element.trigger('refreshed', [data]);
+        self.element.trigger('refreshing', [data]);
         var end = new Date().getTime();
         console.log("Load: ", end - start);
         self.populate(data);
+        self.element.trigger('refreshed', [data]);
         delete data.rows;
         $.extend(self.params, data);
         console.log("Populate: ", new Date().getTime() - end);
@@ -373,7 +374,7 @@
       if (key !== undefined) {
         var id = created.attr('id');
         if (id !== undefined)
-          created.attr('id', key+"_"+id);
+          created.attr('id', key.toLowerCase().replace(/ +/,'_')+"_"+id);
       }
       td.append(created);
     },
@@ -390,7 +391,7 @@
         var key = sink.attr('key');
         if (key === undefined) key = self.options.key;
         var options = $.extend({},self.params, props, {id: action, action: props.action, key: key });
-        var listener = self.element.closest('.page').eq(0);
+        var listener = self.closest('.page').eq(0);
         options.path += '/';
         if (path !== undefined) options.path += path + '/';
         options.path += action;
