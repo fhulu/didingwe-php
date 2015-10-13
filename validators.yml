@@ -80,6 +80,11 @@ extension:
 find_in:
   error: No such $name ($value)
 
+full_name:
+  valid:
+    - name
+    - /^[^ ]+ +[^ ]+/
+
 future_time:
   error: $name must be in the future
 
