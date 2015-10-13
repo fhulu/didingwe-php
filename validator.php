@@ -246,6 +246,10 @@ class validator
         $matches = array();
         preg_match_all('/[^,]+|\(.*\)/', $args, $matches);
         $args = $matches[0];
+        if ($func == 'depends') {
+          $first = array_shift($args);
+          $args = array($first, implode(',', $args));
+        }
       }
       $this->update_args($args);
 
