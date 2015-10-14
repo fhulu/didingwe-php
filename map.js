@@ -29,7 +29,25 @@
       if (pos)
         this.addPoint(pos);
 
+
       this.show();
+
+      var markOnClick = this.options.markOnClick;
+      if (markOnClick !== false) {
+        var self = this;
+        this.map.addListener('click', function(event) {
+          if (markOnClick == 'toggle')
+          var marker = self.markers['click'];
+          if (marker != undefined)
+            marker.setMap(null);
+          var pos = event.latLng
+          self.markers['click'] = new google.maps.Marker({
+            position: event.latLng,
+            map: self.map
+          });
+          self.element.trigger('map_clicked', [pos])
+        });
+      }
     },
 
     _setOption: function( key, value ) {
