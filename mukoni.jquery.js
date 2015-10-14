@@ -61,7 +61,12 @@ $.fn.setValue = function(val)
 $.fn.getValue = function()
 {
   var type = this.attr('type');
-  if (type === 'checkbox') return this.is(':checked')?1:0;
+  if (type === 'checkbox') {
+    var val = this.is(':checked')?1:0;
+    var values = this.attr('values');
+    if (values == '') return val;
+    return values.split(',')[val];
+  }
   if (type === 'radio') return this.filter(':checked').val();
   return this.is('input,select,textarea')? this.val(): this.text();
 }
