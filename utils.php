@@ -65,7 +65,7 @@ function replace_vars($str, $values, $callback=null)
     if (is_null($value)) continue;
     if ($callback && $callback($value, $key) === false) continue;
     if ($escape) $value = addslashes($value);
-    $str = str_replace('$'.$key, $value, $str);
+    $str = preg_replace('/\$'.$key.'([^\w]|$)/',"$value$1", $str);
   }
   return $str;
 }
