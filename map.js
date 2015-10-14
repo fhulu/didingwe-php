@@ -1,8 +1,6 @@
 (function($) {
   $.widget("ui.mapper", {
     options: {
-      latitude: -29.801842,
-      longitude: 30.592950,
       zoom: 8,
       pin: null,
       value: null,
@@ -22,11 +20,15 @@
         this.location(this.options.center[0], this.options.center[1]);
 
       if (this.options.load) {
-        var data = { action: 'data', path: this.options.path + '/load' };
+        var data = { action: 'data', path: this.options.path + '/load', key: this.options.key };
         $.json('/', {data: data}, function(data) {
           self.addPoints(data);
         });
       }
+      var pos = this.options.position;
+      if (pos)
+        this.addPoint(pos);
+
       this.show();
     },
 
@@ -35,34 +37,42 @@
         this.val(value);
     },
 
-    addPoints: function(data)
+    addPoint: function(value)
     {
+      if ($.isPlainObject(value))
+        value = [value.id, value.latitude, value.longitude, value.color, value.hint]
       var colors = this.options.colors;
-      var hint = this.hint;
       var self = this;
       var map = this.map;
       var icon_path = this.options.icon_path;
-      data.forEach(function(value) {
-        var position = new google.maps.LatLng(parseFloat(value[1]), parseFloat(value[2]));
-        var color = value[3];
-        var icon = icon_path+colors[color]+'-dot.png';
 
-        var id = value[0];
-        var marker = new google.maps.Marker({
-          position: position,
-          map: self.map,
-          icon: icon,
-          id: id
-        });
-        self.markers[id] = marker;
-        if (value.length < 4) return;
-        self.hints[id] =  new google.maps.InfoWindow({content: value[4]});
-        google.maps.event.addDomListener(marker, 'mouseover', function() {
-          self.hints[marker.id].open(self.map, marker);
-        });
-        google.maps.event.addDomListener(marker, 'mouseout', function() {
-          self.hints[marker.id].close();
-        });
+      var position = new google.maps.LatLng(parseFloat(value[1]), parseFloat(value[2]));
+      var color = value[3];
+      var icon = icon_path+colors[color]+'-dot.png';
+
+      var id = value[0];
+      var marker = new google.maps.Marker({
+        position: position,
+        map: self.map,
+        icon: icon,
+        id: id
+      });
+      self.markers[id] = marker;
+      if (value.length < 4) return;
+      self.hints[id] =  new google.maps.InfoWindow({content: value[4]});
+      google.maps.event.addDomListener(marker, 'mouseover', function() {
+        self.hints[marker.id].open(self.map, marker);
+      });
+      google.maps.event.addDomListener(marker, 'mouseout', function() {
+        self.hints[marker.id].close();
+      });
+    },
+
+    addPoints: function(data)
+    {
+      var self = this;
+      data.forEach(function(value) {
+        self.addPoint(value);
       });
     },
 
