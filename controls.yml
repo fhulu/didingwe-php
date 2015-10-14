@@ -38,7 +38,8 @@ captioned_image:
 
 checkbox:
   type: input
-  attr: { type: checkbox }
+  values: ""
+  attr: { type: checkbox, values: $values }
 
 class:
   tag: div
@@ -479,6 +480,22 @@ radiogroup:
     - template: label_left
     - type: radiobox
     - attr: { name: $group }
+
+
+row_input:
+  html: <tr><td>$name</td><td>$field</td></tr>
+
+row_inputs:
+  tag: table
+  class: [data]
+  text: $head $inputs
+  heading: $name
+  inherit: [heading,inputs]
+  head:
+    html: <thead><th colspan=2>$heading</th></thead>
+  inputs:
+    - template: row_input
+    - type: input
 
 section_heading:
   classes: p
