@@ -276,6 +276,7 @@ mkn.render = function(options)
   {
     return ['table','thead','th','tbody','tr','td'].indexOf(tag) >= 0;
   }
+
   this.create =  function(field, templated)
   {
     if (field.sub_page)
@@ -285,7 +286,7 @@ mkn.render = function(options)
     if (!field.html) console.log("No html for ", id, field);
     assert(field.html, "Invalid HTML for "+id);
     field.html = field.html.trim().replace(/\$tag(\W)/, field.tag+'$1');
-    var table_tag = isTableTag(field.tag);
+    var table_tag = isTableTag(field.tag)
     var obj = table_tag? $('<'+field.tag+'>'): $(field.html);
     if (this.sink === undefined) this.sink = obj;
     var reserved = ['id', 'create', 'css', 'script', 'name', 'desc', 'data'];
@@ -497,24 +498,22 @@ mkn.render = function(options)
   var setAttr = function(obj, field)
   {
     var attr = field.attr;
-    if (attr) {
-      if (typeof attr === 'string')
-        obj.attr(attr,"");
-      else $.each(attr, function(key, val) {
-        if (field.array) {
-          var numeric = getMatches(val, /\$(\d+)/g);
-          if (numeric.length) val = field.array[numeric[0]];
-        }
-        obj.attr(key,val);
-      });
-    }
-    if (obj[0]) $.each(obj[0].attributes, function(i, attr) {
-      var matches = getMatches(attr.value, /\$(\w+)/g)
-      for (var j in matches) {
-        var value = field[matches[j]];
-        if (value === undefined || typeof value !== 'string') continue;
-        obj.attr(attr.name, attr.value.replace(/\$\w+([\b\W]|$)/g, value+'$1'));
+    if (!attr) return;
+    if (typeof attr === 'string')
+      obj.attr(attr,"");
+    else $.each(attr, function(key, val) {
+      if (field.array) {
+        var numeric = getMatches(val, /\$(\d+)/g);
+        if (numeric.length) val = field.array[numeric[0]];
       }
+      var matches = getMatches(val, /\$(\w+)/g)
+      for (var j in matches) {
+        var match = matches[j];
+        var value = field[match];
+        if (value === undefined || typeof value !== 'string') continue;
+        val = val.replace('$'+match, value);
+      }
+      obj.attr(key,val);
     });
     if (obj.attr('id') === '') obj.removeAttr('id');
   }
