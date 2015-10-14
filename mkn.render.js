@@ -674,50 +674,53 @@ mkn.render = function(options)
       document.location = url;
   }
 
-  var accept = function(event, obj, field)
+  var confirmed = function(event, obj, field)
   {
-    var confirmed = function() {
-      var action = field.action;
-      field.page_id = field.page_id || obj.parents(".page").eq(0).attr('id');
-      switch(action) {
-        case 'dialog': mkn.showDialog(field.url, {key: field.key}); return;
-        case 'redirect': redirect(field); break;
-        case 'post':
-            var params = serverParams('action', field.path, {key: field.key});
-          var selector = field.selector;
-          if (selector !== undefined) {
-            selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+field.page_id+"$2");
-            params = $.extend(params, {invoker: obj, event: event, async: true });
-            me.sink.find(".error").remove();
-            $(selector).json('/', params, function(result) {
-              obj.trigger('processed', [result]);
-              respond(result, obj, event);
-            });
-            break;
-          }
-          $.json('/', params, function(result) {
-            obj.trigger('straight processed', [result]);
-            respond(result, obj);
+    var action = field.action;
+    field.page_id = field.page_id || obj.parents(".page").eq(0).attr('id');
+    switch(action) {
+      case 'dialog': mkn.showDialog(field.url, {key: field.key}); return;
+      case 'redirect': redirect(field); break;
+      case 'post':
+          var params = serverParams('action', field.path, {key: field.key});
+        var selector = field.selector;
+        if (selector !== undefined) {
+          selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+field.page_id+"$2");
+          params = $.extend(params, {invoker: obj, event: event, async: true });
+          me.sink.find(".error").remove();
+          $(selector).json('/', params, function(result) {
+            obj.trigger('processed', [result]);
+            respond(result, obj, event);
           });
           break;
-        case 'trigger':
-          trigger(field, obj);
-          break;
-        default:
-          if (field.url)
-            document.location = field.url.replace(/\$key(\b|\W|$)?/, field.key+"$1");
-      }
+        }
+        $.json('/', params, function(result) {
+          obj.trigger('straight processed', [result]);
+          respond(result, obj);
+        });
+        break;
+      case 'trigger':
+        trigger(field, obj);
+        break;
+      default:
+        if (field.url)
+          document.location = field.url.replace(/\$key(\b|\W|$)?/, field.key+"$1");
     }
-    if (field.confirmation) {
-      mkn.showDialog('/confirm_dialog', {}, function() {
-        $('#confirm_dialog #synopsis').text(field.confirmation);
-        $('#confirm_dialog .action').click(function() {
-          if ($(this).attr('id') === 'yes') confirmed();
-          $('#confirm_dialog').dialog('close');
-        })
-      });
+  }
+
+  var accept = function(event, obj, field)
+  {
+    if (!field.confirmation) {
+      confirmed(event, obj, field);
+      return;
     }
-    else confirmed();
+    mkn.showDialog('/confirm_dialog', {}, function() {
+      $('#confirm_dialog #synopsis').text(field.confirmation);
+      $('#confirm_dialog .action').click(function() {
+        if ($(this).attr('id') === 'yes') confirmed(event, obj, field);
+        $('#confirm_dialog').dialog('close');
+      })
+    });
   }
 
   var reportError = function(field, error)

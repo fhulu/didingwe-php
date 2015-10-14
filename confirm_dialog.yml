@@ -7,5 +7,6 @@ confirm_dialog:
   type: labelled_input_page
   desc: Are you sure?
   actions:
+    - action: none
     - "yes"
-    - "no": { action: close_dialog }
+    - "no"
