@@ -49,7 +49,10 @@ var mkn = new function() {
       }
 
       if ($.isArray(v1)) {
-        r[i] = $.merge( $.merge([], v1), v2);
+        if (v2[0] == '_reset')
+          r[i] = v2.slice(1);
+        else
+          r[i] = $.merge( $.merge([], v1), v2);
         //note: no deep copying arrays, only objects
         continue;
       }
