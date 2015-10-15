@@ -34,7 +34,7 @@ class page
   static $user_roles = array('public');
   static $non_mergeable = array('action', 'attr', 'audit', 'call', 'clear_session',
     'clear_values', 'load_lineage', 'post', 'read_session', 'refresh', 'show_dialog',
-    'style', 'trigger', 'valid', 'validate', 'write_session');
+    'sql_update', 'style', 'trigger', 'valid', 'validate', 'write_session');
   var $request;
   var $object;
   var $method;
@@ -740,6 +740,22 @@ class page
     return $this->db->exec($this->translate_sql($sql));
   }
 
+  function sql_update()
+  {
+    $args = func_get_args();
+    $table = array_shift($args);
+    $key = array_shift($args);
+    if (!sizeof($args))
+      throw new Exception("Invalid number of arguments for sql_update");
+    $sets = array();
+    foreach($args as $arg) {
+      $sets[] =  "$arg = '\$$arg'";
+    }
+    $sets = implode(',', $sets);
+    $sql = "update $table set $sets where $key = '\$$key'";
+    return $this->sql_exec($sql);
+  }
+
   function update_context(&$options)
   {
     $context = page::merge_options($this->context, $options);
@@ -796,7 +812,7 @@ class page
 
     $methods = array('alert', 'abort', 'call', 'clear_session', 'clear_values',
       'close_dialog', 'load_lineage', 'read_session', 'read_values', 'redirect',
-      'send_email', 'show_dialog', 'sql', 'sql_exec','sql_rows','sql_values',
+      'send_email', 'show_dialog', 'sql', 'sql_exec','sql_rows', 'sql_update', 'sql_values',
       'refresh', 'trigger', 'update', 'write_session');
     foreach($actions as $action) {
       if ($this->aborted) return false;
