@@ -15,8 +15,8 @@ accordion_tab:
   text: <h3>$name</h3>$field
 
 actioner:
-  tag: span
-  attr: { action: $id}
+  tag: div
+  attr: { action: $id, id: "" }
 
 blank:
   tag: span

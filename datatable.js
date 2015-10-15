@@ -518,7 +518,7 @@
     {
       this.element.find("tbody>tr").each(function() {
         var row = $(this);
-        var height = (row.height()*0.99).toString()+'px';
+        var height = (row.innerHeight()*0.99).toString()+'px';
         row.find('.slide,[action]').height(height).css('line-height', height);
       });
     },

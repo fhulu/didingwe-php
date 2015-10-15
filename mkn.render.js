@@ -498,6 +498,7 @@ mkn.render = function(options)
   var setAttr = function(obj, field)
   {
     var attr = field.attr;
+    if (obj.attr('id') === '') obj.removeAttr('id');
     if (!attr) return;
     if (typeof attr === 'string')
       obj.attr(attr,"");
