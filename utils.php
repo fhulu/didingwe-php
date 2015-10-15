@@ -29,15 +29,12 @@ function last($array)
 }
 
 
-function null_merge($array1, $array2, $recurse = true)
+function null_merge($array1, $array2)
 {
-  if (!is_array($array2)) return $array1;
-
-
-  if (is_array($array1))
-    return $recurse? array_merge_recursive($array1, $array2): array_merge($array1, $array2);
-
-  return $array2;
+  if (is_null($array2)) return $array1;
+  if (!is_array($array2)) return $array2;
+  if ($array2[0] == '_reset')  return array_slice($array2, 1);
+  return is_array($array1)? array_merge($array1, $array2): $array2;
 }
 
 function merge_to(&$array1, $array2)
@@ -286,4 +283,12 @@ function load_yaml($file, $must_exist=false)
   if (is_null($data))
     throw new Exception ("Unable to parse file $file");
   return $data;
+}
+
+function array_remove_value($array, $value)
+{
+  $key = array_search($value, $value);
+  if ($key === false) return $array;
+  unset($array[$key]);
+  return array_values($array);
 }
