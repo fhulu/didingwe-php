@@ -250,7 +250,6 @@ list:
     - show_header
     - show_titles
   report_title: User Report
-  slide: { access: admin }
   row_actions:
     - edit
     - activate
