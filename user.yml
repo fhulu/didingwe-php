@@ -157,7 +157,6 @@ delete:
 
 edit:
   access: [admin]
-  audit: $title,$first_name,$last_name,$cellphone,$email_address,$assigned_role
   action: dialog
   url: /user/modify
 
@@ -251,9 +250,9 @@ list:
     - show_titles
   report_title: User Report
   row_actions:
-    - edit
     - activate
     - deactivate
+    - edit: { action: dialog }
   footer_actions:
     - print
     - export
@@ -308,6 +307,7 @@ login:
 modify:
   type: labelled_input_page
   desc: Change user details
+  access: [admin]
   width: 600
   inputs:
     - title: {type: dropdown}
@@ -321,13 +321,18 @@ modify:
         valid: provided
   values:
     - sql_values: |
-        select title,first_name,last_name,cellphone,email_address,r.code
-        role
-        from user u left join user_role ur on u.id = ur.user_id
-        left join role r on r.code=ur.role_code
+        select title,first_name,last_name,cellphone,email_address,roles
+        from user 
         where id = $key
   actions:
-    - update
+    - modify: { name: Update }
+  post:
+    - read_values: {id: $key, roles: $role }
+    - sql_update: [user, id, title, first_name, last_name, email_address, roles]
+    - clear_values
+    - close_dialog: User details updated
+    - refresh: "#main table"
+  audit: $title,$first_name,$last_name,$cellphone,$email_address,$role
 
 my_audit_trail:
   type: audit_trail
