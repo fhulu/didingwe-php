@@ -49,7 +49,7 @@ change_password:
 
 
 check_otp:
-  type: labelled_input_page
+  type: wizard_page
   name: One Time Pin
   desc: >
     Please enter the OTP(One Time Pin) that you received on your email or cellphone.
@@ -60,43 +60,44 @@ check_otp:
     - sql_values: select lpad(floor(rand()*9999),4,'0') server_otp, now() time_of_otp
     - write_session: server_otp,time_of_otp
     - clear_values
-  actions:
-    - next:
-        post:
-          - sql_values: select lpad(floor(rand()*9999),4,'0') server_otp, now() time_of_otp
-          - write_session: server_otp,time_of_otp
-          - send_email:
-              subject: One Time Password
-              from: $support
-              to: $first_name $last_name <$email>
-              message: >
-                Good day<br><br>
-                You are currently trying to change your email address.
-                If you have not requested this, please inform the System Adminstrator.<br><br>
-                Your One Time Password is : <b>$otp</b>. <br><br>
-                Regards<br>
-                Customer Operations
-          - clear_values
+  next:
+    post:
+      - sql_values: select lpad(floor(rand()*9999),4,'0') server_otp, now() time_of_otp
+      - write_session: server_otp,time_of_otp
+      - send_email:
+          subject: One Time Password
+          from: $support
+          to: $first_name $last_name <$email>
+          message: >
+            Good day<br><br>
+            You are currently trying to change your email address.
+            If you have not requested this, please inform the System Adminstrator.<br><br>
+            Your One Time Password is : <b>$otp</b>. <br><br>
+            Regards<br>
+            Customer Operations
+      - clear_values
 
 
 complete_registration:
-  type: labelled_input_page
+  type: wizard_page
   width: 700
   desc: |
     Thank you. You have been provisionally registered. <be>
     You will have limited access to the system
     until your registration has been approved. <br>
     Please check your email for registration status.
-  actions:
+  navigate:
     - login: { action: dialog }
 
 confirm_details:
-  type: info_page
+  type: wizard_page
   desc: |
     Below is a list of all the information you have entered to register on the system.
     If you are happy with everything, please accept the terms and conditions to
     complete the registration process.
-  lines:
+  inputs:
+    - template: info_line
+    - type: info_text
     - title
     - first_name
     - last_name
@@ -106,8 +107,8 @@ confirm_details:
     - agree_terms: { type: checkbox, template: question_input }
   values:
     - read_session: title,first_name,last_name,cellphone,email
-  actions:
-    - confirm_details: { name: Submit, desc: "" }
+  navigate:
+    - confirm_details: { name: Submit, desc: "", validate: none }
   post:
     - read_session: title,first_name,last_name,cellphone,email,password
     - sql_exec: >
@@ -162,7 +163,7 @@ edit:
 
 enter_credentials:
   name: User Credentials
-  type: labelled_input_page
+  type: wizard_page
   desc: Fill in user information used to uniquely identify the user on the system
   inputs:
     - title: {type: dropdown}
@@ -173,22 +174,21 @@ enter_credentials:
     - type: password_input
     - password
     - confirm_password
-  actions:
-    - next:
-        post:
-          - sql_values: select lpad(floor(rand()*9999),4,'0') server_otp, now() time_of_otp
-          - write_session: server_otp,time_of_otp,title,first_name,last_name,cellphone,email,password
-          - send_email:
-              subject: One Time Password
-              from: $support
-              to: $first_name $last_name <$email>
-              message: >
-                Good day<br><br>
-                Below is your one time password, required to continue with your application.<br><br>
-                Your One Time Password is : <b>$server_otp</b>. <br><br>
-                Regards<br>
-                Customer Operations
-          - clear_values
+  next:
+    post:
+      - sql_values: select lpad(floor(rand()*9999),4,'0') server_otp, now() time_of_otp
+      - write_session: server_otp,time_of_otp,title,first_name,last_name,cellphone,email,password
+      - send_email:
+          subject: One Time Password
+          from: $support
+          to: $first_name $last_name <$email>
+          message: >
+            Good day<br><br>
+            Below is your one time password, required to continue with your application.<br><br>
+            Your One Time Password is : <b>$server_otp</b>. <br><br>
+            Regards<br>
+            Customer Operations
+      - clear_values
 
 
 history:
@@ -360,10 +360,10 @@ profile:
     - role: { attr: disabled }
   values:
     - sql_values: |
-        select title,first_name,last_name,cellphone,email_address,r.code role
-        from user u left join user_role ur on u.id = ur.user_id
-        join role r on r.code = ur.role_code
+        select title,first_name,last_name,cellphone,email_address,group_concat(r.name) role
+        from user u left join role r on find_in_set(r.code,u.roles)
         where id = $uid
+        group by id
   actions:
     - profile_update
 
