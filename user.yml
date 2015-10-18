@@ -3,10 +3,12 @@
 
 activate:
   access: admin
+  validate: none
   desc: Activate inactive user
   audit: sql(select first_name, last_name, email_address from user where id = '$key')
   post:
     - sql_exec: update user set active = 1 where id = '$key'
+    - refresh: "#main table"
 
 audit_trail:
   access: admin
@@ -148,9 +150,21 @@ create:
 
 deactivate:
   access: admin
+  validate: none
   desc: Deactivate this user
-  audit: sql(select first_name, last_name, email_address from user where id = $key)
-
+  confirmation: Are you sure you want to deactivate this user?
+  audit: sql(select first_name, last_name, email_address from user where id = '$key')
+  post:
+    - sql_exec: update user set active = 0 where id = '$key'
+    - send_email:
+        to: $full_name <$email>
+        subject: Your account has been deactivated
+        message: >
+          Dear <b>$full_name</b> <br><br>
+          The administrator would like to inform you that your account has been activated.<br><br>
+          Regards,<br><br>
+          <b>Customer Operations</b>
+    - refresh: "#main table"
 
 delete:
   type: deactivate
