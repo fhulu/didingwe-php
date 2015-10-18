@@ -83,7 +83,7 @@ var mkn = new function() {
     tmp.page(params);
 
     var id = path.replace('/','_');
-    tmp.on('read_'+id, function(event, object, options) {
+    tmp.one('read_'+id, function(event, object, options) {
       object.attr('title', options.name);
       options = $.extend({modal:true, page_id: id, close: function() {
         $(this).dialog('destroy').remove();
