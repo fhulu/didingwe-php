@@ -531,6 +531,8 @@ sub_menu:
 synopsis:
   type: section_heading
   text: $desc
+  style:
+    margin-top: 24px
 
 table:
   tag: table

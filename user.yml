@@ -35,21 +35,6 @@ audit_trail:
     select t.create_time, u.first_name, u.last_name,u.email_address, t.action, t.detail
       from audit_trail t join user u on t.user_id = u.id
 
-change_password:
-  type: labelled_input_page
-  width: 700
-  desc:
-    Please enter your new password as well as the OTP (One Time Pin) that you received on your email or cellphone.
-  inputs:
-    - otp
-    - email: { attr: disabled }
-    - type: password_input
-    - password
-    - confirm_password
-  actions:
-    - reset_password
-
-
 check_otp:
   type: wizard_page
   name: One Time Pin
@@ -61,24 +46,19 @@ check_otp:
   values:
     - sql_values: select lpad(floor(rand()*9999),4,'0') server_otp, now() time_of_otp
     - write_session: server_otp,time_of_otp
+    - read_session: email,first_name,last_name
+    - send_email:
+        subject: One Time Password
+        from: $support
+        to: $first_name $last_name <$email>
+        message: >
+          Good day<br><br>
+          You are currently trying to register on the system or change your email address.
+          If you have not requested this, please inform the System Adminstrator.<br><br>
+          Your One Time Password is : <b>$server_otp</b>. <br><br>
+          Regards<br>
+          Customer Operations
     - clear_values
-  next:
-    post:
-      - sql_values: select lpad(floor(rand()*9999),4,'0') server_otp, now() time_of_otp
-      - write_session: server_otp,time_of_otp
-      - send_email:
-          subject: One Time Password
-          from: $support
-          to: $first_name $last_name <$email>
-          message: >
-            Good day<br><br>
-            You are currently trying to change your email address.
-            If you have not requested this, please inform the System Adminstrator.<br><br>
-            Your One Time Password is : <b>$otp</b>. <br><br>
-            Regards<br>
-            Customer Operations
-      - clear_values
-
 
 complete_registration:
   type: wizard_page
@@ -91,7 +71,7 @@ complete_registration:
   navigate:
     - login: { action: dialog }
 
-confirm_details:
+confirm_registration:
   type: wizard_page
   desc: |
     Below is a list of all the information you have entered to register on the system.
@@ -109,20 +89,20 @@ confirm_details:
     - agree_terms: { type: checkbox, template: question_input }
   values:
     - read_session: title,first_name,last_name,cellphone,email
-  navigate:
-    - confirm_details: { name: Submit, desc: "", validate: none }
-  post:
-    - read_session: title,first_name,last_name,cellphone,email,password
-    - sql_exec: >
-        insert into user(email_address, password, title, first_name,
-          last_name,cellphone,active,roles)
-        values('$email',password('$password'),'$title', '$first_name',
-          '$last_name','$cellphone',1,'reg')
-    - sql_values: select last_insert_id() uid
-    - sql_exec: >
-        insert into audit_trail(user_id, action, detail)
-        values(last_insert_id(), 'Register', '$title $first_name $last_name $cellphone $email')
-    - trigger: "wizard-next,#user_confirm_details"
+  next:
+    validate: none
+    post:
+      - read_session: title,first_name,last_name,cellphone,email,password
+      - sql_exec: >
+          insert into user(email_address, password, title, first_name,
+            last_name,cellphone,active,roles)
+          values('$email',password('$password'),'$title', '$first_name',
+            '$last_name','$cellphone',1,'reg')
+      - sql_values: select last_insert_id() uid
+      - sql_exec: >
+          insert into audit_trail(user_id, action, detail)
+          values(last_insert_id(), 'Register', '$title $first_name $last_name $cellphone $email')
+      - clear_values
 
 
 
@@ -336,7 +316,7 @@ modify:
   values:
     - sql_values: |
         select title,first_name,last_name,cellphone,email_address,roles
-        from user 
+        from user
         where id = $key
   actions:
     - modify: { name: Update }
@@ -408,22 +388,5 @@ register:
   steps:
     - enter_credentials
     - check_otp
-    - confirm_details: { next: false }
+    - confirm_registration
     - complete_registration
-
-
-reset_password:
-  audit: Changed password
-
-
-start_reset_password:
-  width: 600
-  name: Reset Password
-  desc: Start reset password process
-  type: labelled_input_page
-  inputs:
-    - email
-  actions:
-    - next:
-        call: user::start_reset_pw()
-        action: post
