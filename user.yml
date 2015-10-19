@@ -40,7 +40,10 @@ check_otp:
   name: One Time Pin
   desc: >
     Please enter the OTP(One Time Pin) that you received on your email or cellphone.
-    It is possible that the OTP email was sent to the Junk folder on your mail
+    It is possible that the OTP email was sent to the Junk folder on your mail.
+    <br><br>
+    Note: If you navigated backwards to change something, you will be sent another OTP.
+    Please make sure you enter this OTP instead of the first one.
   inputs:
     - otp
   values:
@@ -99,10 +102,9 @@ confirm_registration:
           values('$email',password('$password'),'$title', '$first_name',
             '$last_name','$cellphone',1,'reg')
       - sql_values: select last_insert_id() uid
-      - sql_exec: >
-          insert into audit_trail(user_id, action, detail)
-          values(last_insert_id(), 'Register', '$title $first_name $last_name $cellphone $email')
+      - write_session: uid
       - clear_values
+  audit: $title $first_name $last_name $cellphone $email
 
 
 
@@ -169,7 +171,7 @@ enter_credentials:
     - confirm_password
   next:
     post:
-      - write_session: first_name,last_name,cellphone,email,password
+      - write_session: [title,first_name,last_name,cellphone,email,password]
 
 history:
   access: [admin]
@@ -273,7 +275,7 @@ login:
     - login
     - forgot_password: { action: dialog }
   post:
-    - sql_values:
+    - sql_values: |
         select id uid, partner_id, email_address email, first_name, last_name,
           concat(first_name, ' ', last_name) full_name,
           cellphone, roles, groups, 'home' page
@@ -374,6 +376,6 @@ register:
   width: 700
   steps:
     - enter_credentials
-    - check_otp
-    - confirm_registration
+    - check_otp: { clear: true } 
+    - confirm_registration: { clear: true}
     - complete_registration
