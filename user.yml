@@ -304,7 +304,7 @@ modify:
         valid: provided
   values:
     - sql_values: |
-        select title,first_name,last_name,cellphone,email_address,roles
+        select title,first_name,last_name,cellphone,email_address,roles role
         from user
         where id = $key
   actions:
