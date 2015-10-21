@@ -322,7 +322,6 @@
         }
         tr = $('<tr></tr>');//.appendTo(body);
         var key;
-        if (i % 2 === 0) tr.addClass('alt');
         var expandable = false;
         var k = 0;
         for (var j in row) {
