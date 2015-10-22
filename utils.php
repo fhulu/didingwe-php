@@ -54,6 +54,11 @@ function remove_nulls(&$array)
 function replace_vars($str, $values, $callback=null)
 {
   $matches = array();
+  if (preg_match('/^\$(\w+)$/', $str, $matches)) {
+    $key = $matches[1];
+    return isset($values[$key])? $values[$key]: $str;
+  }
+
   if (!preg_match_all('/\$(\w+)/', $str, $matches, PREG_SET_ORDER)) return  $str;
 
   foreach($matches as $match) {
