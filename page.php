@@ -771,7 +771,7 @@ class page
     $sql = "insert $table($args) values($values)";
     return $this->sql_exec($sql);
   }
-  
+
   function update_context(&$options)
   {
     $context = page::merge_options($this->context, $options);
@@ -1060,6 +1060,10 @@ class page
 
   function read_values($values)
   {
+    $context = merge_options($this->fields, $this->context, $_SESSION, $this->request, $this->answer);
+    replace_fields($context, $this->request);
+    replace_fields($values, $this->request);
+    replace_fields($values, $context);
     log::debug_json("READ VALUES", $values);
     return $values;
   }
