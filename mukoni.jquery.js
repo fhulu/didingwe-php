@@ -51,8 +51,12 @@ $.fn.setValue = function(val)
     return this;
   }
   var type = this.attr('type');
-  if (type === 'checkbox')
-    return val?this.attr('checked', true): this.removeAttr('checked');
+  if (type === 'checkbox') {
+    var values = this.attr('values');
+    if (values != '') val = values.indexOf(val);
+    return this.prop('checked', val);
+  }
+
   if (this.hasAttr('value'))
     return this.val(val);
   return this.html(val);

@@ -3,10 +3,12 @@
 
 activate:
   access: admin
+  validate: none
   desc: Activate inactive user
   audit: sql(select first_name, last_name, email_address from user where id = '$key')
   post:
     - sql_exec: update user set active = 1 where id = '$key'
+    - refresh: "#main table"
 
 audit_trail:
   access: admin
@@ -33,70 +35,54 @@ audit_trail:
     select t.create_time, u.first_name, u.last_name,u.email_address, t.action, t.detail
       from audit_trail t join user u on t.user_id = u.id
 
-change_password:
-  type: labelled_input_page
-  width: 700
-  desc:
-    Please enter your new password as well as the OTP (One Time Pin) that you received on your email or cellphone.
-  inputs:
-    - otp
-    - email: { attr: disabled }
-    - type: password_input
-    - password
-    - confirm_password
-  actions:
-    - reset_password
-
-
 check_otp:
-  type: labelled_input_page
+  type: wizard_page
   name: One Time Pin
   desc: >
     Please enter the OTP(One Time Pin) that you received on your email or cellphone.
-    It is possible that the OTP email was sent to the Junk folder on your mail
+    It is possible that the OTP email was sent to the Junk folder on your mail.
+    <br><br>
+    Note: If you navigated backwards to change something, you will be sent another OTP.
+    Please make sure you enter this OTP instead of the first one.
   inputs:
     - otp
   values:
     - sql_values: select lpad(floor(rand()*9999),4,'0') server_otp, now() time_of_otp
     - write_session: server_otp,time_of_otp
+    - read_session: email,first_name,last_name
+    - send_email:
+        subject: One Time Password
+        from: $support
+        to: $first_name $last_name <$email>
+        message: >
+          Good day<br><br>
+          You are currently trying to register on the system or change your email address.
+          If you have not requested this, please inform the System Adminstrator.<br><br>
+          Your One Time Password is : <b>$server_otp</b>. <br><br>
+          Regards<br>
+          Customer Operations
     - clear_values
-  actions:
-    - next:
-        post:
-          - sql_values: select lpad(floor(rand()*9999),4,'0') server_otp, now() time_of_otp
-          - write_session: server_otp,time_of_otp
-          - send_email:
-              subject: One Time Password
-              from: $support
-              to: $first_name $last_name <$email>
-              message: >
-                Good day<br><br>
-                You are currently trying to change your email address.
-                If you have not requested this, please inform the System Adminstrator.<br><br>
-                Your One Time Password is : <b>$otp</b>. <br><br>
-                Regards<br>
-                Customer Operations
-          - clear_values
-
 
 complete_registration:
-  type: labelled_input_page
+  type: wizard_page
   width: 700
   desc: |
     Thank you. You have been provisionally registered. <be>
     You will have limited access to the system
     until your registration has been approved. <br>
     Please check your email for registration status.
-  actions:
+  navigate:
     - login: { action: dialog }
 
-confirm_details:
-  type: info_page
+confirm_registration:
+  type: wizard_page
   desc: |
     Below is a list of all the information you have entered to register on the system.
     If you are happy with everything, please accept the terms and conditions to
     complete the registration process.
-  lines:
+  inputs:
+    - template: info_line
+    - type: info_text
     - title
     - first_name
     - last_name
@@ -106,20 +92,19 @@ confirm_details:
     - agree_terms: { type: checkbox, template: question_input }
   values:
     - read_session: title,first_name,last_name,cellphone,email
-  actions:
-    - confirm_details: { name: Submit, desc: "" }
-  post:
-    - read_session: title,first_name,last_name,cellphone,email,password
-    - sql_exec: >
-        insert into user(email_address, password, title, first_name,
-          last_name,cellphone,active,roles)
-        values('$email',password('$password'),'$title', '$first_name',
-          '$last_name','$cellphone',1,'reg')
-    - sql_values: select last_insert_id() uid
-    - sql_exec: >
-        insert into audit_trail(user_id, action, detail)
-        values(last_insert_id(), 'Register', '$title $first_name $last_name $cellphone $email')
-    - trigger: "wizard-next,#user_confirm_details"
+  next:
+    validate: none
+    post:
+      - read_session: title,first_name,last_name,cellphone,email,password
+      - sql_exec: >
+          insert into user(email_address, password, title, first_name,
+            last_name,cellphone,active,roles)
+          values('$email',password('$password'),'$title', '$first_name',
+            '$last_name','$cellphone',1,'reg')
+      - sql_values: select last_insert_id() uid
+      - write_session: uid
+      - clear_values
+  audit: $title $first_name $last_name $cellphone $email
 
 
 
@@ -147,22 +132,33 @@ create:
 
 deactivate:
   access: admin
+  validate: none
   desc: Deactivate this user
-  audit: sql(select first_name, last_name, email_address from user where id = $key)
-
+  confirmation: Are you sure you want to deactivate this user?
+  audit: sql(select first_name, last_name, email_address from user where id = '$key')
+  post:
+    - sql_exec: update user set active = 0 where id = '$key'
+    - send_email:
+        to: $full_name <$email>
+        subject: Your account has been deactivated
+        message: >
+          Dear <b>$full_name</b> <br><br>
+          The administrator would like to inform you that your account has been activated.<br><br>
+          Regards,<br><br>
+          <b>Customer Operations</b>
+    - refresh: "#main table"
 
 delete:
   type: deactivate
 
 edit:
   access: [admin]
-  audit: $title,$first_name,$last_name,$cellphone,$email_address,$assigned_role
   action: dialog
   url: /user/modify
 
 enter_credentials:
   name: User Credentials
-  type: labelled_input_page
+  type: wizard_page
   desc: Fill in user information used to uniquely identify the user on the system
   inputs:
     - title: {type: dropdown}
@@ -173,23 +169,9 @@ enter_credentials:
     - type: password_input
     - password
     - confirm_password
-  actions:
-    - next:
-        post:
-          - sql_values: select lpad(floor(rand()*9999),4,'0') server_otp, now() time_of_otp
-          - write_session: server_otp,time_of_otp,title,first_name,last_name,cellphone,email,password
-          - send_email:
-              subject: One Time Password
-              from: $support
-              to: $first_name $last_name <$email>
-              message: >
-                Good day<br><br>
-                Below is your one time password, required to continue with your application.<br><br>
-                Your One Time Password is : <b>$server_otp</b>. <br><br>
-                Regards<br>
-                Customer Operations
-          - clear_values
-
+  next:
+    post:
+      - write_session: [title,first_name,last_name,cellphone,email,password]
 
 history:
   access: [admin]
@@ -250,11 +232,10 @@ list:
     - show_header
     - show_titles
   report_title: User Report
-  slide: { access: admin }
   row_actions:
-    - edit
     - activate
     - deactivate
+    - edit: { action: dialog }
   footer_actions:
     - print
     - export
@@ -294,7 +275,7 @@ login:
     - login
     - forgot_password: { action: dialog }
   post:
-    - sql_values:
+    - sql_values: |
         select id uid, partner_id, email_address email, first_name, last_name,
           concat(first_name, ' ', last_name) full_name,
           cellphone, roles, groups, 'home' page
@@ -309,6 +290,7 @@ login:
 modify:
   type: labelled_input_page
   desc: Change user details
+  access: [admin]
   width: 600
   inputs:
     - title: {type: dropdown}
@@ -322,13 +304,18 @@ modify:
         valid: provided
   values:
     - sql_values: |
-        select title,first_name,last_name,cellphone,email_address,r.code
-        role
-        from user u left join user_role ur on u.id = ur.user_id
-        left join role r on r.code=ur.role_code
+        select title,first_name,last_name,cellphone,email_address,roles role
+        from user
         where id = $key
   actions:
-    - update
+    - modify: { name: Update }
+  post:
+    - read_values: {id: $key, roles: $role }
+    - sql_update: [user, id, title, first_name, last_name, email_address, roles]
+    - clear_values
+    - close_dialog: User details updated
+    - refresh: "#main table"
+  audit: $title,$first_name,$last_name,$cellphone,$email_address,$role
 
 my_audit_trail:
   type: audit_trail
@@ -360,10 +347,10 @@ profile:
     - role: { attr: disabled }
   values:
     - sql_values: |
-        select title,first_name,last_name,cellphone,email_address,r.code role
-        from user u left join user_role ur on u.id = ur.user_id
-        join role r on r.code = ur.role_code
+        select title,first_name,last_name,cellphone,email_address,group_concat(r.name) role
+        from user u left join role r on find_in_set(r.code,u.roles)
         where id = $uid
+        group by id
   actions:
     - profile_update
 
@@ -389,23 +376,6 @@ register:
   width: 700
   steps:
     - enter_credentials
-    - check_otp
-    - confirm_details: { next: false }
+    - check_otp: { clear: true } 
+    - confirm_registration: { clear: true}
     - complete_registration
-
-
-reset_password:
-  audit: Changed password
-
-
-start_reset_password:
-  width: 600
-  name: Reset Password
-  desc: Start reset password process
-  type: labelled_input_page
-  inputs:
-    - email
-  actions:
-    - next:
-        call: user::start_reset_pw()
-        action: post

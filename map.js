@@ -103,7 +103,7 @@
         zoom: this.options.zoom,
         mapTypeId: google.maps.MapTypeId.ROADMAP
       };
-      this.map = new google.maps.Map(document.getElementById(this.element.attr('id')), props);
+      this.map = new google.maps.Map(this.element[0], props);
       this.zoom(this.options.zoom);
     },
 

@@ -47,7 +47,7 @@ change_password:
   desc: Change your current password
   access: reg
   action: dialog
-  url: /user/start_reset_password
+  url: /password_changer/change
 
 confirm_details:
   name: I confirm that the details provided are true and correct.
