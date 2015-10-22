@@ -69,8 +69,11 @@ datatable:
   flags: []
     # - editall
     #
+  inherit: [data]
   post:
+    - read_values: { rows: $data}
     - call: datatable::read(context,$key)
+
   position: top
   filter:
     name: ""
