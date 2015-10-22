@@ -371,9 +371,10 @@
       field.value = value;
       var created = this.render.create(field);
       if (key !== undefined) {
+        if (!$.isNumeric(key)) key = key.toLowerCase().replace(/ +/,'_');
         var id = created.attr('id');
         if (id !== undefined)
-          created.attr('id', key.toLowerCase().replace(/ +/,'_')+"_"+id);
+          created.attr('id', key+"_"+id);
       }
       td.append(created);
     },

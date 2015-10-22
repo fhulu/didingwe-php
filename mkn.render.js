@@ -293,7 +293,7 @@ mkn.render = function(options)
     setAttr(obj, field);
     setClass(obj, field);
     setStyle(obj, field);
-    var values = $.extend({}, this.known, this.types, field);
+    var values = $.extend({}, this.types, field);
     var matches = getMatches(field.html, /\$(\w+)/g);
     var subitem_count = 0;
     for (var i = 0; i< matches.length; ++i) {
@@ -319,7 +319,7 @@ mkn.render = function(options)
         continue;
       }
 
-      if (typeof value === 'string') {
+      if (!$.isPlainObject(value)) {
         obj.replace(new RegExp('\\$'+code+"([\b\W]|$)?", 'g'), value+'$1');
         this.known[code] = value;
         continue;
