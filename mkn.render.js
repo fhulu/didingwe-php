@@ -486,12 +486,11 @@ mkn.render = function(options)
 
   var initLinks = function(object, field, callback)
   {
-    loadLinks('css', field, function() {
-      loadLinks('script', field, function() {
-        if (field.create)
-          object.customCreate($.extend({types: me.types}, me.options, field));
-        if (callback !== undefined) callback();
-      });
+    loadLinks('css', field);
+    loadLinks('script', field, function() {
+      if (field.create)
+        object.customCreate($.extend({types: me.types}, me.options, field));
+      if (callback !== undefined) callback();
     });
   };
 
