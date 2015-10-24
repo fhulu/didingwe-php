@@ -65,7 +65,7 @@ datatable:
   create: datatable
   script: /common/datatable.js
   row_creator: { type: table_row }
-  css: /datatable.css
+  css: /common/datatable.css
   flags: []
     # - editall
     #

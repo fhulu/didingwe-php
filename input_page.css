@@ -1,3 +1,80 @@
+textarea,
+input[type=email],
+input[type=text],
+input[type=password]
+{
+  border: 1px solid lightgrey;
+}
+
+.warn
+{
+  color: red;
+}
+
+.left
+{
+  text-align: left;
+}
+
+.right
+{
+  float: right;
+}
+
+.hcenter, .hcentre
+{
+  position: relative;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+select
+{
+  border: 1px solid #D0D0CD;
+  background:#ffffff;
+}
+input[type='submit'],[type='reset'] ,[type='button']
+{
+  cursor:pointer;
+}
+
+input:focus,
+select:focus
+{
+  border: 1px solid grey;
+}
+
+button,
+.action
+{
+  height: 30px;
+  color: white;
+  background-color: rgb(20,60,90);
+  border: 0px;
+  padding-left: 20px;
+  padding-right: 20px;
+  font-weight: 100;
+  padding-left: 20px;
+  padding-right: 20px;
+  margin-right: 20px;
+}
+
+.desc
+{
+  text-align: center;
+  font-size: 14pt;
+  font-weight: 100;
+  border-bottom: 1px solid grey;
+}
+.action:hover,button:hover
+{
+  background-color: rgb(36,94,128);
+}
+
+
+
 .actions
 {
   width: 100%;
@@ -105,11 +182,29 @@
 .input > input:hover{
   box-shadow: 0px 0px 6px rgb(50, 204, 204);
 }
+
 .input > input{
-  border-style: none;
   border-radius: 3px;
   font-size: 18px;
 }
+
+.error
+{
+  display: none;
+  padding: 1px;
+  border: 1px solid lightgrey;
+  background: #fffff0;
+  width: 95%;
+  color: red;
+  font-weight: normal;
+  color: red;
+  -moz-box-shadow: 3px 3px 4px #0f0f0f;
+  -webkit-box-shadow: 3px 3px 4px #0f0f0f;
+  box-shadow: 3px 3px 4px #0f0f0f;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 
 .labelled-input>label
 {
@@ -196,9 +291,4 @@
 .question-input>input[type=checkbox]
 {
   width: 24px;
-}
-
-select>option
-{
-  height: 32px;
 }
