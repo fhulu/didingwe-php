@@ -683,8 +683,8 @@ class page
     $detail = addslashes($detail);
     $user = $this->read_user();
     $user_id = $user['uid'];
-    $db->insert("insert into audit_trail(user_id, action, detail)
-      values($user_id, '$name', '$detail')");
+    $db->insert("insert into audit_trail(user, action, detail)
+      values('$user_id', '$name', '$detail')");
   }
 
   function action()
@@ -769,9 +769,20 @@ class page
     $args = implode(',', $args);
     $values = implode(',', $values);
     $sql = "insert $table($args) values($values)";
+    $this->sql_exec($sql);
+  }
+
+  function sql_select()
+  {
+    $args = func_get_args();
+    $table = array_shift($args);
+    $key = array_shift($args);
+    if (!sizeof($args))
+      throw new Exception("Invalid number of arguments for sql_select");
+    $sql = "select from $table where $key = '\$$key'";
     return $this->sql_exec($sql);
   }
-  
+
   function update_context(&$options)
   {
     $context = page::merge_options($this->context, $options);
@@ -828,7 +839,7 @@ class page
 
     $methods = array('alert', 'abort', 'call', 'clear_session', 'clear_values',
       'close_dialog', 'load_lineage', 'read_session', 'read_values', 'redirect',
-      'send_email', 'show_dialog', 'sql', 'sql_exec','sql_rows', 'sql_insert',
+      'send_email', 'show_dialog', 'sql', 'sql_exec','sql_rows', 'sql_insert', 'sql_select',
       'sql_update', 'sql_values', 'refresh', 'trigger', 'update', 'write_session');
     foreach($actions as $action) {
       if ($this->aborted) return false;
