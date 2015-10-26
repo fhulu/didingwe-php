@@ -532,7 +532,7 @@ synopsis:
   type: section_heading
   text: $desc
   style:
-    margin-top: 24px
+    margin-top: 10px
 
 table:
   tag: table
