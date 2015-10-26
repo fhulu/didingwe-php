@@ -5,7 +5,7 @@ activate:
   access: admin
   validate: none
   desc: Activate inactive user
-  audit: sql(select first_name, last_name, email from user where id = '$key')
+  audit: sql(select first_name, last_name, email from user_view where id = '$key')
   post:
     - sql_exec: update user set active = 1 where id = '$key'
     - refresh: "#main table"
@@ -32,9 +32,8 @@ audit_trail:
     - what: { width: 18%, name: Action }
     - detail: { width: 35% }
   sql: |
-    select t.create_time, p.first_name, p.last_name,u.email, t.action, t.detail
-      from audit_trail t join user u on t.user = u.id
-      left join person p on u.person = p.id
+    select t.create_time, u.first_name, u.last_name,u.email, t.action, t.detail
+      from audit_trail t join user_view u on t.user = u.id
 
 check_otp:
   type: wizard_page
@@ -240,7 +239,7 @@ list:
     - export
   fields:
     - key: { hide: yes }
-    - create_time: { width: 14% }
+    - create_time: { width: 20% }
     - email: { width: 20% }
     - first_name: { width: 13% }
     - last_name: { width: 13% }
@@ -254,11 +253,11 @@ list:
       - user/history
   sql: >
     select id, create_time, email, first_name, last_name, cellphone, roles, status, status, actions from (
-       select u.id, u.create_time,email, u.first_name, u.last_name,
+       select u.id, u.create_time, u.email, u.first_name, u.last_name,
         u.cellphone, group_concat(r.name) roles,
         if(u.active=1,'active','inactive') status,
         if(u.active=1,'expand,slide,edit,deactivate','expand,slide,edit,activate') actions
-      from user u left join role r on find_in_set(r.code,u.roles)
+      from user_view u left join role r on find_in_set(r.code,u.roles)
       group by u.id
     ) tmp where 1 = 1
 
@@ -303,9 +302,12 @@ modify:
         valid: provided
   values:
     - sql_values: |
-        select title,first_name,last_name,cellphone,email,roles role
-        from user
-        where id = $key
+        select title,first_name,last_name,cellphone,email,group_concat(r.name) role
+        from user_view u
+          left join role r on find_in_set(r.code,u.roles)
+        where u.id = '$key'
+        group by u.id
+
   actions:
     - modify: { name: Update }
   post:
@@ -321,9 +323,8 @@ my_audit_trail:
   name: My Audit Trail
   access: reg
   sql: |
-    select t.create_time, p.first_name, p.last_name,u.email, t.action, t.detail
-      from audit_trail t join user u on t.user = u.id and u.id = '$uid'
-      left join person p on u.person = p.id
+    select t.create_time, u.first_name, u.last_name,u.email, t.action, t.detail
+      from audit_trail t join user_view u on t.user = u.id and u.id = '$uid'
 
 not_registered:
   valid: not(is_registered($1))
@@ -353,9 +354,8 @@ profile:
     - role: { attr: disabled }
   values:
     - sql_values: |
-        select p.title,p.first_name,p.last_name,p.cellphone,u.email,group_concat(r.name) role
-        from user u
-          left join person p on u.person = p.id
+        select u.title,u.first_name,u.last_name,u.cellphone,u.email,group_concat(r.name) role
+        from user_view u
           left join role r on find_in_set(r.code,u.roles)
         where u.id = '$uid'
         group by u.id
