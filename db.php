@@ -68,8 +68,6 @@ class db
   function exec($q, $max_rows=0, $start=0)
   {
     global $config;
-    $q = str_replace('$pid', $config['program_id'], $q);
-    $q = str_replace('$audit_db', $config['audit_db'], $q);
     if ($start=='') $start = 0;
     if ($max_rows > 0) $q .= " limit $start, $max_rows";
     log::debug("SQL: $q");
@@ -137,9 +135,8 @@ class db
   static function init_default()
   {
     global $db,$config;
-    $default_db = isset($config['default_db'])?$config['default_db']:$config['audit_db'];
     if ($db == null) {
-      $db = new db($default_db, $config['audit_user'], $config['audit_passwd']);
+      $db = new db($config['default_db'], $config['db_user'], $config['db_passwd']);
     }
   }
 
