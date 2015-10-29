@@ -10,12 +10,12 @@ alphabetic: must_be([a-zA-Z]+,alphabetic)
 alphaspace: must_be([a-zA-Z ]+,alphaspace)
 
 at_least:
-  valid: /^.{$1,}$/
+  valid: /^.{$1,}$/s
   2: characters
   error: $name must be at least $1 $2
 
 at_most:
-  valid: /^.{0,$1}$/
+  valid: /^.{0,$1}$/s
   2: characters
   error: $name must be at most $1 $2
 
@@ -29,11 +29,11 @@ between:
   error: $1 ($v1) must be between $v2 and $v3
 
 contains_at_least:
-  valid: /$1/
+  valid: /$1/s
   error: $name must contain at least $2
 
 contains_only:
-  valid: /^$1$/
+  valid: /^$1$/s
   2: $code
   error: $name must only contain $2
 
