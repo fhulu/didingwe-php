@@ -32,7 +32,6 @@
   var request_method = '<?=$config['request_method'];?>';
 </script>
 <?php
-  require_once ('../common/log.php');
 
   function pre_load_custom($page)
   {
