@@ -987,23 +987,29 @@ class page
     $this->update_context($options);
     $options = page::merge_options($this->fields['send_email'], $options);
     $options = page::merge_options($this->get_expanded_field('send_email'), $options);
-    $header_array = $options['headers'];
-    $header_string = "";
-    foreach($header_array as $header) {
-      $header = assoc_element($header);
-      $header_string .= $header[0] . ": " . $header[1] . "\r\n";
-    }
+    $headers = $options['headers'];
     $from = $options['from'];
-    $header_string .= "from: $from\r\n";
     $to = $options['to'];
     $message = $options['message'];
     $subject = $options ['subject'];
-    log::debug("SENDMAIL from $from to $to");
-    log::debug("HEADERS: $header_string");
-    log::debug("SUBJECT: $subject");
-    $result = mail($to, $subject, $message, $header_string);
+    log::debug("SENDMAIL from $from to $to SUBJECT $subject");
+    $headers['From'] = $from;
+    $headers['Subject'] = $subject;
+    $headers['To'] = $to;
+
+    set_include_path("./common/pear");
+    require_once "Mail.php";
+    require_once("Mail/mime.php");
+    $mime = new Mail_mime("\n");
+    $mime->setHTMLBody($message);
+    $message = $mime->get();
+    $headers = $mime->headers($headers);
+    $smtp = Mail::factory('smtp',  $options['smtp']);
+    $result = $smtp->send($to, $headers, $message);
+    restore_include_path();
     log::debug("RESULT: $result");
-  }
+
+}
 
   static function preg_match_test($req)
   {

@@ -274,6 +274,9 @@ send_email:
     - Content-type: text/html; charset=iso-8859-1
   from: $from_user <$from_email>
   to: $to_user <$to_email>
+  smtp:
+    host: didi.mukoni.net
+    auth: true
 
 
 start_date:
