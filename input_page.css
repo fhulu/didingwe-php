@@ -82,36 +82,24 @@ button,
 
 .input
 {
-  width: 100%;
   position: relative;
 }
 
-.input>label+*
+.input
 {
-  position: relative;
-  width: 100%;
-  left: 0px;
-  font-weight: 100;
-  border-radius: 6px;
-  height: 32px;
-}
-
-.input>*
-{
-  width: 100%;
   border-radius: 6px;
   height: 32px;
   vertical-align: middle;
 }
 
-.input>input[type=radio],
-.input>input[type=checkbox]
+.input[type=radio],
+.input[type=checkbox]
 {
   width: 24px;
   height: 24px;
 }
 
-.input>*:first-child:focus
+.input:focus
 {
   -moz-box-shadow: 3px 3px 4px #3f3f3f;
   -webkit-box-shadow: 3px 3px 4px #3f3f3f;

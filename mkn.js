@@ -183,3 +183,9 @@ if (!String.prototype.trim) {
     };
   })();
 }
+
+if (!RegExp.quote) {
+  RegExp.quote = function(str) {
+    return (str+'').replace(/[.?*+^$[\]\\(){}|-]/g, "\\$&");
+  };
+}

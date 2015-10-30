@@ -314,6 +314,12 @@ input_page:
     - wrap: class
     - type: submit
 
+isearch:
+  type: input
+  create: isearch
+  script: [/common/isearch.js]
+  css: [/common/isearch.css]
+
 label:
   tag: label
 
@@ -341,16 +347,19 @@ labelled_input:
     margin-top: 6px
     width: 100%
     position: relative
-
-  label_width: 24%
-  input_width: 73%
-  label_suffix: ":"
-  text: |
-      <label style="width: $label_width">$name$label_suffix</label>
-      <a class=input style="width: $input_width">
-        $field
-        <span class=hint>$desc</span>
-      </a>
+  inherit: [name]
+  label:
+    suffix: ":"
+    classes: label
+    text: $name$suffix
+    width: 23%
+    style: { width: $width}
+  text: $label$field
+  subject:
+    width: 74%
+    class: [input]
+    style: { width: $width }
+    attr: { title: $desc }
 
 labelled_input_page:
   type: input_page
