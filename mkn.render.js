@@ -52,7 +52,7 @@ mkn.render = function(options)
 
   this.expandType = function(type)
   {
-    if ($.isPlainObject(type)) return type;
+    if ($.isPlainObject(type)) return me.mergeType(type);
     if (type.search(/\W/) >= 0) return {html: type};
     return me.mergeType({type: type} );
   };
@@ -539,6 +539,7 @@ mkn.render = function(options)
       for (var i in matches) {
         var match = matches[i];
         style[key] = val.replace(new RegExp('\\$'+match+"([\b\W]|$)?", 'g'), field[match]+'$1');
+        style[key] = val.replace('$'+match, field[match]);
       }
     }
     field[style] = style;
@@ -576,7 +577,7 @@ mkn.render = function(options)
       else if (name === 'wrap' && $.isPlainObject(value))
         value = $.extend({}, {tag: 'div'}, value);
       else if (name === 'type' || name === 'template' || name === 'wrap') {
-        if (value === undefined) { console.log("undefiend value", name, item)}
+        if (value === undefined) { console.log("undefined value", name, item)}
         value = me.expandType(value);
       }
       if (name == 'template' && $.isPlainObject(value))

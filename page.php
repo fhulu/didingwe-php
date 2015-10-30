@@ -367,10 +367,14 @@ class page
         $this->expand_value($value);
         return;
       }
-      if (isset($this->types[$type])) return;
-
       $added_types = array();
-      $expanded = $this->expand_type($type, $added_types);
+      if (is_string($type)) {
+        if (isset($this->types[$type])) return;
+        $expanded = $this->expand_type($type, $added_types);
+      }
+      else if (is_array($type)) {
+        $expanded = $this->merge_type($type, $added_types);
+      }
 
       if (!is_null($expanded))
         $this->merge_type($expanded, $added_types);
