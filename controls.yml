@@ -319,6 +319,9 @@ isearch:
   create: isearch
   script: [/common/isearch.js]
   css: [/common/isearch.css]
+  max_size: 10
+  post:
+    - call: isearch::q(context)
 
 label:
   tag: label
