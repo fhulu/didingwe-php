@@ -2,7 +2,7 @@
 
 class isearch
 {
-  static function filter_term($sql, $term, $fields)
+  static function filter_term($sql, $term, $fields, $conjuctor = "and")
   {
     array_shift($fields);
     $likes = array();
@@ -10,12 +10,25 @@ class isearch
       $likes[] = "$field like '%$term%'";
     }
     $likes = "(". implode(' or ', $likes) . ")";
-    $where_pos = strripos($sql, "where ");
-    if ($where_pos === false)
-      $sql .= " where $likes";
-    else
-      $sql = substr($sql, 0, $where_pos + 6) . " and $likes";
-    return $sql;
+    if (strripos($sql, "where "))
+      return $sql .= " $conjuctor $likes";
+
+    return $sql .= " where $likes";
+  }
+
+  static function split_words($term)
+  {
+    $matches = array();
+    preg_match_all('/([^\s,]+)([\s,]+)?/', $term, $matches, PREG_SET_ORDER);
+    $words = array();
+    $sep = "";
+    foreach($matches as $match) {
+      $words[] = $match[1];
+      $phrase .= $match[1];
+      if (sizeof($words) > 1) $words[] = $phrase;
+      $phrase .= $match[2];
+    }
+    return $words;
   }
 
   static function q($options)
@@ -26,7 +39,13 @@ class isearch
     global $db;
     $sql =  page::replace_sql($options['sql'], $options);
     if ($sql == '') return;
-    $sql = isearch::filter_term($sql, $options['term'], $options['fields']);
+    $words = isearch::split_words($options['term']);
+    $fields = $options['fields'];
+    $conjuctor = "and";
+    foreach($words as $word) {
+      $sql = isearch::filter_term($sql, $word, $fields, $conjuctor);
+      $conjuctor = "or";
+    }
     $sql = preg_replace('/^\s*(select )/i', '$1 SQL_CALC_FOUND_ROWS ', $sql, 1);
     if ($page_size == 0)
       $rows = $db->page_through_indices($sql, 1000);
