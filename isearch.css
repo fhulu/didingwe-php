@@ -1,7 +1,20 @@
+
+.ui-autocomplete {
+  max-height: 240px;
+  overflow-y: auto;
+  /* prevent horizontal scrollbar */
+  overflow-x: hidden;
+}
+
 .isearch {
   position: relative;
   display: inline-block;
+  max-height: 100px;
+  overflow-y: auto;
+  /* prevent horizontal scrollbar */
+  overflow-x: hidden;
 }
+
 .isearch-toggle {
   position: absolute;
   top: 0;
