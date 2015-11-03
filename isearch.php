@@ -31,19 +31,33 @@ class isearch
     return $words;
   }
 
+  static function get_sql($options)
+  {
+    $sql = $options['sql'];
+    if (is_null($sql)) {
+      $table = $options['table'];
+      if (is_null($table))
+        throw new Exception("No table or sql supplied for isearch");
+      $sql = "select " . implode(',', $options['fields']) . " from $table";
+    }
+    return page::replace_sql($sql, $options);
+  }
+
   static function q($options)
   {
     $page_size = at($options, 'max_size');
     if (is_null($page_size))
       $page_size = 0;
     global $db;
-    $sql =  page::replace_sql($options['sql'], $options);
+    $sql =  isearch::get_sql($options);
     if ($sql == '') return;
     $words = isearch::split_words($options['term']);
-    $fields = $options['fields'];
+    $search = $options['search'];
+    if (is_null($search))
+      $search = $options['fields'];
     $conjuctor = "and";
     foreach($words as $word) {
-      $sql = isearch::filter_term($sql, $word, $fields, $conjuctor);
+      $sql = isearch::filter_term($sql, $word, $search, $conjuctor);
       $conjuctor = "or";
     }
     $sql = preg_replace('/^\s*(select )/i', '$1 SQL_CALC_FOUND_ROWS ', $sql, 1);
