@@ -4,7 +4,6 @@ class isearch
 {
   static function filter_term($sql, $term, $fields, $conjuctor = "and")
   {
-    array_shift($fields);
     $likes = array();
     foreach($fields as $field) {
       $likes[] = "$field like '%$term%'";
