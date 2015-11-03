@@ -15,13 +15,19 @@
   overflow-x: hidden;
 }
 
-.isearch-toggle {
+.isearch-buttons {
   position: absolute;
   top: 0;
   bottom: 0;
   right: -2px;
   padding: 0;
 }
+
+.isearch-buttons>* {
+  height: 93%;
+  border-right: 0;
+}
+
 .isearch-input {
   margin: 0;
   width: 100%;

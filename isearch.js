@@ -1,13 +1,17 @@
 $.widget( "custom.isearch", {
   options: {
     categoryPrefix: "-",
-    allowNew: false,
-    fields:  ['value','name','detail'],
-    render: "$name<div>$detail</div>",
-    chosen: "$name"
+    fields:  ['value','name'],
+    render: "$name",
+    chosen: "$name",
+    flags: []
   },
 
   self: this,
+
+  hasFlag: function(flag) {
+    return this.options.flags.indexOf(flag) >= 0;
+  },
 
   _create: function ()
   {
@@ -18,9 +22,14 @@ $.widget( "custom.isearch", {
       .css('width', el.css('width'))
       .append(el)
 
-    this.element.hide();
+
+    el.hide();
     this._createAutocomplete();
-    this._createShowAllButton();
+    if (this.hasFlag('show_all') || this.options.adder !== undefined) {
+      this.buttons = $('<span>').addClass('isearch-buttons').appendTo(this.wrapper);
+      if (this.hasFlag('show_all')) this._createShowAllButton();
+      if (this.options.adder !== undefined) this._createAddNewButton();
+    }
   },
 
   _createAutocomplete: function() {
@@ -64,7 +73,7 @@ $.widget( "custom.isearch", {
       .attr( "tabIndex", -1 )
       .attr( "title", "Show All Items" )
       .tooltip()
-      .appendTo( this.wrapper )
+      .appendTo( this.buttons )
       .button({
         icons: {
           primary: "ui-icon-triangle-1-s"
@@ -72,7 +81,7 @@ $.widget( "custom.isearch", {
         text: false
       })
       .removeClass( "ui-corner-all" )
-      .addClass( "isearch-toggle ui-corner-right" )
+      .addClass( "isearch-toggle" )
       .mousedown(function() {
         wasOpen = input.autocomplete( "widget" ).is( ":visible" );
       })
@@ -86,6 +95,25 @@ $.widget( "custom.isearch", {
 
         // Pass empty string as value to search for, displaying all results
         input.autocomplete( "search", "" );
+      });
+  },
+  _createAddNewButton: function() {
+    var self = this;
+    $( "<a>" )
+      .attr( "tabIndex", -1 )
+      .attr( "title", "Add New Item" )
+      .tooltip()
+      .appendTo( this.buttons )
+      .button({
+        icons: {
+          primary: "ui-icon-plus"
+        },
+        text: false
+      })
+      .removeClass( "ui-corner-all" )
+      .addClass( "isearch-add" )
+      .click(function() {
+        mkn.showDialog(self.options.adder, self.options);
       });
   },
 
