@@ -296,6 +296,19 @@ inplace_input:
   subject:
     attr: { placeholder: $name }
 
+inplace_image_input:
+  templates: div
+  style: { display: $pack }
+  text: |
+      <a class=input>
+      <img src="$src" ></img>
+        $field
+        <span class=hint>$desc</span>
+      </a>
+  subject:
+    attr: { placeholder: $name }
+  src_type: png
+  
 input:
   tag: input
   text: ""
