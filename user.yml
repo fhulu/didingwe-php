@@ -10,8 +10,8 @@ activate:
     - sql_exec: update user set active = 1 where id = '$key'
     - refresh: "#main table"
 
-audit_trail:
-  access: admin
+
+audit_trail_base:
   type: datatable
   sort: when
   sort_order: desc
@@ -31,6 +31,10 @@ audit_trail:
     - email: { width: 18% }
     - what: { width: 18%, name: Action }
     - detail: { width: 35% }
+
+audit_trail:
+  type: audit_trail_base
+  access: admin
   sql: |
     select t.create_time, u.first_name, u.last_name,u.email_address, t.action, t.detail
       from audit_trail t join user u on t.user_id = u.id
@@ -318,7 +322,7 @@ modify:
   audit: $title,$first_name,$last_name,$cellphone,$email_address,$role
 
 my_audit_trail:
-  type: audit_trail
+  type: audit_trail_base
   name: My Audit Trail
   access: reg
   sql: |
@@ -352,7 +356,8 @@ profile:
         where id = $uid
         group by id
   actions:
-    - profile_update
+    - profile_update:
+        validate: [title,first_name,last_name,email_address,cellphone]
 
 profile_update:
   name: Update Profile
