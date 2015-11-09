@@ -51,8 +51,10 @@
   if (!is_null($content) && !in_array($content, array('logout','login')))
     $_SESSION['content'] = $content;
 
-  $page = $content==''? $config['landing_page']: 'index';
-  if ($page == 'index' && $content == '') $content = 'home';
+  if ($content == '') {
+    $page = $config['landing_page'];
+    $content = $config['landing_content'];
+  }
   if (!is_null($page))  pre_load_custom($page);
   if ($content != $page && !is_null($content))
     pre_load_custom($content);
