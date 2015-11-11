@@ -2,7 +2,7 @@
   require_once '../common/log.php';
   log::init('index', log::DEBUG);
   require_once('../common/utils.php');
-  $action = GET('action');
+  $action = REQUEST('action');
   if (!is_null($action)) {
     require_once('../common/page.php');
     return;
