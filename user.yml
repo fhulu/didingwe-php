@@ -289,7 +289,7 @@ login:
     - sql_exec: update user set attempts = 0 where id = $uid
     - write_session: uid,partner_id,roles,email,first_name,last_name,full_name,cellphone
     - close_dialog
-    - redirect: /$landing_page
+    - redirect: /$landing_content
 
 modify:
   type: labelled_input_page
