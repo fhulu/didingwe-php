@@ -160,7 +160,7 @@ date_time:
 
 disabled_input:
   type: input
-  attr: disabled
+  attr: { disabled: disabled }
 
 disabled_text_input:
   type: disabled_input
