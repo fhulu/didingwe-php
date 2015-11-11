@@ -55,6 +55,11 @@ class validator
     return $this->request[$name];
   }
 
+  function equal($name)
+  {
+    return $this->value == $this->value_of($name);
+  }
+
   function less($name)
   {
     return $this->value < $this->value_of($name);
