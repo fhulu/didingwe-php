@@ -282,14 +282,14 @@ login:
     - sql_values: |
         select id uid, partner_id, email_address email, first_name, last_name,
           concat(first_name, ' ', last_name) full_name,
-          cellphone, roles, groups, 'home' page
+          cellphone, roles, groups
         from user
         where email_address='$email'
     - load_lineage: [roles,role,code,base_code]
     - sql_exec: update user set attempts = 0 where id = $uid
     - write_session: uid,partner_id,roles,email,first_name,last_name,full_name,cellphone
     - close_dialog
-    - redirect: /$page
+    - redirect: /$landing_content
 
 modify:
   type: labelled_input_page
@@ -381,6 +381,6 @@ register:
   width: 700
   steps:
     - enter_credentials
-    - check_otp: { clear: true } 
+    - check_otp: { clear: true }
     - confirm_registration: { clear: true}
     - complete_registration

@@ -112,7 +112,7 @@ less_equal:
   error: $name must not be greater than $1 ($v1)
 
 match:
-  valid: /^$v1$/
+  valid: equal($1)
   error: $name must be the same as $1
 
 matches: match($1)

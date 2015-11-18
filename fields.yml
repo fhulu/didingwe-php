@@ -194,7 +194,7 @@ logout:
     - read_session: email
     - sql_exec: insert into audit_trail(user_id,action,detail) values($uid,'Logout','$email')
     - call: session_destroy()
-    - redirect: /home
+    - redirect: /$landing_content
 
 
 longitude:
@@ -275,8 +275,10 @@ send_email:
   from: $from_user <$from_email>
   to: $to_user <$to_email>
   smtp:
-    host: didi.mukoni.net
+    host: $smtp_host
     auth: true
+    username: $smtp_user
+    password: $smtp_password
 
 
 start_date:
