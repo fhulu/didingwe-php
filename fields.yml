@@ -63,7 +63,7 @@ confirm_password:
 
 country:
   options:
-    - sql: select code ,name  from country
+    - sql: select code ,name  from country sort by name
 
 day_of_month:
   options:
