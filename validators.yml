@@ -101,7 +101,7 @@ int_tel:
   valid:
     - /^\+\d+[- \d]*$/
     - at_least(10,digits)
-  error: Please use national number format for $name, e.g. 0123456789
+  error: Please use international number format for $name, e.g. +27123456789
 
 is: must_be($1)
 
@@ -200,7 +200,9 @@ same_year:
 sql:
   error: Invalid $name
 
-telephone: /^[+0]\d+$/
+telephone:
+  valid: /^[+0]\d+$/
+  error: $name must be digits,eg 0158745896
 
 time:
   valid:
