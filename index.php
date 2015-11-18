@@ -45,16 +45,12 @@
   }
 
   global $session;
-  log::debug(json_encode($_REQUEST));
-  list($page) = explode('/', $_REQUEST['path']);
+  log::debug_json("BROWSER REQUEST", $_REQUEST);
   $content = $_REQUEST['content'];
-  if (!is_null($content) && !in_array($content, array('logout','login')))
-    $_SESSION['content'] = $content;
-
-  if ($content == '') {
-    $page = $config['landing_page'];
-    $content = $config['landing_content'];
-  }
+  $prefix = $_SESSION['uid'] == 0? 'landing': 'session';
+  $page = $config[$prefix.'_page'];
+  if ($content == '')  $content = $config[$prefix.'_content'];
+  $_SESSION['content'] = $content;
   if (!is_null($page))  pre_load_custom($page);
   if ($content != $page && !is_null($content))
     pre_load_custom($content);

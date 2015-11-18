@@ -194,7 +194,7 @@ logout:
     - read_session: email
     - sql_exec: insert into audit_trail(user_id,action,detail) values($uid,'Logout','$email')
     - call: session_destroy()
-    - redirect: /$landing_content
+    - redirect: $landing_page
 
 
 longitude:
