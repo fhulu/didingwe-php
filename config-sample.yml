@@ -1,5 +1,7 @@
-landing_page: /index
+landing_page: index
 landing_content: home
+session_page: index
+session_content: home
 db_name: mydb
 db_user: myuser
 db_password: mypassword
