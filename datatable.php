@@ -122,7 +122,8 @@ PATTERN;
 
   static function is_display($field)
   {
-    return page::is_displayable($field) && !in_array($field, array('style','actions'), true);
+    list($id,$attr) = assoc_element($field);
+    return page::is_displayable($attr) && !in_array($id, array('style','actions'), true);
   }
 
   static function is_data($field)
