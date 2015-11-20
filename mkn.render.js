@@ -474,6 +474,10 @@ mkn.render = function(options)
     if (!field.action) return;
     field.page_id = me.page_id;
     obj.click(function(event) {
+      if (field.tag == 'a') {
+        event.preventDefault();
+        if (field.url === undefined) field.url = obj.attr('href');
+      }
       accept(event, $(this), field);
     })
     .on('reload', function() {
