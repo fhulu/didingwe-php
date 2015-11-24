@@ -843,7 +843,8 @@ class page
         $parameter = array();
       else if (!is_array($parameter) || is_assoc($parameter))
         $parameter = array($parameter);
-      $values = null_merge($this->request, $this->answer);
+      global $config;
+      $values = merge_options($this->request, $config, $this->answer);
       replace_fields($parameter, $values);
       replace_fields($method, $values);
       log::debug_json("REPLY ACTION $method", $parameter);

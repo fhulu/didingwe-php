@@ -655,7 +655,8 @@ mkn.render = function(options)
     var url = field.url;
     if (url === undefined && field.target === '_blank') {
       url = '/?action=action';
-      var exclude = ['action', 'desc', 'html', 'id', 'name', 'page_id', 'query', 'tag', 'text', 'type', 'template']
+      field = $.extend({key: options.key}, field);
+      var exclude = ['action', 'desc', 'html', 'id', 'name', 'page_id', 'query', 'selector','tag', 'target','text', 'type', 'template']
       for (var key in field) {
         var val = field[key];
         if ($.isPlainObject(val) || $.isArray(val) || exclude.indexOf(key) >= 0) continue;

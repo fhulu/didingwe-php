@@ -10,8 +10,8 @@ activate:
     - sql_exec: update user set active = 1 where id = '$key'
     - refresh: "#main table"
 
-audit_trail:
-  access: admin
+
+audit_trail_base:
   type: datatable
   sort: when
   sort_order: desc
@@ -31,6 +31,10 @@ audit_trail:
     - email: { width: 18% }
     - what: { width: 18%, name: Action }
     - detail: { width: 35% }
+
+audit_trail:
+  type: audit_trail_base
+  access: admin
   sql: |
     select t.create_time, u.first_name, u.last_name,u.email_address, t.action, t.detail
       from audit_trail t join user u on t.user_id = u.id
@@ -278,14 +282,14 @@ login:
     - sql_values: |
         select id uid, partner_id, email_address email, first_name, last_name,
           concat(first_name, ' ', last_name) full_name,
-          cellphone, roles, groups, 'home' page
+          cellphone, roles, groups
         from user
         where email_address='$email'
     - load_lineage: [roles,role,code,base_code]
     - sql_exec: update user set attempts = 0 where id = $uid
     - write_session: uid,partner_id,roles,email,first_name,last_name,full_name,cellphone
     - close_dialog
-    - redirect: /$page
+    - redirect: /$session_content
 
 modify:
   type: labelled_input_page
@@ -318,7 +322,7 @@ modify:
   audit: $title,$first_name,$last_name,$cellphone,$email_address,$role
 
 my_audit_trail:
-  type: audit_trail
+  type: audit_trail_base
   name: My Audit Trail
   access: reg
   sql: |
@@ -352,7 +356,8 @@ profile:
         where id = $uid
         group by id
   actions:
-    - profile_update
+    - profile_update:
+        validate: [title,first_name,last_name,email_address,cellphone]
 
 profile_update:
   name: Update Profile
@@ -376,6 +381,6 @@ register:
   width: 700
   steps:
     - enter_credentials
-    - check_otp: { clear: true } 
+    - check_otp: { clear: true }
     - confirm_registration: { clear: true}
     - complete_registration

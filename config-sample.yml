@@ -1,0 +1,14 @@
+landing_page: index
+landing_content: home
+session_page: index
+session_content: home
+db_name: mydb
+db_user: myuser
+db_password: mypassword
+sms_user: sms@example.com
+otp_methods: [email]
+otp_expiry: 5
+request_method: get
+smtp_host: smtp.example.com
+smtp_user: email@example.com
+smtp_password: mypassword

@@ -4,7 +4,7 @@ session_start();
 require_once('utils.php');
 require_once('log.php');
 require_once('db.php');
-require_once('user.php');
+
 
 
 class session_exception extends Exception {};
