@@ -163,8 +163,7 @@ id_no:
   name: ID Number
   question: Please enter your South Africa Identity Number
   desc: Valid South African ID number
-  valid:
-    - za_id
+  valid: za_id
 
 id_number:
   type: id_no
