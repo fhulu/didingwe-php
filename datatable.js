@@ -345,6 +345,11 @@
             self.createRowActions(tr, td, actions);
             if (!expandable) continue;
             td = tr.children().eq(0);
+            if (!td.children().exists()) {
+              var text = td.text();
+              td.text('');
+              $('<div>').text(text).appendTo(td).width('80%').css('display','inline-block');
+            }
             self.createAction('expand', undefined, tr).prependTo(td);
             self.createAction('collapse', undefined, tr).prependTo(td).hide();
             continue;
@@ -634,6 +639,11 @@
       var footer = $('<tfoot>').appendTo(this.element);
       var tr = $('<tr>').addClass('actions').appendTo(footer);
       var td = $('<td>').appendTo(tr);
+      var key = this.options.key;
+      actions.map(function(action) {
+        action.key = key;
+        return action;
+      })
       this.render.createItems(td, this.options, undefined, actions);
       this.spanColumns(td);
     }
