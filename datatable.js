@@ -501,10 +501,10 @@
         });
       });
       tr.on('collapse', function(e) {
-        $(e.target).hide();
+        tr.find('[action=collapse]').hide();
         tr.find('[action=expand]').show();
         var next = tr.next();
-        if (next.attr('class') === 'expanded') next.remove();
+        if (next.hasClass('expanded')) next.remove();
       });
 
       tr.on('action', function(evt, btn) {

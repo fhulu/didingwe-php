@@ -139,6 +139,11 @@ class validator
     return $this->value != '';
   }
 
+  function blank()
+  {
+    return trim($this->value) == '';
+  }
+
   function call($function)
   {
     $params = array_slice(func_get_args(), 1);
@@ -235,7 +240,7 @@ class validator
         return $func !== false && $func !== 'depends';
       });
       if ($pos !== false) {
-        array_splice($funcs, $pos, 0, 'provided');
+        if ($funcs[0] != 'blank') array_splice($funcs, $pos, 0, 'provided');
         $this->checked_provided = $auto_provided = true;
       }
     }
