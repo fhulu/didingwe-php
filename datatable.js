@@ -262,8 +262,9 @@
       for (var i in fields) {
         var field = fields[i];
         var id = field.id;
-        if (field.hide || field.show === false  || id === 'attr') continue;
-          var th = $('<th></th>').appendTo(tr);
+        var hide = field.hide || field.show === false;
+        if (id == 'key' && hide  || id === 'attr') continue;
+        var th = $('<th></th>').appendTo(tr);
         if (id === 'actions' || id == 'style') continue;
         if ($.isArray(field.name)) field.name = field.name[field.name.length-1];
         th.html(field.name || toTitleCase(id));
@@ -279,6 +280,7 @@
         ++j;
         if (self.hasFlag('sortable'))
           self.bindSort(th, id);
+        th.toggle(!hide);
       };
       this.spanColumns(head.find('.header th'));
     },
@@ -331,7 +333,9 @@
             key = cell;
             tr.attr('key', key);
           }
-          if (field.hide || field.show !== undefined && !field.show) continue;
+
+          var hide = field.hide || field.show === false;
+          if (field.id === 'key' && hide) continue;
 
           if (field.id === 'style') {
             tr.addClass(cell);
@@ -339,6 +343,7 @@
           }
 
           var td = $('<td></td>').appendTo(tr);
+          td.toggle(!hide);
           if (field.id === 'actions') {
             var actions = cell.split(',');
             var expandable = actions.indexOf('expand') >= 0;
