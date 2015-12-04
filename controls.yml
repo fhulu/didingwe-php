@@ -450,6 +450,15 @@ plain:
 plain_text:
   type: plain
 
+plot:
+  tag: div
+  script:
+    - /common/jquery.jqplot.js
+    - /common/plot.js
+  text: ""
+  create: plotter
+
+
 # todo: fix back-end to contextualise
 print:
   desc: Print above contents
