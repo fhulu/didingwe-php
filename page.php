@@ -742,7 +742,7 @@ class page
 
   function sql_update()
   {
-    $args = func_get_args();
+    $args = page::parse_args(func_get_args());
     $table = array_shift($args);
     $key = array_shift($args);
     if (!sizeof($args))
@@ -758,7 +758,7 @@ class page
 
   function sql_insert()
   {
-    $args = func_get_args();
+    $args = page::parse_args(func_get_args());
     $table = array_shift($args);
     if (!sizeof($args))
       throw new Exception("Invalid number of arguments for sql_insert");
@@ -825,6 +825,7 @@ class page
     if (is_assoc($actions))  $actions = array($actions);
     $this->merge_fields($actions);
 
+    log::debug_json("REPLY ACTIONS", $actions);
 
     $methods = array('alert', 'abort', 'call', 'clear_session', 'clear_values',
       'close_dialog', 'load_lineage', 'read_session', 'read_values', 'redirect',
@@ -974,7 +975,7 @@ class page
       log::debug_json("TRIGGER ", $args);
     }
     else {
-      $args = func_get_args();
+      $args = page::parse_args(func_get_args());
     }
     $options = array("event"=>$event);
     if (!is_null($selector)) $options['sink'] = $selector;
@@ -1029,8 +1030,7 @@ class page
 
   function write_session()
   {
-    $vars = func_get_args();
-    if (sizeof($vars) == 1 && is_string($vars[0])) $vars = explode (',', $vars[0]);
+    $vars = page::parse_args(func_get_args());
 
     foreach($vars as $var) {
       if ($var == 'request' && !isset($this->request['request']))
@@ -1048,8 +1048,7 @@ class page
 
   function read_session()
   {
-    $vars = func_get_args();
-    if (sizeof($vars) == 1) $vars = explode (',', $vars[0]);
+    $vars = page::parse_args(func_get_args());
 
     $values = array();
     foreach($vars as $var) {
@@ -1098,7 +1097,7 @@ class page
 
   function clear_values()
   {
-    $args = func_get_args();
+    $args = page::parse_args(func_get_args());
     if (sizeof($args) == 0) {
       $this->answer = null;
       return;
@@ -1109,11 +1108,19 @@ class page
     }
   }
 
+  static function parse_args($args)
+  {
+    if (sizeof($args) > 1 || sizeof($args) == 0) return $args;
+    $args = explode (',', $args[0]);
+    foreach($args as &$arg) {
+      $arg = trim($arg);
+    }
+    return $args;
+  }
 
   function clear_session()
   {
-    $vars = func_get_args();
-    if (sizeof($vars) == 1) $vars = explode (',', $vars[0]);
+    $vars = page::parse_args(func_get_args());
 
     $values = array();
     foreach($vars as $var) {
