@@ -2,7 +2,7 @@ allow from all
 Options +Indexes
 RewriteEngine on
 RewriteRule ^(\w+)(\/\w+)?$ index.php?content=$1&$2 [L]
-<Files ~ ".yml">
+<FilesMatch  ".(yml|conf)$">
   Order allow,deny
   Deny from all
-</Files>
+</FilesMatch>
