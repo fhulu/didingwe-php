@@ -297,3 +297,13 @@ function array_remove_value($array, $value)
   unset($array[$key]);
   return array_values($array);
 }
+
+function to_array($obj)
+{
+  $keys = array_slice(func_get_args(),1);
+  $array = array();
+  foreach($keys as $key) {
+    $array[] = $obj[$key];
+  }
+  return $aray;
+}
