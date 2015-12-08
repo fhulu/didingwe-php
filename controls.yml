@@ -452,9 +452,14 @@ plain_text:
 
 plot:
   tag: div
+  fixed_xaxis: yes
   script:
-    - /common/jquery.jqplot.js
+    - /common/jquery.jqplot.min.js
+    - /common/jquery.jqplot.canvasTextRenderer.min.js
+    - /common/jquery.jqplot.canvasAxisTickRenderer.min.js
+    - /common/jquery.jqplot.dateAxisRenderer.min.js
     - /common/plot.js
+  css: [/common/jquery.jqplot.min.css]
   text: ""
   create: plotter
 
