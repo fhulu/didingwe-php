@@ -383,4 +383,4 @@ register:
     - enter_credentials
     - check_otp: { clear: true }
     - confirm_registration: { clear: true}
-    - complete_registration
+    - complete_registration: { prev: false}
