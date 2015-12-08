@@ -43,16 +43,25 @@
 
 .wizard-bookmark
 {
-  background-color: darkcyan;
   padding: 3px 5px;
   height: 24px;
-  cursor: pointer;
   position: relative;
   -webkit-transform:rotate(270deg);
   -moz-transform:rotate(270deg);
   -o-transform: rotate(270deg);
   -ms-transform:rotate(270deg);
   transform: rotate(270deg);
+}
+
+.wizard-bookmark-active
+{
+  cursor: pointer;
+  background-color: darkcyan;
+}
+
+.wizard-bookmark-inactive
+{
+  background: lightgrey;
 }
 
 .wizard-bookmark>*

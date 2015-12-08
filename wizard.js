@@ -34,7 +34,7 @@
     {
       var props = this.options.steps[index];
       var page = $('<div class=wizard-page>').attr('name',props.name).hide().css('width','100%').appendTo(this.element);
-      var bookmark = $('<div class=wizard-bookmark>').appendTo(page);
+      var bookmark = $('<div class="wizard-bookmark wizard-bookmark-active">').appendTo(page);
       this.bookmark_width = bookmark.outerHeight();
       $('<span class=wizard-bookmark-number>').appendTo(bookmark);
       $('<span class=wizard-bookmark-title>').appendTo(bookmark);
@@ -84,7 +84,7 @@
       var bookmark = page.find('.wizard-bookmark').hide();
       if (index > 0) {
         var prev = this.element.find('.wizard-page').eq(index-1);
-        var color = prev.find('.wizard-bookmark').css('background-color');
+        var color = prev.find('.wizard-bookmark-active').css('background-color');
         color = darken(rgbToHex(color), 1.15);
         bookmark.css('background-color', color);
       }
@@ -136,8 +136,15 @@
         page.addClass('wizard-loaded').removeClass('wizard-loading');
         content.replaceWith(object);
         var prev = object.find('#prev');
-        if (props.prev === false || index === 0)
+        if (props.prev === false || index === 0) {
           prev.hide();
+          self.first_step = index;
+          self.element.find('.wizard-bookmark-active').each(function(i) {
+            if (i < index)
+              $(this).css('background-color', '')
+                .removeClass('wizard-bookmark-active').addClass('wizard-bookmark-inactive');
+          });
+        }
 
         var next = object.find('#next');
         if (props.next === false || index === self.options.steps.length-1)
@@ -170,9 +177,9 @@
         self.jumpTo(self.next_step);
       });
 
-      this.element.find('.wizard-bookmark').click(function() {
-        var index = parseInt($(this).find('.wizard-bookmark-number').text())-1;
-        self.jumpTo(self.stack[index]);
+      this.element.find('.wizard-bookmark-active').click(function(i) {
+        if (i >= self.first_step)
+          self.jumpTo(self.stack[index]);
       });
     },
 
