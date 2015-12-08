@@ -61,7 +61,7 @@
 
 .wizard-bookmark-inactive
 {
-  background: lightgrey;
+  background: rgb(78,96,89);
 }
 
 .wizard-bookmark>*
@@ -74,11 +74,6 @@
 .wizard-bookmark-number
 {
   width: 24px;
-}
-
-
-.wizard-bookmark-title
-{
 }
 
 .wizard-content
