@@ -471,6 +471,12 @@ mkn.render = function(options)
 
   var initEvents = function(obj, field)
   {
+    if (typeof field.enter == 'string') {
+      obj.keypress(function(event) {
+        if (event.keyCode === 13)
+          obj.find(field.enter).click();
+      })
+    }
     if (!field.action) return;
     field.page_id = me.page_id;
     obj.click(function(event) {
@@ -486,6 +492,7 @@ mkn.render = function(options)
     .on('server_response', function(event, result) {
       respond(result);
     })
+
   };
 
   var initLinks = function(object, field, callback)
