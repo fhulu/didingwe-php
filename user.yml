@@ -276,6 +276,7 @@ login:
   type: input_page
   width: 500
   desc: Fill in your credentials below and click Login to logon
+  enter: "#login"
   inputs:
     - email: { valid: [is_registered, is_active, is_unlocked] }
     - password: { type: password, valid: is_password_for(email) }
