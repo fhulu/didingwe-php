@@ -27,6 +27,12 @@ button:
   tag: button
   attr: { title: $desc }
 
+button_image:
+  class: [action]
+  text: <input type="image" src="$src">
+  attr: { title: $desc }
+  src: $id.png
+
 captioned_image:
   classes: div
   text: |
@@ -261,6 +267,8 @@ image:
   tag: img
   attr: {src: $src}
   text: ""
+  src_type: png
+  src: $id.png
 
 info_line:
   tag: div
@@ -308,7 +316,8 @@ inplace_image_input:
   subject:
     attr: { placeholder: $name }
   src_type: png
-  
+  src: $id.png
+
 input:
   tag: input
   text: ""
