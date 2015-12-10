@@ -1110,7 +1110,7 @@ class page
 
   static function parse_args($args)
   {
-    if (sizeof($args) != 1 || is_assoc($args)) return $args;
+    if (sizeof($args) != 1 || is_assoc($args[0])) return $args;
     $args = explode (',', $args[0]);
     foreach($args as &$arg) {
       $arg = trim($arg);
