@@ -293,6 +293,7 @@ mkn.render = function(options)
     setAttr(obj, field);
     setClass(obj, field);
     setStyle(obj, field);
+    if (field.key == undefined) field.key = options.key;
     var values = $.extend({}, this.types, field);
     var matches = getMatches(field.html, /\$(\w+)/g);
     var subitem_count = 0;
