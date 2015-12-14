@@ -293,7 +293,7 @@ mkn.render = function(options)
     setAttr(obj, field);
     setClass(obj, field);
     setStyle(obj, field);
-    if (field.key == undefined) field.key = options.key;
+    if (field.key === undefined) field.key = options.key;
     var values = $.extend({}, this.types, field);
     var matches = getMatches(field.html, /\$(\w+)/g);
     var subitem_count = 0;
@@ -833,7 +833,7 @@ mkn.render = function(options)
 
   var loadValues =  function(parent, data)
   {
-    $.json('/', serverParams('values', data.path), function(result) {
+    $.json('/', serverParams('values', data.path, {key: data.key}), function(result) {
       parent.trigger('loaded_values', [result]);
       respond(result);
       if ($.isPlainObject(result))
