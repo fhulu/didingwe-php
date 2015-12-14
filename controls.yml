@@ -387,6 +387,12 @@ line:
 link:
   tag: a
   attr: { title: $desc }
+  text: $name
+  style: { cursor: pointer }
+
+link_underlined:
+  type: link
+  style: { text-decoration: underline }
 
 list_item:
   tag: li
