@@ -7,7 +7,10 @@ after_period:
 
 alphabetic: must_be([a-zA-Z]+,alphabetic)
 
-alphaspace: must_be([a-zA-Z ]+,alphaspace)
+alphaspace:
+  valid:
+    - must_be([a-zA-Z' ]+)
+  error: $name must be alphabetic and may contain apostrophe
 
 at_least:
   valid: /^.{$1,}$/s
