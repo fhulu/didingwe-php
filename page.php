@@ -27,7 +27,7 @@ class page
 {
   static $fields_stack = array();
   static $post_items = array('audit', 'call', 'clear_session', 'clear_values', 'post',
-    'send_email', 'valid', 'validate', 'write_session');
+    'post_http', 'send_email', 'send_sms', 'valid', 'validate', 'write_session');
   static $query_items = array('call', 'read_session', 'read_values', 'sql', 'sql_values');
   static $atomic_items = array('action', 'attr', 'css', 'html', 'script', 'sql',
     'style', 'template', 'valid');
@@ -828,8 +828,8 @@ class page
     log::debug_json("REPLY ACTIONS", $actions);
 
     $methods = array('alert', 'abort', 'call', 'clear_session', 'clear_values',
-      'close_dialog', 'load_lineage', 'read_session', 'read_values', 'redirect',
-      'send_email', 'show_dialog', 'sql', 'sql_exec','sql_rows', 'sql_insert',
+      'close_dialog', 'load_lineage', 'post_http', 'read_session', 'read_values', 'redirect',
+      'send_email', 'send_sms', 'show_dialog', 'sql', 'sql_exec','sql_rows', 'sql_insert',
       'sql_update', 'sql_values', 'refresh', 'trigger', 'update', 'write_session');
     foreach($actions as $action) {
       if ($this->aborted) return false;
@@ -1110,7 +1110,7 @@ class page
 
   static function parse_args($args)
   {
-    if (sizeof($args) > 1 || sizeof($args) == 0) return $args;
+    if (sizeof($args) != 1 || is_assoc($args[0])) return $args;
     $args = explode (',', $args[0]);
     foreach($args as &$arg) {
       $arg = trim($arg);
@@ -1140,5 +1140,36 @@ class page
   static function refresh($sink)
   {
     page::trigger("refresh,$sink");
+  }
+
+  static function post_http($options)
+  {
+    log::debug_json("HTTP POST", $options);
+    $url = $options['url'];
+    if (!isset($url)) {
+      $url = $options['protocol']
+            . "://" . $options['host']
+            . ":" . $options['port']
+            . "/" . $options['path'];
+    }
+    require_once('../common/curl.php');
+    $curl = new curl();
+    $curl->read($url);
+  }
+
+  function send_sms($options)
+  {
+    log::debug_json("SEND SMS", $options);
+    $options = page::merge_options($options, $this->answer);
+    log::debug_json("SEND SMS af", $options);
+    $this->update_context($options);
+    global $config;
+    $options = merge_options($config['send_sms'], $this->fields['send_sms'], $options);
+    $options = merge_options($this->get_expanded_field('send_sms'), $options);
+    $options['message'] = urlencode($options['message']);
+    replace_fields($options, $options);
+    replace_fields($options, $this->fields['send_sms']);
+
+    page::post_http($options);
   }
 }

@@ -293,6 +293,7 @@ mkn.render = function(options)
     setAttr(obj, field);
     setClass(obj, field);
     setStyle(obj, field);
+    if (field.key === undefined) field.key = options.key;
     var values = $.extend({}, this.types, field);
     var matches = getMatches(field.html, /\$(\w+)/g);
     var subitem_count = 0;
@@ -471,6 +472,12 @@ mkn.render = function(options)
 
   var initEvents = function(obj, field)
   {
+    if (typeof field.enter == 'string') {
+      obj.keypress(function(event) {
+        if (event.keyCode === 13)
+          obj.find(field.enter).click();
+      })
+    }
     if (!field.action) return;
     field.page_id = me.page_id;
     obj.click(function(event) {
@@ -486,6 +493,7 @@ mkn.render = function(options)
     .on('server_response', function(event, result) {
       respond(result);
     })
+
   };
 
   var initLinks = function(object, field, callback)
@@ -825,7 +833,7 @@ mkn.render = function(options)
 
   var loadValues =  function(parent, data)
   {
-    $.json('/', serverParams('values', data.path), function(result) {
+    $.json('/', serverParams('values', data.path, {key: data.key}), function(result) {
       parent.trigger('loaded_values', [result]);
       respond(result);
       if ($.isPlainObject(result))

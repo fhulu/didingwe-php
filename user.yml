@@ -53,18 +53,22 @@ check_otp:
   values:
     - sql_values: select lpad(floor(rand()*9999),4,'0') server_otp, now() time_of_otp
     - write_session: server_otp,time_of_otp
-    - read_session: email,first_name,last_name
-    - send_email:
-        subject: One Time Password
-        from: $support
-        to: $first_name $last_name <$email>
-        message: >
-          Good day<br><br>
-          You are currently trying to register on the system or change your email address.
-          If you have not requested this, please inform the System Adminstrator.<br><br>
-          Your One Time Password is : <b>$server_otp</b>. <br><br>
-          Regards<br>
-          Customer Operations
+    - read_session: email,first_name,last_name,cellphone
+    - if $sms_otp:
+        send_sms:
+          message: Your OTP for $program_name is $server_otp
+    - if $email_otp:
+        send_email:
+          subject: One Time Password
+          from: $support
+          to: $first_name $last_name <$email>
+          message: >
+            Good day<br><br>
+            You are currently trying to register on $program_name or change your email address.
+            If you have not requested this, please inform the System Adminstrator.<br><br>
+            Your One Time Password is : <b>$server_otp</b>. <br><br>
+            Regards<br>
+            Customer Operations
     - clear_values
 
 complete_registration:
@@ -272,6 +276,7 @@ login:
   type: input_page
   width: 500
   desc: Fill in your credentials below and click Login to logon
+  enter: "#login"
   inputs:
     - email: { valid: [is_registered, is_active, is_unlocked] }
     - password: { type: password, valid: is_password_for(email) }

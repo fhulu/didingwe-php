@@ -377,6 +377,7 @@
         td.html(value);
         return;
       }
+      field = mkn.copy(field);
       field.key = key;
       field.value = value;
       var created = this.render.create(field);

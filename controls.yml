@@ -27,6 +27,12 @@ button:
   tag: button
   attr: { title: $desc }
 
+button_image:
+  class: [action]
+  text: <input type="image" src="$src">
+  attr: { title: $desc }
+  src: $id.png
+
 captioned_image:
   classes: div
   text: |
@@ -239,7 +245,6 @@ google_map:
    - orange
    - pink
 
-
 h1:
   type: heading
 
@@ -270,6 +275,8 @@ image:
   tag: img
   attr: {src: $src}
   text: ""
+  src_type: png
+  src: $id.png
 
 info_line:
   tag: div
@@ -387,6 +394,12 @@ line:
 link:
   tag: a
   attr: { title: $desc }
+  text: $name
+  style: { cursor: pointer }
+
+link_underlined:
+  type: link
+  style: { text-decoration: underline }
 
 list_item:
   tag: li
