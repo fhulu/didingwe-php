@@ -41,6 +41,14 @@ checkbox:
   values: ""
   attr: { type: checkbox, values: $values }
 
+checkbox_group:
+  tag: div
+  text: $options
+  options:
+    - type: checkbox
+    - template: label_left
+
+
 class:
   tag: div
   attr: { id: ""}
@@ -231,6 +239,7 @@ google_map:
    - orange
    - pink
 
+
 h1:
   type: heading
 
@@ -308,7 +317,7 @@ inplace_image_input:
   subject:
     attr: { placeholder: $name }
   src_type: png
-  
+
 input:
   tag: input
   text: ""
@@ -458,6 +467,7 @@ plot:
     - /common/jquery.jqplot.canvasTextRenderer.min.js
     - /common/jquery.jqplot.canvasAxisTickRenderer.min.js
     - /common/jquery.jqplot.dateAxisRenderer.min.js
+    - /common/jquery.jqplot.highlighter.min.js
     - /common/plot.js
   css: [/common/jquery.jqplot.min.css]
   text: ""
@@ -499,6 +509,17 @@ radiobox:
   style:
     width: 24px
     height: 24px
+
+checkgroup:
+  templates: div
+  class: radio
+  text: $options
+  group: $id
+  inherit: [group]
+  options:
+    - template: label_left
+    - type: checkbox
+    - attr: { name: $group }
 
 radiogroup:
   templates: div
