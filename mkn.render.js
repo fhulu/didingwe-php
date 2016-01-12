@@ -449,19 +449,20 @@ mkn.render = function(options)
         me.parent.trigger('loaded', result);
     });
     if (field.autoload || field.autoload === undefined) {
-      $.json('/', serverParams('data', field.path+'/'+name), function(result) {
+      $.json('/', serverParams('data', field.path+'/'+name, field.params), function(result) {
         respond(result, object);
         object.trigger('loaded', [result]);
       });
     }
 
-    object.on('reload', function() {
-      field.autoload = true;
-      me.load_data(object, field, name, defaults);
-      if (field.values)
-        me.loadValues(object, field);
-    })
-  };
+    object.on('reload', function(event, data) {
+         field.autoload = true;
+         field.params = data;
+         me.loadData(object, field, name, defaults);
+         if (field.values)
+           me.loadValues(object, field);
+       })
+     };
 
   var serverParams = function(action, path, params)
   {
