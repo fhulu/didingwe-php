@@ -48,7 +48,7 @@ checkbox:
   attr: { type: checkbox, values: $values }
 
 checkbox_group:
-  tag: div
+  classes: div
   text: $options
   options:
     - type: checkbox
