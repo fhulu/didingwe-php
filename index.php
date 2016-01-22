@@ -49,6 +49,7 @@
 
   function pre_load_custom($page)
   {
+    if ($page[0] == '/') $page = substr($page,1);
     log::debug("loading page pre_$page");
     $file = "pre_$page.php";
     $common_file = "../common/$file";
