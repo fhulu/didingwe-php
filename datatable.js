@@ -326,7 +326,7 @@
         var key;
         var expandable = false;
         var k = 0;
-        for (var j in row) {
+        for (var j in fields) {
           var cell = row[j];
           var field = fields[j];
           if (key === undefined && (field.id === 'key' || field.key)) {
@@ -359,7 +359,6 @@
             self.createAction('collapse', undefined, tr).prependTo(td).hide();
             continue;
           }
-
           self.showCell(field, td, cell, key);
         }
         key = undefined;
@@ -374,7 +373,7 @@
     showCell: function(field, td, value, key)
     {
       if (field.html === undefined) {
-        td.html(value);
+        if (value !== undefined && value !== null) td.html(value);
         return;
       }
       field = mkn.copy(field);
