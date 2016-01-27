@@ -171,7 +171,16 @@ var mkn = new function() {
     }
   }
 
-  this.selectId
+  this.replaceFields = function(str, fields, data)
+  {
+    $.each(fields, function(i, field) {
+      var val = i < data.length? data[i]: "";
+      // text = text.replace(new RegExp('\b\\$'+field+'\b', 'g'), val);
+      str = str.replace('$'+field, val);
+    });
+    return str;
+  }
+
 }
 
 if (!String.prototype.trim) {
@@ -182,4 +191,10 @@ if (!String.prototype.trim) {
         return this.replace(rtrim, '');
     };
   })();
+}
+
+if (!RegExp.quote) {
+  RegExp.quote = function(str) {
+    return (str+'').replace(/[.?*+^$[\]\\(){}|-]/g, "\\$&");
+  };
 }

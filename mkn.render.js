@@ -20,7 +20,7 @@ mkn.render = function(options)
     if (type === undefined && field.html === undefined) {
       if (!id) id = field.id;
       var cls;
-      if (id) cls = id.replace('_', '-');
+      if (id) cls = id.replace(/_/g, '-');
       if (field.classes) {
         type = 'control';
         field.tag = field.classes;
@@ -52,7 +52,7 @@ mkn.render = function(options)
 
   this.expandType = function(type)
   {
-    if ($.isPlainObject(type)) return type;
+    if ($.isPlainObject(type)) return me.mergeType(type);
     if (type.search(/\W/) >= 0) return {html: type};
     return me.mergeType({type: type} );
   };
@@ -499,12 +499,11 @@ mkn.render = function(options)
 
   var initLinks = function(object, field, callback)
   {
-    loadLinks('css', field, function() {
-      loadLinks('script', field, function() {
-        if (field.create)
-          object.customCreate($.extend({types: me.types}, me.options, field));
-        if (callback !== undefined) callback();
-      });
+    loadLinks('css', field);
+    loadLinks('script', field, function() {
+      if (field.create)
+        object.customCreate($.extend({types: me.types}, me.options, field));
+      if (callback !== undefined) callback();
     });
   };
 
@@ -553,6 +552,7 @@ mkn.render = function(options)
       for (var i in matches) {
         var match = matches[i];
         style[key] = val.replace(new RegExp('\\$'+match+"([\b\W]|$)?", 'g'), field[match]+'$1');
+        style[key] = val.replace('$'+match, field[match]);
       }
     }
     field[style] = style;
@@ -590,7 +590,7 @@ mkn.render = function(options)
       else if (name === 'wrap' && $.isPlainObject(value))
         value = $.extend({}, {tag: 'div'}, value);
       else if (name === 'type' || name === 'template' || name === 'wrap') {
-        if (value === undefined) { console.log("undefiend value", name, item)}
+        if (value === undefined) { console.log("undefined value", name, item)}
         value = me.expandType(value);
       }
       if (name == 'template' && $.isPlainObject(value))

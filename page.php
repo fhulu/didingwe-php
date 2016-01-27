@@ -367,10 +367,14 @@ class page
         $this->expand_value($value);
         return;
       }
-      if (isset($this->types[$type])) return;
-
       $added_types = array();
-      $expanded = $this->expand_type($type, $added_types);
+      if (is_string($type)) {
+        if (isset($this->types[$type])) return;
+        $expanded = $this->expand_type($type, $added_types);
+      }
+      else if (is_array($type)) {
+        $expanded = $this->merge_type($type, $added_types);
+      }
 
       if (!is_null($expanded))
         $this->merge_type($expanded, $added_types);
@@ -683,8 +687,8 @@ class page
     $detail = addslashes($detail);
     $user = $this->read_user();
     $user_id = $user['uid'];
-    $db->insert("insert into audit_trail(user_id, action, detail)
-      values($user_id, '$name', '$detail')");
+    $db->insert("insert into audit_trail(user, action, detail)
+      values('$user_id', '$name', '$detail')");
   }
 
   function action()
@@ -769,6 +773,17 @@ class page
     $args = implode(',', $args);
     $values = implode(',', $values);
     $sql = "insert $table($args) values($values)";
+    $this->sql_exec($sql);
+  }
+
+  function sql_select()
+  {
+    $args = func_get_args();
+    $table = array_shift($args);
+    $key = array_shift($args);
+    if (!sizeof($args))
+      throw new Exception("Invalid number of arguments for sql_select");
+    $sql = "select from $table where $key = '\$$key'";
     return $this->sql_exec($sql);
   }
 
@@ -828,8 +843,8 @@ class page
     log::debug_json("REPLY ACTIONS", $actions);
 
     $methods = array('alert', 'abort', 'call', 'clear_session', 'clear_values',
-      'close_dialog', 'load_lineage', 'post_http', 'read_session', 'read_values', 'redirect',
-      'send_email', 'send_sms', 'show_dialog', 'sql', 'sql_exec','sql_rows', 'sql_insert',
+      'close_dialog', 'load_lineage', 'read_session', 'read_values', 'redirect',
+      'send_email', 'show_dialog', 'sql', 'sql_exec','sql_rows', 'sql_insert',
       'sql_update', 'sql_values', 'refresh', 'trigger', 'update', 'write_session');
     foreach($actions as $action) {
       if ($this->aborted) return false;

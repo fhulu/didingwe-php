@@ -79,7 +79,7 @@ datatable:
   create: datatable
   script: /common/datatable.js
   row_creator: { type: table_row }
-  css: /datatable.css
+  css: /common/datatable.css
   flags: []
     # - editall
     #
@@ -311,7 +311,10 @@ inplace_input:
       </a>
   subject:
     attr: { placeholder: $name }
-
+    style:
+      background-image: url($id.png)
+      background-repeat: no-repeat
+      
 inplace_image_input:
   templates: div
   style: { display: $pack }
@@ -323,6 +326,7 @@ inplace_image_input:
       </a>
   subject:
     attr: { placeholder: $name }
+  src: $id.png
   src_type: png
 
 input:
@@ -345,6 +349,15 @@ input_page:
   actions:
     - wrap: class
     - type: submit
+
+isearch:
+  type: input
+  create: isearch
+  script: [/common/isearch.js]
+  css: [/common/isearch.css]
+  max_size: 0
+  post:
+    - call: isearch::q(context)
 
 label:
   tag: label
@@ -373,16 +386,19 @@ labelled_input:
     margin-top: 6px
     width: 100%
     position: relative
-
-  label_width: 24%
-  input_width: 73%
-  label_suffix: ":"
-  text: |
-      <label style="width: $label_width">$name$label_suffix</label>
-      <a class=input style="width: $input_width">
-        $field
-        <span class=hint>$desc</span>
-      </a>
+  inherit: [name]
+  label:
+    suffix: ":"
+    classes: label
+    text: $name$suffix
+    width: 23%
+    style: { width: $width}
+  text: $label$field
+  subject:
+    width: 74%
+    class: [input]
+    style: { width: $width }
+    attr: { title: $desc }
 
 labelled_input_page:
   type: input_page
@@ -596,7 +612,7 @@ synopsis:
   type: section_heading
   text: $desc
   style:
-    margin-top: 24px
+    margin-top: 10px
 
 table:
   tag: table
