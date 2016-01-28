@@ -23,7 +23,9 @@ mkn.render = function(options)
       if (id) cls = id.replace(/_/g, '-');
       if (field.classes) {
         type = 'control';
-        field.tag = field.classes;
+        if (types[field.classes])
+          type = field.classes;
+        else field.tag = field.classes;
         if (cls) field.class = mkn.appendArray(field.class, cls);
       }
       else if (field.templates) {
@@ -166,7 +168,7 @@ mkn.render = function(options)
 
   var isTemplate = function(t)
   {
-    return t !== undefined && t !== "none" && t !== '$field';
+    return t !== undefined && t !== "none" && t !== '$field' && t.html !== '$field';
   }
 
   this.createTemplate = function(template, item)
@@ -283,7 +285,7 @@ mkn.render = function(options)
       return this.createSubPage(field);
 
     var id = field.id;
-    if (field.html === undefined) console.log("No html for ", id, field);
+    if (field.html === undefined) return null;
     field.html = field.html.trim().replace(/\$tag(\W)/, field.tag+'$1');
     var table_tag = isTableTag(field.tag)
     var obj = table_tag? $('<'+field.tag+'>'): $(field.html);
@@ -389,8 +391,8 @@ mkn.render = function(options)
       var hasTemplate = isTemplate(template);
       var obj = this.create(item, hasTemplate);
       var templated = obj;
+      hasTemplate = hasTemplate && this.createTemplate(template, item);
       if (hasTemplate) {
-        templated = this.createTemplate(template, item);
         if (isTableTag(template.tag))
           templated.append(obj);
         else
@@ -548,14 +550,11 @@ mkn.render = function(options)
 
   var setStyle = function(obj, field)
   {
-    var mergeArray = function() {
-      if (typeof style == 'string')
-        style = me.mergeType({}, style);
-      else if ($.isArray(style)) {
-        style = {};
-        for (var i in field.style) {
-          $.extend(style, me.mergeType({}, field.style[i]));
-        }
+    var mergeStyles = function() {
+      if (typeof styles == 'string')
+        styles = me.mergeType({}, styles.split(/[\s,]+/));
+      for (var i in styles) {
+        $.extend(style, me.mergeType({}, styles[i]));
       }
     }
 
@@ -568,24 +567,12 @@ mkn.render = function(options)
       }
     }
 
-    var mergeVariables = function() {
-      for (var key in style) {
-        var val = style[key];
-        var matches = getMatches(val, /\$(\w+)/g);
-        for (var i in matches) {
-          var match = matches[i];
-          var replacement = field[match];
-          if (replacement === undefined) replacement = style[match];
-          style[key] = val.replace(new RegExp('\\$'+match+"([\b\W]|$)?", 'g'), replacement+'$1');
-          style[key] = val.replace('$'+match, replacement);
-        }
-      }
-    }
     var style = field.style;
     if (!style) style = {};
-    mergeArray();
+    styles = field.styles;
+    if (styles) mergeStyles();
     setGeometry();
-    mergeVariables();
+    expandVars(field, style, { sourceFirst: true})
     obj.css(style);
   }
 
@@ -598,6 +585,36 @@ mkn.render = function(options)
     })
     mkn.deleteKeys(item, removed);
     return item;
+  }
+
+  var expandVars = function(source, dest, flags)
+  {
+    if (!flags) flags = {};
+    for (var key in dest) {
+      var val = dest[key];
+      if ($.isPlainObject(val) && flags.recurse) {
+        expandVars($.extend({}, source, dest), val, flags);
+        continue;
+      }
+      if (typeof val !== 'string') continue;
+      var matches = getMatches(val, /\$(\w+)/g);
+      for (var i in matches) {
+        var match = matches[i];
+        var index = flags.sourceFirst? 0: 1;
+        var replacement = arguments[index++][match];
+        if (replacement === undefined) replacement = arguments[index % 2][match];
+        if (replacement === undefined) continue;
+        dest[key] = val.replace(new RegExp('\\$'+match+"([\b\W]|$)?", 'g'), replacement+'$1');
+        dest[key] = val.replace('$'+match, replacement);
+      }
+    }
+  }
+  var expandSubject = function(template)
+  {
+    var subject = template.subject
+    for (var key in subject) {
+
+    }
   }
 
   var setDefaults = function(defaults, item, parent)
@@ -623,8 +640,10 @@ mkn.render = function(options)
         if (value === undefined) { console.log("undefined value", name, item)}
         value = me.expandType(value);
       }
-      if (name == 'template' && $.isPlainObject(value))
+      if (name == 'template' && $.isPlainObject(value)) {
         value = me.initField(value);
+        expandVars(value, value.subject, { recurse: true});
+      }
 
       defaults[name] = value;
       set = true;

@@ -24,6 +24,14 @@ blank:
 
 block:
   display: block
+  line_spacing: 0px
+  margin-top: $line_spacing
+
+bold:
+  font-weight: bold
+
+bolder:
+  font-weight: bolder
 
 button:
   class: [action]
@@ -53,6 +61,9 @@ centered:
 centered_text:
   text-align: center
 
+char_spaced:
+  char_spacing: 8px
+  letter-spacing: $char_spacing
 
 checkbox:
   type: input
@@ -65,7 +76,6 @@ checkbox_group:
   options:
     - type: checkbox
     - template: label_left
-
 
 class:
   tag: div
@@ -300,23 +310,12 @@ image:
   src_type: png
   src: $id.png
 
-info_line:
-  tag: div
-  pack: inline-block
-  label_width: 34%
-  input_width: 63%
-  type: label_left
-  label_suffix: ":"
-  class: [info-line]
-
 info_page:
   type: input_page
   inputs: $lines
-  inherit: [label_suffix]
-  label_suffix: ":"
   lines:
     - type: info_text
-    - template: info_line
+    - template: labelled_left
 
 info_text:
   classes: div
@@ -330,32 +329,7 @@ inline_block:
   display: inline-block
 
 inplace_input:
-  templates: div
-  style: { display: $pack }
-  text: |
-      <a class=input>
-        $field
-        <span class=hint>$desc</span>
-      </a>
-  subject:
-    attr: { placeholder: $name }
-    style:
-      background-image: url($id.png)
-      background-repeat: no-repeat
-
-inplace_image_input:
-  templates: div
-  style: { display: $pack }
-  text: |
-      <a class=input>
-      <img src="$src" ></img>
-        $field
-        <span class=hint>$desc</span>
-      </a>
-  subject:
-    attr: { placeholder: $name }
-  src: $id.png
-  src_type: png
+  type: labelled_inside
 
 input:
   tag: input
@@ -367,9 +341,8 @@ input:
 
 input_page:
   type: page
-  pack: inline
   text: $processing $synopsis $inputs $actions
-  inputs_template: { type: labelled_input }
+  inputs_template: { type: labelled_left }
   inputs:
     - template: $inputs_template
     - type: input
@@ -391,24 +364,13 @@ italic:
 
 label:
   tag: label
-  style: [inline_block]
-
-label_right:
-  templates: span
-  text: $field<label>$name</label>
-
-
-label_top:
-  type: label_left
-  pack: block
+  styles: [inline_block]
 
 labelled:
   templates: div
-  style: [ widest, block]
+  styles: [ widest, block]
   inherit: [name]
-  label:
-    type: label
-    text: $name
+  label: { classes: label }
   text: $label$field
   subject:
     class: [input]
@@ -420,27 +382,6 @@ labelled_input:
 labelled_input_page:
   type: input_page
 
-labelled_left:
-  type: labelled
-  label:
-    suffix: ":"
-    classes: label
-    text: $name$suffix
-    width: 30%
-    style: [right_text]
-  subject:
-    width: 65%
-
-labelled_right:
-  type: labelled
-  label:
-    classes: label
-    text: $name
-  subject:
-    class: [input]
-    attr: { title: $desc }
-  text: $field$label
-
 labelled_inside:
   type: labelled
   label: " "
@@ -448,18 +389,47 @@ labelled_inside:
     width: 100%
     attr: { placeholder: $name }
 
-labelled_image_inside:
+labelled_inside_image:
   type: labelled_inside
   subject:
-    style: [height_watermark,centered_text]
+    styles: [height_watermark,centered_text]
+
+labelled_left:
+  type: labelled
+  label:
+    suffix: ":"
+    classes: label
+    text: $name$suffix
+    width: 30%
+    styles: [right_text]
+  subject:
+    width: 65%
+
+labelled_right:
+  type: labelled
+  label:
+    text: $name
+  subject:
+    class: [input]
+    attr: { title: $desc }
+  text: $field$label
+
+labelled_top:
+  type: labelled
+  label:
 
 letter_spaced:
-  char_spacing: 10px
-  letter-spacing: $char_spacing
+  type: char_spaced
+
+lighter:
+  font-weight: lighter
 
 line:
   tag: hr
   text: ""
+
+line_spacer:
+  type: spacer
 
 link:
   tag: a
@@ -483,7 +453,6 @@ lowercase:
 
 medium:
   font-size: 26pt
-  font-weight: 900
 
 menu:
   type: container
@@ -653,8 +622,14 @@ section_heading:
     margin-bottom: 0px
 
 small:
-  font-weight: 700
   font-size: 8pt
+
+spacer:
+  space: 2px
+  subject:
+    style:
+      display: block
+      margin-bottom: $space
 
 span:
   tag: span
