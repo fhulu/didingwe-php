@@ -20,9 +20,6 @@
 <link href="/jquery/ui.min.css" media="screen" rel="stylesheet" type="text/css" />
 <link href="/common/jquery.datetimepicker.css" media="screen" rel="stylesheet" type="text/css" />
 
-<!-- Bootstrap -->
-<link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-
 <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
 <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
 <!--[if lt IE 9]>
@@ -37,7 +34,7 @@
 <script type='text/javascript' src='/jquery-min.js'></script>
 <script type='text/javascript' src='/jquery-ui.min.js'></script>
 
-<script src="bootstrap/js/bootstrap.min.js"></script>
+<!-- <script src="bootstrap/js/bootstrap.min.js"></script> -->
 
 <script type='text/javascript' src='/common/jquery.datetimepicker.js'></script>
 <script type="text/javascript" src='/common/mukoni.jquery.js?<?=$tag?>'></script>

@@ -283,8 +283,7 @@ mkn.render = function(options)
       return this.createSubPage(field);
 
     var id = field.id;
-    if (!field.html) console.log("No html for ", id, field);
-    assert(field.html, "Invalid HTML for "+id);
+    if (field.html === undefined) console.log("No html for ", id, field);
     field.html = field.html.trim().replace(/\$tag(\W)/, field.tag+'$1');
     var table_tag = isTableTag(field.tag)
     var obj = table_tag? $('<'+field.tag+'>'): $(field.html);
@@ -343,7 +342,6 @@ mkn.render = function(options)
       obj.hide();
 
     initLinks(obj, field, function() {
-      //if (field.value !== undefined) obj.value(field.value)
       if (subitem_count) setValues(obj, field);
       initEvents(obj, field);
     });
@@ -356,6 +354,7 @@ mkn.render = function(options)
     field.path = field.url? field.url: field.id;
     field.sub_page = undefined;
     tmp.page(field);
+    field.id = field.id.replace('/','_');
     tmp.on('read_'+field.id, function(e, obj) {
       if (field.style)
         setStyle(obj, field);
@@ -471,6 +470,10 @@ mkn.render = function(options)
       {action: action, path: path })};
   }
 
+  var initTooltip = function(obj) {
+
+  }
+
   var initEvents = function(obj, field)
   {
     if (typeof field.enter == 'string') {
@@ -494,6 +497,7 @@ mkn.render = function(options)
     .on('server_response', function(event, result) {
       respond(result);
     })
+    initTooltip(obj);
 
   };
 
@@ -544,19 +548,45 @@ mkn.render = function(options)
 
   var setStyle = function(obj, field)
   {
-    var style = field.style;
-    if (!style) return;
-    for (var key in style) {
-      var val = style[key];
-      var matches = getMatches(val, /\$(\w+)/g);
-      for (var i in matches) {
-        var match = matches[i];
-        style[key] = val.replace(new RegExp('\\$'+match+"([\b\W]|$)?", 'g'), field[match]+'$1');
-        style[key] = val.replace('$'+match, field[match]);
+    var mergeArray = function() {
+      if (typeof style == 'string')
+        style = me.mergeType({}, style);
+      else if ($.isArray(style)) {
+        style = {};
+        for (var i in field.style) {
+          $.extend(style, me.mergeType({}, field.style[i]));
+        }
       }
     }
-    field[style] = style;
-    obj.css(field.style);
+
+    var setGeometry = function() {
+      var geometry = ['left','right','width','top','bottom','height'];
+      for (var i in geometry) {
+        var key = geometry[i];
+        if (field[key] !== undefined && style[key] === undefined)
+          style[key] = field[key];
+      }
+    }
+
+    var mergeVariables = function() {
+      for (var key in style) {
+        var val = style[key];
+        var matches = getMatches(val, /\$(\w+)/g);
+        for (var i in matches) {
+          var match = matches[i];
+          var replacement = field[match];
+          if (replacement === undefined) replacement = style[match];
+          style[key] = val.replace(new RegExp('\\$'+match+"([\b\W]|$)?", 'g'), replacement+'$1');
+          style[key] = val.replace('$'+match, replacement);
+        }
+      }
+    }
+    var style = field.style;
+    if (!style) style = {};
+    mergeArray();
+    setGeometry();
+    mergeVariables();
+    obj.css(style);
   }
 
   var removeSubscripts = function(item)
@@ -619,7 +649,6 @@ mkn.render = function(options)
       element.src =  link;
       element.type = 'text/javascript';
     }
-    assert(element !== undefined, "Error loading "+link);
     var loaded = false;
     if (callback !== undefined) element.onreadystatechange = element.onload = function() {
       if (!loaded) callback();

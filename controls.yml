@@ -22,6 +22,9 @@ blank:
   tag: span
   text: ""
 
+block:
+  display: block
+
 button:
   class: [action]
   tag: button
@@ -41,6 +44,15 @@ captioned_image:
   title: $name
   src: $id.png
   caption: $name
+
+
+centered:
+  margin-left: auto
+  margin-right: auto
+
+centered_text:
+  text-align: center
+
 
 checkbox:
   type: input
@@ -64,6 +76,7 @@ container:
   tag: div
   text: $contents
   contents: []
+  tooltip: false
 
 control:
   html: <$tag>$text</$tag>
@@ -74,6 +87,7 @@ control:
 
 datatable:
   head: ""
+  tooltip: false
   type: table
   class: [data]
   create: datatable
@@ -179,6 +193,9 @@ disabled_input:
 disabled_text_input:
   type: disabled_input
 
+double_spaced:
+  margin-top: 10px
+
 dropdown:
   tag: select
   inherit: [unselected,default,option]
@@ -231,6 +248,7 @@ form:
 #footer_actions:
 #  - type: submit
 
+
 google_map:
   tag: div
   create: mapper
@@ -267,6 +285,10 @@ heading:
   tag: h1
   name: $id
 
+height_watermark:
+  type: watermark
+  background-size: auto 100%
+
 hidden:
   type: input
   attr: { type: hidden }
@@ -301,6 +323,12 @@ info_text:
   value: ""
   text: $value
 
+inline:
+  display: inline
+
+inline_block:
+  display: inline-block
+
 inplace_input:
   templates: div
   style: { display: $pack }
@@ -314,7 +342,7 @@ inplace_input:
     style:
       background-image: url($id.png)
       background-repeat: no-repeat
-      
+
 inplace_image_input:
   templates: div
   style: { display: $pack }
@@ -340,7 +368,6 @@ input:
 input_page:
   type: page
   pack: inline
-  inherit: [desc]
   text: $processing $synopsis $inputs $actions
   inputs_template: { type: labelled_input }
   inputs:
@@ -359,16 +386,12 @@ isearch:
   post:
     - call: isearch::q(context)
 
+italic:
+  font-style: italic
+
 label:
   tag: label
-
-label_left:
-  templates: span
-  label_suffix: ""
-  pack: inline
-  text: "<label style='display: $pack; width: $label_width' >$name$label_suffix</label>$field"
-  subject:
-    style: { margin-right: 20px }
+  style: [inline_block]
 
 label_right:
   templates: span
@@ -379,29 +402,60 @@ label_top:
   type: label_left
   pack: block
 
-labelled_input:
+labelled:
   templates: div
-  style:
-    display: $pack
-    margin-top: 6px
-    width: 100%
-    position: relative
+  style: [ widest, block]
   inherit: [name]
+  label:
+    type: label
+    text: $name
+  text: $label$field
+  subject:
+    class: [input]
+    attr: { title: $desc }
+
+labelled_input:
+  type: labelled
+
+labelled_input_page:
+  type: input_page
+
+labelled_left:
+  type: labelled
   label:
     suffix: ":"
     classes: label
     text: $name$suffix
-    width: 23%
-    style: { width: $width}
-  text: $label$field
+    width: 30%
+    style: [right_text]
   subject:
-    width: 74%
-    class: [input]
-    style: { width: $width }
-    attr: { title: $desc }
+    width: 65%
 
-labelled_input_page:
-  type: input_page
+labelled_right:
+  type: labelled
+  label:
+    classes: label
+    text: $name
+  subject:
+    class: [input]
+    attr: { title: $desc }
+  text: $field$label
+
+labelled_inside:
+  type: labelled
+  label: " "
+  subject:
+    width: 100%
+    attr: { placeholder: $name }
+
+labelled_image_inside:
+  type: labelled_inside
+  subject:
+    style: [height_watermark,centered_text]
+
+letter_spaced:
+  char_spacing: 10px
+  letter-spacing: $char_spacing
 
 line:
   tag: hr
@@ -423,6 +477,13 @@ list_item:
 list_text:
   tag: li
   text: $id
+
+lowercase:
+  text-transform: lowercase
+
+medium:
+  font-size: 26pt
+  font-weight: 900
 
 menu:
   type: container
@@ -466,6 +527,7 @@ page:
   sub_page: true
   text: $items
   items: []
+  tooltip: false
 
 page_title:
   html: <title>$name</title>
@@ -539,6 +601,8 @@ radiobox:
     width: 24px
     height: 24px
 
+right_text:
+  text-align: right
 checkgroup:
   templates: div
   class: radio
@@ -587,6 +651,10 @@ section_heading:
     width: 100%
     margin-top: 8px
     margin-bottom: 0px
+
+small:
+  font-weight: 700
+  font-size: 8pt
 
 span:
   tag: span
@@ -703,6 +771,20 @@ titled_paragraph:
     </div>
   heading: $name
   text: " "
+
+tripple_spaced:
+  margin-top: 12px
+
+uppercase:
+  text-transform: uppercase
+
+watermark:
+  background-image: url($id.png)
+  background-repeat: no-repeat
+
+widest:
+  width: 100%
+
 
 wizard:
   classes: div

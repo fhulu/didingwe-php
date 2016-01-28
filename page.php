@@ -358,8 +358,8 @@ class page
         $type = $key;
 
       if ($type == $this->page) return;
-
-      if ($type == 'type' || $type == 'template' || $type == 'wrap') {
+      $is_style = ($type === 'style');
+      if (in_array($type, ['type', 'template', 'wrap', 'style']) ) {
         $type = $value;
         $value = null;
       }
@@ -369,8 +369,13 @@ class page
       }
       $added_types = array();
       if (is_string($type)) {
+        if ($is_style)
+          log::debug("expanding style $type");
         if (isset($this->types[$type])) return;
         $expanded = $this->expand_type($type, $added_types);
+        if ($is_style)
+          log::debug_json("expanded style $type", $this->types[$type]);
+
       }
       else if (is_array($type)) {
         $expanded = $this->merge_type($type, $added_types);
@@ -1186,5 +1191,39 @@ class page
     replace_fields($options, $this->fields['send_sms']);
 
     page::post_http($options);
+  }
+
+  function calender()
+  {
+    global $db;
+    $advance = $req['advance'];
+    $day1 = $req['month'];
+    $key = $req['key'];
+    if (is_null($day1)) $day1 = Date('Y-m-01');
+    if ($advance != 0) $day1 = $db->read_one_value("select '$day1' + interval $advance month");
+
+    list($month, $month_name) = $db->read_one("select month('$day1'), date_format('$day1', '%M %Y')", MYSQLI_NUM);
+
+    $sql = " select i,
+  concat('<div',if(month(sun)=1,'',' class=\"other\"'),'>',day(sun),'</div>') sun,
+  concat('<div',if(month(mon)=1,'',' class=\"other\"'),'>',day(mon),'</div>') mon,
+  concat('<div',if(month(tue)=1,'',' class=\"other\"'),'>',day(tue),'</div>') tue,
+  concat('<div',if(month(wed)=1,'',' class=\"other\"'),'>',day(wed),'</div>') wed,
+  concat('<div',if(month(thu)=1,'',' class=\"other\"'),'>',day(thu),'</div>') thu,
+  concat('<div',if(month(fri)=1,'',' class=\"other\"'),'>',day(fri),'</div>') fri,
+  concat('<div',if(month(sat)=1,'',' class=\"other\"'),'>',day(sat),'</div>') sat
+  from
+    (select i, '$day1' - interval (dayofweek('2016-01-1')-1-i*7) day sun,
+        '2016-01-1' - interval (dayofweek('2016-01-1')-2-i*7) day mon,
+        '2016-01-1' - interval (dayofweek('2016-01-1')-3-i*7) day tue,
+        '2016-01-1' - interval (dayofweek('2016-01-1')-4-i*7) day wed,
+        '2016-01-1' - interval (dayofweek('2016-01-1')-5-i*7) day thu,
+        '2016-01-1' - interval (dayofweek('2016-01-1')-6-i*7) day fri,
+        '2016-01-1' - interval (dayofweek('2016-01-1')-7-i*7) day sat
+        from integers where i  < 6) tmp";
+
+    $rows = $db->read($sql, MYSQLI_NUM);
+
+    return array("month"=>$day1, "month_name"=>$month_name,"rows"=>$rows, "total"=>6);
   }
 }

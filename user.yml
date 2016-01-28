@@ -276,8 +276,8 @@ login:
   desc: Fill in your credentials below and click Login to logon
   enter: "#login"
   inputs:
-    - email: { valid: [is_registered, is_active, is_unlocked] }
-    - password: { type: password, valid: is_password_for(email) }
+    - email: { type: login_email }
+    - password: { type: login_password }
   actions:
     - login
     - forgot_password: { action: dialog }
@@ -293,6 +293,16 @@ login:
     - write_session: uid,partner_id,roles,email,first_name,last_name,full_name,cellphone
     - close_dialog
     - redirect: /$page
+
+login_email:
+  type: email
+  valid: [is_registered, is_active, is_unlocked]
+
+login_password:
+  name: Password
+  type: password
+  valid: is_password_for(email) }
+
 
 modify:
   type: labelled_input_page
