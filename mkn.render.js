@@ -13,6 +13,10 @@ mkn.render = function(options)
 
   var array_defaults = [ 'type', 'template', 'action', 'attr', 'wrap'];
 
+  var mutable = function(field) {
+    return field.mutable || field.mutable === undefined || field.mutable !== false;
+  }
+
   this.mergeType = function(field, type, id)
   {
     if (field === undefined || types === undefined) return field;
@@ -69,6 +73,16 @@ mkn.render = function(options)
     return false;
   }
 
+  var mergeDefaults = function(item, defaults, base) {
+    if (!item.action && defaults.action) item.action = defaults.action;
+    if (defaults.attr) item.attr = mkn.merge(item.attr,defaults.attr);
+    if (!item.type && defaults.type) {
+      item = mkn.merge(defaults.type, item);
+      delete base.type;
+    }
+    return mkn.merge(base, item);
+  }
+
   this.expandFields = function(parent_field, name, items, defaults)
   {
     if (!defaults) defaults = { template: "$field" };
@@ -103,16 +117,14 @@ mkn.render = function(options)
         }
         if (inherit && inherit.indexOf(id) >=0 )
           item = mkn.merge(parent_field[id], item);
-        if (!item.action && defaults.action) item.action = defaults.action;
         promoteAttr(item);
-        if (defaults.attr) item.attr = mkn.merge(item.attr,defaults.attr);
         template = item.template;
-        var base = mkn.copy(this.types[id]);
-        if (!item.type && defaults.type) {
-          item = mkn.merge(defaults.type, item);
-          delete base.type;
-        }
-        item = mkn.merge(base, item);
+        var base = mkn.copy(me.types[id]);
+        var merged = mkn.merge(base, item);
+        if (mutable(merged))
+          item = mergeDefaults(item, defaults, base);
+        else
+          item = merged;
       }
       else if ($.isArray(item)) {
         array = item;

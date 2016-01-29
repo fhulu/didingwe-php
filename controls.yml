@@ -18,11 +18,18 @@ actioner:
   tag: div
   attr: { action: $id, id: "" }
 
+alert_message:
+  classes: div
+  styles: [height_watermark,centered_text]
+  text: $message
+
 blank:
+  mutable: false
   tag: span
   text: ""
 
 blank_line:
+  mutable: false
   type: blank
   styles: [block]
 
@@ -98,6 +105,9 @@ control:
   attr: { id: $id }
   class: []
   text: $name
+
+darker:
+  color: "#333"
 
 datatable:
   head: ""
@@ -784,7 +794,8 @@ uppercase:
   text-transform: uppercase
 
 watermark:
-  background-image: url($id.png)
+  image: $id.png
+  background-image: url($image)
   background-repeat: no-repeat
 
 widest:
