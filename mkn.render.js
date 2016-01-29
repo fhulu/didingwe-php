@@ -180,7 +180,8 @@ mkn.render = function(options)
     }
     else {
       template = this.mergeType(template);
-      mkn.deleteKeys(field, ['type', 'attr', 'action', 'class', 'tag', 'html', 'style', 'create','classes','template', 'templates', 'text']);
+      mkn.deleteKeys(field, ['type', 'attr', 'action', 'class', 'tag', 'html',
+       'style', 'styles', 'create','classes','template', 'templates', 'text']);
     }
     template = this.initField(mkn.merge(field, template));
     return this.create(template);
