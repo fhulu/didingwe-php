@@ -416,6 +416,10 @@ labelled_right:
 labelled_top:
   type: labelled
   styles: [inline_block]
+  side_spacing: 0px
+  style:
+    margin-right: $side_spacing
+    margin-bottom: $line_spacing
   label:
     styles: [block]
   subject:
@@ -433,7 +437,12 @@ line:
   text: ""
 
 line_spacer:
-  type: spacer
+  space: 2px
+  subject:
+    style:
+      display: block
+      margin-bottom: $space
+
 
 link:
   tag: a
@@ -625,15 +634,15 @@ section_heading:
     margin-top: 8px
     margin-bottom: 0px
 
-small:
-  font-size: 8pt
-
-spacer:
+side_spacer:
   space: 2px
   subject:
     style:
-      display: block
+      display: inline-block
       margin-bottom: $space
+
+small:
+  font-size: 8pt
 
 span:
   tag: span
