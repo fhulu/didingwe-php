@@ -563,13 +563,14 @@ processing:
 
 
 question_input:
-  templates: div
-  text: <label>$question</label>$field
-  subject: { class: [input] }
-  style:
-    margin-top: 16px
-    width: 100%
-    position: relative
+  type: labelled_top
+  inherit: [question]
+  styles: [widest,block]
+  label:
+    styles: [widest]
+    text: $question
+  subject:
+    styles: [widest]
 
 question_input_page:
   type: input_page
@@ -585,6 +586,7 @@ radiobox:
 
 right_text:
   text-align: right
+
 checkgroup:
   templates: div
   class: radio
