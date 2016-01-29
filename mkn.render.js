@@ -168,7 +168,7 @@ mkn.render = function(options)
 
   var isTemplate = function(t)
   {
-    return t !== undefined && t !== "none" && t !== '$field' && t.html !== '$field';
+    return t !== undefined && t !== "none" && t !== '$field';
   }
 
   this.createTemplate = function(template, item)
@@ -390,14 +390,14 @@ mkn.render = function(options)
       var template = item.template;
       var hasTemplate = isTemplate(template);
       var obj = this.create(item, hasTemplate);
-      var templated = obj;
-      hasTemplate = hasTemplate && this.createTemplate(template, item);
-      if (hasTemplate) {
+      var templated;
+      if (hasTemplate && (templated = this.createTemplate(template, item))) {
         if (isTableTag(template.tag))
           templated.append(obj);
         else
           this.replace(templated, obj, id, 'field');
       }
+      else templated = obj;
       if (wrap)
         wrap.append(templated);
       else if (item.wrap) {
@@ -794,13 +794,7 @@ mkn.render = function(options)
     }
     var subject = me.sink.find('#'+field+",[name='"+field+"']");
     var parents = subject.parents("[for='"+field+"']");
-    var parent;
-    if (parents.length)
-      parent = parents.eq(0);
-    else
-      parent = subject.parent();
-    if (parent.length == 0)
-      parent = subject;
+    var parent = parents.exists()? parents.eq(0): subject;
 
     var box = $("<div class=error>"+error+"</div>");
     parent.after(box);
