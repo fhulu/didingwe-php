@@ -22,6 +22,10 @@ blank:
   tag: span
   text: ""
 
+blank_line:
+  type: blank
+  styles: [block]
+
 block:
   display: block
   line_spacing: 0px
@@ -381,11 +385,12 @@ labelled_input_page:
   type: input_page
 
 labelled_inside:
-  type: labelled
-  text: $field
+  inherit: [name]
   subject:
+    class: [input]
     width: 100%
-    attr: { placeholder: $name }
+    attr: { placeholder: $name, title: $desc }
+  text: $field
 
 labelled_inside_image:
   type: labelled_inside
