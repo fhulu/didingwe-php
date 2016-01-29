@@ -368,23 +368,21 @@ label:
 
 labelled:
   templates: div
-  styles: [ widest, block]
   inherit: [name]
   label: { classes: label }
-  text: $label$field
   subject:
     class: [input]
     attr: { title: $desc }
 
 labelled_input:
-  type: labelled
+  type: labelled_left
 
 labelled_input_page:
   type: input_page
 
 labelled_inside:
   type: labelled
-  label: " "
+  text: $field
   subject:
     width: 100%
     attr: { placeholder: $name }
@@ -398,12 +396,13 @@ labelled_left:
   type: labelled
   label:
     suffix: ":"
-    classes: label
     text: $name$suffix
     width: 30%
     styles: [right_text]
   subject:
     width: 65%
+  text: $label $field
+
 
 labelled_right:
   type: labelled
@@ -416,7 +415,12 @@ labelled_right:
 
 labelled_top:
   type: labelled
+  styles: [inline_block]
   label:
+    styles: [block]
+  subject:
+    styles: [block]
+  text: $label$field
 
 letter_spaced:
   type: char_spaced
