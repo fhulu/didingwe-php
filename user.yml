@@ -249,7 +249,7 @@ list:
     - export
   fields:
     - key: { hide: yes }
-    - create_time: { width: 14% }
+    - create_time: { width: 17% }
     - email: { width: 20% }
     - first_name: { width: 13% }
     - last_name: { width: 13% }
@@ -320,7 +320,7 @@ modify:
     - modify: { name: Update }
   post:
     - read_values: {id: $key, roles: $role }
-    - sql_update: [user, id, title, first_name, last_name, email_address, roles]
+    - sql_update: [user, id, title, first_name, last_name,cellphone, email_address, roles]
     - clear_values
     - close_dialog: User details updated
     - refresh: "#main table"
