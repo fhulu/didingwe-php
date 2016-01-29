@@ -394,13 +394,15 @@ labelled_inside_image:
 
 labelled_left:
   type: labelled
+  label_width: 30%
+  input_width: 65%
+  suffix: ":"
+  inherit: [label_width, input_width, suffix]
   label:
-    suffix: ":"
     text: $name$suffix
-    width: 30%
+    width: $label_width
     styles: [right_text]
-  subject:
-    width: 65%
+  subject: { width: $input_width }
   text: $label $field
 
 
@@ -417,11 +419,14 @@ labelled_top:
   type: labelled
   styles: [inline_block]
   side_spacing: 0px
+  suffix: ""
+  inherit: [suffix]
   style:
     margin-right: $side_spacing
     margin-bottom: $line_spacing
   label:
     styles: [block]
+    text: $name$suffix
   subject:
     styles: [block]
   text: $label$field
@@ -594,7 +599,12 @@ checkgroup:
   group: $id
   inherit: [group]
   options:
-    - template: label_left
+    - template:
+        type: labelled_left
+        suffix: " "
+        label_width: auto
+        input_width: auto
+        styles: [inline_block]
     - type: checkbox
     - attr: { name: $group }
 
