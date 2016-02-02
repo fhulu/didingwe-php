@@ -143,7 +143,7 @@
         this.createAction('filter').appendTo(th);
         this.element.on('filter', function() { self.showFilter(); });
       }
-      if (this.options.page_size !== undefined) this.createPaging(th);
+      if (this.options.page_size !== undefined && !this.hasFlag('hide_paging')) this.createPaging(th);
     },
 
     createPaging: function(th)
