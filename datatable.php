@@ -237,15 +237,11 @@ PATTERN;
     });
 
     $titles = &$columns[1];
-    $index = 0;
-    $total_width = 0;
-    foreach ($fields as $field) {
-      if (!datatable::is_data($field) || !datatable::is_display($field)) continue;
-      $name = datatable::get_display_name($field);
-      list($id, $field) = assoc_element($field);
-      $width = max(5,$page_width*(float)$field['width']/100);
-        $titles[] = array('text' => $name, 'width' => $width, 'height' => '5', 'align' => 'L', 'font_name' => 'Arial', 'font_size' => '8', 'font_style' => 'B', 'fillcolor' => '128,128,128', 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linewidth' => '0.1', 'linearea' => 'LTBR');
-    }
+    $sql_titles = $options['sql_titles'];
+    if ($sql_titles)
+      datatable::insert_sql_titles($titles, $fields, $page_width, $sql_titles);
+    else
+      datatable::insert_fixed_titles($titles, $fields, $page_width);
 
     $heading = &$columns[0];
     $now = new DateTime();
@@ -256,6 +252,32 @@ PATTERN;
     $heading[] = array('text' =>$report_title, 'width' =>  $total_width, 'height' => '5', 'align' => 'C', 'font_name' => 'Arial', 'font_size' => '11', 'font_style' => 'B', 'fillcolor' => '255,255,255', 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linearea' => '');
     $pdf->WriteTable($columns,80,10);
     $pdf->Output();
+  }
+
+  static function insert_fixed_titles(&$titles, $fields, $page_width)
+  {
+    foreach ($fields as $field) {
+      if (!datatable::is_data($field) || !datatable::is_display($field)) continue;
+      $name = datatable::get_display_name($field);
+      list($id, $field) = assoc_element($field);
+      $width = max(5,$page_width*(float)$field['width']/100);
+      $titles[] = array('text' => $name, 'width' => $width, 'height' => '5', 'align' => 'L', 'font_name' => 'Arial', 'font_size' => '8', 'font_style' => 'B', 'fillcolor' => '128,128,128', 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linewidth' => '0.1', 'linearea' => 'LTBR');
+    }
+  }
+
+  static function insert_sql_titles(&$titles, $fields, $page_width, $sql)
+  {
+    global $db;
+    $names = $db->read_one($sql);
+    $index = 0;
+    foreach ($fields as $field) {
+      if (!datatable::is_data($field) || !datatable::is_display($field)) continue;
+      $name = $names[$index++];
+      if (is_null($name)) $name = datatable::get_display_name($field);
+      list($id, $field) = assoc_element($field);
+      $width = max(5,$page_width*(float)$field['width']/100);
+      $titles[] = array('text' => $name, 'width' => $width, 'height' => '5', 'align' => 'L', 'font_name' => 'Arial', 'font_size' => '8', 'font_style' => 'B', 'fillcolor' => '128,128,128', 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linewidth' => '0.1', 'linearea' => 'LTBR');
+    }
   }
 
 }
