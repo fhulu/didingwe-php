@@ -253,7 +253,7 @@ PATTERN;
     $now->setTimezone(new DateTimeZone('Europe/London'));
     $now = $now->format('Y-m-d');
     $report_title=$options['report_title'];
-    $heading[] = array('text' =>"$report_title for $now", 'width' =>  $total_width, 'height' => '5', 'align' => 'C', 'font_name' => 'Arial', 'font_size' => '11', 'font_style' => 'B', 'fillcolor' => '255,255,255', 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linearea' => '');
+    $heading[] = array('text' =>$report_title, 'width' =>  $total_width, 'height' => '5', 'align' => 'C', 'font_name' => 'Arial', 'font_size' => '11', 'font_style' => 'B', 'fillcolor' => '255,255,255', 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linearea' => '');
     $pdf->WriteTable($columns,80,10);
     $pdf->Output();
   }
