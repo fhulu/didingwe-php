@@ -224,18 +224,15 @@ mobile_number:
 
 month:
   options:
-    - january
-    - february
-    - march
-    - april
-    - may
-    - june
-    - july
-    - august
-    - september
-    - october
-    - november
-    - december
+    - sql: |
+        select month("1970-01-01" + interval i month),
+        monthname("1970-01-01" + interval i month) from integers u
+        union
+        select month("1970-01-01" + interval 10+i month),
+        monthname("1970-01-01" + interval 10+i month) from integers u
+        where i < 2
+
+
 
 mukoni_logo:
     desc: Visit our home page
