@@ -25,13 +25,9 @@ alert_message:
 
 blank:
   mutable: false
-  tag: span
+  templates: div
   text: ""
-
-blank_line:
-  mutable: false
-  type: blank
-  styles: [block]
+  styles: [inline_block]
 
 block:
   display: block
@@ -317,6 +313,11 @@ hidden:
   type: input
   attr: { type: hidden }
 
+hspaced:
+  hspace: 10px
+  margin-left: $hspace
+
+
 image:
   tag: img
   attr: {src: $src}
@@ -354,11 +355,14 @@ input:
     value: $value
 
 input_page:
+  inherit: [desc]
   type: page
-  text: $processing $synopsis $inputs $actions
-  inputs_template: { type: labelled_left }
+  text: $synopsis $inputs $actions
+  synopsis:
+    type: section_heading
+    text: $desc
   inputs:
-    - template: $inputs_template
+    - template: label_left
     - type: input
   actions:
     - wrap: class
@@ -407,33 +411,22 @@ labelled_inside_image:
   subject:
     styles: [height_watermark,centered_text]
 
-labelled_left:
+label_left:
   type: labelled
-  label_width: 30%
-  input_width: 65%
-  suffix: ":"
-  inherit: [label_width, input_width, suffix]
   label:
+    suffix: ":"
     text: $name$suffix
-    width: $label_width
-    styles: [right_text]
-  subject: { width: $input_width }
-  text: $label $field
-
-
-labelled_right:
-  type: labelled
-  label:
-    text: $name
+    width: 30%
+    styles: [right_text,inline_block]
   subject:
-    class: [input]
-    attr: { title: $desc }
-  text: $field$label
+    width: 67%
+    styles: [inline_block]
+  text: $label $field
+  styles: [vspaced]
 
-labelled_top:
+label_mobile:
   type: labelled
-  styles: [inline_block]
-  side_spacing: 0px
+  styles: [widest]
   suffix: ""
   inherit: [suffix]
   style:
@@ -446,6 +439,27 @@ labelled_top:
     styles: [block]
   text: $label$field
 
+label_right:
+  type: labelled
+  label:
+    text: $name
+  subject:
+    class: [input]
+    attr: { title: $desc }
+  text: $field$label
+
+label_top:
+  type: labelled
+  styles: [inline_block]
+  label:
+    styles: [block]
+    text: $name
+  subject:
+    styles: [block]
+  text: $label$field
+
+
+
 letter_spaced:
   type: char_spaced
 
@@ -455,13 +469,6 @@ lighter:
 line:
   tag: hr
   text: ""
-
-line_spacer:
-  space: 2px
-  subject:
-    style:
-      display: block
-      margin-bottom: $space
 
 
 link:
@@ -647,19 +654,12 @@ row_inputs:
   head:
     html: <thead><th colspan=2>$heading</th></thead>
   inputs:
-    - template: row_input
+    - template: row_inputr
     - type: input
 
 section_heading:
   classes: p
-  style:
-    text-align: center
-    font-size: 13pt
-    font-weight: 100
-    border-bottom: 1px solid grey
-    width: 100%
-    margin-top: 8px
-    margin-bottom: 0px
+  styles: [centered_text,thinner,widest,vspaced,underlined]
 
 side_spacer:
   space: 2px
@@ -690,12 +690,6 @@ sub_menu:
   sub_items:
     - action: redirect
     - type: link
-
-synopsis:
-  type: section_heading
-  text: $desc
-  style:
-    margin-top: 10px
 
 table:
   tag: table
@@ -771,6 +765,8 @@ text_area: { type: textarea}
 
 text_input: {type: input }
 
+thinner:
+  font-weight: 100
 
 time:
   type: input
@@ -790,8 +786,17 @@ titled_paragraph:
 tripple_spaced:
   margin-top: 12px
 
+underlined:
+  line_width: 1px
+  border-bottom: $line_width solid
+
 uppercase:
   text-transform: uppercase
+
+vspaced:
+  space: 6px
+  margin-top: $space
+
 
 watermark:
   image: $id.png
