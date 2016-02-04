@@ -12,6 +12,7 @@ mkn.render = function(options)
   me.known = {};
 
   var array_defaults = [ 'type', 'template', 'action', 'attr', 'wrap'];
+  var geometry = ['left','right','width','top','bottom','height'];
 
   var mutable = function(field) {
     return field.mutable || field.mutable === undefined || field.mutable !== false;
@@ -194,6 +195,7 @@ mkn.render = function(options)
       template = this.mergeType(template);
       mkn.deleteKeys(field, ['type', 'attr', 'action', 'class', 'tag', 'html',
        'style', 'styles', 'create','classes','template', 'templates', 'text']);
+       mkn.deleteKeys(field, geometry);
     }
     template = this.initField(mkn.merge(field, template));
     return this.create(template);
@@ -572,7 +574,6 @@ mkn.render = function(options)
     }
 
     var setGeometry = function() {
-      var geometry = ['left','right','width','top','bottom','height'];
       for (var i in geometry) {
         var key = geometry[i];
         if (field[key] !== undefined && style[key] === undefined)
