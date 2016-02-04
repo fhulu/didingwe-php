@@ -358,8 +358,8 @@ class page
         $type = $key;
 
       if ($type == $this->page) return;
-      $is_style = ($type === 'style');
-      if (in_array($type, ['type', 'template', 'wrap', 'style']) ) {
+      $is_style = ($type === 'styles');
+      if (in_array($type, ['type', 'template', 'wrap', 'styles']) ) {
         $type = $value;
         $value = null;
       }
@@ -369,16 +369,16 @@ class page
       }
       $added_types = array();
       if (is_string($type)) {
-        if ($is_style)
-          log::debug("expanding style $type");
         if (isset($this->types[$type])) return;
         $expanded = $this->expand_type($type, $added_types);
-        if ($is_style)
-          log::debug_json("expanded style $type", $this->types[$type]);
-
       }
-      else if (is_array($type)) {
+      else if (is_assoc($type)) {
         $expanded = $this->merge_type($type, $added_types);
+      }
+      else if ($is_style) {
+        foreach ($type as $style) {
+          $this->expand_type($style);
+        }
       }
 
       if (!is_null($expanded))
