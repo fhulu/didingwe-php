@@ -480,6 +480,21 @@ class page
 
   }
 
+  function remove_unsed_types()
+  {
+    $used = array();
+    walk_recursive_down($this->fields, function($value, $key) use (&$used) {
+      if (in_array($key, ['type', 'template']) && is_string($value))
+        $used = $used + [$value];
+      else if ($key == 'styles')
+        $used = $used + (is_array($value)? $value: [$value]);
+    });
+    log::debug_json("TYPES", $this->types);
+    log::debug_json("USED", $used);
+    $this->types = array_intersect($this->types, $used);
+    log::debug_json("INTERSECTION", $used);
+  }
+
   function read()
   {
     $this->types['control'] = $this->get_expanded_field('control');
