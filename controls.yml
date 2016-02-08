@@ -84,6 +84,22 @@ checkbox_group:
     - type: checkbox
     - template: label_left
 
+checkgroup:
+  templates: div
+  class: radio
+  text: $options
+  group: $id
+  inherit: [group]
+  options:
+    - template:
+        type: labelled_left
+        suffix: " "
+        label_width: auto
+        input_width: auto
+        styles: [inline_block]
+    - type: checkbox
+    - attr: { name: $group }
+
 class:
   tag: div
   attr: { id: ""}
@@ -589,6 +605,12 @@ processing:
   style: { display: none }
 
 
+pushed_left:
+  float: left
+
+pushed_right:
+  float: right
+
 question_input:
   type: labelled_top
   inherit: [question]
@@ -614,21 +636,6 @@ radiobox:
 right_text:
   text-align: right
 
-checkgroup:
-  templates: div
-  class: radio
-  text: $options
-  group: $id
-  inherit: [group]
-  options:
-    - template:
-        type: labelled_left
-        suffix: " "
-        label_width: auto
-        input_width: auto
-        styles: [inline_block]
-    - type: checkbox
-    - attr: { name: $group }
 
 radiogroup:
   templates: div
@@ -789,6 +796,9 @@ tripple_spaced:
 underlined:
   line_width: 1px
   border-bottom: $line_width solid
+
+underlined_text:
+  text-decoration: underline
 
 uppercase:
   text-transform: uppercase
