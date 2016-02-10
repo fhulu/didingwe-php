@@ -34,7 +34,8 @@
 <script type='text/javascript' src='/jquery-min.js'></script>
 <script type='text/javascript' src='/jquery-ui.min.js'></script>
 
-<!-- <script src="bootstrap/js/bootstrap.min.js"></script> -->
+<script src="/bootstrap.min.js"></script>
+<link href="/bootstrap.min.css" rel="stylesheet">
 
 <script type='text/javascript' src='/common/jquery.datetimepicker.js'></script>
 <script type="text/javascript" src='/common/mukoni.jquery.js?<?=$tag?>'></script>
