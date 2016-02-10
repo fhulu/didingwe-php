@@ -47,7 +47,9 @@ mkn.render = function(options)
     else
       type = me.mergeType(type);
 
-    return mkn.merge(type, field);
+    var result = mkn.merge(type, field);
+    delete result.type;
+    return result;
   };
 
   this.mergeTypes =  function()
