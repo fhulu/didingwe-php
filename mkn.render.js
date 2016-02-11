@@ -633,6 +633,16 @@ mkn.render = function(options)
     }
   }
 
+  var mergePrevious = function(defaults, name, value)
+  {
+    var prev = defaults[name];
+    if ($.isPlainObject(prev))
+      value = mkn.merge(prev, value);
+    else if (typeof value == 'string')
+      value.type = prev;
+    return value;
+  }
+
   var setDefaults = function(defaults, item, parent)
   {
     if (mkn.size(item) != 1) return false;
@@ -657,7 +667,7 @@ mkn.render = function(options)
         value = me.expandType(value);
       }
       if (name == 'template' && $.isPlainObject(value)) {
-        value = me.initField(value);
+        value = mergePrevious(defaults, name, me.initField(value));
         expandVars(value, value.subject, { recurse: true});
       }
 
