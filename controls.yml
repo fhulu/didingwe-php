@@ -612,6 +612,9 @@ pushed_left:
 pushed_right:
   float: right
 
+pushed_up:
+  vertical-align: top
+
 question_input:
   type: labelled_top
   inherit: [question]
