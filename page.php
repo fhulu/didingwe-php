@@ -420,7 +420,7 @@ class page
       && !in_array($key, page::$query_items, true);
   }
 
-  function merge_fields(&$fields, $merged = array())
+  function merge_fields(&$fields)
   {
     if (is_assoc($fields)) {
       if (isset($fields['type']))
@@ -428,10 +428,7 @@ class page
       foreach($fields as $key=>&$value) {
         if (!is_array($value) || page::not_mergeable($key)) continue;
         $value = $this->get_merged_field($key, $value);
-        if (!in_array($key, $merged, true)) {
-          $merged[] = $key;
-          $this->merge_fields($value, $merged);
-        }
+        $this->merge_fields($value, $merged);
       }
       return $fields;
     }
@@ -447,12 +444,10 @@ class page
       if (is_array($field) && !is_null($default_type) && !isset($field['type']))
         $field['type'] = $default_type;
       $field = $this->get_merged_field($key, $field);
-      if (is_array($field) && !in_array($key, $merged, true)  ) {
-        $merged[] = $key;
+      if (is_array($field)) {
         $this->merge_fields($field, $merged);
-      }
-      if (is_array($field))
         $value = array($key=>$field);
+      }
     }
     return $fields;
   }
@@ -543,7 +538,7 @@ class page
     $fields = merge_options($this->merge_stack(page::$fields_stack), $this->page_fields, $this->fields);
     $this->validator = new validator(page::merge_options($_SESSION, $this->request), $fields, $validators);
 
-    $exclude = array('css','post','script','stype','valid','values');
+    $exclude = array('css','post','script','style', 'styles', 'type','valid','values');
     if ($include != '' &&!is_array($include))
       $include = explode(',', $include);
     $validated = array();
