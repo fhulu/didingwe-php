@@ -474,7 +474,8 @@ label_top:
     styles: [block]
   text: $label$field
 
-
+left_text:
+  text-align: left
 
 letter_spaced:
   type: char_spaced
@@ -610,6 +611,9 @@ pushed_left:
 
 pushed_right:
   float: right
+
+pushed_up:
+  vertical-align: top
 
 question_input:
   type: labelled_top
