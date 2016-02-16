@@ -616,7 +616,7 @@ pushed_up:
   vertical-align: top
 
 question_input:
-  type: labelled_top
+  type: label_top
   inherit: [question]
   styles: [widest,block]
   label:
