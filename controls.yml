@@ -17,6 +17,7 @@ accordion_tab:
 actioner:
   tag: div
   attr: { action: $id, id: "" }
+  style: {color: white}
 
 blank:
   tag: span
@@ -345,6 +346,7 @@ input_page:
   actions:
     - wrap: class
     - type: submit
+  style: {background-color: white}
 
 label:
   tag: label
