@@ -389,7 +389,6 @@ input_page:
   actions:
     - wrap: class
     - type: submit
-  style: {background-color: white}
 
 isearch:
   type: input
