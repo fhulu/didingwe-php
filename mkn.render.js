@@ -12,6 +12,11 @@ mkn.render = function(options)
   me.known = {};
 
   var array_defaults = [ 'type', 'template', 'action', 'attr', 'wrap'];
+  var geometry = ['left','right','width','top','bottom','height'];
+
+  var mutable = function(field) {
+    return field.mutable || field.mutable === undefined || field.mutable !== false;
+  }
 
   this.mergeType = function(field, type, id)
   {
@@ -20,10 +25,12 @@ mkn.render = function(options)
     if (type === undefined && field.html === undefined) {
       if (!id) id = field.id;
       var cls;
-      if (id) cls = id.replace('_', '-');
+      if (id) cls = id.replace(/_/g, '-');
       if (field.classes) {
         type = 'control';
-        field.tag = field.classes;
+        if (types[field.classes])
+          type = field.classes;
+        else field.tag = field.classes;
         if (cls) field.class = mkn.appendArray(field.class, cls);
       }
       else if (field.templates) {
@@ -40,7 +47,9 @@ mkn.render = function(options)
     else
       type = me.mergeType(type);
 
-    return mkn.merge(type, field);
+    var result = mkn.merge(type, field);
+    delete result.type;
+    return result;
   };
 
   this.mergeTypes =  function()
@@ -52,7 +61,7 @@ mkn.render = function(options)
 
   this.expandType = function(type)
   {
-    if ($.isPlainObject(type)) return type;
+    if ($.isPlainObject(type)) return me.mergeType(type);
     if (type.search(/\W/) >= 0) return {html: type};
     return me.mergeType({type: type} );
   };
@@ -65,6 +74,16 @@ mkn.render = function(options)
       if (item[name] !== undefined) return true;
     }
     return false;
+  }
+
+  var mergeDefaults = function(item, defaults, base) {
+    if (!item.action && defaults.action) item.action = defaults.action;
+    if (defaults.attr) item.attr = mkn.merge(item.attr,defaults.attr);
+    if (!item.type && defaults.type) {
+      item = mkn.merge(defaults.type, item);
+      delete base.type;
+    }
+    return mkn.merge(base, item);
   }
 
   this.expandFields = function(parent_field, name, items, defaults)
@@ -101,16 +120,14 @@ mkn.render = function(options)
         }
         if (inherit && inherit.indexOf(id) >=0 )
           item = mkn.merge(parent_field[id], item);
-        if (!item.action && defaults.action) item.action = defaults.action;
         promoteAttr(item);
-        if (defaults.attr) item.attr = mkn.merge(item.attr,defaults.attr);
         template = item.template;
-        var base = mkn.copy(this.types[id]);
-        if (!item.type && defaults.type) {
-          item = mkn.merge(defaults.type, item);
-          delete base.type;
-        }
-        item = mkn.merge(base, item);
+        var base = mkn.copy(me.types[id]);
+        var merged = mkn.merge(base, item);
+        if (mutable(merged))
+          item = mergeDefaults(item, defaults, base);
+        else
+          item = merged;
       }
       else if ($.isArray(item)) {
         array = item;
@@ -178,7 +195,9 @@ mkn.render = function(options)
     }
     else {
       template = this.mergeType(template);
-      mkn.deleteKeys(field, ['type', 'attr', 'action', 'class', 'tag', 'html', 'style', 'create','classes','template', 'templates', 'text']);
+      mkn.deleteKeys(field, ['type', 'attr', 'action', 'class', 'tag', 'html',
+       'style', 'styles', 'create','classes','template', 'templates', 'text']);
+       mkn.deleteKeys(field, geometry);
     }
     template = this.initField(mkn.merge(field, template));
     return this.create(template);
@@ -283,8 +302,7 @@ mkn.render = function(options)
       return this.createSubPage(field);
 
     var id = field.id;
-    if (!field.html) console.log("No html for ", id, field);
-    assert(field.html, "Invalid HTML for "+id);
+    if (field.html === undefined) return null;
     field.html = field.html.trim().replace(/\$tag(\W)/, field.tag+'$1');
     var table_tag = isTableTag(field.tag)
     var obj = table_tag? $('<'+field.tag+'>'): $(field.html);
@@ -343,7 +361,6 @@ mkn.render = function(options)
       obj.hide();
 
     initLinks(obj, field, function() {
-      //if (field.value !== undefined) obj.value(field.value)
       if (subitem_count) setValues(obj, field);
       initEvents(obj, field);
     });
@@ -356,6 +373,7 @@ mkn.render = function(options)
     field.path = field.url? field.url: field.id;
     field.sub_page = undefined;
     tmp.page(field);
+    field.id = field.id.replace('/','_');
     tmp.on('read_'+field.id, function(e, obj) {
       if (field.style)
         setStyle(obj, field);
@@ -389,14 +407,14 @@ mkn.render = function(options)
       var template = item.template;
       var hasTemplate = isTemplate(template);
       var obj = this.create(item, hasTemplate);
-      var templated = obj;
-      if (hasTemplate) {
-        templated = this.createTemplate(template, item);
+      var templated;
+      if (hasTemplate && (templated = this.createTemplate(template, item))) {
         if (isTableTag(template.tag))
           templated.append(obj);
         else
           this.replace(templated, obj, id, 'field');
       }
+      else templated = obj;
       if (wrap)
         wrap.append(templated);
       else if (item.wrap) {
@@ -471,6 +489,10 @@ mkn.render = function(options)
       {action: action, path: path })};
   }
 
+  var initTooltip = function(obj) {
+
+  }
+
   var initEvents = function(obj, field)
   {
     if (typeof field.enter == 'string') {
@@ -494,17 +516,17 @@ mkn.render = function(options)
     .on('server_response', function(event, result) {
       respond(result);
     })
+    initTooltip(obj);
 
   };
 
   var initLinks = function(object, field, callback)
   {
-    loadLinks('css', field, function() {
-      loadLinks('script', field, function() {
-        if (field.create)
-          object.customCreate($.extend({types: me.types}, me.options, field));
-        if (callback !== undefined) callback();
-      });
+    loadLinks('css', field);
+    loadLinks('script', field, function() {
+      if (field.create)
+        object.customCreate($.extend({types: me.types}, me.options, field));
+      if (callback !== undefined) callback();
     });
   };
 
@@ -545,18 +567,29 @@ mkn.render = function(options)
 
   var setStyle = function(obj, field)
   {
-    var style = field.style;
-    if (!style) return;
-    for (var key in style) {
-      var val = style[key];
-      var matches = getMatches(val, /\$(\w+)/g);
-      for (var i in matches) {
-        var match = matches[i];
-        style[key] = val.replace(new RegExp('\\$'+match+"([\b\W]|$)?", 'g'), field[match]+'$1');
+    var mergeStyles = function() {
+      if (typeof styles == 'string')
+        styles = me.mergeType({}, styles.split(/[\s,]+/));
+      for (var i in styles) {
+        $.extend(style, me.mergeType({}, styles[i]));
       }
     }
-    field[style] = style;
-    obj.css(field.style);
+
+    var setGeometry = function() {
+      for (var i in geometry) {
+        var key = geometry[i];
+        if (field[key] !== undefined && style[key] === undefined)
+          style[key] = field[key];
+      }
+    }
+
+    var style = field.style;
+    if (!style) style = {};
+    styles = field.styles;
+    if (styles) mergeStyles();
+    setGeometry();
+    expandVars(field, style, { sourceFirst: true})
+    obj.css(style);
   }
 
   var removeSubscripts = function(item)
@@ -568,6 +601,46 @@ mkn.render = function(options)
     })
     mkn.deleteKeys(item, removed);
     return item;
+  }
+
+  var expandVars = function(source, dest, flags)
+  {
+    if (!flags) flags = {};
+    for (var key in dest) {
+      var val = dest[key];
+      if ($.isPlainObject(val) && flags.recurse) {
+        expandVars($.extend({}, source, dest), val, flags);
+        continue;
+      }
+      if (typeof val !== 'string') continue;
+      var matches = getMatches(val, /\$(\w+)/g);
+      for (var i in matches) {
+        var match = matches[i];
+        var index = flags.sourceFirst? 0: 1;
+        var replacement = arguments[index++][match];
+        if (replacement === undefined) replacement = arguments[index % 2][match];
+        if (replacement === undefined) continue;
+        dest[key] = val.replace(new RegExp('\\$'+match+"([\b\W]|$)?", 'g'), replacement+'$1');
+        dest[key] = val.replace('$'+match, replacement);
+      }
+    }
+  }
+  var expandSubject = function(template)
+  {
+    var subject = template.subject
+    for (var key in subject) {
+
+    }
+  }
+
+  var mergePrevious = function(defaults, name, value)
+  {
+    var prev = defaults[name];
+    if ($.isPlainObject(prev))
+      value = mkn.merge(prev, value);
+    else if (typeof value == 'string')
+      value.type = prev;
+    return value;
   }
 
   var setDefaults = function(defaults, item, parent)
@@ -590,11 +663,13 @@ mkn.render = function(options)
       else if (name === 'wrap' && $.isPlainObject(value))
         value = $.extend({}, {tag: 'div'}, value);
       else if (name === 'type' || name === 'template' || name === 'wrap') {
-        if (value === undefined) { console.log("undefiend value", name, item)}
+        if (value === undefined) { console.log("undefined value", name, item)}
         value = me.expandType(value);
       }
-      if (name == 'template' && $.isPlainObject(value))
-        value = me.initField(value);
+      if (name == 'template' && $.isPlainObject(value)) {
+        value = mergePrevious(defaults, name, me.initField(value));
+        expandVars(value, value.subject, { recurse: true});
+      }
 
       defaults[name] = value;
       set = true;
@@ -619,7 +694,6 @@ mkn.render = function(options)
       element.src =  link;
       element.type = 'text/javascript';
     }
-    assert(element !== undefined, "Error loading "+link);
     var loaded = false;
     if (callback !== undefined) element.onreadystatechange = element.onload = function() {
       if (!loaded) callback();
@@ -746,13 +820,7 @@ mkn.render = function(options)
     }
     var subject = me.sink.find('#'+field+",[name='"+field+"']");
     var parents = subject.parents("[for='"+field+"']");
-    var parent;
-    if (parents.length)
-      parent = parents.eq(0);
-    else
-      parent = subject.parent();
-    if (parent.length == 0)
-      parent = subject;
+    var parent = parents.exists()? parents.eq(0): subject;
 
     var box = $("<div class=error>"+error+"</div>");
     parent.after(box);

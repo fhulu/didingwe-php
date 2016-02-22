@@ -1,3 +1,78 @@
+textarea,
+input[type=email],
+input[type=text],
+input[type=password]
+{
+  border: 1px solid lightgrey;
+}
+
+.warn
+{
+  color: red;
+}
+
+.left
+{
+  text-align: left;
+}
+
+.right
+{
+  float: right;
+}
+
+.hcenter, .hcentre
+{
+  position: relative;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+select
+{
+  border: 1px solid #D0D0CD;
+  background:#ffffff;
+}
+input[type='submit'],[type='reset'] ,[type='button']
+{
+  cursor:pointer;
+}
+
+input:focus,
+select:focus
+{
+  border: 1px solid grey;
+}
+
+button,
+.action
+{
+  height: 30px;
+  color: white;
+  background-color: rgb(20,60,90);
+  border: 0px;
+  padding-left: 20px;
+  padding-right: 20px;
+  font-weight: 100;
+  margin-right: 20px;
+}
+
+.desc
+{
+  text-align: center;
+  font-size: 14pt;
+  font-weight: 100;
+  border-bottom: 1px solid grey;
+}
+.action:hover,button:hover
+{
+  background-color: rgb(36,94,128);
+}
+
+
+
 .actions
 {
   width: 100%;
@@ -7,109 +82,58 @@
 
 .input
 {
-  width: 100%;
   position: relative;
 }
 
-.input>label+*
+.input
 {
-  position: relative;
-  width: 100%;
-  left: 0px;
-  font-weight: 100;
-  border-radius: 6px;
-  height: 32px;
-}
-
-.input>*
-{
-  width: 100%;
   border-radius: 6px;
   height: 32px;
   vertical-align: middle;
 }
 
-.input>input[type=radio],
-.input>input[type=checkbox]
+.input[type=radio],
+.input[type=checkbox]
 {
   width: 24px;
   height: 24px;
 }
 
-.input>*:first-child:focus
+.input:focus
 {
   -moz-box-shadow: 3px 3px 4px #3f3f3f;
   -webkit-box-shadow: 3px 3px 4px #3f3f3f;
   box-shadow: 3px 3px 4px #3f3f3f;
 }
 
-.hint
-{
-  display: none;
-  height: auto;
-  margin-left: auto;
-  margin-right: auto;
-  padding: 5px;
-  position: absolute;
-  bottom: 36px;
-  left: 0px;
-  font-size: 11px;
-  font-weight: normal;
-  font-style: italic;
-  background-color: rgba(255,255,255,0.85);
-  -webkit-border-radius: 16px;
-  -moz-border-radius: 16px;
-  border-radius: 16px;
-  -webkit-box-shadow: 0px 0px 3px #222;
-  -moz-box-shadow: 0px 0px 3px #222;
-  box-shadow: 0px 0px 3px #222;
-  color: #444;
-  padding-left: 10px;
-}
-
-.hint::before{
-  content: ' ';
-	position: absolute;
-	width: 0;
-	height: 0;
-	left: 30px;
-  bottom: -15px;
-	border: 8px solid;
-	border-color: rgba(2,2,2,0.85) transparent transparent rgba(2,2,2,0.85);
-}
-
-.hint::after{
-  content: ' ';
-	position: absolute;
-	width: 0;
-	height: 0;
-	left: 30px;
-  bottom: -15px;
-	border: 8px solid;
-	border-color: rgba(255,255,255,0.85) transparent transparent rgba(255,255,255,0.85);
-}
-
-.input:focus>.hint,
-.input:hover>.hint
-{
-  z-index: 1000;
-  display: block;
-}
-
-.hint:hover
-{
-  display: none !important  ;
-}
 
 
 .input > input:hover{
   box-shadow: 0px 0px 6px rgb(50, 204, 204);
 }
+
 .input > input{
-  border-style: none;
   border-radius: 3px;
   font-size: 18px;
 }
+
+.error
+{
+  display: none;
+  padding: 1px;
+  border: 1px solid lightgrey;
+  background: #fffff0;
+  width: 95%;
+  color: red;
+  font-weight: normal;
+  color: red;
+  -moz-box-shadow: 3px 3px 4px #0f0f0f;
+  -webkit-box-shadow: 3px 3px 4px #0f0f0f;
+  box-shadow: 3px 3px 4px #0f0f0f;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 
 .labelled-input>label
 {
@@ -196,9 +220,4 @@
 .question-input>input[type=checkbox]
 {
   width: 24px;
-}
-
-select>option
-{
-  height: 32px;
 }

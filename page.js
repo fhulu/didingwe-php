@@ -45,7 +45,6 @@ $.fn.page = function(options, callback)
       var object = r.create(data.fields);
       page.object = object;
       data.values = values;
-      assert(object !== undefined, "Unable to create page "+this.id);
       object.addClass('page').appendTo(parent);
       parent.trigger('read_'+this.id, [object, data.fields]);
       return this;

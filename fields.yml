@@ -191,7 +191,7 @@ logout:
   action: post
   post:
     - read_session: email
-    - sql_exec: insert into audit_trail(user_id,action,detail) values($uid,'Logout','$email')
+    - sql_exec: insert into audit_trail(user,action,detail) values($uid,'Logout','$email')
     - call: session_destroy()
     - redirect: $landing_content
 
@@ -239,6 +239,12 @@ mukoni_logo:
     type: image
     src: mukoni.png
     url: http://www.mukoni.co.za
+
+my_audit_trail:
+  desc: My audit trail
+  access: reg
+  url: /user/my_audit_trail
+
 
 next:
   call: ""
@@ -307,6 +313,11 @@ twitter:
   src: /twitter.png
   url: https://twitter.com
 
+users:
+  access: admin
+  desc: List all the users
+  url: /user/list
+
 validator:
   action: post
   validate: all
@@ -331,6 +342,11 @@ weekday:
     - thursday
     - friday
     - saturday
+
+welcome:
+  name: ""
+  access: reg
+  url: /user/profile
 
 wizard_post:
   type: button

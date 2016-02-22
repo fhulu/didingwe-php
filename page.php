@@ -358,8 +358,8 @@ class page
         $type = $key;
 
       if ($type == $this->page) return;
-
-      if ($type == 'type' || $type == 'template' || $type == 'wrap') {
+      $is_style = ($type === 'styles');
+      if (in_array($type, ['type', 'template', 'wrap', 'styles']) ) {
         $type = $value;
         $value = null;
       }
@@ -367,10 +367,19 @@ class page
         $this->expand_value($value);
         return;
       }
-      if (isset($this->types[$type])) return;
-
       $added_types = array();
-      $expanded = $this->expand_type($type, $added_types);
+      if (is_string($type)) {
+        if (isset($this->types[$type])) return;
+        $expanded = $this->expand_type($type, $added_types);
+      }
+      else if (is_assoc($type)) {
+        $expanded = $this->merge_type($type, $added_types);
+      }
+      else if ($is_style) {
+        foreach ($type as $style) {
+          $this->expand_type($style);
+        }
+      }
 
       if (!is_null($expanded))
         $this->merge_type($expanded, $added_types);
@@ -411,7 +420,7 @@ class page
       && !in_array($key, page::$query_items, true);
   }
 
-  function merge_fields(&$fields, $merged = array())
+  function merge_fields(&$fields)
   {
     if (is_assoc($fields)) {
       if (isset($fields['type']))
@@ -419,10 +428,7 @@ class page
       foreach($fields as $key=>&$value) {
         if (!is_array($value) || page::not_mergeable($key)) continue;
         $value = $this->get_merged_field($key, $value);
-        if (!in_array($key, $merged, true)) {
-          $merged[] = $key;
-          $this->merge_fields($value, $merged);
-        }
+        $this->merge_fields($value, $merged);
       }
       return $fields;
     }
@@ -438,12 +444,10 @@ class page
       if (is_array($field) && !is_null($default_type) && !isset($field['type']))
         $field['type'] = $default_type;
       $field = $this->get_merged_field($key, $field);
-      if (is_array($field) && !in_array($key, $merged, true)  ) {
-        $merged[] = $key;
+      if (is_array($field)) {
         $this->merge_fields($field, $merged);
-      }
-      if (is_array($field))
         $value = array($key=>$field);
+      }
     }
     return $fields;
   }
@@ -469,6 +473,21 @@ class page
         unset($parent[$key]);
     });
 
+  }
+
+  function remove_unsed_types()
+  {
+    $used = array();
+    walk_recursive_down($this->fields, function($value, $key) use (&$used) {
+      if (in_array($key, ['type', 'template']) && is_string($value))
+        $used = $used + [$value];
+      else if ($key == 'styles')
+        $used = $used + (is_array($value)? $value: [$value]);
+    });
+    log::debug_json("TYPES", $this->types);
+    log::debug_json("USED", $used);
+    $this->types = array_intersect($this->types, $used);
+    log::debug_json("INTERSECTION", $used);
   }
 
   function read()
@@ -519,7 +538,7 @@ class page
     $fields = merge_options($this->merge_stack(page::$fields_stack), $this->page_fields, $this->fields);
     $this->validator = new validator(page::merge_options($_SESSION, $this->request), $fields, $validators);
 
-    $exclude = array('css','post','script','stype','valid','values');
+    $exclude = array('css','post','script','style', 'styles', 'type','valid','values');
     if ($include != '' &&!is_array($include))
       $include = explode(',', $include);
     $validated = array();
@@ -683,8 +702,8 @@ class page
     $detail = addslashes($detail);
     $user = $this->read_user();
     $user_id = $user['uid'];
-    $db->insert("insert into audit_trail(user_id, action, detail)
-      values($user_id, '$name', '$detail')");
+    $db->insert("insert into audit_trail(user, action, detail)
+      values('$user_id', '$name', '$detail')");
   }
 
   function action()
@@ -769,6 +788,17 @@ class page
     $args = implode(',', $args);
     $values = implode(',', $values);
     $sql = "insert $table($args) values($values)";
+    $this->sql_exec($sql);
+  }
+
+  function sql_select()
+  {
+    $args = func_get_args();
+    $table = array_shift($args);
+    $key = array_shift($args);
+    if (!sizeof($args))
+      throw new Exception("Invalid number of arguments for sql_select");
+    $sql = "select from $table where $key = '\$$key'";
     return $this->sql_exec($sql);
   }
 
@@ -828,8 +858,8 @@ class page
     log::debug_json("REPLY ACTIONS", $actions);
 
     $methods = array('alert', 'abort', 'call', 'clear_session', 'clear_values',
-      'close_dialog', 'load_lineage', 'post_http', 'read_session', 'read_values', 'redirect',
-      'send_email', 'send_sms', 'show_dialog', 'sql', 'sql_exec','sql_rows', 'sql_insert',
+      'close_dialog', 'load_lineage', 'read_session', 'read_values', 'redirect',
+      'send_email', 'show_dialog', 'show_captcha', 'sql', 'sql_exec','sql_rows', 'sql_insert',
       'sql_update', 'sql_values', 'refresh', 'trigger', 'update', 'write_session');
     foreach($actions as $action) {
       if ($this->aborted) return false;
@@ -1171,5 +1201,45 @@ class page
     replace_fields($options, $this->fields['send_sms']);
 
     page::post_http($options);
+  }
+
+  function calender()
+  {
+    global $db;
+    $advance = $req['advance'];
+    $day1 = $req['month'];
+    $key = $req['key'];
+    if (is_null($day1)) $day1 = Date('Y-m-01');
+    if ($advance != 0) $day1 = $db->read_one_value("select '$day1' + interval $advance month");
+
+    list($month, $month_name) = $db->read_one("select month('$day1'), date_format('$day1', '%M %Y')", MYSQLI_NUM);
+
+    $sql = " select i,
+  concat('<div',if(month(sun)=1,'',' class=\"other\"'),'>',day(sun),'</div>') sun,
+  concat('<div',if(month(mon)=1,'',' class=\"other\"'),'>',day(mon),'</div>') mon,
+  concat('<div',if(month(tue)=1,'',' class=\"other\"'),'>',day(tue),'</div>') tue,
+  concat('<div',if(month(wed)=1,'',' class=\"other\"'),'>',day(wed),'</div>') wed,
+  concat('<div',if(month(thu)=1,'',' class=\"other\"'),'>',day(thu),'</div>') thu,
+  concat('<div',if(month(fri)=1,'',' class=\"other\"'),'>',day(fri),'</div>') fri,
+  concat('<div',if(month(sat)=1,'',' class=\"other\"'),'>',day(sat),'</div>') sat
+  from
+    (select i, '$day1' - interval (dayofweek('2016-01-1')-1-i*7) day sun,
+        '2016-01-1' - interval (dayofweek('2016-01-1')-2-i*7) day mon,
+        '2016-01-1' - interval (dayofweek('2016-01-1')-3-i*7) day tue,
+        '2016-01-1' - interval (dayofweek('2016-01-1')-4-i*7) day wed,
+        '2016-01-1' - interval (dayofweek('2016-01-1')-5-i*7) day thu,
+        '2016-01-1' - interval (dayofweek('2016-01-1')-6-i*7) day fri,
+        '2016-01-1' - interval (dayofweek('2016-01-1')-7-i*7) day sat
+        from integers where i  < 6) tmp";
+
+    $rows = $db->read($sql, MYSQLI_NUM);
+
+    return array("month"=>$day1, "month_name"=>$month_name,"rows"=>$rows, "total"=>6);
+  }
+
+  function show_captcha()
+  {
+    log::debug("showing captcha");
+    require_once('../common/captcha.php');
   }
 }

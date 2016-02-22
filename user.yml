@@ -5,7 +5,7 @@ activate:
   access: admin
   validate: none
   desc: Activate inactive user
-  audit: sql(select first_name, last_name, email_address from user where id = '$key')
+  audit: sql(select first_name, last_name, email from user_view where id = '$key')
   post:
     - sql_exec: update user set active = 1 where id = '$key'
     - refresh: "#main table"
@@ -36,8 +36,8 @@ audit_trail:
   type: audit_trail_base
   access: admin
   sql: |
-    select t.create_time, u.first_name, u.last_name,u.email_address, t.action, t.detail
-      from audit_trail t join user u on t.user_id = u.id
+    select t.create_time, u.first_name, u.last_name,u.email, t.action, t.detail
+      from audit_trail t join user_view u on t.user = u.id
 
 check_otp:
   type: wizard_page
@@ -104,11 +104,9 @@ confirm_registration:
     validate: none
     post:
       - read_session: title,first_name,last_name,cellphone,email,password
-      - sql_exec: >
-          insert into user(email_address, password, title, first_name,
-            last_name,cellphone,active,roles)
-          values('$email',password('$password'),'$title', '$first_name',
-            '$last_name','$cellphone',1,'reg')
+      - sql_insert: [person,title,first_name,last_name,cellphone,email]
+      - sql_values: select last_insert_id() person, password('$password') password
+      - sql_insert: [user,person,email,password]
       - sql_values: select last_insert_id() uid
       - write_session: uid
       - clear_values
@@ -143,7 +141,7 @@ deactivate:
   validate: none
   desc: Deactivate this user
   confirmation: Are you sure you want to deactivate this user?
-  audit: sql(select first_name, last_name, email_address from user where id = '$key')
+  audit: sql(select first_name, last_name, email from user where id = '$key')
   post:
     - sql_exec: update user set active = 0 where id = '$key'
     - send_email:
@@ -173,7 +171,7 @@ enter_credentials:
     - first_name
     - last_name
     - cellphone
-    - email: { valid: [unique(user.email_address)] }
+    - email: { valid: [not_registered] }
     - type: password_input
     - password
     - confirm_password
@@ -192,11 +190,11 @@ history:
     - when : { width: 14%, name: Time }
     - what: { width: 30%, name: Action }
     - detail: { width: 55% }
-  sql: select create_time, action, detail from audit_trail where user_id = $key
+  sql: select create_time, action, detail from audit_trail where user = '$key'
 
 
 is_active:
-  valid: sql(select active from user where email_address = '$value')
+  valid: sql(select active from user where email = '$value')
   error: |
     Account $value has been deactivated.
     Please ask the administrator to reactivate your account
@@ -207,23 +205,23 @@ is_password_for:
     - depends(email,is_registered)
     - depends(email,is_active)
     - depends(email,is_unlocked)
-    - sql(select password=password('$value') from user where email_address = '$v1')
+    - sql(select password=password('$value') from user where email = '$v1')
   error:
-    - sql_exec: update user set attempts = attempts+1 where email_address = '$v1'
+    - sql_exec: update user set attempts = attempts+1 where email = '$v1'
     - sql_exec: >
-        insert into audit_trail(user_id, action, detail)
-          select id, 'Failed Login Attempt', '$v1' from user where email_address = '$v1'
+        insert into audit_trail(user, action, detail)
+          select id, 'Failed Login Attempt', '$v1' from user where email = '$v1'
     - error: Invalid user name or password for $v1
 
 is_registered:
-  valid: sql(select 1 from user where email_address = '$value')
+  valid: sql(select 1 from user where email= '$value')
   error: >
     There is no such email '$value' registered on the system.<br>
     Click on <b>Register</b> if you would like to register to use the system.
 
 is_unlocked:
   max_attempts: 5
-  valid: sql(select attempts < $max_attempts from user where email_address = '$value')
+  valid: sql(select attempts < $max_attempts from user where email = '$value')
   error: |
     Account $value locked because of too many incorrect attempts.
     Please ask the administrator to unlock your account.
@@ -262,12 +260,12 @@ list:
     pages:
       - user/history
   sql: >
-    select id, create_time, email_address, first_name, last_name, cellphone, roles, status, status, actions from (
-       select u.id, u.create_time,email_address, u.first_name, u.last_name,
+    select id, create_time, email, first_name, last_name, cellphone, roles, status, status, actions from (
+       select u.id, u.create_time, u.email, u.first_name, u.last_name,
         u.cellphone, group_concat(r.name) roles,
         if(u.active=1,'active','inactive') status,
         if(u.active=1,'expand,slide,edit,deactivate','expand,slide,edit,activate') actions
-      from user u left join role r on find_in_set(r.code,u.roles)
+      from user_view u left join role r on find_in_set(r.code,u.roles)
       group by u.id
     ) tmp where 1 = 1
 
@@ -278,23 +276,37 @@ login:
   desc: Fill in your credentials below and click Login to logon
   enter: "#login"
   inputs:
-    - email: { valid: [is_registered, is_active, is_unlocked] }
-    - password: { type: password, valid: is_password_for(email) }
+    - email: { type: login_email }
+    - password: { type: login_password }
   actions:
-    - login
+    - login: { type: login_action }
     - forgot_password: { action: dialog }
+
+login_action:
+  type: button
+  action: post
   post:
     - sql_values: |
         select id uid, partner_id, email_address email, first_name, last_name,
           concat(first_name, ' ', last_name) full_name,
-          cellphone, roles, groups
+          cellphone, roles, groups, 'home' page
         from user
         where email_address='$email'
     - load_lineage: [roles,role,code,base_code]
     - sql_exec: update user set attempts = 0 where id = $uid
     - write_session: uid,partner_id,roles,email,first_name,last_name,full_name,cellphone
     - close_dialog
-    - redirect: /$session_content
+    - redirect: /$page
+
+login_email:
+  type: email
+  valid: [is_registered, is_active, is_unlocked]
+
+login_password:
+  name: Password
+  type: password
+  valid: is_password_for(email) }
+
 
 modify:
   type: labelled_input_page
@@ -306,33 +318,42 @@ modify:
     - first_name
     - last_name
     - cellphone
-    - email_address
+    - email
     - role:
         name: Assigned Role
         type: dropdown
         valid: provided
   values:
     - sql_values: |
-        select title,first_name,last_name,cellphone,email_address,roles role
-        from user
-        where id = $key
+        select title,first_name,last_name,cellphone,email,group_concat(r.name) role
+        from user_view u
+          left join role r on find_in_set(r.code,u.roles)
+        where u.id = '$key'
+        group by u.id
+
   actions:
     - modify: { name: Update }
   post:
     - read_values: {id: $key, roles: $role }
-    - sql_update: [user, id, title, first_name, last_name,cellphone, email_address, roles]
+    - sql_update: [user, id, title, first_name, last_name, email, roles]
     - clear_values
     - close_dialog: User details updated
     - refresh: "#main table"
-  audit: $title,$first_name,$last_name,$cellphone,$email_address,$role
+  audit: $title,$first_name,$last_name,$cellphone,$email,$role
 
 my_audit_trail:
   type: audit_trail_base
   name: My Audit Trail
   access: reg
   sql: |
-    select t.create_time, u.first_name, u.last_name,u.email_address, t.action, t.detail
-      from audit_trail t join user u on t.user_id = u.id and t.user_id = $uid
+    select t.create_time, u.first_name, u.last_name,u.email, t.action, t.detail
+      from audit_trail t join user_view u on t.user = u.id and u.id = '$uid'
+
+not_registered:
+  valid: not(is_registered($1))
+  error: |
+    User $value is already registered on the system. If you have forgottend the
+    password, click on <i>Forgot Password</i> to reset your password.
 
 otp:
   name: OTP
@@ -352,28 +373,27 @@ profile:
     - first_name
     - last_name
     - cellphone
-    - email_address
+    - email
     - role: { attr: disabled }
   values:
     - sql_values: |
-        select title,first_name,last_name,cellphone,email_address,group_concat(r.name) role
-        from user u left join role r on find_in_set(r.code,u.roles)
-        where id = $uid
-        group by id
+        select u.title,u.first_name,u.last_name,u.cellphone,u.email,group_concat(r.name) role
+        from user_view u
+          left join role r on find_in_set(r.code,u.roles)
+        where u.id = '$uid'
+        group by u.id
   actions:
     - profile_update:
         validate: [title,first_name,last_name,email_address,cellphone]
 
 profile_update:
   name: Update Profile
-  audit: $title $first_name $last_name $cellphone $email_address
+  audit: $title $first_name $last_name $cellphone $email
   post:
-    - sql_exec: |
-        update user
-        set
-          title='$title', first_name='$first_name', last_name='$last_name',
-          cellphone='$cellphone', email_address = '$email_address'
-        where id = '$uid'
+    - sql_values: select id, person from user where id = '$uid'
+    - sql_update: [user,id,email]
+    - read_values: {id : $person}
+    - sql_update: [person,id,title,first_name,last_name,cellphone,email]
     - close_dialog: Successfully updated
 
 
