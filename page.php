@@ -859,7 +859,7 @@ class page
 
     $methods = array('alert', 'abort', 'call', 'clear_session', 'clear_values',
       'close_dialog', 'load_lineage', 'read_session', 'read_values', 'redirect',
-      'send_email', 'show_dialog', 'sql', 'sql_exec','sql_rows', 'sql_insert',
+      'send_email', 'show_dialog', 'show_captcha', 'sql', 'sql_exec','sql_rows', 'sql_insert',
       'sql_update', 'sql_values', 'refresh', 'trigger', 'update', 'write_session');
     foreach($actions as $action) {
       if ($this->aborted) return false;
@@ -1235,5 +1235,11 @@ class page
     $rows = $db->read($sql, MYSQLI_NUM);
 
     return array("month"=>$day1, "month_name"=>$month_name,"rows"=>$rows, "total"=>6);
+  }
+
+  function show_captcha()
+  {
+    log::debug("showing captcha");
+    require_once('../common/captcha.php');
   }
 }

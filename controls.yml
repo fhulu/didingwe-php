@@ -51,6 +51,11 @@ button_image:
   attr: { title: $desc }
   src: $id.png
 
+captcha_image:
+  type: image
+  src: /?action=action&path=/controls/captcha_image
+  post: [show_captcha]
+
 captioned_image:
   classes: div
   text: |
