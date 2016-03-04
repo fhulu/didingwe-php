@@ -3,8 +3,8 @@ $.fn.exists = function()
   return this.get(0) != undefined;
 }
 
-$.fn.hasAttr = function(name)
-{
+$.fn.hasAttr = function(name) 
+{  
   return this.attr(name) !== undefined;
 }
 
@@ -40,47 +40,6 @@ $.fn.enableOnSet = function(controls, events)
 }
 
 
-$.fn.setValue = function(val)
-{
-  if (this.is("a")) {
-    var proto = this.attr('proto')==undefined? '': this.attr('proto');
-    if (val == null)
-      this.attr('href', '');
-   else
-      this.attr('href', proto+val);
-    return this;
-  }
-  var type = this.attr('type');
-  if (type === 'checkbox') {
-    var values = this.attr('values');
-    if (values != '') val = values.indexOf(val);
-    return this.prop('checked', val);
-  }
-
-  if (this.hasAttr('value'))
-    return this.val(val);
-  return this.html(val);
-}
-
-$.fn.getValue = function()
-{
-  var type = this.attr('type');
-  if (type === 'checkbox') {
-    var val = this.is(':checked')?1:0;
-    var values = this.attr('values');
-    if (values == '') return val;
-    return values.split(',')[val];
-  }
-  if (type === 'radio') return this.filter(':checked').val();
-  return this.is('input,select,textarea')? this.val(): this.text();
-}
-
-$.fn.value = function(val)
-{
-  if (val === undefined) return this.getValue();
-  return this.setValue(val);
-}
-
 $.fn.values = function()
 {
   var data = {};
@@ -88,10 +47,19 @@ $.fn.values = function()
     var ctrl = $(this);
     var name = ctrl.hasAttr('name')? ctrl.attr('name'): ctrl.attr('id');
     if (name === undefined) return true;
-    if (ctrl.attr('type') !== 'radio')
-      data[name] = ctrl.value();
-    else if (ctrl.is(':checked'))
-      data[name] = ctrl.attr('value');
+    var type = ctrl.attr('type');
+    var val = ctrl.val();
+    if ((type === 'radio' || type === 'checkbox') && !ctrl.is(':checked')) return true;
+    if (type === 'checkbox') {
+      if (data[name] !== undefined) 
+        data[name] = data[name] + ',' + val;
+      else
+        data[name] = val;
+    }
+    else if (val === undefined)
+      data[name] = ctrl.text();
+    else
+      data[name] = val;
   });
   return data;
 }
@@ -103,10 +71,9 @@ $.send = function(url, options, callback)
     options = undefined;
   }
 
-  if (typeof request_method === 'undefined') request_method = 'post';
   options = $.extend({
     progress: 'Processing...',
-    method: request_method,
+    method: 'post',
     async: true,
     showResult: false,
     invoker: undefined,
@@ -116,25 +83,25 @@ $.send = function(url, options, callback)
     error: undefined,
     event: undefined
   }, options);
-  //if (options.event !== undefined) options.async = false;
+  if (options.event !== undefined) options.async = false;
   var ret = this;
-  if (options.invoker !== undefined)
+  if (options.invoker !== undefined) 
     options.invoker.prop('disabled', true);
   var progress =  {};
   if (options.progress !== false) {
-    progress.box = $('.processing');
+    progress.box = $('.ajax_result');
     progress.box.click(function() {
       $(this).fadeOut('slow');
     });
-
+    
     progress.timeout = setTimeout(function() {
       progress.box.html('<p>'+options.progress+'</p').show();
     }, 500);
-
+    
     if (options.error ===undefined) {
-      options.error = function(jqHXR, status, text)
+      options.error = function(jqHXR, status, text) 
       {
-        progress.box.html('<p class=error>Status:'+status+'<br>Text:'+text+'</p').show();
+        progress.box.html('<p class=error>Status:'+status+'<br>Text:'+text+'</p').show();        
         if (options.event !== undefined) {
           options.event.stopImmediatePropagation();
           ret = false;
@@ -151,10 +118,37 @@ $.send = function(url, options, callback)
     cache: false,
     dataType: options.dataType,
     success: function(data) {
-      if (progress.timeout !== undefined) clearTimeout(progress.timeout);
-      if (progress.box !== undefined) progress.box.hide();
+      if (data != null) {
+        if (data.script !== undefined && options.eval) {
+          eval(data.script);
+        }
+        if ((options.showResult === true && data != '') || data[0] == '!') {
+          if (progress.timeout !== undefined) clearTimeout(progress.timeout);
+          
+          var p = $('<p></p>');
+          if(data[0] == '!') {
+            p.html(data.substr(1));
+            p.addClass('error');
+            if (options.event !== undefined) {
+              options.event.stopImmediatePropagation();
+              ret = false;
+            }
+          }
+          else 
+            p.html(data);
+          progress.box.html('')
+            .append(p)
+            .show();
+          var timeout = setTimeout(function() {progress.box.fadeOut(2000);}, 8000);
+                   
+        }
+        else if (progress.box !== undefined) 
+          progress.box.hide();
+
+      }
       if (callback !== undefined) callback(data, options.event);
       if (options.invoker !== undefined) options.invoker.prop('disabled', false);
+      if (progress.timeout !== undefined) clearTimeout(progress.timeout);
     }
   });
   return ret;
@@ -167,12 +161,11 @@ $.fn.send = function(url, options, callback)
     callback = options;
     options = undefined;
   }
-  var data = $(this).values();
   if (options !== undefined)
-    data = $.extend({}, options.data, data);
-
-  options = $.extend({}, options, {data: data});
-  return $.send(url, options, callback);
+    options.data = $.extend($(this).values(), options.data);
+  else
+    options = {data : $(this).values()};
+  return $.send(url, options, callback);  
 }
 
 $.fn.json = function(url, options, callback)
@@ -181,14 +174,13 @@ $.fn.json = function(url, options, callback)
     callback = options;
     options = undefined;
   }
-  var data = $(this).values();
   if (options !== undefined)
-    data = $.extend({}, options.data, data);
-
-  options = $.extend({}, options, {data: data});
+    options.data = $.extend($(this).values(), options.data);
+  else
+    options = {data : $(this).values()};
   $.json(url, options, function(result){
     callback(result);
-  });
+  });  
   return this;
 }
 
@@ -203,7 +195,7 @@ $.fn.sendOnSet = function(controls, url, options, callback)
   else if (options !== undefined && options.optional !== undefined)
     this.enableOnSet(controls).filter(':not('+options.optional+')');
   else this.enableOnSet(controls);
-
+  
   this.click(function(e) {
     return $(controls).send(url, $.extend({invoker: self, event: e}, options), callback);
   });
@@ -260,13 +252,89 @@ $.fn.confirmOnSet = function(controls,url, options, callback)
 
   var self = this;
   this.enableOnSet(controls);
-
+  
   this.click(function(event) {
     var params = $.extend({invoker: self, event: event}, options);
     var result = $(controls).confirm(url, params);
     if (callback !== undefined)
       callback(result);
   });
+}
+
+$.reportError = function(field, error)
+{
+  var sibling = $('#'+field+",[name='"+field+"']").parent('a');
+  if (sibling.length == 0)
+    sibling = $('#'+field+",[name='"+field+"']");
+  if (sibling.length == 0) {
+    if (field == "alert") alert(error);
+    return;
+  }
+  var box = $("<div class=error>"+error+"</div>");
+  sibling.after(box);
+  box.fadeIn('slow');
+}
+
+$.reportFirstError = function(event, result)
+{
+  $.each(result, function(key, row) {
+    if (key == 'errors') {
+      $.each(row, function(field, error) {
+        $.reportError(field, error);
+        event.stopImmediatePropagation();
+        return false;
+      });
+      return false;
+    }
+  });
+}
+
+$.reportAllErrors = function(event, result)
+{
+  $('.error').remove();
+  $.each(result, function(key, row) {
+    if (key == 'errors') {
+      $.each(row, function(field, error) {
+        $.reportError(field, error);
+      });
+      event.stopImmediatePropagation();
+    }
+  });
+}
+
+
+$.fn.checkOnClick = function(controls,url, options, callback)
+{
+  if (options instanceof Function) {
+    callback = options;
+    options = {};
+  }
+
+  var self = this;
+  
+  this.click(function(event) {
+    var params = $.extend({invoker: self, event: event, async: false }, options);
+    $(controls).siblings(".error").remove();
+    $(controls).json(url, params, function(result) {
+      if (result != null)
+        $.reportAllErrors(event, result);
+      if (callback !== undefined)
+        callback(result, event);      
+    });
+  });
+  return this;
+}
+
+$.fn.asyncCheckOnClick = function(controls,url, options, callback)
+{
+  if (options instanceof Function) {
+    callback = options;
+    options = {};
+  } 
+  else if (options=== undefined)
+    options = {};
+  options.async = true;
+  return this.checkOnClick(controls, url, options, callback);
 }
 
 $.fn.loadHtml = function(url, options, callback)
@@ -310,12 +378,12 @@ $.fn.loadOptions = function(url, options, callback)
   return this;
 }
 
-$.json = function(url, options, callback)
+$.json = function(url, options, callback) 
 {
   if (options instanceof Function) {
     callback = options;
     options = {dataType: 'json'};
-  }
+  } 
   else options = $.extend(options, {dataType: 'json'});
   return $.send(url, options, callback);
 }
@@ -326,11 +394,11 @@ $.fn.jsonLoadOptions = function(url, options, callback)
     callback = url;
     url = undefined;
     options = {};
-  }
+  } 
   else if (options instanceof Function) {
     callback = options;
     options = {};
-  }
+  } 
   var self = $(this);
   self.html('<option>loading...</option>');
   var thisUrl = url === undefined? "/?a=json/ref/items&list="+self.attr('list'): url;
@@ -342,7 +410,7 @@ $.fn.jsonLoadOptions = function(url, options, callback)
     var def = self.attr('default');
     if (def !== undefined) {
       var selected = self.find("[value='"+def+"']");
-      if (selected.length == 0)
+      if (selected.length == 0) 
         selected = $('<option>'+def+'</option>').prependTo(self);
       selected.prop('selected', true);
     }
@@ -354,10 +422,21 @@ $.fn.jsonLoadOptions = function(url, options, callback)
 $.fn.setChildren = function(result)
 {
   var self = this;
-  if (result === null) return;
   $.each(result, function(key, val) {
     var filter = "#"+key+",[name='"+key+"']";
-    self.find(filter).setValue(val);
+    self.find(filter).each(function() {
+      if ($(this).is("a")) {
+        var proto = $(this).attr('proto')==undefined? '': $(this).attr('proto');
+        if (val == null)
+          $(this).attr('href', '');
+       else
+          $(this).attr('href', proto+val);
+      }
+      else if ($(this).attr('value') === undefined)
+        $(this).html(val);
+      else
+        $(this).val(val);
+    });
   });
   return this;
 }
@@ -397,8 +476,8 @@ $.urlParam = function(name){
     return results[1] || 0;
 }
 
-$.fn.insertAtCursor = function(myValue)
-{
+$.fn.insertAtCursor = function(myValue) 
+{ 
   var pos = this.getCursorPosition();
   var val = this.val();
   this.val(val.substr(0, pos)+ ' ' +myValue+ ' '+val.substr(pos));
@@ -422,25 +501,15 @@ $.fn.getCursorPosition = function() {
 $.fn.bookmarkOnClick = function() {
   // Mozilla Firefox Bookmark
   this.click(function() {
-    if ('sidebar' in window && 'addPanel' in window.sidebar) {
+    if ('sidebar' in window && 'addPanel' in window.sidebar) { 
         window.sidebar.addPanel(location.href,document.title,"");
     } else if( /*@cc_on!@*/false) { // IE Favorite
-        window.external.AddFavorite(location.href,document.title);
+        window.external.AddFavorite(location.href,document.title); 
     } else { // webkit - safari/chrome
         alert('Press ' + (navigator.userAgent.toLowerCase().indexOf('mac') != - 1 ? 'Command/Cmd' : 'CTRL') + ' + D to bookmark this page.');
     }
   });
 }
-
-$.fn.customCreate = function(options)
-{
-  var create = options.create;
-  if (create === undefined) return;
-  this.attr('customCreate',create);
-  this[create](options);
-}
-
-
 /**
 * @param scope Object :  The scope in which to execute the delegated function.
 * @param func Function : The function to execute
@@ -456,202 +525,8 @@ function delegate(scope, func, data, isTimeout)
         //this needs to be removed otherwise your handler receives more arguments than you expected.
                 //NOTE : This uses jQuery for browser detection, you can add whatever browser detection you like and replace the below.
         if (isTimeout && $.browser.mozilla)
-            args.shift();
-
+            args.shift();  
+ 
         func.apply(scope, args);
     }
 }
-
-
-
-function sleep(milliseconds) {
-  var start = new Date().getTime();
-  for (var i = 0; i < 1e7; i++) {
-    if ((new Date().getTime() - start) > milliseconds){
-      break;
-    }
-  }
-}
-
-
-function getQueryParams(qs) {
-    qs = qs.split("+").join(" ");
-
-    var params = {}, tokens,
-        re = /[?&]?([^=]+)=([^&]*)/g;
-
-    while (tokens = re.exec(qs)) {
-        params[decodeURIComponent(tokens[1])]
-            = decodeURIComponent(tokens[2]);
-    }
-
-    return params;
-}
-
-$.jsonSize = function(object)
-{
-  var i=0;
-  $.each(object, function() {++i});
-  return i;
-}
-
-$.valid = function(object)
-{
-  return object !== null && object !== undefined;
-}
-
-
-
-
-function isNumber(n) {
-  return !isNaN(parseFloat(n)) && isFinite(n);
-}
-
-
-function toTitleCase(str)
-{
-  str = str.replace(/[_\/]/g, ' ');
-  return str.replace(/\w\S*/g,  function (txt) {
-    return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
-  });
-}
-
-
-// from stackoverflow: Mathias Bynens
-function getMatches(string, regex, index) {
-    index || (index = 1); // default to the first capturing group
-    var matches = [];
-    var match;
-    while (match = regex.exec(string)) {
-        matches.push(match[index]);
-    }
-    return matches;
-}
-
-// Gary Haran => gary@talkerapp.com
-// This code is released under MIT licence
-(function($) {
-  var replacer = function(finder, replacement, element, blackList) {
-    if (!finder || typeof replacement === 'undefined') {
-      return
-    }
-    var regex = (typeof finder == 'string') ? new RegExp(finder, 'g') : finder;
-    var childNodes = element.childNodes;
-    var len = childNodes.length;
-    var list = typeof blackList == 'undefined' ? 'html,head,style,title,link,meta,script,object,iframe,pre,a,' : blackList;
-    while (len--) {
-      var node = childNodes[len];
-      if (node.nodeType === 1 && true || (list.indexOf(node.nodeName.toLowerCase()) === -1)) {
-        replacer(finder, replacement, node, list);
-      }
-      if (node.nodeType !== 3 || !regex.test(node.data)) {
-        continue;
-      }
-      var frag = (function() {
-        var html = node.data.replace(regex, replacement);
-        var wrap = document.createElement('span');
-        var frag = document.createDocumentFragment();
-        wrap.innerHTML = html;
-        while (wrap.firstChild) {
-          frag.appendChild(wrap.firstChild);
-        }
-        return frag;
-      })();
-      var parent = node.parentNode;
-      parent.insertBefore(frag, node);
-      parent.removeChild(node);
-    }
-  }
-  $.fn.replace = function(finder, replacement, blackList) {
-    return this.each(function() {
-      replacer(finder, replacement, $(this).get(0), blackList);
-    });
-  }
-})(jQuery);
-
-function assert(condition, message) {
-  if (!condition) {
-    message = message || "Assertion failed";
-    console.log(message);
-    if (typeof Error !== "undefined") {
-      throw new Error(message);
-    }
-    throw message; // Fallback
-  }
-}
-
-function rgbToHex(color) {
-    if (color.substr(0, 1) === "#") {
-        return color;
-    }
-    var nums = /(.*?)rgb\((\d+),\s*(\d+),\s*(\d+)\)/i.exec(color);
-    if (!nums) return color;
-    var r = parseInt(nums[2], 10).toString(16);
-    var g = parseInt(nums[3], 10).toString(16);
-    var b = parseInt(nums[4], 10).toString(16);
-    return "#"+ (
-        (r.length == 1 ? "0"+ r : r) +
-        (g.length == 1 ? "0"+ g : g) +
-        (b.length == 1 ? "0"+ b : b)
-    );
-}
-
-function darken( hexColor, factor ) {
-   if ( factor < 0 ) factor = 0;
-
-   var c = hexColor;
-   if( c.substr(0,1) == "#" ){
-     c = c.substring(1);
-   }
-
-   if( c.length == 3 || c.length == 6 ){
-     var i = c.length / 3;
-     var f;  // the relative distance from white
-
-     var r = parseInt( c.substr(0, i ), 16 );
-     f = ( factor * r / (256-r) );
-     r = Math.floor((256 * f) / (f+1));
-
-     r = r.toString(16);
-     if ( r.length == 1 ) r = "0" + r;
-
-     var g = parseInt(c.substr(i, i), 16);
-     f = (factor * g / (256 - g));
-     g = Math.floor((256 * f) / (f + 1));
-     g = g.toString(16);
-     if (g.length == 1)
-     g = "0" + g;
-
-     var b = parseInt(c.substr(2 * i, i), 16);
-     f = (factor * b / (256 - b));
-     b = Math.floor((256 * f) / (f + 1));
-     b = b.toString(16);
-     if (b.length == 1)
-     b = "0" + b;
-     c = r + g + b;
-   }
-  return "#" + c;
- }
-
-
-$.fn.valueFromCurrency = function()
-{
-  return this.value().replace(/[^\d.]/g,'');
-}
-// from stackoverflow: Anurag
-$.fn.bindFirst = function(name, fn)
-{
-  // bind as you normally would
-  // don't want to miss out on any jQuery magic
-  this.on(name, fn);
-
-  // Thanks to a comment by @Martin, adding support for
-  // namespaced events too.
-  this.each(function() {
-      var handlers = $._data(this, 'events')[name.split('.')[0]];
-      // take out the handler we just inserted from the end
-      var handler = handlers.pop();
-      // move it at the beginning
-      handlers.splice(0, 0, handler);
-  });
-};

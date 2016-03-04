@@ -1,6 +1,6 @@
 <?php
+require_once('config.php');
 require_once('log.php');
-require_once('utils.php');
 
 class db_exception extends Exception {
    public function __construct($message, $code = 0)//, Exception $previous = null)
@@ -21,12 +21,11 @@ class db
   var $id;
   var $row;
   var $fields;
-  var $field_names;
-  var $rows_affected;
+
 
   function __construct($dbname,$user,$passwd,$hostname="localhost")
   {
-    $this->mysqli = null;
+    $this->handle = null;
     $this->dbname = $dbname;
     $this->user = $user;
     $this->passwd = $passwd;
@@ -39,7 +38,6 @@ class db
     log::debug("MySQL connect to $this->hostname with user $this->user");
     $this->mysqli = new mysqli($this->hostname,$this->user,$this->passwd, $this->dbname);
     if ($this->mysqli->connect_errno) throw new db_exception("Could not connect to '$this->dbname' :" . $this->mysqli->connect_error);
-    $this->mysqli->set_charset('utf8');
     log::debug("User $this->user connected to MySQL on $this->hostname");
   }
 
@@ -49,14 +47,14 @@ class db
     $this->mysqli = null;
     log::debug("User $this->user disconnected to MySQL on $this->hostname");
   }
-
+  
   function reconnect()
   {
     if ($this->connected()) $this->disconnect();
     $this->connect();
   }
-
-  function connected() { return $this->mysqli != null; }
+  
+  function connected() { return $this->handle != null; }
 
   function dup($newlink=false)
   {
@@ -67,23 +65,15 @@ class db
 
   function exec($q, $max_rows=0, $start=0)
   {
-    global $config;
+    $q = str_replace('$pid', config::$program_id, $q);
+    $q = str_replace('$audit_db', config::$audit_db, $q);
     if ($start=='') $start = 0;
     if ($max_rows > 0) $q .= " limit $start, $max_rows";
     log::debug("SQL: $q");
-    $this->connect();
     $this->result = $this->mysqli->query($q);
     if (!$this->result) throw new db_exception("SQL='$q', ERROR=".$this->mysqli->error);
-    if ($this->result === true) {
-      $this->rows_affected = $this->mysqli->affected_rows;
-      return;
-    }
-
-    $this->fields = $this->result->fetch_fields();
-    $this->field_names = array();
-    foreach($this->fields as $field) {
-      $this->field_names[] = $field->name;
-    }
+    if ($this->result !== true)
+      $this->fields = $this->result->fetch_fields();
    }
 
   function send($q) { return $this->exec($q); }
@@ -102,8 +92,8 @@ class db
   {
     $this->exec($q, $max_rows);
 
-    $this->row = $this->result->fetch_array($fetch_type);
-    if ($this->row == null) return false;
+    $this->row = $this->result->fetch_array($fetch_type);     
+    if (!$this->row) return false;
 
     $this->id = $this->row[0];
     return true;
@@ -127,17 +117,14 @@ class db
     return $this->result->field_count;
   }
 
-  function row_count()
-  {
-    return $this->read_one_value("select found_rows()");
-  }
-
-  static function init_default()
+  static function connect_default()
   {
     global $db;
-    if ($db != null) return;
-    global $config;
-    $db = new db($config['db_name'], $config['db_user'], $config['db_password']);
+    $default_db = isset(config::$default_db)?config::$default_db:config::$audit_db;
+    if ($db == null || !$db->connected()) {
+      $db = new db($default_db, config::$audit_user, config::$audit_passwd);
+      $db->connect();
+    }
   }
 
   function read($sql, $fetch_type=MYSQLI_BOTH, $max_rows=0, $start=0)
@@ -146,7 +133,7 @@ class db
     $this->each($sql, function($index, $row) use (&$rows) {
       $rows[] = $row;
     }, array('fetch'=>$fetch_type, 'size'=>$max_rows, 'start'=>$start));
-
+    
     return $rows;
   }
 
@@ -164,7 +151,7 @@ class db
     }
     $this->exec($sql, $size, $start);
     $index = 0;
-
+    
     while (($row = $this->result->fetch_array( $fetch))) {
       if ($callback($index, $row)===false) break;
       ++$index;
@@ -174,10 +161,10 @@ class db
   function page($sql, $size, $start=0, $callback=null, $options=null)
   {
     $options['start'] = $start;
-    $options['size'] = $size;
+    $options['size'] = $size+1;
     $rows = array();
     $this->each($sql, function($index, $row) use (&$rows,$callback) {
-      if ($callback)
+      if ($callback) 
         $callback($index, $row);
       else
         $rows[] = $row;
@@ -190,50 +177,42 @@ class db
     $options['fetch'] = MYSQLI_ASSOC;
     return $this->page($sql, $size, $start, $callback, $options);
   }
-
+  
   function page_indices($sql, $size, $start=0, $callback=null, $options=null)
   {
     $options['fetch'] = MYSQLI_NUM;
     return $this->page($sql, $size, $start, $callback, $options);
   }
-
-
-  function page_through($sql, $size, $offset=0, $callback=null, $options=null)
+  function page_through($sql, $size, $callback=null, $options=null)
   {
     $options['size'] = $size;
-    $options['start'] = $offset;
-    $pagenum = 0;
-    $rows = array();
+    $options['start'] = 0;
+    $pagenum = 0;   
     do {
       $paged = false;
       $last_row_index = 0;
-      $this->each($sql, function($index, $row) use (&$paged, &$callback, &$pagenum, &$last_row_index, &$rows) {
+      $this->each($sql, function($index, $row) use (&$paged, &$callback, &$pagenum, &$last_row_index) {
         $paged = true;
         $last_row_index = $index;
-        if (is_null($callback))
-          $rows[]  = $row;
-        else
-          $callback($row, $pagenum, $index);
-        return true;
+        return is_null($callback)? true: $callback($row, $pagenum, $index);
       }, $options);
       $options['start']  += $size;
       ++$pagenum;
     } while ($paged && $last_row_index == $size-1);
-    return $rows;
   }
 
-  function page_through_names($sql, $size=500, $offset=0, $callback=null, $options=null)
+  function page_through_names($sql, $size, $callback=null, $options=null)
   {
     $options['fetch'] = MYSQLI_ASSOC;
-    return $this->page_through($sql, $size, $offset, $callback, $options);
+    return $this->page_through($sql, $size, $callback, $options);
   }
 
-  function page_through_indices($sql, $size=500, $offset=0, $callback=null, $options=null)
+  function page_through_indices($sql, $size, $callback=null, $options=null)
   {
     $options['fetch'] = MYSQLI_NUM;
-    return $this->page_through($sql, $size, $offset, $callback, $options);
+    return $this->page_through($sql, $size, $callback, $options);
   }
-
+  
   function read_column($sql, $column_idx=0)
   {
     $this->exec($sql);
@@ -245,21 +224,21 @@ class db
   function read_one($sql, $fetch_type=MYSQLI_BOTH)
   {
     $rows = db::read($sql, $fetch_type, 1);
-    return at($rows,0);
+    return $rows[0];
   }
-
+  
   function read_one_value($sql)
   {
-    $this->exec($sql, 1);
+    $this->exec($sql);
     $row = $this->result->fetch_row();
-    return at($row,0);
+    return $row[0];
   }
 
-  function json($sql, $max_rows=0, $fetch_type=MYSQLI_ASSOC)
+  function json($sql, $max_rows=0, $fetch_type=MYSQLI_ASSOC) 
   {
     return json_encode($this->read($sql, $fetch_type, $max_rows));
   }
-
+  
   function lineage(&$values, $key, $parent_key, $table, $other='')
   {
     $value = $values[sizeof($values)-1];
@@ -269,7 +248,7 @@ class db
     $values[] = $value;
     $this->lineage($values, $key, $parent_key, $table, $other);
   }
-
+  
   function listing($sql, $separator=',')
   {
     return implode($separator, $this->read_column($sql));
@@ -284,16 +263,16 @@ class db
     }
     return $result;
   }
-
+  
   static function addslashes($array)
   {
     $output = array();
     foreach($array as $key => $val) {
-      $output[$key] = is_string($val)? addslashes($val): $val;
+      $output[$key] = addslashes($val);
     }
     return $output;
   }
-
+  
   static function quote($array)
   {
     return db::addslashes($array);
@@ -306,31 +285,15 @@ class db
     }
     return $output;
   }
-
+  
   static function unquote($array)
   {
     return db::stripslashes($array);
   }
 
-  static function parse_column_name($name)
-  {
-    $list = explode(' ',$name); //todo: use regex for calculated fields
-    $spec = $list[0];
-    $alias = at($list,1);
-    $parts = explode('.', $spec);
-    $schema = null;
-    $table = null;
-    switch(sizeof($parts)) {
-      case 0:
-      case 1: $column = $spec; break;
-      case 2: list($table, $column)= $parts; break;
-      case 3: list($schema, $table, $column)= $parts; break;
-    }
-    if (is_null($alias)) $alias = $column;
-    return array('spec'=>$spec, 'schema'=>$schema, 'table'=>$table, 'column'=>$column, 'alias'=>$alias);
-  }
-
 }
 
 $db = null;
-if (!isset($daemon_mode)) db::init_default();
+if (!$daemon_mode) db::connect_default();
+
+?>

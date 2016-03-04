@@ -1,191 +1,129 @@
 (function( $ ) {
   $.widget( "ui.wizard", {
     _create: function() {
-      this.stack = new Array();
+      this.stack = new Array();   
+      this.dialogs = new Array();
+      this.last_url = undefined;
       var self = this;
-      this.width = this.element.width();
-      var num_steps = this.options.steps.length;
-      this._createPages();
-      this._bindActions();
-      this.stack = new Array();
-      this.jumpTo(0);
-    },
+      $.each(this.element.children(), function(i) {
+        var dialog = $(this);
+        var div = dialog.dialog({
+          modal: true,
+          autoOpen: false,
+          width: parseInt($(this).css('width')),
+          //note: show commented out, using show causes an exception if div contains input[type=file]
+//          show: 'blind', 
+          hide: 'explode'
+        });
+        self.dialogs.push(div);
+        
+        $(this).find("[wizard='next']").click(function() {
+          var steps = $(this).attr('steps');
+          self.goNext(steps);
+        });
 
-    _createPages: function()
+        $(this).find("[wizard='back']").click(function() {
+          self.goBack();
+        });
+        
+        $(this).find("[wizard='close']").click(function() {
+          if (self.last_url != undefined)
+            window.location.href = self.last_url;
+          dialog.dialog('close');
+        });
+        
+      });
+
+    },
+    
+    onNext: function(index, callback)
     {
+      var dialog = this.element.children().eq(index);
+      dialog.find("[wizard='next']").click(callback);
+    },
+    
+    dialog: function(selector) { 
+      return $(this).find(selector); 
+    },
+    
+    start: function(index) {
+      if (index == undefined) index = 0;
+      this.stack = new Array();
+      for (var i=0; i < index; i++)
+        this.stack.push(1);
+      this.dialogs[index].dialog('open');
+      return false;
+    },
+    
+    goNext: function(steps) {
+      steps = steps==undefined? 1: parseInt(steps);
+      var cur_idx = 0;
       var self = this;
-      $.each(this.options.steps, function(i, info) {
-        var name = info;
-        var props = {};
-        if ($.isPlainObject(name)) {
-          for (var k in info) {
-            name = k;
-            props = info[k];
-            break;
+      $.each(self.stack, function(i, v) {
+        cur_idx += parseInt(v);
+      });
+  
+      $.each(self.dialogs, function(i) {
+        var dialog = this.dialog().data('dialog');
+        if (i == cur_idx) {
+          if (dialog.isOpen()) { 
+            self.auto_closed = true;
+            dialog.close();
           }
+          else {
+            self.auto_closed = false;
+            dialog.open();
+            return false;
+          }   
+          // make sure we remember to go back the same number of times we went forward
+          cur_idx += steps;
+          self.stack.push(steps);
         }
-        props.name = name;
-        self.options.steps[i] = props;
-        self._createPage(i);
-      })
+      });
     },
-
-    _createPage: function(index)
-    {
-      var props = this.options.steps[index];
-      var page = $('<div class=wizard-page>').attr('name',props.name).hide().css('width','100%').appendTo(this.element);
-      var bookmark = $('<div class="wizard-bookmark wizard-bookmark-active">').appendTo(page);
-      this.bookmark_width = bookmark.outerHeight();
-      $('<span class=wizard-bookmark-number>').appendTo(bookmark);
-      $('<span class=wizard-bookmark-title>').appendTo(bookmark);
-      var height = parseInt(this.element.height());
-      var content = $('<div class=wizard-content>').appendTo(page);
-      content.height(height);
-      bookmark.width(height);
-      var offset = (height - this.bookmark_width)/2;
-      bookmark.css('left', (-offset)+'px');
-      bookmark.css('top', offset+'px');
-      bookmark.hide();
-    },
-
-    jumpTo: function(index)
-    {
-      if ($.isPlainObject(index)) index = index.index;
-      if (typeof index === 'string') {
-        var page = this.element.find('.wizard-page[name="'+index+'"]');
-        if (!page.exists()) return;
-        index = this.element.find('.wizard-page').index(page);
-      }
-      if (this.stack.length) {
-        var top_index = this.stack[this.stack.length-1];
-        if (index === top_index) return;
-        if (top_index < index) {  // going forward
-          this._hidePage(top_index, true);
+    
+    goBack: function() {
+      var cur_idx = 0;
+      $.each(this.stack, function(i, v) {
+        cur_idx += v;
+      });
+         
+      $.each(this.dialogs, function(i) {
+        if (i == cur_idx) {
+            self.auto_closed = true;
+          this.dialog('close');
+          return false;
         }
-        else do { // goin backwards
-            top_index = this.stack.pop();
-            this._hidePage(top_index, false);
-        } while (top_index >  index);
-      }
-
-      this._showPage(index);
-      this.next_step = undefined;
+      });
+   
+      cur_idx -= this.stack.pop();
+      $.each(this.dialogs, function(i) {
+        if (i == cur_idx) {
+            self.auto_closed = false;
+          this.dialog('open');
+          return false;
+        }
+      });
     },
 
-    _showPage: function(index)
+    close: function() 
     {
-      var page = this.element.find('.wizard-page').eq(index);
-      var props = this.options.steps[index];
-      if (!page.hasClass('wizard-loaded') || props.clear)
-        this._loadPage(page, index);
-      else
-        page.find('.wizard-content').trigger('reload');
-
-      var bookmark = page.find('.wizard-bookmark').hide();
-      if (index > 0) {
-        var prev = this.element.find('.wizard-page').eq(index-1);
-        var color = prev.find('.wizard-bookmark-active').css('background-color');
-        color = darken(rgbToHex(color), 1.15);
-        bookmark.css('background-color', color);
-      }
-      page.find('.wizard-content,.wizard-nav').show();
-      var offset = this.stack.length * this.bookmark_width - 6;
-      page.css('left', offset+'px');
-      page.width(this.width-offset);
-      page.addClass('wizard-current').show();
-      this.stack.push(index);
-    },
-
-
-    _hidePage: function(index, show_heading)
-    {
-      var page = this.element.find('.wizard-page').eq(index);
-      page.removeClass('wizard-current');
-      if (show_heading) {
-        page.find('.wizard-bookmark-number').text(this.stack.length+' ');
-        page.find('.wizard-bookmark-title').text(page.find('.wizard-content').attr('title'));
-        page.find('.wizard-bookmark').show();
-      }
-      else {
-        page.find('.wizard-bookmark').hide();
-      }
-      page.find('.wizard-content,.wizard-nav').hide();
-      page.removeClass('wizard-done');
-    },
-
-    _loadPage: function(page, index)
-    {
-      page.addClass('wizard-loading');
-      var props = this.options.steps[index];
-      var path = this.options.path;
-      if (props.url !== undefined)
-        path = props.url;
-      else if (path.indexOf('/') === -1)
-        path += '/' + props.name;
-      else
-        path = path.substr(0, path.lastIndexOf('/')+1) + props.name;
-      var tmp = $('<div>');
-      tmp.page({path: path, key: this.options.key});
-      var content = page.find('.wizard-content');
-      if (path[0] === '/') path = path.substr(1);
+      var cur_idx = 0;
       var self = this;
-      tmp.on('read_'+path.replace(/\//, '_'), function(event, object) {
-        object.height(content.height());
-        object.css('left', content.css('left'));
-        object.addClass('wizard-content');
-        page.addClass('wizard-loaded').removeClass('wizard-loading');
-        content.replaceWith(object);
-        var prev = object.find('#prev');
-        if (props.prev === false || index === 0) {
-          prev.hide();
-          self.first_step = index;
-          self.element.find('.wizard-bookmark-active').each(function(i) {
-            if (i < index)
-              $(this).css('background-color', '')
-                .removeClass('wizard-bookmark-active').addClass('wizard-bookmark-inactive');
-          });
-        }
-
-        var next = object.find('#next');
-        if (props.next === false || index === self.options.steps.length-1)
-          next.hide();
-        else next.bindFirst('click', function() {
-          if (self.next_step === undefined)
-            self.next_step = typeof props.next === 'string'? props.next: index+1;
+      $.each(self.stack, function(i, v) {
+        cur_idx += parseInt(v);
+      });
+  
+      this.dialogs[cur_idx].dialog('close');
+    },
+        
+    bind: function(event, callback) 
+    {
+      $.each(this.dialogs, function() {
+        $(this).bind( event, function(evt, ui) {
+          callback(evt, ui);
         });
       });
-    },
-
-
-    _bindActions: function()
-    {
-      var self = this;
-      this.element.on('wizard-jump', function(event, object, index) {
-        self.jumpTo(index);
-      });
-
-      this.element.on('wizard-next', function() {
-        self.jumpTo(self.stack[self.stack.length-1]+1);
-      });
-
-      this.element.on('wizard-prev', function() {
-        self.jumpTo(self.stack[self.stack.length-2]);
-      });
-
-      this.element.on('processed', function(event, result) {
-        if (result || !self.stack.length || !self.next_step) return;
-        self.jumpTo(self.next_step);
-      });
-
-      this.element.find('.wizard-bookmark-active').click(function(i) {
-        if (i >= self.first_step)
-          self.jumpTo(self.stack[index]);
-      });
-    },
-
-    nextStep: function(step)
-    {
-      this.next_step = step;
     }
   })
 }) (jQuery);

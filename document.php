@@ -5,36 +5,27 @@ require_once('session.php');
 class document_exception extends Exception {};
 class document
 {
-  static function upload($control, $types, $partner_id=null)
+  static function upload($control, $type, $partner_id,$reference=null)
   {
     session::ensure_not_expired();
     $file_name = addslashes($_FILES[$control]["name"]);
-    $type = document::extension($file_name);
-    log::debug("about to upload $file_name from $control of type $type");
-
-    if (!is_array($types)) $types = preg_split('/ /',$types);
-    if (!in_array($type, $types, 1)) {
-      page::error($control, "File $file_name is not allowed");
+    log::debug("about to upload $file_name from $control of $type");
+    if ($file_name == '') {
+      echo "Error uploading document of type $type. File may be too large";
       return;
     }
-    if ($file_name == '') {
-      page::error($control, "Error uploading document of type $type. File may be too large");
-      return null;
-    }
-
+    
     global $db,$session;
-    $user = $session->user;
-    $user_id = $user->id;
-    if (is_null($partner_id)) $partner_id = $user->partner_id;
+    $user_id = $session->user->id;
 
-
+    
     $pid = getmypid();
     $db->exec("update document set status='reset' where session_id = '$pid' and status = 'busy'");
-
+    
     //if (is_null($partner_id)) $partner_id = 0;
-    $sql = "INSERT INTO document(partner_id,user_id,session_id,filename,type)
-            values($partner_id,$user_id,'$pid','$file_name','$type')";
-
+    $sql = "INSERT INTO document(partner_id,user_id,session_id,filename,type,reference) 
+            values($partner_id,$user_id,'$pid','$file_name','$type','$reference')";
+    
     $id = $db->insert($sql);
     $file_name = str_replace("/[\' \s]'/", '-', $_FILES[$control]["name"]);
     $path = "../uploads/$id-$file_name";
@@ -42,29 +33,28 @@ class document
     $temp_file = $_FILES[$control]['tmp_name'];
     if (!is_uploaded_file($temp_file)) {
       $db->exec("update document set status = 'inva' where id = $id");
-      page::error($control, "Error uploading document. File may be too large");
-      //echo "Error uploading document. File may be too large.";
-      return null;
+      echo "Error uploading document. File may be too large.";
+      return $id;
       //throw new document_exception("File $temp_file cannot be uploaded. Perhaps the file is too large.");
-    }
+    }      
     if (!move_uploaded_file($_FILES[$control]["tmp_name"], $path)) {
-
+      
       $db->exec("update document set status = 'perm' where id = $id");
-      page::error("Error uploading document of type $type. File may be too large");
-      return null;
+      echo "Error uploading document of type $type. File may be too large";
+      return $id;
      // throw new document_exception("File $path not moved to destination folder. Check permissions");
     }
     $db->exec("update document set status = 'done' where id = $id");
     log::debug("File uploaded $path");
     return $id;
   }
-
-  static function optional_upload($control, $type, $partner_id)
+  
+  static function optional_upload($control, $type, $partner_id, $reference=null)
   {
-    if ($_FILES[$control]["name"] != '')
-      document::upload ($control, $type, $partner_id);
+    if ($_FILES[$control]["name"] != '') 
+      document::upload ($control, $type, $partner_id, $reference);
   }
-
+  
   static function view($request)
   {
     $id = $request['id'];
@@ -88,15 +78,15 @@ class document
     fclose($file);
     echo $data;
   }
-
-  static function extension($file)
-  {
+ 
+  static function extension($file) 
+  { 
     $pos = strrpos($file, '.');
     return $pos===FALSE? '': substr($file, $pos+1);
   }
-
+   
   static function mimetype($value) {
-
+   
     $ct['htm'] = 'text/html';
     $ct['html'] = 'text/html';
     $ct['txt'] = 'text/plain';
@@ -157,14 +147,14 @@ class document
     $ct['wmls'] = 'text/vnd.wap.wmlscript';
     $ct['xsl'] = 'text/xml';
     $ct['xml'] = 'text/xml';
-
+   
     $extension = document::extension($value);
-
+   
     if (!$type = $ct[strtolower($extension)]) $type = 'text/html';
-
+   
     return $type;
   }
-
+ 
   static function uploaded_check()
   {
     global $db, $session;
@@ -176,7 +166,7 @@ class document
     else if ($db->exists("select id from document where session_id = '$session->id' and status = 'busy'")) {
       $result['status'] = 'busy';
     }
-    else {
+    else {  
       $row = $db->read_one("select filename, status from document
               where session_id = '$session->id' and status in ('inva','perm')");
       if ($row == null) {
@@ -190,5 +180,6 @@ class document
     }
     echo json_encode($result);
   }
-
+  
 }
+

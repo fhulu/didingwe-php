@@ -44,3 +44,4 @@ class regex_reader
     return $this->matches;
   }     
 }
+?>
