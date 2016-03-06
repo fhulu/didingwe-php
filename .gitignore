@@ -2,3 +2,4 @@
 !.htacess
 !.gitignore
 *.log
+*.conf
