@@ -56,7 +56,7 @@ class page
   var $rendering;
   var $page_stack;
   var $page_fields;
-  var $expanding;
+  var $expand_stack;
   var $context;
 
   function __construct($request=null, $user_db=null)
@@ -80,6 +80,7 @@ class page
     $this->context = array();
     $this->aborted = false;
     $this->answer = null;
+    $this->expand_stack = array();
   }
 
   function process()
@@ -194,12 +195,14 @@ class page
   function expand_type($type, &$added = array() )
   {
     $expanded = $this->types[$type];
-    if (isset($expanded)) return $expanded;
+    if (isset($expanded) || in_array($type, $this->expand_stack, true)) return $expanded;
     $expanded = $this->get_expanded_field($type);
     if (!is_array($expanded)) return null;
     $added[] = $type;
-    $this->remove_items($expanded);
+    $this->expand_stack[] = $type;
+    $this->expand_types($expanded);
     $result = $this->types[$type] = $expanded;
+    array_pop($this->expand_stack);
     $this->merge_type($expanded);
     return $result;
   }
@@ -346,7 +349,6 @@ class page
 
   function expand_types(&$fields)
   {
-    $this->remove_items($fields);
     walk_recursive_down($fields, function($value, $key, &$parent) {
       if (!is_assoc($parent))
         list($type, $value) = assoc_element($value);
@@ -363,10 +365,12 @@ class page
         $type = $value;
         $value = null;
       }
-      if (is_string($value)) {
+
+      if (!is_null($value) && is_string($value)) {
         $this->expand_value($value);
         return;
       }
+
       $added_types = array();
       if (is_string($type)) {
         if (isset($this->types[$type])) return;
@@ -380,13 +384,10 @@ class page
         $this->merge_type($expanded, $added_types);
 
       $expanded = is_array($value)? merge_options($expanded, $value): $expanded;
+
       if (is_null($expanded)) return;
 
-      if ($this->allowed($expanded)) {
-        $this->expand_types($expanded);
-        return;
-      }
-
+      if ($this->allowed($expanded)) return;
 
       if (!$this->rendering) return;
 
@@ -398,9 +399,6 @@ class page
     function (&$array) {
       array_compact($array);
     });
-
-    if ($this->rendering)
-      $this->remove_items($fields, array('access'));
   }
 
   static function not_mergeable($key)
@@ -460,17 +458,13 @@ class page
     $this->expand_types($this->fields);
   }
 
-  function remove_items(&$fields, $keys=array())
+  function remove_items(&$fields)
   {
-    walk_recursive_down($fields, function(&$value, $key, &$parent) use($keys) {
-      if ($this->rendering) {
-        if (!$this->is_render_item($key))
-          unset($parent[$key]);
-        if (in_array($key, page::$query_items, true))
-          $parent['query'] = " ";
-      }
-      if (in_array($key, $keys, true))
+    walk_recursive_down($fields, function(&$value, $key, &$parent) {
+      if (!$this->is_render_item($key) || $key === 'access')
         unset($parent[$key]);
+      if (in_array($key, page::$query_items, true))
+        $parent['query'] = " ";
     });
 
   }
@@ -479,6 +473,8 @@ class page
   {
     $this->types['control'] = $this->get_expanded_field('control');
     $this->types['template'] = $this->get_expanded_field('template');
+    $this->remove_items($this->fields);
+    $this->remove_items($this->types);
     return array(
       'path'=>implode('/',$this->path),
       'fields'=>$this->fields,
