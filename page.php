@@ -360,8 +360,8 @@ class page
         $type = $key;
 
       if ($type == $this->page) return;
-
-      if ($type == 'type' || $type == 'template' || $type == 'wrap') {
+      $is_style = ($type === 'styles');
+      if (in_array($type, ['type', 'template', 'wrap', 'styles']) ) {
         $type = $value;
         $value = null;
       }
@@ -376,8 +376,13 @@ class page
         if (isset($this->types[$type])) return;
         $expanded = $this->expand_type($type, $added_types);
       }
-      else if (is_array($type)) {
+      else if (is_assoc($type)) {
         $expanded = $this->merge_type($type, $added_types);
+      }
+      else if ($is_style) {
+        foreach ($type as $style) {
+          $this->expand_type($style);
+        }
       }
 
       if (!is_null($expanded))
@@ -413,7 +418,7 @@ class page
       && !in_array($key, page::$query_items, true);
   }
 
-  function merge_fields(&$fields, $merged = array())
+  function merge_fields(&$fields)
   {
     if (is_assoc($fields)) {
       if (isset($fields['type']))
@@ -421,10 +426,7 @@ class page
       foreach($fields as $key=>&$value) {
         if (!is_array($value) || page::not_mergeable($key)) continue;
         $value = $this->get_merged_field($key, $value);
-        if (!in_array($key, $merged, true)) {
-          $merged[] = $key;
-          $this->merge_fields($value, $merged);
-        }
+        $this->merge_fields($value, $merged);
       }
       return $fields;
     }
@@ -440,12 +442,10 @@ class page
       if (is_array($field) && !is_null($default_type) && !isset($field['type']))
         $field['type'] = $default_type;
       $field = $this->get_merged_field($key, $field);
-      if (is_array($field) && !in_array($key, $merged, true)  ) {
-        $merged[] = $key;
+      if (is_array($field)) {
         $this->merge_fields($field, $merged);
-      }
-      if (is_array($field))
         $value = array($key=>$field);
+      }
     }
     return $fields;
   }
@@ -467,6 +467,21 @@ class page
         $parent['query'] = " ";
     });
 
+  }
+
+  function remove_unsed_types()
+  {
+    $used = array();
+    walk_recursive_down($this->fields, function($value, $key) use (&$used) {
+      if (in_array($key, ['type', 'template']) && is_string($value))
+        $used = $used + [$value];
+      else if ($key == 'styles')
+        $used = $used + (is_array($value)? $value: [$value]);
+    });
+    log::debug_json("TYPES", $this->types);
+    log::debug_json("USED", $used);
+    $this->types = array_intersect($this->types, $used);
+    log::debug_json("INTERSECTION", $used);
   }
 
   function read()
@@ -519,7 +534,7 @@ class page
     $fields = merge_options($this->merge_stack(page::$fields_stack), $this->page_fields, $this->fields);
     $this->validator = new validator(page::merge_options($_SESSION, $this->request), $fields, $validators);
 
-    $exclude = array('css','post','script','stype','valid','values');
+    $exclude = array('css','post','script','style', 'styles', 'type','valid','values');
     if ($include != '' &&!is_array($include))
       $include = explode(',', $include);
     $validated = array();
@@ -820,7 +835,7 @@ class page
   function reply_if($method, $args)
   {
     $matches = array();
-    if (!preg_match('/^if\s+(.+)\s*$/', $method, $matches)) return false;
+    if (!preg_match('/^if\s+(\d+)\s*$/', $method, $matches)) return false;
     if (sizeof($args) < 1) throw new Exception("Invalid number of parameters for 'if'");
     $condition = $matches[1];
     if ($condition[0] == '!') $condition = !$condition;
@@ -840,7 +855,7 @@ class page
 
     $methods = array('alert', 'abort', 'call', 'clear_session', 'clear_values',
       'close_dialog', 'load_lineage', 'read_session', 'read_values', 'redirect',
-      'send_email', 'show_dialog', 'sql', 'sql_exec','sql_rows', 'sql_insert',
+      'send_email', 'show_dialog', 'show_captcha', 'sql', 'sql_exec','sql_rows', 'sql_insert',
       'sql_update', 'sql_values', 'refresh', 'trigger', 'update', 'write_session');
     foreach($actions as $action) {
       if ($this->aborted) return false;
@@ -1182,5 +1197,45 @@ class page
     replace_fields($options, $this->fields['send_sms']);
 
     page::post_http($options);
+  }
+
+  function calender()
+  {
+    global $db;
+    $advance = $req['advance'];
+    $day1 = $req['month'];
+    $key = $req['key'];
+    if (is_null($day1)) $day1 = Date('Y-m-01');
+    if ($advance != 0) $day1 = $db->read_one_value("select '$day1' + interval $advance month");
+
+    list($month, $month_name) = $db->read_one("select month('$day1'), date_format('$day1', '%M %Y')", MYSQLI_NUM);
+
+    $sql = " select i,
+  concat('<div',if(month(sun)=1,'',' class=\"other\"'),'>',day(sun),'</div>') sun,
+  concat('<div',if(month(mon)=1,'',' class=\"other\"'),'>',day(mon),'</div>') mon,
+  concat('<div',if(month(tue)=1,'',' class=\"other\"'),'>',day(tue),'</div>') tue,
+  concat('<div',if(month(wed)=1,'',' class=\"other\"'),'>',day(wed),'</div>') wed,
+  concat('<div',if(month(thu)=1,'',' class=\"other\"'),'>',day(thu),'</div>') thu,
+  concat('<div',if(month(fri)=1,'',' class=\"other\"'),'>',day(fri),'</div>') fri,
+  concat('<div',if(month(sat)=1,'',' class=\"other\"'),'>',day(sat),'</div>') sat
+  from
+    (select i, '$day1' - interval (dayofweek('2016-01-1')-1-i*7) day sun,
+        '2016-01-1' - interval (dayofweek('2016-01-1')-2-i*7) day mon,
+        '2016-01-1' - interval (dayofweek('2016-01-1')-3-i*7) day tue,
+        '2016-01-1' - interval (dayofweek('2016-01-1')-4-i*7) day wed,
+        '2016-01-1' - interval (dayofweek('2016-01-1')-5-i*7) day thu,
+        '2016-01-1' - interval (dayofweek('2016-01-1')-6-i*7) day fri,
+        '2016-01-1' - interval (dayofweek('2016-01-1')-7-i*7) day sat
+        from integers where i  < 6) tmp";
+
+    $rows = $db->read($sql, MYSQLI_NUM);
+
+    return array("month"=>$day1, "month_name"=>$month_name,"rows"=>$rows, "total"=>6);
+  }
+
+  function show_captcha()
+  {
+    log::debug("showing captcha");
+    require_once('../common/captcha.php');
   }
 }

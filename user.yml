@@ -247,7 +247,7 @@ list:
     - export
   fields:
     - key: { hide: yes }
-    - create_time: { width: 20% }
+    - create_time: { width: 17% }
     - email: { width: 20% }
     - first_name: { width: 13% }
     - last_name: { width: 13% }
@@ -276,11 +276,15 @@ login:
   desc: Fill in your credentials below and click Login to logon
   enter: "#login"
   inputs:
-    - email: { valid: [is_registered, is_active, is_unlocked] }
-    - password: { type: password, valid: is_password_for(email) }
+    - email: { type: login_email }
+    - password: { type: login_password }
   actions:
-    - login
+    - login: { type: login_action }
     - forgot_password: { action: dialog }
+
+login_action:
+  type: button
+  action: post
   post:
     - sql_values: |
         select u.id uid, partner_id, u.email, first_name, last_name,
@@ -293,6 +297,16 @@ login:
     - write_session: uid,partner_id,roles,email,first_name,last_name,full_name,cellphone
     - close_dialog
     - redirect: /$start_page
+
+login_email:
+  type: email
+  valid: [is_registered, is_active, is_unlocked]
+
+login_password:
+  name: Password
+  type: password
+  valid: is_password_for(email) }
+
 
 modify:
   type: labelled_input_page

@@ -17,10 +17,28 @@ accordion_tab:
 actioner:
   tag: div
   attr: { action: $id, id: "" }
+  style: {color: white}
+
+alert_message:
+  classes: div
+  styles: [height_watermark,centered_text]
+  text: $message
 
 blank:
-  tag: span
+  mutable: false
+  templates: div
   text: ""
+  styles: [inline_block]
+
+block:
+  display: block
+  margin-top: $line_spacing
+
+bold:
+  font-weight: bold
+
+bolder:
+  font-weight: bolder
 
 button:
   class: [action]
@@ -32,6 +50,11 @@ button_image:
   text: <input type="image" src="$src">
   attr: { title: $desc }
   src: $id.png
+
+captcha_image:
+  type: image
+  src: /?action=action&path=/controls/captcha_image
+  post: [show_captcha]
 
 captioned_image:
   classes: div
@@ -52,6 +75,22 @@ captioned_image:
   title: $name
   src: $id.png
 
+center_all:
+  text-align: center
+  margin-left: auto
+  margin-right: auto
+
+centered:
+  margin-left: auto
+  margin-right: auto
+
+centered_text:
+  text-align: center
+
+char_spaced:
+  char_spacing: 8px
+  letter-spacing: $char_spacing
+
 checkbox:
   type: input
   values: ""
@@ -64,6 +103,21 @@ checkbox_group:
     - type: checkbox
     - template: label_left
 
+checkgroup:
+  templates: div
+  class: radio
+  text: $options
+  group: $id
+  inherit: [group]
+  options:
+    - template:
+        type: labelled_left
+        suffix: " "
+        label_width: auto
+        input_width: auto
+        styles: [inline_block]
+    - type: checkbox
+    - attr: { name: $group }
 
 class:
   tag: div
@@ -74,6 +128,7 @@ container:
   tag: div
   text: $contents
   contents: []
+  tooltip: false
 
 control:
   html: <$tag>$text</$tag>
@@ -82,8 +137,12 @@ control:
   class: []
   text: $name
 
+darker:
+  color: "#333"
+
 datatable:
   head: ""
+  tooltip: false
   type: table
   class: [data]
   create: datatable
@@ -189,6 +248,9 @@ disabled_input:
 disabled_text_input:
   type: disabled_input
 
+double_spaced:
+  margin-top: 10px
+
 dropdown:
   tag: select
   inherit: [unselected,default,option]
@@ -238,8 +300,11 @@ file:
 form:
   tag: form
 
-#footer_actions:
-#  - type: submit
+float_left:
+  float: left
+
+float_right:
+  float: right
 
 google_map:
   tag: div
@@ -277,9 +342,21 @@ heading:
   tag: h1
   name: $id
 
+height_watermark:
+  type: watermark
+  background-size: auto 100%
+
 hidden:
   type: input
   attr: { type: hidden }
+
+highest:
+  height: 100%
+
+hspaced:
+  hspace: 10px
+  margin-left: $hspace
+
 
 image:
   tag: img
@@ -288,56 +365,26 @@ image:
   src_type: png
   src: $id.png
 
-info_line:
-  tag: div
-  pack: inline-block
-  label_width: 34%
-  input_width: 63%
-  type: label_left
-  label_suffix: ":"
-  class: [info-line]
-
 info_page:
   type: input_page
   inputs: $lines
-  inherit: [label_suffix]
-  label_suffix: ":"
   lines:
     - type: info_text
-    - template: info_line
+    - template: labelled_left
 
 info_text:
   classes: div
   value: ""
   text: $value
 
-inplace_input:
-  templates: div
-  style: { display: $pack }
-  text: |
-      <a class=input>
-        $field
-        <span class=hint>$desc</span>
-      </a>
-  subject:
-    attr: { placeholder: $name }
-    style:
-      background-image: url($id.png)
-      background-repeat: no-repeat
+inline:
+  display: inline
 
-inplace_image_input:
-  templates: div
-  style: { display: $pack }
-  text: |
-      <a class=input>
-      <img src="$src" ></img>
-        $field
-        <span class=hint>$desc</span>
-      </a>
-  subject:
-    attr: { placeholder: $name }
-  src: $id.png
-  src_type: png
+inline_block:
+  display: inline-block
+
+inplace_input:
+  type: labelled_inside
 
 input:
   tag: input
@@ -348,13 +395,14 @@ input:
     value: $value
 
 input_page:
-  type: page
-  pack: inline
   inherit: [desc]
-  text: $processing $synopsis $inputs $actions
-  inputs_template: { type: labelled_input }
+  type: page
+  text: $synopsis $inputs $actions
+  synopsis:
+    type: section_heading
+    text: $desc
   inputs:
-    - template: $inputs_template
+    - template: label_left
     - type: input
   actions:
     - wrap: class
@@ -369,53 +417,100 @@ isearch:
   post:
     - call: isearch::q(context)
 
+italic:
+  font-style: italic
+
 label:
   tag: label
+  styles: [inline_block]
 
-label_left:
-  templates: span
-  label_suffix: ""
-  pack: inline
-  text: "<label style='display: $pack; width: $label_width' >$name$label_suffix</label>$field"
+labelled:
+  templates: div
+  inherit: [name]
+  label: { classes: label }
   subject:
-    style: { margin-right: 20px }
-
-label_right:
-  templates: span
-  text: $field<label>$name</label>
-
-
-label_top:
-  type: label_left
-  pack: block
+    class: [input]
+    attr: { title: $desc }
 
 labelled_input:
-  templates: div
-  style:
-    display: $pack
-    margin-top: 6px
-    width: 100%
-    position: relative
-  inherit: [name]
-  label:
-    suffix: ":"
-    classes: label
-    text: $name$suffix
-    width: 23%
-    style: { width: $width}
-  text: $label$field
-  subject:
-    width: 74%
-    class: [input]
-    style: { width: $width }
-    attr: { title: $desc }
+  type: labelled_left
 
 labelled_input_page:
   type: input_page
 
+labelled_inside:
+  inherit: [name]
+  subject:
+    class: [input]
+    width: 100%
+    attr: { placeholder: $name, title: $desc }
+  text: $field
+
+labelled_inside_image:
+  type: labelled_inside
+  subject:
+    styles: [height_watermark,centered_text]
+
+label_left:
+  type: labelled
+  label:
+    suffix: ":"
+    text: $name$suffix
+    width: 30%
+    styles: [right_text,inline_block]
+  subject:
+    width: 67%
+    styles: [inline_block]
+  text: $label $field
+  styles: [vspaced]
+
+label_mobile:
+  type: labelled
+  styles: [widest]
+  suffix: ""
+  inherit: [suffix]
+  style:
+    margin-right: $side_spacing
+    margin-bottom: $line_spacing
+  label:
+    styles: [block]
+    text: $name$suffix
+  subject:
+    styles: [block]
+  text: $label$field
+
+label_right:
+  type: labelled
+  label:
+    text: $name
+  subject:
+    class: [input]
+    attr: { title: $desc }
+  text: $field$label
+
+label_top:
+  type: labelled
+  styles: [inline_block]
+  label:
+    styles: [block]
+    text: $name
+  subject:
+    styles: [block]
+  text: $label$field
+
+left_text:
+  text-align: left
+
+letter_spaced:
+  type: char_spaced
+
+lighter:
+  font-weight: lighter
+
 line:
   tag: hr
   text: ""
+
 
 link:
   tag: a
@@ -433,6 +528,12 @@ list_item:
 list_text:
   tag: li
   text: $id
+
+lowercase:
+  text-transform: lowercase
+
+medium:
+  font-size: 26pt
 
 menu:
   type: container
@@ -476,6 +577,7 @@ page:
   sub_page: true
   text: $items
   items: []
+  tooltip: false
 
 page_title:
   html: <title>$name</title>
@@ -528,14 +630,26 @@ processing:
   style: { display: none }
 
 
+pushed_left:
+  position: absolute
+  left: 0
+
+pushed_right:
+  position: absolute
+  right: 0
+
+pushed_up:
+  vertical-align: top
+
 question_input:
-  templates: div
-  text: <label>$question</label>$field
-  subject: { class: [input] }
-  style:
-    margin-top: 16px
-    width: 100%
-    position: relative
+  type: label_top
+  inherit: [question]
+  styles: [widest,block]
+  label:
+    styles: [widest]
+    text: $question
+  subject:
+    styles: [widest]
 
 question_input_page:
   type: input_page
@@ -549,16 +663,9 @@ radiobox:
     width: 24px
     height: 24px
 
-checkgroup:
-  templates: div
-  class: radio
-  text: $options
-  group: $id
-  inherit: [group]
-  options:
-    - template: label_left
-    - type: checkbox
-    - attr: { name: $group }
+right_text:
+  text-align: right
+
 
 radiogroup:
   templates: div
@@ -584,19 +691,22 @@ row_inputs:
   head:
     html: <thead><th colspan=2>$heading</th></thead>
   inputs:
-    - template: row_input
+    - template: row_inputr
     - type: input
 
 section_heading:
   classes: p
-  style:
-    text-align: center
-    font-size: 13pt
-    font-weight: 100
-    border-bottom: 1px solid grey
-    width: 100%
-    margin-top: 8px
-    margin-bottom: 0px
+  styles: [centered_text,thinner,widest,vspaced,underlined]
+
+side_spacer:
+  space: 2px
+  subject:
+    style:
+      display: inline-block
+      margin-bottom: $space
+
+small:
+  font-size: 8pt
 
 span:
   tag: span
@@ -617,12 +727,6 @@ sub_menu:
   sub_items:
     - action: redirect
     - type: link
-
-synopsis:
-  type: section_heading
-  text: $desc
-  style:
-    margin-top: 10px
 
 table:
   tag: table
@@ -698,6 +802,8 @@ text_area: { type: textarea}
 
 text_input: {type: input }
 
+thinner:
+  font-weight: 100
 
 time:
   type: input
@@ -713,6 +819,43 @@ titled_paragraph:
     </div>
   heading: $name
   text: " "
+
+top_left:
+  position: absolute
+  top: 0
+  left: 0
+
+top_right:
+  position: absolute
+  top: 0
+  right: 0
+
+tripple_spaced:
+  margin-top: 12px
+
+underlined:
+  line_width: 1px
+  border-bottom: $line_width solid
+
+underlined_text:
+  text-decoration: underline
+
+uppercase:
+  text-transform: uppercase
+
+vspaced:
+  space: 6px
+  margin-top: $space
+
+
+watermark:
+  image: $id.png
+  background-image: url($image)
+  background-repeat: no-repeat
+
+widest:
+  width: 100%
+
 
 wizard:
   classes: div
