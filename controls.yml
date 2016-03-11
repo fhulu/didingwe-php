@@ -353,10 +353,14 @@ hidden:
 highest:
   height: 100%
 
+hspace:
+  mutable: false
+  type: blank
+  styles: [hspaced]
+
 hspaced:
   hspace: 10px
   margin-left: $hspace
-
 
 image:
   tag: img
@@ -863,10 +867,14 @@ underlined_text:
 uppercase:
   text-transform: uppercase
 
+vspace:
+  mutable: false
+  type: blank
+  styles: [vspaced]
+
 vspaced:
   space: 6px
   margin-top: $space
-
 
 watermark:
   image: $id.png
