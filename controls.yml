@@ -35,12 +35,22 @@ button_image:
 
 captioned_image:
   classes: div
-  text: |
-    <img src="$src" title="$title"></img>
-    <p>$caption</p>
+  text: $image $caption
+  parent_id: $id
+  inherit: [parent_id,title]
+  image:
+    type: image
+    src: $parent_id.png
+    attr: { title: $name}
+    style:
+      width: 100%
+  caption:
+    type: label
+    text: $title
+    style:
+      display: block
   title: $name
   src: $id.png
-  caption: $name
 
 checkbox:
   type: input
@@ -314,7 +324,7 @@ inplace_input:
     style:
       background-image: url($id.png)
       background-repeat: no-repeat
-      
+
 inplace_image_input:
   templates: div
   style: { display: $pack }
