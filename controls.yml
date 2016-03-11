@@ -517,6 +517,7 @@ link:
   attr: { title: $desc }
   text: $name
   style: { cursor: pointer }
+  url: /$id
 
 link_underlined:
   type: link
@@ -537,7 +538,10 @@ medium:
 
 menu:
   type: container
+  class: [menu]
+  css: /common/menu.css
   tag: ul
+
   contents: $items
   items:
     - template: menu_item
