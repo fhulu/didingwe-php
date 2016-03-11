@@ -9,6 +9,9 @@ add_user:
 admin:
   name: Administrator
 
+administration:
+  desc: Perform adminstrative duties
+
 agree_terms:
   question: I have read and accepted the terms and conditions.
   valid: equals(1)
