@@ -40,6 +40,18 @@ bold:
 bolder:
   font-weight: bolder
 
+bookmark:
+  tag: div
+  name: $id
+  link: $id
+  text: $anchor
+  inherit: [link]
+  attr: { id: ""}
+  anchor:
+    tag: a
+    attr: { href: "#$link", id: ""}
+    name: $link
+
 button:
   class: [action]
   tag: button
@@ -836,13 +848,19 @@ time:
   format: H:i
 
 titled_paragraph:
-  html: >
-    <div class=titled-paragraph>
-      <p class=heading>$heading</p>
-      <p class=text>$text</p>
-    </div>
-  heading: $name
-  text: " "
+  classes: div
+  text: $heading $content
+  title: $id
+  inherit: [body,title]
+  heading:
+    type: plain_text
+    tag: h2
+    styles: [vspaced]
+    text: $title
+  content:
+    type: plain_text
+    tag: p
+    text: $body
 
 top_left:
   position: absolute
