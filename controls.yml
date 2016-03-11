@@ -25,8 +25,8 @@ alert_message:
   text: $message
 
 blank:
+  type: plain_text
   mutable: false
-  templates: div
   text: ""
   styles: [inline_block]
 
@@ -527,8 +527,8 @@ list_item:
   tag: li
 
 list_text:
+  type: plain_text
   tag: li
-  text: $id
 
 lowercase:
   text-transform: lowercase
@@ -602,7 +602,9 @@ plain:
   text: $value
 
 plain_text:
-  type: plain
+  tag: div
+  text: $id
+  attr: { id: ""}
 
 plot:
   tag: div
@@ -714,6 +716,20 @@ small:
 
 span:
   tag: span
+
+story:
+  type: control
+  text: $heading $body
+  title: $name
+  inherit: [title]
+  heading:
+    type: plain_text
+    tag: h1
+    class: [heading]
+    text: $title
+  body:
+    - type: plain_text
+
 
 submit:
   type: button
