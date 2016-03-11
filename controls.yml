@@ -861,6 +861,8 @@ titled_paragraph:
     type: plain_text
     tag: p
     text: $body
+  space: 30
+  styles: [vspaced]
 
 top_left:
   position: absolute
