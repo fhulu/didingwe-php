@@ -283,16 +283,16 @@ login:
     - forgot_password: { action: dialog }
   post:
     - sql_values: |
-        select id uid, partner_id, email_address email, first_name, last_name,
+        select u.id uid, partner_id, u.email, first_name, last_name,
           concat(first_name, ' ', last_name) full_name,
-          cellphone, roles, groups, 'home' page
-        from user
-        where email_address='$email'
+          u.cellphone, roles, groups,  ifnull(start_page,'home') start_page
+        from user u join person p on u.email = p.email
+        where u.email='$email'
     - load_lineage: [roles,role,code,base_code]
     - sql_exec: update user set attempts = 0 where id = $uid
     - write_session: uid,partner_id,roles,email,first_name,last_name,full_name,cellphone
     - close_dialog
-    - redirect: /$page
+    - redirect: /$start_page
 
 modify:
   type: labelled_input_page
@@ -363,8 +363,8 @@ profile:
     - role: { attr: disabled }
   values:
     - sql_values: |
-        select u.title,u.first_name,u.last_name,u.cellphone,u.email,group_concat(r.name) role
-        from user_view u
+        select p.title,p.first_name,p.last_name,u.cellphone,u.email,group_concat(r.name) role
+        from user u join person on u.email = p.email
           left join role r on find_in_set(r.code,u.roles)
         where u.id = '$uid'
         group by u.id
