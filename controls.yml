@@ -535,6 +535,7 @@ link:
   style: { cursor: pointer }
   immutable: [url]
   url: /$id
+  action: redirect
 
 link_underlined:
   type: link
