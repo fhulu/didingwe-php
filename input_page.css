@@ -50,8 +50,6 @@ button,
 .action
 {
   height: 30px;
-  color: white;
-  background-color: rgb(20,60,90);
   border: 0px;
   padding-left: 20px;
   padding-right: 20px;
@@ -76,6 +74,7 @@ button,
 .actions
 {
   width: 100%;
+  text-align: center;
   margin-top: 12px;
   margin-bottom: 12px;
 }
