@@ -84,7 +84,6 @@ mkn.render = function(options)
       mkn.deleteKeys(type, item.immutable);
       mkn.deleteKeys(type, type.immutable);
       item = mkn.merge(type, item);
-      delete base.type;
     }
     return mkn.merge(base, item);
   }
