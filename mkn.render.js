@@ -80,7 +80,10 @@ mkn.render = function(options)
     if (!item.action && defaults.action) item.action = defaults.action;
     if (defaults.attr) item.attr = mkn.merge(item.attr,defaults.attr);
     if (!item.type && defaults.type) {
-      item = mkn.merge(defaults.type, item);
+      var type = mkn.copy(defaults.type);
+      mkn.deleteKeys(type, item.immutable);
+      mkn.deleteKeys(type, type.immutable);
+      item = mkn.merge(type, item);
       delete base.type;
     }
     return mkn.merge(base, item);

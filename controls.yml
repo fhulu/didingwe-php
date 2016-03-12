@@ -533,6 +533,7 @@ link:
   attr: { title: $desc }
   text: $name
   style: { cursor: pointer }
+  immutable: [url]
   url: /$id
 
 link_underlined:
