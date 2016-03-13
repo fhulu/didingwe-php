@@ -76,13 +76,19 @@ mkn.render = function(options)
     return false;
   }
 
+  var mergeImmutables = function(item, base, type) {
+    var immutables = type.immutable;
+    for (var i in immutables) {
+      var key = immutables[i];
+      if (base[key] !== undefined && item[key] === undefined) item[key] = base[key];
+    }
+  }
   var mergeDefaults = function(item, defaults, base) {
     if (!item.action && defaults.action) item.action = defaults.action;
     if (defaults.attr) item.attr = mkn.merge(item.attr,defaults.attr);
     if (!item.type && defaults.type) {
       var type = mkn.copy(defaults.type);
-      mkn.deleteKeys(type, item.immutable);
-      mkn.deleteKeys(type, type.immutable);
+      mergeImmutables(item, base, type);
       item = mkn.merge(type, item);
     }
     return mkn.merge(base, item);
