@@ -205,13 +205,13 @@ is_password_for:
     - depends(email,is_registered)
     - depends(email,is_active)
     - depends(email,is_unlocked)
-    - sql(select password=password('$value') from user where email = '$v1')
+    - sql(select password=password('$value') from user where email = '$email')
   error:
-    - sql_exec: update user set attempts = attempts+1 where email = '$v1'
+    - sql_exec: update user set attempts = attempts+1 where email = '$email'
     - sql_exec: >
         insert into audit_trail(user, action, detail)
-          select id, 'Failed Login Attempt', '$v1' from user where email = '$v1'
-    - error: Invalid user name or password for $v1
+          select id, 'Failed Login Attempt', email from user where email = '$email'
+    - error: Invalid user name or password for $email
 
 is_registered:
   valid: sql(select 1 from user where email= '$value')
@@ -277,7 +277,7 @@ login:
   enter: "#login"
   inputs:
     - email: { type: login_email }
-    - password: { type: login_password }
+    - login_password: { type: password }
   actions:
     - login
     - forgot_password: { action: dialog }
@@ -300,8 +300,7 @@ login_email:
 
 login_password:
   name: Password
-  type: password
-  valid: is_password_for(email) }
+  valid: is_password_for(mail)
 
 
 modify:
