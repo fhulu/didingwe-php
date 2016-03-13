@@ -279,12 +279,8 @@ login:
     - email: { type: login_email }
     - password: { type: login_password }
   actions:
-    - login: { type: login_action }
+    - login
     - forgot_password: { action: dialog }
-
-login_action:
-  type: button
-  action: post
   post:
     - sql_values: |
         select u.id uid, partner_id, u.email, first_name, last_name,

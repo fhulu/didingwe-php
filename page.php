@@ -202,15 +202,15 @@ class page
     $this->expand_stack[] = $type;
     $this->expand_types($expanded);
     $result = $this->types[$type] = $expanded;
-    array_pop($this->expand_stack);
     $this->merge_type($expanded);
+    array_pop($this->expand_stack);
     return $result;
   }
 
   function merge_type(&$field, &$added = array())
   {
     $type = $field['type'];
-    if (!isset($type) || $type == 'none') return $field;
+    if (!isset($type) || $type == 'none'  || in_array($type, $this->expand_stack, true)) return $field;
     $expanded = $this->expand_type($type, $added);
     if (is_null($expanded)) {
       log::warn("Unknown type $type");
@@ -418,7 +418,7 @@ class page
       && !in_array($key, page::$query_items, true);
   }
 
-  function merge_fields(&$fields)
+  function merge_fields(&$fields, $merged = array())
   {
     if (is_assoc($fields)) {
       if (isset($fields['type']))
@@ -426,7 +426,10 @@ class page
       foreach($fields as $key=>&$value) {
         if (!is_array($value) || page::not_mergeable($key)) continue;
         $value = $this->get_merged_field($key, $value);
-        $this->merge_fields($value, $merged);
+        if (!in_array($key, $merged, true)) {
+          $merged[] = $key;
+          $this->merge_fields($value, $merged);
+        }
       }
       return $fields;
     }
@@ -442,10 +445,12 @@ class page
       if (is_array($field) && !is_null($default_type) && !isset($field['type']))
         $field['type'] = $default_type;
       $field = $this->get_merged_field($key, $field);
-      if (is_array($field)) {
+      if (is_array($field) && !in_array($key, $merged, true)  ) {
+        $merged[] = $key;
         $this->merge_fields($field, $merged);
-        $value = array($key=>$field);
       }
+      if (is_array($field))
+        $value = array($key=>$field);
     }
     return $fields;
   }
@@ -708,6 +713,7 @@ class page
     log::debug_json("ACTION ".last($this->path), $invoker);
     $validate = at($invoker, 'validate');
     $this->merge_fields($this->fields);
+    log::debug("MERGED ", $this->fields);
     if ($validate != 'none' && !$this->validate($this->fields, $validate))
       return null;
 
