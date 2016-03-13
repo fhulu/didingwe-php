@@ -9,6 +9,7 @@ table.data
   -moz-box-shadow: 3px 3px 3px 4px lightgray;
   -webkit-box-shadow: 3px 3px 3px 4px lightgray;
   width: 100%;
+  word-wrap: break-word;
 }
 
 table.data>thead
@@ -204,7 +205,7 @@ table.data tr [action]
   cursor: pointer;
   text-align: center;
   padding: 0px 6px;
-  opacity: 0.88;
+  opacity: 0.8;
 }
 
 table.data tr [action]:hover
@@ -236,8 +237,7 @@ table.data td [action=collapse]:hover
 table.data tr [action=view],
 table.data tr [action=save],
 table.data tr [action=slide],
-table.data tr [action=add],
-table.data tr [action=slideoff]
+table.data tr [action=add]
 {
   background-color:rgb(20,60,90);
 }
@@ -306,4 +306,8 @@ table.data>tfoot tr
 {
   height: 30px;
   line-height: 30px;
+}
+
+table.data tr.registered>td {
+  background-color: lightgreen !important;
 }
