@@ -353,7 +353,7 @@
             if (!td.children().exists()) {
               var text = td.text();
               td.text('');
-              $('<div>').text(text).appendTo(td).width('80%').css('display','inline-block');
+              $('<div>').text(text).appendTo(td).css('display','inline-block');
             }
             self.createAction('expand', undefined, tr).prependTo(td);
             self.createAction('collapse', undefined, tr).prependTo(td).hide();

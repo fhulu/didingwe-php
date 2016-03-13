@@ -17,7 +17,6 @@ accordion_tab:
 actioner:
   tag: div
   attr: { action: $id, id: "" }
-  style: {color: white}
 
 alert_message:
   classes: div
@@ -161,7 +160,7 @@ datatable:
   create: datatable
   script: /common/datatable.js
   row_creator: { type: table_row }
-  css: /common/datatable.css
+  css: [/common/datatable.css,/datatable.css]
   flags: []
     # - editall
     #
