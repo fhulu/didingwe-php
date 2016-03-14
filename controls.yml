@@ -87,6 +87,19 @@ captioned_image:
   title: $name
   src: $id.png
 
+categorized:
+  tag: fieldset
+  text: $legend $inputs
+  title: $name
+  inherit: [title]
+  legend:
+    tag: legend
+    text: $title
+  inputs:
+    - template: label_left
+    - type: input
+
+
 center_all:
   text-align: center
   margin-left: auto
@@ -449,7 +462,7 @@ labelled:
     attr: { title: $desc }
 
 labelled_input:
-  type: labelled_left
+  type: label_left
 
 labelled_input_page:
   type: input_page
