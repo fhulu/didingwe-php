@@ -352,10 +352,6 @@ class page
     walk_recursive_down($fields, function($value, $key, &$parent) {
       if (!is_assoc($parent))
         list($type, $value) = assoc_element($value);
-      else if ($this->rendering && !$this->is_render_item($key)) {
-        unset($parent[$key]);
-        return;
-      }
       else
         $type = $key;
 
@@ -472,21 +468,6 @@ class page
         $parent['query'] = " ";
     });
 
-  }
-
-  function remove_unsed_types()
-  {
-    $used = array();
-    walk_recursive_down($this->fields, function($value, $key) use (&$used) {
-      if (in_array($key, ['type', 'template']) && is_string($value))
-        $used = $used + [$value];
-      else if ($key == 'styles')
-        $used = $used + (is_array($value)? $value: [$value]);
-    });
-    log::debug_json("TYPES", $this->types);
-    log::debug_json("USED", $used);
-    $this->types = array_intersect($this->types, $used);
-    log::debug_json("INTERSECTION", $used);
   }
 
   function read()
