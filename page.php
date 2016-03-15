@@ -255,6 +255,7 @@ class page
       }
       $values = $this->get_merged_field($key, $values);
       $this->parent_sow($parent, $key, $values);
+      $this->derive_parent($parent, $values);
       return $values;
     }
     return null;
@@ -303,11 +304,14 @@ class page
       if (is_assoc($field)) {
         $new_parent = $field;
         $field = $this->parent_sow($parent, $branch, $field[$branch]);
+        $this->derive_parent($parent, $field[$branch]);
         $field = $this->get_merged_field($branch, $field);
         $parent = $new_parent;
       }
-      else
+      else {
         $field = $this->find_array_field($field, $branch, $parent);
+        $this->derive_parent($parent, $field);
+      }
       if (is_null($field))
         $this->throw_invalid_path ();
       $this->verify_access($field);
@@ -331,6 +335,21 @@ class page
     if (!isset($sow)) return $field;
     if (!in_array($key, $sow, true)) return $field;
     return $field = merge_options($parent[$key], $field);
+  }
+
+  function derive_parent($parent, &$field)
+  {
+    $derive = $field['derive'];
+    if (!isset($derive)) return $field;
+    foreach($derive as $key) {
+      $value = $field[$key];
+      if (!isset($value))
+        $field[$key] = $value;
+      else if (is_array($value))
+        $field[$key] = merge_options($parent[$key], $value);
+      else if ($value[0] == '$')
+        $field[$key] = $parent[substr($value,1)];
+    }
   }
 
   function expand_value($value)
@@ -694,7 +713,6 @@ class page
     log::debug_json("ACTION ".last($this->path), $invoker);
     $validate = at($invoker, 'validate');
     $this->merge_fields($this->fields);
-    log::debug("MERGED ", $this->fields);
     if ($validate != 'none' && !$this->validate($this->fields, $validate))
       return null;
 
