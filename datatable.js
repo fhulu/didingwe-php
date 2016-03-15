@@ -453,6 +453,9 @@
 
       var slider = $('<span class="slide">').toggle(false).appendTo(td);
       this.render.createItems(slider, {}, undefined, slide_actions);
+      slider.find('[action]').click(function() {
+        td.trigger('action',[$(this),id,action.action]);
+      });
     },
 
     slide: function(tr)
