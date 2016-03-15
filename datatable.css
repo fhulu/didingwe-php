@@ -305,3 +305,7 @@ table.data>tfoot tr
   height: 30px;
   line-height: 30px;
 }
+
+table.data .hidden {
+  display: none;
+}

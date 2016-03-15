@@ -292,24 +292,6 @@
       td.attr('colspan', tr.children().length);
     },
 
-    appendRow: function(data)
-    {
-      var body = this.body();
-      var fields =  [].concat(this.options.fields);
-      for (var i in fields) {
-        var val = $.firstValue(fields[i]);
-        val.value = data[i];
-      }
-      var options = {
-        fields: { type: 'table_row', columns: fields},
-        types: this.options.types,
-        path: ""
-      };
-      console.log("reset", fields);
-      body.page(options);
-//      var tmp = $('<tr>$</tr>');//.appendTo(body);
-    },
-
     showData: function(data)
     {
       var self = this;
@@ -322,7 +304,7 @@
           self.bindRowActions(tr);
           tr.appendTo(body);
         }
-        tr = $('<tr></tr>');//.appendTo(body);
+        tr = $('<tr>');
         var key;
         var expandable = false;
         for (var j in fields) {
@@ -340,9 +322,12 @@
             tr.addClass(cell);
             continue;
           }
+          var td = $('<td>').appendTo(tr);
+          if (hide) {
+            td.addClass('hidden');
+            continue;
+          }
 
-          var td = $('<td></td>').appendTo(tr);
-          td.toggle(!hide);
           if (field.id === 'actions') {
             var actions = cell.split(',');
             var expandable = actions.indexOf('expand') >= 0;
@@ -468,9 +453,6 @@
 
       var slider = $('<span class="slide">').toggle(false).appendTo(td);
       this.render.createItems(slider, {}, undefined, slide_actions);
-      slider.find('[action]').click(function() {
-        td.trigger('action',[$(this),id,action.action]);
-      });
     },
 
     slide: function(tr)
