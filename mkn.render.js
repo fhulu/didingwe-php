@@ -99,11 +99,8 @@ mkn.render = function(options)
     if (!defaults) defaults = { template: "$field" };
     var path = parent_field.path+'/'+name;
     var pushed = [];
-    var first;
-    var last;
     var wrap;
     var inherit = parent_field.inherit;
-    var last_pos = -1;
     var removed = [];
     for(var i in items) {
       var item = items[i];
@@ -163,7 +160,6 @@ mkn.render = function(options)
         pushed.push(item);
 
       items[i] = item;
-      last_pos++;
       removed.pop();
     }
 
@@ -175,18 +171,21 @@ mkn.render = function(options)
       var item = pushed[i];
       var push = item.push;
       var pos = mkn.indexOfKey(items, 'id', item.id);
-      if (push === 'first') {
-        if (pos === 0) continue;
-      }
-      else if (push == 'last') {
-        if (pos === last_pos) continue;
-      }
-      var new_pos = mkn.indexOfKey(items, 'id', item.push);
       item = mkn.copy(item);
       items.splice(pos, 1);
-      items.splice(new_pos, 0, item);
+      if (push === 'first')
+        items.unshift(item);
+      else if (push === 'last')
+        items.push(item);
+      else {
+        var push_pos = mkn.indexOfKey(items, 'id', item.push)-1;
+        items.splice(mkn.indexOfKey(items, 'id', item.push)-1, 0, item);
+      }
+      if (item.wrap) {
+        items[pos].wrap = item.wrap;
+        delete item.wrap;
+      }
     }
-
   }
 
   var isTemplate = function(t)
