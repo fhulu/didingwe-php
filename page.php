@@ -254,7 +254,7 @@ class page
         $values = $type;
       }
       $values = $this->get_merged_field($key, $values);
-      $this->inherit_parent($parent, $key, $values);
+      $this->parent_sow($parent, $key, $values);
       return $values;
     }
     return null;
@@ -302,7 +302,7 @@ class page
     foreach($path as $branch) {
       if (is_assoc($field)) {
         $new_parent = $field;
-        $field = $this->inherit_parent($parent, $branch, $field[$branch]);
+        $field = $this->parent_sow($parent, $branch, $field[$branch]);
         $field = $this->get_merged_field($branch, $field);
         $parent = $new_parent;
       }
@@ -325,11 +325,11 @@ class page
     });
   }
 
-  function inherit_parent($parent, $key, &$field)
+  function parent_sow($parent, $key, &$field)
   {
-    $inherit = $parent['inherit'];
-    if (!isset($inherit)) return $field;
-    if (!in_array($key, $inherit, true)) return $field;
+    $sow = $parent['sow'];
+    if (!isset($sow)) return $field;
+    if (!in_array($key, $sow, true)) return $field;
     return $field = merge_options($parent[$key], $field);
   }
 
@@ -609,9 +609,9 @@ class page
     if (is_assoc($options1) && !is_assoc($options2)) return $options2;
     if (!is_assoc($options1)) {
       $new_values = array();
-      $inheritables = array('type', 'template', 'action');
+      $sowables = array('type', 'template', 'action');
       foreach($options1 as $v1) {
-        if (!is_array($v1) || array_intersect($inheritables,  array_keys($v1)) === array()) continue;
+        if (!is_array($v1) || array_intersect($sowables,  array_keys($v1)) === array()) continue;
         $new_values[] = $v1;
       }
       return array_merge($new_values, $options2);

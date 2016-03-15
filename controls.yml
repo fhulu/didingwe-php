@@ -44,7 +44,7 @@ bookmark:
   name: $id
   link: $id
   text: $anchor
-  inherit: [link]
+  sow: [link]
   attr: { id: ""}
   anchor:
     tag: a
@@ -82,8 +82,8 @@ captioned_image:
   classes: div
   text: $image $caption
   parent_id: $id
-  inherit: [parent_id,title]
   image:
+    derive: [parent_id]
     type: image
     src: $parent_id.png
     attr: { title: $name}
@@ -91,23 +91,21 @@ captioned_image:
       width: 100%
   caption:
     type: label
+    derive: [title]
     text: $title
-    style:
-      display: block
+    styles: [block]
   title: $name
   src: $id.png
 
 categorized:
+  type: input_page
   tag: fieldset
-  text: $legend $inputs
+  text: $legend $synopsis $inputs
   title: $name
-  inherit: [title]
   legend:
     tag: legend
+    derive: [title]
     text: $title
-  inputs:
-    - template: label_left
-    - type: input
 
 
 center_all:
@@ -143,7 +141,7 @@ checkgroup:
   class: radio
   text: $options
   group: $id
-  inherit: [group]
+  sow: [group]
   options:
     - template:
         type: labelled_left
@@ -187,7 +185,7 @@ datatable:
   flags: []
     # - editall
     #
-  inherit: [data]
+  sow: [data]
   post:
     - read_values: { rows: $data}
     - call: datatable::read(context,$key)
@@ -198,7 +196,7 @@ datatable:
     desc: Filter by specific columns
 
   fields: [ type: none ]
-  inherit: [slide,slideoff]
+  sow: [slide,slideoff]
 
   #paging
   paging:
@@ -266,7 +264,6 @@ datetime:
   create: datetimepicker
   format: Y-m-d H:i
   validateOnBlur: false
-  non_inherit: [next,prev]
   allowBlanks: false
 
 datetime_future:
@@ -288,7 +285,7 @@ double_spaced:
 
 dropdown:
   tag: select
-  inherit: [unselected,default,option]
+  sow: [unselected,default,option]
   unselected: --Select $name--
   option:
     tag: option
@@ -313,7 +310,7 @@ email:
   type: input
   attr: { type: email }
 
-#todo: fix backend inheritance
+#todo: fix backend sowance
 export:
   name: Export to Excel
   desc: Export to an Excel spreadsheet
@@ -434,11 +431,11 @@ input:
     value: $value
 
 input_page:
-  inherit: [desc,actions]
   type: page
   text: $synopsis $inputs
   layout: { type: label_left }
   synopsis:
+    derive: [desc]
     type: section_heading
     text: $desc
   inputs:
@@ -450,6 +447,7 @@ input_page:
           label: { text: " " }
         styles: [inline_block]
         type: container
+        derive: [actions]
         contents: $actions
   actions:
     - type:
@@ -475,7 +473,7 @@ label:
 
 labelled:
   templates: div
-  inherit: [name]
+  sow: [name]
   label: { classes: label }
   subject:
     class: [input]
@@ -488,7 +486,7 @@ labelled_input_page:
   type: input_page
 
 labelled_inside:
-  inherit: [name]
+  sow: [name]
   subject:
     class: [input]
     width: 100%
@@ -516,13 +514,11 @@ label_left:
 label_mobile:
   type: labelled
   styles: [widest]
-  suffix: ""
-  inherit: [suffix]
   style:
     margin-right: $side_spacing
     margin-bottom: $line_spacing
   label:
-    styles: [block]
+    suffix: ""
     text: $name$suffix
   subject:
     styles: [block]
@@ -617,10 +613,10 @@ one_row_table:
   tag: table
   text: $row
   cell_width: 33%
-  inherit: [items,cell_width]
+  sow: [items,cell_width]
   row:
     templates: tr
-    inherit: [cell_width]
+    sow: [cell_width]
     field: $items
   items:
     - template: table_cell
@@ -701,10 +697,11 @@ pushed_up:
 
 question_input:
   type: label_top
-  inherit: [question]
+  sow: [question]
   styles: [widest,block]
   label:
     styles: [widest]
+    derive: [question]
     text: $question
   subject:
     styles: [widest]
@@ -730,7 +727,7 @@ radiogroup:
   class: radio
   text: $options
   group: $id
-  inherit: [group]
+  sow: [group]
   options:
     - template: label_left
     - type: radiobox
@@ -745,7 +742,7 @@ row_inputs:
   class: [data]
   text: $head $inputs
   heading: $name
-  inherit: [heading,inputs]
+  sow: [heading,inputs]
   head:
     html: <thead><th colspan=2>$heading</th></thead>
   inputs:
@@ -773,7 +770,7 @@ story:
   type: control
   text: $heading $body
   title: $name
-  inherit: [title]
+  sow: [title]
   heading:
     type: plain_text
     tag: h1
@@ -805,7 +802,7 @@ table:
   head: { type: table_head }
   body: { type: table_body }
   text: $head $body
-  inherit: [rows]
+  sow: [rows]
   rows:
     - type: table_row
 
@@ -840,7 +837,7 @@ table_input_page:
     $processing
     $synopsis
     $form
-  inherit: [inputs,actions]
+  sow: [inputs,actions]
   form:
     type: table
     class: [form]
@@ -887,7 +884,7 @@ titled_paragraph:
   classes: div
   text: $heading $content
   title: $id
-  inherit: [body,title]
+  sow: [body,title]
   heading:
     type: plain_text
     tag: h2
@@ -967,7 +964,7 @@ wizard_page:
     name: Previous
     action: trigger
     event: wizard-prev
-  inherit: [next,prev]
+  sow: [next,prev]
   navigate:
     - wrap: class
     - prev

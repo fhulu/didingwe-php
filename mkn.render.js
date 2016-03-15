@@ -100,7 +100,7 @@ mkn.render = function(options)
     var path = parent_field.path+'/'+name;
     var pushed = [];
     var wrap;
-    var inherit = parent_field.inherit;
+    var sow = parent_field.sow;
     var removed = [];
     for(var i in items) {
       var item = items[i];
@@ -128,7 +128,7 @@ mkn.render = function(options)
           item = mkn.merge(parent_field[id], item);
         }
 
-        if (inherit && inherit.indexOf(id) >=0)
+        if (sow && sow.indexOf(id) >=0)
           item = mkn.merge(parent_field[id], item);
         promoteAttr(item);
         template = item.template;
@@ -275,25 +275,39 @@ mkn.render = function(options)
   }
 
 
-  this.inheritParent =  function(parent, field)
+  this.parentSow =  function(parent, field)
   {
-    if (!parent || !parent.inherit) return field;
-    var ignore = field.non_inherit;
-    for (var i in parent.inherit) {
-      var key = parent.inherit[i];
-      if (ignore && ignore.indexOf(key) >= 0) continue;
-      var inherited = {};
-      inherited[key] = parent[key];
-      field = mkn.merge(inherited, field);
+    if (!parent || !parent.sow) return field;
+    for (var i in parent.sow) {
+      var key = parent.sow[i];
+      var sowed = {};
+      sowed[key] = parent[key];
+      field = mkn.merge(sowed, field);
     }
     return field;
+  }
+
+  var deriveParent = function(parent, field)
+  {
+    if (!parent || !field.derive) return;
+    for (var i in field.derive) {
+      var key = field.derive[i];
+      var value = field[key];
+      if (value === undefined)
+        field[key] = parent[key];
+      else if ($.isPlainObject(value) || $.isArray(value))
+        field[key] = mkn.merge(parent[key], value);
+      else if (value[0] == '$')
+        field[key] = parent[value.substr(1)];
+    }
   }
 
   this.initField = function(field, parent)
   {
     field.page_id = this.page_id;
     field = this.mergeType(field);
-    field = this.inheritParent(parent, field);
+    field = this.parentSow(parent, field);
+    deriveParent(parent, field);
 
     var id = field.id;
     if (field.array)
@@ -662,7 +676,7 @@ mkn.render = function(options)
   {
     if (mkn.size(item) != 1) return false;
     var names = [ 'type', 'template', 'action', 'attr', 'wrap'];
-    var inherit = parent.inherit;
+    var sow = parent.sow;
     var set = false;
     for (var i in array_defaults) {
       var name = array_defaults[i];
@@ -671,7 +685,7 @@ mkn.render = function(options)
       if (value[0] == '$')
         value = parent[value.substring(1)];
       if (value === undefined) continue;
-      if (inherit && inherit.indexOf(value) >=0 )
+      if (sow && sow.indexOf(value) >=0 )
         value = mkn.merge(parent[value], defaults[name]);
       if (name === 'template' && value === 'none')
         value = '$field';
