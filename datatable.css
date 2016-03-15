@@ -204,7 +204,7 @@ table.data tr [action]
   cursor: pointer;
   text-align: center;
   padding: 0px 6px;
-  opacity: 0.8;
+  opacity: 0.9;
 }
 
 table.data tr [action]:hover
@@ -218,7 +218,7 @@ table.data td [action=collapse]
   height: 100%;
   color:rgb(20,60,90);
   font-family: monospace;
-  font-size: 16pt;
+  font-size: 12pt;
   font-weight: 100;
   border-right: 1px solid lightgray;
   display: inline-block;
@@ -232,6 +232,7 @@ table.data td [action=collapse]:hover
 {
   color:rgb(30,90,135);
 }
+
 
 table.data tr [action=view],
 table.data tr [action=save],
