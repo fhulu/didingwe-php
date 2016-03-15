@@ -51,6 +51,16 @@ bookmark:
     attr: { href: "#$link", id: ""}
     name: $link
 
+bottom_left:
+  position: absolute
+  left: 0
+  right: 0
+
+bottom_right:
+  position: absolute
+  bottom: 0
+  right: 0
+
 button:
   class: [action]
   tag: button
@@ -385,7 +395,7 @@ hspace:
 
 hspaced:
   hspace: 10px
-  margin-left: $hspace
+  margin-right: $hspace
 
 image:
   tag: img
@@ -424,18 +434,28 @@ input:
     value: $value
 
 input_page:
-  inherit: [desc]
+  inherit: [desc,actions]
   type: page
-  text: $synopsis $inputs $actions
+  text: $synopsis $inputs
+  layout: { type: label_left }
   synopsis:
     type: section_heading
     text: $desc
   inputs:
-    - template: label_left
+    - template: $layout
     - type: input
+    - controls:
+        push: last
+        template:
+          label: { text: " " }
+        styles: [inline_block]
+        type: container
+        contents: $actions
   actions:
-    - wrap: class
-    - type: submit
+    - type:
+        type: submit
+        space: 24
+        styles: [hspaced]
 
 isearch:
   type: input
