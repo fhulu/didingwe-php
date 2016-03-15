@@ -123,7 +123,12 @@ mkn.render = function(options)
         if (id == 'query') {
           item.defaults = mkn.copy(defaults);
         }
-        if (inherit && inherit.indexOf(id) >=0 )
+        if (id[0] == '$') {
+          id = id.substr(1);
+          item = mkn.merge(parent_field[id], item);
+        }
+
+        if (inherit && inherit.indexOf(id) >=0)
           item = mkn.merge(parent_field[id], item);
         promoteAttr(item);
         template = item.template;
