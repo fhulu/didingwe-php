@@ -181,6 +181,9 @@ var mkn = new function() {
     return str;
   }
 
+  this.visible = function(f) {
+    return !(f.hide || f.show === false);
+  }
 }
 
 if (!String.prototype.trim) {

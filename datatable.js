@@ -262,8 +262,8 @@
       for (var i in fields) {
         var field = fields[i];
         var id = field.id;
-        var hide = field.hide || field.show === false;
-        if (id == 'key' && hide  || id === 'attr') continue;
+        var visible = mkn.visible(field);
+        if (id == 'key' && visible  || id === 'attr') continue;
         var th = $('<th></th>').appendTo(tr);
         if (id === 'actions' || id == 'style') continue;
         if ($.isArray(field.name)) field.name = field.name[field.name.length-1];
@@ -280,7 +280,7 @@
         ++j;
         if (self.hasFlag('sortable'))
           self.bindSort(th, id);
-        th.toggle(!hide);
+        th.toggle(visible);
       };
       this.spanColumns(head.find('.header th'));
     },
@@ -569,7 +569,7 @@
       var td;
       template.children().each(function(i) {
         var field = fields[i];
-        if (field.hide) return;
+        if (!mkn.visible(field)) return;
         if (field.id === 'style' || field.id === 'actions') {
           var colspan = td.attr('colspan');
           if (!colspan) colspan = 1;
@@ -604,8 +604,9 @@
         for (var i in fields) {
           var field = fields[i];
           if (field.id === 'actions' || field.id === 'style') continue;
-          var val = field.hide? '': cols.eq(j++).find('input').val();
-          self.params.filtered += val + '|';
+          if (mkn.visible(field))
+            self.params.filtered += cols.eq(j++).find('input').val();
+          self.params.filtered += '|';
         }
         self.refresh();
       });
