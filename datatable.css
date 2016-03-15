@@ -204,7 +204,7 @@ table.data tr [action]
   cursor: pointer;
   text-align: center;
   padding: 0px 6px;
-  opacity: 0.9;
+  opacity: 0.88;
 }
 
 table.data tr [action]:hover
