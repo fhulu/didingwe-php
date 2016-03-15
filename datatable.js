@@ -325,7 +325,6 @@
         tr = $('<tr></tr>');//.appendTo(body);
         var key;
         var expandable = false;
-        var k = 0;
         for (var j in fields) {
           var cell = row[j];
           var field = fields[j];
@@ -349,7 +348,7 @@
             var expandable = actions.indexOf('expand') >= 0;
             self.createRowActions(tr, td, actions);
             if (!expandable) continue;
-            td = tr.children().eq(0);
+            td = tr.children().eq(0).addClass('expandable');
             if (!td.children().exists()) {
               var text = td.text();
               td.text('');

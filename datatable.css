@@ -212,8 +212,7 @@ table.data tr [action]:hover
   opacity: 1;
 }
 
-table.data td [action=expand],
-table.data td [action=collapse]
+table.data td.expandable [action]
 {
   height: 100%;
   color:rgb(20,60,90);
@@ -224,11 +223,10 @@ table.data td [action=collapse]
   display: inline-block;
   padding-left: 5px;
   padding-right: 5px;
-  margin-right: 10px;
+  margin-right: 5px;
 }
 
-table.data td [action=expand]:hover,
-table.data td [action=collapse]:hover
+table.data td.expandable [action]:hover
 {
   color:rgb(30,90,135);
 }
