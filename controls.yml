@@ -141,17 +141,12 @@ checkgroup:
   templates: div
   class: radio
   text: $options
-  group: $id
-  sow: [group]
+  layout:
+    type: label_left
+    label: { suffix: " " }
   options:
-    - template:
-        type: labelled_left
-        suffix: " "
-        label_width: auto
-        input_width: auto
-        styles: [inline_block]
+    - template: $layout
     - type: checkbox
-    - attr: { name: $group }
 
 class:
   tag: div
@@ -719,11 +714,13 @@ radiogroup:
   class: radio
   text: $options
   group: $id
-  sow: [group]
+  layout: label_left
   options:
     - template: label_left
-    - type: radiobox
-    - attr: { name: $group }
+    - type:
+        type: radiobox
+        derive: [group]
+        attr: { name: $group }
 
 
 row_input:
