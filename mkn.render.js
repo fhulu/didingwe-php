@@ -306,8 +306,8 @@ mkn.render = function(options)
   {
     field.page_id = this.page_id;
     field = this.mergeType(field);
-    field = this.parentSow(parent, field);
     deriveParent(parent, field);
+    field = this.parentSow(parent, field);
 
     var id = field.id;
     if (field.array)

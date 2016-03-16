@@ -100,6 +100,7 @@ captioned_image:
 categorized:
   type: input_page
   tag: fieldset
+  style: { display: table-column}
   text: $legend $synopsis $inputs
   title: $name
   legend:
@@ -609,17 +610,7 @@ one_column_table:
   items:
     - template: one_cell_row
 
-one_row_table:
-  tag: table
-  text: $row
-  cell_width: 33%
-  sow: [items,cell_width]
-  row:
-    templates: tr
-    sow: [cell_width]
-    field: $items
-  items:
-    - template: table_cell
+one_row_table: { type: silos }
 
 p: { tag: p}
 
@@ -759,6 +750,19 @@ side_spacer:
     style:
       display: inline-block
       margin-bottom: $space
+
+silos:
+  tag: table
+  text: $row
+  cell_width: 33%
+  sow: [cell_width]
+  row:
+    templates: tr
+    derive: [items]
+    sow: [cell_width]
+    field: $items
+  items:
+    - template: table_cell
 
 small:
   font-size: 8pt
