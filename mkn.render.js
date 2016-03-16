@@ -477,7 +477,7 @@ mkn.render = function(options)
   this.loadData = function(object, field, name, defaults)
   {
     this.loading++;
-    object.on('loaded', function(event,result) {
+    object.on('loaded', function(event, field, result) {
       if (--me.loading === 0)
         me.parent.trigger('loaded', result);
       if (result === undefined || result === null) {
@@ -493,23 +493,23 @@ mkn.render = function(options)
       me.expandFields(field, name, result, defaults)
       me.createItems(object, field, name, result, defaults);
       if (me.loading === 0)
-        me.parent.trigger('loaded', result);
+        me.parent.trigger('loaded', [field,result]);
     });
     if (field.autoload || field.autoload === undefined) {
       $.json('/', serverParams('data', field.path+'/'+name, field.params), function(result) {
         respond(result, object);
-        object.trigger('loaded', [result]);
+        object.trigger('loaded', [field, result]);
       });
     }
 
     object.on('reload', function(event, data) {
-         field.autoload = true;
-         field.params = data;
-         me.loadData(object, field, name, defaults);
-         if (field.values)
-           me.loadValues(object, field);
-       })
-     };
+       field.autoload = true;
+       field.params = data;
+       me.loadData(object, field, name, defaults);
+       if (field.values)
+         me.loadValues(object, field);
+     })
+  };
 
   var serverParams = function(action, path, params)
   {
