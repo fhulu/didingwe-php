@@ -232,6 +232,7 @@ class page
   function find_array_field($array, $code, $parent)
   {
     $type = null;
+    $default = null;
     foreach($array as $value) {
       $values = $own_type = null;
       if (is_assoc($value))
@@ -241,6 +242,10 @@ class page
 
       if ($key == 'type') {
         $type = $this->get_merged_field($values);
+        continue;
+      }
+      if ($key == 'default') {
+        $default = $values;
         continue;
       }
 
@@ -256,7 +261,8 @@ class page
       $values = $this->get_merged_field($key, $values);
       $this->parent_sow($parent, $key, $values);
       $this->derive_parent($parent, $values);
-      return $values;
+
+      return merge_options($default, $values);
     }
     return null;
   }
@@ -449,11 +455,16 @@ class page
       return $fields;
     }
     $default_type = null;
+    $default = null;
     foreach($fields as &$value) {
       list($key, $field) = assoc_element($value);
       if (page::not_mergeable($key)) continue;
       if ($key == 'type') {
         $default_type = $field;
+        continue;
+      }
+      if ($key == 'default') {
+        $default = $field;
         continue;
       }
       if (!is_array($field) && !is_null($field)) continue;
@@ -464,6 +475,8 @@ class page
         $merged[] = $key;
         $this->merge_fields($field, $merged);
       }
+      if (!is_null($default))
+        $field = merge_options($default, $field);
       if (is_array($field))
         $value = array($key=>$field);
     }
@@ -711,8 +724,8 @@ class page
   {
     $invoker = $this->context;
     log::debug_json("ACTION ".last($this->path), $invoker);
-    $validate = at($invoker, 'validate');
     $this->merge_fields($this->fields);
+    $validate = at($invoker, 'validate');
     if ($validate != 'none' && !$this->validate($this->fields, $validate))
       return null;
 

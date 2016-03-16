@@ -11,7 +11,7 @@ mkn.render = function(options)
   me.parent = options.parent;
   me.known = {};
 
-  var array_defaults = [ 'type', 'template', 'action', 'attr', 'wrap'];
+  var array_defaults = [ 'type', 'template', 'action', 'attr', 'wrap', 'default'];
   var geometry = ['left','right','width','top','bottom','height'];
 
   var mutable = function(field) {
@@ -138,6 +138,8 @@ mkn.render = function(options)
           item = mergeDefaults(item, defaults, base);
         else
           item = merged;
+        if (defaults.default)
+          item = mkn.merge(defaults.default, item);
       }
       else if ($.isArray(item)) {
         array = item;
@@ -675,7 +677,6 @@ mkn.render = function(options)
   var setDefaults = function(defaults, item, parent)
   {
     if (mkn.size(item) != 1) return false;
-    var names = [ 'type', 'template', 'action', 'attr', 'wrap'];
     var sow = parent.sow;
     var set = false;
     for (var i in array_defaults) {

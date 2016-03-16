@@ -220,6 +220,7 @@ datatable:
 
   # row actions
   row_actions:
+    - default: { validate: none }
     - type: actioner
     - action: trigger
     - slide
