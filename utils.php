@@ -199,15 +199,22 @@ function assoc_element($element)
   return array($key, $value);
 }
 
-function replace_fields(&$options, $context)
+function replace_fields(&$options, $context, $recurse=false)
 {
   if (!is_array($options)) {
     $options = replace_vars($options, $context);
     return;
   }
-  array_walk_recursive($options, function(&$value) use(&$context) {
-    $value = replace_vars($value, $context);
+  $replaced = false;
+  array_walk_recursive($options, function(&$value) use(&$context, &$replaced) {
+    $new = replace_vars($value, $context);
+    if ($new != $value) {
+      $replaced = true;
+      $value = $new;
+    }
   });
+  if ($recurse && $replaced)
+    replace_fields($options, $context, $recurse);
 }
 
 function replace_indices($str, $values)
