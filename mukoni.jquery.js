@@ -40,6 +40,12 @@ $.fn.enableOnSet = function(controls, events)
 }
 
 
+$.fn.filterText = function(text) {
+  return this.filter(function() {
+    return $(this).text() == text;
+  });
+}
+
 $.fn.setValue = function(val)
 {
   if (this.is("a")) {
@@ -55,6 +61,14 @@ $.fn.setValue = function(val)
     var values = this.attr('values');
     if (values != '') val = values.indexOf(val);
     return this.prop('checked', val);
+  }
+
+  if (this.is('select')) {
+    this.val(val);
+    if (this.val() == val) return this;
+    var option = this.children('option').filterText(val);
+    if (option.exists()) this.val(option.val());
+    return this;
   }
 
   if (this.hasAttr('value'))
