@@ -286,7 +286,6 @@ double_spaced:
 
 dropdown:
   tag: select
-  sow: [unselected,default,option]
   unselected: --Select $name--
   option:
     tag: option
@@ -296,12 +295,13 @@ dropdown:
     attr: { value: $id }
   default:
     classes: option
+    derive: [unselected]
     text: $unselected
     attr: { value: ""}
   text: $options
   options:
-    - default
-    - type: option
+    - $default
+    - type: $option
 
 element:
   text: ""

@@ -66,7 +66,7 @@ confirm_password:
 
 country:
   options:
-    - sql: select code ,name  from country sort by name
+    - sql: select code,name from country order by 1
 
 day_of_month:
   options:

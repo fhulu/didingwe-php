@@ -89,7 +89,7 @@ mkn.render = function(options)
     if (!item.type && defaults.type) {
       var type = mkn.copy(defaults.type);
       mergeImmutables(item, base, type);
-      item = mkn.merge(type, item);
+      return mkn.merge(mkn.merge(type,base), item);
     }
     return mkn.merge(base, item);
   }
