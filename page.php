@@ -28,7 +28,7 @@ class page
   static $fields_stack = array();
   static $post_items = array('audit', 'call', 'clear_session', 'clear_values', 'post',
     'post_http', 'send_email', 'send_sms', 'valid', 'validate', 'write_session');
-  static $query_items = array('call', 'read_session', 'read_values', 'sql', 'sql_values');
+  static $query_items = array('call', 'read_session', 'read_values', 'ref_list', 'sql', 'sql_values');
   static $atomic_items = array('action', 'attr', 'css', 'html', 'script', 'sql',
     'style', 'template', 'valid');
   static $user_roles = array('public');
@@ -803,6 +803,18 @@ class page
     return $this->sql_exec($sql);
   }
 
+  function ref_list($field)
+  {
+    if (is_null($field))
+      $field = ['list'=>$this->path[sizeof($this->path)-2]];
+    else if (is_string($field))
+      $field = ['list'=>$field];
+    $base = $this->get_expanded_field('ref_list');
+    $field = merge_options($base, $field);
+    replace_fields($field, $field, true);
+    return $this->sql($field['sql']);
+  }
+
   function update_context(&$options)
   {
     $context = page::merge_options($this->context, $options);
@@ -859,7 +871,7 @@ class page
     log::debug_json("REPLY ACTIONS", $actions);
 
     $methods = array('alert', 'abort', 'call', 'clear_session', 'clear_values',
-      'close_dialog', 'load_lineage', 'read_session', 'read_values', 'redirect',
+      'close_dialog', 'load_lineage', 'read_session', 'read_values', 'redirect', 'ref_list',
       'send_email', 'show_dialog', 'show_captcha', 'sql', 'sql_exec','sql_rows', 'sql_insert',
       'sql_update', 'sql_values', 'refresh', 'trigger', 'update', 'write_session');
     foreach($actions as $action) {
