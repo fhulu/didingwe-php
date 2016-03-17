@@ -16,7 +16,7 @@ accordion_tab:
 
 actioner:
   tag: div
-  attr: { action: $id, id: "" }
+  attr: { action: $id, id: "", title: $desc }
 
 alert_message:
   classes: div
@@ -389,7 +389,7 @@ hspace:
 
 hspaced:
   hspace: 10px
-  margin-right: $hspace
+  margin-right: $space
 
 image:
   tag: img
