@@ -17,6 +17,8 @@ accordion_tab:
 actioner:
   tag: div
   attr: { action: $id, id: "", title: $desc }
+  styles: [filled]
+
 
 alert_message:
   classes: div
@@ -87,8 +89,6 @@ captioned_image:
     type: image
     src: $parent_id.png
     attr: { title: $name}
-    style:
-      width: 100%
   caption:
     type: label
     derive: [title]
@@ -326,6 +326,10 @@ file:
   uploader: /?action=upload
   max_size: 100
 
+filled:
+  background-color: $fill
+  color: $color
+
 form:
   tag: form
 
@@ -398,6 +402,17 @@ image:
   src_type: png
   src: $id.png
 
+image_button:
+  type: button
+  text: $pic $name
+  image: $id.png
+  pic:
+    type: input
+    derive: [image]
+    attr: { type: image, src: $image }
+
+
+
 info_page:
   type: input_page
   inputs: $lines
@@ -447,10 +462,8 @@ input_page:
         derive: [actions]
         contents: $actions
   actions:
-    - type:
-        type: submit
-        space: 24
-        styles: [hspaced]
+    - default: { styles: [hspaced], space: 24}
+    - type: submit
 
 isearch:
   type: input
@@ -934,7 +947,12 @@ vspaced:
 watermark:
   image: $id.png
   background-image: url($image)
-  background-repeat: no-repeat
+  repeat: no-repeat
+  imagex: left
+  imagey: center
+  background-repeat: $repeat
+  background-position: $imagex $imagey
+  background-color: $fill
 
 widest:
   width: 100%
