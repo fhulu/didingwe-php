@@ -651,8 +651,7 @@ mkn.render = function(options)
         var replacement = arguments[index++][match];
         if (replacement === undefined) replacement = arguments[index % 2][match];
         if (replacement === undefined) continue;
-        dest[key] = val.replace(new RegExp('\\$'+match+"([\b\W]|$)?", 'g'), replacement+'$1');
-        dest[key] = val.replace('$'+match, replacement);
+        dest[key] = val = val.replace(new RegExp('\\$'+match+"([^\w]|$)", 'g'), replacement+'$1');
       }
     }
   }
