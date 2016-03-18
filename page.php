@@ -35,6 +35,7 @@ class page
   static $non_mergeable = array('action', 'attr', 'audit', 'call', 'clear_session',
     'clear_values', 'load_lineage', 'post', 'read_session', 'refresh', 'show_dialog',
     'sql_insert', 'sql_update', 'style', 'trigger', 'valid', 'validate', 'write_session');
+  static $objectify = ['ref_list'];
   var $request;
   var $object;
   var $method;
@@ -386,8 +387,11 @@ class page
         $type = $value;
         $value = null;
       }
-
-      if (!is_null($value) && is_string($value)) {
+      if (is_null($value)  && in_array($type, page::$objectify)) {
+        $value = [];
+        $parent[$key] = [$type=>$value];
+      }
+      else if (!is_null($value) && is_string($value)) {
         $this->expand_value($value);
         return;
       }
@@ -818,10 +822,10 @@ class page
 
   function ref_list($field)
   {
-    if (is_null($field))
-      $field = ['list'=>$this->path[sizeof($this->path)-2]];
-    else if (is_string($field))
+    if (is_string($field))
       $field = ['list'=>$field];
+    else if (!isset($field['list']))
+      $field['list'] = $this->path[sizeof($this->path)-2];
     $base = $this->get_expanded_field('ref_list');
     $field = merge_options($base, $field);
     replace_fields($field, $field, true);
