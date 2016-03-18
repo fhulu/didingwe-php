@@ -459,9 +459,19 @@ $.fn.customCreate = function(options)
   var create = options.create;
   if (create === undefined) return;
   this.attr('customCreate',create);
-  this[create](options);
+  this.run(create, options);
 }
 
+$.fn.run = function()
+{
+  var args = Array.prototype.slice.call(arguments);;
+  var f = args.shift();
+  this[f].apply(this, args);
+}
+
+$.fn.call = function(method, args) {
+  this[method].apply(this, args);
+}
 
 /**
 * @param scope Object :  The scope in which to execute the delegated function.

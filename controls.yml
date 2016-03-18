@@ -781,6 +781,13 @@ small:
 span:
   tag: span
 
+source:
+  tag: div
+  file: $id.html
+  jquery: load
+  params: [$file]
+
+
 story:
   type: control
   text: $heading $body

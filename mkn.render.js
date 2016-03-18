@@ -327,6 +327,13 @@ mkn.render = function(options)
     return ['table','thead','th','tbody','tr','td'].indexOf(tag) >= 0;
   }
 
+  var runJquery = function (obj, item) {
+    if (!item.jquery) return;
+    expandVars(item,item.params);
+    obj.call(item.jquery, item.params);
+  }
+
+
   this.create =  function(field, templated)
   {
     if (field.sub_page)
@@ -385,12 +392,12 @@ mkn.render = function(options)
         obj.html('').append(child);
       else
         this.replace(obj, child, code);
-      ++subitem_count;
     }
     if (obj.attr('id') === '') obj.removeAttr('id');
     if (!templated && (field.hide || field.show === false))
       obj.hide();
 
+    runJquery(obj, field);
     initLinks(obj, field, function() {
       if (subitem_count) setValues(obj, field);
       initEvents(obj, field);
