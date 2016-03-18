@@ -556,15 +556,17 @@ class page
     $fields = merge_options($this->merge_stack(page::$fields_stack), $this->page_fields, $this->fields);
     $this->validator = new validator(page::merge_options($_SESSION, $this->request), $fields, $validators);
 
+    $delta = explode(',', $this->request['delta']);
     $exclude = array('css','post','script','style', 'styles', 'type','valid','values');
     if ($include != '' &&!is_array($include))
       $include = explode(',', $include);
     $validated = array();
-    walk_recursive_down($field, function($value, $key, $parent) use (&$exclude, &$validated, &$include) {
+    walk_recursive_down($field, function($value, $key, $parent) use (&$exclude, &$validated, &$include, &$delta) {
       if (!is_assoc($parent))
         list($code, $value) = assoc_element($value);
       else
         $code = $key;
+      if (!empty($delta) && !in_array($code, $delta, true)) return;
       if (is_array($include) && !in_array($code, $include, true)) return;
       if (in_array($code, $validated, true)) return false;
       if (in_array($code, $exclude, true)) return false;

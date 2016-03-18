@@ -98,15 +98,22 @@ $.fn.value = function(val)
 $.fn.values = function()
 {
   var data = {};
+  var delta = [];
   this.filter('input,textarea,select').each(function() {
     var ctrl = $(this);
     var name = ctrl.hasAttr('name')? ctrl.attr('name'): ctrl.attr('id');
     if (name === undefined) return true;
+    var val;
     if (ctrl.attr('type') !== 'radio')
-      data[name] = ctrl.value();
+      val = ctrl.value();
     else if (ctrl.is(':checked'))
-      data[name] = ctrl.attr('value');
+      val = ctrl.attr('value');
+    var server = ctrl.attr('server');
+    if (server !== undefined && server != val)
+      delta.push(name);
+    data[name] = val;
   });
+  data.delta = delta.join();
   return data;
 }
 
@@ -365,13 +372,14 @@ $.fn.jsonLoadOptions = function(url, options, callback)
   return this;
 }
 
-$.fn.setChildren = function(result)
+$.fn.setChildren = function(result, server)
 {
   var self = this;
   if (result === null) return;
   $.each(result, function(key, val) {
-    var filter = "#"+key+",[name='"+key+"']";
-    self.find(filter).setValue(val);
+    var obj = self.find("#"+key+",[name='"+key+"']");
+    obj.setValue(val);
+    if (server) obj.attr('server', val);
   });
   return this;
 }

@@ -891,7 +891,7 @@ mkn.render = function(options)
         case 'show_dialog': mkn.showDialog(val, responses.options); break;
         case 'close_dialog': mkn.closeDialog(parent, val); break;
         case 'redirect': redirect(val); break;
-        case 'update': parent.setChildren(val); break;
+        case 'update': parent.setChildren(val, true); break;
         case 'trigger': trigger(val, parent); break;
       }
     }
@@ -935,9 +935,9 @@ mkn.render = function(options)
       parent.trigger('loaded_values', [result]);
       respond(result);
       if ($.isPlainObject(result))
-        parent.setChildren(result);
+        parent.setChildren(result, true);
       else for (var i in result) {
-        parent.setChildren(result[i]);
+        parent.setChildren(result[i], true);
       }
     });
   }
