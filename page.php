@@ -556,18 +556,21 @@ class page
     $fields = merge_options($this->merge_stack(page::$fields_stack), $this->page_fields, $this->fields);
     $this->validator = new validator(page::merge_options($_SESSION, $this->request), $fields, $validators);
 
-    $delta = explode(',', $this->request['delta']);
     $exclude = array('css','post','script','style', 'styles', 'type','valid','values');
-    if ($include != '' &&!is_array($include))
+    if ($include == 'delta')
+      $include = explode(',', $this->request['delta']);
+    else if (is_string($include) && !is_array($include))
       $include = explode(',', $include);
+    else
+      $include = true;
+
     $validated = array();
-    walk_recursive_down($field, function($value, $key, $parent) use (&$exclude, &$validated, &$include, &$delta) {
+    walk_recursive_down($field, function($value, $key, $parent) use (&$exclude, &$validated, &$include) {
       if (!is_assoc($parent))
         list($code, $value) = assoc_element($value);
       else
         $code = $key;
-      if (!empty($delta) && !in_array($code, $delta, true)) return;
-      if (is_array($include) && !in_array($code, $include, true)) return;
+      if ($include !== true && !in_array($code, $include, true)) return;
       if (in_array($code, $validated, true)) return false;
       if (in_array($code, $exclude, true)) return false;
       if (!is_null($value) && !is_array($value)) return false;
@@ -939,9 +942,9 @@ class page
   function upload()
   {
     require_once 'document.php';
-    $this->fields = $this->expand_field($this->path[0], $this->path);
+    //$this->fields = $this->expand_field($this->path[0], $this->path);
     $code = last($this->path);
-    $id = document::upload($code."_file", $this->fields['format']);
+    $id = document::upload($code."_file", $this->context['format']);
     if (!is_null($id))
       page::update("id", $id);
   }
