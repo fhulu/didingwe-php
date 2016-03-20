@@ -389,6 +389,7 @@ highest:
 hspace:
   mutable: false
   type: blank
+  space: 20
   styles: [hspaced]
 
 hspaced:
@@ -945,6 +946,7 @@ uppercase:
 vspace:
   mutable: false
   type: blank
+  space: 20
   styles: [vspaced]
 
 vspaced:
