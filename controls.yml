@@ -450,6 +450,7 @@ input_page:
   layout: { type: label_left }
   synopsis:
     derive: [desc]
+    space: 16
     type: section_heading
     text: $desc
   inputs:

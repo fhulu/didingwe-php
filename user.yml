@@ -73,14 +73,13 @@ check_otp:
 
 complete_registration:
   type: wizard_page
-  width: 700
   desc: |
     Thank you. You have been provisionally registered. <be>
     You will have limited access to the system
     until your registration has been approved. <br>
     Please check your email for registration status.
   navigate:
-    - login: { action: dialog }
+    - start: { url: user/login, action: dialog }
 
 confirm_registration:
   type: wizard_page
@@ -397,7 +396,7 @@ register:
   type: wizard
   name: Register User
   desc: Register as a new user of the system
-  height: 520
+  height: 500
   width: 700
   steps:
     - enter_credentials
