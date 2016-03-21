@@ -702,7 +702,7 @@ question_input:
   type: label_top
   styles: [widest,block]
   label:
-    styles: [widest]
+    styles: [widest,left_text]
     derive: [question]
     text: $question
   subject:
