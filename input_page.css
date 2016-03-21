@@ -106,14 +106,10 @@ button,
 
 
 
-.input > input:hover{
+.input:hover{
   box-shadow: 0px 0px 6px rgb(50, 204, 204);
 }
 
-.input > input{
-  border-radius: 3px;
-  font-size: 18px;
-}
 
 .error
 {
@@ -195,6 +191,7 @@ button,
 {
   background: lightgrey;
   font-weight: bold;
+  padding: 0px 3px;
 }
 
 .question-input>label
