@@ -4,6 +4,14 @@
       this.stack = new Array();
       var self = this;
       this.width = this.element.width();
+      this.render = new mkn.render({
+        parent: this.element,
+        types: this.options.types,
+        id: this.element.id,
+        key: this.options.key
+      });
+      this.render.expandFields(this.options, "steps", this.options.steps);
+
       var num_steps = this.options.steps.length;
       this._createPages();
       this._bindActions();
@@ -15,17 +23,6 @@
     {
       var self = this;
       $.each(this.options.steps, function(i, info) {
-        var name = info;
-        var props = {};
-        if ($.isPlainObject(name)) {
-          for (var k in info) {
-            name = k;
-            props = info[k];
-            break;
-          }
-        }
-        props.name = name;
-        self.options.steps[i] = props;
         self._createPage(i);
       })
     },
@@ -121,9 +118,9 @@
       if (props.url !== undefined)
         path = props.url;
       else if (path.indexOf('/') === -1)
-        path += '/' + props.name;
+        path += '/' + props.id;
       else
-        path = path.substr(0, path.lastIndexOf('/')+1) + props.name;
+        path = path.substr(0, path.lastIndexOf('/')+1) + props.id;
       var tmp = $('<div>');
       tmp.page({path: path, key: this.options.key});
       var content = page.find('.wizard-content');
