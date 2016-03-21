@@ -106,7 +106,7 @@ confirm_registration:
       - read_session: title,first_name,last_name,cellphone,email,password
       - sql_insert: [person,title,first_name,last_name,cellphone,email]
       - sql_values: select last_insert_id() person, password('$password') password
-      - sql_insert: [user,person,email,password]
+      - sql_insert: [user,person,email,password,cellphone]
       - sql_values: select last_insert_id() uid
       - write_session: uid
       - clear_values
@@ -397,7 +397,7 @@ register:
   type: wizard
   name: Register User
   desc: Register as a new user of the system
-  height: 630
+  height: 520
   width: 700
   steps:
     - enter_credentials
