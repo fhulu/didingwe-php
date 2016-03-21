@@ -155,9 +155,9 @@ mkn.render = function(options)
       if (path)
         item.path = path + '/' + id;
       if (typeof template == 'string') {
-        var defaults = {};
-        setDefaults(defaults, {template: template}, parent_field);
-        template = defaults.template;
+        var def = {};
+        setDefaults(def, {template: template}, parent_field);
+        template = def.template;
       }
       if (!template)
         template = item.template = defaults.template;
