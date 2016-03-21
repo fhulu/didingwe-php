@@ -100,12 +100,12 @@ confirm_registration:
   values:
     - read_session: title,first_name,last_name,cellphone,email
   next:
-    validate: none
+    validate: agree_terms
     post:
       - read_session: title,first_name,last_name,cellphone,email,password
       - sql_insert: [person,title,first_name,last_name,cellphone,email]
-      - sql_values: select last_insert_id() person, password('$password') password
-      - sql_insert: [user,person,email,password,cellphone]
+      - sql_values: select last_insert_id() person, password('$password') password, 1 active, 'reg' roles
+      - sql_insert: [user,person,email,password,cellphone,active,roles]
       - sql_values: select last_insert_id() uid
       - write_session: uid
       - clear_values
@@ -282,14 +282,14 @@ login:
     - forgot_password: { action: dialog }
   post:
     - sql_values: |
-        select u.id uid, partner_id, u.email, first_name, last_name,
+        select u.id uid, partner, u.email, first_name, last_name,
           concat(first_name, ' ', last_name) full_name,
           u.cellphone, roles, groups,  ifnull(start_page,'home') start_page
         from user u join person p on u.email = p.email
         where u.email='$email'
     - load_lineage: [roles,role,code,base_code]
     - sql_exec: update user set attempts = 0 where id = $uid
-    - write_session: uid,partner_id,roles,email,first_name,last_name,full_name,cellphone
+    - write_session: uid,partner,roles,email,first_name,last_name,full_name,cellphone
     - close_dialog
     - redirect: /$start_page
 
