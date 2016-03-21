@@ -304,11 +304,11 @@ element:
   text: ""
   html: <$tag>$text</$tag>
 
-email:
+emailbox:
   type: input
   attr: { type: email }
 
-#todo: fix backend sowance
+#todo: fix backend inheritance
 export:
   name: Export to Excel
   desc: Export to an Excel spreadsheet
