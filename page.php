@@ -894,7 +894,7 @@ class page
 
     $methods = array('alert', 'abort', 'call', 'clear_session', 'clear_values',
       'close_dialog', 'load_lineage', 'read_session', 'read_values', 'redirect', 'ref_list',
-      'send_email', 'show_dialog', 'show_captcha', 'sql', 'sql_exec','sql_rows', 'sql_insert',
+      'send_email', 'send_sms', 'show_dialog', 'show_captcha', 'sql', 'sql_exec','sql_rows', 'sql_insert',
       'sql_update', 'sql_values', 'refresh', 'trigger', 'update', 'write_session');
     foreach($actions as $action) {
       if ($this->aborted) return false;
