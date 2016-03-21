@@ -128,6 +128,7 @@ char_spaced:
 checkbox:
   type: input
   values: ""
+  immutable: [width]
   attr: { type: checkbox, values: $values }
 
 checkbox_group:
@@ -698,7 +699,6 @@ pushed_up:
 
 question_input:
   type: label_top
-  sow: [question]
   styles: [widest,block]
   label:
     styles: [widest]

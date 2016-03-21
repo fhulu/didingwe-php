@@ -608,17 +608,21 @@ mkn.render = function(options)
 
   var setStyle = function(obj, field)
   {
+    var immutable = field.immutable;
     var mergeStyles = function() {
       if (typeof styles == 'string')
         styles = me.mergeType({}, styles.split(/[\s,]+/));
       for (var i in styles) {
-        $.extend(style, me.mergeType({}, styles[i]));
+        var type = me.mergeType({}, styles[i]);
+        mkn.deleteKeys(type, immutable);
+        $.extend(style, type);
       }
     }
 
     var setGeometry = function() {
       for (var i in geometry) {
         var key = geometry[i];
+        if (immutable && immutable.indexOf(key) >= 0) continue;
         if (field[key] !== undefined && style[key] === undefined)
           style[key] = field[key];
       }
