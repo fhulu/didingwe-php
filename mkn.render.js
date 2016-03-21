@@ -154,13 +154,15 @@ mkn.render = function(options)
 
       if (path)
         item.path = path + '/' + id;
-      if (!template)
-        template = item.template = defaults.template;
-      else if (typeof template == 'string') {
+      if (typeof template == 'string') {
         var defaults = {};
         setDefaults(defaults, {template: template}, parent_field);
-        template = item.template = defaults.template;
+        template = defaults.template;
       }
+      if (!template)
+        template = item.template = defaults.template;
+      else if (!template.type && defaults.template)
+        template = item.template  = mkn.merge(defaults.template, template);
       if (template && template.subject) item = mkn.merge(template.subject, item);
       if (defaults.wrap) {
         item.wrap = defaults.wrap;

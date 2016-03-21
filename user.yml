@@ -295,7 +295,7 @@ login:
     - redirect: /$start_page
 
 login_email:
-  type: email
+  type: emailbox
   valid: [is_registered, is_active, is_unlocked]
 
 login_password:
