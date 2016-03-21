@@ -26,7 +26,7 @@ $page->output();
 class page
 {
   static $fields_stack = array();
-  static $post_items = array('audit', 'call', 'clear_session', 'clear_values', 'post',
+  static $post_items = array('audit', 'call', 'clear_session', 'clear_values', 'error', 'post',
     'post_http', 'send_email', 'send_sms', 'valid', 'validate', 'write_session');
   static $query_items = array('call', 'read_session', 'read_values', 'ref_list', 'sql', 'sql_values');
   static $atomic_items = array('action', 'attr', 'css', 'html', 'script', 'sql',
