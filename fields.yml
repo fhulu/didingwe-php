@@ -13,7 +13,8 @@ administration:
   desc: Perform adminstrative duties
 
 agree_terms:
-  question: I have read and accepted the terms and conditions.
+  question: I have read and accepted the terms and conditions
+  desc: You must agree to the terms and conditions before continuing
   valid: equals(1)
   error: Must accept and agree to terms and conditions.
 
