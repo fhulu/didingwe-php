@@ -271,6 +271,7 @@ list:
 login:
   access: public
   type: input_page
+  position: { my: 'top', at: 'top+150' }
   width: 560
   desc: Fill in your credentials below and click Login to logon
   enter: "#login"
@@ -393,6 +394,7 @@ profile_update:
 
 register:
   access: public
+  position: { my: 'top', at: 'top+50' }
   type: wizard
   name: Register User
   desc: Register as a new user of the system
