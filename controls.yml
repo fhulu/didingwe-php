@@ -43,15 +43,15 @@ bolder:
 
 bookmark:
   tag: div
-  name: $id
+  title: $id
   link: $id
   text: $anchor
-  sow: [link]
   attr: { id: ""}
   anchor:
+    derive: [link,title]
     tag: a
     attr: { href: "#$link", id: ""}
-    name: $link
+    name: $title
 
 bottom_left:
   position: absolute
