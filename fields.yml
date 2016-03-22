@@ -336,6 +336,11 @@ validator:
   action: post
   validate: all
 
+vat_no:
+  name: VAT Number
+  desc: VAT Number as it is written on the South African Revenue Services (SARS) certificate. Note This is a 10 digit number.
+  valid: za_vat
+
 view_profile:
   desc: View my profile
   access: reg
