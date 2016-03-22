@@ -906,13 +906,15 @@ titled_paragraph:
   classes: div
   text: $heading $content
   title: $id
-  sow: [body,title]
+  body: $name
   heading:
+    derive: [title]
     type: plain_text
     tag: h2
     styles: [vspaced]
     text: $title
   content:
+    derive: [body]
     type: plain_text
     tag: p
     text: $body
