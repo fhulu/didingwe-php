@@ -468,6 +468,7 @@ input_page:
     - template: $layout
     - type: input
     - controls:
+        class: ""
         push: last
         template:
           label: { text: " " }
