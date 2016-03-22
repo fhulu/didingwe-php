@@ -26,10 +26,6 @@ $.fn.page = function(options, callback)
     show: function(data)
     {
       var self = this;
-      this.globals = {};
-      $.each(data.fields, function(code, value) {
-        self.globals[code] = value;
-      });
       this.data = data;
       this.types = this.data.types;
       var parent = page.parent;
