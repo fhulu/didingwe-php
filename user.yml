@@ -347,8 +347,8 @@ my_audit_trail:
 not_registered:
   valid: not(is_registered($1))
   error: |
-    User $value is already registered on the system. If you have forgottend the
-    password, click on <i>Forgot Password</i> to reset your password.
+    User $value is already registered on the system. If you have forgotten the
+    password, use <i>Login/Forgot Password</i> feature to reset your password.
 
 otp:
   name: OTP
