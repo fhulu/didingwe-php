@@ -319,6 +319,17 @@ export:
   query: " "
   target: _blank
 
+fieldset:
+  templates: fieldset
+  style: { display: table-column}
+  text: $legend $field
+  title: $name
+  legend:
+    tag: legend
+    derive: [title]
+    text: $title
+
+
 file:
   html: <div id="$id" name="$id"></div>
   create: file_uploader
