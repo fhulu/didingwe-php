@@ -310,7 +310,6 @@ class page
     foreach($path as $branch) {
       if (is_assoc($field)) {
         $new_parent = $field;
-        $field = $this->parent_sow($parent, $branch, $field[$branch]);
         $this->derive_parent($parent, $field[$branch]);
         $field = $this->get_merged_field($branch, $field);
         $parent = $new_parent;
