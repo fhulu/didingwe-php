@@ -495,7 +495,7 @@ mkn.render = function(options)
       if (--me.loading === 0)
         me.parent.trigger('loaded', result);
       if (result === undefined || result === null) {
-        console.log('No page data result for object: ', me.object, ' field ', id);
+        console.log('No page data result for object: ', me.object, ' field ', field.id);
         return;
       }
       if (defaults.attr === undefined) defaults.attr = {};
