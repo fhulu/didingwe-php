@@ -412,16 +412,16 @@ mkn.render = function(options)
 
   this.createSubPage = function(field)
   {
-    var tmp = $('<span></span>');
-    field.path = field.url? field.url: field.id;
+    var tmp = $('<span>').addClass('loading');
+    var path = field.path = field.url? field.url: field.id;
     field.sub_page = undefined;
+    field.appendChild = false;
     tmp.page(field);
-    field.id = field.id.replace('/','_');
-    tmp.on('read_'+field.id, function(e, obj) {
+    path = path.replace('/','_');
+    tmp.on('read_'+path, function(e, obj) {
       if (field.style)
         setStyle(obj, field);
-      var parent = obj.parents().eq(0);
-      parent.replaceWith(obj);
+      tmp.replaceWith(obj);
     });
     return tmp;
   }
