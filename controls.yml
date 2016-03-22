@@ -128,6 +128,7 @@ char_spaced:
 checkbox:
   type: input
   values: ""
+  immutable: [width]
   attr: { type: checkbox, values: $values }
 
 checkbox_group:
@@ -303,11 +304,11 @@ element:
   text: ""
   html: <$tag>$text</$tag>
 
-email:
+emailbox:
   type: input
   attr: { type: email }
 
-#todo: fix backend sowance
+#todo: fix backend inheritance
 export:
   name: Export to Excel
   desc: Export to an Excel spreadsheet
@@ -389,6 +390,7 @@ highest:
 hspace:
   mutable: false
   type: blank
+  space: 20
   styles: [hspaced]
 
 hspaced:
@@ -448,6 +450,7 @@ input_page:
   layout: { type: label_left }
   synopsis:
     derive: [desc]
+    space: 16
     type: section_heading
     text: $desc
   inputs:
@@ -697,10 +700,9 @@ pushed_up:
 
 question_input:
   type: label_top
-  sow: [question]
   styles: [widest,block]
   label:
-    styles: [widest]
+    styles: [widest,left_text]
     derive: [question]
     text: $question
   subject:
@@ -947,6 +949,7 @@ uppercase:
 vspace:
   mutable: false
   type: blank
+  space: 20
   styles: [vspaced]
 
 vspaced:

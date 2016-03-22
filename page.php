@@ -26,7 +26,7 @@ $page->output();
 class page
 {
   static $fields_stack = array();
-  static $post_items = array('audit', 'call', 'clear_session', 'clear_values', 'post',
+  static $post_items = array('audit', 'call', 'clear_session', 'clear_values', 'error', 'post',
     'post_http', 'send_email', 'send_sms', 'valid', 'validate', 'write_session');
   static $query_items = array('call', 'read_session', 'read_values', 'ref_list', 'sql', 'sql_values');
   static $atomic_items = array('action', 'attr', 'css', 'html', 'script', 'sql',
@@ -556,18 +556,21 @@ class page
     $fields = merge_options($this->merge_stack(page::$fields_stack), $this->page_fields, $this->fields);
     $this->validator = new validator(page::merge_options($_SESSION, $this->request), $fields, $validators);
 
-    $delta = explode(',', $this->request['delta']);
     $exclude = array('css','post','script','style', 'styles', 'type','valid','values');
-    if ($include != '' &&!is_array($include))
+    if ($include == 'delta')
+      $include = explode(',', $this->request['delta']);
+    else if (is_string($include) && !is_array($include))
       $include = explode(',', $include);
+    else
+      $include = true;
+
     $validated = array();
-    walk_recursive_down($field, function($value, $key, $parent) use (&$exclude, &$validated, &$include, &$delta) {
+    walk_recursive_down($field, function($value, $key, $parent) use (&$exclude, &$validated, &$include) {
       if (!is_assoc($parent))
         list($code, $value) = assoc_element($value);
       else
         $code = $key;
-      if (!empty($delta) && !in_array($code, $delta, true)) return;
-      if (is_array($include) && !in_array($code, $include, true)) return;
+      if ($include !== true && !in_array($code, $include, true)) return;
       if (in_array($code, $validated, true)) return false;
       if (in_array($code, $exclude, true)) return false;
       if (!is_null($value) && !is_array($value)) return false;
@@ -891,7 +894,7 @@ class page
 
     $methods = array('alert', 'abort', 'call', 'clear_session', 'clear_values',
       'close_dialog', 'load_lineage', 'read_session', 'read_values', 'redirect', 'ref_list',
-      'send_email', 'show_dialog', 'show_captcha', 'sql', 'sql_exec','sql_rows', 'sql_insert',
+      'send_email', 'send_sms', 'show_dialog', 'show_captcha', 'sql', 'sql_exec','sql_rows', 'sql_insert',
       'sql_update', 'sql_values', 'refresh', 'trigger', 'update', 'write_session');
     foreach($actions as $action) {
       if ($this->aborted) return false;
@@ -939,9 +942,9 @@ class page
   function upload()
   {
     require_once 'document.php';
-    $this->fields = $this->expand_field($this->path[0], $this->path);
+    //$this->fields = $this->expand_field($this->path[0], $this->path);
     $code = last($this->path);
-    $id = document::upload($code."_file", $this->fields['format']);
+    $id = document::upload($code."_file", $this->context['format']);
     if (!is_null($id))
       page::update("id", $id);
   }
