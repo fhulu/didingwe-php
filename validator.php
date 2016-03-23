@@ -192,18 +192,19 @@ class validator
     return strpos($name, '::') !== false;
   }
 
-  function check($name, $title_or_field=null)
+  function check($name, $field=null)
   {
+    $this->field = $field;
     $this->name = $name;
     $this->value = trim(at($this->request,$name));
     $this->checked_provided = $this->failed_auto_provided = false;
     if ($this->prev_name != $name)
       $this->optional = false;
     $this->prev_name = $name;
-    if (is_array($title_or_field))
-      $this->title = $this->get_title($name, $title_or_field);
-    else if (is_string($title_or_field))
-      $this->title = $title_or_field;
+    if (is_array($field))
+      $this->title = $this->get_title($name, $field);
+    else if (is_string($field))
+      $this->title = $field;
     else
       $this->title = null;
     $this->error = null;
@@ -424,6 +425,17 @@ class validator
     if ($result) return false;
     $this->has_error = $had_error;
     return true;
+  }
+
+  function ref_list()
+  {
+    global $page;
+    $field = $this->field;
+    log::debug_json("ref_list b4 validate", $field);
+    $page->expand_ref_list($field, $this->name);
+    log::debug_json("ref_list after validate", $field);
+    $sql = str_replace('$value', $this->value, $field['valid_sql']);
+    return $this->sql($sql);
   }
 
 }

@@ -870,15 +870,20 @@ class page
     return $this->sql_exec($sql);
   }
 
-  function ref_list($field)
+  function expand_ref_list(&$field, $code)
   {
     if (is_string($field))
       $field = ['list'=>$field];
     else if (!isset($field['list']))
-      $field['list'] = $this->path[sizeof($this->path)-2];
+      $field['list'] = $code;
     $base = $this->get_expanded_field('ref_list');
     $field = merge_options($base, $field);
     replace_fields($field, $field, true);
+  }
+
+  function ref_list($field)
+  {
+    $this->expand_ref_list($field, $this->path[sizeof($this->path)-2]);
     return $this->sql($field['sql']);
   }
 

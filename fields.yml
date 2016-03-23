@@ -292,6 +292,7 @@ ref_list:
   sort_order: asc
   sort: order by $sort_field $sort_order
   sql: select $code, $display from $table $filter $sort
+  valid_sql: select count(1) from $table $filter and $code = '$value'
 
 register:
   desc: Click here to register
