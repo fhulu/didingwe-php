@@ -195,6 +195,14 @@ class page
 
   function expand_type($type, &$added = array() )
   {
+    if (is_array($type)) {
+      $result = [];
+      foreach($type as $t) {
+        $expanded = $this->expand_type($t, $added);
+        $result = merge_options($result, $expanded);
+      }
+      return $result;
+    }
     $expanded = $this->types[$type];
     if (isset($expanded) || in_array($type, $this->expand_stack, true)) return $expanded;
     $expanded = $this->get_expanded_field($type);
@@ -402,6 +410,9 @@ class page
       }
       else if (is_assoc($type)) {
         $expanded = $this->merge_type($type, $added_types);
+      }
+      else if (is_array($type)) {
+        $expanded = $this->expand_type($type, $added_types);
       }
       else if ($is_style) {
         foreach ($type as $style) {

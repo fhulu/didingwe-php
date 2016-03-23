@@ -18,6 +18,17 @@ mkn.render = function(options)
     return field.mutable || field.mutable === undefined || field.mutable !== false;
   }
 
+  var mergeTypeArray = function(array)
+  {
+    var result = {};
+    for (var i in array) {
+      var type = array[i];
+      var merged = me.mergeType(types[type], undefined, type);
+      result = mkn.merge(result, merged);
+    }
+    return result;
+  }
+
   this.mergeType = function(field, type, id)
   {
     if (field === undefined || types === undefined) return field;
@@ -44,19 +55,14 @@ mkn.render = function(options)
     if (type === undefined) return field;
     if (typeof type === 'string')
       type = me.mergeType(types[type], undefined, type);
+    else if ($.isArray(type))
+      type = mergeTypeArray(type);
     else
       type = me.mergeType(type);
 
     var result = mkn.merge(type, field);
     delete result.type;
     return result;
-  };
-
-  this.mergeTypes =  function()
-  {
-    $.each(me.types, function(key, value) {
-      me.types[key] = me.mergeType(value);
-    })
   };
 
   this.expandType = function(type)
