@@ -718,6 +718,18 @@ class page
     return $field['name'];
   }
 
+  function audit_delta(&$detail)
+  {
+    if (strpos($detail, '$delta') === false) return true;
+    $fields = trim($this->request['delta']);
+    if ($fields == '') return $detail != '$delta';
+    foreach(explode(',', $fields) as $key) {
+      $delta[] .= $this->field_name($key) . ": ". $this->request[$key];
+    }
+    $detail = str_replace('$delta', implode(', ', $delta), $detail);
+    return true;
+  }
+
   function audit($action, $result)
   {
     global $db;
@@ -732,13 +744,7 @@ class page
     $detail = at($action, 'audit');
     if ($detail) {
       $detail = replace_vars($detail, $user);
-      $delta = [];
-      if (strpos($detail, '$delta') !== false) {
-        foreach(explode(',', $this->request['delta']) as $key) {
-          $delta[] .= $this->field_name($key) . ": ". $this->request[$key];
-        }
-      }
-      $detail = str_replace('$delta', implode(', ', $delta), $detail);
+      if (!$this->audit_delta($detail)) return;
       $context = merge_options($this->fields, $this->context, $_SESSION, $this->request, $result);
       $detail = replace_vars($detail, $context);
       $detail = page::decode_field($detail);
@@ -814,9 +820,12 @@ class page
     if (!sizeof($args))
       throw new Exception("Invalid number of arguments for sql_update");
 
-    $delta = array_search('delta', $args);
-    if ($delta >= 0)
-      array_splice($args, $delta_index, 1, explode(',', $this->request['delta']));
+    $delta_index = array_search('delta', $args);
+    if ($delta_index >= 0) {
+      $delta = trim($this->request['delta']);
+      $delta = $delta==''? null: explode(',', $delta);
+      array_splice($args, $delta_index, 1, $delta);
+    }
 
     if (!sizeof($args)) return null;
 
