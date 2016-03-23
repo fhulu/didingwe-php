@@ -310,13 +310,13 @@ class page
     foreach($path as $branch) {
       if (is_assoc($field)) {
         $new_parent = $field;
-        $this->derive_parent($parent, $field[$branch]);
+        $field = $field[$branch];
+        $this->derive_parent($parent, $field);
         $field = $this->get_merged_field($branch, $field);
         $parent = $new_parent;
       }
       else {
         $field = $this->find_array_field($field, $branch, $parent);
-        $this->derive_parent($parent, $field);
       }
       if (is_null($field))
         $this->throw_invalid_path ();
@@ -350,7 +350,7 @@ class page
     foreach($derive as $key) {
       $value = $field[$key];
       if (!isset($value))
-        $field[$key] = $value;
+        $field[$key] = $parent[$key];
       else if (is_array($value))
         $field[$key] = merge_options($parent[$key], $value);
       else if ($value[0] == '$')
@@ -788,6 +788,13 @@ class page
     $key = array_shift($args);
     if (!sizeof($args))
       throw new Exception("Invalid number of arguments for sql_update");
+
+    $delta = array_search('delta', $args);
+    if ($delta >= 0)
+      array_splice($args, $delta_index, 1, explode(',', $this->request['delta']));
+
+    if (!sizeof($args)) return null;
+
     $sets = array();
     foreach($args as $arg) {
       $sets[] =  "$arg = '\$$arg'";
