@@ -116,6 +116,8 @@ mkn.render = function(options)
           id = a[0];
           item = a[1];
         }
+        else
+          id = item.id ;
         if (item.merge) continue;
         if (typeof item === 'string') {
           item = { name: item };
