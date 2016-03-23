@@ -67,7 +67,9 @@ $.fn.setValue = function(val)
     this.val(val);
     if (this.val() == val) return this;
     var option = this.children('option').filterText(val);
-    if (option.exists()) this.val(option.val());
+    if (!option.exists()) return this;
+    if (this.attr('server') == val) this.attr('server', option.val());
+    this.val(option.val());
     return this;
   }
 
@@ -378,8 +380,8 @@ $.fn.setChildren = function(result, server)
   if (result === null) return;
   $.each(result, function(key, val) {
     var obj = self.find("#"+key+",[name='"+key+"']");
-    obj.setValue(val);
     if (server) obj.attr('server', val);
+    obj.setValue(val);
   });
   return this;
 }
