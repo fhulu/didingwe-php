@@ -304,9 +304,12 @@ element:
   text: ""
   html: <$tag>$text</$tag>
 
-emailbox:
+email_input:
   type: input
-  attr: { type: email }
+  format: email
+
+emailbox:
+  type: email_input
 
 #todo: fix backend inheritance
 export:
@@ -451,8 +454,9 @@ input:
   tag: input
   text: ""
   value: ""
+  format: text
   attr:
-    type: text
+    type: $format
     value: $value
 
 input_page:
@@ -622,6 +626,10 @@ menu:
     - action: redirect
 
 menu_item: { templates: li }
+
+number_input:
+  type: input
+  format: number
 
 one_cell_row:
   templates: div
@@ -1003,21 +1011,22 @@ wizard_page:
   type: input_page
   text: $processing $synopsis $inputs $actions $navigate
   sub_page: false
-  prev:
-    type: button
-    name: Previous
-    action: trigger
-    event: wizard-prev
   sow: [next,prev]
   navigate:
     - wrap: class
-    - prev
-    - type: submit
-    - next
+    - prev: {type: wizard_prev}
+    - next: {type: wizard_next}
+
+wizard_next:
+  type: submit
+  name: Next
+  desc: Go to next step
 
 wizard_prev:
-  type: wizard_action
-  event: wizard-prev
+  type: button
   name: Previous
+  desc: Go to previous step
+  action: trigger
+  event: wizard-prev
 
 ...
