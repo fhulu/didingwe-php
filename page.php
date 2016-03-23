@@ -700,6 +700,13 @@ class page
     return $message;
   }
 
+  function field_name($code, $field=null)
+  {
+    if (is_null($field)) $field = $this->fields[$code];
+    if (is_null($field) || is_null($field['name'])) return ucwords (str_replace ('_', ' ',$code));
+    return $field['name'];
+  }
+
   function audit($action, $result)
   {
     global $db;
@@ -714,6 +721,13 @@ class page
     $detail = at($action, 'audit');
     if ($detail) {
       $detail = replace_vars($detail, $user);
+      $delta = [];
+      if (strpos($detail, '$delta') !== false) {
+        foreach(explode(',', $this->request['delta']) as $key) {
+          $delta[] .= $this->field_name($key) . ": ". $this->request[$key];
+        }
+      }
+      $detail = str_replace('$delta', implode(', ', $delta), $detail);
       $context = merge_options($this->fields, $this->context, $_SESSION, $this->request, $result);
       $detail = replace_vars($detail, $context);
       $detail = page::decode_field($detail);
