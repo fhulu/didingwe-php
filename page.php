@@ -798,8 +798,8 @@ class page
 
   function translate_sql($sql)
   {
-    $values = null_merge($this->request, $this->answer, false);
-    return page::replace_sql($sql, null_merge($this->context, $values));
+    $sql = page::replace_sql($sql, $this->answer);
+    return page::replace_sql($sql, $this->context);
   }
 
   function sql_values($sql)
@@ -845,8 +845,13 @@ class page
     if (!sizeof($args))
       throw new Exception("Invalid number of arguments for sql_insert");
     $values = array();
-    foreach($args as $arg) {
-      $values[] =  "'\$$arg'";
+    foreach($args as &$arg) {
+      if (is_array($arg)) {
+        list($arg,$value) = assoc_element($arg);
+        $values[] = "'$value'";
+      }
+      else
+        $values[] =  "'\$$arg'";
     }
     $args = implode(',', $args);
     $values = implode(',', $values);
@@ -1154,7 +1159,7 @@ class page
   function read_session()
   {
     $vars = page::parse_args(func_get_args());
-
+    if (sizeof($vars) == 0) return $_SESSION;
     $values = array();
     foreach($vars as $var) {
       if (isset($_SESSION[$var]))
@@ -1171,10 +1176,9 @@ class page
 
   function read_values($values)
   {
-    $context = merge_options($this->fields, $this->context, $_SESSION, $this->request, $this->answer);
-    replace_fields($context, $this->request);
-    replace_fields($values, $this->request);
-    replace_fields($values, $context);
+    replace_fields($values, $this->answer, true);
+    replace_fields($values, $this->request, true);
+    replace_fields($values, $_SESSION, true);
     log::debug_json("READ VALUES", $values);
     return $values;
   }
