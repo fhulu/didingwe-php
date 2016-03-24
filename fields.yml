@@ -271,10 +271,36 @@ next:
   attr:
     class: action wizard-jump
 
+passport_document:
+  desc: Certified copy of passport document
+
+passport_no:
+  name: Password Number
+  desc: Your passport number as it is written in your Passport book
 
 password:
   desc: A secret combination of letters and number only known to you. Please do not give out your password.
   valid: password
+
+postal_address:
+  attr: { maxlength: 100 }
+  valid: [at_least(30,characters)]
+
+postal_code:
+  attr: { min: 0000, max: 1000 }
+  valid:
+    - numeric
+    - at_least(4,digits)
+
+physical_address:
+  attr: { maxlength: 128 }
+  valid: [at_least(30,characters)]
+
+physical_code:
+  attr: { min: 0000, max: 1000 }
+  valid:
+    - numeric
+    - at_least(4,digits)
 
 query:
   type: button
