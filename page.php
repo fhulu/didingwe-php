@@ -831,7 +831,12 @@ class page
 
     $sets = array();
     foreach($args as $arg) {
-      $sets[] =  "$arg = '\$$arg'";
+      if (is_array($arg)) {
+        list($arg,$value) = assoc_element($arg);
+        $sets[] = "$arg = '".addslashes($value)."'";
+      }
+      else
+        $sets[] =  "$arg = '\$$arg'";
     }
     $sets = implode(',', $sets);
     $sql = "update $table set $sets where $key = '\$$key'";
@@ -848,7 +853,7 @@ class page
     foreach($args as &$arg) {
       if (is_array($arg)) {
         list($arg,$value) = assoc_element($arg);
-        $values[] = "'$value'";
+        $values[] = "'".addslashes($value)."'";
       }
       else
         $values[] =  "'\$$arg'";
@@ -857,6 +862,7 @@ class page
     $values = implode(',', $values);
     $sql = "insert $table($args) values($values)";
     $this->sql_exec($sql);
+    return $this->sql_values("select last_insert_id() new_${table}_id");
   }
 
   function sql_select()
