@@ -514,13 +514,16 @@ labelled_input:
 labelled_input_page:
   type: input_page
 
-labelled_inside:
-  sow: [name]
+label_inside:
+  label: $name
   subject:
     class: [input]
     width: 100%
-    attr: { placeholder: $name, title: $desc }
+    attr: { placeholder: $label, title: $desc, for: $id }
   text: $field
+
+labelled_inside:
+  type: label_inside
 
 labelled_inside_image:
   type: labelled_inside
