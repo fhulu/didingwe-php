@@ -264,13 +264,6 @@ my_audit_trail:
   access: reg
   url: /user/my_audit_trail
 
-
-next:
-  call: ""
-  merge: true
-  attr:
-    class: action wizard-jump
-
 passport_document:
   desc: Certified copy of passport document
 
@@ -287,7 +280,7 @@ postal_address:
   valid: [at_least(30,characters)]
 
 postal_code:
-  attr: { min: 0000, max: 1000 }
+  attr: { min: 0000, max: 9999 }
   valid:
     - numeric
     - at_least(4,digits)
@@ -297,7 +290,7 @@ physical_address:
   valid: [at_least(30,characters)]
 
 physical_code:
-  attr: { min: 0000, max: 1000 }
+  attr: { min: 0000, max: 9999 }
   valid:
     - numeric
     - at_least(4,digits)
@@ -324,7 +317,7 @@ ref_options:
   options:
     - ref_list
   valid: ref_list
-  
+
 register:
   desc: Click here to register
   access: public
