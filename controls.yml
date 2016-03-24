@@ -1015,12 +1015,14 @@ wizard_page:
   navigate:
     - wrap: class
     - prev: {type: wizard_prev}
-    - next: {type: wizard_next}
+    - type: wizard_next
+    - next
 
 wizard_next:
   type: submit
   name: Next
   desc: Go to next step
+  class: [action,wizard-next]
 
 wizard_prev:
   type: button

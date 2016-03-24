@@ -145,9 +145,11 @@
         }
 
         var next = object.find('#next');
-        if (props.next === false || index === self.options.steps.length-1)
+        var is_last = index === self.options.steps.length-1;
+        if (props.next === false || is_last)
           next.hide();
-        else next.bindFirst('click', function() {
+        if (is_last) return;
+        $('.wizard-next').bindFirst('click', function() {
           if (self.next_step === undefined)
             self.next_step = typeof props.next === 'string'? props.next: index+1;
         });
