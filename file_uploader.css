@@ -1,77 +1,32 @@
 /*
-Copyright Expression year is undefined on line 4, column 29 in file:///Users/fhulu/Documents/code/common/nbproject/licenseheader.txt. Mukoni Software. 
+Copyright Expression year is undefined on line 4, column 29 in file:///Users/fhulu/Documents/code/common/nbproject/licenseheader.txt. Mukoni Software.
 */
-/* 
+/*
     Created on : 19 Jan 2015, 7:56:57 PM
     Author     : fhulu
 */
 
-.file_uplaoder
+.file-uploader #progress
 {
-  position: relative;
-}
-
-.file_uploader .progress 
-{ 
-  float: right;
-  position: absolute;
-  top: 0px;
-  right: 0px;
-  width: 100%; 
-  height: 98%;
   color: white;
   border: 1px solid #4cae4c;
 }
 
-.file_uploader .bar 
-{ 
-  background-color: #4cae4c; 
-  width:0%; 
-  height: 100%; 
-}
-.file_uploader .percent 
-{ 
-  position: absolute;
-  width: 100%;
-  top: 6px;  
-  margin-left: 10px;
-  text-align: left;
-}
-
-.file_uploader .error .percent, 
-.file_uploader .uploaded .percent
-{ 
-  margin-left: 0px;
-  text-align: center;
-  width: 80px;
-}
-
-.file_uploader .error
+.file-uploader #buttons>*
 {
-  padding: 0px;
-  border: 1px solid red;
+  color: white;
+  padding: 2 0;
 }
 
-.file_uploader .error .bar
+.file-uploader #uploaded,
+.file-uploader #bar
+{
+  color: white;
+  background-color: #4cae4c;
+}
+
+.file-uploader #failed,
+.file-uploader #bar.error
 {
   background-color: red;
-}
-
-.file_uploader iframe
-{
-  width: 0px;
-  height: 0px;
-  border: 0px;
-}
-
-.file_uploader form
-{
-  display: inline;
-  width: 80%;
-}
-
-.file_uploader button
-{
-  float: right;
-  margin-right: 0px;
 }

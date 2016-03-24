@@ -36,6 +36,7 @@ class page
     'clear_values', 'load_lineage', 'post', 'read_session', 'refresh', 'show_dialog',
     'sql_insert', 'sql_update', 'style', 'trigger', 'valid', 'validate', 'write_session');
   static $objectify = ['ref_list'];
+  static $login_vars = ['uid','partner_id','roles','groups','email','first_name','last_name','cellphone'];
   var $request;
   var $object;
   var $method;
@@ -998,11 +999,10 @@ class page
   function upload()
   {
     require_once 'document.php';
-    //$this->fields = $this->expand_field($this->path[0], $this->path);
     $code = last($this->path);
-    $id = document::upload($code."_file", $this->context['format']);
-    if (!is_null($id))
-      page::update("id", $id);
+    $this->merge_fields($this->context);
+    $id = document::upload("file_$code", $this->context['allowed'], $_SESSION['uid']);
+    $this->write_session(["file_$code"=>$id]);
   }
 
   static function respond($response, $value=null)
@@ -1068,7 +1068,8 @@ class page
     global $page;
     log::debug("ERROR $name $value ");
     $result = &$page->result;
-    $errors = &$result['errors'];
+    $responses = &$result['_responses'];
+    $errors = &$responses['errors'];
     $errors[$name] = $value;
   }
 
@@ -1241,10 +1242,9 @@ class page
   function clear_session()
   {
     $vars = page::parse_args(func_get_args());
-
-    $values = array();
+    if (sizeof($vars) == 0) $vars = array_keys($_SESSION);
     foreach($vars as $var) {
-      if (isset($_SESSION[$var]))
+      if (isset($_SESSION[$var]) && !in_array(page::$login_vars))
         unset($_SESSION[$var]);
     }
   }

@@ -333,13 +333,60 @@ fieldset:
     text: $title
 
 
-file:
-  html: <div id="$id" name="$id"></div>
+file_input:
+  type: input
+  format: file
+
+file_uploader:
+  tag: div
+  class: [file-uploader]
   create: file_uploader
-  script: /common/file_uploader.js,/common/jquery.form.js
-  css: /common/file_uploader.css
+  script: [/common/file_uploader.js,/common/jquery.form.js]
+  css: [/common/file_uploader.css]
   uploader: /?action=upload
   max_size: 100
+  parent_id: $id
+  allowed: pdf
+  text: $form $iframe $progress $buttons
+  form:
+    tag: form
+    width: 70%
+    styles: [top_left]
+    derive: [parent_id,uploader]
+    attr:
+      id: ""
+      enctype: multipart/form-data
+      target: iframe_$parent_id
+    text: $file
+    file:
+      derive: [parent_id]
+      type: file_input
+      attr: { name: file_$parent_id }
+  iframe:
+    tag: iframe
+    derive: [parent_id]
+    hide: yes
+    attr: {name: iframe_$parent_id }
+  progress:
+    type: container
+    styles: [top_right,biggest]
+    show: no
+    contents:
+      - default: { classes: div, styles: [biggest,top_let], text: "" }
+      - bar
+      - percent
+  buttons:
+    type: container
+    styles: [top_right,tallest]
+    width: 15%
+    contents:
+      - default: { styles: [biggest], show: no }
+      - type: button
+      - upload
+      - cancel
+      - type: control
+      - uploaded
+      - failed
 
 filled:
   background-color: $fill
@@ -394,9 +441,12 @@ height_watermark:
   type: watermark
   background-size: auto 100%
 
+hide:
+  display: none
+
 hidden:
   type: input
-  attr: { type: hidden }
+  format: hidden
 
 highest:
   height: 100%
@@ -410,6 +460,9 @@ hspace:
 hspaced:
   hspace: 10px
   margin-right: $space
+
+iframe:
+  tag: iframe
 
 image:
   tag: img
@@ -612,6 +665,10 @@ list_text:
 
 lowercase:
   text-transform: lowercase
+
+biggest:
+  width: 100%
+  height: 100%
 
 medium:
   font-size: 26pt
@@ -903,6 +960,9 @@ table_row:
   text: $columns
   columns:
     - template: table_cell
+
+tallest:
+  height: 100%
 
 template:
   tag: div

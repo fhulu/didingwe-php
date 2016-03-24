@@ -5,15 +5,14 @@ require_once('session.php');
 class document_exception extends Exception {};
 class document
 {
-  static function upload($control, $types, $partner_id=null)
+  static function upload($control, $types, $user_id, $partner_id=0)
   {
-    session::ensure_not_expired();
     $file_name = addslashes($_FILES[$control]["name"]);
     $type = document::extension($file_name);
     log::debug("about to upload $file_name from $control of type $type");
 
-    if (!is_array($types)) $types = preg_split('/ /',$types);
-    if (!in_array($type, $types, 1)) {
+    if (!is_array($types)) $types = explode(',', $types);
+    if (!in_array($type, $types)) {
       page::error($control, "File $file_name is not allowed");
       return;
     }
@@ -22,14 +21,10 @@ class document
       return null;
     }
 
-    global $db,$session;
-    $user = $session->user;
-    $user_id = $user->id;
-    if (is_null($partner_id)) $partner_id = $user->partner_id;
+    global $db;
 
 
     $pid = getmypid();
-    $db->exec("update document set status='reset' where session_id = '$pid' and status = 'busy'");
 
     //if (is_null($partner_id)) $partner_id = 0;
     $sql = "INSERT INTO document(partner_id,user_id,session_id,filename,type)

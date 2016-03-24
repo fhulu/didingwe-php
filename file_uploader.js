@@ -3,65 +3,69 @@
     options: {
       uploader: ''
     },
-    
+
     _create: function()
     {
-      var el = this.element.addClass('file_uploader');
-      var id = el.attr('id');
-      var form = $('<form method=POST></form>')
-              .attr('action',this.options.uploader+'&path='+encodeURIComponent(this.options.path))
-              .attr('target',id+'_target')
-              .appendTo(el);
-      var file = $('<input type=file></input>').attr('name',id+'_file').appendTo(form);
-      var uploaded_id = $('<input type=hidden></input>').attr('name',id+'_id').appendTo(el);
-      var button = $('<button>Upload</button>').appendTo(el).hide().click(function() {
+      var el = this.element
+      var form = el.find('form')
+        .attr('action',this.options.uploader+'&path='+encodeURIComponent(this.options.path));
+      form.att
+      var upload = el.find('#upload').click(function() {
         form.submit();
       });
-      var progress = $('<div class=progress></div>').hide().appendTo(el);
-      var bar = $('<div class=bar></div>').appendTo(progress);
-      var percent = $('<span class=percent></span>').appendTo(progress);
-      $('<iframe src="#"></iframe>').attr('target',id+'_target').appendTo(el);
-      file.change(function() {
-         button.show();
-         progress.hide();
+      var progress = el.find('#progress');
+      var file = el.find("#file").change(function() {
+        uploaded.hide();
+        failed.hide();
+        upload.show();
+        progress.hide();
       });
+      var bar = el.find('#bar');
+      var percent = el.find("#percent");
+      var cancel = el.find('#cancel');
+      var uploaded = el.find('#uploaded');
+      var failed = el.find('#failed');
       form.ajaxForm({
-        beforeSend: function()
+        beforeSend: function(xhr)
         {
           bar.width('0%');
-          percent.html('0%');
-          progress.removeClass("uploaded error").width('100%').fadeIn();
+          percent.html('0%').zIndex(bar.zIndex()+1);;
+          progress.width('100%').fadeIn();
           $('.error').remove();
-          button.hide();
+          upload.hide();
+          uploaded.hide();
+          failed.hide();
+          cancel.click(xhr.abort).show();
         },
 
-        uploadProgress: function(event, position, total, done) 
+        uploadProgress: function(event, position, total, done)
         {
           bar.width(done + '%');
           percent.html('Uploaded ' + position + ' of ' + total +'(' + done +'%)');
         },
 
-        success: function(response, textStatus, xhr) 
+        success: function(response, textStatus, xhr)
         {
-          response = $.parseJSON(response);
-          if (response.errors !== undefined) {
-            this.error(response.errors[id+'_file']);
-            return;
-          }
-          uploaded_id.val(response._responses.update.id)
+          el.trigger('server_response', [response]);
+          cancel.hide();
+          if (response._responses && response._responses.errors)
+            return this.error();
           percent.text('Uploaded');
-          progress.animate({width:'80px'}, 200).addClass('uploaded');
-          el.trigger('uploaded');
+          progress.animate({width:0}, 200, function() {
+            uploaded.show();
+          });
         },
 
-        error: function(msg) 
+        error: function()
         {
+          cancel.hide();
           percent.text('Error');
-          progress.animate({width:'80px'}, 200).addClass('error');
-          $.reportError(id, msg);
+          progress.animate({width:0}, 200, function() {
+            failed.show();
+          });
+          return this;
         }
       });
     }
   })
 })(jQuery);
-

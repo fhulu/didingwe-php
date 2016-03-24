@@ -131,14 +131,18 @@ mkn.render = function(options)
         if (id == 'query') {
           item.defaults = mkn.copy(defaults);
         }
+
         if (id[0] == '$') {
           id = id.substr(1);
           item = mkn.merge(parent_field[id], item);
         }
+        id = me.expandValue(parent_field, id);
 
         if (sow && sow.indexOf(id) >=0)
           item = mkn.merge(parent_field[id], item);
         promoteAttr(item);
+        if (defaults.default)
+          item = mkn.merge(defaults.default, item);
         template = item.template;
         var base = mkn.copy(me.types[id]);
         var merged = mkn.merge(base, item);
@@ -146,8 +150,6 @@ mkn.render = function(options)
           item = mergeDefaults(item, defaults, base);
         else
           item = merged;
-        if (defaults.default)
-          item = mkn.merge(defaults.default, item);
       }
       else if ($.isArray(item)) {
         array = item;
@@ -880,24 +882,18 @@ mkn.render = function(options)
     box.fadeIn('slow').click(function() { $(this).fadeOut('slow') });
   }
 
-  var reportAllErrors = function(result, event)
+  var reportErrors = function(errors, event)
   {
-    $.each(result, function(key, row) {
-      if (key == 'errors') {
-        console.log("has errors", row);
-        $.each(row, function(field, error) {
-          reportError(field, error);
-        });
-        if (event) event.stopImmediatePropagation();
-      }
-    });
+    console.log("has errors", errors);
+    for (var key in errors) {
+      reportError(key, errors[key]);
+    }
+    if (event) event.stopImmediatePropagation();
   }
-
 
   var respond = function(result, invoker, event)
   {
     if (!result) return;
-    reportAllErrors(result, event);
     var responses = result._responses;
     if (!$.isPlainObject(responses)) return this;
     var parent = me.sink;
@@ -917,6 +913,8 @@ mkn.render = function(options)
         case 'redirect': redirect(val); break;
         case 'update': parent.setChildren(val, true); break;
         case 'trigger': trigger(val, parent); break;
+        case 'error': reportError(val); break;
+        case 'errors': reportErrors(val); break;
       }
     }
 

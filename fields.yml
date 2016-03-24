@@ -268,7 +268,7 @@ passport_document:
   desc: Certified copy of passport document
 
 passport_no:
-  name: Password Number
+  name: Passport Number
   desc: Your passport number as it is written in your Passport book
 
 password:
