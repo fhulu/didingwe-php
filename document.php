@@ -22,7 +22,12 @@ class document
     global $db;
 
 
+    $pid = getmypid();
 
+    $sql = "INSERT INTO document(partner_id,user_id,session_id,filename,type,status)
+            values($partner_id,$user_id,'$pid','$file_name','$type','pend')";
+
+    $id = $db->insert($sql);
     $file_name = str_replace("/[\' \s]'/", '-', $_FILES[$control]["name"]);
     $path = "../uploads/$id-$file_name";
     log::debug("Uploading file $path");
@@ -34,11 +39,7 @@ class document
     if (!move_uploaded_file($_FILES[$control]["tmp_name"], $path))
       return "Error uploading document of type $type. File may be too large";
 
-    $pid = getmypid();
-    $sql = "INSERT INTO document(partner_id,user_id,session_id,filename,type,status)
-            values($partner_id,$user_id,'$pid','$file_name','$type','pend')";
-    log::debug("File uploaded $path");
-    return $db->insert($sql);
+    return $id;
   }
 
   static function optional_upload($control, $type, $partner_id)
