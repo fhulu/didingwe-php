@@ -813,6 +813,18 @@ class page
     return $this->db->exec($this->translate_sql($sql));
   }
 
+  static function get_sql_pair($arg)
+  {
+    if (!is_array($arg)) return [$arg, "'\$$arg'"];
+
+    list($arg,$value) = assoc_element($arg);
+    if ($value[0] == '/')
+      $value = substr($value,1);
+    else
+      $value = "'".addslashes($value)."'";
+    return [$arg, $value];
+  }
+
   function sql_update()
   {
     $args = page::parse_args(func_get_args());
@@ -832,12 +844,8 @@ class page
 
     $sets = array();
     foreach($args as $arg) {
-      if (is_array($arg)) {
-        list($arg,$value) = assoc_element($arg);
-        $sets[] = "$arg = '".addslashes($value)."'";
-      }
-      else
-        $sets[] =  "$arg = '\$$arg'";
+      list($arg,$value) = page::get_sql_pair($arg);
+      $sets[] = "$arg = $value";
     }
     $sets = implode(',', $sets);
     $sql = "update $table set $sets where $key = '\$$key'";
@@ -852,12 +860,8 @@ class page
       throw new Exception("Invalid number of arguments for sql_insert");
     $values = array();
     foreach($args as &$arg) {
-      if (is_array($arg)) {
-        list($arg,$value) = assoc_element($arg);
-        $values[] = "'".addslashes($value)."'";
-      }
-      else
-        $values[] =  "'\$$arg'";
+      list($arg,$value) = page::get_sql_pair($arg);
+      $values[] = $value;
     }
     $args = implode(',', $args);
     $values = implode(',', $values);
