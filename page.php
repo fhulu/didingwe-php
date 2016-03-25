@@ -1002,7 +1002,10 @@ class page
     $code = last($this->path);
     $this->merge_fields($this->context);
     $id = document::upload("file_$code", $this->context['allowed'], $_SESSION['uid']);
-    $this->write_session(["file_$code"=>$id]);
+    if (is_numeric($id))
+      $this->write_session([$code=>$id]);
+    else
+      page::error($code, $id);
   }
 
   static function respond($response, $value=null)

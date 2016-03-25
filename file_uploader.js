@@ -44,12 +44,13 @@
           percent.html('Uploaded ' + position + ' of ' + total +'(' + done +'%)');
         },
 
-        success: function(response, textStatus, xhr)
+        success: function(result, textStatus, xhr)
         {
-          el.trigger('server_response', [response]);
-          cancel.hide();
-          if (response._responses && response._responses.errors)
+          result = $.parseJSON(result);
+          el.trigger('server_response', [result]);
+          if (result && result._responses && result._responses.errors)
             return this.error();
+            cancel.hide();
           percent.text('Uploaded');
           progress.animate({width:0}, 200, function() {
             uploaded.show();
@@ -59,7 +60,6 @@
         error: function()
         {
           cancel.hide();
-          percent.text('Error');
           progress.animate({width:0}, 200, function() {
             failed.show();
           });
