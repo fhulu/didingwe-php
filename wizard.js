@@ -139,8 +139,7 @@
           self.first_step = index;
           self.element.find('.wizard-bookmark-active').each(function(i) {
             if (i < index)
-              $(this).css('background-color', '')
-                .removeClass('wizard-bookmark-active').addClass('wizard-bookmark-inactive');
+              $(this).removeClass('wizard-bookmark-active').addClass('wizard-bookmark-inactive');
           });
         }
 
@@ -149,7 +148,7 @@
         if (props.next === false || is_last)
           next.hide();
         if (is_last) return;
-        $('.wizard-next').bindFirst('click', function() {
+        object.find('.wizard-next').bindFirst('click', function() {
           if (self.next_step === undefined)
             self.next_step = typeof props.next === 'string'? props.next: index+1;
         });
@@ -173,7 +172,10 @@
       });
 
       this.element.on('processed', function(event, result) {
-        if (result || !self.stack.length || !self.next_step) return;
+        if (result) {
+          if (result._responses || !self.stack.length || !self.next_step) return;
+          if (result.next_step) self.next_step = result.next_step;
+        }
         self.jumpTo(self.next_step);
       });
 
