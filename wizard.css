@@ -51,25 +51,33 @@
   -o-transform: rotate(270deg);
   -ms-transform:rotate(270deg);
   transform: rotate(270deg);
-}
-
-.wizard-bookmark-active
-{
   cursor: pointer;
-  background-color: darkcyan;
 }
 
-.wizard-bookmark-inactive
-{
-  background: rgb(78,96,89);
-}
 
 .wizard-bookmark>*
 {
   display: inline-block;
   height: 20px;
-  color: white;
 }
+
+.wizard-bookmark-active
+{
+  color: white;
+  background-color: darkcyan;
+}
+
+.wizard-bookmark-inactive
+{
+  background-color: darkcyan;
+  color: darkgrey;
+}
+
+.wizard-bookmark-inactive>.wizard-bookmark>*
+{
+  color: darkgrey;
+}
+
 
 .wizard-bookmark-number
 {
