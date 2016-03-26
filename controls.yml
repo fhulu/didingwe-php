@@ -33,7 +33,6 @@ blank:
 
 block:
   display: block
-  margin-top: $line_spacing
 
 bold:
   font-weight: bold
@@ -87,7 +86,7 @@ captioned_image:
   image:
     derive: [parent_id]
     type: image
-    src: $parent_id.png
+    src: /$parent_id.png
     attr: { title: $name}
   caption:
     type: label
@@ -96,6 +95,15 @@ captioned_image:
     styles: [block]
   title: $name
   src: $id.png
+
+captioned_input:
+  type: label_top
+  styles: [widest,block,vspaced]
+  space: 20
+  label:
+    derive: [caption]
+    text: $caption
+  text: $field $label
 
 categorized:
   type: input_page
@@ -469,7 +477,7 @@ image:
   attr: {src: $src}
   text: ""
   src_type: png
-  src: $id.png
+  src: /$id.$src_type
 
 image_button:
   type: button
@@ -1033,7 +1041,7 @@ vspace:
   mutable: false
   type: blank
   space: 20
-  styles: [vspaced]
+  styles: [block,vspaced]
 
 vspaced:
   space: 6px
