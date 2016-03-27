@@ -40,6 +40,7 @@ class document
     if (!move_uploaded_file($_FILES[$control]["tmp_name"], $path))
       return "Error uploading document of type $type. File may be too large";
 
+    $db->exec("update document set status = 'done' where id = '$id'");
     return $id;
   }
 
