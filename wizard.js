@@ -30,7 +30,20 @@
     _createPage: function(index)
     {
       var props = this.options.steps[index];
-      var page = $('<div class=wizard-page>').attr('name',props.name).hide().css('width','100%').appendTo(this.element);
+      var page = $('<div class=wizard-page>')
+          .attr('step',props.id)
+          .hide()
+          .css('width','100%')
+          .appendTo(this.element);
+
+      if (this.options.bookmarks)
+        this._createBookmark(page);
+      else
+        $('<div class=wizard-content>').appendTo(page);
+    },
+
+    _createBookmark: function(page)
+    {
       var bookmark = $('<div class="wizard-bookmark wizard-bookmark-active">').appendTo(page);
       this.bookmark_width = bookmark.outerHeight();
       $('<span class=wizard-bookmark-number>').appendTo(bookmark);
@@ -47,9 +60,10 @@
 
     jumpTo: function(index)
     {
+      console.log("jumping to ", index);
       if ($.isPlainObject(index)) index = index.index;
       if (typeof index === 'string') {
-        var page = this.element.find('.wizard-page[name="'+index+'"]');
+        var page = this.element.find('.wizard-page[step="'+index+'"]');
         if (!page.exists()) return;
         index = this.element.find('.wizard-page').index(page);
       }
@@ -76,8 +90,16 @@
       if (!page.hasClass('wizard-loaded') || props.clear)
         this._loadPage(page, index);
       else
-        page.find('.wizard-content').trigger('reload');
+        page.find('.wizard-content').triggerHandler('reload');
 
+      if (this.options.bookmarks)
+        this._showBookmark(page, index);
+      page.addClass('wizard-current').show();
+      this.stack.push(index);
+    },
+
+    _showBookmark: function(page, index)
+    {
       var bookmark = page.find('.wizard-bookmark').hide();
       if (index > 0) {
         var prev = this.element.find('.wizard-page').eq(index-1);
@@ -89,10 +111,7 @@
       var offset = this.stack.length * this.bookmark_width - 6;
       page.css('left', offset+'px');
       page.width(this.width-offset);
-      page.addClass('wizard-current').show();
-      this.stack.push(index);
     },
-
 
     _hidePage: function(index, show_heading)
     {
@@ -159,8 +178,9 @@
     _bindActions: function()
     {
       var self = this;
-      this.element.on('wizard-jump', function(event, object, index) {
-        self.jumpTo(index);
+      this.element.on('wizard-jump', function(event, params) {
+        console.log("wizard-jump", params);
+        self.jumpTo(params);
       });
 
       this.element.on('wizard-next', function() {

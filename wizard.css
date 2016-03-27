@@ -100,9 +100,13 @@
 
 .wizard .navigate
 {
-  position: absolute;
   border-top: 1px solid lightgrey;
-  bottom: 0px;
   padding-top: 10px;
   width: 100%;
+}
+
+.ui-dialog .wizard .navigate
+{
+  bottom: 0px;
+  position: absolute;
 }

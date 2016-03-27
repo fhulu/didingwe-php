@@ -473,6 +473,7 @@ hspaced:
 
 iframe:
   tag: iframe
+  sub_page: true
 
 image:
   tag: img
@@ -521,6 +522,7 @@ input:
   attr:
     type: $format
     value: $value
+    name: $id
 
 input_page:
   type: page
@@ -1068,9 +1070,10 @@ wizard:
   create: wizard
   script: [/common/wizard.js]
   css: [/common/wizard.css]
-  text: $bookmarks
-  bookmarks: []
+  text: $dummy
+  bookmarks: true
   steps: []
+  dummy: []
 
 
 wizard_jump:
