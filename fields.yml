@@ -132,6 +132,9 @@ developed_by:
   target: _blank
 
 
+done:
+  post: [close_dialog]
+
 email:
   desc: |
     The active email address at which you can be contacted on.

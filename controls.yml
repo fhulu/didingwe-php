@@ -395,6 +395,8 @@ file_uploader:
       - type: control
       - uploaded
       - failed
+  post: []
+  audit: "$type: $file_name"
 
 filled:
   background-color: $fill

@@ -41,7 +41,7 @@ class document
       return "Error uploading document of type $type. File may be too large";
 
     $db->exec("update document set status = 'done' where id = '$id'");
-    return $id;
+    return array($id,$file_name);
   }
 
   static function optional_upload($control, $type, $partner_id)

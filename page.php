@@ -731,16 +731,19 @@ class page
     return true;
   }
 
+  function name($field)
+  {
+    $name = at($field, 'name');
+    if (!is_null($name)) return $name;
+    $code = last($this->path);
+    return ucwords (str_replace ('_', ' ',$code));
+  }
+
   function audit($action, $result)
   {
     global $db;
     $fields = $this->fields[$this->page];
-    $name = at($action, 'name');
-    if (is_null($name)) {
-      $code = at($action, 'code');
-      if (is_null($code)) $code = last($this->path);
-      $name = ucwords (str_replace ('_', ' ',$code));
-    }
+    $name = $this->name($action);
     $result = null_merge($fields, $result, false);
     $detail = at($action, 'audit');
     if ($detail) {
@@ -1005,11 +1008,16 @@ class page
     require_once 'document.php';
     $code = last($this->path);
     $this->merge_fields($this->context);
-    $id = document::upload("file_$code", $this->context['allowed'], $_SESSION['uid']);
-    if (is_numeric($id))
-      $this->write_session([$code=>$id]);
-    else
-      page::error($code, $id);
+    $result = document::upload("file_$code", $this->context['allowed'], $_SESSION['uid']);
+    if (!is_array($result)) return page::error($code, $result);
+
+    list($id, $file_name) = $result;
+    $result = ['type'=>$this->name($this->context), 'file_name'=>$file_name];
+    $result = merge_options($result, $this->reply($this->context['post']));
+    if ($result === false) return false;
+    $this->context['name'] = 'Upload';
+    $this->audit($this->context, $result);
+    return $result;
   }
 
   static function respond($response, $value=null)
