@@ -2,7 +2,7 @@
 ---
 
 activate:
-  access: admin
+  access: [admin]
   validate: none
   desc: Activate inactive user
   audit: sql(select first_name, last_name, email from user_view where id = '$key')
@@ -34,7 +34,7 @@ audit_trail_base:
 
 audit_trail:
   type: audit_trail_base
-  access: admin
+  access: [admin]
   sql: |
     select t.create_time, u.first_name, u.last_name,u.email, t.action, t.detail
       from audit_trail t join user_view u on t.user = u.id
@@ -116,7 +116,7 @@ confirm_registration:
 
 create:
   type: labelled_input_page
-  access: admin
+  access: [admin]
   audit: >
     Title: $title, First Name:$first_name, Last Name:$last_name, Cellphone:$cellphone, E-Mail:$email, Role:$role
   width: 500
@@ -136,7 +136,7 @@ create:
     - create
 
 deactivate:
-  access: admin
+  access: [admin]
   validate: none
   desc: Deactivate this user
   confirmation: Are you sure you want to deactivate this user?
@@ -339,7 +339,7 @@ modify:
 my_audit_trail:
   type: audit_trail_base
   name: My Audit Trail
-  access: reg
+  access: [reg]
   sql: |
     select t.create_time, u.first_name, u.last_name,u.email, t.action, t.detail
       from audit_trail t join user_view u on t.user = u.id and u.id = '$uid'
