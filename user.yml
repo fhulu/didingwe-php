@@ -36,8 +36,9 @@ audit_trail:
   type: audit_trail_base
   access: [admin]
   sql: |
-    select t.create_time, u.first_name, u.last_name,u.email, t.action, t.detail
-      from audit_trail t join user_view u on t.user = u.id
+    select t.create_time, p.first_name, p.last_name,u.email, t.action, t.detail
+      from audit_trail t join user u on t.user = u.id
+      left join person p on u.person = p.id
 
 check_otp:
   type: wizard_page
@@ -341,8 +342,9 @@ my_audit_trail:
   name: My Audit Trail
   access: [reg]
   sql: |
-    select t.create_time, u.first_name, u.last_name,u.email, t.action, t.detail
-      from audit_trail t join user_view u on t.user = u.id and u.id = '$uid'
+    select t.create_time, p.first_name, p.last_name,u.email, t.action, t.detail
+      from audit_trail t join user u on t.user = u.id and u.id = '$uid'
+      left join person p on u.person = p.id
 
 not_registered:
   valid: not(is_registered($1))
