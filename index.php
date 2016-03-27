@@ -61,19 +61,25 @@
 
   global $session;
   log::debug_json("BROWSER REQUEST", $_REQUEST);
-  $content = $_REQUEST['content'];
-  $prefix = $_SESSION['uid'] == 0? 'landing': 'session';
-  $page = $config[$prefix.'_page'];
-  if ($content == '')  $content = $config[$prefix.'_content'];
-  $_SESSION['content'] = $content;
-  if (!is_null($page))  pre_load_custom($page);
-  if ($content != $page && !is_null($content))
-    pre_load_custom($content);
-  $request = $_REQUEST;
-  if (!is_null($content)) $request['content'] = $content;
-  unset($request['path']);
-  $options = array("path"=>$page);
-  if (!empty($request)) $options['request']=$request;
+  $path = $_REQUEST['path'];
+  if (isset($path)) {
+    $options = $_REQUEST;
+  }
+  else {
+    $content = $_REQUEST['content'];
+    $prefix = $_SESSION['uid'] == 0? 'landing': 'session';
+    $page = $config[$prefix.'_page'];
+    if ($content == '')  $content = $config[$prefix.'_content'];
+    $_SESSION['content'] = $content;
+    if (!is_null($page))  pre_load_custom($page);
+    if ($content != $page && !is_null($content))
+      pre_load_custom($content);
+    $request = $_REQUEST;
+    if (!is_null($content)) $request['content'] = $content;
+    unset($request['path']);
+    $options = array("path"=>$page);
+    if (!empty($request)) $options['request']=$request;
+  }
 ?>
 <script>
 $(function() {
