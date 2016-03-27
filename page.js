@@ -17,7 +17,7 @@ $.fn.page = function(options, callback)
       var data = { path: path, action: 'read', key: options.key};
       $.extend(data, options.request);
       $.json('/', { data: data }, function(result) {
-        page.parent.trigger('server_response');
+        page.parent.triggerHandler('server_response', result);
         result.values = $.extend({}, options.values, result.values );
         if (result.path) page.show(result);
       });
