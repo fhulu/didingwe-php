@@ -202,10 +202,8 @@ mkn.render = function(options)
         items.unshift(item);
       else if (push === 'last')
         items.push(item);
-      else {
-        var push_pos = mkn.indexOfKey(items, 'id', item.push)-1;
-        items.splice(mkn.indexOfKey(items, 'id', item.push)-1, 0, item);
-      }
+      else
+        items.splice(mkn.indexOfKey(items, 'id', item.push), 0, item);
       if (item.wrap) {
         items[pos].wrap = item.wrap;
         delete item.wrap;
