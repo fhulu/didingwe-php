@@ -12,9 +12,10 @@ class document
     log::debug("about to upload $file_name from $control of type $type");
 
     if (!is_array($types)) $types = explode(',', $types);
-    $type = strtolower($type);
+    $type = strtoupper($type);
+    array_walk($types, function(&$val) { $val = strtoupper($val); });
     if (!in_array($type, $types))
-      return "File $file_name is not allowed";
+      return "File $file_name is not allowed. Please upload file of type ". implode(' or ', $types);
 
     if ($file_name == '')
       return  "Error uploading document of type $type. File may be too large";
