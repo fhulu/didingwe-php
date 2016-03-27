@@ -4,25 +4,23 @@
 breach:
   type: labelled_input_page
   name: Unauthorised access
+  position: { my: 'top', at: 'top+100' }
   width: 600
-  style:
-    color: rgb(20,60,90)
   desc: |
-    You are not authorised to access this page.<br> 
+    You are not authorised to access this page.<br>
     Possible reasons for this message are:
   inputs:
     type: container
     contents:
       - type: list_item
-      - r1: 
+      - r1:
           access: reg
-          name: Your role was changed since you accessed this function. 
+          name: Your role was changed since you accessed this function.
       - r2:
           name: The System Administrator has restricted access to this function.
-      - r3: 
+      - r3:
           access: public
-          name: Your session has timed out. 
+          name: Your session has timed out.
   actions:
     - home: { action: redirect }
-    - login: { action: dialog } 
-    
+    - login: { action: dialog }

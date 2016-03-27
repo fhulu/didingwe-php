@@ -4,8 +4,6 @@ error_page:
   name: Unexpected Error
   width: 630
   position: { my: 'top', at: 'top+100' }
-  style:
-    color: rgb(20,60,90)
   desc: |
     An unexpected error occurred while processing your results. <br>
     Please notify the system administrator of this incident.
