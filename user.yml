@@ -10,36 +10,6 @@ activate:
     - sql_exec: update user set active = 1 where id = '$key'
     - refresh: "#main table"
 
-
-audit_trail_base:
-  type: datatable
-  sort: when
-  sort_order: desc
-  page_size: 15
-  flags:
-    - filter
-    - show_header
-    - show_titles
-  report_title: User Audit Trail
-  actions:
-    - print
-    - export
-  fields:
-    - when: { width: 12%,name: Time }
-    - first_name: { width: 10% }
-    - last_name: { width: 16% }
-    - email: { width: 18% }
-    - what: { width: 18%, name: Action }
-    - detail: { width: 35% }
-
-audit_trail:
-  type: audit_trail_base
-  access: [admin]
-  sql: |
-    select t.create_time, p.first_name, p.last_name,u.email, t.action, t.detail
-      from audit_trail t join user u on t.user = u.id
-      left join person p on u.person = p.id
-
 check_otp:
   type: wizard_page
   name: One Time Pin
@@ -336,15 +306,6 @@ modify:
     - close_dialog: User details updated
     - refresh: "#main table"
   audit: $title,$first_name,$last_name,$cellphone,$email,$role
-
-my_audit_trail:
-  type: audit_trail_base
-  name: My Audit Trail
-  access: [reg]
-  sql: |
-    select t.create_time, p.first_name, p.last_name,u.email, t.action, t.detail
-      from audit_trail t join user u on t.user = u.id and u.id = '$uid'
-      left join person p on u.person = p.id
 
 not_registered:
   valid: not(is_registered($1))
