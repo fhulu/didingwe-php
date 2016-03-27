@@ -554,23 +554,22 @@ mkn.render = function(options)
           obj.find(field.enter).click();
       })
     }
-    if (!field.action) return;
     field.page_id = me.page_id;
-    obj.click(function(event) {
-      if (field.tag == 'a') {
-        event.preventDefault();
-        if (field.url === undefined) field.url = obj.attr('href');
-      }
-      accept(event, $(this), field);
-    })
-    .on('reload', function() {
+    obj.on('reload', function() {
       loadValues(obj, field);
     })
     .on('server_response', function(event, result) {
       respond(result);
     })
     initTooltip(obj);
-
+    if (!field.action) return;
+    obj.click(function(event) {
+      if (field.tag == 'a') {
+        event.preventDefault();
+        if (field.url === undefined) field.url = obj.attr('href');
+      }
+      accept(event, $(this), field);
+    });
   };
 
   var initLinks = function(object, field, callback)

@@ -94,7 +94,7 @@
       $.json('/', {data: mkn.plainValues(data)}, function(data) {
         if (!data) return;
         if (data._responses)
-          self.element.trigger('server_response', [data]);
+          self.element.triggerHandler('server_response', [data]);
         self.element.trigger('refreshing', [data]);
         var end = new Date().getTime();
         console.log("Load: ", end - start);

@@ -47,21 +47,23 @@
         success: function(result, textStatus, xhr)
         {
           result = $.parseJSON(result);
-          el.trigger('server_response', [result]);
+          el.triggerHandler('server_response', [result]);
           if (result && result._responses && result._responses.errors)
             return this.error();
-            cancel.hide();
-          percent.text('Uploaded');
-          progress.animate({width:0}, 200, function() {
-            uploaded.show();
-          });
+          return this.showResult(uploaded);
         },
 
         error: function()
         {
+          return this.showResult(failed);
+        },
+
+        showResult: function(result)
+        {
           cancel.hide();
           progress.animate({width:0}, 200, function() {
-            failed.show();
+            percent.hide();
+            result.show();
           });
           return this;
         }
