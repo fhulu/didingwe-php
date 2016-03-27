@@ -473,7 +473,6 @@ hspaced:
 
 iframe:
   tag: iframe
-  sub_page: true
 
 image:
   tag: img
