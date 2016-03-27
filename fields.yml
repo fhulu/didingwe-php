@@ -359,7 +359,8 @@ support_email: Mukoni Support <support@mukoni.co.za>
 
 system_audit_trail:
   url: /audit_trail/system
-
+  access: [developer]
+  
 title:
   desc: A descriptive or distinctive appellation, especially one belonging to a person by right of rank, office, attainment
   options:

@@ -43,9 +43,9 @@ partner:
 system:
   name: System Audit Trail
   type: base
-  access: [developer,admin]
+  access: [developer]
   fields:
-    - organisation: { push: first_name }
+    - organisation: { push: first_name, width: 12% }
   sql: |
     select t.create_time, c.name, p.first_name, p.last_name,u.email, t.action, t.detail
       from audit_trail t join user u on t.user = u.id
