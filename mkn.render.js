@@ -951,13 +951,14 @@ mkn.render = function(options)
   var loadValues =  function(parent, data)
   {
     $.json('/', serverParams('values', data.path, {key: data.key}), function(result) {
+      if (!result) return;
       parent.trigger('loaded_values', [result]);
-      respond(result);
       if ($.isPlainObject(result))
         parent.setChildren(result, true);
       else for (var i in result) {
         parent.setChildren(result[i], true);
       }
+      respond(result);
     });
   }
 
