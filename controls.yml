@@ -473,6 +473,9 @@ hspaced:
 
 iframe:
   tag: iframe
+  src: /$id
+  attr:
+    src: $src
 
 image:
   tag: img
