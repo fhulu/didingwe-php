@@ -130,7 +130,7 @@ class page
   {
     if (!$reload && $this->user && $this->user['uid']) return $this->user;
     log::debug_json("SESSION", $_SESSION);
-    $user = $this->read_session('uid,partner_id,roles,groups,email_address,first_name,last_name,cellphone');
+    $user = $this->read_session('uid,partner_id,roles,groups,email,first_name,last_name,cellphone');
     $user['full_name'] = $user['first_name'] . " ". $user['last_name'];
     if (is_null($user['roles'])) $user['roles'] = array('public');
     $this->user = $user;
