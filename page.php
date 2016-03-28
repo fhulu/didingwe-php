@@ -27,7 +27,7 @@ class page
 {
   static $fields_stack = array();
   static $post_items = array('audit', 'call', 'clear_session', 'clear_values', 'error', 'post',
-    'post_http', 'send_email', 'send_sms', 'valid', 'validate', 'write_session');
+    'post_http', 'rest_post', 'send_email', 'send_sms', 'valid', 'validate', 'write_session');
   static $query_items = array('call', 'read_session', 'read_values', 'ref_list', 'sql', 'sql_values');
   static $atomic_items = array('action', 'attr', 'css', 'html', 'script', 'sql',
     'style', 'template', 'valid');
@@ -960,7 +960,7 @@ class page
     log::debug_json("REPLY ACTIONS", $actions);
 
     $methods = array('alert', 'abort', 'call', 'clear_session', 'clear_values',
-      'close_dialog', 'load_lineage', 'read_session', 'read_values', 'redirect', 'ref_list',
+      'close_dialog', 'load_lineage', 'read_session', 'read_values', 'redirect', 'ref_list', 'rest_post',
       'send_email', 'send_sms', 'show_dialog', 'show_captcha', 'sql', 'sql_exec','sql_rows', 'sql_insert',
       'sql_update', 'sql_values', 'refresh', 'trigger', 'update', 'write_session');
     foreach($actions as $action) {
@@ -1292,7 +1292,8 @@ class page
     }
     require_once('../common/curl.php');
     $curl = new curl();
-    $curl->read($url);
+    $post = $options['post'];
+    isset($options['post'])? $curl->post($url, $post): $curl->read($url);
   }
 
   function send_sms($options)

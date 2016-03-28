@@ -22,10 +22,10 @@ class curl
     log::debug("CURL Read $url");
     curl_setopt($this->session, CURLOPT_URL, $url);
     if ($limit > 0)
-	  $range = "0-$limit";
-	else
-	  $range = "0-";
-	curl_setopt ($this->session, CURLOPT_HTTPHEADER, array("Range: $range"));
+	     $range = "0-$limit";
+	  else
+      $range = "0-";
+  	curl_setopt ($this->session, CURLOPT_HTTPHEADER, array("Range: $range"));
     curl_setopt($this->session, CURLOPT_RETURNTRANSFER, 1);
 
     return curl_exec($this->session);
@@ -59,5 +59,18 @@ class curl
   function get_last_mime()
   {
     return curl_getinfo($this->session, CURLINFO_CONTENT_TYPE);
+  }
+
+  function post($url, $fields)
+  {
+    curl_setopt($this->session,CURLOPT_URL, $url);
+    curl_setopt($this->session,CURLOPT_POST, count($fields));
+
+    $values = [];
+    foreach($fields as $key=>$value) {
+      $values[] = "$key = " . urlencode($value);
+    }
+    curl_setopt($this->session,CURLOPT_POSTFIELDS, implode('&', $values));
+    return curl_exec($ch);
   }
 };
