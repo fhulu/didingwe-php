@@ -51,6 +51,8 @@
       var height = parseInt(this.element.height());
       var content = $('<div class=wizard-content>').appendTo(page);
       content.height(height);
+      content.css('top', -10);
+      content.css('left', 10);
       bookmark.width(height);
       var offset = (height - this.bookmark_width)/2;
       bookmark.css('left', (-offset)+'px');
@@ -146,9 +148,11 @@
       if (path[0] === '/') path = path.substr(1);
       var self = this;
       tmp.on('read_'+path.replace(/\//, '_'), function(event, object) {
-        object.height(content.height());
-        object.css('left', content.css('left'));
-        object.width(page.width());
+        if (self.options.bookmarks) {
+          object.height(content.height());
+          object.css('left', content.css('left'));
+          object.width(page.width());
+        }
         object.addClass('wizard-content');
         page.addClass('wizard-loaded').removeClass('wizard-loading');
         content.replaceWith(object);
