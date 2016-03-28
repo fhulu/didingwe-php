@@ -1,0 +1,36 @@
+request:
+  desc: ""
+  tag: form
+  attr:
+    action: "https://www.paygate.co.za/paywebv2/process.trans"
+    method: POST
+  text:
+    - type: hidden
+    - PAYGATE_ID
+    - REFERENCE
+    - AMOUNT
+    - CURRENCY
+    - RETURN_URL
+    - TRANSACTION_DATE
+    - EMAIL
+    - CHECKSUM
+  values:
+    - read_session: [email, partner]
+    - sql_values: >
+        select number PAYGATE_ID, '$email' EMAIL, now() TRANSACTION_DATE
+        from account where name like 'Paygate%' and active=1
+    - sql_values: >
+        select $amount AMOUNT, id REFERENCE
+        from transaction where partner_id = '$partner'
+    - read_values:
+        CURRENCY: ZAR
+        RETURN_URL: http://fpbonline.mukoni.net/?path=paygate/response
+        SECRET: muk403
+    - sql_values: >
+        select md5('$PAYGATE_ID|$REFERENCE|$AMOUNT|$CURRENCY|$RETURN_URL|$TRANSACTION_DATE|$EMAIL|$SECRET') CHECKSUM
+    - trigger: .submit
+    - clear_values: [email,partner]
+
+response:
+  post:
+    - done
