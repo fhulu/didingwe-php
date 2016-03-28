@@ -36,7 +36,7 @@ class page
     'clear_values', 'load_lineage', 'post', 'read_session', 'refresh', 'show_dialog',
     'sql_insert', 'sql_update', 'style', 'trigger', 'valid', 'validate', 'write_session');
   static $objectify = ['ref_list'];
-  static $login_vars = ['uid','partner_id','roles','groups','email','first_name','last_name','cellphone'];
+  static $login_vars = ['uid','pid','roles','groups','email','first_name','last_name','cellphone'];
   var $request;
   var $object;
   var $method;
@@ -130,7 +130,7 @@ class page
   {
     if (!$reload && $this->user && $this->user['uid']) return $this->user;
     log::debug_json("SESSION", $_SESSION);
-    $user = $this->read_session('uid,partner_id,roles,groups,email,first_name,last_name,cellphone');
+    $user = $this->read_session('uid,pid,roles,groups,email,first_name,last_name,cellphone');
     $user['full_name'] = $user['first_name'] . " ". $user['last_name'];
     if (is_null($user['roles'])) $user['roles'] = array('public');
     $this->user = $user;
@@ -783,9 +783,12 @@ class page
     global $page;
     $user = $page->user;
     $user_id = $user['uid'];
+    $partner_id = $user['pid'];
     $key = $options['key'];
-    if ($user_id)
+    if (isset($user_id))
       $sql = preg_replace('/\$uid([^\w]|$)/', "$user_id\$1", $sql);
+    if (isset($partner_id))
+      $sql = preg_replace('/\$pid([^\w]|$)/', "$partner_id\$1", $sql);
     $sql = preg_replace('/\$key([^\w]|$)/', "$key\$1", $sql);
     return replace_vars($sql, $options, function(&$val) {
       $val = addslashes($val);

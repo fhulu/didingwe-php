@@ -36,8 +36,8 @@ partner:
   sql: |
     select t.create_time, p.first_name, p.last_name,u.email, t.action, t.detail
       from audit_trail t join user u on t.user = u.id
-      and (u.id in (select id from user where partner = u.partner)
-        or u.partner = t.partner)
+      and (u.id in (select id from user where partner = '$pid')
+        or t.partner = '$pid')
       left join person p on u.person = p.id
 
 system:
