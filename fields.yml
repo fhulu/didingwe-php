@@ -284,7 +284,7 @@ password:
 
 postal_address:
   attr: { maxlength: 100 }
-  valid: [at_least(30,characters)]
+  valid: [at_least(15)]
 
 postal_code:
   attr: { min: 0000, max: 9999 }
@@ -294,7 +294,7 @@ postal_code:
 
 physical_address:
   attr: { maxlength: 128 }
-  valid: [at_least(30,characters)]
+  valid: [at_least(15)]
 
 physical_code:
   attr: { min: 0000, max: 9999 }
