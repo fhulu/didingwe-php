@@ -31,17 +31,17 @@
 <link href="/common/input_page.css?<?=$tag?>" media="screen" rel="stylesheet" type="text/css" />
 
 <link href="/default.style.css?<?=$tag?>" media="screen" rel="stylesheet" type="text/css" />
-<script type='text/javascript' src='/jquery-min.js'></script>
-<script type='text/javascript' src='/jquery-ui.min.js'></script>
+<script src='/jquery-min.js'></script>
+<script src='/jquery-ui.min.js'></script>
 
 <script src="/bootstrap.min.js"></script>
 <link href="/bootstrap.min.css" rel="stylesheet">
 
-<script type='text/javascript' src='/common/jquery.datetimepicker.js'></script>
-<script type="text/javascript" src='/common/mukoni.jquery.js?<?=$tag?>'></script>
-<script type='text/javascript' src="/common/mkn.js?<?=$tag?>"></script>
-<script type='text/javascript' src="/common/mkn.render.js?<?=$tag?>"></script>
-<script type='text/javascript' src="/common/page.js?<?=$tag?>"></script>
+<script src='/common/jquery.datetimepicker.js'></script>
+<script src='/common/mukoni.jquery.js?<?=$tag?>'></script>
+<script src="/common/mkn.js?<?=$tag?>"></script>
+<script src="/common/mkn.render.js?<?=$tag?>"></script>
+<script src="/common/page.js?<?=$tag?>"></script>
 <script>
   var request_method = '<?=$config['request_method'];?>';
 </script>
@@ -62,11 +62,11 @@
   global $session;
   log::debug_json("BROWSER REQUEST", $_REQUEST);
   $path = $_REQUEST['path'];
-  if (isset($path)) {
+  $content = $_REQUEST['content'];
+  if (isset($path) && !isset($content)) {
     $options = $_REQUEST;
   }
   else {
-    $content = $_REQUEST['content'];
     $prefix = $_SESSION['uid'] == 0? 'landing': 'session';
     $page = $config[$prefix.'_page'];
     if ($content == '')  $content = $config[$prefix.'_content'];
