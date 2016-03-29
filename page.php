@@ -919,6 +919,7 @@ class page
       $context['user_email'] = $user['email'];
       $context['uid'] = $user['uid'];
     }
+    $context['server_host'] = page::base_url();
     $this->context = $context;
   }
 
@@ -1209,6 +1210,7 @@ class page
     replace_fields($values, $this->answer, true);
     replace_fields($values, $this->request, true);
     replace_fields($values, $_SESSION, true);
+    replace_fields($values, $this->context, true);
     log::debug_json("READ VALUES", $values);
     return $values;
   }
@@ -1366,5 +1368,13 @@ class page
     $response = $result->decode_response();
     log::debug_json("DECODED RESULT", $response);
     return $response;
+  }
+
+  static function base_url()
+  {
+    $protocol = 'http';
+    if(isset($_SERVER['HTTPS']))
+      $protocol = ($_SERVER['HTTPS'] && $_SERVER['HTTPS'] != "off") ? "https" : "http";
+    return $protocol . "://" . $_SERVER['HTTP_HOST'] . ':' . $_SERVER['SERVER_PORT'];
   }
 }
