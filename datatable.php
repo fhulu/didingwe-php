@@ -50,12 +50,14 @@ PATTERN;
 
   static function get_field_index($fields, $code)
   {
-    $index = -1;
+    $index = 0;
+    $span = 0;
     foreach($fields as $field) {
-
+      $index += $span;
       list($id, $values) = assoc_element($field);
       if (in_array($id, array('type','template'))) continue;
-      ++$index;
+      $span = is_array($values) && $values['span']? $values['span']: 1;
+      if (!$span) $span = 1;
       if (is_array($field) && $field['hide']) continue;
       if ($id == $code ) return $index;
     }
@@ -74,24 +76,36 @@ PATTERN;
     $sql .= " order by $db_sort_field $sort_order";
   }
 
-  static function filter(&$sql, $fields, $options) {
+  static function filter(&$sql, $names, $options) {
     $filter = at($options, 'filtered');
     if (is_null($filter))
       return;
 
-    $index = -1;
-    $where = '';
+    $index = 0;
+    $conditions = [];
+    $fields = $options['fields'];
+    $span = 0;
     foreach (explode('|', $filter) as $value) {
-      ++$index;
+      $index += $span;
+      $name = $names[$index];
+      list($id, $field) = assoc_element($fields[$index]);
+      $span = is_array($field) && $field['span']? $field['span']: 1;
       if (trim($value) === '') continue;
-      $field = $fields[$index];
-      $where .= " and $field like '%$value%' ";
+      if ($span < 2) {
+        $conditions[] = "$name like '%$value%'";
+        continue;
+      }
+      $span_conditions = [];
+      for($i = 0; $i<$span; ++$i) {
+        $span_conditions[] = $names[$i+$index]. " like '%$value%'";
+      }
+      $conditions[] = "(" . implode(' or ', $span_conditions) . ")";
     }
 
-    if ($where === '')
+    if (sizeof($conditions) < 1)
       return;
     $where_pos = strripos($sql, "where ");
-    $where = substr($where, 5);
+    $where = implode(" and ", $conditions);
     if ($where_pos === false)
       $sql .= " where $where";
     else

@@ -292,6 +292,13 @@
       td.attr('colspan', tr.children().length);
     },
 
+    spanData: function(field, row, col)
+    {
+      if (field.span <= 1) return row[col];
+      var span = row.slice(col, col+field.span);
+      return span.join(' ');
+    },
+
     showData: function(data)
     {
       var self = this;
@@ -307,9 +314,11 @@
         tr = $('<tr>');
         var key;
         var expandable = false;
+        var col = 0;
         for (var j in fields) {
-          var cell = row[j];
           var field = fields[j];
+          var cell = self.spanData(field, row, col);
+          col += field.span;
           if (key === undefined && (field.id === 'key' || field.key)) {
             key = cell;
             tr.attr('key', key);
@@ -601,13 +610,16 @@
         self.params.page_num = 1;
         self.params.page_size = self.options.page_size;
         var j = 0;
+        var filters = [];
         for (var i in fields) {
           var field = fields[i];
           if (field.id === 'actions' || field.id === 'style') continue;
+          var filter = '';
           if (mkn.visible(field))
-            self.params.filtered += cols.eq(j++).find('input').val();
-          self.params.filtered += '|';
+            filter = cols.eq(j++).find('input').val();
+          filters.push(filter);
         }
+        self.params.filtered = filters.join('|');
         self.refresh();
       });
       return filter;

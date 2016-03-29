@@ -200,7 +200,10 @@ datatable:
     name: ""
     desc: Filter by specific columns
 
-  fields: [ type: none ]
+  fields:
+    - type: none
+    - default: { span: 1}
+    
   sow: [slide,slideoff]
 
   #paging
