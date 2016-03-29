@@ -15,21 +15,20 @@ request:
     - EMAIL
     - CHECKSUM
   values:
-    - read_session: [email, partner]
-    - sql_values: >
-        select number PAYGATE_ID, '$email' EMAIL, now() TRANSACTION_DATE
-        from account where name like 'Paygate%' and active=1
-    - sql_values: >
-        select $amount AMOUNT, id REFERENCE
-        from transaction where partner_id = '$partner'
+    - read_session: [paygate_amount,paygate_reference,email]
+    - sql_values: select now() TRANSACTION_DATE
     - read_values:
+        PAYGATE_ID: $paygate_id
+        REFERENCE: $paygate_reference
+        AMOUNT: $paygate_amount
         CURRENCY: ZAR
-        RETURN_URL: http://fpbonline.mukoni.net/?path=paygate/response
-        SECRET: muk403
+        RETURN_URL: $server_host/?path=paygate/response
+        EMAIL: $email
+        SECRET: $paygate_secret
     - sql_values: >
         select md5('$PAYGATE_ID|$REFERENCE|$AMOUNT|$CURRENCY|$RETURN_URL|$TRANSACTION_DATE|$EMAIL|$SECRET') CHECKSUM
     - trigger: .submit
-    - clear_values: [email,partner]
+    - clear_values: [paygate_amount,paygate_reference]
 
 response:
   post:
