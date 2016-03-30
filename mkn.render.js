@@ -995,7 +995,6 @@ mkn.render = function(options)
       sink = $(sink.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+me.id+"$2"));
       if (!sink.exists())
         sink = window.parent.$(selector);
-
     }
     else
       sink = invoker;
@@ -1004,8 +1003,8 @@ mkn.render = function(options)
       return;
     }
     event = $.Event(event);
-    // event.target = invoker[0];
-    sink.triggerHandler(event, params);
+    event.target = invoker[0];
+    sink.trigger(event, params);
   }
 
 }
