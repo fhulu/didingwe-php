@@ -553,6 +553,8 @@ mkn.render = function(options)
       })
     }
     field.page_id = me.page_id;
+    if (obj.attr('id') == 'payment_start_electronic_payment')
+      console.log("attaching events for", obj);
     obj.on('reload', function() {
       loadValues(obj, field);
     })
@@ -988,8 +990,13 @@ mkn.render = function(options)
         params = [parseInt(params[0]) === 1 || params[0] === true];
     }
 
-    if (sink)
+    if (sink) {
+      var selector = sink;
       sink = $(sink.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+me.id+"$2"));
+      if (!sink.exists())
+        sink = window.parent.$(selector);
+
+    }
     else
       sink = invoker;
     if (event[0] === '.') {
@@ -997,8 +1004,8 @@ mkn.render = function(options)
       return;
     }
     event = $.Event(event);
-    event.target = invoker[0];
-    sink.trigger(event, params);
+    // event.target = invoker[0];
+    sink.triggerHandler(event, params);
   }
 
 }
