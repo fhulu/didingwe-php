@@ -1046,9 +1046,10 @@ class page
     page::respond('alert', $message);
   }
 
-  static function redirect($url)
+  function redirect($url)
   {
     if (!is_array($url)) $url = array("url"=>$url);
+    $url['url'] = replace_vars($url['url'], $this->context);
     log::debug_json("REDIRECT", $url);
     page::respond('redirect', $url);
   }
