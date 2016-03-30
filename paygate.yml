@@ -22,7 +22,7 @@ request:
         REFERENCE: $paygate_reference
         AMOUNT: $paygate_amount
         CURRENCY: ZAR
-        RETURN_URL: $server_host/?path=paygate/response
+        RETURN_URL: $server_host/?path=paygate/response&action=action
         EMAIL: $email
         SECRET: $paygate_secret
     - sql_values: >
@@ -30,6 +30,40 @@ request:
     - trigger: .submit
     - clear_values: [paygate_amount,paygate_reference]
 
+test_request:
+  desc: Test Paygate Request
+  type: input_page
+  inputs:
+    - PAYGATE_ID
+    - TRANSACTION_STATUS
+    - TRANSACTION_ID
+    - AUTH_CODE
+    - RESULT_CODE
+    - RESULT_DESC
+    - REFERENCE
+    - AMOUNT
+  values:
+    - read_values:
+        PAYGATE_ID: $paygate_id
+        TRANSACTION_STATUS: 1
+        TRANSACTION_ID: 123456789
+        AUTH_CODE: Test234
+        RESULT_CODE: 999
+        RESULT_DESC: Auth Done
+        REFERENCE: $paygate_reference
+        AMOUNT: $paygate_amount
+  actions:
+    - response
+
 response:
+  name: Complete Electronic Payment
   post:
-    - done
+    - write_session:
+        - paygate_status: $TRANSACTION_STATUS
+        - paygate_result: $RESULT_DESC
+        - paygate_auth_code: $AUTH_CODE
+        - paygate_trx_id: $TRANSACTION_ID
+        - paygate_amount: $AMOUNT
+    - trigger: "mememe,#payment_start_electronic_payment"
+  audit: >
+    Transaction ID: $TRANSACTION_ID Auth Code: $AUTH_CODE Amount: $AMOUNT Result: $RESULT_DESC
