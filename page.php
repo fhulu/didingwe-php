@@ -806,7 +806,8 @@ class page
   function translate_sql($sql)
   {
     $sql = page::replace_sql($sql, $this->answer);
-    return page::replace_sql($sql, $this->context);
+    $sql = page::replace_sql($sql, $this->context);
+    return page::replace_sql($sql, $this->request);
   }
 
   function sql_values($sql)
@@ -827,7 +828,7 @@ class page
     if ($value[0] == '/')
       $value = substr($value,1);
     else
-      $value = "'".addslashes($value)."'";
+      $value = "'\$$value'";
     return [$arg, $value];
   }
 
