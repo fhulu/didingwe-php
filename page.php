@@ -834,7 +834,7 @@ class page
     if ($value[0] == '/')
       $value = substr($value,1);
     else
-      $value = "'\$$value'";
+      $value = "'$value'";
     return [$this->get_db_name($arg), $value];
   }
 
@@ -1023,7 +1023,7 @@ class page
     if (!is_array($result)) return page::error($code, $result);
 
     list($id, $file_name) = $result;
-    $result = ['type'=>$this->name($this->context), 'file_name'=>$file_name];
+    $result = ['document_id'=>$id, 'document_type'=>$this->name($this->context), 'document_file'=>$file_name];
     $result = merge_options($result, $this->reply($this->context['post']));
     if ($result === false) return false;
     $this->context['name'] = 'Upload';
