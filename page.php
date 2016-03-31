@@ -714,7 +714,7 @@ class page
 
   function field_name($code, $field=null)
   {
-    if (is_null($field)) $field = $this->fields[$code];
+    if (is_null($field)) $field = $this->get_merged_field($code);
     if (is_null($field) || is_null($field['name'])) return ucwords (str_replace ('_', ' ',$code));
     return $field['name'];
   }
