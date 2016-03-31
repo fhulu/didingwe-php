@@ -472,10 +472,34 @@
       tr.find('.slide').animate({width:'toggle'}, this.options.slideSpeed);
     },
 
+
+    loadSubPages: function(tr, pages)
+    {
+      var expanded = $('<tr class=expanded></tr>');
+      var td = $('<td></td>')
+              .attr('colspan', tr.children('td').length)
+              .prependTo(expanded);
+      expanded.insertAfter(tr);
+
+      var key = tr.attr('key');
+      var tmp = $('<div></div>');
+      var index = 0;
+      var load = function() {
+        var path = pages[index];
+        tmp.page({path: path, key: key });
+        path = path.replace(/\//, '_');
+        tmp.on('read_'+path, function(e, obj) {
+          td.append(obj);
+          if (++index < pages.length)
+            load();
+        });
+      };
+      load();
+    },
+
     bindRowActions: function(tr)
     {
       var self = this;
-      var key = tr.attr('key');
       tr.on('slide', function(e) {
         $(e.target).toggle();
         self.slide(tr);
@@ -484,19 +508,7 @@
         if (!item.pages) return;
         btn.hide();
         tr.find('[action=collapse]').show();
-        var expanded = $('<tr class=expanded></tr>');
-        var td = $('<td></td>')
-                .attr('colspan', tr.children('td').length)
-                .prependTo(expanded);
-        expanded.insertAfter(tr);
-        $.each(item.pages, function(i, path) {
-          var tmp = $('<div></div>');
-          tmp.page({path: path, key: key});
-          path = path.replace(/\//, '_');
-          tmp.on('read_'+path, function(e, obj) {
-            td.append(obj);
-          });
-        });
+        self.loadSubPages(tr, item.pages)
       });
       tr.on('collapse', function(e) {
         tr.find('[action=collapse]').hide();
