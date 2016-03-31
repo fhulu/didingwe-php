@@ -26,7 +26,7 @@ $page->output();
 class page
 {
   static $fields_stack = array();
-  static $post_items = array('audit', 'call', 'clear_session', 'clear_values', 'error', 'post',
+  static $post_items = array('audit', 'call', 'clear_session', 'clear_values', 'db_name', 'error', 'post',
     'post_http', 'rest_post', 'send_email', 'send_sms', 'valid', 'validate', 'write_session');
   static $query_items = array('call', 'read_session', 'read_values', 'ref_list', 'sql', 'sql_values');
   static $atomic_items = array('action', 'attr', 'css', 'html', 'script', 'sql',
@@ -820,16 +820,22 @@ class page
     return $this->db->exec($this->translate_sql($sql));
   }
 
-  static function get_sql_pair($arg)
+  function get_db_name($arg)
   {
-    if (!is_array($arg)) return [$arg, "'\$$arg'"];
+    $field = $this->get_merged_field($arg);
+    return isset($field) && isset($field['db_name'])? $field['db_name']: $arg;
+  }
+
+  function get_sql_pair($arg)
+  {
+    if (!is_array($arg)) return [$this->get_db_name($arg), "'\$$arg'"];
 
     list($arg,$value) = assoc_element($arg);
     if ($value[0] == '/')
       $value = substr($value,1);
     else
       $value = "'\$$value'";
-    return [$arg, $value];
+    return [$this->get_db_name($arg), $value];
   }
 
   function sql_update()
@@ -851,7 +857,7 @@ class page
 
     $sets = array();
     foreach($args as $arg) {
-      list($arg,$value) = page::get_sql_pair($arg);
+      list($arg,$value) = $this->get_sql_pair($arg);
       $sets[] = "$arg = $value";
     }
     $sets = implode(',', $sets);
@@ -867,7 +873,7 @@ class page
       throw new Exception("Invalid number of arguments for sql_insert");
     $values = array();
     foreach($args as &$arg) {
-      list($arg,$value) = page::get_sql_pair($arg);
+      list($arg,$value) = $this->get_sql_pair($arg);
       $values[] = $value;
     }
     $args = implode(',', $args);
