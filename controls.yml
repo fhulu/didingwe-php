@@ -108,7 +108,6 @@ captioned_input:
 categorized:
   type: input_page
   tag: fieldset
-  style: { display: table-column}
   text: $legend $synopsis $inputs
   title: $name
   legend:
@@ -203,7 +202,7 @@ datatable:
   fields:
     - type: none
     - default: { span: 1}
-    
+
   sow: [slide,slideoff]
 
   #paging
@@ -977,6 +976,13 @@ table_row:
   text: $columns
   columns:
     - template: table_cell
+
+tabular:
+  type: container
+  sow: [col_width]
+  contents:
+    - default:
+        style: { width: $col_width, display: inline-block, vertical-align: top }
 
 tallest:
   height: 100%

@@ -427,8 +427,7 @@ mkn.render = function(options)
     tmp.page(field);
     path = path.replace('/','_');
     tmp.on('read_'+path, function(e, obj) {
-      if (field.style)
-        setStyle(obj, field);
+      setStyle(obj, field);
       tmp.replaceWith(obj);
     });
     return tmp;
