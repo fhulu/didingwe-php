@@ -842,7 +842,8 @@ class page
   {
     $args = page::parse_args(func_get_args());
     $table = array_shift($args);
-    $key = array_shift($args);
+    list($key_name,$key_value) = $this->get_sql_pair(array_shift($args));
+    if (!isset($key_value)) $key_value = "\$$key_name";
     if (!sizeof($args))
       throw new Exception("Invalid number of arguments for sql_update");
 
@@ -861,7 +862,7 @@ class page
       $sets[] = "$arg = $value";
     }
     $sets = implode(',', $sets);
-    $sql = "update $table set $sets where $key = '\$$key'";
+    $sql = "update $table set $sets where $key_name = $key_value";
     return $this->sql_exec($sql);
   }
 
