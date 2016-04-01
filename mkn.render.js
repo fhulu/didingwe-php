@@ -872,11 +872,12 @@ mkn.render = function(options)
       return;
     }
     var subject = me.sink.find('#'+field+",[name='"+field+"']");
-    var parents = subject.parents("[for='"+field+"']");
+    var parents = subject.parents("[for='"+field+"'],.error-sink");
     var parent = parents.exists()? parents.eq(0): subject;
 
     var box = $("<div class=error>"+error+"</div>");
     parent.after(box);
+    box.zIndex(parent.zIndex()+1);
     box.fadeIn('slow').click(function() { $(this).fadeOut('slow') });
   }
 

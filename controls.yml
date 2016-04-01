@@ -349,7 +349,7 @@ file_input:
 
 file_uploader:
   tag: div
-  class: [file-uploader]
+  class: [file-uploader error-sink]
   create: file_uploader
   script: [/common/file_uploader.js,/common/jquery.form.js]
   css: [/common/file_uploader.css]
@@ -390,7 +390,7 @@ file_uploader:
     styles: [top_right,tallest]
     width: 56
     contents:
-      - default: { styles: [biggest], show: no }
+      - default: { styles: [biggest,center_text], show: no }
       - type: button
       - upload
       - cancel
