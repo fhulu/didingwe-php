@@ -388,7 +388,7 @@ file_uploader:
   buttons:
     type: container
     styles: [top_right,tallest]
-    width: 15%
+    width: 56
     contents:
       - default: { styles: [biggest], show: no }
       - type: button
