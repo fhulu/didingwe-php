@@ -339,6 +339,7 @@ class page
     walk_recursive_down($fields, function($value, $key, &$parent) {
       if (is_numeric($key) || $key[0] != '$') return;
       $new_key = $this->request[substr($key,1)];
+      if (!isset($new_key)) return;
       $parent[$new_key] = $value;
       unset($parent[$key]);
     });
@@ -567,10 +568,10 @@ class page
     $fields = merge_options($this->merge_stack(page::$fields_stack), $this->page_fields, $this->fields);
     $this->validator = new validator(page::merge_options($_SESSION, $this->request), $fields, $validators);
 
-    $exclude = array('css','post','script','style', 'styles', 'type','valid','values');
+    $exclude = array('audit','css','post','script','style', 'styles', 'type','valid','validate','values');
     if ($include == 'delta')
-      $include = explode(',', $this->request['delta']);
-    else if (is_string($include) && !is_array($include))
+      $include = $this->request['delta'];
+    if (is_string($include) && !is_array($include))
       $include = explode(',', $include);
     else
       $include = true;
