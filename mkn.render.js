@@ -141,8 +141,6 @@ mkn.render = function(options)
         if (sow && sow.indexOf(id) >=0)
           item = mkn.merge(parent_field[id], item);
         promoteAttr(item);
-        if (defaults.default)
-          item = mkn.merge(defaults.default, item);
         template = item.template;
         var base = mkn.copy(me.types[id]);
         var merged = mkn.merge(base, item);
@@ -150,6 +148,8 @@ mkn.render = function(options)
           item = mergeDefaults(item, defaults, base);
         else
           item = merged;
+        if (defaults.default)
+          item = mkn.merge(defaults.default, item);
       }
       else if ($.isArray(item)) {
         array = item;
@@ -246,13 +246,11 @@ mkn.render = function(options)
   this.expandValue = function(values,value,parent_id)
   {
     $.each(values, function(code, subst) {
-      if ($.isNumeric(code)) return;
-      if (typeof subst === 'string' && value !== null) {
-        subst = me.expandFunction(subst, parent_id)
-        value = value.replace(new RegExp('\\$'+code+"([\b\W]|$)?", 'g'), subst+'$1');
-        values[code] = subst;
-        if (value.indexOf('$') < 0) return;
-      }
+      if ($.isNumeric(code) || typeof subst !== 'string' || typeof value !== 'string') return;
+      subst = me.expandFunction(subst, parent_id)
+      value = value.replace(new RegExp('\\$'+code+"([\b\W]|$)?", 'g'), subst+'$1');
+      values[code] = subst;
+      if (value.indexOf('$') < 0) return;
     });
     return value;
   }
@@ -552,8 +550,6 @@ mkn.render = function(options)
       })
     }
     field.page_id = me.page_id;
-    if (obj.attr('id') == 'payment_start_electronic_payment')
-      console.log("attaching events for", obj);
     obj.on('reload', function() {
       loadValues(obj, field);
     })
@@ -633,8 +629,9 @@ mkn.render = function(options)
       for (var i in geometry) {
         var key = geometry[i];
         if (immutable && immutable.indexOf(key) >= 0) continue;
-        if (field[key] !== undefined && style[key] === undefined)
-          style[key] = field[key];
+        var val = field[key];
+        if (val !== undefined && val[0] !== '$')
+          style[key] = val;
       }
     }
 
@@ -642,8 +639,8 @@ mkn.render = function(options)
     if (!style) style = {};
     styles = field.styles;
     if (styles) mergeStyles();
-    setGeometry();
     expandVars(field, style, { sourceFirst: true})
+    setGeometry();
     obj.css(style);
   }
 
