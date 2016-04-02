@@ -721,6 +721,11 @@ number_input:
   type: input
   format: number
 
+numbered_document:
+  type: multi_input
+  inputs:
+    - types: [number_input,link]
+
 one_cell_row:
   templates: div
   text: <td>$field</td>
