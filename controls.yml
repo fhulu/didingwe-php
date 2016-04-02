@@ -300,14 +300,14 @@ dropdown:
     name: $2
     text: $name
     attr: { value: $id }
-  default:
+  selected:
     classes: option
     derive: [unselected]
     text: $unselected
     attr: { value: ""}
   text: $options
   options:
-    - $default
+    - $selected
     - type: $option
 
 element:
@@ -702,6 +702,20 @@ menu:
     - action: redirect
 
 menu_item: { templates: li }
+
+multi_input:
+  classes: div
+  text: $inputs
+  split: 45%
+  spacing: 10
+  inputs:
+    - template: inplace_input
+    - type: input
+    - default:
+        derive: [split,spacing]
+        width: $split
+        styles: [tallest,hspaced]
+        space: 5
 
 number_input:
   type: input
