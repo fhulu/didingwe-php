@@ -11,7 +11,7 @@ mkn.render = function(options)
   me.parent = options.parent;
   me.known = {};
 
-  var array_defaults = [ 'type', 'template', 'action', 'attr', 'wrap', 'default'];
+  var array_defaults = [ 'type', 'types', 'template', 'action', 'attr', 'wrap', 'default'];
   var geometry = ['left','right','width','top','bottom','height'];
 
   var mutable = function(field) {
@@ -89,14 +89,18 @@ mkn.render = function(options)
       if (base[key] !== undefined && item[key] === undefined) item[key] = base[key];
     }
   }
+
+  var mergeDefaultType = function(base, item, type) {
+    var type = mkn.copy(type);
+    mergeImmutables(item, base, type);
+    return mkn.merge(mkn.merge(type,base), item);
+  }
+
   var mergeDefaults = function(item, defaults, base) {
     if (!item.action && defaults.action) item.action = defaults.action;
     if (defaults.attr) item.attr = mkn.merge(item.attr,defaults.attr);
-    if (!item.type && defaults.type) {
-      var type = mkn.copy(defaults.type);
-      mergeImmutables(item, base, type);
-      return mkn.merge(mkn.merge(type,base), item);
-    }
+    if (defaults.types) return mergeDefaultType(base, item, defaults.types.shift());
+    if (!item.type && defaults.type) return mergeDefaultType(base, item, defaults.type);
     return mkn.merge(base, item);
   }
 
@@ -715,6 +719,13 @@ mkn.render = function(options)
       else if (name === 'type' || name === 'template' || name === 'wrap') {
         if (value === undefined) { console.log("undefined value", name, item)}
         value = me.expandType(value);
+      }
+      else if (name === 'types') {
+        var types = [];
+        for (var i in value) {
+          types.push(me.expandType(value[i]));
+        }
+        value = types;
       }
       if (name == 'template' && $.isPlainObject(value)) {
         value = mergePrevious(defaults, name, me.initField(value));

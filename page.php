@@ -392,7 +392,7 @@ class page
 
       if ($type == $this->page) return;
       $is_style = ($type === 'styles');
-      if (in_array($type, ['type', 'template', 'wrap', 'styles']) ) {
+      if (in_array($type, ['types', 'type', 'template', 'wrap', 'styles']) ) {
         $type = $value;
         $value = null;
       }
