@@ -210,11 +210,7 @@ logout:
   access: reg
   src: /logout_icon.jpg
   action: post
-  post:
-    - read_session: email
-    - sql_exec: insert into audit_trail(user,action,detail) values($uid,'Logout','$email')
-    - call: session_destroy()
-    - redirect: $landing_content
+  url: /user/logout
 
 
 longitude:
