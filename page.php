@@ -835,7 +835,7 @@ class page
     if ($value[0] == '/')
       $value = substr($value,1);
     else
-      $value = "'$value'";
+      $value = "'". addslashes($value). "'";
     return [$this->get_db_name($arg), $value];
   }
 
@@ -848,8 +848,8 @@ class page
     if (!sizeof($args))
       throw new Exception("Invalid number of arguments for sql_update");
 
-    $delta_index = array_search('delta', $args);
-    if ($delta_index >= 0) {
+    $delta_index = array_search('delta', $args, true);
+    if ($delta_index !== false) {
       $delta = trim($this->request['delta']);
       $delta = $delta==''? null: explode(',', $delta);
       array_splice($args, $delta_index, 1, $delta);
