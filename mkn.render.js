@@ -832,7 +832,8 @@ mkn.render = function(options)
       case 'dialog': mkn.showDialog(field.url, {key: field.key}); return;
       case 'redirect': redirect(field); break;
       case 'post':
-          var params = serverParams('action', field.path, {key: field.key});
+        var url = field.url? field.url: field.path
+        var params = serverParams('action', url, {key: field.key});
         var selector = field.selector;
         if (selector !== undefined) {
           selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+field.page_id+"$2");
