@@ -951,10 +951,10 @@ class page
   function reply_if($method, $args)
   {
     $matches = array();
-    if (!preg_match('/^if\s+(\d+)\s*$/', $method, $matches)) return false;
+    if (!preg_match('/^if\s+(\!?\d+)\s*$/', $method, $matches)) return false;
     if (sizeof($args) < 1) throw new Exception("Invalid number of parameters for 'if'");
     $condition = $matches[1];
-    if ($condition[0] == '!') $condition = !$condition;
+    if ($condition[0] == '!') $condition = !(int)$condition;
     if ($condition) $this->reply($args);
     return true;
   }
