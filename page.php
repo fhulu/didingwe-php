@@ -954,7 +954,7 @@ class page
     if (!preg_match('/^if\s+(\!?\d+)\s*$/', $method, $matches)) return false;
     if (sizeof($args) < 1) throw new Exception("Invalid number of parameters for 'if'");
     $condition = $matches[1];
-    if ($condition[0] == '!') $condition = !(int)$condition;
+    if ($condition[0] == '!') $condition = !(int)substr($condition,1);
     if ($condition) $this->reply($args);
     return true;
   }
@@ -1374,8 +1374,7 @@ class page
     $url = $options['url'];
     unset($options['url']);
     $result = $api->post($url, json_encode($options), ['Content-Type' => 'application/json']);
-    log::debug_json("ENCODED RESULT", $result);
-    $response = $result->decode_response();
+    $response = (array)$result->decode_response();
     log::debug_json("DECODED RESULT", $response);
     return $response;
   }
