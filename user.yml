@@ -3,6 +3,7 @@
 
 activate:
   access: [admin]
+  fill: teal
   validate: none
   desc: Activate inactive user
   audit: sql(select first_name, last_name, email from user_view where id = '$key')
@@ -108,6 +109,7 @@ create:
 
 deactivate:
   access: [admin]
+  fill: red
   validate: none
   desc: Deactivate this user
   confirmation: Are you sure you want to deactivate this user?
@@ -130,6 +132,7 @@ delete:
 edit:
   access: [admin]
   action: dialog
+  fill: teal
   url: /user/modify
 
 enter_credentials:
@@ -231,11 +234,12 @@ list:
       - user/history
   sql: >
     select id, create_time, email, first_name, last_name, cellphone, roles, status, status, actions from (
-       select u.id, u.create_time, u.email, u.first_name, u.last_name,
+       select u.id, u.create_time, u.email, p.first_name, p.last_name,
         u.cellphone, group_concat(r.name) roles,
         if(u.active=1,'active','inactive') status,
         if(u.active=1,'expand,slide,edit,deactivate','expand,slide,edit,activate') actions
-      from user_view u left join role r on find_in_set(r.code,u.roles)
+      from user u left join person p on p.id = u.person
+        left join role r on find_in_set(r.code,u.roles)
       group by u.id
     ) tmp where 1 = 1
 
@@ -297,21 +301,26 @@ modify:
         valid: provided
   values:
     - sql_values: |
-        select title,first_name,last_name,cellphone,email,group_concat(r.name) role
-        from user_view u
+        select p.title,p.first_name,p.last_name,u.cellphone,u.email,group_concat(r.name) role
+        from user u left join person p on p.id = u.person
           left join role r on find_in_set(r.code,u.roles)
         where u.id = '$key'
         group by u.id
 
   actions:
-    - modify: { name: Update }
+    - modify: { name: Update User Details }
+  validate: delta
   post:
-    - read_values: {id: $key, roles: $role }
-    - sql_update: [user, id, title, first_name, last_name, email, roles]
+    - read_values:
+        id: $key
+        roles: $role
+        person: /(select person from user where id = '$key')
+    - sql_update: [user, id, delta]
+    - sql_update: [person, {id: $person}, delta]
     - clear_values
     - close_dialog: User details updated
     - refresh: "#main table"
-  audit: $title,$first_name,$last_name,$cellphone,$email,$role
+  audit: $delta
 
 not_registered:
   valid: not(is_registered($1))
