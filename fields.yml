@@ -235,6 +235,10 @@ manage_users:
   access: user
   url: /user/list
 
+manage_all_users:
+  access: [admin]
+  url: /user/list_all
+
 mobile_number:
   desc: The mobile number at which you can be contacted on
   valid: national_tel

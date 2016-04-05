@@ -243,6 +243,26 @@ list:
       group by u.id
     ) tmp where 1 = 1
 
+
+list_all:
+  name: System Users
+  access: [admin]
+  type: list
+  fields:
+    - organisation: { push: email }
+  sql: >
+    select id, create_time, company_name,  email, first_name, last_name, cellphone, roles, status, status, actions from (
+       select u.id, u.create_time, u.email, p.first_name, p.last_name, org.name company_name,
+        u.cellphone, group_concat(r.name) roles,
+        if(u.active=1,'active','inactive') status,
+        if(u.active=1,'expand,slide,edit,deactivate','expand,slide,edit,activate') actions
+      from user u join partner org on u.partner = org.id and org.active = 1
+        left join person p on p.id = u.person
+        left join role r on find_in_set(r.code,u.roles)
+      group by u.id
+    ) tmp where 1 = 1
+
+
 login:
   access: public
   type: input_page
