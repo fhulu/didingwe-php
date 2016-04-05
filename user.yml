@@ -231,7 +231,7 @@ list:
     - actions
   expand:
     pages:
-      - user/history
+      - /user/history
   sql: >
     select id, create_time, email, first_name, last_name, cellphone, roles, status, status, actions from (
        select u.id, u.create_time, u.email, p.first_name, p.last_name,
@@ -320,7 +320,7 @@ modify:
     - clear_values
     - close_dialog: User details updated
     - refresh: "#main table"
-  audit: $delta
+  audit: $email $delta
 
 not_registered:
   valid: not(is_registered($1))
