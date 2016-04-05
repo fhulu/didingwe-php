@@ -193,6 +193,7 @@ button,
   background: lightgrey;
   font-weight: bold;
   padding: 0px 3px;
+  line-height: 32px;
 }
 
 .question-input>label
