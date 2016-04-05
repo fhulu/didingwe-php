@@ -857,12 +857,17 @@ class page
 
     if (!sizeof($args)) return null;
 
+    $fields = $this->db->field_names($table);
     $sets = array();
     foreach($args as $arg) {
       list($arg,$value) = $this->get_sql_pair($arg);
+      if (!in_array($arg, $fields)) continue;
       $sets[] = "$arg = $value";
     }
+    if (!sizeof($sets)) return null;
+
     $sets = implode(',', $sets);
+
     $sql = "update $table set $sets where $key_name = $key_value";
     return $this->sql_exec($sql);
   }

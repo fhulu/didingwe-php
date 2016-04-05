@@ -330,6 +330,10 @@ class db
     return array('spec'=>$spec, 'schema'=>$schema, 'table'=>$table, 'column'=>$column, 'alias'=>$alias);
   }
 
+  function field_names($table)
+  {
+    return $this->read_column("show columns from $table");
+  }
 }
 
 $db = null;
