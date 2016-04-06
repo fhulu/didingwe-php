@@ -428,4 +428,3 @@ wizard_post:
 tax_reference_no:
   name: Tax Reference Number
   attr: { min: 1000000000, max: 9999999999 }
-  valid: /^\d{10}$/
