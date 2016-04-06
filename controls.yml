@@ -79,22 +79,22 @@ captcha_image:
   src: /?action=action&path=/controls/captcha_image
   post: [show_captcha]
 
+
 captioned_image:
   classes: div
   text: $image $caption
-  parent_id: $id
+  source: $id.png
+  title: $name
   image:
-    derive: [parent_id]
+    derive: [source,title]
     type: image
-    src: /$parent_id.png
-    attr: { title: $name}
+    src: $source
+    attr: { title: $title}
   caption:
     type: label
     derive: [title]
     text: $title
     styles: [block]
-  title: $name
-  src: $id.png
 
 captioned_input:
   type: label_top
