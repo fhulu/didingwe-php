@@ -394,8 +394,8 @@ file_uploader:
       - percent
   buttons:
     type: container
-    styles: [top_right,tallest]
-    width: 56
+    styles: [top_right,tallest,center_text]
+    width: 82
     contents:
       - default: { styles: [biggest,center_text], show: no }
       - type: button

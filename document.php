@@ -5,17 +5,19 @@ require_once('session.php');
 class document_exception extends Exception {};
 class document
 {
-  static function upload($control, $types, $user_id, $partner_id=0)
+  static function upload($options)
   {
+    list($control, $allowed_types, $user_id, $partner_id, $path, $ignore_date) =
+      to_array($options,'control', 'types', 'user_id', 'partner_id', 'path', 'ignore_date');
     $file_name = addslashes($_FILES[$control]["name"]);
     $type = document::extension($file_name);
     log::debug("about to upload $file_name from $control of type $type");
 
-    if (!is_array($types)) $types = explode(',', $types);
+    if (!is_array($allowed_types)) $allowed_types = explode(',', $allowed_types);
     $type = strtoupper($type);
-    array_walk($types, function(&$val) { $val = strtoupper($val); });
-    if (!in_array($type, $types))
-      return "File $file_name is not allowed. Please upload file of type ". implode(' or ', $types);
+    array_walk($allowed_types, function(&$val) { $val = strtoupper($val); });
+    if (!in_array($type, $allowed_types))
+      return "File $file_name is not allowed. Please upload file of type ". implode(' or ', $allowed_types);
 
     if ($file_name == '')
       return  "Error uploading document of type $type. File may be too large";
@@ -23,14 +25,15 @@ class document
     global $db;
 
 
-    $pid = getmypid();
-
-    $sql = "INSERT INTO document(partner_id,user_id,session_id,filename,type,status)
-            values($partner_id,$user_id,'$pid','$file_name','$type','pend')";
+    $sql = "INSERT INTO document(partner_id,user_id,filename,type,status)
+            values($partner_id,$user_id,'$file_name','$type','pend')";
 
     $id = $db->insert($sql);
     $file_name = str_replace("/[\' \s]'/", '-', $_FILES[$control]["name"]);
-    $path = "../uploads/$id-$file_name";
+    if ($path=='') $path = '.';
+    if (!$ignore_date) $path .= '/' . date('Ymd');
+    if (!file_exists($path)) mkdir($path, 755, true);
+    $path = "$path/$id-$file_name";
     log::debug("Uploading file $path");
     $temp_file = $_FILES[$control]['tmp_name'];
 
@@ -40,7 +43,7 @@ class document
     if (!move_uploaded_file($_FILES[$control]["tmp_name"], $path))
       return "Error uploading document of type $type. File may be too large";
 
-    $db->exec("update document set status = 'done' where id = '$id'");
+    $db->exec("update document set status = 'done', path='$path' where id = '$id'");
     return array($id,$file_name);
   }
 
@@ -50,7 +53,7 @@ class document
       document::upload ($control, $type, $partner_id);
   }
 
-  static function view($request)
+  static function view($id)
   {
     $id = $request['id'];
     user::verify("view_doc");
