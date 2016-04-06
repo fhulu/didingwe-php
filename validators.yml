@@ -224,7 +224,12 @@ url: /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/
 visitable:
   error: $name $value is not accessible from this site
 
-za_code: /^\d{4}$/
+za_code:
+  valid:
+    - numeric
+    - at_least(4,digits)
+    - at_most(4,digits)
+
 
 za_company_reg:
   valid:

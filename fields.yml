@@ -287,9 +287,7 @@ postal_address:
 
 postal_code:
   attr: { min: 0000, max: 9999 }
-  valid:
-    - numeric
-    - at_least(4,digits)
+  valid: za_code
 
 physical_address:
   attr: { maxlength: 128 }
@@ -297,9 +295,7 @@ physical_address:
 
 physical_code:
   attr: { min: 0000, max: 9999 }
-  valid:
-    - numeric
-    - at_least(4,digits)
+  valid: za_code
 
 query:
   type: button
