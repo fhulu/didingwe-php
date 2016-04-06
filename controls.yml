@@ -712,8 +712,9 @@ menu_item: { templates: li }
 
 multi_input:
   classes: div
+  attr: { id: ""}
   text: $inputs
-  split: 45%
+  split: 47%
   spacing: 10
   inputs:
     - template: inplace_input
