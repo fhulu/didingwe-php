@@ -289,10 +289,14 @@ disabled_text_input:
   type: disabled_input
 
 document_link:
-  type: link
-  action: post
+  tag: a
+  attr: { title: $desc }
+  text: $name
+  style: { cursor: pointer }
+  immutable: [url]
+  url: /$id
   target: _blank
-  post: []
+
 
 
 double_spaced:

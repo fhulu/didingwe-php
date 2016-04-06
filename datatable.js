@@ -378,6 +378,7 @@
         field.id = field.id + '_' + key;
       }
       var created = this.render.create(field);
+      if (value !== undefined) created.value(value);
       td.append(created);
     },
 
