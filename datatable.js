@@ -41,6 +41,7 @@
       var self = this;
       this.element.on('refresh', function(e, args) {
         self.load(args);
+        e.stopImmediatePropagation();
       })
     },
 
