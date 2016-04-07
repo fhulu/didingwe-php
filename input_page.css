@@ -218,3 +218,8 @@ button,
 {
   width: 24px;
 }
+
+.file_uploader #buttons
+{
+  line-height: 32px;
+}

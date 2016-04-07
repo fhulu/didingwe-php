@@ -289,10 +289,14 @@ disabled_text_input:
   type: disabled_input
 
 document_link:
-  type: link
-  action: post
+  tag: a
+  attr: { title: $desc }
+  text: $name
+  style: { cursor: pointer }
+  immutable: [url]
+  url: /$id
   target: _blank
-  post: []
+
 
 
 double_spaced:
@@ -394,8 +398,8 @@ file_uploader:
       - percent
   buttons:
     type: container
-    styles: [top_right,tallest]
-    width: 56
+    styles: [top_right,tallest,center_text]
+    width: 82
     contents:
       - default: { styles: [biggest,center_text], show: no }
       - type: button
@@ -712,8 +716,9 @@ menu_item: { templates: li }
 
 multi_input:
   classes: div
+  attr: { id: ""}
   text: $inputs
-  split: 45%
+  split: 47%
   spacing: 10
   inputs:
     - template: inplace_input

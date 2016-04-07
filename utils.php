@@ -312,5 +312,5 @@ function to_array($obj)
   foreach($keys as $key) {
     $array[] = $obj[$key];
   }
-  return $aray;
+  return $array;
 }

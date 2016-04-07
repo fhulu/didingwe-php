@@ -8,7 +8,7 @@
     {
       var el = this.element
       var form = el.find('form')
-        .attr('action',this.options.uploader+'&path='+encodeURIComponent(this.options.path));
+        .attr('action',this.options.uploader+'&path='+encodeURIComponent(this.options.path)+'&key='+this.options.key);
       form.att
       var upload = el.find('#upload').click(function() {
         form.submit();

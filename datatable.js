@@ -41,6 +41,7 @@
       var self = this;
       this.element.on('refresh', function(e, args) {
         self.load(args);
+        e.stopImmediatePropagation();
       })
     },
 
@@ -377,6 +378,7 @@
         field.id = field.id + '_' + key;
       }
       var created = this.render.create(field);
+      if (value !== undefined) created.value(value);
       td.append(created);
     },
 

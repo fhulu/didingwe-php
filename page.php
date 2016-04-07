@@ -1026,12 +1026,28 @@ class page
     require_once 'document.php';
     $code = last($this->path);
     $this->merge_fields($this->context);
-    $result = document::upload("file_$code", $this->context['allowed'], $_SESSION['uid']);
+    $pre_upload = $this->context['pre_upload'];
+    if ($pre_upload) {
+      $pre_upload = $this->reply($pre_upload);
+      if ($pre_upload === false) return false;
+    }
+    $partner_id = $pre_upload['partner_id'];
+    if (!isset($partner_id)) $partner_id = $_SESSION['pid'];
+    global $config;
+    $options = [
+        'control' => "file_$code",
+        'types' => $this->context['allowed'],
+        'user_id' => $_SESSION['uid'],
+        'partner_id' => $partner_id,
+        'path' => $config['upload_path']
+      ];
+    $result = document::upload($options);
     if (!is_array($result)) return page::error($code, $result);
 
     list($id, $file_name) = $result;
     $result = ['document_id'=>$id, 'document_type'=>$this->name($this->context), 'document_file'=>$file_name];
-    $result = merge_options($result, $this->reply($this->context['post']));
+    if (!$result) return false;
+    $result = merge_options($pre_upload, $result, $this->reply($this->context['post']));
     if ($result === false) return false;
     $this->context['name'] = 'Upload';
     $this->audit($this->context, $result);
