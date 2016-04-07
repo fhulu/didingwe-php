@@ -15,7 +15,7 @@ class datatable
   {
     $matches = array();
     $sql = preg_replace('/[\n\r\s]/', ' ', $sql);
-    if (!preg_match('/^select (((?!from).)*)(?:from.+)?$/', $sql, $matches))
+    if (!preg_match('/^select (?:distinct)?(((?!from).)*)(?:from.+)?$/i', $sql, $matches))
       throw new Exception("Invalid or complex SQL while parsing fields");
     $pattern = <<< PATTERN
 /[^,]*\((?>[^()]|(?R))*\)( [^,]+)?|[^,]*'(?>[^()]|(?R))*'( [^,]+)?|[^,]*"(?>[^()]|(?R))*"( [^,]+)?|[^,]+/
@@ -123,7 +123,7 @@ PATTERN;
     $sql =  page::replace_sql($options['sql'], $options);
     if ($sql == '') return;
     $fields = datatable::get_sql_fields($sql);
-    $sql = preg_replace('/^\s*(select )/i', '$1 SQL_CALC_FOUND_ROWS ', $sql, 1);
+    $sql = preg_replace('/^\s*(select )(distinct)?/i', '$1 $2 SQL_CALC_FOUND_ROWS ', $sql, 1);
     datatable::filter($sql, $fields, $options);
     datatable::sort($sql, $fields, $options);
     if ($page_size == 0)
