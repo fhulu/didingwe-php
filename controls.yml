@@ -476,8 +476,9 @@ highest:
 
 hspace:
   mutable: false
+  width: 0
   type: blank
-  space: 20
+  space: 6
   styles: [hspaced]
 
 hspaced:
@@ -516,7 +517,7 @@ info_page:
     - template: labelled_left
 
 info_text:
-  classes: div
+  classes: label
   value: ""
   text: $value
 
