@@ -977,7 +977,7 @@ class page
     $methods = array('alert', 'abort', 'call', 'clear_session', 'clear_values',
       'close_dialog', 'load_lineage', 'read_session', 'read_values', 'redirect', 'ref_list', 'rest_post',
       'send_email', 'send_sms', 'show_dialog', 'show_captcha', 'sql', 'sql_exec','sql_rows', 'sql_insert',
-      'sql_update', 'sql_values', 'refresh', 'trigger', 'update', 'write_session');
+      'sql_update', 'sql_values', 'refresh', 'trigger', 'update', 'view_doc', 'write_session');
     foreach($actions as $action) {
       if ($this->aborted) return false;
       if (is_array($action)) {
@@ -1019,39 +1019,6 @@ class page
     $values = $this->context['values'];
     if (is_null($values)) $values = $this->context;
     return $this->reply($values);
-  }
-
-  function upload()
-  {
-    require_once 'document.php';
-    $code = last($this->path);
-    $this->merge_fields($this->context);
-    $pre_upload = $this->context['pre_upload'];
-    if ($pre_upload) {
-      $pre_upload = $this->reply($pre_upload);
-      if ($pre_upload === false) return false;
-    }
-    $partner_id = $pre_upload['partner_id'];
-    if (!isset($partner_id)) $partner_id = $_SESSION['pid'];
-    global $config;
-    $options = [
-        'control' => "file_$code",
-        'types' => $this->context['allowed'],
-        'user_id' => $_SESSION['uid'],
-        'partner_id' => $partner_id,
-        'path' => $config['upload_path']
-      ];
-    $result = document::upload($options);
-    if (!is_array($result)) return page::error($code, $result);
-
-    list($id, $file_name) = $result;
-    $result = ['document_id'=>$id, 'document_type'=>$this->name($this->context), 'document_file'=>$file_name];
-    if (!$result) return false;
-    $result = merge_options($pre_upload, $result, $this->reply($this->context['post']));
-    if ($result === false) return false;
-    $this->context['name'] = 'Upload';
-    $this->audit($this->context, $result);
-    return $result;
   }
 
   static function respond($response, $value=null)
@@ -1406,5 +1373,49 @@ class page
     if(isset($_SERVER['HTTPS']))
       $protocol = ($_SERVER['HTTPS'] && $_SERVER['HTTPS'] != "off") ? "https" : "http";
     return $protocol . "://" . $_SERVER['HTTP_HOST'] . ':' . $_SERVER['SERVER_PORT'];
+  }
+
+  function upload()
+  {
+    require_once 'document.php';
+    $code = last($this->path);
+    $this->merge_fields($this->context);
+    $pre_upload = $this->context['pre_upload'];
+    if ($pre_upload) {
+      $pre_upload = $this->reply($pre_upload);
+      if ($pre_upload === false) return false;
+    }
+    $partner_id = $pre_upload['partner_id'];
+    if (!isset($partner_id)) $partner_id = $_SESSION['pid'];
+    global $config;
+    $options = [
+        'control' => "file_$code",
+        'types' => $this->context['allowed'],
+        'user_id' => $_SESSION['uid'],
+        'partner_id' => $partner_id,
+        'path' => $config['upload_path']
+      ];
+    $result = document::upload($options);
+    if (!is_array($result)) return page::error($code, $result);
+
+    list($id, $file_name) = $result;
+    $result = ['document_id'=>$id, 'document_type'=>$this->name($this->context), 'document_file'=>$file_name];
+    if (!$result) return false;
+    $result = merge_options($pre_upload, $result, $this->reply($this->context['post']));
+    if ($result === false) return false;
+    $this->context['name'] = 'Upload';
+    $this->audit($this->context, $result);
+    return $result;
+  }
+
+
+  function view_doc()
+  {
+    $this->merge_fields($this->context);
+    $options = page::merge_options($this->request,$this->context, $this->answer);
+
+    //todo: verify permissions
+    require_once 'document.php';
+    document::view($options['key']);
   }
 }

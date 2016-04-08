@@ -55,12 +55,9 @@ class document
 
   static function view($id)
   {
-    $id = $request['id'];
-    user::verify("view_doc");
     global $db;
-    list($file_name, $desc) = $db->read_one("select filename, description from document d, document_type dt
+    list($file_name, $desc) = $db->read_one("select path, description from document d, document_type dt
       where d.type = dt.code and d.id = $id");
-    $file_name = "../uploads/$id-$file_name";
     if (!file_exists($file_name)) {
       echo "Document file not found. Please report to System Administrator";
       return;

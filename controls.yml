@@ -293,9 +293,11 @@ document_link:
   attr: { title: $desc }
   text: $name
   style: { cursor: pointer }
-  immutable: [url]
-  url: /$id
+  action: redirect
   target: _blank
+  query: " "
+  post:
+    - view_doc
 
 
 
