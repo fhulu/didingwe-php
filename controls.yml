@@ -369,7 +369,7 @@ file_uploader:
   uploader: /?action=upload
   max_size: 100
   parent_id: $id
-  allowed: pdf
+  allowed_extensions: pdf
   text: $form $iframe $progress $buttons
   form:
     tag: form

@@ -1390,7 +1390,8 @@ class page
     global $config;
     $options = [
         'control' => "file_$code",
-        'types' => $this->context['allowed'],
+        'allowed_exts' => $this->context['allowed_extensions'],
+        'type' => page::field_name($code),
         'user_id' => $_SESSION['uid'],
         'partner_id' => $partner_id,
         'path' => $config['upload_path']
