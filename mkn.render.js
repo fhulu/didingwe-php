@@ -796,7 +796,7 @@ mkn.render = function(options)
   var redirect = function(field)
   {
     if (!$.isPlainObject(field)) field = { url: field };
-    var url = field.url.trim();
+    var url = field.url;
     if (url == '' && field.target === '_blank') {
       url = '/?action=action';
       field = $.extend({key: options.key}, field);
