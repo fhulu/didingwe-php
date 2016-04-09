@@ -847,6 +847,16 @@ class page
     return [$this->get_db_name($arg), $value];
   }
 
+  function parse_delta(&$args)
+  {
+    $delta_index = array_search('delta', $args, true);
+    if ($delta_index === false) return;
+
+    $delta = trim($this->request['delta']);
+    $delta = $delta==''? null: explode(',', $delta);
+    array_splice($args, $delta_index, 1, $delta);
+  }
+
   function sql_update()
   {
     $args = page::parse_args(func_get_args());
@@ -856,12 +866,8 @@ class page
     if (!sizeof($args))
       throw new Exception("Invalid number of arguments for sql_update");
 
-    $delta_index = array_search('delta', $args, true);
-    if ($delta_index !== false) {
-      $delta = trim($this->request['delta']);
-      $delta = $delta==''? null: explode(',', $delta);
-      array_splice($args, $delta_index, 1, $delta);
-    }
+
+    $this->parse_delta($args);
 
     if (!sizeof($args)) return null;
 
@@ -1178,7 +1184,7 @@ class page
   function write_session()
   {
     $vars = page::parse_args(func_get_args());
-
+    $this->parse_delta($vars);
     foreach($vars as $var) {
       if ($var == 'request' && !isset($this->request['request']))
         call_user_func_array (array($this, 'write_session'), array_keys($this->request));
