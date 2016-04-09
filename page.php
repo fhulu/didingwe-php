@@ -744,24 +744,32 @@ class page
   {
     global $db;
     $fields = $this->fields[$this->page];
-    $name = $this->name($action);
     $result = null_merge($fields, $result, false);
     $detail = at($action, 'audit');
+    $field = [];
+    $context = merge_options($this->fields, $this->context, $_SESSION, $this->request, $result);
+    if (is_array($detail)) {
+      $field = $detail;
+      $detail = $field['detail'];
+      replace_fields($field, $context, true);
+    }
     if ($detail) {
       $detail = replace_vars($detail, $user);
       if (!$this->audit_delta($detail)) return;
-      $context = merge_options($this->fields, $this->context, $_SESSION, $this->request, $result);
       $detail = replace_vars($detail, $context);
       $detail = page::decode_field($detail);
       $detail = page::decode_sql($detail);
       $detail = replace_vars($detail,$this->request);
     }
+    $name = $field['name'];
+    if (!$field['name']) $name = $this->name('action');
     $name = addslashes($name);
     $detail = addslashes($detail);
     $user = $this->read_user();
-    $user_id = $user['uid'];
-    $db->insert("insert into audit_trail(user, action, detail)
-      values('$user_id', '$name', '$detail')");
+    $user = $user['uid'];
+    $partner = $field['partner'];
+    $db->insert("insert into audit_trail(user, partner, action, detail)
+      values('$user', '$partner', '$name', '$detail')");
   }
 
   function action()
@@ -977,7 +985,7 @@ class page
     $methods = array('alert', 'abort', 'call', 'clear_session', 'clear_values',
       'close_dialog', 'load_lineage', 'read_session', 'read_values', 'redirect', 'ref_list', 'rest_post',
       'send_email', 'send_sms', 'show_dialog', 'show_captcha', 'sql', 'sql_exec','sql_rows', 'sql_insert',
-      'sql_update', 'sql_values', 'refresh', 'trigger', 'update', 'view_doc', 'write_session');
+      'sql_update', 'sql_values', 'refresh', 'trigger', 'update', 'upload', 'view_doc', 'write_session');
     foreach($actions as $action) {
       if ($this->aborted) return false;
       if (is_array($action)) {
@@ -1377,7 +1385,6 @@ class page
 
   function upload()
   {
-    require_once 'document.php';
     $code = last($this->path);
     $this->merge_fields($this->context);
     $pre_upload = $this->context['pre_upload'];
@@ -1385,7 +1392,7 @@ class page
       $pre_upload = $this->reply($pre_upload);
       if ($pre_upload === false) return false;
     }
-    $partner_id = $pre_upload['partner_id'];
+    $partner_id = $pre_upload['partner'];
     if (!isset($partner_id)) $partner_id = $_SESSION['pid'];
     global $config;
     $options = [
@@ -1396,17 +1403,13 @@ class page
         'partner_id' => $partner_id,
         'path' => $config['upload_path']
       ];
+
+    require_once 'document.php';
     $result = document::upload($options);
     if (!is_array($result)) return page::error($code, $result);
 
     list($id, $file_name) = $result;
-    $result = ['document_id'=>$id, 'document_type'=>$this->name($this->context), 'document_file'=>$file_name];
-    if (!$result) return false;
-    $result = merge_options($pre_upload, $result, $this->reply($this->context['post']));
-    if ($result === false) return false;
-    $this->context['name'] = 'Upload';
-    $this->audit($this->context, $result);
-    return $result;
+    return ['document_id'=>$id, 'document_type'=>$options['type'], 'document_file'=>$file_name];
   }
 
 

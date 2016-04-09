@@ -366,7 +366,7 @@ file_uploader:
   create: file_uploader
   script: [/common/file_uploader.js,/common/jquery.form.js]
   css: [/common/file_uploader.css]
-  uploader: /?action=upload
+  uploader: /?action=action
   max_size: 100
   parent_id: $id
   allowed_extensions: pdf
@@ -410,7 +410,7 @@ file_uploader:
       - type: control
       - uploaded
       - failed
-  post: []
+  post: [ upload ]
   audit: "$type: $file_name"
 
 filled:
