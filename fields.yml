@@ -270,7 +270,7 @@ my_audit_trail:
   access: reg
   url: /audit_trail/user
 
-partner_audit_trail:
+organisation_audit_trail:
   access: [admin]
   url: /audit_trail/partner
 

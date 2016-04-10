@@ -31,7 +31,7 @@ user:
       left join person p on u.person = p.id
 
 partner:
-  name: Partner Audit Trail
+  name: Organisation Audit Trail
   type: base
   access: [admin]
   sql: |
