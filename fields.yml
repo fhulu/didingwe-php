@@ -53,6 +53,10 @@ change_password:
   action: dialog
   url: /password_changer/change
 
+
+close:
+  action: close_dialog
+
 company_name:
   valid:
     - at_least(2)
