@@ -761,8 +761,8 @@ class page
       $detail = page::decode_sql($detail);
       $detail = replace_vars($detail,$this->request);
     }
-    $name = $field['name'];
-    if (!$field['name']) $name = $this->name('action');
+    $name = $field['action'];
+    if (!isset($name)) $name = $this->name($action);
     $name = addslashes($name);
     $detail = addslashes($detail);
     $user = $this->read_user();
@@ -770,6 +770,10 @@ class page
     $partner = $field['partner'];
     $db->insert("insert into audit_trail(user, partner, action, detail)
       values('$user', '$partner', '$name', '$detail')");
+
+    $post = $field['post'];
+    if (isset($post))
+      $this->reply($post);
   }
 
   function action()
