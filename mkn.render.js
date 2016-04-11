@@ -797,7 +797,7 @@ mkn.render = function(options)
   {
     if (!$.isPlainObject(field)) field = { url: field };
     var url = field.url;
-    if (url === undefined && field.target === '_blank') {
+    if (url == '' && field.target === '_blank') {
       url = '/?action=action';
       field = $.extend({key: options.key}, field);
       var exclude = ['action', 'desc', 'html', 'id', 'name', 'page_id', 'query', 'selector','tag', 'target','text', 'type', 'template']
@@ -830,6 +830,7 @@ mkn.render = function(options)
     field.page_id = field.page_id || obj.parents(".page").eq(0).attr('id');
     switch(action) {
       case 'dialog': mkn.showDialog(field.url, {key: field.key}); return;
+      case 'close_dialog': mkn.closeDialog(obj.parents(".page").eq(0));
       case 'redirect': redirect(field); break;
       case 'post':
         var url = field.url? field.url: field.path

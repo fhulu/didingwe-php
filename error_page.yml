@@ -9,3 +9,4 @@ error_page:
     Please notify the system administrator of this incident.
   actions:
     - home
+    - close: { action: close_dialog }

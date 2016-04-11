@@ -53,6 +53,10 @@ change_password:
   action: dialog
   url: /password_changer/change
 
+
+close:
+  action: close_dialog
+
 company_name:
   valid:
     - at_least(2)
@@ -266,7 +270,7 @@ my_audit_trail:
   access: reg
   url: /audit_trail/user
 
-partner_audit_trail:
+organisation_audit_trail:
   access: [admin]
   url: /audit_trail/partner
 

@@ -744,24 +744,36 @@ class page
   {
     global $db;
     $fields = $this->fields[$this->page];
-    $name = $this->name($action);
     $result = null_merge($fields, $result, false);
     $detail = at($action, 'audit');
+    $field = [];
+    $context = merge_options($this->fields, $this->context, $_SESSION, $this->request, $result);
+    if (is_array($detail)) {
+      $field = $detail;
+      $detail = $field['detail'];
+      replace_fields($field, $context, true);
+    }
     if ($detail) {
       $detail = replace_vars($detail, $user);
       if (!$this->audit_delta($detail)) return;
-      $context = merge_options($this->fields, $this->context, $_SESSION, $this->request, $result);
       $detail = replace_vars($detail, $context);
       $detail = page::decode_field($detail);
       $detail = page::decode_sql($detail);
       $detail = replace_vars($detail,$this->request);
     }
+    $name = $field['action'];
+    if (!isset($name)) $name = $this->name($action);
     $name = addslashes($name);
     $detail = addslashes($detail);
     $user = $this->read_user();
-    $user_id = $user['uid'];
-    $db->insert("insert into audit_trail(user, action, detail)
-      values('$user_id', '$name', '$detail')");
+    $user = $user['uid'];
+    $partner = $field['partner'];
+    $db->insert("insert into audit_trail(user, partner, action, detail)
+      values('$user', '$partner', '$name', '$detail')");
+
+    $post = $field['post'];
+    if (isset($post))
+      $this->reply($post);
   }
 
   function action()
@@ -839,6 +851,16 @@ class page
     return [$this->get_db_name($arg), $value];
   }
 
+  function parse_delta(&$args)
+  {
+    $delta_index = array_search('delta', $args, true);
+    if ($delta_index === false) return;
+
+    $delta = trim($this->request['delta']);
+    $delta = $delta==''? null: explode(',', $delta);
+    array_splice($args, $delta_index, 1, $delta);
+  }
+
   function sql_update()
   {
     $args = page::parse_args(func_get_args());
@@ -848,12 +870,8 @@ class page
     if (!sizeof($args))
       throw new Exception("Invalid number of arguments for sql_update");
 
-    $delta_index = array_search('delta', $args, true);
-    if ($delta_index !== false) {
-      $delta = trim($this->request['delta']);
-      $delta = $delta==''? null: explode(',', $delta);
-      array_splice($args, $delta_index, 1, $delta);
-    }
+
+    $this->parse_delta($args);
 
     if (!sizeof($args)) return null;
 
@@ -977,7 +995,7 @@ class page
     $methods = array('alert', 'abort', 'call', 'clear_session', 'clear_values',
       'close_dialog', 'load_lineage', 'read_session', 'read_values', 'redirect', 'ref_list', 'rest_post',
       'send_email', 'send_sms', 'show_dialog', 'show_captcha', 'sql', 'sql_exec','sql_rows', 'sql_insert',
-      'sql_update', 'sql_values', 'refresh', 'trigger', 'update', 'write_session');
+      'sql_update', 'sql_values', 'refresh', 'trigger', 'update', 'upload', 'view_doc', 'write_session');
     foreach($actions as $action) {
       if ($this->aborted) return false;
       if (is_array($action)) {
@@ -1019,39 +1037,6 @@ class page
     $values = $this->context['values'];
     if (is_null($values)) $values = $this->context;
     return $this->reply($values);
-  }
-
-  function upload()
-  {
-    require_once 'document.php';
-    $code = last($this->path);
-    $this->merge_fields($this->context);
-    $pre_upload = $this->context['pre_upload'];
-    if ($pre_upload) {
-      $pre_upload = $this->reply($pre_upload);
-      if ($pre_upload === false) return false;
-    }
-    $partner_id = $pre_upload['partner_id'];
-    if (!isset($partner_id)) $partner_id = $_SESSION['pid'];
-    global $config;
-    $options = [
-        'control' => "file_$code",
-        'types' => $this->context['allowed'],
-        'user_id' => $_SESSION['uid'],
-        'partner_id' => $partner_id,
-        'path' => $config['upload_path']
-      ];
-    $result = document::upload($options);
-    if (!is_array($result)) return page::error($code, $result);
-
-    list($id, $file_name) = $result;
-    $result = ['document_id'=>$id, 'document_type'=>$this->name($this->context), 'document_file'=>$file_name];
-    if (!$result) return false;
-    $result = merge_options($pre_upload, $result, $this->reply($this->context['post']));
-    if ($result === false) return false;
-    $this->context['name'] = 'Upload';
-    $this->audit($this->context, $result);
-    return $result;
   }
 
   static function respond($response, $value=null)
@@ -1203,7 +1188,7 @@ class page
   function write_session()
   {
     $vars = page::parse_args(func_get_args());
-
+    $this->parse_delta($vars);
     foreach($vars as $var) {
       if ($var == 'request' && !isset($this->request['request']))
         call_user_func_array (array($this, 'write_session'), array_keys($this->request));
@@ -1406,5 +1391,45 @@ class page
     if(isset($_SERVER['HTTPS']))
       $protocol = ($_SERVER['HTTPS'] && $_SERVER['HTTPS'] != "off") ? "https" : "http";
     return $protocol . "://" . $_SERVER['HTTP_HOST'] . ':' . $_SERVER['SERVER_PORT'];
+  }
+
+  function upload()
+  {
+    $code = last($this->path);
+    $this->merge_fields($this->context);
+    $pre_upload = $this->context['pre_upload'];
+    if ($pre_upload) {
+      $pre_upload = $this->reply($pre_upload);
+      if ($pre_upload === false) return false;
+    }
+    $partner_id = $pre_upload['partner'];
+    if (!isset($partner_id)) $partner_id = $_SESSION['pid'];
+    global $config;
+    $options = [
+        'control' => "file_$code",
+        'allowed_exts' => $this->context['allowed_extensions'],
+        'type' => page::field_name($code),
+        'user_id' => $_SESSION['uid'],
+        'partner_id' => $partner_id,
+        'path' => $config['upload_path']
+      ];
+
+    require_once 'document.php';
+    $result = document::upload($options);
+    if (!is_array($result)) return page::error($code, $result);
+
+    list($id, $file_name) = $result;
+    return ['document_id'=>$id, 'document_type'=>$options['type'], 'document_file'=>$file_name];
+  }
+
+
+  function view_doc()
+  {
+    $this->merge_fields($this->context);
+    $options = page::merge_options($this->request,$this->context, $this->answer);
+
+    //todo: verify permissions
+    require_once 'document.php';
+    document::view($options['key']);
   }
 }

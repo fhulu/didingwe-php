@@ -12,6 +12,7 @@ base:
     - print
     - export
   fields:
+    - key: { hide: yes}
     - when: { width: 12%,name: Time }
     - first_name: { width: 10% }
     - last_name: { width: 16% }
@@ -25,19 +26,18 @@ user:
   name: My Audit Trail
   access: [reg]
   sql: |
-    select t.create_time, p.first_name, p.last_name,u.email, t.action, t.detail
+    select t.id, t.create_time, p.first_name, p.last_name,u.email, t.action, t.detail
       from audit_trail t join user u on t.user = u.id and u.id = '$uid'
       left join person p on u.person = p.id
 
 partner:
-  name: Partner Audit Trail
+  name: Organisation Audit Trail
   type: base
   access: [admin]
   sql: |
-    select t.create_time, p.first_name, p.last_name,u.email, t.action, t.detail
+    select t.id, t.create_time, p.first_name, p.last_name,u.email, t.action, t.detail
       from audit_trail t join user u on t.user = u.id
-      and (u.id in (select id from user where partner = '$pid')
-        or t.partner = '$pid')
+      and (u.partner = '$pid' or t.partner = '$pid')
       left join person p on u.person = p.id
 
 system:
@@ -47,7 +47,7 @@ system:
   fields:
     - organisation: { push: first_name, width: 12% }
   sql: |
-    select t.create_time, c.name, p.first_name, p.last_name,u.email, t.action, t.detail
+    select t.id, t.create_time, c.name, p.first_name, p.last_name,u.email, t.action, t.detail
       from audit_trail t join user u on t.user = u.id
       left join partner c on c.id = t.partner or c.id = u.partner
       left join person p on u.person = p.id

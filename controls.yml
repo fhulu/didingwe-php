@@ -293,9 +293,11 @@ document_link:
   attr: { title: $desc }
   text: $name
   style: { cursor: pointer }
-  immutable: [url]
-  url: /$id
+  action: redirect
   target: _blank
+  query: " "
+  post:
+    - view_doc
 
 
 
@@ -364,10 +366,10 @@ file_uploader:
   create: file_uploader
   script: [/common/file_uploader.js,/common/jquery.form.js]
   css: [/common/file_uploader.css]
-  uploader: /?action=upload
+  uploader: /?action=action
   max_size: 100
   parent_id: $id
-  allowed: pdf
+  allowed_extensions: pdf
   text: $form $iframe $progress $buttons
   form:
     tag: form
@@ -408,7 +410,7 @@ file_uploader:
       - type: control
       - uploaded
       - failed
-  post: []
+  post: [ upload ]
   audit: "$type: $file_name"
 
 filled:
