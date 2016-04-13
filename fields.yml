@@ -83,6 +83,7 @@ confirm_password:
 country:
   options:
     - ref_list
+  valid: ref_list
 
 day_of_month:
   options:
