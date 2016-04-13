@@ -270,7 +270,7 @@ table.data td>input
   height: 100%;
 }
 
-table.data .actions>*
+table.data td>.actions>*
 {
   height: 100%;
 }
