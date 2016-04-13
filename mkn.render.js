@@ -636,7 +636,7 @@ mkn.render = function(options)
     if (!style) style = {};
     styles = field.styles;
     if (styles) mergeStyles();
-    expandVars(field, style, { sourceFirst: true})
+    expandVars(field, style, { sourceFirst: true, recurse: true})
     setGeometry();
     obj.css(style);
   }
@@ -652,26 +652,39 @@ mkn.render = function(options)
     return item;
   }
 
+
   var expandVars = function(source, dest, flags)
   {
     if (!flags) flags = {};
-    for (var key in dest) {
-      var val = dest[key];
-      if ($.isPlainObject(val) && flags.recurse) {
-        expandVars($.extend({}, source, dest), val, flags);
-        continue;
+    var args = arguments;
+    var doit = function() {
+      for (var key in dest) {
+        var val = dest[key];
+        if ($.isPlainObject(val) && flags.recurse) {
+          expandVars($.extend({}, source, dest), val, flags);
+          continue;
+        }
+        if (typeof val !== 'string') continue;
+        var matches = getMatches(val, /\$(\w+)/g);
+        for (var i in matches) {
+          var match = matches[i];
+          var index = flags.sourceFirst? 0: 1;
+          var replacement = args[index++][match];
+          if (replacement === undefined) replacement = args[index % 2][match];
+          if (replacement === undefined) continue;
+          var old = val;
+          dest[key] = val = val.replace(new RegExp('\\$'+match+"([^\w]|$)", 'g'), replacement+'$1');
+          if (!replaced)
+            replaced = val != old;
+        }
       }
-      if (typeof val !== 'string') continue;
-      var matches = getMatches(val, /\$(\w+)/g);
-      for (var i in matches) {
-        var match = matches[i];
-        var index = flags.sourceFirst? 0: 1;
-        var replacement = arguments[index++][match];
-        if (replacement === undefined) replacement = arguments[index % 2][match];
-        if (replacement === undefined) continue;
-        dest[key] = val = val.replace(new RegExp('\\$'+match+"([^\w]|$)", 'g'), replacement+'$1');
-      }
-    }
+    };
+
+    do {
+      replaced = false;
+      doit();
+    } while (replaced && flags.recurse)
+
   }
   var expandSubject = function(template)
   {
