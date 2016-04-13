@@ -25,6 +25,9 @@ alert_message:
   styles: [height_watermark,centered_text]
   text: $message
 
+autoheight:
+  height: auto
+
 blank:
   type: plain_text
   mutable: false
@@ -138,23 +141,19 @@ checkbox:
   immutable: [width]
   attr: { type: checkbox, values: $values }
 
-checkbox_group:
-  classes: div
-  text: $options
-  options:
-    - type: checkbox
-    - template: label_left
 
 checkgroup:
-  templates: div
-  class: radio
+  classes: div
   text: $options
-  layout:
-    type: label_left
-    label: { suffix: " " }
+  layout: { type: label_right }
+  option:
+    type: checkbox
+    value: 0
+    name: $2
+    attr: { name: $id }
   options:
     - template: $layout
-    - type: checkbox
+    - type: $option
 
 class:
   tag: div
@@ -619,7 +618,7 @@ label_left:
     suffix: ":"
     text: $name$suffix
     width: 30%
-    styles: [right_text,inline_block]
+    styles: [right_text,inline_block,pushed_up]
   subject:
     width: 67%
     styles: [inline_block]
@@ -643,10 +642,11 @@ label_right:
   type: labelled
   label:
     text: $name
+    styles: [left_text]
   subject:
     class: [input]
     attr: { title: $desc }
-  text: $field$label
+  text: $field $label
 
 label_top:
   type: labelled

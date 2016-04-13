@@ -175,8 +175,8 @@ mkn.render = function(options)
       }
       if (!template)
         template = item.template = defaults.template;
-      else if (!template.type && defaults.template)
-        template = item.template  = mkn.merge(defaults.template, template);
+      // else if (!template.type && defaults.template)
+      //   template = item.template  = mkn.merge(defaults.template, template);
       if (template && template.subject) item = mkn.merge(template.subject, item);
       if (defaults.wrap) {
         item.wrap = defaults.wrap;
@@ -285,7 +285,7 @@ mkn.render = function(options)
       var matches = getMatches(value, /\$(\d+)/g);
       for (var i in matches) {
         var index = parseInt(matches[i]);
-        value = value.replace(new RegExp("\\$"+index+"([^\d]?)", 'g'), item.array[index-1]+'$1');
+        value = value.replace(new RegExp("\\$"+index+"([^\d]+)?", 'g'), item.array[index-1]+'$1');
       }
       item[key] = value;
     });
@@ -370,17 +370,10 @@ mkn.render = function(options)
     var subitem_count = 0;
     for (var i = 0; i< matches.length; ++i) {
       var code = matches[i];
-      var value;
-      if (field.array) {
-        if (!field.array.length) continue;
-        value = field.array[i];
-      }
-      else {
-        value = values[code];
-        if (value === undefined) continue;
-        if (typeof value === 'string' && value.search(/\W/) < 0 && reserved.indexOf(code) < 0) {
-          value = values[value] || value;
-        }
+      var value = values[code];
+      if (value === undefined) continue;
+      if (typeof value === 'string' && value.search(/\W/) < 0 && reserved.indexOf(code) < 0) {
+        value = values[value] || value;
       }
 
       if ($.isArray(value)) {
