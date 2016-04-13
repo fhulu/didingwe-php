@@ -410,7 +410,9 @@ file_uploader:
       - uploaded
       - failed
   post: [ upload ]
-  audit: "$type: $file_name"
+  audit:
+    action: Upload
+    detail: $document_type
 
 filled:
   background-color: $fill
@@ -730,7 +732,7 @@ multi_input:
         derive: [split,spacing]
         width: $split
         styles: [tallest,hspaced]
-        space: 5
+        space: $spacing
 
 number_input:
   type: input
