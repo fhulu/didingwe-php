@@ -285,7 +285,7 @@ mkn.render = function(options)
       var matches = getMatches(value, /\$(\d+)/g);
       for (var i in matches) {
         var index = parseInt(matches[i]);
-        value = value.replace(new RegExp("\\$"+index+"([^\d]+)?", 'g'), item.array[index-1]+'$1');
+        value = value.replace(new RegExp("\\$"+index+"([\D|\b]|$)", 'g'), item.array[index-1]+'$1');
       }
       item[key] = value;
     });
@@ -652,7 +652,6 @@ mkn.render = function(options)
     return item;
   }
 
-
   var expandVars = function(source, dest, flags)
   {
     if (!flags) flags = {};
@@ -673,7 +672,7 @@ mkn.render = function(options)
           if (replacement === undefined) replacement = args[index % 2][match];
           if (replacement === undefined) continue;
           var old = val;
-          dest[key] = val = val.replace(new RegExp('\\$'+match+"([^\w]|$)", 'g'), replacement+'$1');
+          dest[key] = val = val.replace(new RegExp('\\$'+match+"([\W\b]|$)", 'g'), replacement+'$1');
           if (!replaced)
             replaced = val != old;
         }
