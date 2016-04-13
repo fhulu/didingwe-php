@@ -111,7 +111,7 @@ captioned_input:
 categorized:
   type: input_page
   tag: fieldset
-  text: $legend $synopsis $inputs
+  text: $legend $synopsis $inputs $controls
   title: $name
   legend:
     tag: legend
@@ -729,7 +729,7 @@ multi_input:
   attr: { id: ""}
   text: $inputs
   split: 47%
-  spacing: 10
+  spacing: 2
   inputs:
     - template: inplace_input
     - type: input
