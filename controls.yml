@@ -545,8 +545,12 @@ input:
 
 input_page:
   type: page
-  text: $synopsis $inputs
-  layout: { type: label_left }
+  text: $synopsis $inputs $controls
+  input_left: 30%
+  input_width: 67%
+  layout:
+    derive: [input_left,input_width]
+    type: label_left
   synopsis:
     derive: [desc]
     space: 16
@@ -555,15 +559,12 @@ input_page:
   inputs:
     - template: $layout
     - type: input
-    - controls:
-        class: ""
-        push: last
-        template:
-          label: { text: " " }
-        styles: [inline_block]
-        type: container
-        derive: [actions]
-        contents: $actions
+  controls:
+    tag: div
+    class: [actions]
+    derive: [input_left,actions]
+    style: { margin-left: $input_left }
+    text: $actions
   actions:
     - default: { styles: [hspaced], space: 24}
     - type: submit
@@ -616,15 +617,18 @@ labelled_inside_image:
 
 label_left:
   type: labelled
+  derive: [input_left,input_width]
   label:
-    suffix: ":"
+    derive: [input_left]
+    suffix: ": "
     text: $name$suffix
-    width: 30%
+    width: $input_left
     styles: [right_text,inline_block,pushed_up]
   subject:
-    width: 67%
+    derive: [input_width,input_left]
+    width: $input_width
     styles: [inline_block]
-  text: $label $field
+  text: $label$field
   styles: [vspaced]
 
 label_mobile:
