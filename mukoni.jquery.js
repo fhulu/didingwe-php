@@ -102,7 +102,6 @@ $.fn.updateCheckGroupValue = function()
 {
   var data = [];
   this.find('input[type=checkbox]').each(function() {
-    console.log("checkgroup check",$(this).attr('check'), $(this).is(':checked'))
     if ($(this).is(':checked'))
        data.push($(this).attr('check'));
   });
