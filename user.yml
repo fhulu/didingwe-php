@@ -6,9 +6,19 @@ activate:
   fill: teal
   validate: none
   desc: Activate inactive user
-  audit: sql(select first_name, last_name, email from user_view where id = '$key')
+  audit: sql(select first_name, last_name, email from person where id = '$key')
   post:
     - sql_exec: update user set active = 1 where id = '$key'
+    - sql_values: select concat(first_name, last_name) full_name, email from person where id = '$key'
+    - send_email:
+        from: $support
+        to: $full_name <$email>
+        subject: Your account has been activated
+        message: >
+          Dear <b>$full_name</b> <br><br>
+          The administrator would like to inform you that your account has been activated for $program_name.<br><br>
+          Regards,<br><br>
+          <b>Customer Operations</b>
     - refresh: "#main table"
 
 check_otp:
@@ -113,15 +123,17 @@ deactivate:
   validate: none
   desc: Deactivate this user
   confirmation: Are you sure you want to deactivate this user?
-  audit: sql(select first_name, last_name, email from user where id = '$key')
+  audit: sql(select first_name, last_name, email from person where id = '$key')
   post:
     - sql_exec: update user set active = 0 where id = '$key'
+    - sql_values: select concat(first_name, last_name) full_name, email from person where id = '$key'
     - send_email:
+        from: $support
         to: $full_name <$email>
         subject: Your account has been deactivated
         message: >
           Dear <b>$full_name</b> <br><br>
-          The administrator would like to inform you that your account has been activated.<br><br>
+          The administrator would like to inform you that your account has been deactivated for $program_name.<br><br>
           Regards,<br><br>
           <b>Customer Operations</b>
     - refresh: "#main table"
@@ -132,7 +144,7 @@ delete:
 edit:
   access: [admin]
   action: dialog
-  fill: teal
+  fill: black
   url: /user/modify
 
 enter_credentials:
