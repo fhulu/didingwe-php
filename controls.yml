@@ -721,6 +721,7 @@ menu_item: { templates: li }
 
 multi_input:
   classes: div
+  class: [error-sink]
   attr: { id: ""}
   text: $inputs
   split: 47%
