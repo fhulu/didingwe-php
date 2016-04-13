@@ -97,16 +97,31 @@ $.fn.value = function(val)
   return this.setValue(val);
 }
 
+
+$.fn.updateCheckGroupValue = function()
+{
+  var data = [];
+  this.find('input[type=checkbox]').each(function() {
+    console.log("checkgroup check",$(this).attr('check'), $(this).is(':checked'))
+    if ($(this).is(':checked'))
+       data.push($(this).attr('check'));
+  });
+  return this.attr('chosen', data.join());
+}
+
 $.fn.values = function()
 {
+  this.find('.checkgroup').updateCheckGroupValue();
   var data = {};
   var delta = [];
-  this.filter('input,textarea,select').each(function() {
+  this.filter('input,textarea,select,.checkgroup').each(function() {
     var ctrl = $(this);
     var name = ctrl.hasAttr('name')? ctrl.attr('name'): ctrl.attr('id');
-    if (name === undefined) return true;
+    if (name === undefined || name.trim() == '') return true;
     var val;
-    if (ctrl.attr('type') !== 'radio')
+    if (ctrl.hasClass('checkgroup'))
+      val = ctrl.attr('chosen');
+    else if (ctrl.attr('type') !== 'radio')
       val = ctrl.value();
     else if (ctrl.is(':checked'))
       val = ctrl.attr('value');

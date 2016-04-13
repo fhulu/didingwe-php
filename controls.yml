@@ -150,7 +150,7 @@ checkgroup:
     type: checkbox
     value: 0
     name: $2
-    attr: { name: $id }
+    attr: { id: "", name: "", check: $id }
   options:
     - template: $layout
     - type: $option
