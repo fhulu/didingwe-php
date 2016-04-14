@@ -262,11 +262,16 @@ function find_assoc_element($array, $key)
 function expand_function($func)
 {
   $matches = array();
-  if (!preg_match('/^([\w:]+)(?:\((.*)\))?$/sm', trim($func), $matches))
-    throw new Exception("Invalid function specification --$func--");
 
-  array_shift($matches);
-  return $matches;
+  if (!preg_match('/^(\w+)(?:\((.*)\))?$/', trim($func), $matches))
+    throw new Exception("Invalid function specification --$func--");
+  $name = $matches[1];
+  $args = $matches[2];
+  if (is_null($args)) return [$name,[]];
+  if (!preg_match_all('/\w*(\(.*\)|[^,]+)/sm', trim($args), $matches))
+    throw new Exception("Invalid function parameter specification --$func--");
+
+  return [$name, $matches[0]];
 }
 
 function array_find(&$array, $callback)
