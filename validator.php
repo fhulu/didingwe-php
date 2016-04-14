@@ -327,6 +327,7 @@ class validator
     }
 
     $str = str_replace('$value', $this->value, $str);
+    $str = preg_replace('/(\$\d+)/', '', $str);
     return $str;
   }
 
