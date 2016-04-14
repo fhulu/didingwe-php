@@ -216,7 +216,7 @@ time:
     - relate_time(H:i, $1)
 
 unique:
-  valid: not(in($1))
+  valid: not(in($1,$2))
   error: $name ($value) already exists
 
 url: /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/

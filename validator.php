@@ -75,7 +75,7 @@ class validator
   }
 
 
-  function find_in($table)
+  function find_in($table, $filter='')
   {
     if ($table == '') {
       $table = $this->table;
@@ -98,12 +98,13 @@ class validator
       }
     }
     $value = addslashes($this->value);
-    return $this->sql("select 1 from $table where $field = '$value'");
+    if ($filter != '') $filter = " and $filter";
+    return $this->sql("select 1 from $table where $field = '$value'$filter");
   }
 
-  function in($table=null)
+  function in($table,$filter=null)
   {
-    return $this->find_in($table);
+    return $this->find_in($table,$filter);
   }
 
   function exist($table=null)
@@ -221,6 +222,11 @@ class validator
     return method_exists($this, $func)? $func: false;
   }
 
+  static function expand_function($func)
+  {
+    $func = trim($func);
+    return $func[0] == '/'? ['regex', [$func]]: expand_function($func);
+  }
 
   function is($funcs)
   {
@@ -245,21 +251,7 @@ class validator
     }
 
     foreach($funcs as $func) {
-      $func = trim($func);
-      if ($func[0] == '/') {
-        $args = array($func);
-        $func = 'regex';
-      }
-      else {
-        list($func, $args) = expand_function($func);
-        $matches = array();
-        preg_match_all('/[^,]+|\(.*\)/', $args, $matches);
-        $args = $matches[0];
-        if ($func == 'depends') {
-          $first = array_shift($args);
-          $args = array($first, implode(',', $args));
-        }
-      }
+      list($func, $args) = validator::expand_function($func);
       $this->update_args($args);
 
       if (validator::is_static_method($func)) {
