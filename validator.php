@@ -98,6 +98,7 @@ class validator
       }
     }
     $value = addslashes($this->value);
+    if ($filter[0] == '$') $filter = '';
     if ($filter != '') $filter = " and $filter";
     return $this->sql("select 1 from $table where $field = '$value'$filter");
   }
@@ -327,7 +328,6 @@ class validator
     }
 
     $str = str_replace('$value', $this->value, $str);
-    $str = preg_replace('/(\$\d+)/', '', $str);
     return $str;
   }
 
