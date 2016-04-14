@@ -252,7 +252,7 @@ mkn.render = function(options)
     $.each(values, function(code, subst) {
       if ($.isNumeric(code) || typeof subst !== 'string' || typeof value !== 'string') return;
       subst = me.expandFunction(subst, parent_id)
-      value = value.replace(new RegExp('\\$'+code+"([\b\W]|$)?", 'g'), subst+'$1');
+      value = value.replace(new RegExp('\\$'+code+"([^\w]|\b|$)", 'g'), subst+'$1');
       values[code] = subst;
       if (value.indexOf('$') < 0) return;
     });
@@ -285,7 +285,7 @@ mkn.render = function(options)
       var matches = getMatches(value, /\$(\d+)/g);
       for (var i in matches) {
         var index = parseInt(matches[i]);
-        value = value.replace(new RegExp("\\$"+index+"([\D|\b]|$)", 'g'), item.array[index-1]+'$1');
+        value = value.replace(new RegExp("\\$"+index+"([^\d]|\b|$)", 'g'), item.array[index-1]+'$1');
       }
       item[key] = value;
     });
@@ -385,7 +385,7 @@ mkn.render = function(options)
       }
 
       if (!$.isPlainObject(value)) {
-        obj.replace(new RegExp('\\$'+code+"([\b\W]|$)?", 'g'), value+'$1');
+        obj.replace(new RegExp('\\$'+code+"([^\w]|\b|$)?", 'g'), value+'$1');
         this.known[code] = value;
         continue;
       }
@@ -637,6 +637,7 @@ mkn.render = function(options)
     styles = field.styles;
     if (styles) mergeStyles();
     expandVars(field, style, { sourceFirst: true, recurse: true})
+    expandVars(style, style, { sourceFirst: true, recurse: true})
     setGeometry();
     obj.css(style);
   }
@@ -656,6 +657,7 @@ mkn.render = function(options)
   {
     if (!flags) flags = {};
     var args = arguments;
+    var replaced = false;
     var doit = function() {
       for (var key in dest) {
         var val = dest[key];
@@ -672,7 +674,7 @@ mkn.render = function(options)
           if (replacement === undefined) replacement = args[index % 2][match];
           if (replacement === undefined) continue;
           var old = val;
-          dest[key] = val = val.replace(new RegExp('\\$'+match+"([\W\b]|$)", 'g'), replacement+'$1');
+          dest[key] = val = val.replace(new RegExp('\\$'+match+"([^\w]|\b|$)", 'g'), replacement+'$1');
           if (!replaced)
             replaced = val != old;
         }
