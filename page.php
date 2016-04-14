@@ -992,7 +992,7 @@ class page
 
     log::debug_json("REPLY ACTIONS", $actions);
 
-    $methods = array('alert', 'abort', 'call', 'clear_session', 'clear_values',
+    $methods = array('abort', 'alert', 'assert', 'call', 'clear_session', 'clear_values',
       'close_dialog', 'load_lineage', 'read_session', 'read_values', 'redirect', 'ref_list', 'rest_post',
       'send_email', 'send_sms', 'show_dialog', 'show_captcha', 'sql', 'sql_exec','sql_rows', 'sql_insert',
       'sql_update', 'sql_values', 'refresh', 'trigger', 'update', 'upload', 'view_doc', 'write_session');
@@ -1431,5 +1431,11 @@ class page
     //todo: verify permissions
     require_once 'document.php';
     document::view($options['key']);
+  }
+
+  function assert($condition)
+  {
+    if (!eval("return $condition;"))
+      throw new Exception("Assert failed for $condition");
   }
 }
