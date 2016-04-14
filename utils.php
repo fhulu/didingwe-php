@@ -206,7 +206,8 @@ function replace_fields(&$options, $context, $recurse=false)
     return;
   }
   $replaced = false;
-  array_walk_recursive($options, function(&$value) use(&$context, &$replaced) {
+  walk_recursive_down($options, function(&$value) use(&$context, &$replaced) {
+    if (!is_string($value)) return;
     $new = replace_vars($value, $context);
     if ($new != $value) {
       $replaced = true;
