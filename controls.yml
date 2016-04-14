@@ -620,8 +620,8 @@ label_left:
   derive: [input_left,input_width]
   label:
     derive: [input_left]
-    suffix: ": "
-    text: $name$suffix
+    suffix: ":"
+    text: $name$suffix&nbsp;
     width: $input_left
     styles: [right_text,inline_block,pushed_up]
   subject:
