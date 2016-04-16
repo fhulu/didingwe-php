@@ -51,7 +51,7 @@ function remove_nulls(&$array)
   return $array;
 }
 
-function replace_vars($str, $values, $callback=null)
+function replace_vars($str, $values, $callback=null, $value_if_unset=null)
 {
   $matches = array();
   if (preg_match('/^\$(\w+)$/', $str, $matches)) {
@@ -64,7 +64,10 @@ function replace_vars($str, $values, $callback=null)
   foreach($matches as $match) {
     $key = $match[1];
     $value = at($values, $key);
-    if (is_null($value)) continue;
+    if (is_null($value)) {
+      if ($value_if_unset === null) continue;
+      $value = $value_if_unset;
+    }
     if ($callback && $callback($value, $key) === false) continue;
     if ($escape) $value = addslashes($value);
     $str = preg_replace('/\$'.$key.'([^\w]|$)/',"$value$1", $str);
