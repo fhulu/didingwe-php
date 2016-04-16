@@ -22,19 +22,96 @@ class q
 
     $user_message = $merged['message'];
     $merged['message'] = json_encode($args);
-    $db->insert_array('q', $merged);
+    $id = $db->insert_array('q', $merged);
+    q::wake($id);
     return null;
   }
 
-  static function process($name, $options, $args)
+  private static function get_msg_q()
+  {
+    return msg_get_queue(ftok('q.conf', 'R'), 0666 | IPC_CREAT);
+  }
+
+  static function wake($id=1)
+  {
+    $msg_id = q::get_msg_q();
+
+    if (!msg_send($msg_id, $id, "wake", true, true, $error_code))
+      log::error("Error sending to message queue with error code $error_code");
+  }
+
+  static function run()
+  {
+    log::init("q", log::DEBUG);
+
+    $msg_id = q::get_msg_q();
+
+    global $db;
+    $sql = "
+      select SQL_CALC_FOUND_ROWS id, process, message, success_regex, success_process, success_message,
+        timestampdiff(second, ifnull(post_time, create_time), now())
+      from q
+      where status in ('pend', 'fail') and attempts < max_attempts
+        and now() < create_time + interval max_period second
+        and (isnull(post_time) or now() >= post_time + interval retry_interval second)
+      order by priority, create_time";
+
+    do {
+      $file = fopen("q.conf", 'r');
+      $config = json_decode(stripslashes(fgets($file)), true);
+      fclose($file);
+      $batch_size = $config['batch_size'];
+      do {
+        $rows = $db->read($sql, MYSQLI_ASSOC, $batch_size);
+        foreach($rows as $row) {
+          q::process($row['process'], $row, json_decode($row['message'], true));
+        }
+        msg_receive ($msg_id, 0, $type, 32, $msg, true, MSG_IPC_NOWAIT);
+      } while ( $db->row_count() > sizeof($rows) && $msg != 'stop');
+
+      if ($msg != 'stop')
+        msg_receive ($msg_id, 0, $type, 32, $msg);
+    } while ($msg != 'stop');
+    log::debug("STOPPED");
+  }
+
+  static function stop()
+  {
+    msg_send(q::get_msg_q(), 1, 'stop');
+  }
+
+  private static function update_db($options, $status, $time)
+  {
+    global $db;
+    $args = func_get_args();
+    array_splice($args, 0, 3, ['q', $options, 'id', ['status'=>"$status"], ["$time"=>'/now()']]);
+    call_user_func_array(array($db, 'update_array'), $args);
+  }
+
+  private static function process($name, $options, $args)
   {
     try {
+      q::update_db($options, 'busy', 'post_time', ['attempts'=>'/attempts+1']);
       $result = call_user_func_array("q::$name", array($args));
       log::debug("RESULT: $result");
+      if (preg_match('/'.$options['success_regex'] . '/', $result))
+        return q::process_success($opttions, $result);
     }
     catch (Exception $ex) {
+      log::debug_json("EXCEPTION:", $ex);
     }
-    return $result;
+    q::process_failure($options, $result);
+  }
+
+  private static function process_success($options, $result)
+  {
+    q::update_db($options, 'done', 'response', 'response');
+  }
+
+
+  private static function process_failure($options, $result)
+  {
+    q::update_db($options, 'fail', 'response', 'response');
   }
 
   static function post_http($options)
