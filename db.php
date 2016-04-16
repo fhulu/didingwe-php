@@ -212,8 +212,8 @@ class db
         $last_row_index = $index;
         if (is_null($callback))
           $rows[]  = $row;
-        else
-          $callback($row, $pagenum, $index);
+        else if ($callback($row, $pagenum, $index) === false)
+          return false;
         return true;
       }, $options);
       $options['start']  += $size;
@@ -372,6 +372,29 @@ class db
     $sql = "insert $table($names) values($values)";
     $this->exec($sql);
   }
+
+  function update_array($table, $options)
+  {
+    $names = array_slice(func_get_args(), 2);
+    list($key_name,$key_value) = db::name_value(array_shift($names), $options);
+
+
+    $fields = $this->field_names($table);
+    $sets = array();
+    $temp = $names;
+    foreach($temp as $name) {
+      list($name,$value) = db::name_value($name, $options);
+      if (is_null($value) || !in_array($name, $fields, true)) continue;
+      $sets[] = "$name = $value";
+    }
+    if (!sizeof($sets)) return;
+
+    $sets = implode(',', $sets);
+
+    $sql = "update $table set $sets where $key_name = $key_value";
+    return $this->exec($sql);
+  }
+
 }
 
 $db = null;
