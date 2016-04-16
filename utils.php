@@ -215,7 +215,7 @@ function replace_fields(&$options, $context, $recurse=false)
     }
   });
   if ($recurse && $replaced)
-    replace_fields($options, $context, $recurse);
+    replace_fields($options, merge_options($context,$options), $recurse);
 }
 
 function replace_indices($str, $values)
