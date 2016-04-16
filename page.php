@@ -2,6 +2,7 @@
 require_once 'validator.php';
 require_once 'db.php';
 require_once 'utils.php';
+require_once('q.php');
 
 class user_exception extends Exception {};
 
@@ -27,7 +28,7 @@ class page
 {
   static $fields_stack = array();
   static $post_items = array('audit', 'call', 'clear_session', 'clear_values', 'db_name', 'error', 'post',
-    'post_http', 'rest_post', 'send_email', 'send_sms', 'valid', 'validate', 'write_session');
+    'q', 'valid', 'validate', 'write_session');
   static $query_items = array('call', 'read_session', 'read_values', 'ref_list', 'sql', 'sql_values');
   static $atomic_items = array('action', 'attr', 'css', 'html', 'script', 'sql',
     'style', 'template', 'valid');
@@ -993,8 +994,7 @@ class page
     log::debug_json("REPLY ACTIONS", $actions);
 
     $methods = array('abort', 'alert', 'assert', 'call', 'clear_session', 'clear_values',
-      'close_dialog', 'load_lineage', 'read_session', 'read_values', 'redirect', 'ref_list', 'rest_post',
-      'send_email', 'send_sms', 'show_dialog', 'show_captcha', 'sql', 'sql_exec','sql_rows', 'sql_insert',
+      'close_dialog', 'load_lineage', 'read_session', 'read_values', 'redirect', 'ref_list', 'show_dialog', 'show_captcha', 'sql', 'sql_exec','sql_rows', 'sql_insert',
       'sql_update', 'sql_values', 'refresh', 'trigger', 'update', 'upload', 'view_doc', 'write_session');
     foreach($actions as $action) {
       if ($this->aborted) return false;
@@ -1015,7 +1015,12 @@ class page
       replace_fields($method, $values);
       log::debug_json("REPLY ACTION $method", $parameter);
       if ($this->reply_if($method, $parameter)) continue;
-      if (!in_array($method, $methods)) continue;
+      if (is_callable("q::$method")) {
+        array_unshift($parameter, $method);
+        $method = 'q';
+      }
+      else if (!in_array($method, $methods))
+	      continue;
       $result = call_user_func_array(array($this, $method), $parameter);
       if ($result === false) {
         $this->aborted = true;
@@ -1140,35 +1145,6 @@ class page
     page::respond('trigger', $options);
   }
 
-  function send_email($options)
-  {
-    $options = page::merge_options($options, $this->answer);
-    $this->update_context($options);
-    $options = page::merge_options($this->fields['send_email'], $options);
-    $options = page::merge_options($this->get_expanded_field('send_email'), $options);
-    $headers = $options['headers'];
-    $from = $options['from'];
-    $to = $options['to'];
-    $message = $options['message'];
-    $subject = $options ['subject'];
-    log::debug("SENDMAIL from $from to $to SUBJECT $subject");
-    $headers['From'] = $from;
-    $headers['Subject'] = $subject;
-    $headers['To'] = $to;
-
-    set_include_path("./common/pear");
-    require_once "Mail.php";
-    require_once("Mail/mime.php");
-    $mime = new Mail_mime("\n");
-    $mime->setHTMLBody($message);
-    $message = $mime->get();
-    $headers = $mime->headers($headers);
-    $smtp = Mail::factory('smtp',  $options['smtp']);
-    $result = $smtp->send($to, $headers, $message);
-    restore_include_path();
-    log::debug("RESULT: $result");
-
-}
 
   static function preg_match_test($req)
   {
@@ -1298,38 +1274,6 @@ class page
     page::trigger("refresh,$sink");
   }
 
-  static function post_http($options)
-  {
-    log::debug_json("HTTP POST", $options);
-    $url = $options['url'];
-    if (!isset($url)) {
-      $url = $options['protocol']
-            . "://" . $options['host']
-            . ":" . $options['port']
-            . "/" . $options['path'];
-    }
-    require_once('../common/curl.php');
-    $curl = new curl();
-    $post = $options['post'];
-    isset($options['post'])? $curl->post($url, $post): $curl->read($url);
-  }
-
-  function send_sms($options)
-  {
-    log::debug_json("SEND SMS", $options);
-    $options = page::merge_options($options, $this->answer);
-    log::debug_json("SEND SMS af", $options);
-    $this->update_context($options);
-    global $config;
-    $options = merge_options($config['send_sms'], $this->fields['send_sms'], $options);
-    $options = merge_options($this->get_expanded_field('send_sms'), $options);
-    $options['message'] = urlencode($options['message']);
-    replace_fields($options, $options);
-    replace_fields($options, $this->fields['send_sms']);
-
-    page::post_http($options);
-  }
-
   function calender()
   {
     global $db;
@@ -1437,5 +1381,15 @@ class page
   {
     if (!eval("return $condition;"))
       throw new Exception("Assert failed for $condition");
+  }
+
+  function q($method, $args)
+  {
+    $args = page::merge_options($args, $this->answer);
+    $this->update_context($args);
+    global $config;
+    $args = page::merge_options($this->get_expanded_field($method), $args);
+    $args = page::merge_options($config[$method], $args);
+    q::put($method, $args);
   }
 }
