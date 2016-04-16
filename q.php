@@ -7,12 +7,34 @@ class q
   {
     if ($process == 'put')
       throw new Exception("Cannot call q::put() recursively");
+
+    global $db;
+    $options = $db->read_one(
+      "select name process, q, priority, retry_interval, max_attempts, max_period, success_regex, success_process, success_message
+        from process where name = '$process'");
+    if (is_null($options))
+      throw new Exception("Queue process $process not defined on the database");
+
+    $merged = merge_options($options, $args);
+    $args = array_diff_assoc($args, $options);
+    if (!$merged['q'])
+      return q::process($name, $merged, $args);
+
+    $user_message = $merged['message'];
+    $merged['message'] = json_encode($args);
+    $db->insert_array('q', $merged);
+    return null;
+  }
+
+  static function process($name, $options, $args)
+  {
     try {
-      call_user_func_array("q::$process", array($args));
+      $result = call_user_func_array("q::$name", array($args));
+      log::debug("RESULT: $result");
     }
     catch (Exception $ex) {
-
     }
+    return $result;
   }
 
   static function post_http($options)
@@ -35,7 +57,7 @@ class q
   {
     $options['message'] = urlencode($options['message']);
     replace_fields($options, $options, true);
-    q::post_http($options);
+    return q::post_http($options);
   }
 
   static function send_email($options)
@@ -60,7 +82,7 @@ class q
     $smtp = Mail::factory('smtp',  $options['smtp']);
     $result = $smtp->send($to, $headers, $message);
     restore_include_path();
-    log::debug("RESULT: $result");
+    return $result;
   }
 
   static function rest_post($options)
@@ -74,10 +96,7 @@ class q
     unset($options['url']);
     unset($options['username']);
     unset($options['password']);
-    $result = $api->post($url, json_encode($options), ['Content-Type' => 'application/json']);
-    $response = (array)$result->decode_response();
-    log::debug_json("DECODED RESULT", $response);
-    return $response;
+    return $api->post($url, json_encode($options), ['Content-Type' => 'application/json']);
   }
 
 }
