@@ -1314,21 +1314,6 @@ class page
     require_once('../common/captcha.php');
   }
 
-  function rest_post($options)
-  {
-    $user = $options['username'];
-    $password = $options['password'];
-    require_once('../common/restclient.php');
-    $api = new RestClient(['username'=>$user, 'password'=>$password]);
-
-    $url = $options['url'];
-    unset($options['url']);
-    $result = $api->post($url, json_encode($options), ['Content-Type' => 'application/json']);
-    $response = (array)$result->decode_response();
-    log::debug_json("DECODED RESULT", $response);
-    return $response;
-  }
-
   static function base_url()
   {
     $protocol = 'http';

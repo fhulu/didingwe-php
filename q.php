@@ -7,7 +7,12 @@ class q
   {
     if ($process == 'put')
       throw new Exception("Cannot call q::put() recursively");
-    call_user_func_array("q::$process", array($args));
+    try {
+      call_user_func_array("q::$process", array($args));
+    }
+    catch (Exception $ex) {
+
+    }
   }
 
   static function post_http($options)
@@ -58,5 +63,21 @@ class q
     log::debug("RESULT: $result");
   }
 
+  static function rest_post($options)
+  {
+    $user = $options['username'];
+    $password = $options['password'];
+    require_once('../common/restclient.php');
+    $api = new RestClient(['username'=>$user, 'password'=>$password]);
+
+    $url = $options['url'];
+    unset($options['url']);
+    unset($options['username']);
+    unset($options['password']);
+    $result = $api->post($url, json_encode($options), ['Content-Type' => 'application/json']);
+    $response = (array)$result->decode_response();
+    log::debug_json("DECODED RESULT", $response);
+    return $response;
+  }
 
 }
