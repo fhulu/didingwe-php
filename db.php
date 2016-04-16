@@ -334,6 +334,44 @@ class db
   {
     return $this->read_column("show columns from $table");
   }
+
+  static function name_value($arg, $values)
+  {
+    if (is_array($arg))
+      list($arg,$value) = assoc_element($arg);
+    else if (is_array($values[$arg]))
+      return [$arg];
+    else
+      $value = $values[$arg];
+
+    if ($value[0] == '/') {
+      $value = substr($value,1);
+      if ($value[0] == '/') $value = "'". addslashes($value). "'";
+    }
+    else
+      $value = "'". addslashes($value). "'";
+    return [$arg, $value];
+  }
+
+  function insert_array($table, $options=[], $names=[])
+  {
+    if (!sizeof($names))
+      $names = array_keys($options);
+
+    $fields = $this->field_names($table);
+    $temp = $names;
+    $names = $values = [];
+    foreach($temp as $name) {
+      list($name,$value) = db::name_value($name, $options);
+      if (is_null($value) || !in_array($name, $fields, true)) continue;
+      $values[] = $value;
+      $names[] = $name;
+    }
+    $names = implode(',', $names);
+    $values = implode(',', $values);
+    $sql = "insert $table($names) values($values)";
+    $this->exec($sql);
+  }
 }
 
 $db = null;
