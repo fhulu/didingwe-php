@@ -18,12 +18,12 @@ class q
     $merged = merge_options($options, $args);
     $args = array_diff_assoc($args, $options);
     if (!$merged['q'])
-      return q::process($name, $merged, $args);
+      return q::process($process, $merged, $args);
 
     $user_message = $merged['message'];
     $merged['message'] = json_encode($args);
     $id = $db->insert_array('q', $merged);
-    q::wake($id);
+    q::wake();
     return null;
   }
 
@@ -37,11 +37,10 @@ class q
   {
   }
 
-  static function wake($id=1)
+  static function wake()
   {
     $msg_id = q::get_msg_q();
-
-    if (!msg_send($msg_id, $id, "wake", true, true, $error_code))
+    if (!msg_send($msg_id,1, "wake", true, true, $error_code))
       log::error("Error sending to message queue with error code $error_code");
   }
 
@@ -56,11 +55,11 @@ class q
     $sql = "
       select SQL_CALC_FOUND_ROWS id, process, message, success_regex, success_process, success_message, retry_interval
       from q
-      where status in ('pend', 'fail') and attempts < max_attempts
-        and now() < create_time + interval max_period second
+      where status in ('pend', 'fail')
+        and (max_attempts = 0 or attempts < max_attempts)
+        and (max_period = 0 or now() < create_time + interval max_period second)
         and (isnull(post_time) or now() >= post_time + interval retry_interval second)
       order by priority, create_time";
-
 
     do {
       $file = fopen("q.conf", 'r');
@@ -104,8 +103,8 @@ class q
       q::update_db($options, 'busy', 'post_time', ['attempts'=>'/attempts+1']);
       $result = call_user_func_array("q::$name", array($args));
       log::debug("RESULT: $result");
-      if (preg_match('/'.$options['success_regex'] . '/', $result))
-        return q::process_success($opttions, $result);
+      if (preg_match('/'. $options['success_regex'] . '/', $result))
+        return q::process_success($options, $result);
     }
     catch (Exception $ex) {
       log::debug("EXCEPTION: ". $ex->getMessage());
@@ -181,9 +180,10 @@ class q
 
     $url = $options['url'];
     unset($options['url']);
-    unset($options['username']);
-    unset($options['password']);
-    return $api->post($url, json_encode($options), ['Content-Type' => 'application/json']);
+    $result =  $api->post($url, json_encode($options), ['Content-Type' => 'application/json']);
+    if (!$result) return false;
+    $response = (array)$result->decode_response();
+    log::debug_json("DECODED RESULT", $response);
+    return json_encode($respose);
   }
-
 }
