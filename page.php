@@ -1348,7 +1348,7 @@ class page
     if (!is_array($result)) return page::error($code, $result);
 
     list($id, $file_name) = $result;
-    return ['document_id'=>$id, 'document_type'=>$options['type'], 'document_file'=>$file_name];
+    return ['partner_id'=>$partner_id, 'document_id'=>$id, 'document_type'=>$options['type'], 'document_file'=>$file_name];
   }
 
 
