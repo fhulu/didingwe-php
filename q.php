@@ -22,14 +22,20 @@ class q
 
     $user_message = $merged['message'];
     $merged['message'] = json_encode($args);
-    $id = $db->insert_array('q', $merged);
+    $id = $db->insert_array('q', $merged, ['create_time'=>'/now()']);
     q::wake();
     return null;
   }
 
+
+  private static function get_msg_key()
+  {
+    return ftok('q.conf', 'R');
+  }
+
   private static function get_msg_q()
   {
-    return msg_get_queue(ftok('q.conf', 'R'), 0666 | IPC_CREAT);
+    return msg_get_queue(q::get_msg_key(), 0666 | IPC_CREAT);
   }
 
 
@@ -48,12 +54,18 @@ class q
   {
     log::init("q", log::DEBUG);
 
+    if (msg_queue_exists(q::get_msg_key())) {
+      log::warn("Q already running - will attempt wakeup");
+      q::wake();
+      return;
+    }
     $msg_id = q::get_msg_q();
 
     pcntl_signal(SIGALRM, "q::signal_handler", true);
     global $db;
     $sql = "
-      select SQL_CALC_FOUND_ROWS id, process, message, success_regex, success_process, success_message, retry_interval
+      select SQL_CALC_FOUND_ROWS id, process, message, success_regex, success_process, success_message,
+        retry_interval - timestampdiff(second, ifnull(post_time,create_time), now()) retry_interval
       from q
       where status in ('pend', 'fail')
         and (max_attempts = 0 or attempts < max_attempts)
@@ -66,27 +78,39 @@ class q
       $config = json_decode(stripslashes(fgets($file)), true);
       fclose($file);
       $batch_size = $config['batch_size'];
-      $min_wait = (int)$config['delay'];
+      $delay = (int)$config['delay'];
       do {
         $rows = $db->read($sql, MYSQLI_ASSOC, $batch_size);
         foreach($rows as $row) {
           q::process($row['process'], $row, json_decode($row['message'], true));
           $retry_interval = $row['retry_interval'];
-          if ($min_wait > $retry_interval) $min_wait = $retry_interval;
+          if ($delay > $retry_interval) $min_wait = $retry_interval;
         }
         msg_receive ($msg_id, 0, $type, 32, $msg, true, MSG_IPC_NOWAIT);
       } while ( $db->row_count() > sizeof($rows) && $msg != 'stop');
 
       if ($msg == 'stop') break;
-      pcntl_alarm($min_wait);
-      msg_receive ($msg_id, 0, $type, 32, $msg);
+      if ($delay > 0) {
+        pcntl_alarm($delay);
+        $sleep_time = time();
+        log::debug("SLEEP for $delay");
+        msg_receive ($msg_id, 0, $type, 32, $msg);
+        log::debug("WOKEN after ", time() - $sleep_time);
+      }
     } while ($msg != 'stop');
     log::debug("STOPPED");
+    q::kill();
   }
 
   static function stop()
   {
     msg_send(q::get_msg_q(), 1, 'stop');
+  }
+
+  static function kill()
+  {
+    //system("ipcrm -Q ".q::get_msg_key());
+     msg_remove_queue(q::get_msg_q());
   }
 
   private static function update_db($options, $status, $time)
@@ -181,9 +205,15 @@ class q
     $url = $options['url'];
     unset($options['url']);
     $result =  $api->post($url, json_encode($options), ['Content-Type' => 'application/json']);
+
     if (!$result) return false;
     $response = (array)$result->decode_response();
     log::debug_json("DECODED RESULT", $response);
     return json_encode($respose);
+  }
+
+  static function decode_rest($response)
+  {
+
   }
 }
