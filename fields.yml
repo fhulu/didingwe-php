@@ -330,6 +330,9 @@ register:
   access: public
   url: /user/register
 
+rest_post:
+  merge: false
+  
 send_email:
   support: Mukoni Support <support@mukoni.co.za>
   headers:
@@ -342,6 +345,10 @@ send_email:
     auth: true
     username: $smtp_user
     password: $smtp_password
+    ssl:
+      verify_peer: false
+      verify_peer_name: false
+      allow_self_signed: true
 
 
 start_date:
