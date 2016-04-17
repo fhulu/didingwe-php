@@ -111,7 +111,6 @@ class q
 
   static function kill()
   {
-    //system("ipcrm -Q ".q::get_msg_key());
      msg_remove_queue(q::get_msg_q());
   }
 
@@ -207,15 +206,10 @@ class q
     $url = $options['url'];
     unset($options['url']);
     $result =  $api->post($url, json_encode($options), ['Content-Type' => 'application/json']);
-
-    if (!$result) return false;
-    $response = (array)$result->decode_response();
-    log::debug_json("DECODED RESULT", $response);
-    return json_encode($respose);
+    return $api->raw_response;
   }
 
   static function decode_rest($response)
   {
-
   }
 }

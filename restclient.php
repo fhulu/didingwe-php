@@ -19,6 +19,9 @@ class RestClient implements Iterator, ArrayAccess {
     public $info; // Response info object.
     public $error; // Response error string.
 
+
+    public $raw_response;
+
     // Populated as-needed.
     public $decoded_response; // Decoded response body.
     private $iterator_positon;
@@ -184,7 +187,8 @@ class RestClient implements Iterator, ArrayAccess {
         curl_setopt_array($client->handle, $curlopt);
 
         log::debug_json("CURL_EXEC", $client->options);
-        $client->parse_response(curl_exec($client->handle));
+        $this->raw_response = curl_exec($client->handle);
+        $client->parse_response($this->raw_response);
         $client->info = (object) curl_getinfo($client->handle);
         $client->error = curl_error($client->handle);
 
