@@ -32,6 +32,11 @@ class q
     return msg_get_queue(ftok('q.conf', 'R'), 0666 | IPC_CREAT);
   }
 
+
+  static function signal_handler($signal)
+  {
+  }
+
   static function wake($id=1)
   {
     $msg_id = q::get_msg_q();
@@ -40,37 +45,42 @@ class q
       log::error("Error sending to message queue with error code $error_code");
   }
 
-  static function run()
+  static function start()
   {
     log::init("q", log::DEBUG);
 
     $msg_id = q::get_msg_q();
 
+    pcntl_signal(SIGALRM, "q::signal_handler", true);
     global $db;
     $sql = "
-      select SQL_CALC_FOUND_ROWS id, process, message, success_regex, success_process, success_message,
-        timestampdiff(second, ifnull(post_time, create_time), now())
+      select SQL_CALC_FOUND_ROWS id, process, message, success_regex, success_process, success_message, retry_interval
       from q
       where status in ('pend', 'fail') and attempts < max_attempts
         and now() < create_time + interval max_period second
         and (isnull(post_time) or now() >= post_time + interval retry_interval second)
       order by priority, create_time";
 
+
     do {
       $file = fopen("q.conf", 'r');
       $config = json_decode(stripslashes(fgets($file)), true);
       fclose($file);
       $batch_size = $config['batch_size'];
+      $min_wait = (int)$config['delay'];
       do {
         $rows = $db->read($sql, MYSQLI_ASSOC, $batch_size);
         foreach($rows as $row) {
           q::process($row['process'], $row, json_decode($row['message'], true));
+          $retry_interval = $row['retry_interval'];
+          if ($min_wait > $retry_interval) $min_wait = $retry_interval;
         }
         msg_receive ($msg_id, 0, $type, 32, $msg, true, MSG_IPC_NOWAIT);
       } while ( $db->row_count() > sizeof($rows) && $msg != 'stop');
 
-      if ($msg != 'stop')
-        msg_receive ($msg_id, 0, $type, 32, $msg);
+      if ($msg == 'stop') break;
+      pcntl_alarm($min_wait);
+      msg_receive ($msg_id, 0, $type, 32, $msg);
     } while ($msg != 'stop');
     log::debug("STOPPED");
   }
@@ -98,20 +108,20 @@ class q
         return q::process_success($opttions, $result);
     }
     catch (Exception $ex) {
-      log::debug_json("EXCEPTION:", $ex);
+      log::debug("EXCEPTION: ". $ex->getMessage());
     }
     q::process_failure($options, $result);
   }
 
   private static function process_success($options, $result)
   {
-    q::update_db($options, 'done', 'response', 'response');
+    q::update_db($options, 'done', 'response_time', 'response');
   }
 
 
   private static function process_failure($options, $result)
   {
-    q::update_db($options, 'fail', 'response', 'response');
+    q::update_db($options, 'fail', 'response_time', 'response');
   }
 
   static function post_http($options)
