@@ -353,11 +353,10 @@ class db
     return [$arg, $value];
   }
 
-  function insert_array($table, $options=[], $names=[])
+  function insert_array($table, $options)
   {
-    if (!sizeof($names))
-      $names = array_keys($options);
-
+    $names = func_get_args();
+    array_splice($names, 0, 2, array_keys($options));
     $fields = $this->field_names($table);
     $temp = $names;
     $names = $values = [];
