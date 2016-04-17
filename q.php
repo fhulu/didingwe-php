@@ -65,12 +65,12 @@ class q
     global $db;
     $sql = "
       select SQL_CALC_FOUND_ROWS id, process, message, success_regex, success_process, success_message,
-        retry_interval - timestampdiff(second, ifnull(post_time,create_time), now()) retry_interval
+        retry_interval - timestampdiff(second, ifnull(post_time,create_time), now()) retry_interval,
+        (isnull(post_time) or now() >= post_time + interval retry_interval second) is_due
       from q
       where status in ('pend', 'fail')
         and (max_attempts = 0 or attempts < max_attempts)
         and (max_period = 0 or now() < create_time + interval max_period second)
-        and (isnull(post_time) or now() >= post_time + interval retry_interval second)
       order by priority, create_time";
 
     do {
@@ -82,9 +82,10 @@ class q
       do {
         $rows = $db->read($sql, MYSQLI_ASSOC, $batch_size);
         foreach($rows as $row) {
-          q::process($row['process'], $row, json_decode($row['message'], true));
+          if ($row['is_due'])
+            q::process($row['process'], $row, json_decode($row['message'], true));
           $retry_interval = $row['retry_interval'];
-          if ($delay > $retry_interval) $min_wait = $retry_interval;
+          if ($delay > $retry_interval) $delay = $retry_interval;
         }
         msg_receive ($msg_id, 0, $type, 32, $msg, true, MSG_IPC_NOWAIT);
       } while ( $db->row_count() > sizeof($rows) && $msg != 'stop');
@@ -93,9 +94,10 @@ class q
       if ($delay > 0) {
         pcntl_alarm($delay);
         $sleep_time = time();
-        log::debug("SLEEP for $delay");
+        log::debug("SLEEP for $delay seconds");
         msg_receive ($msg_id, 0, $type, 32, $msg);
-        log::debug("WOKEN after ", time() - $sleep_time);
+        $elapsed  = time() - $sleep_time;
+        log::debug("WOKEN after $elapsed seconds");
       }
     } while ($msg != 'stop');
     log::debug("STOPPED");
