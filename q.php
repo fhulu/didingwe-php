@@ -128,8 +128,9 @@ class q
       q::update_db($options, 'busy', 'post_time', ['attempts'=>'/attempts+1']);
       $result = call_user_func_array("q::$name", array($args));
       log::debug("RESULT: $result");
+      $options['response'] = $result;
       if (preg_match('/'. $options['success_regex'] . '/', $result))
-        return q::process_success($options, $result);
+        return q::process_success($options);
     }
     catch (Exception $ex) {
       log::debug("EXCEPTION: ". $ex->getMessage());
@@ -137,13 +138,13 @@ class q
     q::process_failure($options, $result);
   }
 
-  private static function process_success($options, $result)
+  private static function process_success($options)
   {
     q::update_db($options, 'done', 'response_time', 'response');
   }
 
 
-  private static function process_failure($options, $result)
+  private static function process_failure($options)
   {
     q::update_db($options, 'fail', 'response_time', 'response');
   }
