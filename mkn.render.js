@@ -331,9 +331,14 @@ mkn.render = function(options)
       this.expandArray(field);
     else
       field = removeSubscripts(field);
+
+    this.expandValues(field);
     if (id && field.name === undefined)
       field.name = toTitleCase(id.replace(/[_\/]/g, ' '));
-    this.expandValues(field);
+    if (field.template && field.template.subject) {
+      deriveParent(field.template, field);
+      this.expandValues(field);
+    }
     return field;
   }
 
@@ -734,7 +739,7 @@ mkn.render = function(options)
         }
         value = types;
       }
-      if (name == 'template' && $.isPlainObject(value)) {
+      if (name == 'template' && $.isPlainObject(item[name]) && item[name].type !== undefined) {
         value = mergePrevious(defaults, name, me.initField(value));
         expandVars(value, value.subject, { recurse: true});
       }

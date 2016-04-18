@@ -531,7 +531,7 @@ inline_block:
   display: inline-block
 
 inplace_input:
-  type: labelled_inside
+  type: label_inside
 
 input:
   tag: input
@@ -604,6 +604,7 @@ label_inside:
   subject:
     class: [input]
     width: 100%
+    derive: [label]
     attr: { placeholder: $label, title: $desc, for: $id }
   text: $field
 
@@ -731,7 +732,7 @@ multi_input:
   split: 47%
   spacing: 2
   inputs:
-    - template: inplace_input
+    - template: label_inside
     - type: input
     - default:
         derive: [split,spacing]
