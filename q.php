@@ -82,6 +82,7 @@ class q
       do {
         $rows = $db->read($sql, MYSQLI_ASSOC, $batch_size);
         foreach($rows as $row) {
+          $row['q'] = true;
           if ($row['is_due'])
             q::process($row['process'], $row, json_decode($row['message'], true));
           $retry_interval = $row['retry_interval'];
