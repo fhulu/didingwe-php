@@ -80,12 +80,13 @@ class q
       $batch_size = $config['batch_size'];
       $delay = (int)$config['delay'];
       do {
+        $start_time = time();
         $rows = $db->read($sql, MYSQLI_ASSOC, $batch_size);
         foreach($rows as $row) {
           $row['q'] = true;
           if ($row['is_due'])
             q::process($row['process'], $row, json_decode($row['message'], true));
-          $retry_interval = $row['retry_interval'];
+          $retry_interval = $row['retry_interval'] - (time() - $start_time);
           if ($delay > $retry_interval) $delay = $retry_interval;
         }
         msg_receive ($msg_id, 0, $type, 32, $msg, true, MSG_IPC_NOWAIT);
@@ -145,7 +146,7 @@ class q
     q::update_db($options, 'done', 'response_time', 'response');
     $next_process = $options['success_process'];
     $response = $options['response'];
-    if (!isset($next_process)) return $response;
+    if ($next_process == '') return $response;
     return call_user_func_array("q::$next_process", array($response));
   }
 
