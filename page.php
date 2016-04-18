@@ -975,11 +975,12 @@ class page
   function reply_if($method, $args)
   {
     $matches = array();
-    if (!preg_match('/^if\s+(\!?\d+)\s*$/', $method, $matches)) return false;
+    if (!preg_match('/^if\s+(.+)$/', $method, $matches)) return false;
+
     if (sizeof($args) < 1) throw new Exception("Invalid number of parameters for 'if'");
     $condition = $matches[1];
-    if ($condition[0] == '!') $condition = !(int)substr($condition,1);
-    if ($condition) $this->reply($args);
+    if (eval("return $condition;"))
+      $this->reply($args);
     return true;
   }
 
@@ -1377,6 +1378,6 @@ class page
       $args = page::merge_options($this->get_expanded_field($method), $args);
       $args = page::merge_options($config[$method], $args);
     }
-    q::put($method, $args);
+    return q::put($method, $args);
   }
 }

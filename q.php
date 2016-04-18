@@ -24,7 +24,7 @@ class q
     $merged['message'] = json_encode($args);
     $id = $db->insert_array('q', $merged, ['create_time'=>'/now()']);
     q::wake();
-    return null;
+    return true;
   }
 
 
@@ -116,6 +116,7 @@ class q
 
   private static function update_db($options, $status, $time)
   {
+    if (!$options['q']) return;
     global $db;
     $args = func_get_args();
     array_splice($args, 0, 3, ['q', $options, 'id', ['status'=>"$status"], ["$time"=>'/now()']]);
@@ -141,6 +142,10 @@ class q
   private static function process_success($options)
   {
     q::update_db($options, 'done', 'response_time', 'response');
+    $next_process = $options['success_process'];
+    $response = $options['response'];
+    if (!isset($next_process)) return $response;
+    return call_user_func_array("q::$next_process", array($response));
   }
 
 
@@ -212,5 +217,13 @@ class q
 
   static function decode_rest($response)
   {
+    $matches = [];
+    if (!preg_match('/^HTTP.*[\r\n][\r\n]({.*})$/s', $response, $matches)) {
+      log::warn("Unable to decode REST response $response");
+      return null;
+    }
+    $decoded = json_decode($matches[1], true);
+    log::debug_json("DECODED REST", $decoded);
+    return $decoded;
   }
 }
