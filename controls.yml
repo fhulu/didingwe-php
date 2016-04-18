@@ -1098,6 +1098,7 @@ vspace:
   mutable: false
   type: blank
   space: 20
+  template: none
   styles: [block,vspaced]
 
 vspaced:

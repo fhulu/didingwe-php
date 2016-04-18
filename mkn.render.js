@@ -99,9 +99,14 @@ mkn.render = function(options)
   var mergeDefaults = function(item, defaults, base) {
     if (!item.action && defaults.action) item.action = defaults.action;
     if (defaults.attr) item.attr = mkn.merge(item.attr,defaults.attr);
-    if (defaults.types) return mergeDefaultType(base, item, defaults.types.shift());
-    if (!item.type && defaults.type) return mergeDefaultType(base, item, defaults.type);
-    return mkn.merge(base, item);
+    if (!item.template) item.template = defaults.template;
+    if (defaults.types)
+      item = mergeDefaultType(base, item, defaults.types.shift());
+    else if (!item.type && defaults.type)
+      item = mergeDefaultType(base, item, defaults.type);
+    else
+      item = mkn.merge(base, item);
+    return defaults.default? mkn.merge(defaults.default, item): item;
   }
 
   this.expandFields = function(parent_field, name, items, defaults)
@@ -145,15 +150,12 @@ mkn.render = function(options)
         if (sow && sow.indexOf(id) >=0)
           item = mkn.merge(parent_field[id], item);
         promoteAttr(item);
-        template = item.template;
         var base = mkn.copy(me.types[id]);
         var merged = mkn.merge(base, item);
         if (mutable(merged))
           item = mergeDefaults(item, defaults, base);
         else
           item = merged;
-        if (defaults.default)
-          item = mkn.merge(defaults.default, item);
       }
       else if ($.isArray(item)) {
         array = item;
@@ -168,16 +170,13 @@ mkn.render = function(options)
 
       if (path)
         item.path = path + '/' + id;
-      if (typeof template == 'string') {
+      if (item.template == 'none')
+        delete item.template;
+      else if (typeof item.template == 'string') {
         var def = {};
         setDefaults(def, {template: template}, parent_field);
-        template = def.template;
+        item.template = def.template;
       }
-      if (!template)
-        template = item.template = defaults.template;
-      // else if (!template.type && defaults.template)
-      //   template = item.template  = mkn.merge(defaults.template, template);
-      if (template && template.subject) item = mkn.merge(template.subject, item);
       if (defaults.wrap) {
         item.wrap = defaults.wrap;
         item.wrap.id = name;
@@ -322,6 +321,8 @@ mkn.render = function(options)
   this.initField = function(field, parent)
   {
     field.page_id = this.page_id;
+    if (field.template && field.template.subject)
+      field = mkn.merge(field.template.subject, field);
     field = this.mergeType(field);
     deriveParent(parent, field);
     field = this.parentSow(parent, field);
