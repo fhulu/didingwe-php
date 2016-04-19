@@ -55,7 +55,7 @@ PATTERN;
     foreach($fields as $field) {
       $index += $span;
       list($id, $values) = assoc_element($field);
-      if (in_array($id, array('type','template'))) continue;
+      if (in_array($id, ['type','template', 'default'], true)) continue;
       $span = is_array($values) && $values['span']? $values['span']: 1;
       if (!$span) $span = 1;
       if (is_array($field) && $field['hide']) continue;
