@@ -504,11 +504,12 @@
         $(e.target).toggle();
         self.slide(tr);
       });
-      tr.on('expand', function(e, btn, item) {
-        if (!item.pages) return;
-        btn.hide();
+      tr.on('expand', function(e) {
+        tr.find('[action=expand]').hide();
         tr.find('[action=collapse]').show();
-        self.loadSubPages(tr, item.pages)
+        var expand = self.options['expand'];
+        if (!expand.pages) return;
+        self.loadSubPages(tr, expand.pages)
       });
       tr.on('collapse', function(e) {
         tr.find('[action=collapse]').hide();
