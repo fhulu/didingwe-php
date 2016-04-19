@@ -1371,12 +1371,14 @@ class page
 
   function q($method, $args)
   {
-    if ($args['merge'] != false) {
+    $merge = $args['merge'];
+    if (!isset($merge) || $merge != false) {
       $args = page::merge_options($this->answer, $args);
       $this->update_context($args);
       global $config;
       $args = page::merge_options($this->get_expanded_field($method), $args);
       $args = page::merge_options($config[$method], $args);
+      replace_fields($args,$args,true);
     }
     return q::put($method, $args);
   }
