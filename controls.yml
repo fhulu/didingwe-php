@@ -1142,6 +1142,7 @@ wizard_page:
   text: $processing $synopsis $inputs $actions $navigate
   sub_page: false
   sow: [next,prev]
+  styles: [widest,centered]
   navigate:
     - wrap: class
     - prev: {type: wizard_prev}

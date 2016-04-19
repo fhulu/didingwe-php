@@ -151,7 +151,6 @@
         if (self.options.bookmarks) {
           object.height(content.height());
           object.css('left', content.css('left'));
-          object.width(page.width());
         }
         object.addClass('wizard-content');
         page.addClass('wizard-loaded').removeClass('wizard-loading');
