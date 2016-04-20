@@ -504,6 +504,7 @@
       tr.on('expand', function(e) {
         tr.find('[action=expand]').hide();
         tr.find('[action=collapse]').show();
+        if (tr.next().hasClass('expanded')) return;
         var expand = self.options['expand'];
         if (!expand.pages) return;
         self.loadSubPages(tr, expand.pages)
