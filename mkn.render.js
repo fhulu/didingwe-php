@@ -755,6 +755,15 @@ mkn.render = function(options)
 
   var loadLink = function(link,type, callback)
   {
+    var cache = mkn.links[link];
+    if (cache !== undefined) {
+      if (cache.loaded)
+        callback();
+      else
+        cache.callbacks.push(callback);
+      return;
+    }
+    mkn.links[link] = {loaded: false, callbacks: [callback]};
     var element;
     if (type == 'css') {
       element = document.createElement('link');
@@ -768,10 +777,15 @@ mkn.render = function(options)
       element.src =  link;
       element.type = 'text/javascript';
     }
-    var loaded = false;
-    if (callback !== undefined) element.onreadystatechange = element.onload = function() {
-      if (!loaded) callback();
-      loaded = true;
+    element.onreadystatechange = element.onload = function() {
+      cache = mkn.links[link];
+      console.log('after loading', link, mkn.copy(mkn.links[link]));
+      cache.loaded = true;
+      while (cache.callbacks.length) {
+        var func = cache.callbacks.shift();
+        func();
+      }
+      console.log('after calling', link, mkn.copy(mkn.links[link]));
     }
     var head = document.getElementsByTagName('head')[0];
     head.appendChild(element);
