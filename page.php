@@ -570,13 +570,16 @@ class page
     $this->validator = new validator(page::merge_options($_SESSION, $this->request), $fields, $validators);
 
     $exclude = array('audit','css','post','script','style', 'styles', 'type','valid','validate','values');
+
     if (is_string($include) && !is_array($include))
       $include = explode(',', $include);
-    $delta_pos = array_search('delta', $include, true);
-    if ($delta_pos !== false)
-      array_splice($include, $delta_pos, 1, explode(',', $this->request['delta']));
-
-    if (is_null($include)) $include = true;
+    if (is_array($include)) {
+      $delta_pos = array_search('delta', $include, true);
+      if ($delta_pos !== false)
+        array_splice($include, $delta_pos, 1, explode(',', $this->request['delta']));
+    }
+    else
+     $include = true;
 
     $validated = array();
     walk_recursive_down($field, function($value, $key, $parent) use (&$exclude, &$validated, &$include) {
