@@ -100,7 +100,7 @@
         var end = new Date().getTime();
         console.log("Load: ", end - start);
         self.populate(data);
-        self.element.trigger('refreshed', [data]);
+        self.element.triggerHandler('refreshed', [data]);
         delete data.rows;
         $.extend(self.params, data);
         console.log("Populate: ", new Date().getTime() - end);
@@ -333,10 +333,7 @@
             continue;
           }
           var td = $('<td>').appendTo(tr);
-          if (hide) {
-            td.addClass('hidden');
-            continue;
-          }
+          if (hide) td.addClass('hidden');
 
           if (field.id === 'actions') {
             var actions = cell.split(',');
