@@ -136,7 +136,9 @@
       page.addClass('wizard-loading');
       var props = this.options.steps[index];
       var path = this.options.path;
-      if (props.url !== undefined)
+      if (props.id.indexOf('/') >= 0)
+        path = props.id;
+      else if (props.url !== undefined)
         path = props.url;
       else if (path.indexOf('/') === -1)
         path += '/' + props.id;
