@@ -182,7 +182,7 @@ datatable:
   type: table
   class: [data]
   create: datatable
-  script: /common/datatable.js
+  script: [/common/datatable.js]
   row_creator: { type: table_row }
   css: [/common/datatable.css,/datatable.css]
   flags: []
