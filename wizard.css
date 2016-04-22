@@ -6,17 +6,20 @@
         Purpose of the stylesheet follows.
 */
 
-.wizard-page
-{
+.wizard {
+  padding: 0 !important;
+}
+
+.wizard-page {
   display: table-cell;
-  padding-left: 8px;
+  padding: 0 8;
   vertical-align: top;
   margin-left: auto;
   margin-right: auto;
+  padding
 }
 
-.wizard-bookmark-holder-left
-{
+.wizard-bookmark-holder-left {
   display: table-cell;
   vertical-align: top;
   width: 20%;
@@ -26,8 +29,7 @@
   background-color: whitesmoke;
 }
 
-.wizard-bookmark-holder-left>.wizard-bookmark>*
-{
+.wizard-bookmark-holder-left>.wizard-bookmark>* {
   display: inline-block;;
 }
 
@@ -41,11 +43,13 @@
 
 .wizard-state-pend {
   color: #777;
+  cursor: not-allowed;
 }
 
 .wizard-state-active {
   color: white;
   background-color: darkcyan;
+  cursor: done;
 }
 
 .wizard-state-done {
@@ -53,6 +57,7 @@
   background-image: url('tick16.png');
   background-position: center right;
   background-repeat: no-repeat;
+  cursor: pointer;
 }
 
 .wizard .navigate

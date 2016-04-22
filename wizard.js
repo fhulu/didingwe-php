@@ -2,17 +2,15 @@
   $.widget( "ui.wizard", {
     _create: function() {
       this.stack = new Array();
-      var self = this;
-      this.width = this.element.width();
+      var el = this.element.addClass('wizard');
       this.render = new mkn.render({
-        parent: this.element,
+        parent: el,
         types: this.options.types,
-        id: this.element.id,
+        id: el.id,
         key: this.options.key
       });
       this.render.expandFields(this.options, "steps", this.options.steps);
 
-      var num_steps = this.options.steps.length;
       this.createBookmarks();
       this.createPages();
       this.bindActions();
@@ -39,7 +37,7 @@
 
     createBookmark: function(index, info) {
       var bookmark = $('<div>')
-        .addClass('wizard-bookmark')
+        .addClass('wizard-bookmark wizard-state-pend')
         .attr('step',index).appendTo(this.bookmarkHolder);
       $('<div>').addClass('wizard-bookmark-number').text(++index+'.').appendTo(bookmark);
       $('<div>').addClass('wizard-bookmark-title').text(info.name).appendTo(bookmark);
