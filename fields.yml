@@ -82,6 +82,7 @@ confirm_password:
 
 country:
   options:
+    - South Africa
     - ref_list
   valid: ref_list
 
@@ -332,7 +333,7 @@ register:
 
 rest_post:
   merge: false
-  
+
 send_email:
   support: Mukoni Support <support@mukoni.co.za>
   headers:
