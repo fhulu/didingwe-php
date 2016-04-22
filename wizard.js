@@ -23,7 +23,7 @@
 
     child: function(selector, index) {
       if (!index) index = 0;
-      return this.element.children(selector).eq(index);
+      return this.element.find(selector).eq(index);
     },
 
     createBookmarks: function() {
@@ -38,10 +38,8 @@
 
 
     createBookmark: function(index, info) {
-      var state = index==0? 'active': 'pend';
       var bookmark = $('<div>')
         .addClass('wizard-bookmark')
-        .addClass('wizard-state-'+state)
         .attr('step',index).appendTo(this.bookmarkHolder);
       $('<div>').addClass('wizard-bookmark-number').text(++index+'.').appendTo(bookmark);
       $('<div>').addClass('wizard-bookmark-title').text(info.name).appendTo(bookmark);
@@ -83,23 +81,22 @@
       if (!page.hasClass('wizard-loaded') || props.clear)
         this.loadPage(page, index);
       else
-        page.triggerHandler('reload');
-      page.addClass('wizard-current').show();
-      this.activateBookmark(index);
+        page.triggerHandler('reload').show();
+      this.updateBookmark(index, 'pend', 'active');
       this.stack.push(index);
     },
 
-    activateBookmark: function(index)
+    updateBookmark: function(index, old_state, new_state)
     {
-      this.child('wizard-bookmark',index)
-        .removeClass('wizard-state-pend')
-        .addClass('wizard-state-active');
+      this.child('.wizard-bookmark',index)
+        .removeClass('wizard-state-'+old_state)
+        .addClass('wizard-state-'+new_state);
     },
 
     hidePage: function(index, state)
     {
       this.child('.wizard-page', index).hide();
-      this.child('.wizard-bookmark', index).addClass('wizard-state-'+state);
+      this.updateBookmark(index, 'active', state);
     },
 
     loadPage: function(page, index)
