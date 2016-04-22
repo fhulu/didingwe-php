@@ -779,13 +779,11 @@ mkn.render = function(options)
     }
     element.onreadystatechange = element.onload = function() {
       cache = mkn.links[link];
-      console.log('after loading', link, mkn.copy(mkn.links[link]));
       cache.loaded = true;
       while (cache.callbacks.length) {
         var func = cache.callbacks.shift();
         func();
       }
-      console.log('after calling', link, mkn.copy(mkn.links[link]));
     }
     var head = document.getElementsByTagName('head')[0];
     head.appendChild(element);

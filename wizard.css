@@ -8,10 +8,54 @@
 
 .wizard-page
 {
-  display: block;
-  position: absolute;
-  top: 0px;
+  display: table-cell;
+  padding-left: 8px;
+  vertical-align: top;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.wizard-bookmark-holder-left
+{
+  display: table-cell;
+  vertical-align: top;
+  width: 20%;
+  padding: 4;
+  height: 100%;
+  font-size: 10pt;
+  background-color: whitesmoke;
+}
+
+.wizard-bookmark-holder-left>.wizard-bookmark>*
+{
+  display: inline-block;
+  margin-right: 4px;
+}
+
+.wizard-state-pend {
+  color: #777;
+}
+
+.wizard-state-active {
+  color: white;
+  background-color: darkcyan;
+}
+
+.wizard-state-done {
+  color: darkcyan;
+}
+
+.wizard .navigate
+{
+  border-top: 1px solid lightgrey;
+  padding-top: 10px;
   width: 100%;
+}
+
+.ui-dialog .wizard .navigate
+{
+  bottom: 0px;
+  position: absolute;
 }
 
 .wizard-nav
@@ -39,65 +83,4 @@
 .navigate>*
 {
   float: right;
-}
-
-.wizard-bookmark
-{
-  padding: 3px 5px;
-  height: 24px;
-  position: relative;
-  -webkit-transform:rotate(270deg);
-  -moz-transform:rotate(270deg);
-  -o-transform: rotate(270deg);
-  -ms-transform:rotate(270deg);
-  transform: rotate(270deg);
-  cursor: pointer;
-}
-
-
-.wizard-bookmark>*
-{
-  display: inline-block;
-  height: 20px;
-}
-
-.wizard-bookmark-active
-{
-  color: white;
-  background-color: darkcyan;
-}
-
-.wizard-bookmark-inactive
-{
-  background-color: darkcyan;
-  color: darkgrey;
-}
-
-.wizard-bookmark-inactive>.wizard-bookmark>*
-{
-  color: darkgrey;
-}
-
-
-.wizard-bookmark-number
-{
-  width: 24px;
-}
-
-.wizard-content #validate
-{
-  display: none;
-}
-
-.wizard .navigate
-{
-  border-top: 1px solid lightgrey;
-  padding-top: 10px;
-  width: 100%;
-}
-
-.ui-dialog .wizard .navigate
-{
-  bottom: 0px;
-  position: absolute;
 }

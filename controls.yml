@@ -1125,7 +1125,7 @@ wizard:
   script: [/common/wizard.js]
   css: [/common/wizard.css]
   text: $dummy
-  bookmarks: true
+  bookmarks: left
   steps: []
   dummy: []
 
@@ -1142,7 +1142,7 @@ wizard_page:
   text: $processing $synopsis $inputs $actions $navigate
   sub_page: false
   sow: [next,prev]
-  styles: [widest,centered]
+  styles: [centered]
   navigate:
     - wrap: class
     - prev: {type: wizard_prev}

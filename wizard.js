@@ -13,125 +13,96 @@
       this.render.expandFields(this.options, "steps", this.options.steps);
 
       var num_steps = this.options.steps.length;
-      this._createPages();
-      this._bindActions();
+      this.createBookmarks();
+      this.createPages();
+      this.bindActions();
       this.stack = new Array();
       this.jumpTo(0);
     },
 
-    _createPages: function()
-    {
-      var self = this;
-      $.each(this.options.steps, function(i, info) {
-        self._createPage(i);
+
+    child: function(selector, index) {
+      if (!index) index = 0;
+      return this.element.children(selector).eq(index);
+    },
+
+    createBookmarks: function() {
+      var me = this;
+      var type = me.options.bookmarks;
+      if (!type) return;
+      me.bookmarkHolder = $('<div>').addClass('wizard-bookmark-holder-'+type).appendTo(me.element);
+      $.each(me.options.steps, function(i, info) {
+        me.createBookmark(i, info);
       })
     },
 
-    _createPage: function(index)
-    {
-      var props = this.options.steps[index];
-      var page = $('<div class=wizard-page>')
-          .attr('step',props.id)
-          .hide()
-          .css('width','100%')
-          .appendTo(this.element);
 
-      if (this.options.bookmarks)
-        this._createBookmark(page);
-      else
-        $('<div class=wizard-content>').appendTo(page);
+    createBookmark: function(index, info) {
+      var state = index==0? 'active': 'pend';
+      var bookmark = $('<div>')
+        .addClass('wizard-bookmark')
+        .addClass('wizard-state-'+state)
+        .attr('step',index).appendTo(this.bookmarkHolder);
+      $('<div>').addClass('wizard-bookmark-number').text(++index+'.').appendTo(bookmark);
+      $('<div>').addClass('wizard-bookmark-title').text(info.name).appendTo(bookmark);
     },
 
-    _createBookmark: function(page)
-    {
-      var bookmark = $('<div class="wizard-bookmark wizard-bookmark-active">').appendTo(page);
-      this.bookmark_width = bookmark.outerHeight();
-      $('<span class=wizard-bookmark-number>').appendTo(bookmark);
-      $('<span class=wizard-bookmark-title>').appendTo(bookmark);
-      var height = parseInt(this.element.height());
-      var content = $('<div class=wizard-content>').appendTo(page);
-      content.height(height);
-      content.css('top', -10);
-      content.css('left', 10);
-      bookmark.width(height);
-      var offset = (height - this.bookmark_width)/2;
-      bookmark.css('left', (-offset)+'px');
-      bookmark.css('top', offset+'px');
-      bookmark.hide();
+    createPages: function() {
+      var me = this;
+      $.each(this.options.steps, function(i, info) {
+        $('<div>').addClass('wizard-page').hide().appendTo(me.element);
+      })
     },
 
-    jumpTo: function(index)
-    {
-      console.log("jumping to ", index);
+    jumpTo: function(index) {
       if ($.isPlainObject(index)) index = index.index;
       if (typeof index === 'string') {
-        var page = this.element.find('.wizard-page[step="'+index+'"]');
+        var page = this.child('.wizard-page[step="'+index+'"]');
         if (!page.exists()) return;
-        index = this.element.find('.wizard-page').index(page);
+        index = this.children('.wizard-page').index(page);
       }
       if (this.stack.length) {
         var top_index = this.stack[this.stack.length-1];
         if (index === top_index) return;
         if (top_index < index) {  // going forward
-          this._hidePage(top_index, true);
+          this.hidePage(top_index, 'done');
         }
         else do { // goin backwards
             top_index = this.stack.pop();
-            this._hidePage(top_index, false);
+            this.hidePage(top_index, 'visited');
         } while (top_index >  index);
       }
 
-      this._showPage(index);
-      this.next_step = undefined;
+      this.showPage(index);
+      delete this.next_step;
     },
 
-    _showPage: function(index)
-    {
-      var page = this.element.find('.wizard-page').eq(index);
+    showPage: function(index) {
+      var page = this.child('.wizard-page', index);
       var props = this.options.steps[index];
       if (!page.hasClass('wizard-loaded') || props.clear)
-        this._loadPage(page, index);
+        this.loadPage(page, index);
       else
-        page.find('.wizard-content').triggerHandler('reload');
-
-      if (this.options.bookmarks)
-        this._showBookmark(page, index);
+        page.triggerHandler('reload');
       page.addClass('wizard-current').show();
+      this.activateBookmark(index);
       this.stack.push(index);
     },
 
-    _showBookmark: function(page, index)
+    activateBookmark: function(index)
     {
-      var bookmark = page.find('.wizard-bookmark').hide();
-      if (index > 0) {
-        var prev = this.element.find('.wizard-page').eq(index-1);
-        var color = prev.find('.wizard-bookmark-active').css('background-color');
-        color = darken(rgbToHex(color), 1.15);
-        bookmark.css('background-color', color);
-      }
-      page.find('.wizard-content,.wizard-nav').show();
-      var offset = this.stack.length * this.bookmark_width - 6;
-      page.css('left', offset+'px');
-      page.width(this.width-offset);
+      this.child('wizard-bookmark',index)
+        .removeClass('wizard-state-pend')
+        .addClass('wizard-state-active');
     },
 
-    _hidePage: function(index, show_heading)
+    hidePage: function(index, state)
     {
-      var page = this.element.find('.wizard-page').eq(index);
-      page.removeClass('wizard-current');
-      if (show_heading) {
-        page.find('.wizard-bookmark-number').text(this.stack.length+' ');
-        page.find('.wizard-bookmark-title').text(page.find('.wizard-content').attr('title'));
-        page.find('.wizard-bookmark').show();
-      }
-      else {
-        page.find('.wizard-bookmark').hide();
-      }
-      page.find('.wizard-content,.wizard-nav').hide();
-      page.removeClass('wizard-done');
+      this.child('.wizard-page', index).hide();
+      this.child('.wizard-bookmark', index).addClass('wizard-state-'+state);
     },
 
-    _loadPage: function(page, index)
+    loadPage: function(page, index)
     {
       page.addClass('wizard-loading');
       var props = this.options.steps[index];
@@ -146,28 +117,21 @@
         path = path.substr(0, path.lastIndexOf('/')+1) + props.id;
       var tmp = $('<div>');
       tmp.page({path: path, key: this.options.key});
-      var content = page.find('.wizard-content');
       if (path[0] === '/') path = path.substr(1);
       var self = this;
       tmp.on('read_'+path.replace(/\//, '_'), function(event, object) {
-        if (self.options.bookmarks) {
-          object.height(content.height());
-          object.css('left', content.css('left'));
-        }
-        object.addClass('wizard-content');
-        page.addClass('wizard-loaded').removeClass('wizard-loading');
-        content.replaceWith(object);
-        var prev = object.find('#prev');
+        page.replaceWith(object);
+        page = object;
+        page.attr('step', index)
+          .addClass('wizard-page')
+          .addClass('wizard-loaded');
+        var prev = page.find('#prev');
         if (props.prev === false || index === 0) {
           prev.hide();
           self.first_step = index;
-          self.element.find('.wizard-bookmark-active').each(function(i) {
-            if (i < index)
-              $(this).removeClass('wizard-bookmark-active').addClass('wizard-bookmark-inactive');
-          });
         }
 
-        var next = object.find('#next');
+        var next = page.find('#next');
         var is_last = index === self.options.steps.length-1;
         if (props.next === false || is_last)
           next.hide();
@@ -180,11 +144,10 @@
     },
 
 
-    _bindActions: function()
+    bindActions: function()
     {
       var self = this;
       this.element.on('wizard-jump', function(event, params) {
-        console.log("wizard-jump", params);
         self.jumpTo(params);
       });
 
@@ -204,7 +167,7 @@
         self.jumpTo(self.next_step);
       });
 
-      this.element.find('.wizard-bookmark-active').click(function(i) {
+      this.element.find('.wizard-bookmark.wizard-state-visited').click(function(i) {
         if (i >= self.first_step)
           self.jumpTo(self.stack[index]);
       });
