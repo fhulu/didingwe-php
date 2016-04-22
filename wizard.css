@@ -28,8 +28,15 @@
 
 .wizard-bookmark-holder-left>.wizard-bookmark>*
 {
-  display: inline-block;
+  display: inline-block;;
+}
+
+.wizard-bookmark-holder-left .wizard-bookmark-number {
   margin-right: 4px;
+}
+
+.wizard-bookmark-holder-left .wizard-bookmark-title {
+  margin-right: 16px;
 }
 
 .wizard-state-pend {
@@ -43,6 +50,9 @@
 
 .wizard-state-done {
   color: darkcyan;
+  background-image: url('tick16.png');
+  background-position: center right;
+  background-repeat: no-repeat;
 }
 
 .wizard .navigate
