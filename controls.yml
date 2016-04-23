@@ -1125,9 +1125,25 @@ wizard:
   script: [/common/wizard.js]
   css: [/common/wizard.css]
   text: $dummy
+  dummy: []
   bookmarks: left
   steps: []
-  dummy: []
+  prev:
+    type: button
+    name: Previous
+    desc: Go to previous step
+    action: trigger
+    event: wizard-prev
+    class: [wizard-prev]
+  next:
+    type: submit
+    name: Next
+    desc: Go to next step
+    class: [action,wizard-next]
+  navigate: [$prev,$next]
+
+
+
 
 
 wizard_jump:
@@ -1141,25 +1157,7 @@ wizard_page:
   type: input_page
   text: $processing $synopsis $inputs $actions $navigate
   sub_page: false
-  sow: [next,prev]
   styles: [centered]
-  navigate:
-    - wrap: class
-    - prev: {type: wizard_prev}
-    - type: wizard_next
-    - next
 
-wizard_next:
-  type: submit
-  name: Next
-  desc: Go to next step
-  class: [action,wizard-next]
-
-wizard_prev:
-  type: button
-  name: Previous
-  desc: Go to previous step
-  action: trigger
-  event: wizard-prev
 
 ...

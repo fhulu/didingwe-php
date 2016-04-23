@@ -3,16 +3,11 @@
     _create: function() {
       this.stack = new Array();
       var el = this.element.addClass('wizard');
-      this.render = new mkn.render({
-        parent: el,
-        types: this.options.types,
-        id: el.id,
-        key: this.options.key
-      });
-      this.render.expandFields(this.options, "steps", this.options.steps);
+      this.options.render.expandFields(this.options, "steps", this.options.steps);
 
       this.createBookmarks();
       this.createPages();
+      this.createNavigation();
       this.bindActions();
       this.stack = new Array();
       this.jumpTo(0);
@@ -50,6 +45,13 @@
       })
     },
 
+
+    createNavigation: function() {
+      var me = this;
+      var nav = $('<div class=wizard-navigate>').appendTo(this.element);
+      this.options.render.expandFields(this.options,'navigate',this.options.navigate);
+    },
+
     jumpTo: function(index) {
       if ($.isPlainObject(index)) index = index.index;
       if (typeof index === 'string') {
@@ -76,6 +78,7 @@
     showPage: function(index) {
       var page = this.child('.wizard-page', index);
       var props = this.options.steps[index];
+      console.log("showing page", index, page.attr('class'));
       if (!page.hasClass('wizard-loaded') || props.clear)
         this.loadPage(page, index);
       else
@@ -90,6 +93,30 @@
         .removeClass('wizard-state-'+old_state)
         .addClass('wizard-state-'+new_state);
     },
+
+    updateNavigation: function(index, info) {
+      var me = this;
+      var bar = me.child('.wizard-navigate').empty();
+      var navs = $.extend({}, me.options.navigate, info.navigate);
+      var last_step = me.options.steps.length-1;
+      $.each(navs, function(i, nav) {
+        if (nav.id == 'next') {
+          if (info.next === false || index == last_step) return;
+          nav.path = info.path;
+        }
+        if (nav.id == 'prev' && (info.prev === false || index === 0)) {
+          self.first_step = index;
+          return;
+        }
+        me.options.render.create(nav).appendTo(bar);
+      });
+
+      me.child('.wizard-next').bindFirst('click', function() {
+        if (me.next_step === undefined)
+          me.next_step = typeof info.next === 'string'? info.next: index+1;
+      });
+    },
+
 
     hidePage: function(index, state)
     {
@@ -114,27 +141,13 @@
       tmp.page({path: path, key: this.options.key});
       if (path[0] === '/') path = path.substr(1);
       var self = this;
-      tmp.on('read_'+path.replace(/\//, '_'), function(event, object) {
+      tmp.on('read_'+path.replace(/\//, '_'), function(event, object, info) {
         page.replaceWith(object);
         page = object;
         page.attr('step', index)
           .addClass('wizard-page')
           .addClass('wizard-loaded');
-        var prev = page.find('#prev');
-        if (props.prev === false || index === 0) {
-          prev.hide();
-          self.first_step = index;
-        }
-
-        var next = page.find('#next');
-        var is_last = index === self.options.steps.length-1;
-        if (props.next === false || is_last)
-          next.hide();
-        if (is_last) return;
-        object.find('.wizard-next').bindFirst('click', function() {
-          if (self.next_step === undefined)
-            self.next_step = typeof props.next === 'string'? props.next: index+1;
-        });
+        self.updateNavigation(index, info);
       });
     },
 

@@ -60,42 +60,21 @@
   cursor: pointer;
 }
 
-.wizard .navigate
-{
+
+.wizard-navigate {
+  background-color: whitesmoke;
   border-top: 1px solid lightgrey;
-  padding-top: 10px;
-  width: 100%;
-}
-
-.ui-dialog .wizard .navigate
-{
-  bottom: 0px;
-  position: absolute;
-}
-
-.wizard-nav
-{
-  position: relative;
   display: inline-block;
-  border-top: 1px solid grey;
-  padding-top: 5px;
-  height: 40px;
   width: 100%;
-  top: -2px;
-  left: 8px;
 }
 
-.wizard-nav .action
+.wizard-navigate>*
 {
+  margin: 10px;
   float: right;
 }
 
-.navigate #prev
+.wizard-navigate>.wizard-prev
 {
   float: left;
-}
-
-.navigate>*
-{
-  float: right;
 }
