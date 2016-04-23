@@ -1144,20 +1144,11 @@ wizard:
 
 
 
-
-
 wizard_jump:
   classes: button
   action: trigger
   event:
     name: wizard-jump
     parameters: { index: $id }
-
-wizard_page:
-  type: input_page
-  text: $processing $synopsis $inputs $actions $navigate
-  sub_page: false
-  styles: [centered]
-
 
 ...
