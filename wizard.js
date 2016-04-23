@@ -81,17 +81,24 @@
       console.log("showing page", index, page.attr('class'));
       if (!page.hasClass('wizard-loaded') || props.clear)
         this.loadPage(page, index);
-      else
-        page.triggerHandler('reload').show();
-      this.updateBookmark(index, 'pend', 'active');
+      else {
+        page.triggerHandler('reload');
+        this.updateNavigation(index, props);
+        page.show();
+      }
+
+      this.updateBookmark(index, 'active', 'pend', 'visited', 'done');
       this.stack.push(index);
     },
 
-    updateBookmark: function(index, old_state, new_state)
+    updateBookmark: function(index, state)
     {
-      this.child('.wizard-bookmark',index)
-        .removeClass('wizard-state-'+old_state)
-        .addClass('wizard-state-'+new_state);
+      var bm = this.child('.wizard-bookmark',index)
+        .addClass('wizard-state-'+state);
+      for (var i = 2; i<arguments.length; ++i) {
+        bm.removeClass('wizard-state-'+arguments[i]);
+      }
+      return bm;
     },
 
     updateNavigation: function(index, info) {
@@ -121,7 +128,7 @@
     hidePage: function(index, state)
     {
       this.child('.wizard-page', index).hide();
-      this.updateBookmark(index, 'active', state);
+      this.updateBookmark(index, state, 'active')
     },
 
     loadPage: function(page, index)
@@ -143,10 +150,10 @@
       var self = this;
       tmp.on('read_'+path.replace(/\//, '_'), function(event, object, info) {
         page.replaceWith(object);
-        page = object;
-        page.attr('step', index)
-          .addClass('wizard-page')
-          .addClass('wizard-loaded');
+        page = object.attr('step', index).addClass('wizard-page wizard-loaded');
+        path = info.path;
+        info = self.options.steps[index] = $.extend({}, info, self.options.steps[index]);
+        info.path = path;
         self.updateNavigation(index, info);
       });
     },
