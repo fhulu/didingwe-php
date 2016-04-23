@@ -120,8 +120,10 @@ $.fn.values = function()
     var val;
     if (ctrl.hasClass('checkgroup'))
       val = ctrl.attr('chosen');
-    else if (ctrl.attr('type') !== 'radio')
-      val = ctrl.value();
+    else if (ctrl.attr('type') === 'radio') {
+      if (!ctrl.is(':checked')) return;
+      val = ctrl.attr('value');
+    }
     else if (ctrl.is(':checked'))
       val = ctrl.attr('value');
     var server = ctrl.attr('server');

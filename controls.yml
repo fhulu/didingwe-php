@@ -853,7 +853,7 @@ question_input_page:
 
 radiobox:
   type: input
-  attr: { type: radio, value: $id}
+  attr: { type: radio, value: $id, id: ""}
   style:
     width: 24px
     height: 24px
