@@ -84,6 +84,7 @@ country:
   options:
     - ref_list
   valid: ref_list
+  desc: Country of residence
 
 day_of_month:
   options:
@@ -332,7 +333,7 @@ register:
 
 rest_post:
   merge: false
-  
+
 send_email:
   support: Mukoni Support <support@mukoni.co.za>
   headers:
