@@ -575,7 +575,7 @@ mkn.render = function(options)
     loadLinks('css', field);
     loadLinks('script', field, function() {
       if (field.create)
-        object.customCreate($.extend({types: me.types}, me.options, field));
+        object.customCreate($.extend({render: me}, field));
       if (callback !== undefined) callback();
     });
   };
@@ -918,7 +918,6 @@ mkn.render = function(options)
 
   var reportErrors = function(errors, event)
   {
-    console.log("has errors", errors);
     for (var key in errors) {
       reportError(key, errors[key]);
     }
