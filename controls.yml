@@ -491,8 +491,7 @@ hspaced:
 iframe:
   tag: iframe
   src: /$id
-  attr:
-    src: $src
+  attr: { src: $src }
 
 image:
   tag: img
@@ -675,6 +674,7 @@ lighter:
   font-weight: lighter
 
 line:
+  mutable: false
   tag: hr
   text: ""
 
