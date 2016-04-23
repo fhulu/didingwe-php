@@ -15,21 +15,29 @@ require_once('pdf/fpdf.php');
 
 class ExtPDF extends FPDF {
 
-  var $header;
+  var $options;
   var $footer;
-//  function __construct($header, $footer) 
-//  {
-//    $this->header = $header;
-//    $this->footer = $footer;
-//  }
-  
-  function wrap($left_margin, &$y, $right_margin, $sentence, $vertical_spacing=null)
+  function __construct($options = [])
   {
-    if (is_null($vertical_spacing)) 
-      $vertical_spacing = 5;  //todo: use current font height;
-    
-    $words = preg_split('/([^\s,;.-]+[\s,;.-]+)/',$sentence, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
+    $this->options = array_merge([
+      'left_margin'=>10,
+      'right_margin'=>10,
+      'top_margin'=>10,
+      'bottom_margin'=>10,
+      'vertical_spacing'=>5,
+    ], $options);
+ }
+
+  function wrap($sentence, $x=null, &$y=null, &$options=[])
+  {
+    $options = array_merge($this->options, $options);
+    if (!is_null($x)) $options['left_margin'] = $x;
+    if (!is_null($y)) $options['top_margin'] = $y;
+    list($left_margin, $right_margin, $y, $vertical_spacing) = to_array(
+      $options, 'left_margin', 'right_margin', 'top_margin', 'vertical_spacing');
+
     $x = $left_margin;
+    $words = preg_split('/([^\s,;.-]+[\s,;.-]+)/',$sentence, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
     foreach($words as $word) {
       $word = html_entity_decode(htmlentities($word),ENT_HTML401,"ISO-8859-1");
       $width = $this->GetStringWidth($word);
@@ -43,13 +51,4 @@ class ExtPDF extends FPDF {
     }
     $y += $vertical_spacing;
   }
-//  function Footer()
-//{
-//    // Go to 1.5 cm from bottom
-//    $this->SetY($this->footer['x']);
-//    // Select Arial italic 8
-//    $this->SetFont($this->footer['font_style'], $this->footer['font_type'], $this->footer['font_size']);
-//    // Print centered page number
-//    $this->Cell(0,10,'Page '.$this->PageNo(),0,0,'C');
-//}
 }
