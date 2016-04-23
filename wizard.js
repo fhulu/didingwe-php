@@ -36,6 +36,12 @@
         .attr('step',index).appendTo(this.bookmarkHolder);
       $('<div>').addClass('wizard-bookmark-number').text(++index+'.').appendTo(bookmark);
       $('<div>').addClass('wizard-bookmark-title').text(info.name).appendTo(bookmark);
+      var me = this;
+      bookmark.click(function() {
+        if ($(this).hasClass('wizard-state-done'))
+          me.jumpTo($(this).attr('step'));
+      });
+
     },
 
     createPages: function() {
@@ -57,7 +63,7 @@
       if (typeof index === 'string') {
         var page = this.child('.wizard-page[step="'+index+'"]');
         if (!page.exists()) return;
-        index = this.children('.wizard-page').index(page);
+        index = this.element.children('.wizard-page').index(page);
       }
       if (this.stack.length) {
         var top_index = this.stack[this.stack.length-1];
@@ -78,7 +84,6 @@
     showPage: function(index) {
       var page = this.child('.wizard-page', index);
       var props = this.options.steps[index];
-      console.log("showing page", index, page.attr('class'));
       if (!page.hasClass('wizard-loaded') || props.clear)
         this.loadPage(page, index);
       else {
@@ -87,18 +92,18 @@
         page.show();
       }
 
-      this.updateBookmark(index, 'active', 'pend', 'visited', 'done');
+      this.updateBookmark(index, 'active');
       this.stack.push(index);
     },
 
     updateBookmark: function(index, state)
     {
+      var states = ['pend','active', 'done', 'visited'];
       var bm = this.child('.wizard-bookmark',index)
-        .addClass('wizard-state-'+state);
-      for (var i = 2; i<arguments.length; ++i) {
-        bm.removeClass('wizard-state-'+arguments[i]);
+      for (var i in states) {
+        bm.removeClass('wizard-state-'+states[i]);
       }
-      return bm;
+      bm.addClass('wizard-state-'+state);
     },
 
     updateNavigation: function(index, info) {
@@ -128,7 +133,7 @@
     hidePage: function(index, state)
     {
       this.child('.wizard-page', index).hide();
-      this.updateBookmark(index, state, 'active')
+      this.updateBookmark(index, state)
     },
 
     loadPage: function(page, index)
@@ -164,28 +169,23 @@
       var self = this;
       this.element.on('wizard-jump', function(event, params) {
         self.jumpTo(params);
-      });
+      })
 
-      this.element.on('wizard-next', function() {
+      .on('wizard-next', function() {
         self.jumpTo(self.stack[self.stack.length-1]+1);
-      });
+      })
 
-      this.element.on('wizard-prev', function() {
+      .on('wizard-prev', function() {
         self.jumpTo(self.stack[self.stack.length-2]);
-      });
+      })
 
-      this.element.on('processed', function(event, result) {
+      .on('processed', function(event, result) {
         if (result) {
           if (result._responses || !self.stack.length || !self.next_step) return;
           if (result.next_step) self.next_step = result.next_step;
         }
         self.jumpTo(self.next_step);
-      });
-
-      this.element.find('.wizard-bookmark.wizard-state-visited').click(function(i) {
-        if (i >= self.first_step)
-          self.jumpTo(self.stack[index]);
-      });
+      })
     },
 
     nextStep: function(step)

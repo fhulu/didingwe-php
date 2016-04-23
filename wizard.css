@@ -56,11 +56,14 @@
   color: darkcyan;
 }
 
+.wizard-state-done {
+  cursor: pointer;
+}
+
 .wizard-state-done>.wizard-bookmark-title{
   background-image: url('tick16.png');
   background-position: center right;
   background-repeat: no-repeat;
-  cursor: pointer;
 }
 
 .wizard-navigate {
