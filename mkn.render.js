@@ -822,7 +822,7 @@ mkn.render = function(options)
   {
     if (!$.isPlainObject(field)) field = { url: field };
     var url = field.url;
-    if (url == '' && field.target === '_blank') {
+    if (!url && field.target === '_blank') {
       url = '/?action=action';
       field = $.extend({key: options.key}, field);
       var exclude = ['action', 'desc', 'html', 'id', 'name', 'page_id', 'query', 'selector','tag', 'target','text', 'type', 'template']
