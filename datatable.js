@@ -50,6 +50,7 @@
         if (typeof val === 'string' || typeof val === "number")
           this.params[key] = val;
       }
+      this.params.path += '/load';
     },
 
     _promote_fields: function(fields)
@@ -85,7 +86,6 @@
       if (selector !== undefined) {
         $.extend(data, $(selector).values());
       }
-      data.action = 'data';
       $.json('/', {data: mkn.plainValues(data)}, function(data) {
         if (!data) return;
         if (data._responses)

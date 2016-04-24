@@ -192,9 +192,8 @@ datatable:
   flags: []
     # - editall
     #
-  sow: [data]
-  post:
-    - read_values: { rows: $data}
+  load:
+    - read_values: { derive: [data], rows: $data}
     - call: datatable::read(context,$key)
 
   position: top
