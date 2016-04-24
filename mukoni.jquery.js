@@ -124,8 +124,9 @@ $.fn.values = function()
       if (!ctrl.is(':checked')) return;
       val = ctrl.attr('value');
     }
-    else if (ctrl.is(':checked'))
-      val = ctrl.attr('value');
+    else
+      val = ctrl.value();
+
     var server = ctrl.attr('server');
     if (server !== undefined && server != val)
       delta.push(name);
