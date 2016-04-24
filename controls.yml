@@ -28,6 +28,10 @@ alert_message:
 autoheight:
   height: auto
 
+biggest:
+  width: 100%
+  height: 100%
+
 blank:
   type: plain_text
   mutable: false
@@ -703,10 +707,6 @@ list_text:
 lowercase:
   text-transform: lowercase
 
-biggest:
-  width: 100%
-  height: 100%
-
 medium:
   font-size: 26pt
 
@@ -739,6 +739,9 @@ multi_input:
         width: $split
         styles: [tallest,hspaced]
         space: $spacing
+
+navigate:
+  - type: submit
 
 number_input:
   type: input

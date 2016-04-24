@@ -109,6 +109,8 @@
     updateNavigation: function(index, info) {
       var me = this;
       var bar = me.child('.wizard-navigate').empty();
+      if (info.navigate)
+        me.options.render.expandFields(info, "navigate", info.navigate);
       var navs = $.extend({}, me.options.navigate, info.navigate);
       var last_step = me.options.steps.length-1;
       $.each(navs, function(i, nav) {
@@ -184,7 +186,7 @@
           if (result._responses || !self.stack.length || !self.next_step) return;
           if (result.next_step) self.next_step = result.next_step;
         }
-        self.jumpTo(self.next_step);
+        if (self.next_step) self.jumpTo(self.next_step);
       })
     },
 
