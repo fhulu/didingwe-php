@@ -84,7 +84,6 @@ country:
   options:
     - ref_list
   valid: ref_list
-  desc: Country of residence
 
 day_of_month:
   options:

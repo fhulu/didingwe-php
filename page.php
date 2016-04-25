@@ -1265,7 +1265,7 @@ class page
     $vars = page::parse_args(func_get_args());
     if (sizeof($vars) == 0) $vars = array_keys($_SESSION);
     foreach($vars as $var) {
-      if (isset($_SESSION[$var]) && !in_array(page::$login_vars))
+      if (isset($_SESSION[$var]) && !in_array($var, page::$login_vars))
         unset($_SESSION[$var]);
     }
   }
