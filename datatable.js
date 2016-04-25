@@ -50,7 +50,6 @@
         if (typeof val === 'string' || typeof val === "number")
           this.params[key] = val;
       }
-      this.params.path += '/load';
     },
 
     _promote_fields: function(fields)
@@ -81,7 +80,7 @@
       var start = new Date().getTime();
       var self = this;
       self.head().find('.paging [action]').attr('disabled','');
-      var data = $.extend(this.options.request, args, {action: 'data'}, self.params);
+      var data = $.extend(this.options.request, args, {action: 'values'}, self.params);
       var selector = this.options.selector;
       if (selector !== undefined) {
         $.extend(data, $(selector).values());
