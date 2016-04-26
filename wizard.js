@@ -84,14 +84,12 @@
     showPage: function(index) {
       var page = this.child('.wizard-page', index);
       var props = this.options.steps[index];
+      this.updateNavigation(index, props);
       if (!page.hasClass('wizard-loaded') || props.clear)
         this.loadPage(page, index);
-      else {
-        page.triggerHandler('reload');
-        this.updateNavigation(index, props);
-        page.show();
-      }
-
+      else 
+        page.show().triggerHandler('reload');
+      
       this.updateBookmark(index, 'active');
       this.stack.push(index);
     },
