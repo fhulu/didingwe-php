@@ -47,7 +47,7 @@
     createPages: function() {
       var me = this;
       $.each(this.options.steps, function(i, info) {
-        $('<div>').addClass('wizard-page').hide().appendTo(me.element);
+        $('<div>').attr('step', info.id).addClass('wizard-page').hide().appendTo(me.element);
       })
     },
 
@@ -84,12 +84,15 @@
     showPage: function(index) {
       var page = this.child('.wizard-page', index);
       var props = this.options.steps[index];
-      this.updateNavigation(index, props);
-      if (!page.hasClass('wizard-loaded') || props.clear)
+      if (!page.hasClass('wizard-loaded') || props.clear) {
+        this.child('.wizard-navigate').empty();
         this.loadPage(page, index);
-      else 
+      }
+      else {
+        this.updateNavigation(index, props);
         page.show().triggerHandler('reload');
-      
+      }
+
       this.updateBookmark(index, 'active');
       this.stack.push(index);
     },
@@ -154,8 +157,9 @@
       if (path[0] === '/') path = path.substr(1);
       var self = this;
       tmp.on('read_'+path.replace(/\//, '_'), function(event, object, info) {
+        object.attr('step', page.attr('step'));
         page.replaceWith(object);
-        page = object.attr('step', index).addClass('wizard-page wizard-loaded');
+        page = object.addClass('wizard-page wizard-loaded');
         path = info.path;
         info = self.options.steps[index] = $.extend({}, info, self.options.steps[index]);
         info.path = path;
@@ -181,8 +185,9 @@
 
       .on('processed', function(event, result) {
         if (result && result._responses && result._responses.errors) return;
-        if (!self.stack.length || !self.next_step) return;
         if (result && result.next_step) self.next_step = result.next_step;
+        if (!self.stack.length || !self.next_step) return;
+        if (self.next_step === true) self.element.trigger('wizard-next');
         if (self.next_step) self.jumpTo(self.next_step);
       })
     },
