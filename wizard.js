@@ -34,15 +34,10 @@
     createBookmark: function(index, info) {
       var bookmark = $('<div>')
         .addClass('wizard-bookmark wizard-state-pend')
-        .attr('step',index).appendTo(this.bookmarkHolder);
+        .attr('step',info.id)
+        .appendTo(this.bookmarkHolder);
       $('<div>').addClass('wizard-bookmark-number').text(++index+'.').appendTo(bookmark);
       $('<div>').addClass('wizard-bookmark-title').text(info.name).appendTo(bookmark);
-      var me = this;
-      bookmark.click(function() {
-        if ($(this).hasClass('wizard-state-done'))
-          me.jumpTo($(this).attr('step'));
-      });
-
     },
 
     createPages: function() {
@@ -170,26 +165,31 @@
 
     bindActions: function()
     {
-      var self = this;
-      this.element.on('wizard-jump', function(event, params) {
-        self.jumpTo(params);
+      var me = this;
+      me.element.on('wizard-jump', function(event, params) {
+        me.jumpTo(params);
       })
 
       .on('wizard-next', function() {
-        self.jumpTo(self.stack[self.stack.length-1]+1);
+        me.jumpTo(me.stack[me.stack.length-1]+1);
       })
 
       .on('wizard-prev', function() {
-        self.jumpTo(self.stack[self.stack.length-2]);
+        me.jumpTo(me.stack[me.stack.length-2]);
       })
 
       .on('processed', function(event, result) {
         if (result && result._responses && result._responses.errors) return;
-        if (result && result.next_step) self.next_step = result.next_step;
-        if (!self.stack.length || !self.next_step) return;
-        if (self.next_step === true) self.element.trigger('wizard-next');
-        if (self.next_step) self.jumpTo(self.next_step);
+        if (result && result.next_step) me.next_step = result.next_step;
+        if (!me.stack.length || !me.next_step) return;
+        if (me.next_step === true) me.element.trigger('wizard-next');
+        if (me.next_step) me.jumpTo(me.next_step);
       })
+
+      .find('.wizard-bookmark').click(function() {
+        if ($(this).hasClass('wizard-state-done')) me.jumpTo($(this).attr('step'));
+      })
+
     },
 
     nextStep: function(step)
