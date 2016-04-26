@@ -323,3 +323,8 @@ function to_array($obj)
   }
   return $array;
 }
+
+function is_function($str)
+{
+  return preg_match('/(\w+::)?\w+\(.*\)$/', $str);
+}
