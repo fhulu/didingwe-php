@@ -5,6 +5,7 @@
       var el = this.element.addClass('wizard');
       this.options.render.expandFields(this.options, "steps", this.options.steps);
 
+      this.first_step = 0;
       this.createBookmarks();
       this.createPages();
       this.createNavigation();
@@ -119,13 +120,12 @@
           if (info.next === false || index == last_step) return;
           nav.path = info.path;
         }
-        if (nav.id == 'prev' && (info.prev === false || index === 0)) {
-          self.first_step = index;
-          return;
-        }
         me.options.render.create(nav).appendTo(bar);
       });
 
+      if (info.prev === false) me.element.find('.wizard-bookmark').each(function(i) {
+        if (i < index) $(this).addClass('wizard-state-committed');
+      });
       me.child('.wizard-next').bindFirst('click', function() {
         if (me.next_step === undefined)
           me.next_step = typeof info.next === 'string'? info.next: index+1;

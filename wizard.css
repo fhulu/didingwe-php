@@ -41,11 +41,6 @@
   padding-right: 20px;
 }
 
-.wizard-state-pend {
-  color: #777;
-  cursor: not-allowed;
-}
-
 .wizard-state-active {
   color: white;
   background-color: darkcyan;
@@ -64,6 +59,11 @@
   background-image: url('tick16.png');
   background-position: center right;
   background-repeat: no-repeat;
+}
+
+.wizard-state-pend, .wizard-state-committed {
+  color: #777;
+  cursor: not-allowed;
 }
 
 .wizard-navigate {
