@@ -111,7 +111,7 @@
       var bar = me.child('.wizard-navigate').empty();
       if (info.navigate)
         me.options.render.expandFields(info, "navigate", info.navigate);
-      var navs = $.extend({}, me.options.navigate, info.navigate);
+      var navs = $.extend([], me.options.navigate, info.navigate);
       var last_step = me.options.steps.length-1;
       $.each(navs, function(i, nav) {
         if (nav.id == 'next') {
