@@ -22,7 +22,7 @@ activate:
     - refresh: "#main table"
 
 check_otp:
-  type: wizard_page
+  type: input_page
   name: One Time Pin
   desc: >
     Please enter the OTP(One Time Pin) that you received on your email or cellphone.
@@ -149,7 +149,7 @@ edit:
 
 enter_credentials:
   name: User Credentials
-  type: wizard_page
+  type: input_page
   desc: Fill in user information used to uniquely identify the user on the system
   inputs:
     - title: {type: dropdown}
