@@ -1024,6 +1024,10 @@ class page
         array_unshift($parameter, $method);
         $method = 'q';
       }
+      else if (is_function($method)) {
+        $parameter = [$method];
+        $method = 'call';
+      }
       else if (!in_array($method, $methods))
 	      continue;
       $result = call_user_func_array(array($this, $method), $parameter);
