@@ -369,7 +369,7 @@ class db
     $names = implode(',', $names);
     $values = implode(',', $values);
     $sql = "insert $table($names) values($values)";
-    $this->exec($sql);
+    return $this->insert($sql);
   }
 
   function update_array($table, $options)

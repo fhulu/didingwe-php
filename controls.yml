@@ -28,6 +28,10 @@ alert_message:
 autoheight:
   height: auto
 
+biggest:
+  width: 100%
+  height: 100%
+
 blank:
   type: plain_text
   mutable: false
@@ -188,9 +192,8 @@ datatable:
   flags: []
     # - editall
     #
-  sow: [data]
-  post:
-    - read_values: { rows: $data}
+  values:
+    - read_values: { derive: [data], rows: $data}
     - call: datatable::read(context,$key)
 
   position: top
@@ -491,8 +494,7 @@ hspaced:
 iframe:
   tag: iframe
   src: /$id
-  attr:
-    src: $src
+  attr: { src: $src }
 
 image:
   tag: img
@@ -675,6 +677,7 @@ lighter:
   font-weight: lighter
 
 line:
+  mutable: false
   tag: hr
   text: ""
 
@@ -702,10 +705,6 @@ list_text:
 
 lowercase:
   text-transform: lowercase
-
-biggest:
-  width: 100%
-  height: 100%
 
 medium:
   font-size: 26pt
@@ -739,6 +738,9 @@ multi_input:
         width: $split
         styles: [tallest,hspaced]
         space: $spacing
+
+navigate:
+  - type: submit
 
 number_input:
   type: input
@@ -853,7 +855,7 @@ question_input_page:
 
 radiobox:
   type: input
-  attr: { type: radio, value: $id}
+  attr: { type: radio, value: $id, id: ""}
   style:
     width: 24px
     height: 24px
@@ -1125,9 +1127,23 @@ wizard:
   script: [/common/wizard.js]
   css: [/common/wizard.css]
   text: $dummy
-  bookmarks: true
-  steps: []
   dummy: []
+  bookmarks: left
+  steps: []
+  prev:
+    type: button
+    name: Previous
+    desc: Go to previous step
+    action: trigger
+    event: wizard-prev
+    class: [wizard-prev]
+  next:
+    type: submit
+    name: Next
+    desc: Go to next step
+    class: [action,wizard-next]
+  navigate: [$prev,$next]
+
 
 
 wizard_jump:
@@ -1136,30 +1152,5 @@ wizard_jump:
   event:
     name: wizard-jump
     parameters: { index: $id }
-
-wizard_page:
-  type: input_page
-  text: $processing $synopsis $inputs $actions $navigate
-  sub_page: false
-  sow: [next,prev]
-  styles: [widest,centered]
-  navigate:
-    - wrap: class
-    - prev: {type: wizard_prev}
-    - type: wizard_next
-    - next
-
-wizard_next:
-  type: submit
-  name: Next
-  desc: Go to next step
-  class: [action,wizard-next]
-
-wizard_prev:
-  type: button
-  name: Previous
-  desc: Go to previous step
-  action: trigger
-  event: wizard-prev
 
 ...

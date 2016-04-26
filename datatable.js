@@ -22,14 +22,8 @@
     _create: function()
     {
       if (this.options.sort) this.options.flags.push('sortable');
-      this.render = new mkn.render({
-        parent: this.element,
-        types: this.options.types,
-        id: this.element.id,
-        key: this.options.key
-      });
-      this.render.expandFields(this.options, "fields", this.options.fields);
-      this.render.expandFields(this.options, "row_actions", this.options.row_actions);
+      this.options.render.expandFields(this.options, "fields", this.options.fields);
+      this.options.render.expandFields(this.options, "row_actions", this.options.row_actions);
       this._init_params();
       if (this.hasFlag('show_titles') || this.hasFlag('show_header')) {
         $('<thead></thead>').prependTo(this.element);
@@ -86,12 +80,11 @@
       var start = new Date().getTime();
       var self = this;
       self.head().find('.paging [action]').attr('disabled','');
-      var data = $.extend(this.options.request, args, {action: 'data'}, self.params);
+      var data = $.extend(this.options.request, args, {action: 'values'}, self.params);
       var selector = this.options.selector;
       if (selector !== undefined) {
         $.extend(data, $(selector).values());
       }
-      data.action = 'data';
       $.json('/', {data: mkn.plainValues(data)}, function(data) {
         if (!data) return;
         if (data._responses)
@@ -374,7 +367,7 @@
         if (!$.isNumeric(key)) key = key.toLowerCase().replace(/ +/,'_');
         field.id = field.id + '_' + key;
       }
-      var created = this.render.create(field);
+      var created = this.options.render.create(field);
       if (value !== undefined) created.value(value);
       td.append(created);
     },
@@ -453,12 +446,12 @@
           actions = slide_actions;
       }
       if (normal_actions.length)
-        this.render.createItems(td, {}, undefined, normal_actions);
+        this.options.render.createItems(td, {}, undefined, normal_actions);
 
       if (!slide_actions.length) return;
 
       var slider = $('<span class="slide">').toggle(false).appendTo(td);
-      this.render.createItems(slider, {}, undefined, slide_actions);
+      this.options.render.createItems(slider, {}, undefined, slide_actions);
       slider.find('[action]').click(function() {
         td.trigger('action',[$(this),id,action.action]);
       });
@@ -646,7 +639,7 @@
 
     showFooterActions: function()
     {
-      this.render.expandFields(this.options, "footer_actions", this.options.footer_actions);
+      this.options.render.expandFields(this.options, "footer_actions", this.options.footer_actions);
       var actions = this.options.footer_actions;
       if (!actions.length) return;
       var footer = $('<tfoot>').appendTo(this.element);
@@ -657,7 +650,7 @@
         action.key = key;
         return action;
       })
-      this.render.createItems(td, this.options, undefined, actions);
+      this.options.render.createItems(td, this.options, undefined, actions);
       this.spanColumns(td);
     }
 
