@@ -182,10 +182,9 @@
       })
 
       .on('processed', function(event, result) {
-        if (result) {
-          if (result._responses || !self.stack.length || !self.next_step) return;
-          if (result.next_step) self.next_step = result.next_step;
-        }
+        if (result && result._responses && result._responses.errors) return;
+        if (!self.stack.length || !self.next_step) return;
+        if (result && result.next_step) self.next_step = result.next_step;
         if (self.next_step) self.jumpTo(self.next_step);
       })
     },
