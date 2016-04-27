@@ -30,7 +30,7 @@
   background-color: whitesmoke;
 }
 
-.wizard-bookmark-holder-left+.wizard-page {
+.wizard-bookmark-holder-left~.wizard-page {
   width: 80%;
 }
 
