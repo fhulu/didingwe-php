@@ -80,7 +80,7 @@
     showPage: function(index) {
       var page = this.child('.wizard-page', index);
       var props = this.options.steps[index];
-      if (!page.hasClass('wizard-loaded') || props.clear) {
+      if (!page.find('.wizard-content').exists() || props.clear) {
         this.child('.wizard-navigate').empty();
         this.loadPage(page, index);
       }
@@ -136,7 +136,6 @@
 
     loadPage: function(page, index)
     {
-      page.addClass('wizard-loading');
       var props = this.options.steps[index];
       var path = this.options.path;
       if (props.id.indexOf('/') >= 0)
@@ -147,14 +146,14 @@
         path += '/' + props.id;
       else
         path = path.substr(0, path.lastIndexOf('/')+1) + props.id;
-      var tmp = $('<div>');
-      tmp.page({path: path, key: this.options.key});
+      page.empty().show();
+      var content = $('<div class=wizard-content>').appendTo(page);
+      var tmp = $('<div class=loading>').appendTo(content);
+      content.page({path: path, key: this.options.key});
       if (path[0] === '/') path = path.substr(1);
       var self = this;
-      tmp.on('read_'+path.replace(/\//, '_'), function(event, object, info) {
-        object.attr('step', page.attr('step'));
-        page.replaceWith(object);
-        page = object.addClass('wizard-page wizard-loaded');
+      content.on('read_'+path.replace(/\//, '_'), function(event, object, info) {
+        tmp.replaceWith(object);
         path = info.path;
         info = self.options.steps[index] = $.extend({}, info, self.options.steps[index]);
         info.path = path;

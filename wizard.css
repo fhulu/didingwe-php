@@ -12,11 +12,13 @@
 
 .wizard-page {
   display: table-cell;
-  padding: 0px 8px;
   vertical-align: top;
   margin-left: auto;
   margin-right: auto;
-  padding
+}
+
+.wizard-content {
+  width: 100%;
 }
 
 .wizard-bookmark-holder-left {
@@ -26,6 +28,10 @@
   height: 100%;
   font-size: 10pt;
   background-color: whitesmoke;
+}
+
+.wizard-bookmark-holder-left+.wizard-page {
+  width: 80%;
 }
 
 .wizard-bookmark {
