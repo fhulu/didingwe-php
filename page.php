@@ -519,8 +519,16 @@ class page
 
   }
 
+  function pre_read($fields)
+  {
+    $this->merge_fields($fields);
+    $actions = $fields['read'];
+    if (isset($actions)) $this->reply($actions);
+  }
+
   function read()
   {
+    $this->pre_read($this->fields);
     $this->types['control'] = $this->get_expanded_field('control');
     $this->types['template'] = $this->get_expanded_field('template');
     $this->remove_items($this->fields);
