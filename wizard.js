@@ -36,7 +36,7 @@
         .addClass('wizard-bookmark wizard-state-pend')
         .attr('step',info.id)
         .appendTo(this.bookmarkHolder);
-      $('<div>').addClass('wizard-bookmark-number').text(++index+'.').appendTo(bookmark);
+      $('<div>').addClass('wizard-bookmark-number').text(++index).appendTo(bookmark);
       $('<div>').addClass('wizard-bookmark-title').text(info.name).appendTo(bookmark);
     },
 

@@ -47,6 +47,12 @@
   padding-right: 20px;
 }
 
+.wizard-bookmark-number {
+  border-width: 3px;
+  border-style: solid;
+  border-radius: 50%;
+}
+
 .wizard-state-active {
   color: white;
   background-color: darkcyan;
