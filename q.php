@@ -1,6 +1,6 @@
 <?php
-
 require_once('db.php');
+
 class q
 {
   static function put($process, $args)
@@ -46,8 +46,13 @@ class q
   static function wake()
   {
     $msg_id = q::get_msg_q();
-    if (!msg_send($msg_id,1, "wake", true, true, $error_code))
-      log::error("Error sending to message queue with error code $error_code");
+    try {
+      if (!msg_send($msg_id,1, "wake", true, false, $error_code))
+        log::warn("Error sending to message queue with error code $error_code");
+    }
+    catch (Exception $e) {
+      log::error("Exception sending message queue: ". $e->getMessage());
+    }
   }
 
   static function start()
