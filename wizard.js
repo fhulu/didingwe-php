@@ -115,6 +115,7 @@
           if (info.next === false || index == last_step) return;
           nav.path = info.path;
         }
+        if (nav.id == 'prev' && index == me.first_step) return;
         me.options.render.create(nav).appendTo(bar);
       });
 
