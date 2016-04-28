@@ -64,7 +64,7 @@
   $path = $_REQUEST['path'];
   $content = $_REQUEST['content'];
   if (isset($path) && !isset($content)) {
-    $options = $_REQUEST;
+    $request = $options = $_REQUEST;
   }
   else {
     $prefix = $_SESSION['uid'] == 0? 'landing': 'session';
@@ -79,7 +79,7 @@
     unset($request['path']);
     $options = array("path"=>$page);
   }
-  $options['request'] = $_REQUEST;
+  $options['request'] = $request;
 ?>
 <script>
 $(function() {
