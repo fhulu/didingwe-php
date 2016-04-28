@@ -78,8 +78,8 @@
     if (!is_null($content)) $request['content'] = $content;
     unset($request['path']);
     $options = array("path"=>$page);
-    if (!empty($request)) $options['request']=$request;
   }
+  $options['request'] = $_REQUEST;
 ?>
 <script>
 $(function() {
