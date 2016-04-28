@@ -91,9 +91,12 @@ mkn.render = function(options)
   }
 
   var mergeDefaultType = function(base, item, type) {
-    var type = mkn.copy(type);
+    type = mkn.copy(type);
     mergeImmutables(item, base, type);
-    return mkn.merge(mkn.merge(type,base), item);
+    base = mkn.copy(base);
+    mkn.deleteKeys(base, ['type', 'styles', 'style'])
+    mkn.deleteKeys(base, geometry)
+    return mkn.merge(mkn.merge(base,type), item);
   }
 
   var mergeDefaults = function(item, defaults, base) {
