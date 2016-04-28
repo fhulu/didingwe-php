@@ -45,10 +45,9 @@ response:
     - authorisation_code
     - reference
   values:
-    - sql_values: select 1
+    - read_session
+    - sql_values: select round($paygate_amount/100,2) amount, if ($paygate_status=1,'Success', 'Failed') status
     - let:
-        amount: $paygate_amount
-        status: $paygate_status
         result_description: $paygate_result
         authorisation_code: $paygate_auth_code
         reference: $paygate_trx_id
@@ -61,7 +60,9 @@ response:
         - paygate_auth_code: $AUTH_CODE
         - paygate_trx_id: $TRANSACTION_ID
         - paygate_amount: $AMOUNT
-    - sql_values: select if('$TRANSACTION_STATUS'='1', 'appr', 'reje') status
+    - sql_values: >
+        select if('$TRANSACTION_STATUS'='1', 'appr', 'reje'), status, id payment_id, payer_id partner_id
+        from payment where id = '$REFERENCE'
     - sql_update: [payment, id: $REFERENCE, status, reference1: $TRANSACTION_ID, reference2: $AUTH_CODE ]
 
 

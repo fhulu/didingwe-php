@@ -288,7 +288,7 @@ password:
   valid: password
 
 payweb:
-  styles: [widest]
+  styles: [widest, borderless]
   height: 800
   type: iframe
   src: /?path=paygate/request
