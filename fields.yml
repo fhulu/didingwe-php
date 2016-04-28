@@ -287,6 +287,12 @@ password:
   desc: A secret combination of letters and number only known to you. Please do not give out your password.
   valid: password
 
+payweb:
+  styles: [widest]
+  height: 800
+  type: iframe
+  src: /?path=paygate/request
+
 postal_address:
   attr: { maxlength: 100 }
   valid: [at_least(15)]

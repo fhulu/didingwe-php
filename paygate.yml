@@ -45,6 +45,7 @@ response:
     - authorisation_code
     - reference
   values:
+    - sql_values: select 1
     - let:
         amount: $paygate_amount
         status: $paygate_status
@@ -53,15 +54,16 @@ response:
         reference: $paygate_trx_id
     - clear_session: [paygate_amount, paygate_status, paygate_result, paygate_auth_code, paygate_trx_id]
   read:
+    #- paygate::verify(request)
     - write_session:
         - paygate_status: $TRANSACTION_STATUS
         - paygate_result: $RESULT_DESC
         - paygate_auth_code: $AUTH_CODE
         - paygate_trx_id: $TRANSACTION_ID
         - paygate_amount: $AMOUNT
-        - paygate_payment_id: $USER1
     - sql_values: select if('$TRANSACTION_STATUS'='1', 'appr', 'reje') status
-    - sql_update: [payment, id: $USER1, status, reference1: $TRANSACTION_ID, reference2: $AUTH_CODE ]
+    - sql_update: [payment, id: $REFERENCE, status, reference1: $TRANSACTION_ID, reference2: $AUTH_CODE ]
+
 
   audit:
     partner_id: $payer_id
