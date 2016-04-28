@@ -8,7 +8,6 @@ table.data
   -webkit-box-shadow: 3px 3px 3px 4px lightgray;
   width: 100%;
   word-wrap: break-word;
-  table-layout: fixed;
 }
 
 table.data, table.data td, table.data th {
