@@ -61,7 +61,7 @@ response:
         - paygate_trx_id: $TRANSACTION_ID
         - paygate_amount: $AMOUNT
     - sql_values: >
-        select if('$TRANSACTION_STATUS'='1', 'appr', 'reje'), status, id payment_id, payer_id partner_id
+        select if('$TRANSACTION_STATUS'='1', 'appr', 'reje') status, id payment_id, payer_id partner_id
         from payment where id = '$REFERENCE'
     - sql_update: [payment, id: $REFERENCE, status, reference1: $TRANSACTION_ID, reference2: $AUTH_CODE ]
 
