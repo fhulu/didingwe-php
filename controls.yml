@@ -59,6 +59,9 @@ bookmark:
     attr: { href: "#$link", id: ""}
     name: $title
 
+borderless:
+  border: 0
+  
 bottom_left:
   position: absolute
   left: 0
