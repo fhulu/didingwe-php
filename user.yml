@@ -251,6 +251,7 @@ list:
         if(u.active=1,'expand,slide,edit,deactivate','expand,slide,edit,activate') actions
       from user u left join person p on p.id = u.person
         left join role r on find_in_set(r.code,u.roles)
+      where u.partner = '$pid'
       group by u.id
     ) tmp where 1 = 1
 
