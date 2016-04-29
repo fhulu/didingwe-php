@@ -1007,7 +1007,7 @@ class page
     log::debug_json("REPLY ACTIONS", $actions);
 
     $methods = array('abort', 'alert', 'assert', 'call', 'clear_session', 'clear_values',
-      'close_dialog', 'let', 'load_lineage', 'read_session', 'read_values', 'redirect', 'ref_list', 'show_dialog', 'show_captcha', 'sql', 'sql_exec','sql_rows', 'sql_insert',
+      'close_dialog', 'let', 'load_lineage', 'logoff', 'read_session', 'read_values', 'redirect', 'ref_list', 'show_dialog', 'show_captcha', 'sql', 'sql_exec','sql_rows', 'sql_insert',
       'sql_update', 'sql_values', 'refresh', 'trigger', 'update', 'upload', 'view_doc', 'write_session');
     foreach($actions as $action) {
       if ($this->aborted) return false;
@@ -1401,5 +1401,12 @@ class page
       replace_fields($args,$args,true);
     }
     return q::put($method, $args);
+  }
+
+  function logoff()
+  {
+    session_destroy();
+    $_SESSION = [];
+    $this->read_user(true);
   }
 }

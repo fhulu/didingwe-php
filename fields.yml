@@ -216,8 +216,8 @@ logout:
   access: reg
   src: /logout_icon.jpg
   action: post
-  url: /user/logout
-
+  post: [logoff]
+  
 
 longitude:
   desc: Angular distance east or west on the earth's surface
