@@ -79,7 +79,7 @@ confirm_registration:
     - cellphone
     - email
     - password: { value: "**************" }
-    - agree_terms: { type: checkbox, template: question_input }
+    - agree_terms: { type: checkbox}
   values:
     - read_session: title,first_name,last_name,cellphone,email
   validate: agree_terms
