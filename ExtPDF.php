@@ -17,7 +17,7 @@ class ExtPDF extends FPDF {
 
   var $options;
   var $footer;
-  function __construct($options = [])
+  function ExtPDF($options = [])
   {
     $this->options = array_merge([
       'left_margin'=>10,
@@ -26,6 +26,7 @@ class ExtPDF extends FPDF {
       'bottom_margin'=>10,
       'vertical_spacing'=>5,
     ], $options);
+    FPDF::FPDF();
  }
 
   function wrap($sentence, $x=null, &$y=null, &$options=[])
