@@ -215,8 +215,7 @@ logout:
   desc: Log out of the system
   access: reg
   src: /logout_icon.jpg
-  action: post
-  post: [logoff]
+  url: /user/logout
   
 
 longitude:
