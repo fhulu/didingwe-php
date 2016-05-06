@@ -312,6 +312,7 @@
         for (var j in fields) {
           var field = fields[j];
           var cell = self.spanData(field, row, col);
+          if (cell === null) cell = '';
           col += field.span;
           if (key === undefined && (field.id === 'key' || field.key)) {
             key = cell;
