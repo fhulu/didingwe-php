@@ -52,4 +52,23 @@ class ExtPDF extends FPDF {
     }
     $y += $vertical_spacing;
   }
+
+  function setOption($option, $value)
+  {
+    $this->options[$option] = $value;
+  }
+
+  function writeRow($cells, &$y, $options=[])
+  {
+    $options = array_merge($this->options, $options);
+    $x = $options['left_margin'];
+    $top = $ymax = $y;
+    $widths = $this->options['columnWidths'];
+    foreach($cells as $cell) {
+      $y = $top;
+      $this->wrap($cell, $x, $y, $options);
+      $x += array_shift($widths);
+      if ($y > $ymax) $ymax = y;
+    }
+  }
 }
