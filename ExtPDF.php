@@ -38,12 +38,13 @@ class ExtPDF extends FPDF {
       $options, 'left_margin', 'right_margin', 'top_margin', 'vertical_spacing');
 
     $x = $left_margin;
+    $xmax = $this->w - $$right_margin;
     $words = preg_split('/([^\s,;.-]+[\s,;.-]+)/',$sentence, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
     foreach($words as $word) {
       $word = html_entity_decode(htmlentities($word),ENT_HTML401,"ISO-8859-1");
       $width = $this->GetStringWidth($word);
 
-      if ($x + $width > $right_margin) {
+      if ($x + $width > $xmax) {
         $x = $left_margin;
         $y += $vertical_spacing;
       }
@@ -70,5 +71,25 @@ class ExtPDF extends FPDF {
       $x += array_shift($widths);
       if ($y > $ymax) $ymax = y;
     }
+  }
+
+  function getCenterX($width)
+  {
+    $x = $this->options['left_margin'];
+    $pageWidth = $this->w - $this->options['right_margin'] - $x;
+    return $x + ($pageWidth - $width)/2;
+  }
+
+  function centerText($text, &$y)
+  {
+    $text = html_entity_decode(htmlentities($text),ENT_HTML401,"ISO-8859-1");
+    $width = $this->GetStringWidth($text);
+    $this->Text($this->getCenterX($width), $y, $text);
+    $y += $this->options['vertical_spacing'];
+  }
+
+  function centerImage($file, $width, $y)
+  {
+    $this->Image($file,$this->getCenterX($width),$y,$width);
   }
 }
