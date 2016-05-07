@@ -41,9 +41,8 @@ class ExtPDF extends FPDF {
     $xmax = $this->w - $$right_margin;
     $words = preg_split('/([^\s,;.-]+[\s,;.-]+)/',$sentence, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
     foreach($words as $word) {
-      $word = html_entity_decode(htmlentities($word),ENT_HTML401,"ISO-8859-1");
+      $word = $this->prepareText($word, $options);
       $width = $this->GetStringWidth($word);
-
       if ($x + $width > $xmax) {
         $x = $left_margin;
         $y += $vertical_spacing;
@@ -75,19 +74,18 @@ class ExtPDF extends FPDF {
 
   function getCenterX($width)
   {
-    $x = $this->options['left_margin'];
-    $pageWidth = $this->w - $this->options['right_margin'] - $x;
-    return $x + ($pageWidth - $width)/2;
+    return ($this->w - $width)/2;
   }
 
-  function prepareText($text)
+  function prepareText($text, $options =[])
   {
+    if ($options['capitalise']) $text = strtoupper($text);
     return html_entity_decode(htmlentities($text),ENT_HTML401,"ISO-8859-1");
   }
 
-  function centerText($text, $y)
+  function centerText($text, $y, $options = [])
   {
-    $text = $this->prepareText($text);
+    $text = $this->prepareText($text, $options);
     $width = $this->GetStringWidth($text);
     $this->Text($this->getCenterX($width), $y, $text);
   }
@@ -97,9 +95,19 @@ class ExtPDF extends FPDF {
     $this->Image($file,$this->getCenterX($width),$y,$width);
   }
 
-  function rightText($text, $y)
+  function rightText($text, $y, $options = [])
   {
-    $text = $this->prepareText($text);
+    $text = $this->prepareText($text, $options);
     $this->Text($this->w - $this->options['right_margin'] - $this->GetStringWidth($text), $y, $text);
+  }
+
+  function getPrintableWidth()
+  {
+    return $this->w - $this->options['right_margin'] - $this->options['left_margin'];
+  }
+
+  function getTextWidth($text, $options=[])
+  {
+    return $this->GetStringWidth($this->prepareText($text));
   }
 }
