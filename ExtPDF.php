@@ -80,16 +80,26 @@ class ExtPDF extends FPDF {
     return $x + ($pageWidth - $width)/2;
   }
 
-  function centerText($text, &$y)
+  function prepareText($text)
   {
-    $text = html_entity_decode(htmlentities($text),ENT_HTML401,"ISO-8859-1");
+    return html_entity_decode(htmlentities($text),ENT_HTML401,"ISO-8859-1");
+  }
+
+  function centerText($text, $y)
+  {
+    $text = $this->prepareText($text);
     $width = $this->GetStringWidth($text);
     $this->Text($this->getCenterX($width), $y, $text);
-    $y += $this->options['vertical_spacing'];
   }
 
   function centerImage($file, $width, $y)
   {
     $this->Image($file,$this->getCenterX($width),$y,$width);
+  }
+
+  function rightText($text, $y)
+  {
+    $text = $this->prepareText($text);
+    $this->Text($this->w - $this->options['right_margin'] - $this->GetStringWidth($text), $y, $text);
   }
 }
