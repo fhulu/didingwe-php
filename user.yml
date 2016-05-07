@@ -293,7 +293,7 @@ login:
         select u.id uid, partner pid, u.email, first_name, last_name,
           concat(first_name, ' ', last_name) full_name,
           u.cellphone, roles, groups,  ifnull(start_page,'home') start_page
-        from user u join person p on u.email = p.email
+        from user u join person p on u.person = p.id
         where u.email='$email'
     - load_lineage: [roles,role,code,base_code]
     - sql_exec: update user set attempts = 0 where id = $uid
