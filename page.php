@@ -1373,14 +1373,11 @@ class page
   }
 
 
-  function view_doc()
+  function view_doc($id)
   {
-    $this->merge_fields($this->context);
-    $options = page::merge_options($this->request,$this->context, $this->answer);
-
     //todo: verify permissions
     require_once 'document.php';
-    document::view($options['key']);
+    document::view($id);
   }
 
   function assert($condition)
