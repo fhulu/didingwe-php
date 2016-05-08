@@ -7,7 +7,7 @@ class document
 {
   static function upload($options)
   {
-    list($control, $allowed_exts, $type, $user_id, $partner_id, $path, $ignore_date) =
+    list($control, $allowed_exts, $type, $user_id, $partner_id) =
       to_array($options,'control', 'allowed_exts', 'type', 'user_id', 'partner_id', 'path', 'ignore_date');
     $file_name = addslashes($_FILES[$control]["name"]);
     $ext = document::extension($file_name);
@@ -22,31 +22,40 @@ class document
     if ($file_name == '')
       return  "Error uploading $file_name document of type $ext. File may be too large";
 
-    global $db;
+    $options['temp_file'] = $_FILES[$control]['tmp_name'];
+    if (!is_uploaded_file($options['temp_file']))
+      return "Error uploading document. File may be too large";
 
+    $options['file_name'] = $file_name;
+    $options['status'] = 'pend';
+    return document::store($options, true);
+  }
 
-    $file_name = addslashes($filename);
+  static function store($options, $uploading=false)
+  {
+    list($partner_id,$user_id,$file_name, $type, $temp_file, $path, $ignore_date) =
+      to_array($options, 'partner_id','user_id','file_name', 'type', 'temp_file', 'path', 'ignore_date');
+    $db_file_name = addslashes($file_name);
     $type = addslashes($type);
     $sql = "INSERT INTO document(partner_id,user_id,filename,type,status)
-            values($partner_id,$user_id,'$file_name',(select code from document_type where description = '$type'),'pend')";
+            values($partner_id,$user_id,'$db_file_name',(select code from document_type where description = '$type'),'pend')";
 
+    global $db;
     $id = $db->insert($sql);
-    $file_name = str_replace("/[\' \s]'/", '-', $_FILES[$control]["name"]);
+    $file_name = str_replace("/[\' \s]'/", '-', $file_name);
     if ($path=='') $path = '.';
     if (!$ignore_date) $path .= '/' . date('Ymd');
     if (!file_exists($path)) mkdir($path, 755, true);
     $path = "$path/$id-$file_name";
-    log::debug("Uploading file $path");
-    $temp_file = $_FILES[$control]['tmp_name'];
-
-    if (!is_uploaded_file($temp_file))
-      return "Error uploading document. File may be too large";
-
-    if (!move_uploaded_file($_FILES[$control]["tmp_name"], $path))
+    if (!$uploading)
+      rename($temp_file, $path);
+    else if (!move_uploaded_file($temp_file, $path)) {
+      $db->exec("delete from document where id = '$id'");
       return "Error uploading document of type $ext. File may be too large";
+    }
 
     $db->exec("update document set status = 'done', path='$path' where id = '$id'");
-    return array($id,$file_name);
+    return ['document_path'=>$path, 'document_id'=>$id, 'document_file'=>$file_name, 'document_type'=>$type];
   }
 
   static function view($id)

@@ -1368,8 +1368,7 @@ class page
     $result = document::upload($options);
     if (!is_array($result)) return page::error($code, $result);
 
-    list($id, $file_name) = $result;
-    return ['partner_id'=>$partner_id, 'document_id'=>$id, 'document_type'=>$options['type'], 'document_file'=>$file_name];
+    return array_merge(['partner_id'=>$partner_id], $result);
   }
 
 
