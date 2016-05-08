@@ -1228,9 +1228,13 @@ class page
     return $this->read_values($values);
   }
 
-  static function abort($error_name, $error_message)
+  static function abort()
   {
-    page::error($error_name, $error_message);
+    $args = page::parse_args(func_get_args());
+    if (sizeof($args) > 1) {
+      list($name, $message) = $args;
+      page::error($name, $message);
+    }
     return false;
   }
 
