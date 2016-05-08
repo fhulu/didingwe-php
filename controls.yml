@@ -1153,9 +1153,8 @@ wizard:
 
 wizard_jump:
   classes: button
-  action: trigger
-  event:
-    name: wizard-jump
-    parameters: { index: $id }
+  type: submit
+  post:
+    - trigger: [wizard-jump, .wizard, $id ]
 
 ...
