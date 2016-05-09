@@ -793,6 +793,7 @@ class page
   {
     $invoker = $this->context;
     log::debug_json("ACTION ".last($this->path), $invoker);
+    if (!isset($this->request['id'])) $this->request['id'] = last($this->path);
     $this->merge_fields($this->fields);
     $validate = at($invoker, 'validate');
     if ($validate != 'none' && !$this->validate($this->fields, $validate))
@@ -1228,9 +1229,13 @@ class page
     return $this->read_values($values);
   }
 
-  static function abort($error_name, $error_message)
+  static function abort()
   {
-    page::error($error_name, $error_message);
+    $args = page::parse_args(func_get_args());
+    if (sizeof($args) > 1) {
+      list($name, $message) = $args;
+      page::error($name, $message);
+    }
     return false;
   }
 
@@ -1368,19 +1373,15 @@ class page
     $result = document::upload($options);
     if (!is_array($result)) return page::error($code, $result);
 
-    list($id, $file_name) = $result;
-    return ['partner_id'=>$partner_id, 'document_id'=>$id, 'document_type'=>$options['type'], 'document_file'=>$file_name];
+    return array_merge(['partner_id'=>$partner_id], $result);
   }
 
 
-  function view_doc()
+  function view_doc($id)
   {
-    $this->merge_fields($this->context);
-    $options = page::merge_options($this->request,$this->context, $this->answer);
-
     //todo: verify permissions
     require_once 'document.php';
-    document::view($options['key']);
+    document::view($id);
   }
 
   function assert($condition)
