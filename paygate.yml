@@ -16,7 +16,7 @@ request:
     - EMAIL
     - CHECKSUM
   values:
-    - read_session: [paygate_amount,email]
+    - read_session: [paygate_amount,user_email]
     - sql_insert: [payment, payer_id: $pid, user_id: $uid, amount: $paygate_amount, status: pend, method: creditc ]
     - sql_values: select now() TRANSACTION_DATE
     - read_values:
@@ -25,7 +25,7 @@ request:
         AMOUNT: $paygate_amount
         CURRENCY: ZAR
         RETURN_URL: $server_host/?path=paygate/response
-        EMAIL: $email
+        EMAIL: $user_email
         SECRET: $paygate_secret
     - sql_values: >
         select md5('$PAYGATE_ID|$REFERENCE|$AMOUNT|$CURRENCY|$RETURN_URL|$TRANSACTION_DATE|$EMAIL|$SECRET') CHECKSUM
