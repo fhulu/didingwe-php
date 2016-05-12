@@ -29,6 +29,7 @@
 <!-- Include all compiled plugins (below), or include individual files as needed -->
 
 <link href="/common/input_page.css?<?=$tag?>" media="screen" rel="stylesheet" type="text/css" />
+<link href="/input_page.css?<?=$tag?>" media="screen" rel="stylesheet" type="text/css" />
 
 <link href="/default.style.css?<?=$tag?>" media="screen" rel="stylesheet" type="text/css" />
 <script src='/jquery-min.js'></script>
