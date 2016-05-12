@@ -290,14 +290,14 @@ login:
     - forgot_password: { action: dialog }
   post:
     - sql_values: |
-        select u.id uid, partner pid, u.email, first_name, last_name,
-          concat(first_name, ' ', last_name) full_name,
+        select u.id uid, partner pid, u.email user_email, first_name user_first_name, last_name user_last_name,
+          concat(first_name, ' ', last_name) user_full_name,
           u.cellphone, roles, groups,  ifnull(start_page,'home') start_page
-        from user u join person p on u.email = p.email
+        from user u join person p on u.person = p.id
         where u.email='$email'
     - load_lineage: [roles,role,code,base_code]
     - sql_exec: update user set attempts = 0 where id = $uid
-    - write_session: uid,pid,roles,email,first_name,last_name,full_name,cellphone
+    - write_session: uid,pid,roles,user_email,user_first_name,user_last_name,user_full_name,cellphone
     - close_dialog
     - redirect: /$start_page
 
@@ -310,9 +310,9 @@ login_password:
   valid: is_password_for(mail)
 
 logout:
-  post: [redirect: $landing_content]
+  post: [read_session,redirect: $landing_content]
   audit:
-    detail: $email
+    detail: $user_email
     post: [call: session_destroy()]
 
 modify:

@@ -145,6 +145,10 @@ national_tel:
 not:
   error: Invalid $name
 
+not_same:
+  valid: not(equal($1))
+  error: $name must not be the same as $1
+  
 numeric: must_be(-?\d+(\.\d+)?,numeric)
 
 password:

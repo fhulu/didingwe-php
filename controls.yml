@@ -28,6 +28,10 @@ alert_message:
 autoheight:
   height: auto
 
+autosize:
+  width: auto
+  height: auto
+
 biggest:
   width: 100%
   height: 100%
@@ -199,8 +203,6 @@ datatable:
   row_creator: { type: table_row }
   css: [/common/datatable.css,/datatable.css]
   flags: []
-    # - editall
-    #
   values:
     - read_values: { derive: [data], rows: $data}
     - call: datatable::read(context,$key)
@@ -308,7 +310,7 @@ document_link:
   target: _blank
   query: " "
   post:
-    - view_doc
+    - view_doc: $value
 
 
 
@@ -1157,9 +1159,8 @@ wizard:
 
 wizard_jump:
   classes: button
-  action: trigger
-  event:
-    name: wizard-jump
-    parameters: { index: $id }
+  type: submit
+  post:
+    - trigger: [wizard-jump, .wizard, $id ]
 
 ...

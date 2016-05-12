@@ -428,7 +428,7 @@ mkn.render = function(options)
     var path = field.path = field.url? field.url: field.id;
     field.sub_page = undefined;
     field.appendChild = false;
-    tmp.page($.extend({request: options.request}, field));
+    tmp.page(field);
     path = path.replace('/','_');
     tmp.on('read_'+path, function(e, obj) {
       setStyle(obj, field);
@@ -813,7 +813,7 @@ mkn.render = function(options)
   {
     if (!$.isPlainObject(field)) field = { url: field };
     var url = field.url;
-    if (!url && field.target === '_blank') {
+    if ((!url || field.query) && field.target === '_blank') {
       url = '/?action=action';
       field = $.extend({key: options.key}, field);
       var exclude = ['action', 'desc', 'html', 'id', 'name', 'page_id', 'query', 'selector','tag', 'target','text', 'type', 'template']
