@@ -428,7 +428,7 @@ mkn.render = function(options)
     var path = field.path = field.url? field.url: field.id;
     field.sub_page = undefined;
     field.appendChild = false;
-    tmp.page(field);
+    tmp.page($.extend({request: options.request}, field));
     path = path.replace('/','_');
     tmp.on('read_'+path, function(e, obj) {
       setStyle(obj, field);
