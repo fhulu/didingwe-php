@@ -839,7 +839,8 @@ class page
 
   function sql_values($sql)
   {
-    return $this->db->read_one($this->translate_sql($sql), MYSQL_ASSOC);
+    $sql = $this->translate_sql($sql);
+    return $this->foreach? $this->db->read($sql, MYSQL_ASSOC): $this->db->read_one($sql, MYSQL_ASSOC);
   }
 
   function sql_exec($sql)
@@ -1008,8 +1009,10 @@ class page
     log::debug_json("REPLY ACTIONS", $actions);
 
     $methods = array('abort', 'alert', 'assert', 'call', 'clear_session', 'clear_values',
-      'close_dialog', 'let', 'load_lineage', 'read_session', 'read_values', 'redirect', 'ref_list', 'show_dialog', 'show_captcha', 'sql', 'sql_exec','sql_rows', 'sql_insert',
-      'sql_update', 'sql_values', 'refresh', 'trigger', 'update', 'upload', 'view_doc', 'write_session');
+      'close_dialog', 'foreach', 'let', 'load_lineage', 'read_session', 'read_values',
+       'redirect', 'ref_list', 'show_dialog', 'show_captcha', 'sql', 'sql_exec',
+       'sql_rows', 'sql_insert','sql_update', 'sql_values', 'refresh', 'trigger',
+       'update', 'upload', 'view_doc', 'write_session');
     foreach($actions as $action) {
       if ($this->aborted) return false;
       if (is_array($action)) {
@@ -1024,9 +1027,11 @@ class page
       else if (!is_array($parameter) || is_assoc($parameter))
         $parameter = array($parameter);
       global $config;
-      $values = merge_options($this->request, $config, $this->answer);
-      replace_fields($parameter, $values);
-      replace_fields($method, $values);
+      if ($method != 'foreach') {
+        $values = merge_options($this->request, $config, $this->answer);
+        replace_fields($parameter, $values);
+        replace_fields($method, $values);
+      }
       log::debug_json("REPLY ACTION $method", $parameter);
       if ($this->reply_if($method, $parameter)) continue;
       if (is_callable("q::$method")) {
@@ -1039,11 +1044,15 @@ class page
       }
       else if (!in_array($method, $methods))
 	      continue;
-      $result = call_user_func_array(array($this, $method), $parameter);
+      if ($method == 'foreach')
+        $result = $this->reply_foreach($parameter);
+      else
+        $result = call_user_func_array(array($this, $method), $parameter);
       if ($result === false) {
         $this->aborted = true;
         return false;
       };
+      if ($this->foreach) return $result;
       if (is_null($result)) continue;
       if (!is_array($result)) $result = array($result);
       if (is_null($this->answer))
@@ -1402,5 +1411,24 @@ class page
       replace_fields($args,$args,true);
     }
     return q::put($method, $args);
+  }
+
+  function reply_foreach($args)
+  {
+    $this->foreach = true;
+
+    $data = $this->reply(array_shift($args));
+    if ($data === false) return false;
+    $this->foreach = false;
+    $i = 0;
+    foreach($data as $row) {
+      log::debug_json("foreach row $i: ", $row);
+      $this->answer = array_merge($this->answer, $row);
+      foreach($args as $arg) {
+        if ($this->reply($arg) === false) return false;
+      }
+      ++$i;
+    }
+    return null;
   }
 }
