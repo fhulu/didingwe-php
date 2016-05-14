@@ -1028,7 +1028,7 @@ class page
         $parameter = array($parameter);
       global $config;
       if ($method != 'foreach') {
-        $values = merge_options($this->request, $config, $this->answer);
+        $values = merge_options($this->request, $config, $this->context, $this->answer);
         replace_fields($parameter, $values);
         replace_fields($method, $values);
       }
@@ -1420,9 +1420,7 @@ class page
     $data = $this->reply(array_shift($args));
     if ($data === false) return false;
     $this->foreach = false;
-    $i = 0;
     foreach($data as $row) {
-      log::debug_json("foreach row $i: ", $row);
       $this->answer = array_merge($this->answer, $row);
       foreach($args as $arg) {
         if ($this->reply($arg) === false) return false;
