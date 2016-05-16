@@ -65,9 +65,10 @@ response:
         - status
     - sql_values: select id payment_id, payer_id partner_id from payment where id = '$REFERENCE'
     - sql_update: [payment, id: $REFERENCE, status, reference1: $TRANSACTION_ID, reference2: $AUTH_CODE ]
-
-
-  audit:
-    partner_id: $payer_id
-    detail: >
-      Transaction ID: $TRANSACTION_ID Auth Code: $AUTH_CODE Amount: $AMOUNT Result: $RESULT_DESC
+    - sql_insert:
+        - audit_trail
+        - partner: $partner_id
+        - user: $uid
+        - action: Complete Electronic Payment
+        - detail: >
+            Transaction ID: $TRANSACTION_ID Auth Code: $AUTH_CODE Amount: $AMOUNT Result: $RESULT_DESC
