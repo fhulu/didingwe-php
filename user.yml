@@ -109,7 +109,7 @@ create:
     - first_name
     - last_name
     - cellphone
-    - email
+    - email:  { valid: [not_registered] }
     - type: password_input
     - password
     - confirm_password
@@ -325,7 +325,7 @@ modify:
     - first_name
     - last_name
     - cellphone
-    - email
+    - email: { valid: [not_registered] }
     - role:
         name: Assigned Role
         type: dropdown
@@ -337,7 +337,6 @@ modify:
           left join role r on find_in_set(r.code,u.roles)
         where u.id = '$key'
         group by u.id
-
   actions:
     - modify: { name: Update User Details }
   validate: delta
@@ -346,7 +345,7 @@ modify:
         id: $key
         roles: $role
         person: /(select person from user where id = '$key')
-    - sql_update: [user, id, delta]
+    - sql_update: [user, id, delta, roles]
     - sql_update: [person, {id: $person}, delta]
     - clear_values
     - close_dialog: User details updated
