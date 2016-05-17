@@ -37,7 +37,7 @@ class page
     'clear_values', 'load_lineage', 'post', 'read_session', 'refresh', 'show_dialog',
     'sql_insert', 'sql_update', 'style', 'trigger', 'valid', 'validate', 'write_session');
   static $objectify = ['ref_list'];
-  static $login_vars = ['uid','pid','roles','groups','email','first_name','last_name','cellphone'];
+  static $login_vars = ['uid','pid','roles','groups','user_email','user_first_name','user_last_name','user_cellphone'];
   var $request;
   var $object;
   var $method;
