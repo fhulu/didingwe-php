@@ -111,6 +111,12 @@ int_tel:
 
 is: must_be($1)
 
+is_registered:
+  valid: sql(select 1 from user where email= '$value')
+  error: >
+    There is no such email '$value' registered on the system.<br>
+    Click on <b>Register</b> if you would like to register to use the system.
+
 less:
   error: $name must be less that $1 ($v1)
 
@@ -148,7 +154,13 @@ not:
 not_same:
   valid: not(equal($1))
   error: $name must not be the same as $1
-  
+
+not_registered:
+  valid: not(is_registered($1))
+  error: |
+    User $value is already registered on the system. If you have forgotten the
+    password, use <i>Login/Forgot Password</i> feature to reset your password.
+
 numeric: must_be(-?\d+(\.\d+)?,numeric)
 
 password:
