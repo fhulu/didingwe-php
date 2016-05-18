@@ -112,11 +112,24 @@ mkn.render = function(options)
     return defaults.default? mkn.merge(defaults.default, item): item;
   }
 
+
+  var removePopped = function(items, popped)
+  {
+    var i = items.length;
+    console.log("popped items", popped)
+    while (i--) {
+      var item = items[i];
+      if (popped.indexOf(item.id) >= 0)
+        items.splice(i,1);
+    }
+  }
+
   this.expandFields = function(parent_field, name, items, defaults)
   {
     if (!defaults) defaults = { template: "$field" };
     var path = parent_field.path+'/'+name;
     var pushed = [];
+    var popped = [];
     var wrap;
     var sow = parent_field.sow;
     var removed = [];
@@ -144,6 +157,10 @@ mkn.render = function(options)
           item.defaults = mkn.copy(defaults);
         }
 
+        if (id == 'pop') {
+          popped.push(item.name);
+          continue;
+        }
         if (id[0] == '$') {
           id = id.substr(1);
           item = mkn.merge(parent_field[id], item);
@@ -197,6 +214,8 @@ mkn.render = function(options)
     for (var i in removed) {
       items.splice(removed[i]-i,1);
     }
+
+    removePopped(items, popped);
 
     for (var i in pushed) {
       var item = pushed[i];
