@@ -9,7 +9,7 @@ activate:
   audit: sql(select first_name, last_name, email from person where id = '$key')
   post:
     - sql_exec: update user set active = 1 where id = '$key'
-    - sql_values: select concat(first_name, last_name) full_name, email from person where id = '$key'
+    - sql_values: select concat(first_name,' ', last_name) full_name, email from person where id = '$key'
     - send_email:
         from: $support
         to: $full_name <$email>
@@ -126,7 +126,7 @@ deactivate:
   audit: sql(select first_name, last_name, email from person where id = '$key')
   post:
     - sql_exec: update user set active = 0 where id = '$key'
-    - sql_values: select concat(first_name, last_name) full_name, email from person where id = '$key'
+    - sql_values: select concat(first_name,' ',last_name) full_name, email from person where id = '$key'
     - send_email:
         from: $support
         to: $full_name <$email>
