@@ -63,8 +63,8 @@ function replace_vars($str, $values, $callback=null, $value_if_unset=null)
 
   foreach($matches as $match) {
     $key = $match[1];
-    $value = at($values, $key);
-    if (is_null($value)) {
+    $value = $values[$key];
+    if (!isset($value)) {
       if ($value_if_unset === null) continue;
       $value = $value_if_unset;
     }

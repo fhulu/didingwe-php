@@ -816,7 +816,8 @@ class page
       $sql = preg_replace('/\$uid([^\w]|$)/', "$user_id\$1", $sql);
     if (isset($partner_id))
       $sql = preg_replace('/\$pid([^\w]|$)/', "$partner_id\$1", $sql);
-    $sql = preg_replace('/\$key([^\w]|$)/', "$key\$1", $sql);
+    if (isset($key))
+      $sql = preg_replace('/\$key([^\w]|$)/', "$key\$1", $sql);
     return replace_vars($sql, $options, function(&$val) {
       $val = addslashes($val);
     });
