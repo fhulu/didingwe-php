@@ -316,6 +316,7 @@ logout:
     post: [call: session_destroy()]
 
 modify:
+  name: Change User Details
   type: input_page
   desc: Change user details
   access: [admin]
