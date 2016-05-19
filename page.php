@@ -312,7 +312,7 @@ class page
 
   function get_expanded_field($code)
   {
-    if (strpos($code, '.') !== false && strpos($code, '/') === false)
+    if (preg_match('/^\w+\.\w+$/', $code))
       return $this->read_external($code);
     $field = $this->merge_stack_field(page::$fields_stack, $code);
     $this->merge_stack_field($this->page_stack, $code, $field);
