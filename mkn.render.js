@@ -116,7 +116,6 @@ mkn.render = function(options)
   var removePopped = function(items, popped)
   {
     var i = items.length;
-    console.log("popped items", popped)
     while (i--) {
       var item = items[i];
       if (popped.indexOf(item.id) >= 0)
