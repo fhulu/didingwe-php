@@ -316,7 +316,7 @@ logout:
     post: [call: session_destroy()]
 
 modify:
-  type: labelled_input_page
+  type: input_page
   desc: Change user details
   access: [admin]
   width: 600
@@ -341,12 +341,8 @@ modify:
     - modify: { name: Update User Details }
   validate: delta
   post:
-    - read_values:
-        id: $key
-        roles: $role
-        person: /(select person from user where id = '$key')
-    - sql_update: [user, id, delta, roles]
-    - sql_update: [person, {id: $person}, delta]
+    - sql_update: [user, id: $key, delta]
+    - sql_update: [person, {id: /(select person from user where id = '$key')}, delta]
     - clear_values
     - close_dialog: User details updated
     - refresh: "#main table"
