@@ -299,8 +299,21 @@ class page
     return $base_field;
   }
 
+  function read_external($path)
+  {
+    $request = $this->request;
+    $request['path'] = str_replace('.', '/', $path);
+    $request['action'] = 'read';
+    $page = new page($request);
+    $result = $page->process();
+    $this->types = merge_options($result['types'], $this->types);
+    return $result['fields'];
+  }
+
   function get_expanded_field($code)
   {
+    if (strpos($code, '.') !== false)
+      return $this->read_external($code);
     $field = $this->merge_stack_field(page::$fields_stack, $code);
     $this->merge_stack_field($this->page_stack, $code, $field);
     return $field;
