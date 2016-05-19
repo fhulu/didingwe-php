@@ -340,6 +340,9 @@ register:
 rest_post:
   merge: false
 
+role:
+  db_name: roles  
+
 send_email:
   support: Mukoni Support <support@mukoni.co.za>
   headers:
