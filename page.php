@@ -61,6 +61,7 @@ class page
   var $page_fields;
   var $expand_stack;
   var $context;
+  var $sub_page;
 
   function __construct($request=null, $user_db=null)
   {
@@ -84,6 +85,7 @@ class page
     $this->aborted = false;
     $this->answer = null;
     $this->expand_stack = array();
+    $this->sub_page = false;
   }
 
   function process()
@@ -116,6 +118,7 @@ class page
     $this->set_fields();
     if (!$this->rendering)
       $this->set_context($path);
+    if ($this->sub_page) return;
     $result = $this->{$this->method}();
     return $this->result = null_merge($result, $this->result, false);
   }
@@ -303,11 +306,11 @@ class page
   {
     $request = $this->request;
     $request['path'] = str_replace('.', '/', $path);
-    $request['action'] = 'read';
     $page = new page($request);
-    $result = $page->process();
-    $this->types = merge_options($result['types'], $this->types);
-    return $result['fields'];
+    $page->sub_page = true;
+    $page->process();
+    $this->types = merge_options($page->types, $this->types);
+    return $page->fields;
   }
 
   function get_expanded_field($code)
@@ -328,7 +331,7 @@ class page
 
   function follow_path($path, $field = null)
   {
-    if (is_null($field))  $field = $this->fields;
+    if (is_null($field))  $field = $this->merge_fields($this->fields);
     $parent = $field;
     foreach($path as $branch) {
       if (is_assoc($field)) {
