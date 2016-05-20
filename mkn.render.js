@@ -389,6 +389,15 @@ mkn.render = function(options)
     obj.call(item.jquery, item.params);
   }
 
+  var setVisible = function(obj, field) {
+    mkn.toIntValue(field, 'hide');
+    mkn.toIntValue(field, 'show');
+    if (field.hide || field.show === false || field.show === 0)
+      obj.hide();
+    else if (field.show)
+      obj.show();
+  }
+
   this.create =  function(field, templated)
   {
     if (field.sub_page)
@@ -443,8 +452,9 @@ mkn.render = function(options)
         this.replace(obj, child, code);
     }
     if (obj.attr('id') === '') obj.removeAttr('id');
-    if (!templated && (field.hide || field.show === false))
-      obj.hide();
+    if (!templated) setVisible(obj, field);
+    setWatcher(obj, field, field.show);
+    setWatcher(obj, field, field.hide);
 
     runJquery(obj, field);
     initLinks(obj, field, function() {
@@ -1098,5 +1108,6 @@ mkn.render = function(options)
     setAttr(obj, field);
     setClass(obj, field);
     setStyle(obj, field);
+    setVisible(obj, field);
   }
 }
