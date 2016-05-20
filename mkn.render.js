@@ -1,4 +1,5 @@
 mkn.links = {};
+mkn.model = {};
 
 mkn.render = function(options)
 {
@@ -339,6 +340,17 @@ mkn.render = function(options)
     }
   }
 
+  var initModel = function(field) {
+    field.watches = [];
+    mkn.walkTree(field, function(key, value) {
+      if (typeof value !== 'string') return;
+      $.each(getMatches(value, /\$@(\w+)/g), function(i, key) {
+        if (!(key in mkn.model)) mkn.model[key] = '';
+        field.watches.push(key);
+      });
+    });
+  }
+
   this.initField = function(field, parent)
   {
     field.page_id = this.page_id;
@@ -361,8 +373,10 @@ mkn.render = function(options)
       deriveParent(field.template, field);
       this.expandValues(field);
     }
+    initModel(field);
     return field;
   }
+
 
   var isTableTag = function(tag)
   {
@@ -374,7 +388,6 @@ mkn.render = function(options)
     expandVars(item,item.params);
     obj.call(item.jquery, item.params);
   }
-
 
   this.create =  function(field, templated)
   {
@@ -393,6 +406,7 @@ mkn.render = function(options)
     setStyle(obj, field);
     if (field.key === undefined) field.key = options.key;
     var values = $.extend({}, this.types, field);
+    setWatcher(obj, field, obj.text());
     var matches = getMatches(field.html, /\$(\w+)/g);
     var subitem_count = 0;
     for (var i = 0; i< matches.length; ++i) {
@@ -565,6 +579,19 @@ mkn.render = function(options)
 
   }
 
+  var isWatchValue = function(value) {
+    return /\$@\w+/.test(value);
+  }
+
+  var setWatcher = function(obj, field, value) {
+    if (!field.watches.length) return;
+    if (!isWatchValue(value)) return;
+    obj.data('mkn-field', field);
+    $.each(field.watches, function(i, watch) {
+      obj.attr('mkn-watch-'+watch,'');
+    });
+  }
+
   var initEvents = function(obj, field)
   {
     if (typeof field.enter == 'string') {
@@ -606,8 +633,10 @@ mkn.render = function(options)
     var attr = field.attr;
     if (obj.attr('id') === '') obj.removeAttr('id');
     if (!attr) return;
-    if (typeof attr === 'string')
+    if (typeof attr === 'string') {
+      setWatcher(obj, field, attr);
       obj.attr(attr,"");
+    }
     else $.each(attr, function(key, val) {
       if (field.array) {
         var numeric = getMatches(val, /\$(\d+)/g);
@@ -620,6 +649,7 @@ mkn.render = function(options)
         if (value === undefined || typeof value !== 'string') continue;
         val = val.replace('$'+match, value);
       }
+      setWatcher(obj, field, val);
       obj.attr(key,val);
     });
     if (obj.attr('id') === '') obj.removeAttr('id');
@@ -631,6 +661,7 @@ mkn.render = function(options)
     if (cls === undefined) return;
     if (typeof cls === 'string') cls = [cls];
     for (var i in cls) {
+      setWatcher(obj, field, cls[i]);
       obj.addClass(cls[i]);
     }
   }
@@ -654,6 +685,7 @@ mkn.render = function(options)
         var key = geometry[i];
         if (immutable && immutable.indexOf(key) >= 0) continue;
         var val = field[key];
+        setWatcher(obj, field, val);
         if (val !== undefined && val[0] !== '$')
           style[key] = val;
       }
@@ -666,6 +698,9 @@ mkn.render = function(options)
     expandVars(field, style, { sourceFirst: true, recurse: true})
     expandVars(style, style, { sourceFirst: true, recurse: true})
     setGeometry();
+    $.each(style, function(k, val) {
+      setWatcher(obj, field, val);
+    })
     obj.css(style);
   }
 
@@ -984,6 +1019,7 @@ mkn.render = function(options)
       }
       var obj = parent.find(mkn.selector.idName(id));
       if (obj.exists()) {
+        setWatcher(obj, data, value);
         obj.value(value);
         continue;
       }
@@ -1050,4 +1086,17 @@ mkn.render = function(options)
     sink.trigger(event, params);
   }
 
+
+  this.updateWatchers = function(obj) {
+    var field = mkn.copy(obj.data('mkn-field'));
+    mkn.walkTree(field, function(key, value, parent) {
+      if (key == 'html' || typeof value !== 'string' || !isWatchValue(value)) return;
+      value = value.replace(/\$@(\w+)/g, "mkn.model['$1']");
+      parent[key] = value = eval(value);
+      if (key == 'text') obj.text(value);
+    })
+    setAttr(obj, field);
+    setClass(obj, field);
+    setStyle(obj, field);
+  }
 }
