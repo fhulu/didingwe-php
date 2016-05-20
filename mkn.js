@@ -198,7 +198,11 @@ var mkn = new function() {
   }
 
   this.toIntValue = function(field, key) {
-    if (key in field) field[key] = parseInt(field[key]);
+    if (!(key in field)) return false;
+    var val = parseInt(field[key]);
+    if (isNaN(val)) return false;
+    field[key] = parseInt(field[key]);
+    return true;
   }
 }
 
