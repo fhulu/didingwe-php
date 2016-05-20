@@ -196,6 +196,10 @@ var mkn = new function() {
   this.hasFlag = function(flags, flag) {
     return flags.indexOf(flag) >= 0;
   }
+
+  this.toIntValue = function(field, key) {
+    if (key in field) field[key] = parseInt(field[key]);
+  }
 }
 
 if (!String.prototype.trim) {
