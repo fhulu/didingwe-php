@@ -398,6 +398,11 @@ mkn.render = function(options)
       obj.show();
   }
 
+  var setDisabled = function(obj, field) {
+    if (mkn.toIntValue(field, 'disabled') && field);
+      obj.prop('disabled', field.disabled);
+  }
+
   this.create =  function(field, templated)
   {
     if (field.sub_page)
@@ -452,9 +457,14 @@ mkn.render = function(options)
         this.replace(obj, child, code);
     }
     if (obj.attr('id') === '') obj.removeAttr('id');
-    if (!templated) setVisible(obj, field);
-    setWatcher(obj, field, field.show);
-    setWatcher(obj, field, field.hide);
+    if (!templated) {
+      setVisible(obj, field);
+      setWatcher(obj, field, field.show);
+      setWatcher(obj, field, field.hide);
+    }
+
+    setDisabled(obj, field);
+    setWatcher(obj, field, field.disabled);
 
     runJquery(obj, field);
     initLinks(obj, field, function() {
@@ -594,8 +604,7 @@ mkn.render = function(options)
   }
 
   var setWatcher = function(obj, field, value) {
-    if (!field.watches.length) return;
-    if (!isWatchValue(value)) return;
+    if (typeof value !== 'string' || !field.watches.length || !isWatchValue(value)) return;
     obj.data('mkn-field', field);
     $.each(field.watches, function(i, watch) {
       obj.attr('mkn-watch-'+watch,'');
@@ -1109,5 +1118,6 @@ mkn.render = function(options)
     setClass(obj, field);
     setStyle(obj, field);
     setVisible(obj, field);
+    setDisabled(obj, field);
   }
 }
