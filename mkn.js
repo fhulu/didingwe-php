@@ -184,6 +184,18 @@ var mkn = new function() {
   this.visible = function(f) {
     return !(f.hide || f.show === false);
   }
+
+  this.walkTree = function(field, callback) {
+    $.each(field, function(k, value) {
+      callback(k, value, field);
+      if ($.isArray(value) || $.isPlainObject(value))
+        mkn.walkTree(value, callback);
+    });
+  }
+
+  this.hasFlag = function(flags, flag) {
+    return flags.indexOf(flag) >= 0;
+  }
 }
 
 if (!String.prototype.trim) {
