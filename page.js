@@ -41,13 +41,12 @@ $.fn.page = function(options, callback)
       page.object = object;
       data.values = values;
       object.addClass('page').appendTo(parent);
-      object.on('keyup input cut paste click change', 'input,select,textarea', function() {
+      r.updateWatchers(object);
+      object.on('keyup input cut paste change', 'input,select,textarea', function() {
         var id = $(this).attr('id');
         if (!(id in mkn.model)) return;
-        mkn.model[id] = $(this).val();
-        object.find('[mkn-watch-'+id+']').each(function() {
-          r.updateWatchers($(this));
-        });
+        mkn.model[id] = $(this).value();
+        r.updateWatchers(object, id);
       });
 
       parent.trigger('read_'+this.id, [object, data.fields]);

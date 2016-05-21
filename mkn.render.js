@@ -340,17 +340,6 @@ mkn.render = function(options)
     }
   }
 
-  var initModel = function(field) {
-    field.watches = [];
-    mkn.walkTree(field, function(key, value) {
-      if (typeof value !== 'string') return;
-      $.each(getMatches(value, /\$@(\w+)/g), function(i, key) {
-        if (!(key in mkn.model)) mkn.model[key] = '';
-        field.watches.push(key);
-      });
-    });
-  }
-
   this.initField = function(field, parent)
   {
     field.page_id = this.page_id;
@@ -373,7 +362,6 @@ mkn.render = function(options)
       deriveParent(field.template, field);
       this.expandValues(field);
     }
-    initModel(field);
     return field;
   }
 
@@ -471,6 +459,7 @@ mkn.render = function(options)
       if (subitem_count) setValues(obj, field);
       initEvents(obj, field);
     });
+
     return obj;
   }
 
@@ -604,10 +593,14 @@ mkn.render = function(options)
   }
 
   var setWatcher = function(obj, field, value) {
-    if (typeof value !== 'string' || !field.watches.length || !isWatchValue(value)) return;
+    if (typeof value !== 'string') return;
+    var watches = getMatches(value, /\$@(\w+)/g);
+    if (!watches.length) return;
     obj.data('mkn-field', field);
-    $.each(field.watches, function(i, watch) {
-      obj.attr('mkn-watch-'+watch,'');
+    obj.addClass('mkn-watcher');
+    $.each(watches, function(i, key) {
+      if (!(key in mkn.model)) mkn.model[key] = '';
+      obj.attr('mkn-watch-'+key,'');
     });
   }
 
@@ -1106,18 +1099,22 @@ mkn.render = function(options)
   }
 
 
-  this.updateWatchers = function(obj) {
-    var field = mkn.copy(obj.data('mkn-field'));
-    mkn.walkTree(field, function(key, value, parent) {
-      if (key == 'html' || typeof value !== 'string' || !isWatchValue(value)) return;
-      value = value.replace(/\$@(\w+)/g, "mkn.model['$1']");
-      parent[key] = value = eval(value);
-      if (key == 'text') obj.text(value);
-    })
-    setAttr(obj, field);
-    setClass(obj, field);
-    setStyle(obj, field);
-    setVisible(obj, field);
-    setDisabled(obj, field);
+  this.updateWatchers = function(parent,id) {
+    var selector = id===undefined? '.mkn-watcher': '[mkn-watch-'+id+']';
+    parent.find(selector).each(function() {
+      var obj = $(this);
+      var field = mkn.copy(obj.data('mkn-field'));
+      mkn.walkTree(field, function(key, value, parent) {
+        if (key == 'html' || typeof value !== 'string' || !isWatchValue(value)) return;
+        value = value.replace(/\$@(\w+)/g, "mkn.model['$1']");
+        parent[key] = value = eval(value);
+        if (key == 'text') obj.text(value);
+      })
+      setAttr(obj, field);
+      setClass(obj, field);
+      setStyle(obj, field);
+      setVisible(obj, field);
+      setDisabled(obj, field);
+    });
   }
 }
