@@ -36,19 +36,10 @@ $.fn.page = function(options, callback)
       data.fields.sub_page = false;
       data.fields.id = this.id;
       var r = new mkn.render({invoker: page.parent, types: data.types, id: this.id, key: options.key, request: options.request} );
-      data.fields = r.initField(data.fields);
-      var object = r.create(data.fields);
+      var object = r.render(data.fields);
       page.object = object;
       data.values = values;
       object.addClass('page').appendTo(parent);
-      r.updateWatchers(object);
-      object.on('keyup input cut paste change', 'input,select,textarea', function() {
-        var id = $(this).attr('id');
-        if (!(id in mkn.model)) return;
-        mkn.model[id] = $(this).value();
-        r.updateWatchers(object, id);
-      });
-
       parent.trigger('read_'+this.id, [object, data.fields]);
       return this;
     },

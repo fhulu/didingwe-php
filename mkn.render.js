@@ -391,6 +391,18 @@ mkn.render = function(options)
       obj.prop('disabled', field.disabled);
   }
 
+  this.render = function(field) {
+    field = me.initField(field);
+    var obj = me.create(field);
+    me.updateWatchers(obj);
+    return obj.on('keyup input cut paste change', 'input,select,textarea', function() {
+      var id = $(this).attr('id');
+      if (!(id in mkn.model)) return;
+      mkn.model[id] = $(this).value();
+      me.updateWatchers(obj, id);
+    });
+  }
+
   this.create =  function(field, templated)
   {
     if (field.sub_page)
