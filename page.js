@@ -36,7 +36,7 @@ $.fn.page = function(options, callback)
       data.fields.sub_page = false;
       data.fields.id = this.id;
       var r = new mkn.render({invoker: page.parent, types: data.types, id: this.id, key: options.key, request: options.request} );
-      var object = r.render(data.fields);
+      var object = r.render(data, 'fields');
       page.object = object;
       data.values = values;
       object.addClass('page').appendTo(parent);

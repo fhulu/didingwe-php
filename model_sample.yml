@@ -1,0 +1,13 @@
+test:
+  desc: Test model binding/watching
+  type: input_page
+  inputs:
+    - color: { type: dropdown }
+    - show_disable: { type: checkbox }
+    - string_test: { type: p, text:  $@color + " " + $@show_disable  }
+    - style_test: { styles: [filled], fill: $@color }
+    - show_test: { show: $@show_disable }
+    - disable_test: { disabled: $@show_disable }
+
+color:
+  options: [red,orange,yellow,green,blue,indigo,violet]

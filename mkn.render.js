@@ -241,8 +241,9 @@ mkn.render = function(options)
     return t !== undefined && t !== "none" && t !== '$field';
   }
 
-  this.createTemplate = function(template, item)
+  this.createTemplate = function(item)
   {
+    template = item.template;
     if (!isTemplate(template)) return undefined;
     var field = mkn.copy(this.mergeType(item));
     if (typeof template === 'string') {
@@ -251,11 +252,11 @@ mkn.render = function(options)
     else {
       template = this.mergeType(template);
       mkn.deleteKeys(field, ['type', 'attr', 'action', 'class', 'tag', 'html',
-       'style', 'styles', 'create','classes','template', 'templates', 'text']);
+       'style', 'styles', 'create','classes','template', 'templates', 'text', 'templated']);
        mkn.deleteKeys(field, geometry);
     }
-    template = this.initField(mkn.merge(field, template));
-    return this.create(template);
+    item.template = this.initField(mkn.merge(field, template));
+    return this.create(item, 'template');
   };
 
   this.expandFunction = function(value, parent_id)
@@ -391,9 +392,9 @@ mkn.render = function(options)
       obj.prop('disabled', field.disabled);
   }
 
-  this.render = function(field) {
-    field = me.initField(field);
-    var obj = me.create(field);
+  this.render = function(parent, key) {
+    parent[key] = me.initField(parent[key], parent);
+    var obj = me.create(parent, key);
     me.updateWatchers(obj);
     return obj.on('keyup input cut paste change', 'input,select,textarea', function() {
       var id = $(this).attr('id');
@@ -403,10 +404,11 @@ mkn.render = function(options)
     });
   }
 
-  this.create =  function(field, templated)
+  this.create =  function(parent, key)
   {
+    var field = parent[key];
     if (field.sub_page)
-      return this.createSubPage(field);
+      return this.createSubPage(parent, key);
 
     var id = field.id;
     if (field.html === undefined) return null;
@@ -447,8 +449,8 @@ mkn.render = function(options)
 
       value.path = field.path+'/'+code;
       value.id = code;
-      value = this.initField(value, field);
-      var child = this.create(value);
+      field[code] = this.initField(value, field);
+      var child = this.create(field, code);
       if (table_tag)
         obj.append(child)
       if (field.html == '$'+code)
@@ -457,7 +459,7 @@ mkn.render = function(options)
         this.replace(obj, child, code);
     }
     if (obj.attr('id') === '') obj.removeAttr('id');
-    if (!templated) {
+    if (!field.templated) {
       setVisible(obj, field);
       setWatcher(obj, field, field.show);
       setWatcher(obj, field, field.hide);
@@ -472,12 +474,15 @@ mkn.render = function(options)
       initEvents(obj, field);
     });
 
+    obj.data('mkn-field', field);
+    parent[key] = field;
     return obj;
   }
 
-  this.createSubPage = function(field)
+  this.createSubPage = function(parent, key)
   {
     var tmp = $('<span>').addClass('loading');
+    var field = parent[key];
     var path = field.path = field.url? field.url: field.id;
     field.sub_page = undefined;
     field.appendChild = false;
@@ -486,6 +491,7 @@ mkn.render = function(options)
     tmp.on('read_'+path, function(e, obj) {
       setStyle(obj, field);
       tmp.replaceWith(obj);
+      parent[key] = field;
     });
     return tmp;
   }
@@ -512,10 +518,10 @@ mkn.render = function(options)
       if (regex)
         parent.replace(regex,new_item_html+'$1');
       var template = item.template;
-      var hasTemplate = isTemplate(template);
-      var obj = this.create(item, hasTemplate);
+      var hasTemplate = item.templated = isTemplate(template);
+      var obj = this.create(items, i);
       var templated;
-      if (hasTemplate && (templated = this.createTemplate(template, item))) {
+      if (hasTemplate && (templated = this.createTemplate(item))) {
         if (isTableTag(template.tag))
           templated.append(obj);
         else
@@ -525,7 +531,7 @@ mkn.render = function(options)
       if (wrap)
         wrap.append(templated);
       else if (item.wrap) {
-        wrap = this.create(item.wrap);
+        wrap = this.create(item, 'wrap');
         wrap.html('');
         parent.find('#'+new_item_name).replaceWith(wrap);
         wrap.append(templated);
@@ -608,7 +614,6 @@ mkn.render = function(options)
     if (typeof value !== 'string') return;
     var watches = getMatches(value, /\$@(\w+)/g);
     if (!watches.length) return;
-    obj.data('mkn-field', field);
     obj.addClass('mkn-watcher');
     $.each(watches, function(i, key) {
       if (!(key in mkn.model)) mkn.model[key] = '';
