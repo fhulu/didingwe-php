@@ -254,7 +254,8 @@ mkn.render = function(options)
       mkn.deleteKeys(field, ['type', 'attr', 'action', 'class', 'tag', 'html',
        'style', 'styles', 'create','classes','template', 'templates', 'text', 'templated']);
        mkn.deleteKeys(field, geometry);
-      template.attr['for'] = item.id;
+       if (!('attr' in template)) template.attr = {};
+       template.attr['for'] = item.id;
     }
     item.template = this.initField(mkn.merge(field, template));
     return this.create(item, 'template');
