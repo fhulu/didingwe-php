@@ -254,6 +254,7 @@ mkn.render = function(options)
       mkn.deleteKeys(field, ['type', 'attr', 'action', 'class', 'tag', 'html',
        'style', 'styles', 'create','classes','template', 'templates', 'text', 'templated']);
        mkn.deleteKeys(field, geometry);
+      template.attr['for'] = item.id;
     }
     item.template = this.initField(mkn.merge(field, template));
     return this.create(item, 'template');
@@ -462,6 +463,7 @@ mkn.render = function(options)
     }
     if (obj.attr('id') === '') obj.removeAttr('id');
 
+    setVisible(obj, field);
     setDisabled(obj, field);
 
     runJquery(obj, field);
@@ -645,7 +647,7 @@ mkn.render = function(options)
 
   var setAttr = function(obj, field)
   {
-    expandVars(field, field.attr, { sourceFirst: true, recurse: true})
+    expandVars(field, field.attr, { sourceFirst: true, recurse: false})
     var attr = field.attr;
     if (obj.attr('id') === '') obj.removeAttr('id');
     if (!attr) return;

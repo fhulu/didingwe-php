@@ -1046,7 +1046,7 @@ tallest:
 template:
   tag: div
   text: $field
-  attr: {for: $id, id: ""}
+  attr: { id: ""}
 
 textarea:
   tag: textarea
