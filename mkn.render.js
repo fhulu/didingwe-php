@@ -1118,6 +1118,7 @@ mkn.render = function(options)
     setAttr(obj, field);
     setClass(obj, field);
     setStyle(obj, field);
+    if ('show' in field) console.log("set visilbe", obj,field);
     setVisible(obj, field);
     setDisabled(obj, field);
   }
