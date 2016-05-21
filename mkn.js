@@ -167,7 +167,7 @@ var mkn = new function() {
 
     attr: function(name, value)
     {
-      return "[?='_']".replace('?',name).replace('_',value);
+      return "$name='$value']".replace('$name',name).replace('$value',value);
     }
   }
 
