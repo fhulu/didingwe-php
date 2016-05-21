@@ -9,7 +9,7 @@ test:
     - switched: { name: "Off", value: 0 }
     - string_test: { type: p, text:  $@color + " " + $@checked + " " + $@switched  }
     - type: input
-    - style_test: { styles: [filled], fill: $@color }
+    - style_test: { styles: [filled], fill: $@color, value: $@color}
     - show_test: { show: $@checked }
     - checked_and_switched: { disabled: $@checked && $@switched }
 
