@@ -159,6 +159,7 @@
       this.createAction('goto_next').attr('disabled','').appendTo(paging);
       this.createAction('goto_last').attr('disabled','').appendTo(paging);
       this.bindPaging();
+      this.bindRowActions();
     },
 
     pageTo: function(invoker, number)
@@ -301,10 +302,7 @@
       var tr;
       for(var i in data.rows) {
         var row = data.rows[i];
-        if (tr) {
-          self.bindRowActions(tr);
-          tr.appendTo(body);
-        }
+        if (tr) tr.appendTo(body);
         tr = $('<tr>');
         var key;
         var expandable = false;
@@ -348,10 +346,7 @@
         }
         key = undefined;
       }
-      if (tr) {
-        self.bindRowActions(tr);
-        tr.appendTo(body);
-      }
+      if (tr) tr.appendTo(body);
       this.spanColumns(this.head().find('.header>th'));
     },
 
@@ -488,37 +483,36 @@
       load();
     },
 
-    bindRowActions: function(tr)
+    bindRowActions: function()
     {
       var self = this;
-      tr.on('slide', function(e) {
+      this.element.on('slide', 'tr', function(e) {
         $(e.target).toggle();
-        self.slide(tr);
-      });
-      tr.on('expand', function(e) {
+        self.slide($(this));
+      })
+      .on('expand', 'tr', function(e) {
+        var tr = $(this);
         tr.find('[action=expand]').hide();
         tr.find('[action=collapse]').show();
         if (tr.next().hasClass('expanded')) return;
         var expand = self.options['expand'];
         if (!expand.pages) return;
         self.loadSubPages(tr, expand.pages)
-      });
-      tr.on('collapse', function(e) {
+      })
+      .on('collapse', 'tr', function(e) {
+        var tr = $(this);
         tr.find('[action=collapse]').hide();
         tr.find('[action=expand]').show();
         var next = tr.next();
         if (next.hasClass('expanded')) next.remove();
-      });
-
-      tr.on('action', function(evt, btn) {
+      })
+      .on('action', 'tr', function(evt, btn) {
         if (!btn.parent('.slide').exists()) return;
-        self.slide(tr);
-        tr.find('[action=slide]').toggle();
-      });
-
-      tr.on('processed_delete', function() {
-        tr.remove();
-//        alert('deleted successfullyy ' + JSON.toString(result));
+        self.slide($(this));
+        $(this).find('[action=slide]').toggle();
+      })
+      .on('processed_delete', 'tr', function() {
+        $(this).remove();
       });
     },
 
