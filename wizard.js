@@ -116,7 +116,7 @@
           nav.path = info.path;
         }
         if (nav.id == 'prev' && index == me.first_step) return;
-        me.options.render.create(nav).appendTo(bar);
+        me.options.render.create(navs, i).appendTo(bar);
       });
 
       if (info.prev === false) me.element.find('.wizard-bookmark').each(function(i) {
