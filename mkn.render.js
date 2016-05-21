@@ -462,7 +462,6 @@ mkn.render = function(options)
     }
     if (obj.attr('id') === '') obj.removeAttr('id');
 
-    setVisible(obj, field);
     setDisabled(obj, field);
 
     runJquery(obj, field);
