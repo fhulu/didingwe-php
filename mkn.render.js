@@ -400,7 +400,7 @@ mkn.render = function(options)
     initModel(root);
     me.updateWatchers(root);
     return obj.on('keyup input cut paste change', 'input,select,textarea', function() {
-      var id = $(this).attr('id');
+      var id = $(this).data('id');
       if (!(id in mkn.model)) return;
       mkn.model[id] = $(this).value();
       me.updateWatchers(root);
@@ -471,6 +471,7 @@ mkn.render = function(options)
       initEvents(obj, field);
     });
 
+    obj.data('id',  id);
     field['mkn-object'] = obj;
     parent[key] = field;
     return obj;
@@ -645,6 +646,7 @@ mkn.render = function(options)
 
   var setAttr = function(obj, field)
   {
+    expandVars(field, field.attr, { sourceFirst: true, recurse: true})
     var attr = field.attr;
     if (obj.attr('id') === '') obj.removeAttr('id');
     if (!attr) return;

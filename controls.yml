@@ -71,7 +71,7 @@ borderless:
   border-left: 0
   border-bottom: 0
 
-  
+
 bottom_left:
   position: absolute
   left: 0
@@ -866,7 +866,8 @@ question_input_page:
 
 radiobox:
   type: input
-  attr: { type: radio, value: $id, id: ""}
+  value: $id
+  attr: { type: radio, value: $value, id: ""}
   style:
     width: 24px
     height: 24px

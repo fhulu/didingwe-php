@@ -3,11 +3,16 @@ test:
   type: input_page
   inputs:
     - color: { type: dropdown }
-    - show_disable: { type: checkbox }
-    - string_test: { type: p, text:  $@color + " " + $@show_disable  }
+    - checked: { type: checkbox }
+    - type: radiobox
+    - switched: { name: "On", value: 1 }
+    - switched: { name: "Off", value: 0 }
+    - string_test: { type: p, text:  $@color + " " + $@checked + " " + $@switched  }
+    - type: input
     - style_test: { styles: [filled], fill: $@color }
-    - show_test: { show: $@show_disable }
-    - disable_test: { disabled: $@show_disable }
+    - show_test: { show: $@checked }
+    - checked_and_switched: { disabled: $@checked && $@switched }
+
 
 color:
   options: [red,orange,yellow,green,blue,indigo,violet]
