@@ -108,7 +108,6 @@
       }
       this.showData(data);
       if (this.options.page_size !== undefined) this.showPaging(parseInt(data.total));
-      this.adjustActionsHeight();
     },
 
 
@@ -443,23 +442,23 @@
       }
       if (normal_actions.length)
         this.options.render.createItems(td, {}, undefined, normal_actions);
-
       if (!slide_actions.length) return;
-
-      var slider = $('<span class="slide">').toggle(false).appendTo(td);
+      var slider = $('<div class="slide">').toggle(false).appendTo(td);
       slider.data('actions', slide_actions);
     },
 
     slide: function(tr)
     {
+      var height = this.getActionsHeight(tr);
       var slider = tr.find('.slide');
       if (slider.children().length == 0) {
         this.options.render.createItems(slider, {}, undefined, slider.data('actions'));
         slider.find('[action]').click(function() {
-          td.trigger('action',[$(this),id,action.action]);
+          slider.parent().trigger('action',[$(this),'', $(this).attr('action')]);
         });
       }
-      tr.find('.slide').animate({width:'toggle'}, this.options.slideSpeed);
+      slider.find('[action]').height(height);
+      slider.animate({width:'toggle'}, this.options.slideSpeed);
     },
 
 
@@ -517,17 +516,14 @@
       })
       .on('processed_delete', 'tr', function() {
         $(this).remove();
-      });
+      })
     },
 
-    adjustActionsHeight: function()
+    getActionsHeight: function(tr)
     {
-      this.element.find("tbody>tr").each(function() {
-        var row = $(this);
-        var height = (row.innerHeight()*0.99).toString()+'px';
-        row.find('.slide,[action]').height(height).css('line-height', height);
-      });
+      return (tr.innerHeight()*0.99).toString()+'px';
     },
+
 
     updateWidths: function(row, widths)
     {

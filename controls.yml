@@ -15,7 +15,7 @@ accordion_tab:
   text: <h3>$name</h3>$field
 
 actioner:
-  tag: div
+  tag: button
   attr: { action: $id, id: "", title: $desc }
   styles: [filled]
 
@@ -259,6 +259,7 @@ datatable:
     pages: []
 
   slide:
+    tag: button
     event: slide
     name: "<"
     desc: More options...

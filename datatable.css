@@ -199,11 +199,15 @@ table.data tr.expanded>td>*
 
 table.data tr [action]
 {
+  font-size: 10pt;
+  font-weight: 200;
   color: white;
   cursor: pointer;
   text-align: center;
-  padding: 0px 6px;
+  padding: 0px 3px;
   opacity: 0.88;
+  border-radius: 0;
+  height: 100%;
 }
 
 table.data tr [action]:hover
@@ -239,10 +243,12 @@ table.data tr [action=add]
   background-color:rgb(20,60,90);
 }
 
-table.data [action=slide]
+table.data tr [action=slide]
 {
   float: right;
+  height: 100%;
 }
+
 
 table.data .slide
 {
@@ -255,7 +261,7 @@ table.data .slide
 }
 table.data .slide>[action]
 {
-  display: inline;
+  display: inline-block;;
   float: left;
 }
 
