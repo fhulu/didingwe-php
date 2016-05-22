@@ -1,7 +1,6 @@
 table.data
 {
   position: relative;
-  border-radius: 5px;
   border-collapse: collapse;
   text-align: left;
   -moz-box-shadow: 3px 3px 3px 4px lightgray;
@@ -164,6 +163,9 @@ table.data tr.sort
   cursor: pointer;
 }
 
+table.data td.actions {
+  padding: 0px;
+}
 table.data .actions [action=export]
 {
   background-color:#35d59d;
@@ -178,11 +180,6 @@ table.data .actions [action=email]
 table.data .actions [action=sms]
 {
   background-color:lightcoral;
-}
-
-table.data .adder:hover, .exporter:hover
-{
-  border: 1px solid blue;
 }
 
 table.data>tbody>tr.expanded>td
