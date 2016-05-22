@@ -13,7 +13,7 @@ mkn.render = function(options)
   me.known = {};
 
   var array_defaults = [ 'type', 'types', 'template', 'action', 'attr', 'wrap', 'default'];
-  var geometry = ['left','right','width','top','bottom','height'];
+  var geometry = ['left','right','width','top','bottom','height', 'line-height'];
 
   var mutable = function(field) {
     return field.mutable || field.mutable === undefined || field.mutable !== false;
