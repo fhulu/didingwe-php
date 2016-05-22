@@ -161,6 +161,8 @@ facebook:
   src: /fb.png
   url: http://facebook.com
 
+"false": { value: 0 }
+
 first_name:
   desc: Your first name as written in your ID book
   valid: name
@@ -272,6 +274,9 @@ my_audit_trail:
   access: reg
   url: /audit_trail/user
 
+
+"no": { value: 0 }
+
 organisation_audit_trail:
   access: [admin]
   url: /audit_trail/partner
@@ -341,7 +346,7 @@ rest_post:
   merge: false
 
 role:
-  db_name: roles  
+  db_name: roles
 
 send_email:
   support: Mukoni Support <support@mukoni.co.za>
@@ -446,3 +451,18 @@ wizard_post:
 tax_reference_no:
   name: Tax Reference Number
   attr: { min: 1000000000, max: 9999999999 }
+
+
+true: { value: 1}
+
+true_false:
+  options:
+    - "true"
+    - "false"
+
+"yes": { value: 1 }
+
+yes_no:
+  options:
+    - "yes"
+    - "no"
