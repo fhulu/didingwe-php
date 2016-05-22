@@ -185,11 +185,12 @@ var mkn = new function() {
     return !(f.hide || f.show === false);
   }
 
-  this.walkTree = function(field, callback) {
+  this.walkTree = function(field, callback, level) {
+    if (level === undefined) level = 0;
     $.each(field, function(k, value) {
-      callback(k, value, field);
+      callback(k, value, field, level);
       if ($.isArray(value) || $.isPlainObject(value))
-        mkn.walkTree(value, callback);
+        mkn.walkTree(value, callback, level+1);
     });
   }
 
