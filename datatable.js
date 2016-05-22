@@ -456,9 +456,10 @@
         slider.find('[action]').click(function() {
           slider.parent().trigger('action',[$(this),'', $(this).attr('action')]);
         });
+        slider.css('right', -slider.width());
       }
       slider.find('[action]').height(height);
-      slider.animate({width:'toggle'}, this.options.slideSpeed);
+      slider.show().animate({right:'0px'}, this.options.slideSpeed);
     },
 
 
@@ -513,6 +514,8 @@
         if (!btn.parent('.slide').exists()) return;
         self.slide($(this));
         $(this).find('[action=slide]').toggle();
+        var slider = $(this).find('.slide');
+        slider.animate({right: -slider.width()}, self.options.slideSpeed*2, function() { slider.hide()});
       })
       .on('processed_delete', 'tr', function() {
         $(this).remove();

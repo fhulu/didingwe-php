@@ -269,7 +269,7 @@ datatable:
     name: ">"
     desc: Hide options
 
-  slideSpeed: 100
+  slideSpeed: 150
 
 date:
   type: datetime
