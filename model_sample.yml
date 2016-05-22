@@ -2,6 +2,7 @@ test:
   desc: Test model binding/watching
   type: input_page
   inputs:
+    # - template: none
     - color: { type: dropdown }
     - checked: { type: checkbox }
     - type: radiobox
