@@ -650,7 +650,7 @@ mkn.render = function(options)
 
   var setAttr = function(obj, field)
   {
-    expandVars(field, field.attr, { sourceFirst: true, recurse: false})
+    expandVars(field, field.attr, { sourceFirst: true, recurse: true})
     var attr = field.attr;
     if (obj.attr('id') === '') obj.removeAttr('id');
     if (!attr) return;
