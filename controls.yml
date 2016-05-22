@@ -868,6 +868,7 @@ question_input_page:
 radiobox:
   type: input
   value: $id
+  immutable: [value]
   attr: { type: radio, value: $value, id: ""}
   style:
     width: 24px
@@ -882,9 +883,10 @@ radiogroup:
   class: radio
   text: $options
   group: $id
-  layout: label_left
+  layout:
+    type: label_left
   options:
-    - template: label_left
+    - template: $layout
     - type:
         type: radiobox
         derive: [group]
