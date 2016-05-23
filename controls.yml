@@ -326,6 +326,7 @@ dropdown:
     value: $1
     name: $2
     text: $name
+    immutable: [name,value,text]
     attr: { value: $id }
   selected:
     classes: option

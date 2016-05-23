@@ -1,5 +1,6 @@
 test:
   desc: Test model binding/watching
+  onload: $@moves = 0, $@colors = ['red','orange','yellow','green','blue','indigo','violet']
   type: input_page
   inputs:
     # - template: none
@@ -10,9 +11,18 @@ test:
     - switched: { name: "Off", value: 0 }
     - string_test: { type: p, text:  $@color + " " + $@checked + " " + $@switched  }
     - type: input
-    - style_test: { styles: [filled], fill: $@color, value: $@color}
+    - style_test:
+        style:
+          background-color: $@color
+          # color: @$colors[($@colors.indexOf('$@color')+3) % 7)]
+        value: >
+          "You chose " + $@color
     - show_test: { show: $@checked }
-    - checked_and_switched: { disabled: $@checked && $@switched }
+    - checked_and_switched:
+        disabled: $@checked && $@switched
+        value: $@moves
+        onmousemove: $@moves = $@moves+1
+
 
 
 color:
