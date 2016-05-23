@@ -399,7 +399,7 @@ mkn.render = function(options)
     parent[key] = me.initField(parent[key], parent);
     var obj = me.create(parent, key);
     var root = parent[key];
-    initModel(root);
+    if (!initModel(root)) return obj;
     me.updateWatchers(root);
     return obj.on('keyup input cut paste change', 'input,select,textarea', function() {
       var id = $(this).data('id');
@@ -411,7 +411,7 @@ mkn.render = function(options)
 
   this.create =  function(parent, key)
   {
-    var field = parent[key];
+    var field = key===undefined? parent: parent[key];
     if (field.sub_page)
       return this.createSubPage(parent, key);
 
@@ -475,7 +475,7 @@ mkn.render = function(options)
 
     obj.data('id',  id);
     field['mkn-object'] = obj;
-    parent[key] = field;
+    if (key !== undefined) parent[key] = field;
     return obj;
   }
 
@@ -1100,20 +1100,22 @@ mkn.render = function(options)
   }
 
   var initWatcher = function(key, value, parent) {
-    if (typeof key !== 'string' || key.indexOf('mkn-original-') == 0 || typeof value !== 'string') return;
+    if (typeof key !== 'string' || key.indexOf('mkn-original-') == 0 || typeof value !== 'string') return false;
     var watches = getMatches(value, /\$@(\w+)/g);
-    if (!watches.length) return;
+    if (!watches.length) return false;
     parent['mkn-original-'+key] = value;
     $.each(watches, function(i, key) {
       if (!(key in mkn.model)) mkn.model[key] = '';
-    });
+    })
+    return true;
   }
 
   var initModel = function(root) {
-    var element;
+    var watching = false;
     mkn.walkTree(root, function(key, value, parent) {
-      initWatcher(key, value, parent);
+      watching |= initWatcher(key, value, parent);
     });
+    return watching;
   }
 
   this.updateWatchers = function(root) {
