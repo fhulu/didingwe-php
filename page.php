@@ -145,13 +145,17 @@ class page
   function load_field_stack($file, &$fields=array(), $search_paths=array('../common', '.'))
   {
     $read_one = false;
-    foreach($search_paths as $path) {
-      $data = load_yaml("$path/$file");
-      if (is_null($data)) continue;
-      $read_one = true;
+    $languages = [''];
+    if ($this->request['lang']) $languages[] = ".". $this->request['lang'];
+    foreach($languages as $lang) {
+      foreach($search_paths as $path) {
+        $data = load_yaml("$path/$file$lang.yml");
+        if (is_null($data)) continue;
+        $read_one = true;
 
-      $this->replace_keys($data);
-      $fields[] = $data;
+        $this->replace_keys($data);
+        $fields[] = $data;
+      }
     }
     if (!$read_one)
       throw new Exception("Unable to load file $file");
@@ -162,13 +166,13 @@ class page
   {
 
     if (sizeof(page::$fields_stack) == 0) {
-      $this->load_field_stack('controls.yml', page::$fields_stack);
-      $this->load_field_stack('fields.yml', page::$fields_stack);
+      $this->load_field_stack('controls', page::$fields_stack);
+      $this->load_field_stack('fields', page::$fields_stack);
     }
 
     if (sizeof($this->page_stack) != 0) return;
 
-    $this->load_field_stack($this->path[0] . ".yml", $this->page_stack);
+    $this->load_field_stack($this->path[0], $this->page_stack);
     $this->page_fields = $this->merge_stack($this->page_stack);
   }
 
