@@ -158,7 +158,6 @@
       this.createAction('goto_next').attr('disabled','').appendTo(paging);
       this.createAction('goto_last').attr('disabled','').appendTo(paging);
       this.bindPaging();
-      this.bindRowActions();
     },
 
     pageTo: function(invoker, number)
@@ -301,7 +300,10 @@
       var tr;
       for(var i in data.rows) {
         var row = data.rows[i];
-        if (tr) tr.appendTo(body);
+        if (tr) {
+          self.bindRowActions(tr);
+          tr.appendTo(body);
+        }
         tr = $('<tr>');
         var key;
         var expandable = false;
@@ -345,7 +347,10 @@
         }
         key = undefined;
       }
-      if (tr) tr.appendTo(body);
+      if (tr) {
+        self.bindRowActions(tr);
+        tr.appendTo(body);
+      }
       this.spanColumns(this.head().find('.header>th'));
     },
 
@@ -487,15 +492,14 @@
       load();
     },
 
-    bindRowActions: function()
+    bindRowActions: function(tr)
     {
       var self = this;
-      this.element.on('slide', 'tr', function(e) {
+      tr.on('slide', function(e) {
         $(e.target).toggle();
-        self.slide($(this));
+        self.slide(tr);
       })
-      .on('expand', 'tr', function(e) {
-        var tr = $(this);
+      .on('expand', function(e) {
         tr.find('[action=expand]').hide();
         tr.find('[action=collapse]').show();
         if (tr.next().hasClass('expanded')) return;
@@ -503,21 +507,20 @@
         if (!expand.pages) return;
         self.loadSubPages(tr, expand.pages)
       })
-      .on('collapse', 'tr', function(e) {
-        var tr = $(this);
+      .on('collapse', function(e) {
         tr.find('[action=collapse]').hide();
         tr.find('[action=expand]').show();
         var next = tr.next();
         if (next.hasClass('expanded')) next.remove();
       })
-      .on('action', 'tr', function(evt, btn) {
+      .on('action', function(evt, btn) {
         if (!btn.parent('.slide').exists()) return;
         self.slide($(this));
         $(this).find('[action=slide]').toggle();
         var slider = $(this).find('.slide');
         slider.animate({right: -slider.width()}, self.options.slideSpeed*2, function() { slider.hide()});
       })
-      .on('processed_delete', 'tr', function() {
+      .on('processed_delete', function() {
         $(this).remove();
       })
     },
