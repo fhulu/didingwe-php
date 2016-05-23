@@ -907,9 +907,9 @@ mkn.render = function(options)
       document.location = url;
   }
 
-  var confirmed = function(event, obj, field)
+  var confirmed = function(event, obj, field, action)
   {
-    var action = field.action;
+    if (action == undefined) action = field.action;
     field.page_id = field.page_id || obj.parents(".page").eq(0).attr('id');
     switch(action) {
       case 'dialog': mkn.showDialog(field.url, {key: field.key}); return;
@@ -1130,23 +1130,24 @@ mkn.render = function(options)
 
     var complete = function(field, watching) {
       var obj = field['mkn-object'];
-      if (!watching || !obj) return;
+      if (!watching || !obj) return watching;
       setAttr(obj, field);
       setClass(obj, field);
       setStyle(obj, field);
       setVisible(obj, field);
       setDisabled(obj, field);
+      return false;
     }
 
     var loop = function(parent) {
       var watching;
       $.each(parent, function(key, value) {
         if ($.isPlainObject(value) || $.isArray(value))
-          watching = loop(value);
+          watching |= loop(value);
         else if (evaluate(parent, key))
           watching = true;
       });
-      complete(parent, watching);
+      return complete(parent, watching);
     }
 
     loop(root);
