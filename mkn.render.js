@@ -11,6 +11,7 @@ mkn.render = function(options)
   me.sink = undefined;
   me.parent = options.parent;
   me.known = {};
+  me.root = {};
 
   var array_defaults = [ 'type', 'types', 'template', 'action', 'attr', 'wrap', 'default'];
   var geometry = ['left','right','width','top','bottom','height', 'line-height'];
@@ -396,16 +397,16 @@ mkn.render = function(options)
   }
 
   this.render = function(parent, key) {
-    parent[key] = me.initField(parent[key], parent);
+    me.root = parent[key] = me.initField(parent[key], parent);
     var obj = me.create(parent, key);
-    var root = parent[key];
-    if (!initModel(root)) return obj;
-    me.updateWatchers(root);
+    obj.triggerHandler('load');
+    if (!initModel()) return obj;
+    me.updateWatchers();
     return obj.on('keyup input cut paste change', 'input,select,textarea', function() {
       var id = $(this).data('id');
       if (!(id in mkn.model)) return;
       mkn.model[id] = $(this).value();
-      me.updateWatchers(root);
+      me.updateWatchers();
     });
   }
 
@@ -524,7 +525,6 @@ mkn.render = function(options)
           templated.append(obj);
         else
           this.replace(templated, obj, id, 'field');
-        parent_field['mkn-template-'+i] = item.template;
       }
       else {
         templated = obj;
@@ -612,8 +612,21 @@ mkn.render = function(options)
     return /\$@\w+/.test(value);
   }
 
+  var initOnEvents = function(obj, field) {
+    var events = [];
+    $.each(field, function(key, value) {
+      if (key.indexOf('on_') != 0) return;
+      events.push(key);
+      obj.on(key.substr(3), function(event) {
+        accept(event, obj, field, value);
+      });
+    });
+    mkn.deleteKeys(field, events);
+  }
+
   var initEvents = function(obj, field)
   {
+    initOnEvents(obj, field);
     if (typeof field.enter == 'string') {
       obj.keypress(function(event) {
         if (event.keyCode === 13)
@@ -907,52 +920,54 @@ mkn.render = function(options)
       document.location = url;
   }
 
-  var confirmed = function(event, obj, field, action)
+
+  var accept = function(event, obj, field, action)
   {
-    if (action == undefined) action = field.action;
-    field.page_id = field.page_id || obj.parents(".page").eq(0).attr('id');
-    switch(action) {
-      case 'dialog': mkn.showDialog(field.url, {key: field.key}); return;
-      case 'close_dialog': mkn.closeDialog(obj.parents(".page").eq(0));
-      case 'redirect': redirect(field); break;
-      case 'post':
-        var url = field.url? field.url: field.path
-        var params = serverParams('action', url, {key: field.key});
-        var selector = field.selector;
-        if (selector !== undefined) {
-          selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+field.page_id+"$2");
-          params = $.extend(params, {invoker: obj, event: event, async: true });
-          me.sink.find(".error").remove();
-          $(selector).json('/', params, function(result) {
-            obj.trigger('processed', [result]);
-            respond(result, obj, event);
+    var dispatch = function()
+    {
+      if (action === undefined) action = field.action;
+      field.page_id = field.page_id || obj.parents(".page").eq(0).attr('id');
+      switch(action) {
+        case 'dialog': mkn.showDialog(field.url, {key: field.key}); return;
+        case 'close_dialog': mkn.closeDialog(obj.parents(".page").eq(0));
+        case 'redirect': redirect(field); break;
+        case 'post':
+          var url = field.url? field.url: field.path
+          var params = serverParams('action', url, {key: field.key});
+          var selector = field.selector;
+          if (selector !== undefined) {
+            selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+field.page_id+"$2");
+            params = $.extend(params, {invoker: obj, event: event, async: true });
+            me.sink.find(".error").remove();
+            $(selector).json('/', params, function(result) {
+              obj.trigger('processed', [result]);
+              respond(result, obj, event);
+            });
+            break;
+          }
+          $.json('/', params, function(result) {
+            obj.trigger('straight processed', [result]);
+            respond(result, obj);
           });
           break;
-        }
-        $.json('/', params, function(result) {
-          obj.trigger('straight processed', [result]);
-          respond(result, obj);
-        });
-        break;
-      case 'trigger':
-        trigger(field, obj);
-        break;
-      default:
-        if (field.url)
-          document.location = field.url.replace(/\$key(\b|\W|$)?/, field.key+"$1");
+        case 'trigger':
+          trigger(field, obj);
+          break;
+        default:
+          if (isWatchValue(action)) {
+            evaluateModelValue(action);
+            me.updateWatchers();
+          }
+          else if (field.url)
+            document.location = field.url.replace(/\$key(\b|\W|$)?/, field.key+"$1");
+      }
     }
-  }
-
-  var accept = function(event, obj, field)
-  {
-    if (!field.confirmation) {
-      confirmed(event, obj, field);
-      return;
-    }
-    mkn.showDialog('/confirm_dialog', {}, function() {
+    if (!field.confirmation || action)
+      dispatch();
+    else mkn.showDialog('/confirm_dialog', {}, function() {
       $('#confirm_dialog #synopsis').text(field.confirmation);
       $('#confirm_dialog .action').click(function() {
-        if ($(this).attr('id') === 'yes') confirmed(event, obj, field);
+        if ($(this).attr('id') === 'yes') dispatch();
         $('#confirm_dialog').dialog('close');
       })
     });
@@ -1099,33 +1114,37 @@ mkn.render = function(options)
     sink.trigger(event, params);
   }
 
-  var initWatcher = function(key, value, parent) {
-    if (typeof key !== 'string' || key.indexOf('mkn-original-') == 0 || typeof value !== 'string') return false;
-    var watches = getMatches(value, /\$@(\w+)/g);
-    if (!watches.length) return false;
-    parent['mkn-original-'+key] = value;
-    $.each(watches, function(i, key) {
-      if (!(key in mkn.model)) mkn.model[key] = '';
-    })
-    return true;
-  }
+  var initModel = function() {
+    var init = function(key, value, parent) {
+      if (typeof key !== 'string' || key.indexOf('mkn-original-') == 0 || typeof value !== 'string') return false;
+      var watches = getMatches(value, /\$@(\w+)/g);
+      if (!watches.length) return false;
+      parent['mkn-original-'+key] = value;
+      $.each(watches, function(i, key) {
+        if (!(key in mkn.model)) mkn.model[key] = '';
+      })
+      return true;
+    }
 
-  var initModel = function(root) {
     var watching = false;
-    mkn.walkTree(root, function(key, value, parent) {
-      watching |= initWatcher(key, value, parent);
+    mkn.walkTree(me.root, function(key, value, parent) {
+      watching |= init(key, value, parent);
     });
     return watching;
   }
 
-  this.updateWatchers = function(root) {
+  var evaluateModelValue = function(value) {
+    value = value.replace(/\$@(\w+)/g, "mkn.model['$1']");
+    return eval(value);
+  }
+
+  me.updateWatchers = function() {
     var evaluate = function(field, key) {
       if (typeof key != 'string' || key.indexOf('mkn-original-') < 0 ) return false;
       var orig = key;
       key = key.substr(13);
       if (key == 'html') return false;
-      value = field[orig].replace(/\$@(\w+)/g, "mkn.model['$1']");
-      field[key] = value = eval(value);
+      field[key] = value = evaluateModelValue(field[orig]);
       if (key == 'text') field['mkn-object'].text(value);
       return true;
     }
@@ -1152,6 +1171,6 @@ mkn.render = function(options)
       return complete(parent, watching);
     }
 
-    loop(root);
+    loop(me.root);
   }
 }
