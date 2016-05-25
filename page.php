@@ -593,7 +593,7 @@ class page
   function validate($field, $include)
   {
     $options = merge_options($this->context,$this->request);
-    $validators = $this->load_fields('validators.yml');
+    $validators = $this->load_fields('validators');
     $fields = merge_options($this->merge_stack(page::$fields_stack), $this->page_fields, $this->fields);
     $this->validator = new validator(page::merge_options($_SESSION, $this->request), $fields, $validators);
 
