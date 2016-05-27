@@ -552,6 +552,7 @@ input:
   tag: input
   text: ""
   value: ""
+  immutable: [format]
   format: text
   attr:
     type: $format

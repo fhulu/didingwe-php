@@ -148,6 +148,7 @@ email:
     communication
 
   name: Email Address
+  format: email
   valid:
     - email
 
@@ -291,6 +292,7 @@ passport_no:
 password:
   desc: A secret combination of letters and number only known to you. Please do not give out your password.
   valid: password
+  format: password
 
 payweb:
   styles: [widest, borderless]
