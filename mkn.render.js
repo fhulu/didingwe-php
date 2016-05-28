@@ -1114,37 +1114,57 @@ mkn.render = function(options)
     sink.trigger(event, params);
   }
 
-  var initModel = function() {
-    var init = function(key, value, parent) {
+  var initModel = function(expr) {
+
+    var initVars = function(expr) {
+      var vars = expr.regexCapture(/(?:^|[^.a-z_])([a-z_][\w]*)/gi);
+      $.each(vars, function(i, v) {
+        if (!(v in mkn.model)) mkn.model[v] = '';
+      });
+      return vars.length>0;
+    }
+    var search = function(key, value, parent) {
       if (typeof key !== 'string' || key.indexOf('mkn-original-') == 0 || typeof value !== 'string') return false;
-      var watches = getMatches(value, /\$@(\w+)/g);
-      if (!watches.length) return false;
-      parent['mkn-original-'+key] = value;
-      $.each(watches, function(i, key) {
-        if (!(key in mkn.model)) mkn.model[key] = '';
-      })
-      return true;
+      var exprs = value.regexCapture(/<d(?:d|idi)? ([^>]+)>/g);
+      var hasVars = false;
+      $.each(exprs, function(i, e) {
+        hasVars |= initVars(e);
+      });
+      if (hasVars) parent['mkn-original-'+key] = value;
+      return hasVars;
     }
 
     var watching = false;
     mkn.walkTree(me.root, function(key, value, parent) {
-      watching |= init(key, value, parent);
+      watching |= search(key, value, parent);
     });
     return watching;
   }
 
-  var evaluateModelValue = function(value) {
-    value = value.replace(/\$@(\w+)/g, "mkn.model['$1']");
-    return eval(value);
-  }
 
   me.updateWatchers = function() {
+
+    var replace = function(expr) {
+      var vars = expr.regexCapture(/(?:^|[^.a-z_])([a-z_][\w]*)/gi);
+      $.each(vars, function(i, v) {
+        expr = expr.replace(v, "mkn.model['"+v+"']");
+      });
+      return expr;
+    }
+
     var evaluate = function(field, key) {
       if (typeof key != 'string' || key.indexOf('mkn-original-') < 0 ) return false;
       var orig = key;
       key = key.substr(13);
       if (key == 'html') return false;
-      field[key] = value = evaluateModelValue(field[orig]);
+      value = field[orig];
+      var exprs = value.regexCapture(/<d(?:d|idi)? ([^>]+)>/g);
+      if (!exprs.length) return false;
+      $.each(exprs, function(i, e) {
+        var r = new RegExp("<d(?:d|idi)? "+RegExp.quote(e)+">")
+        value = value.replace(r, eval(replace(e)));
+      });
+      field[key] = value;
       if (key == 'text') field['mkn-object'].text(value);
       return true;
     }
