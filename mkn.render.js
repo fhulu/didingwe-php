@@ -1116,22 +1116,33 @@ mkn.render = function(options)
 
   var initModel = function(expr) {
 
-    var initVars = function(expr) {
+    var inject = function(expr) {
       var vars = expr.regexCapture(/(?:^|[^.a-z_'"])([a-z_][\w]*)(?:[^'"]|$)/gi);
+      var unique = [];
       $.each(vars, function(i, v) {
         if (!(v in mkn.model)) mkn.model[v] = '';
+        if (unique.indexOf(v) < 0) unique.push(v);
       });
-      return vars.length>0;
+      return "(function() {"
+        + unique.map(function(v) { return "var "+ v + " = mkn.model['"+v+"']"})
+            .join(';')
+        + "; return " + expr + ";"
+        + "})()";
     }
+
+
     var search = function(key, value, parent) {
       if (typeof key !== 'string' || key.indexOf('mkn-original-') == 0 || typeof value !== 'string') return false;
       var exprs = value.regexCapture(/<d(?:d|idi)? ([^>]+)(?:>|$)/g);
-      var hasVars = false;
+      var injections = [];
       $.each(exprs, function(i, e) {
-        hasVars |= initVars(e);
+        var injection = inject(e);
+        if (injection) injections.push(injection);
       });
-      if (hasVars) parent['mkn-original-'+key] = value;
-      return hasVars;
+      if (!injections.length) return false;
+      parent['mkn-injections-'+key] = injections;
+      parent['mkn-original-'+key] = value;
+      return true;
     }
 
     var watching = false;
@@ -1144,31 +1155,17 @@ mkn.render = function(options)
 
   me.updateWatchers = function() {
 
-    var inject = function(expr) {
-      var vars = expr.regexCapture(/(?:^|[^.a-z_])([a-z_][\w]*)/gi);
-      var injections = [];
-      $.each(vars, function(i, v) {
-        if (injections.indexOf(v) < 0) injections.push(v);
-      });
-      return "(function() {"
-        + injections.map(function(v) { return "var "+ v + " = mkn.model['"+v+"']"})
-            .join(';')
-        + "; return " + expr + ";"
-        + "})()";
-    }
-
     var evaluate = function(field, key) {
       if (typeof key != 'string' || key.indexOf('mkn-original-') < 0 ) return false;
       var orig = key;
       key = key.substr(13);
       if (key == 'html') return false;
       value = field[orig];
-      var exprs = value.regexCapture(/<d(?:d|idi)? ([^>]+)(?:>|$)/g);
+      var exprs = value.regexCapture(/(<d(?:d|idi)? (?:[^>]+)(?:>|$))/g);
       if (!exprs.length) return false;
+      var injections = field['mkn-injections-'+key];
       $.each(exprs, function(i, e) {
-        var regex = new RegExp("<d(?:d|idi)? "+RegExp.quote(e)+"(?:>|$)",'g');
-        var injection = inject(e);
-        value = value.replace(regex, eval(injection));
+        value = value.replace(e, eval(injections[i]));
       });
       field[key] = value;
       if (key == 'text') field['mkn-object'].text(value);
