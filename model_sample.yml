@@ -12,13 +12,13 @@ test:
     - string_test:
         type: p
         # text: `"color " + color + " checked " + checked + " switched " + switched`
-        text: color <dd color> checked <d checked>switched <d switched>
+        text: color <dd color> checked <d checked> switched <d switched>
 
     - type: input
     - style_test:
         style:
           background-color: <d color
-          # color: `colors[(color.indexOf(color)+4) % colors.length]`
+          color: <d colors[(color.indexOf(color)+3) % colors.length]
         value: You chose <d color>
         on_mousemove: <dd moves = moves+1
     - show_test: { show: <d checked> }
