@@ -206,6 +206,7 @@ var mkn = new function() {
     field[key] = val;
     return true;
   }
+
 }
 
 if (!String.prototype.trim) {
@@ -217,6 +218,18 @@ if (!String.prototype.trim) {
     };
   })();
 }
+
+if (!String.prototype.regexCapture) {
+  String.prototype.regexCapture = function(regex) {
+    var matches = [];
+    var match;
+    while (match = regex.exec(this)) {
+      matches.push(match[1]);
+    }
+    return matches;
+  }
+}
+
 
 if (!RegExp.quote) {
   RegExp.quote = function(str) {
