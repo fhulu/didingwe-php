@@ -1,6 +1,6 @@
 test:
   desc: Test model binding/watching
-  on_load: <didi moves = 0; color='red'; colors = ['red','orange','yellow','green','blue','indigo','violet']>
+  on_load: <didi moves = 0; color='red'; colors = ['red','orange','yellow','green','blue','indigo','violet']
   type: input_page
   inputs:
     # - template: none
@@ -17,13 +17,13 @@ test:
     - type: input
     - style_test:
         style:
-          background-color: <dd color>
+          background-color: <d color
           # color: `colors[(color.indexOf(color)+4) % colors.length]`
         value: You chose <d color>
-        on_mousemove: <dd moves = moves+1>
+        on_mousemove: <dd moves = moves+1
     - show_test: { show: <d checked> }
     - checked_and_switched:
-        disabled: <d checked && switched>
+        disabled: <d checked && switched
         # value: `moves`
 
 

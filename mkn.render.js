@@ -1125,7 +1125,7 @@ mkn.render = function(options)
     }
     var search = function(key, value, parent) {
       if (typeof key !== 'string' || key.indexOf('mkn-original-') == 0 || typeof value !== 'string') return false;
-      var exprs = value.regexCapture(/<d(?:d|idi)? ([^>]+)>/g);
+      var exprs = value.regexCapture(/<d(?:d|idi)? ([^>]+)(?:>|$)/g);
       var hasVars = false;
       $.each(exprs, function(i, e) {
         hasVars |= initVars(e);
@@ -1158,10 +1158,10 @@ mkn.render = function(options)
       key = key.substr(13);
       if (key == 'html') return false;
       value = field[orig];
-      var exprs = value.regexCapture(/<d(?:d|idi)? ([^>]+)>/g);
+      var exprs = value.regexCapture(/<d(?:d|idi)? ([^>]+)(?:>|$)/g);
       if (!exprs.length) return false;
       $.each(exprs, function(i, e) {
-        var r = new RegExp("<d(?:d|idi)? "+RegExp.quote(e)+">")
+        var r = new RegExp("<d(?:d|idi)? "+RegExp.quote(e)+"(?:>|$)")
         value = value.replace(r, eval(replace(e)));
       });
       field[key] = value;
