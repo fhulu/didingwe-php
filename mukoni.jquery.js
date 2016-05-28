@@ -8,38 +8,6 @@ $.fn.hasAttr = function(name)
   return this.attr(name) !== undefined;
 }
 
-$.fn.updateEnableOnSet = function(controls)
-{
-  var self = this;
-  var set = 0;
-  var mandatory = $(controls).filter(':visible').filter(':not([optional])');
-  var total = mandatory.length;
-  mandatory.each(function() {
-    if ($(this).attr('type') == 'radio') {
-      if ($(this).is(':checked')) {
-        var name = $(this).attr('name');
-        total -= mandatory.filter('[name='+name+']').length - 1;
-        ++set;
-      }
-    }
-    else if ($(this).val() != '') ++set;
-  });
-  self.prop('disabled', set < total);
-}
-
-$.fn.enableOnSet = function(controls, events)
-{
-  this.updateEnableOnSet(controls);
-  controls = $(controls).filter('input,select,textarea')
-  if (events === undefined) events = '';
-  var self = this;
-  controls.bind('keyup input cut paste click change '+events, function() {
-    self.updateEnableOnSet(controls);
-  });
-  return this;
-}
-
-
 $.fn.filterText = function(text) {
   return this.filter(function() {
     return $(this).text() == text;
@@ -232,123 +200,6 @@ $.fn.json = function(url, options, callback)
   return this;
 }
 
-$.fn.sendOnSet = function(controls, url, options, callback)
-{
-  var self = this;
-  if (options instanceof Function) {
-    callback = options;
-    options = undefined;
-    this.enableOnSet(controls);
-  }
-  else if (options !== undefined && options.optional !== undefined)
-    this.enableOnSet(controls).filter(':not('+options.optional+')');
-  else this.enableOnSet(controls);
-
-  this.click(function(e) {
-    return $(controls).send(url, $.extend({invoker: self, event: e}, options), callback);
-  });
-  return this;
-}
-
-$.fn.sendOnClick = function(controls, url, options, callback)
-{
-  var self = this;
-  if (options instanceof Function) {
-    callback = options;
-    options = undefined;
-  }
-  $(this).click(function(e) {
-    return $(controls).send(url, $.extend({invoker: self, event: e}, options), callback);
-  });
-  return this;
-}
-
-$.fn.confirm = function(url, options, callback)
-{
-  if (options instanceof Function) {
-    callback = options;
-    options = {};
-  }
-  else if (options === undefined) {
-    options = {};
-  }
-  options.async = false;
-  var result;
-  this.send(url, options, function(data) {
-    if (callback !== undefined)
-      callback(data);
-    result = data;
-  });
-  if (result === false) return false;
-  if (result === undefined) return this;
-  result = $.trim(result);
-  if (result[0] == '?') {
-    if (!confirm(result.substr(1))) {
-      if (options.event !== undefined) options.event.stopImmediatePropagation();
-      return false;
-    }
-    return true;
-  }
-}
-
-$.fn.confirmOnSet = function(controls,url, options, callback)
-{
-  if (options instanceof Function) {
-    callback = options;
-    options = {};
-  }
-
-  var self = this;
-  this.enableOnSet(controls);
-
-  this.click(function(event) {
-    var params = $.extend({invoker: self, event: event}, options);
-    var result = $(controls).confirm(url, params);
-    if (callback !== undefined)
-      callback(result);
-  });
-}
-
-$.fn.loadHtml = function(url, options, callback)
-{
-  var self = this;
-  $.send(url, options, function(result) {
-    self.html(result);
-    if (callback) callback(result);
-  });
-  return this;
-}
-
-$.fn.loadHtmlByValues = function(url, values, options, callback)
-{
-  if (options instanceof Function) {
-    callback = options;
-    options = {};
-  }
-  options = $.extend(options, {data: $(values).values()});
-  var self = this;
-  $.send(url, options, function(result) {
-    self.html(result);
-    if (callback) callback(result);
-  });
-  return this;
-}
-
-$.fn.load = function(url, options, callback)
-{
-  var self = this;
-  $.send(url, options, function(result) {
-    self.replaceWith(result);
-    if (callback) callback(result);
-  });
-  return this;
-}
-
-$.fn.loadOptions = function(url, options, callback)
-{
-  this.html('<option>loading...</option>').loadHtml(url, options, callback);
-  return this;
-}
 
 $.json = function(url, options, callback)
 {
@@ -358,37 +209,6 @@ $.json = function(url, options, callback)
   }
   else options = $.extend(options, {dataType: 'json'});
   return $.send(url, options, callback);
-}
-
-$.fn.jsonLoadOptions = function(url, options, callback)
-{
-  if (url instanceof Function) {
-    callback = url;
-    url = undefined;
-    options = {};
-  }
-  else if (options instanceof Function) {
-    callback = options;
-    options = {};
-  }
-  var self = $(this);
-  self.html('<option>loading...</option>');
-  var thisUrl = url === undefined? "/?a=json/ref/items&list="+self.attr('list'): url;
-  $.json(thisUrl, options, function(result) {
-    self.html('');
-    $.each(result, function(key, row) {
-      self.append('<option f=t value='+row.item_code+'>'+row.item_name+'</option>');
-    });
-    var def = self.attr('default');
-    if (def !== undefined) {
-      var selected = self.find("[value='"+def+"']");
-      if (selected.length == 0)
-        selected = $('<option>'+def+'</option>').prependTo(self);
-      selected.prop('selected', true);
-    }
-    if (callback !== undefined) callback(result);
-  });
-  return this;
 }
 
 $.fn.setChildren = function(result, server)
