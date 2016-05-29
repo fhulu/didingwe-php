@@ -1,6 +1,9 @@
 test:
   desc: Test model binding/watching
-  on_load: <didi moves = 0; color='red'; colors = ['red','orange','yellow','green','blue','indigo','violet']
+  dd_init:
+    moved: 0
+    color: red
+    colors: [red,orange,yellow,green,blue,indigo,violet]
   type: input_page
   inputs:
     # - template: none
@@ -11,8 +14,9 @@ test:
     - switched: { name: "Off", value: 0 }
     - string_test:
         type: p
-        # text: `"color " + color + " checked " + checked + " switched " + switched`
-        text: color <dd color> checked <d checked> switched <d switched>
+        # text: >
+        #   <d "color is " + color + " checked " + checked + " switched " + switched
+        text: color <d color> checked <d checked> switched <d switched>
 
     - type: input
     - style_test:
@@ -20,11 +24,11 @@ test:
           background-color: <d color
           color: <d colors[(color.indexOf(color)+3) % colors.length]
         value: You chose <d color>
-        on_mousemove: <dd moves = moves+1
+        on_mousemove: <d moves = moves+1
     - show_test: { show: <d checked> }
     - checked_and_switched:
         disabled: <d checked && switched
-        # value: `moves`
+        value: <d moves
 
 
 
