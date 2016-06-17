@@ -2,7 +2,7 @@ $.widget( "custom.isearch", {
   options: {
     categoryPrefix: "-",
     fields:  ['value','name'],
-    render: "$name",
+    display: "$name",
     chosen: "$name",
     flags: []
   },
@@ -49,7 +49,7 @@ $.widget( "custom.isearch", {
       })
       .autocomplete("instance")._renderItem =  function( ul, item ) {
         if (!item) return;
-        var text = mkn.replaceFields(options.render, options.fields, item.data);
+        var text = mkn.replaceFields(options.display, options.fields, item.data);
         return $("<li>")
           .append($("<a>"+text+"</a>"))
           .appendTo(ul)
