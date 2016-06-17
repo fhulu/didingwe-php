@@ -173,9 +173,9 @@ var mkn = new function() {
 
   this.replaceFields = function(str, fields, data)
   {
+    if (typeof str != 'string') return str;
     $.each(fields, function(i, field) {
       var val = i < data.length? data[i]: "";
-      // text = text.replace(new RegExp('\b\\$'+field+'\b', 'g'), val);
       str = str.replace('$'+field, val);
     });
     return str;
