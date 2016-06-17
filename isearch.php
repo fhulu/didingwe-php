@@ -30,14 +30,20 @@ class isearch
     return $words;
   }
 
-  static function get_sql($options)
+
+  static function get_sql(&$options)
   {
     $sql = $options['sql'];
     if (is_null($sql)) {
       $table = $options['table'];
       if (is_null($table))
         throw new Exception("No table or sql supplied for isearch");
-      $sql = "select " . implode(',', $options['fields']) . " from $table";
+      $fields = $options['fields'];
+      if (!isset($fields) || $fields == '*') {
+        global $db;
+        $fields = $options['fields'] = $db->field_names($table);
+      }
+      $sql = "select " . implode(',', $fields) . " from $table";
     }
     return page::replace_sql($sql, $options);
   }
