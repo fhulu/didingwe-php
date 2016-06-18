@@ -62,12 +62,14 @@ class page
   var $expand_stack;
   var $context;
   var $sub_page;
+  var $includes;
 
   function __construct($request=null, $user_db=null)
   {
     global $db;
     $this->db = is_null($user_db)?$db: $user_db;
     $this->result = null;
+    $this->includes = [];
 
     if (is_null($request)) $request = $_REQUEST;
     log::debug_json("REQUEST",$request);
@@ -142,6 +144,20 @@ class page
     return $this->user;
   }
 
+  function include_external(&$data)
+  {
+    $files = $data['include'];
+    if (!isset($files)) return;
+    $fields = [];
+    foreach($files as $file) {
+      if (in_array($file, $this->includes, true)) continue;
+      $this->includes[] = $file;
+      $this->load_field_stack($file, $fields);
+    }
+    $fields = $this->merge_stack($fields);
+    $data = merge_options($fields, $data);
+  }
+
   function load_field_stack($file, &$fields=array(), $search_paths=array('../common', '.'))
   {
     $read_one = false;
@@ -153,6 +169,7 @@ class page
         if (is_null($data)) continue;
         $read_one = true;
 
+        $this->include_external($data);
         $this->replace_keys($data);
         $fields[] = $data;
       }

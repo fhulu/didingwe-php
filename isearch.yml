@@ -1,35 +1,11 @@
-test:
-  desc: Test iSearch
-  type: input_page
-  inputs:
-    - country: { type: isearch }
-    - bound: { value: <didi test }
-  actions: [test]
-  post: [write_session: $test]
-
-
-country:
-  table: country
-  fields: [code, name]
-  flags: [show_all]
-  adder: /isearch/add
-  choose: $name ($code)
-
-add:
-  desc: Add new country
-  width: 400
-  type: input_page
-  inputs:
-    - new_country_code
-    - new_country_name
-  actions: [add]
+isearch:
+  type: input
+  create: isearch
+  script: [/common/isearch.js]
+  css: [/common/isearch.css]
+  max_size: 0
+  constants: [choose,chosen]
+  choose: $name
+  chosen: $name
   post:
-    - sql_insert: [country, code: $new_country_code, name: $new_country_name]
-
-new_country_code:
-  name: Country Code
-  valid: unique(country.code)
-
-new_country_name:
-  name: Country Name
-  valid: unique(country.name)
+    - call: isearch::q(context)
