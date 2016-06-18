@@ -591,6 +591,7 @@ isearch:
   script: [/common/isearch.js]
   css: [/common/isearch.css]
   max_size: 0
+  constants: [display]
   post:
     - call: isearch::q(context)
 

@@ -290,12 +290,13 @@ mkn.render = function(options)
     if (parent_id === undefined) parent_id = data.id;
     var expanded;
     var count = 0;
+    var constants = $.isArray(data.constants)? data.constants: [];
     do {
       expanded = false;
       for (var field in data) {
         if ($.isNumeric(field)) continue;
         var value = data[field];
-        if (typeof value !== 'string' || value.indexOf('$') < 0 || field === 'template' && field === 'attr') continue;
+        if (typeof value !== 'string' || value.indexOf('$') < 0 || field === 'template' && field === 'attr' || constants.indexOf(field) >= 0) continue;
         var old_value = value = value.replace('$id', parent_id);
         data[field] = value = me.expandValue(data, value, parent_id);
         expanded = old_value !== value;
@@ -749,6 +750,7 @@ mkn.render = function(options)
     var replaced = false;
     var doit = function() {
       for (var key in dest) {
+        if ($.isArray(dest.constants) && dest.constants.indexOf(key) >= 0) continue;
         var val = dest[key];
         if ($.isPlainObject(val) && flags.recurse) {
           expandVars($.extend({}, source, dest), val, flags);
