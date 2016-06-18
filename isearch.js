@@ -60,7 +60,11 @@ $.widget( "custom.isearch", {
       },
       autocompleteclose: function( event, ui ) {
         if (el.val() =="") input.val("");
-      },
+      }
+    });
+    el.on('autocompleteadded', function( event, data) {
+      el.val(data[0]);
+      input.val(data[1]);
     });
   },
 

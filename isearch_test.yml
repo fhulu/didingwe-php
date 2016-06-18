@@ -14,7 +14,7 @@ country:
   table: country
   fields: [code, name]
   flags: [show_all]
-  adder: /isearch/add
+  adder: /isearch_test/add
   choose: $name ($code)
 
 add:
@@ -27,6 +27,8 @@ add:
   actions: [add]
   post:
     - sql_insert: [country, code: $new_country_code, name: $new_country_name]
+    - close_dialog
+    - trigger: [autocompleteadded,"#country", [$new_country_code, $new_country_name] ]
 
 new_country_code:
   name: Country Code
