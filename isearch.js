@@ -51,7 +51,7 @@ $.widget( "custom.isearch", {
         if (!item) return;
         var text = mkn.replaceFields(options.display, options.fields, item.data);
         return $("<li>")
-          .append($("<a>"+text+"</a>"))
+          .text(text)
           .appendTo(ul)
       }
 
