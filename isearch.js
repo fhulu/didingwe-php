@@ -33,6 +33,7 @@ $.widget( "custom.isearch", {
   },
 
   _createAutocomplete: function() {
+    var me = this;
     var el = this.element;
     var options = this.options;
     var input = this.input = $( "<input>" );
@@ -59,7 +60,11 @@ $.widget( "custom.isearch", {
         el.val(ui.item.code);
       },
       autocompleteclose: function( event, ui ) {
-        if (el.val() =="") input.val("");
+        if (el.val() != "") return;
+        if (me.hasFlag('allow_unknowns'))
+          el.val(input.val())
+        else
+          input.val("");
       }
     });
     el.on('autocompleteadded', function( event, data) {
