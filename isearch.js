@@ -35,13 +35,13 @@ $.widget( "custom.isearch", {
   _createAutocomplete: function() {
     var el = this.element;
     var options = this.options;
-    this.input = $( "<input>" );
-    this.input.appendTo( this.wrapper )
+    var input = this.input = $( "<input>" );
+    input.appendTo( this.wrapper )
       .attr( "title", "" )
       .addClass( "isearch-input ui-widget ui-widget-content ui-state-default ui-corner-left" )
       .autocomplete({
-        delay: 0,
-        minLength: 0,
+        delay: options.delay,
+        minLength: options.minLength,
         source: $.proxy( this, "_source" ),
       })
       .tooltip({
@@ -51,14 +51,17 @@ $.widget( "custom.isearch", {
         return item? $("<li>").html(item.label).appendTo(ul): null;
       }
 
-    this._on( this.input, {
+    this._on( input, {
+      autocompletesearch: function( event, ui ) {
+        el.val("")
+      },
       autocompleteselect: function( event, ui ) {
         el.val(ui.item.code);
-      }
+      },
+      autocompleteclose: function( event, ui ) {
+        if (el.val() =="") input.val("");
+      },
     });
-    el.change(function() {
-
-    })
   },
 
   _createShowAllButton: function() {

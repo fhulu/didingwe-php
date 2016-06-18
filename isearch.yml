@@ -7,5 +7,7 @@ isearch:
   constants: [choose,chosen]
   choose: $name
   chosen: $name
+  delay: 0
+  minLength: 0
   post:
     - call: isearch::q(context)
