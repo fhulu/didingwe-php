@@ -2,7 +2,7 @@ $.widget( "custom.isearch", {
   options: {
     categoryPrefix: "-",
     fields:  ['value','name'],
-    display: "$name",
+    choose: "$name",
     chosen: "$name",
     flags: []
   },
@@ -48,11 +48,7 @@ $.widget( "custom.isearch", {
         tooltipClass: "ui-state-highlight"
       })
       .autocomplete("instance")._renderItem =  function( ul, item ) {
-        if (!item) return;
-        var text = mkn.replaceFields(options.display, options.fields, item.data);
-        return $("<li>")
-          .text(text)
-          .appendTo(ul)
+        return item? $("<li>").html(item.label).appendTo(ul): null;
       }
 
     this._on( this.input, {
@@ -89,9 +85,7 @@ $.widget( "custom.isearch", {
         input.focus();
 
         // Close if already visible
-        if ( wasOpen ) {
-          return;
-        }
+        if ( wasOpen ) return;
 
         // Pass empty string as value to search for, displaying all results
         input.autocomplete( "search", "" );
@@ -131,7 +125,15 @@ $.widget( "custom.isearch", {
         el.trigger('server_response', data);
       el.trigger('refreshing', [data]);
       response( data.rows.map(function(val) {
-        return { code: val[0], data: val, label: mkn.replaceFields(opts.chosen, opts.fields, val) };
+        var text = mkn.replaceFields(opts.choose, opts.fields, val);
+        var value = mkn.replaceFields(opts.chosen, opts.fields, val)
+        return { code: val[0], value: value, label: text.replace(
+                  new RegExp(
+                    "(?![^&;]+;)(?!<[^<>]*)(" +
+                    $.ui.autocomplete.escapeRegex(request.term) +
+                    ")(?![^<>]*>)(?![^&;]+;)", "gi"),
+                  "<strong>$1</strong>")
+        }
       }));
     });
   },

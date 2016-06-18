@@ -13,7 +13,7 @@ country:
   fields: [code, name]
   flags: [show_all]
   adder: /isearch/add
-  display: $name ($code)
+  choose: $name ($code)
 
 add:
   desc: Add new country

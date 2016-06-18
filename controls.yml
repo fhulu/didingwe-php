@@ -591,7 +591,9 @@ isearch:
   script: [/common/isearch.js]
   css: [/common/isearch.css]
   max_size: 0
-  constants: [display]
+  constants: [choose,chosen]
+  choose: $name
+  chosen: $name
   post:
     - call: isearch::q(context)
 
