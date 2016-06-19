@@ -1,0 +1,8 @@
+material_test:
+  type: container
+  contents:
+    - hello:
+        tag: i
+        css: /common/google-material-icons.css
+        class: material-icons
+        text: face

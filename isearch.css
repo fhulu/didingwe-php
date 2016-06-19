@@ -6,30 +6,12 @@
   overflow-x: hidden;
 }
 
-.isearch {
-  position: relative;
-  display: inline-block;
-  max-height: 100px;
-  overflow-y: auto;
-  /* prevent horizontal scrollbar */
-  overflow-x: hidden;
-}
 
 .isearch-buttons {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  right: -2px;
-  padding: 0;
+  height: 100%;
 }
 
-.isearch-buttons>* {
-  height: 93%;
-  border-right: 0;
-}
 
-.isearch-input {
-  margin: 0;
-  width: 100%;
-  padding: 5px 10px;
+.isearch-show-all, .isearch-add {
+  vertical-align: center;
 }

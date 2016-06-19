@@ -365,6 +365,13 @@ float_left:
 float_right:
   float: right
 
+
+google_icon:
+  tag: i
+  class: [material-icons]
+  icon: face
+  text: $icon
+  
 google_map:
   tag: div
   create: mapper
