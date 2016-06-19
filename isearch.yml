@@ -9,5 +9,7 @@ isearch:
   chosen: $name
   delay: 0
   minLength: 0
+  show_all_tooltip: Show all items
+  add_new_tooltip: Add a new item
   post:
     - call: isearch::q(context)

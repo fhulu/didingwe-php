@@ -74,12 +74,13 @@ $.widget( "custom.isearch", {
   },
 
   _createShowAllButton: function() {
+    var opts = this.options;
     var input = this.input,
       wasOpen = false;
 
     $( "<a>" )
       .attr( "tabIndex", -1 )
-      .attr( "title", "Show All Items" )
+      .attr( "title", opts.show_all_tooltip )
       .tooltip()
       .appendTo( this.buttons )
       .button({
@@ -107,7 +108,7 @@ $.widget( "custom.isearch", {
     var self = this;
     $( "<a>" )
       .attr( "tabIndex", -1 )
-      .attr( "title", "Add New Item" )
+      .attr( "title", this.options.add_new_tooltip)
       .tooltip()
       .appendTo( this.buttons )
       .button({
