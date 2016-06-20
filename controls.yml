@@ -369,9 +369,9 @@ float_right:
 google_icon:
   tag: i
   class: [material-icons]
-  icon: face
+  icon: $id
   text: $icon
-  
+
 google_map:
   tag: div
   create: mapper

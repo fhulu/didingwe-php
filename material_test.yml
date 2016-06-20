@@ -1,8 +1,8 @@
 material_test:
   type: container
   contents:
-    - hello:
-        tag: i
-        css: /common/google-material-icons.css
-        class: material-icons
-        text: face
+    - type: google_icon
+    - face
+    - computer
+    - watch_later
+    - refresh: { class: [w3-spin]}
