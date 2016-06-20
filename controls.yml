@@ -1060,35 +1060,4 @@ widest:
   width: 100%
 
 
-wizard:
-  classes: div
-  create: wizard
-  script: [/common/wizard.js]
-  css: [/common/wizard.css]
-  text: $dummy
-  dummy: []
-  bookmarks: left
-  steps: []
-  prev:
-    type: button
-    name: Previous
-    desc: Go to previous step
-    action: trigger
-    event: wizard-prev
-    class: [wizard-prev]
-  next:
-    type: submit
-    name: Next
-    desc: Go to next step
-    class: [action,wizard-next]
-  navigate: [$prev,$next]
-
-
-
-wizard_jump:
-  classes: button
-  type: submit
-  post:
-    - trigger: [wizard-jump, .wizard, $id ]
-
 ...
