@@ -156,7 +156,9 @@ checkbox:
   type: input
   values: ""
   immutable: [width]
-  attr: { type: checkbox, values: $values }
+  format: checkbox
+  attr: { values: $values }
+  class: [w3-show-inline-block]
 
 
 checkgroup:
@@ -483,6 +485,7 @@ input:
   value: ""
   immutable: [format]
   format: text
+  class: [w3-input,w3-border]
   attr:
     type: $format
     value: $value
@@ -526,7 +529,6 @@ labelled:
   sow: [name]
   label: { classes: label }
   subject:
-    class: [w3-input,w3-border]
     attr: { title: $desc }
 
 labelled_input:
