@@ -88,8 +88,11 @@ var mkn = new function() {
     content.page(params);
     var id = path.replace('/','_');
     content.one('read_'+id, function(event, object, options) {
-      if (options.width != undefined) content.css('max-width', options.width);
-      $('<div class="w3-center w3-xlarge">').text(options.name).zIndex(0).appendTo(header);
+      if (options.width != undefined) content.css('width', options.width);
+      if (options.max_width != undefined) content.css('max-width', options.max_width);
+      $('<div>').text(options.name).zIndex(0).appendTo(header);
+      if (options.header_class) header.addClass(options.header_class.join(' '));
+      if (options.class) content.addClass(options.class.join(' '));
       object.attr('title', options.name);
       modal.show();
       if (callback) callback();

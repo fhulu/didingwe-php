@@ -526,7 +526,7 @@ labelled:
   sow: [name]
   label: { classes: label }
   subject:
-    class: [dd-input]
+    class: [w3-input,w3-border]
     attr: { title: $desc }
 
 labelled_input:
@@ -707,6 +707,8 @@ page:
   text: $items
   items: []
   tooltip: false
+  header_class: [w3-center, w3-xlarge]
+  class: [w3-padding-bottom]
 
 page_title:
   html: <title>$name</title>

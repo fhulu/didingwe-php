@@ -21,6 +21,8 @@ country:
 add:
   desc: Add new country
   width: 600
+  header_class: [w3-round-xlarge]
+  class: [w3-round-xlarge,w3-padding-bottom]
   type: input_page
   inputs:
     - new_country_code
