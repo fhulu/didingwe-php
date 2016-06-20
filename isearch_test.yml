@@ -5,7 +5,7 @@ test:
   type: input_page
   inputs:
     - country: { type: isearch }
-    - bound: { value: <didi test }
+    # - bound: { value: <didi test }
   actions: [test]
   post: [write_session: $test]
 

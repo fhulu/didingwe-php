@@ -17,7 +17,7 @@ $.widget( "custom.isearch", {
   {
     var el = this.element
     this.wrapper = $("<span>")
-      .addClass("isearch input w3-display-container w3-show-inline-block")
+      .addClass("isearch w3-display-container w3-show-inline-block")
       .insertAfter(el)
       .css('width', el.css('width'))
       .append(el);
@@ -33,11 +33,13 @@ $.widget( "custom.isearch", {
   _createAutocomplete: function() {
     var me = this;
     var el = this.element;
+    var cls = el.attr('class');
+    el.removeClass(cls);
     var options = this.options;
     var input = this.input = $( "<input>" )
       .attr( "title", "" )
       .attr( "placeholder", options.placeholder)
-      .addClass( "isearch autocomplete w3-input w3-border w3-show-inline-block" )
+      .addClass(cls)
       .autocomplete({
         delay: options.delay,
         minLength: options.minLength,

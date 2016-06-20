@@ -12,5 +12,6 @@ isearch:
   minLength: 0
   show_all_tooltip: Show all items
   add_new_tooltip: Add a new item
+  class: [ isearch, autocomplete, w3-input, w3-border, w3-show-inline-block, w3-round-large]
   post:
     - call: isearch::q(context)
