@@ -1,6 +1,7 @@
 isearch:
   type: input
   create: isearch
+  placeholder: Search $name
   script: [/common/isearch.js]
   css: [/common/isearch.css]
   max_size: 0

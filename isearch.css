@@ -1,17 +1,14 @@
-
 .ui-autocomplete {
   max-height: 240px;
   overflow-y: auto;
-  /* prevent horizontal scrollbar */
   overflow-x: hidden;
 }
 
 
-.isearch-buttons {
+.isearch.buttons {
   height: 100%;
 }
 
-
-.isearch-show-all, .isearch-add {
+.isearch.show-all, .isearch.add {
   vertical-align: center;
 }

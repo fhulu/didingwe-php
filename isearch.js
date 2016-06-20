@@ -24,7 +24,7 @@ $.widget( "custom.isearch", {
     el.hide();
     this._createAutocomplete();
     if (this.hasFlag('show_all') || this.options.adder !== undefined) {
-      this.buttons = $('<span>').addClass('isearch-buttons w3-padding w3-display-topright').appendTo(this.wrapper);
+      this.buttons = $('<span>').addClass('isearch buttons w3-padding-top w3-padding-bottom w3-display-topright').appendTo(this.wrapper);
       if (this.hasFlag('show_all')) this._createShowAllButton();
       if (this.options.adder !== undefined) this._createAddNewButton();
     }
@@ -34,10 +34,10 @@ $.widget( "custom.isearch", {
     var me = this;
     var el = this.element;
     var options = this.options;
-    var input = this.input = $( "<input>" );
-    input.appendTo( this.wrapper )
+    var input = this.input = $( "<input>" )
       .attr( "title", "" )
-      .addClass( "isearch-input w3-input w3-border w3-show-inline-block" )
+      .attr( "placeholder", options.placeholder)
+      .addClass( "isearch autocomplete w3-input w3-border w3-show-inline-block" )
       .autocomplete({
         delay: options.delay,
         minLength: options.minLength,
@@ -46,9 +46,11 @@ $.widget( "custom.isearch", {
       .tooltip({
         tooltipClass: "ui-state-highlight"
       })
+      .appendTo(this.wrapper)
       .autocomplete("instance")._renderItem =  function( ul, item ) {
         return item? $("<li>").html(item.label).appendTo(ul): null;
       }
+
 
     this._on( input, {
       autocompletesearch: function( event, ui ) {
@@ -81,7 +83,7 @@ $.widget( "custom.isearch", {
       .attr( "title", opts.show_all_tooltip )
       .tooltip()
       .appendTo( this.buttons )
-      .addClass( "isearch-show-all material-icons" ).text('arrow_drop_down')
+      .addClass( "isearch show-all material-icons w3-text-dark-grey" ).text('arrow_drop_down')
       .mousedown(function() {
         wasOpen = input.autocomplete( "widget" ).is( ":visible" );
       })
@@ -102,7 +104,7 @@ $.widget( "custom.isearch", {
       .attr( "title", this.options.add_new_tooltip)
       .tooltip()
       .appendTo( this.buttons )
-      .addClass( "isearch-add material-icons" ).text('add')
+      .addClass( "isearch add material-icons w3-text-dark-grey" ).text('add')
       .click(function() {
         mkn.showDialog(self.options.adder, self.options);
       });
