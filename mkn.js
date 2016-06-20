@@ -83,13 +83,13 @@ var mkn = new function() {
     var content = $('<div class="w3-modal-content">').appendTo(modal);
     var header = $('<div class="w3-container">').appendTo(content);
     var close = $('<div class="w3-closebtn">&times;</div>')
-      .appendTo(header)
+      .appendTo(header).zIndex(1)
       .click(function() { modal.remove(); });
     content.page(params);
     var id = path.replace('/','_');
     content.one('read_'+id, function(event, object, options) {
       if (options.width != undefined) content.css('max-width', options.width);
-      $('<div class="w3-center w3-xlarge">').text(options.name).appendTo(header);
+      $('<div class="w3-center w3-xlarge">').text(options.name).zIndex(0).appendTo(header);
       object.attr('title', options.name);
       modal.show();
       if (callback) callback();
