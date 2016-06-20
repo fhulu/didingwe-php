@@ -11,7 +11,8 @@ test:
 
 
 country:
-  table: country
+  # table: country
+  sql: select code, name from country
   fields: [code, name]
   flags: [show_all]
   adder: /isearch_test/add
