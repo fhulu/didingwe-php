@@ -47,9 +47,9 @@ $.widget( "custom.isearch", {
         tooltipClass: "ui-state-highlight"
       })
       .appendTo(this.wrapper)
-      .autocomplete("instance")._renderItem =  function( ul, item ) {
+    input.autocomplete("instance")._renderItem =  function( ul, item ) {
         return item? $("<li>").html(item.label).appendTo(ul): null;
-      }
+    }
 
 
     this._on( input, {
