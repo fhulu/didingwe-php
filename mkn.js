@@ -79,16 +79,19 @@ var mkn = new function() {
       params.values = field.values;
       params.key = field.key;
     }
-    var tmp = $('body');
-    tmp.page(params);
-
+    var modal = $('<div class="w3-modal">').hide().appendTo('body');
+    var content = $('<div class="w3-modal-content">').appendTo(modal);
+    var header = $('<div class="w3-container">').appendTo(content);
+    var close = $('<div class="w3-closebtn">&times;</div>')
+      .appendTo(header)
+      .click(function() { modal.remove(); });
+    content.page(params);
     var id = path.replace('/','_');
-    tmp.one('read_'+id, function(event, object, options) {
+    content.one('read_'+id, function(event, object, options) {
+      if (options.width != undefined) content.css('max-width', options.width);
+      $('<div class="w3-center w3-xlarge">').text(options.name).appendTo(header);
       object.attr('title', options.name);
-      options = $.extend({modal:true, page_id: id, close: function() {
-        $(this).dialog('destroy').remove();
-      }}, options);
-      object.dialog(options);
+      modal.show();
       if (callback) callback();
     });
   }
@@ -96,9 +99,8 @@ var mkn = new function() {
   this.closeDialog = function(dialog, message)
   {
     if (message) alert(message);
-    if (!dialog.hasClass('ui-dialog-content'))
-      dialog = dialog.parents('.ui-dialog-content').eq(0);
-    dialog.dialog('destroy').remove();
+    var parent = dialog.parents('.w3-modal').eq(0);
+    if (parent.exists()) parent.remove();
   }
 
   this.firstElement = function(obj)

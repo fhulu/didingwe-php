@@ -526,7 +526,7 @@ labelled:
   sow: [name]
   label: { classes: label }
   subject:
-    class: [input]
+    class: [dd-input]
     attr: { title: $desc }
 
 labelled_input:

@@ -20,12 +20,14 @@ country:
 
 add:
   desc: Add new country
-  width: 400
+  width: 600
   type: input_page
   inputs:
     - new_country_code
     - new_country_name
-  actions: [add]
+  actions:
+    - add
+    - close: {action: close_dialog}
   post:
     - sql_insert: [country, code: $new_country_code, name: $new_country_name]
     - close_dialog
