@@ -834,6 +834,10 @@ row_inputs:
     - template: row_inputr
     - type: input
 
+
+scroll_y:
+  overflow-y: auto
+
 section_heading:
   classes: p
   styles: [centered_text,thinner,widest,vspaced,underlined]
