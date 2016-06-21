@@ -11,17 +11,18 @@ test:
 
 
 country:
-  # table: country
-  sql: select code, name from country
+  table: country
+  # sql: select code, name from country
   fields: [code, name]
   flags: [show_all]
-  adder: /isearch_test/add
-  choose: $name ($code)
+  add: { url: /isearch_test/add }
+  drop: { max-height: 180px }
+  option: { label: $name ($value) }
 
 add:
   desc: Add new country
   width: 600
-  header_class: [w3-round-xlarge]
+  header_class: [w3-round-xlarge,w3-white]
   class: [w3-round-xlarge,w3-padding-bottom]
   type: input_page
   inputs:
@@ -33,7 +34,7 @@ add:
   post:
     - sql_insert: [country, code: $new_country_code, name: $new_country_name]
     - close_dialog
-    - trigger: [autocompleteadded,"#country", [$new_country_code, $new_country_name] ]
+    - trigger: [isearch_add,"#country", [$new_country_code, $new_country_name] ]
 
 new_country_code:
   name: Country Code

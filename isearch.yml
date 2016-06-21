@@ -4,14 +4,49 @@ isearch:
   placeholder: Search $name
   script: [/common/isearch.js]
   css: [/common/isearch.css]
-  max_size: 0
-  constants: [choose,chosen]
-  choose: $name
-  chosen: $name
-  delay: 0
-  minLength: 0
-  show_all_tooltip: Show all items
-  add_new_tooltip: Add a new item
-  class: [ isearch, autocomplete, w3-input, w3-border, w3-show-inline-block]
+  class: [ isearch ]
+  inputs:
+    classes: div
+    class: [isearch, w3-border, w3-show-inline-block]
+    derive: [search,buttons,width,placeholder,add,show_all]
+    text: $search $buttons
+  search:
+    type: input
+    class: [search]
+    derive: [placeholder]
+    attr: { id: "", name: "", placeholder: $placeholder }
+  buttons:
+    tag: div
+    class: [isearch,buttons w3-padding-top, w3-padding-bottom, w3-display-topright]
+    derive: [add,show_all]
+    text: $show_all $add
+  show_all:
+    type: google_icon
+    icon: arrow_drop_down
+    class: [isearch,show-all, w3-text-dark-grey]
+    tooltip: Show all items
+    show: yes
+  add:
+    type: google_icon
+    class: [isearch,add, w3-text-dark-grey]
+    derive: [name]
+    tooltip: Add new $name
+    action: dialog
+    # show: yes
+  drop:
+    tag: ul
+    class: [isearch,drop,w3-dropdown-content,w3-card-2]
+    text: ""
+    styles: [scroll_y,widest]
+    height: auto
+    show: no
+  option:
+    tag: a
+    class: [isearch,option]
+    value: $1
+    name: $2
+    label: $name
+    text: $label
+    attr: { id: $value, value: $value, chosen: $name }
   post:
     - call: isearch::q(context)

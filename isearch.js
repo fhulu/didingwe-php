@@ -7,109 +7,69 @@ $.widget( "custom.isearch", {
     flags: []
   },
 
-  self: this,
-
-  hasFlag: function(flag) {
-    return this.options.flags.indexOf(flag) >= 0;
-  },
-
   _create: function ()
   {
-    var el = this.element
-    this.wrapper = $("<span>")
-      .addClass("isearch w3-display-container w3-show-inline-block")
+    var me = this;
+    var el = me.element;
+    var opts = me.options;
+    me.params = { action: 'data', path: opts.path, key: opts.key  };
+    var inputs = me.inputs = opts.render.create(opts, 'inputs', true)
       .insertAfter(el)
-      .css('width', el.css('width'))
       .append(el);
     el.hide();
-    this._createAutocomplete();
-    if (this.hasFlag('show_all') || this.options.adder !== undefined) {
-      this.buttons = $('<span>').addClass('isearch buttons w3-padding-top w3-padding-bottom w3-display-topright').appendTo(this.wrapper);
-      if (this.hasFlag('show_all')) this._createShowAllButton();
-      if (this.options.adder !== undefined) this._createAddNewButton();
-    }
-  },
-
-  _createAutocomplete: function() {
-    var me = this;
-    var el = this.element;
-    var cls = el.attr('class');
-    el.removeClass(cls);
-    var options = this.options;
-    var input = this.input = $( "<input>" )
-      .attr( "title", "" )
-      .attr( "placeholder", options.placeholder)
-      .addClass(cls)
-      .autocomplete({
-        delay: options.delay,
-        minLength: options.minLength,
-        source: $.proxy( this, "_source" ),
-      })
-      .tooltip({
-        tooltipClass: "ui-state-highlight"
-      })
-      .appendTo(this.wrapper)
-    input.autocomplete("instance")._renderItem =  function( ul, item ) {
-        return item? $("<li>").html(item.label).appendTo(ul): null;
-    }
-
-
-    this._on( input, {
-      autocompletesearch: function( event, ui ) {
-        el.val("")
-      },
-      autocompleteselect: function( event, ui ) {
-        el.val(ui.item.code);
-      },
-      autocompleteclose: function( event, ui ) {
-        if (el.val() != "") return;
-        if (me.hasFlag('allow_unknowns'))
-          el.val(input.val())
-        else
-          input.val("");
-      }
+    me.searcher = inputs.find('.search').on('keyup input cut paste', function() {
+      me._load();
     });
-    el.on('autocompleteadded', function( event, data) {
+    me.drop = opts.render.create(opts, 'drop', true).appendTo(me.inputs);
+    me.dropper = inputs.find('.isearch.show-all').click(function() {
+      me.searcher.val("");
+      me._load();
+    });
+
+    if (opts.add && opts.add.url) inputs.find('.isearch.add').show();
+    el.on('isearch_add', function( event, data) {
       el.val(data[0]);
-      input.val(data[1]);
+      me.searcher.val(data[1]);
+    });
+
+  },
+
+
+  _load: function() {
+    var me = this;
+    var el = me.element;
+    var opts = me.options;
+    me.params.term = me.searcher.val();
+    el.val("");
+    $.json('/', {data: me.params}, function(data) {
+      if (!data) return;
+      if (data._responses)
+        el.triggerHandler('server_response', [data]);
+      el.trigger('loaded', [data]);
+      me._populate(data);
+      delete data.rows;
+      $.extend(self.params, data);
     });
   },
 
-  _createShowAllButton: function() {
-    var opts = this.options;
-    var input = this.input,
-      wasOpen = false;
-
-    $( "<a>" )
-      .attr( "tabIndex", -1 )
-      .attr( "title", opts.show_all_tooltip )
-      .tooltip()
-      .appendTo( this.buttons )
-      .addClass( "isearch show-all material-icons w3-text-dark-grey" ).text('arrow_drop_down')
-      .mousedown(function() {
-        wasOpen = input.autocomplete( "widget" ).is( ":visible" );
-      })
-      .click(function() {
-        input.focus();
-
-        // Close if already visible
-        if ( wasOpen ) return;
-
-        // Pass empty string as value to search for, displaying all results
-        input.autocomplete( "search", "" );
-      });
-  },
-  _createAddNewButton: function() {
-    var self = this;
-    $( "<a>" )
-      .attr( "tabIndex", -1 )
-      .attr( "title", this.options.add_new_tooltip)
-      .tooltip()
-      .appendTo( this.buttons )
-      .addClass( "isearch add material-icons w3-text-dark-grey" ).text('add')
-      .click(function() {
-        mkn.showDialog(self.options.adder, self.options);
-      });
+  _populate: function(data) {
+    var me = this;
+    var opts = me.options;
+    var drop = me.drop;
+    drop.children().remove();
+    $.each(data.rows, function(i, row) {
+      var option = mkn.copy(opts.option);
+      option.array = row;
+      option = opts.render.initField(option, opts);
+      option.label = me._boldTerm(option.label, me.params.term);
+      opts.render.create(option).appendTo(drop);
+    })
+    drop.children().click(function() {
+      me.element.val($(this).attr('value'));
+      me.searcher.val($(this).attr('chosen'));
+      drop.hide();
+    });
+    drop.show();
   },
 
   _boldTerm: function(text, term)
@@ -123,28 +83,6 @@ $.widget( "custom.isearch", {
                 "<strong>$1</strong>")
     });
     return text;
-  },
-
-  _source: function( request, response ) {
-    var opts = this.options;
-    var data = {action: 'data', path: opts.path, key: opts.key, term: this.input.val() };
-    var selector = opts.selector;
-    if (selector !== undefined) {
-      $.extend(data, $(selector).values());
-    }
-    var el = this.element;
-    var me = this;
-    $.json('/', {data: data}, function(data) {
-      if (!data) return;
-      if (data._responses)
-        el.trigger('server_response', data);
-      el.trigger('refreshing', [data]);
-      response( data.rows.map(function(val) {
-        var text = mkn.replaceFields(opts.choose, opts.fields, val);
-        var value = mkn.replaceFields(opts.chosen, opts.fields, val)
-        return { code: val[0], value: value, label: me._boldTerm(text, request.term) }
-      }));
-    });
   },
 
 });

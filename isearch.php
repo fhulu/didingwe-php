@@ -57,8 +57,8 @@ class isearch
     $sql =  isearch::get_sql($options);
     if ($sql == '') return;
     $words = isearch::split_words($options['term']);
-    $search = $options['search'];
-    if (is_null($search))
+    // $search = $options['search'];
+    // if (is_null($search))
       $search = $options['fields'];
     $conjuctor = "and";
     foreach($words as $word) {

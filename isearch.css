@@ -12,3 +12,7 @@
 .isearch.show-all, .isearch.add {
   vertical-align: center;
 }
+
+.isearch.drop {
+  z-index: 1000;
+}
