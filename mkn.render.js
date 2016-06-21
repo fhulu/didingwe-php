@@ -14,7 +14,7 @@ mkn.render = function(options)
   me.root = {};
 
   var array_defaults = [ 'type', 'types', 'template', 'action', 'attr', 'wrap', 'default'];
-  var geometry = ['left','right','width','top','bottom','height', 'line-height'];
+  var geometry = ['left','right','width','top','bottom','height', 'line-height','max-height', 'max-width'];
 
   var mutable = function(field) {
     return field.mutable || field.mutable === undefined || field.mutable !== false;
@@ -272,11 +272,10 @@ mkn.render = function(options)
     return $(source).value();
   }
 
-  this.expandValue = function(values,value,parent_id)
+  this.expandValue = function(values,value)
   {
     $.each(values, function(code, subst) {
       if ($.isNumeric(code) || typeof subst !== 'string' || typeof value !== 'string') return;
-      subst = me.expandFunction(subst, parent_id)
       value = value.replace(new RegExp('\\$'+code+"([^\w]|\b|$)", 'g'), subst+'$1');
       values[code] = subst;
       if (value.indexOf('$') < 0) return;
@@ -284,19 +283,21 @@ mkn.render = function(options)
     return value;
   }
 
-  this.expandValues = function(data, parent_id)
+  this.expandValues = function(data, parent_id, exclusions)
   {
     if (!data) return data;
     if (parent_id === undefined) parent_id = data.id;
     var expanded;
     var count = 0;
+    if (!exclusions) exclusions = [];
     var constants = $.isArray(data.constants)? data.constants: [];
+    exclusions = exclusions.concat(constants);
     do {
       expanded = false;
       for (var field in data) {
         if ($.isNumeric(field)) continue;
         var value = data[field];
-        if (typeof value !== 'string' || value.indexOf('$') < 0 || field === 'template' && field === 'attr' || constants.indexOf(field) >= 0) continue;
+        if (typeof value !== 'string' || value.indexOf('$') < 0 || exclusions.indexOf(field) >=0) continue;
         var old_value = value = value.replace('$id', parent_id);
         data[field] = value = me.expandValue(data, value, parent_id);
         expanded = old_value !== value;
@@ -360,12 +361,13 @@ mkn.render = function(options)
     else
       field = removeSubscripts(field);
 
-    this.expandValues(field);
+    var exclusions = ['template','attr', 'text', 'html'];
+    this.expandValues(field, field.id, exclusions );
     if (id && field.name === undefined)
       field.name = toTitleCase(id.replace(/[_\/]/g, ' '));
     if (field.template && field.template.subject) {
       deriveParent(field.template, field);
-      this.expandValues(field);
+      this.expandValues(field, field.id, exclusions);
     }
     return field;
   }
@@ -411,14 +413,17 @@ mkn.render = function(options)
     });
   }
 
-  this.create =  function(parent, key)
+  this.create =  function(parent, key, init)
   {
     var field = key===undefined? parent: parent[key];
+    if (init) field = this.initField(field, parent);
     if (field.sub_page)
       return this.createSubPage(parent, key);
 
     var id = field.id;
     if (field.html === undefined) return null;
+    field.text = this.expandValue(field, field.text);
+    field.html = this.expandValue(field, field.html);
     field.html = field.html.trim().replace(/\$tag(\W)/, field.tag+'$1');
     var table_tag = isTableTag(field.tag)
     var obj = table_tag? $('<'+field.tag+'>'): $(field.html);
@@ -455,8 +460,7 @@ mkn.render = function(options)
 
       value.path = field.path+'/'+code;
       value.id = code;
-      field[code] = this.initField(value, field);
-      var child = this.create(field, code);
+      var child = this.create(field, code, true);
       if (table_tag)
         obj.append(child)
       if (field.html == '$'+code)
@@ -776,8 +780,8 @@ mkn.render = function(options)
       replaced = false;
       doit();
     } while (replaced && flags.recurse)
-
   }
+
   var expandSubject = function(template)
   {
     var subject = template.subject
