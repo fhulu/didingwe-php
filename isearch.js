@@ -14,24 +14,27 @@ $.widget( "custom.isearch", {
     var opts = me.options;
     me.params = { action: 'data', path: opts.path, key: opts.key  };
     var inputs = me.inputs = opts.render.create(opts, 'inputs', true)
-      .insertAfter(el)
-      .append(el);
-    el.hide();
+      .insertAfter(el.hide())
+      .append(el)
     me.searcher = inputs.find('.search').on('keyup input cut paste', function() {
       me._load();
     });
+
     me.drop = opts.render.create(opts, 'drop', true).appendTo(me.inputs);
+
     me.dropper = inputs.find('.isearch.show-all').click(function() {
       me.searcher.val("");
       me._load();
     });
 
     if (opts.add && opts.add.url) inputs.find('.isearch.add').show();
+
     el.on('isearch_add', function( event, data) {
       el.val(data[0]);
       me.searcher.val(data[1]);
     });
 
+    inputs.on('mouseleave', function() { me.drop.hide() });
   },
 
 
