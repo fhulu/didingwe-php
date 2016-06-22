@@ -312,6 +312,10 @@ $.fn.call = function(method, args) {
   this[method].apply(this, args);
 }
 
+$.fn.scrollHeight = function() {
+  return this[0].scrollHeight;
+}
+
 /**
 * @param scope Object :  The scope in which to execute the delegated function.
 * @param func Function : The function to execute
