@@ -64,7 +64,6 @@ datatable:
     pages: []
 
   slide:
-    tag: button
     event: slide
     name: "<"
     desc: More options...

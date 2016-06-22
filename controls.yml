@@ -16,6 +16,7 @@ accordion_tab:
 
 actioner:
   tag: button
+  class: [w3-btn]
   attr: { action: $id, id: "", title: $desc }
   styles: [filled]
 
