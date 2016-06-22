@@ -50,9 +50,6 @@ class isearch
 
   static function q($options)
   {
-    $page_size = at($options, 'max_size');
-    if (is_null($page_size))
-      $page_size = 0;
     global $db;
     $sql =  isearch::get_sql($options);
     if ($sql == '') return;
@@ -66,10 +63,14 @@ class isearch
       $conjuctor = "or";
     }
     $sql = preg_replace('/^\s*(select )/i', '$1 SQL_CALC_FOUND_ROWS ', $sql, 1);
-    if ($page_size == 0)
-      $rows = $db->page_through_indices($sql, 1000);
+    $size = $options['size'];
+    if (!isset($size)) $size = 0;
+    $offset = $options['offset'];
+    if (!isset($offset)) $offset = 0;
+    if ($size == 0)
+      $rows = $db->page_through_indices($sql, 1000, $offset);
     else
-      $rows = $db->page_indices($sql, $page_size);
+      $rows = $db->page_indices($sql, $size, $offset);
     $total = $db->row_count();
     return array('rows' => $rows, 'total' => $total);
   }
