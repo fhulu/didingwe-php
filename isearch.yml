@@ -16,23 +16,23 @@ isearch:
     derive: [placeholder]
     attr: { id: "", name: "", placeholder: $placeholder }
   buttons:
-    tag: div
+    type: container
     class: [isearch,buttons w3-padding-top, w3-padding-bottom, w3-display-topright]
     derive: [add,show_all]
-    text: $show_all $add
+    contents: [$show_all, $add]
   show_all:
     type: google_icon
     icon: arrow_drop_down
-    class: [isearch,show-all, w3-text-dark-grey]
+    class: [isearch, show-all, w3-text-dark-grey]
     tooltip: Show all items
     show: yes
   add:
     type: google_icon
+    width: auto
     class: [isearch,add, w3-text-dark-grey]
     derive: [name]
     tooltip: Add new $name
     action: dialog
-    # show: yes
   drop:
     tag: ul
     class: [isearch,drop,w3-dropdown-content,w3-card-2]

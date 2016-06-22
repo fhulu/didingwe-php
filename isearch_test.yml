@@ -20,6 +20,7 @@ country:
   option: { label: $name ($value) }
 
 add:
+  access: reg
   desc: Add new country
   width: 600
   header_class: [w3-round-xlarge,w3-white]
