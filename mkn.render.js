@@ -875,6 +875,7 @@ mkn.render = function(options)
     }
     if (typeof links === 'string')
       links = links.split(',');
+    links = mkn.unique(field[type]);
     var loaded = 0;
     $.each(links, function(i, link) {
       loadLink(link, type, function() {
