@@ -28,12 +28,7 @@ $.widget( "custom.isearch", {
         me.searcher.val($(this).attr('chosen'));
         me.drop.hide();
       })
-      .scroll(function() {
-        if($(this).scrollHeight() - $(this).scrollTop() == $(this).height() && !me._loading()) {
-          me.params.offset += me.params.size;
-          me._load();
-        }
-      })
+      .scroll($.proxy(me._scroll,me))
       .appendTo(me.inputs);
 
     me.dropper = inputs.find('.isearch.show-all').click(function() {
@@ -53,6 +48,14 @@ $.widget( "custom.isearch", {
   },
 
 
+  _scroll: function(e) {
+    var me = this;
+    var drop = me.drop;
+    if(drop.scrollHeight() - drop.scrollTop() != drop.height() || me._loading()) return;
+    me.params.offset += me.params.size;
+    me._load();
+  },
+
   _loading: function(val) {
     if (val == undefined) return this.drop.data('loading');
     this.drop.data('loading', val);
@@ -67,13 +70,12 @@ $.widget( "custom.isearch", {
     me.params.term = me.searcher.val();
     el.val("");
     $.json('/', {data: me.params}, function(data) {
-      if (!data) { me._loading(false); return; }
       if (data._responses)
         el.triggerHandler('server_response', [data]);
       el.trigger('loaded', [data]);
       me._populate(data);
-      delete data.rows;
       me._loading(false);
+      delete data.rows;
     });
   },
 
@@ -82,6 +84,8 @@ $.widget( "custom.isearch", {
     var opts = me.options;
     var drop = me.drop;
     if (!me.params.offset) drop.scrollTop(0).children().remove();
+    var maxHeight = parseInt(drop.css('max-height'));
+    me.autoScrolls = 0;
     $.each(data.rows, function(i, row) {
       var option = mkn.copy(opts.option);
       option.array = row;
@@ -89,8 +93,8 @@ $.widget( "custom.isearch", {
       option.label = me._boldTerm(option.label, me.params.term);
       opts.render.create(option).appendTo(drop);
     })
-    if (!me.params.offset) drop.scrollTop(0);
     if (!drop.is(':visible')) drop.show();
+    if (me.params.offset == 0) drop.scrollTop(0);
   },
 
   _boldTerm: function(text, term)
