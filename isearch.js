@@ -12,6 +12,7 @@ $.widget( "custom.isearch", {
     var me = this;
     var el = me.element;
     var opts = me.options;
+    me.dropped = me.justDropped = false;
     me.params = { action: 'data', path: opts.path, key: opts.key, offset: 0, size: opts.drop.autoload  };
     var inputs = me.inputs = opts.render.create(opts, 'inputs', true)
       .insertAfter(el.hide())
@@ -32,8 +33,14 @@ $.widget( "custom.isearch", {
       .appendTo(me.inputs);
 
     me.dropper = inputs.find('.isearch.show-all').click(function() {
+      if (me.dropped) {
+        if (!me.drop.is(':visible')) me.drop.show();
+        return;
+      }
+      me.justDropped = me.dropped = true;
       me.params.offset = 0;
       me.searcher.val("");
+      me.drop.show();
       me._load();
     });
 
@@ -93,8 +100,9 @@ $.widget( "custom.isearch", {
       option.label = me._boldTerm(option.label, me.params.term);
       opts.render.create(option).appendTo(drop);
     })
-    if (!drop.is(':visible')) drop.show();
-    if (me.params.offset == 0) drop.scrollTop(0);
+    if (!me.justDropped) return;
+    me.justDropped = false;
+    drop.scrollTop(0);
   },
 
   _boldTerm: function(text, term)
