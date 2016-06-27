@@ -18,17 +18,11 @@
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
-<link href="/common/google-material-icons.css?<?=$tag?>" media="screen" rel="stylesheet" type="text/css" />
-<link href="/common/w3.css?<?=$tag?>" media="screen" rel="stylesheet" type="text/css" />
 <link href="/common/input_page.css?<?=$tag?>" media="screen" rel="stylesheet" type="text/css" />
-<link href="/input_page.css?<?=$tag?>" media="screen" rel="stylesheet" type="text/css" />
 
 <link href="/default.style.css?<?=$tag?>" media="screen" rel="stylesheet" type="text/css" />
 <script src='/jquery-min.js'></script>
 <script src='/jquery-ui.min.js'></script>
-
-<script src="/bootstrap.min.js"></script>
-<link href="/bootstrap.min.css" rel="stylesheet">
 
 <script src='/common/jquery.datetimepicker.js'></script>
 <script src='/common/mukoni.jquery.js?<?=$tag?>'></script>
