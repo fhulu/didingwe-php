@@ -17,7 +17,16 @@ country:
   flags: [show_all]
   add: { url: /isearch_test/add }
   drop: { max-height: 180px }
-  option: { label: $name ($value) }
+  option:
+    embolden: $name ($value)
+    country: $value
+    label: { derive: [embolden], text: $embolden }
+    text: [$label,$flag]
+    flag:
+      type: flag_icon
+      class: [w3-right]
+      derive: [value]
+      country: $value
 
 add:
   access: reg

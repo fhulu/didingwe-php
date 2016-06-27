@@ -362,6 +362,12 @@ filled:
 form:
   tag: form
 
+flag_icon:
+  tag: span
+  class: [flag-icon flag-icon-$country]
+  country: $id
+  text: " "
+
 float_left:
   float: left
 
