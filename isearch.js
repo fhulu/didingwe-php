@@ -63,6 +63,7 @@ $.widget( "custom.isearch", {
     var me = this;
     var drop = me.drop;
     if(drop.scrollHeight() - drop.scrollTop() != drop.height() || me._loading()) return;
+    if (me.params.total && me.params.offset + me.params.size > me.params.total) return;
     me.params.offset += me.params.size;
     me._load();
   },
@@ -89,6 +90,7 @@ $.widget( "custom.isearch", {
       me._populate(data);
       me._loading(false);
       delete data.rows;
+      $.extend(me.params, data);
     });
   },
 
