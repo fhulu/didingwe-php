@@ -697,6 +697,7 @@ mkn.render = function(options)
     var cls = field.class;
     if (cls === undefined) return;
     if (typeof cls === 'string') cls = [cls];
+    expandVars(field, cls, { sourceFirst: true, recurse: true})
     for (var i in cls) {
       obj.addClass(cls[i]);
     }
