@@ -28,6 +28,7 @@ $.widget( "custom.isearch", {
         el.val($(this).attr('value'));
         me.searcher.val($(this).attr('chosen'));
         me.drop.hide();
+        me.dropped = false;
       })
       .scroll($.proxy(me._scroll,me))
       .appendTo(me.inputs);
@@ -37,10 +38,8 @@ $.widget( "custom.isearch", {
         if (!me.drop.is(':visible')) me.drop.show();
         return;
       }
-      me.justDropped = me.dropped = true;
       me.params.offset = 0;
       me.searcher.val("");
-      me.drop.show();
       me._load();
     });
 
@@ -49,9 +48,14 @@ $.widget( "custom.isearch", {
     el.on('isearch_add', function( event, data) {
       el.val(data[0]);
       me.searcher.val(data[1]);
+      me.dropped = false;
+      me.drop.hide();
     });
 
-    inputs.on('mouseleave', function() { me.drop.hide() });
+    inputs.on('mouseleave', function() {
+      me.drop.hide();
+      me.dropped = false;
+    });
   },
 
 
@@ -76,6 +80,8 @@ $.widget( "custom.isearch", {
     var opts = me.options;
     me.params.term = me.searcher.val();
     el.val("");
+    me.justDropped = me.dropped = true;
+    me.drop.show();
     $.json('/', {data: me.params}, function(data) {
       if (data._responses)
         el.triggerHandler('server_response', [data]);
