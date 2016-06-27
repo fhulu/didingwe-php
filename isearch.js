@@ -97,7 +97,7 @@ $.widget( "custom.isearch", {
       var option = mkn.copy(opts.option);
       option.array = row;
       option = opts.render.initField(option, opts);
-      option.label = me._boldTerm(option.label, me.params.term);
+      option.embolden = me._boldTerm(option.embolden, me.params.term);
       opts.render.create(option).appendTo(drop);
     })
     if (!me.justDropped) return;

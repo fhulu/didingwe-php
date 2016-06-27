@@ -46,8 +46,8 @@ isearch:
     class: [isearch,option]
     value: $1
     name: $2
-    label: $name
-    text: $label
+    embolden: $name
+    text: $embolden
     attr: { id: $value, value: $value, chosen: $name }
   post:
     - call: isearch::q(context)
