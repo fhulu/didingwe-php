@@ -680,6 +680,7 @@ multi_input:
         derive: [split,spacing]
         width: $split
         styles: [tallest,hspaced]
+        class: [w3-show-inline-block]
         space: $spacing
 
 navigate:
