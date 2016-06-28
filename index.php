@@ -23,8 +23,6 @@
 <link href="/default.style.css?<?=$tag?>" media="screen" rel="stylesheet" type="text/css" />
 <script src='/jquery-min.js'></script>
 <script src='/jquery-ui.min.js'></script>
-
-<script src='/common/jquery.datetimepicker.js'></script>
 <script src='/common/mukoni.jquery.js?<?=$tag?>'></script>
 <script src="/common/mkn.js?<?=$tag?>"></script>
 <script src="/common/mkn.render.js?<?=$tag?>"></script>

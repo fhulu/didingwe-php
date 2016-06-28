@@ -474,7 +474,7 @@ mkn.render = function(options)
     setDisabled(obj, field);
 
     runJquery(obj, field);
-    initLinks(obj, field, function() {
+    initLinks(obj, field).then(function() {
       if (subitem_count) setValues(obj, field);
       initEvents(obj, field);
     });
@@ -656,14 +656,17 @@ mkn.render = function(options)
     });
   };
 
-  var initLinks = function(object, field, callback)
+  var initLinks = function(object, field)
   {
-    loadLinks('css', field);
-    loadLinks('script', field, function() {
-      if (field.create)
-        object.customCreate($.extend({render: me}, field));
-      if (callback !== undefined) callback();
+    var d = $.Deferred();
+    loadLinks('css', field).then(function() {
+      loadLinks('script', field).then(function() {
+        if (field.create)
+          object.customCreate($.extend({render: me}, field));
+        d.resolve(field);
+      });
     });
+    return d.promise();
   };
 
   var setAttr = function(obj, field)
@@ -843,48 +846,22 @@ mkn.render = function(options)
     return set;
   }
 
-  var loadLink = function(link,type, callback)
-  {
-    var element;
-    if (type == 'css') {
-      element = document.createElement('link');
-      element.rel = 'stylesheet';
-      element.type = 'text/css';
-      element.media = 'screen';
-      element.href = link;
-    }
-    else if (type === 'script') {
-      element = document.createElement('script');
-      element.src =  link;
-      element.type = 'text/javascript';
-    }
-    var loaded = false;
-    if (callback !== undefined) element.onreadystatechange = element.onload = function() {
-      if (!loaded) callback();
-      loaded = true;
-    }
-    var head = document.getElementsByTagName('head')[0];
-    head.appendChild(element);
-  }
-
-  var loadLinks = function(type, field, callback)
+  var loadLinks = function(type, field)
   {
     var links = field[type];
-    if (links === undefined || links === null) {
-      if (callback !== undefined) callback();
-      return;
-    }
+    var defer = $.Deferred();
+    if (links === undefined || links === null) return defer.resolve(field).promise();
     if (typeof links === 'string')
       links = links.split(',');
     links = mkn.unique(field[type]);
     var loaded = 0;
+    var defer = $.Deferred();
     $.each(links, function(i, link) {
-      loadLink(link, type, function() {
-        if (callback !== undefined && ++loaded == links.length) {
-          callback();
-        }
+      mkn.loadLink(link, type).then(function() {
+        if (++loaded == links.length) defer.resolve(field);
       });
     });
+    return defer.promise();
   }
 
   var promoteAttr = function(field)

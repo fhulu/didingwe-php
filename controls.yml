@@ -198,7 +198,6 @@ darker:
 
 date:
   type: datetime
-  create: datetimepicker
   timepicker: false
   format: Y-m-d
 
@@ -209,6 +208,7 @@ date_future:
 datetime:
   type: input
   create: datetimepicker
+  script: [/common/jquery.datetimepicker.js]
   format: Y-m-d H:i
   validateOnBlur: false
   allowBlanks: false

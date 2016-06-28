@@ -227,6 +227,36 @@ var mkn = new function() {
     return out;
   }
 
+  this.getCSS = function (href) {
+    return mkn.loadLink(href, 'css');
+  }
+
+  this.loadLink = function(link, type) {
+    var params = {
+      css: { tag: 'link', type: 'text/css', selector: 'href', rel: 'stylesheet' },
+      script: { tag: 'script', type: 'text/javascript', selector: 'src'}
+    }
+    var param = params[type];
+    var defer = $.Deferred();
+    if (type == 'script' && $(param.tag+'['+param.selector+'="'+link+'"]').exists()) {
+      defer.resolve(link);
+      return defer.promise();
+    }
+    var element = document.createElement(param.tag);
+    delete param.tag;
+    element[param.selector] = link;
+    delete param.selector;
+    $.extend(element, param);
+    element[param.src] = link;
+    element.type = param.type;
+    if (type == 'css') element.rel = 'stylesheet';
+
+    element.onreadystatechange = element.onload = function() { defer.resolve(link); }
+    document.head.appendChild(element);
+    return defer.promise();
+  }
+
+
 }
 
 if (!String.prototype.trim) {
