@@ -21,9 +21,9 @@ $.widget( "custom.wizard", {
 
   createBookmarks: function() {
     var me = this;
-    var type = me.options.bookmarks;
-    if (!type) return;
-    me.bookmarkHolder = $('<div>').addClass('wizard-bookmark-holder-'+type).appendTo(me.element);
+    var opts = me.options;
+    if (!$.isPlainObject(opts.bookmarks)) return;
+    me.bookmarkHolder = opts.render.create(opts, 'bookmarks', true).appendTo(me.element);
     $.each(me.options.steps, function(i, info) {
       me.createBookmark(i, info);
     })

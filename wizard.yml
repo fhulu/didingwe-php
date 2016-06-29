@@ -6,7 +6,13 @@ wizard:
   css: [/common/wizard.css]
   text: $dummy
   dummy: []
-  bookmarks: left
+  bookmarks:
+    type: empty
+    class: [wizard-bookmark-holder-left, w3-pale-blue]
+    width: 250px
+  step:
+    type: empty
+    class: [w3-rest]
   steps: []
   prev:
     type: button
@@ -21,6 +27,7 @@ wizard:
     desc: Go to next step
     class: [action,wizard-next]
   navigate: [$prev,$next]
+
 
 
 
