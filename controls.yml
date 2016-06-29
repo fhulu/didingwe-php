@@ -274,6 +274,9 @@ email_input:
 emailbox:
   type: email_input
 
+empty:
+  tag: div
+  text: ""
 #todo: fix backend inheritance
 export:
   name: Export to Excel
