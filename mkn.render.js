@@ -492,9 +492,7 @@ mkn.render = function(options)
     var path = field.path = field.url? field.url: field.id;
     field.sub_page = undefined;
     field.appendChild = false;
-    tmp.page($.extend({request: options.request}, field));
-    path = path.replace('/','_');
-    tmp.on('read_'+path, function(e, obj) {
+    tmp.page($.extend({request: options.request}, field)).then(function(obj) {
       setStyle(obj, field);
       tmp.replaceWith(obj);
       parent[key] = field;
@@ -853,7 +851,6 @@ mkn.render = function(options)
     if (links === undefined || links === null) return defer.resolve(field).promise();
     if (typeof links === 'string')
       links = links.split(',');
-    links = mkn.unique(field[type]);
     var loaded = 0;
     var defer = $.Deferred();
     $.each(links, function(i, link) {

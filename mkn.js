@@ -238,7 +238,8 @@ var mkn = new function() {
     }
     var param = params[type];
     var defer = $.Deferred();
-    if (type == 'script' && $(param.tag+'['+param.selector+'="'+link+'"]').exists()) {
+    var prev = $(param.tag+'['+param.selector+'="'+link+'"]');
+    if (prev.exists()) {
       defer.resolve(link);
       return defer.promise();
     }

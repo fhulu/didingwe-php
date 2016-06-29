@@ -1,6 +1,6 @@
-$.fn.page = function(options, callback)
+$.fn.page = function(options)
 {
-  if (options instanceof Function) callback = options;
+  var defer = $.Deferred();
   var self = this;
   var page  = {
     parent: self,
@@ -41,6 +41,7 @@ $.fn.page = function(options, callback)
       data.values = values;
       object.addClass('page').appendTo(parent);
       parent.trigger('read_'+this.id, [object, data.fields]);
+      defer.resolve(object, data.fields);
       return this;
     },
 
@@ -52,5 +53,5 @@ $.fn.page = function(options, callback)
 
   };
   options.fields && page.show(options) || page.load();
-  return page.object;
+  return defer.promise();
 }
