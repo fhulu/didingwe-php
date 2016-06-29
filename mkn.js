@@ -238,10 +238,12 @@ var mkn = new function() {
     }
     var param = params[type];
     var defer = $.Deferred();
-    var prev = $(param.tag+'['+param.selector+'="'+link+'"]');
-    if (prev.exists()) {
-      defer.resolve(link);
-      return defer.promise();
+    if (link.indexOf('?') < 0) {
+      var prev = $(param.tag+'['+param.selector+'="'+link+'"]');
+      if (prev.exists()) {
+        defer.resolve(link);
+        return defer.promise();
+      }
     }
     var element = document.createElement(param.tag);
     delete param.tag;
