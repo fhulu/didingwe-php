@@ -81,7 +81,8 @@ var mkn = new function() {
     }
     var modal = $('<div class="w3-modal">').hide().appendTo('body');
     var content = $('<div class="w3-modal-content">').appendTo(modal);
-    var header = $('<div class="w3-container">').appendTo(content);
+    var header = $('<div class="w3-container header">').appendTo(content);
+    content.draggable({handle: header });
     var close = $('<div class="w3-closebtn">&times;</div>')
       .appendTo(header).zIndex(1)
       .click(function() { modal.remove(); });
