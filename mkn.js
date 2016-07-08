@@ -233,34 +233,29 @@ var mkn = new function() {
   }
 
   this.loadLink = function(link, type) {
-    var params = {
-      css: { tag: 'link', type: 'text/css', selector: 'href', rel: 'stylesheet' },
-      script: { tag: 'script', type: 'text/javascript', selector: 'src'}
-    }
-    var param = params[type];
-    var defer = $.Deferred();
-    if (link.indexOf('?') < 0) {
-      var prev = $(param.tag+'['+param.selector+'="'+link+'"]');
-      if (prev.exists()) {
-        defer.resolve(link);
-        return defer.promise();
+    return $.Deferred(function(defer) {
+      var params = {
+        css: { tag: 'link', type: 'text/css', selector: 'href', rel: 'stylesheet' },
+        script: { tag: 'script', type: 'text/javascript', selector: 'src'}
       }
-    }
-    var element = document.createElement(param.tag);
-    delete param.tag;
-    element[param.selector] = link;
-    delete param.selector;
-    $.extend(element, param);
-    element[param.src] = link;
-    element.type = param.type;
-    if (type == 'css') element.rel = 'stylesheet';
+      var param = params[type];
+      if (link.indexOf('?') < 0) {
+        var prev = $(param.tag+'['+param.selector+'="'+link+'"]');
+        if (prev.exists()) return defer.resolve(link);
+      }
+      var element = document.createElement(param.tag);
+      delete param.tag;
+      element[param.selector] = link;
+      delete param.selector;
+      $.extend(element, param);
+      element[param.src] = link;
+      element.type = param.type;
+      if (type == 'css') element.rel = 'stylesheet';
 
-    element.onreadystatechange = element.onload = function() { defer.resolve(link); }
-    document.head.appendChild(element);
-    return defer.promise();
+      element.onreadystatechange = element.onload = function() { defer.resolve(link); }
+      document.head.appendChild(element);
+    }).promise();
   }
-
-
 }
 
 if (!String.prototype.trim) {

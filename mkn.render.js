@@ -656,15 +656,11 @@ mkn.render = function(options)
 
   var initLinks = function(object, field)
   {
-    var d = $.Deferred();
-    loadLinks('css', field).then(function() {
-      loadLinks('script', field).then(function() {
-        if (field.create)
-          object.customCreate($.extend({render: me}, field));
-        d.resolve(field);
-      });
+    return $.when(loadLinks('css', field),loadLinks('script', field)).then(function(x,y){
+      console.log("resolved",x,y)
+      if (field.create)
+        object.customCreate($.extend({render: me}, field));
     });
-    return d.promise();
   };
 
   var setAttr = function(obj, field)
@@ -847,18 +843,12 @@ mkn.render = function(options)
   var loadLinks = function(type, field)
   {
     var links = field[type];
-    var defer = $.Deferred();
-    if (links === undefined || links === null) return defer.resolve(field).promise();
     if (typeof links === 'string')
       links = links.split(',');
-    var loaded = 0;
-    var defer = $.Deferred();
-    $.each(links, function(i, link) {
-      mkn.loadLink(link, type).then(function() {
-        if (++loaded == links.length) defer.resolve(field);
-      });
-    });
-    return defer.promise();
+    if (links === undefined || links === null || links.length==0) return $.when();
+    return $.when.apply($, $.map(links, function(link) {
+      return mkn.loadLink(link, type);
+    }));
   }
 
   var promoteAttr = function(field)
