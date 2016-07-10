@@ -12,7 +12,7 @@ isearch:
     text: $search $buttons
   search:
     type: input
-    class: [search]
+    class: [search,w3-input]
     derive: [placeholder]
     attr: { id: "", name: "", placeholder: $placeholder }
   buttons:
@@ -35,9 +35,8 @@ isearch:
     action: dialog
   drop:
     tag: ul
-    class: [isearch,drop,w3-dropdown-content,w3-card-2]
+    class: [isearch,drop,w3-dropdown-content,w3-card-2,scroll-y,widest]
     text: ""
-    styles: [scroll_y,widest]
     height: auto
     show: no
     autoload: 10
