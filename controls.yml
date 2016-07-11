@@ -23,34 +23,15 @@ actioner:
 
 alert_message:
   classes: div
-  styles: [height_watermark,centered_text]
+  class: [center-text]
+  style: [height_watermark]
   text: $message
-
-autoheight:
-  height: auto
-
-autosize:
-  width: auto
-  height: auto
-
-biggest:
-  width: 100%
-  height: 100%
 
 blank:
   type: plain_text
   mutable: false
   text: ""
-  styles: [inline_block]
-
-block:
-  display: block
-
-bold:
-  font-weight: bold
-
-bolder:
-  font-weight: bolder
+  class: [inline-block]
 
 bookmark:
   tag: div
@@ -63,25 +44,6 @@ bookmark:
     tag: a
     attr: { href: "#$link", id: ""}
     name: $title
-
-borderless:
-  border-style: none
-  border: 0
-  border-top: 0
-  border-right: 0
-  border-left: 0
-  border-bottom: 0
-
-
-bottom_left:
-  position: absolute
-  left: 0
-  right: 0
-
-bottom_right:
-  position: absolute
-  bottom: 0
-  right: 0
 
 button:
   class: [action]
@@ -136,19 +98,6 @@ categorized:
     derive: [title]
     text: $title
 
-
-center_all:
-  text-align: center
-  margin-left: auto
-  margin-right: auto
-
-centered:
-  margin-left: auto
-  margin-right: auto
-
-centered_text:
-  text-align: center
-
 char_spaced:
   char_spacing: 8px
   letter-spacing: $char_spacing
@@ -193,9 +142,6 @@ control:
   class: []
   text: $name
 
-darker:
-  color: "#333"
-
 date:
   type: datetime
   timepicker: false
@@ -238,11 +184,6 @@ document_link:
   post:
     - view_doc: $value
 
-
-
-double_spaced:
-  margin-top: 10px
-
 dropdown:
   tag: select
   unselected: --Select $name--
@@ -277,6 +218,7 @@ emailbox:
 empty:
   tag: div
   text: ""
+
 #todo: fix backend inheritance
 export:
   name: Export to Excel
@@ -371,12 +313,6 @@ flag_icon:
   country: $id
   text: " "
 
-float_left:
-  float: left
-
-float_right:
-  float: right
-
 
 google_icon:
   tag: i
@@ -424,15 +360,10 @@ height_watermark:
   type: watermark
   background-size: auto 100%
 
-hide:
-  display: none
-
 hidden:
   type: input
   format: hidden
 
-highest:
-  height: 100%
 
 hspace:
   mutable: false
@@ -442,7 +373,7 @@ hspace:
   styles: [hspaced]
 
 hspaced:
-  hspace: 10px
+  space: 10px
   margin-right: $space
 
 iframe:
@@ -480,12 +411,6 @@ info_text:
   value: ""
   text: $value
 
-inline:
-  display: inline
-
-inline_block:
-  display: inline-block
-
 inplace_input:
   type: label_inside
 
@@ -495,7 +420,6 @@ input:
   value: ""
   immutable: [format]
   format: text
-  class: [w3-input,w3-border]
   attr:
     type: $format
     value: $value
@@ -527,12 +451,8 @@ input_page:
     - default: { styles: [hspaced], space: 24}
     - type: submit
 
-italic:
-  font-style: italic
-
 label:
   tag: label
-  styles: [inline_block]
 
 labelled:
   templates: div
@@ -550,8 +470,7 @@ labelled_input_page:
 label_inside:
   label: $name
   subject:
-    class: [input]
-    width: 100%
+    class: [input,widest]
     derive: [label]
     attr: { placeholder: $label, title: $desc}
   text: $field
@@ -572,11 +491,11 @@ label_left:
     suffix: ":"
     text: $name$suffix&nbsp;
     width: $input_left
-    styles: [right_text,inline_block,pushed_up]
+    class: [right-text,inline-block,vertical-top]
   subject:
     derive: [input_width,input_left]
     width: $input_width
-    styles: [inline_block]
+    class: [border]
   text: $label$field
   styles: [vspaced]
 
@@ -619,9 +538,6 @@ left_text:
 letter_spaced:
   type: char_spaced
 
-lighter:
-  font-weight: lighter
-
 line:
   mutable: false
   tag: hr
@@ -649,12 +565,6 @@ list_text:
   tag: li
   style: { margin-left: 16 }
 
-lowercase:
-  text-transform: lowercase
-
-medium:
-  font-size: 26pt
-
 menu:
   type: container
   class: [menu]
@@ -674,16 +584,15 @@ multi_input:
   class: [error-sink]
   attr: { id: ""}
   text: $inputs
-  split: 47%
-  spacing: 2
+  split: half
+  spacing: 0
   inputs:
     - template: label_inside
     - type: input
     - default:
         derive: [split,spacing]
-        width: $split
         styles: [tallest,hspaced]
-        class: [w3-show-inline-block]
+        class: [w3-col,w3-$split,w3-show-inline-block]
         space: $spacing
 
 navigate:
@@ -775,18 +684,6 @@ processing:
   classes: span
   style: { display: none }
 
-
-pushed_left:
-  position: absolute
-  left: 0
-
-pushed_right:
-  position: absolute
-  right: 0
-
-pushed_up:
-  vertical-align: top
-
 question_input:
   type: label_top
   styles: [widest,block]
@@ -810,9 +707,6 @@ radiobox:
   style:
     width: 24px
     height: 24px
-
-right_text:
-  text-align: right
 
 
 radiogroup:
@@ -846,12 +740,9 @@ row_inputs:
     - type: input
 
 
-scroll_y:
-  overflow-y: auto
-
 section_heading:
   classes: p
-  styles: [centered_text,thinner,widest,vspaced,underlined]
+  class: [center-text,thinner,widest,vspaced,w3-border-bottom]
 
 side_spacer:
   space: 2px
@@ -872,9 +763,6 @@ silos:
     field: $items
   items:
     - template: table_cell
-
-small:
-  font-size: 8pt
 
 span:
   tag: span
@@ -984,9 +872,6 @@ tabular:
     - default:
         style: { width: $col_width, display: inline-block, vertical-align: top }
 
-tallest:
-  height: 100%
-
 template:
   tag: div
   text: $field
@@ -1000,9 +885,6 @@ textarea:
 text_area: { type: textarea}
 
 text_input: {type: input }
-
-thinner:
-  font-weight: 100
 
 time:
   type: input
@@ -1029,28 +911,15 @@ titled_paragraph:
   space: 30
   styles: [vspaced]
 
-top_left:
-  position: absolute
-  top: 0
-  left: 0
 
-top_right:
-  position: absolute
-  top: 0
-  right: 0
+tri_input:
+  type: multi_input
+  split: third
 
-tripple_spaced:
-  margin-top: 12px
 
-underlined:
-  line_width: 1px
-  border-bottom: $line_width solid
-
-underlined_text:
-  text-decoration: underline
-
-uppercase:
-  text-transform: uppercase
+twin_input:
+  type: multi_input
+  split: half
 
 vspace:
   mutable: false
@@ -1072,9 +941,6 @@ watermark:
   background-repeat: $repeat
   background-position: $imagex $imagey
   background-color: $fill
-
-widest:
-  width: 100%
 
 
 ...
