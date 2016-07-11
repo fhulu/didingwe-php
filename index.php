@@ -18,15 +18,17 @@
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
-<link href="/common/input_page.css?<?=$tag?>" media="screen" rel="stylesheet" type="text/css" />
+<link href="/common/w3.css" media="screen" rel="stylesheet" type="text/css" />
+<link href="/common/didi.css" media="screen" rel="stylesheet" type="text/css" />
+<link href="/common/input_page.css" media="screen" rel="stylesheet" type="text/css" />
 
-<link href="/default.style.css?<?=$tag?>" media="screen" rel="stylesheet" type="text/css" />
+<link href="/default.style.css" media="screen" rel="stylesheet" type="text/css" />
 <script src='/jquery-min.js'></script>
 <script src='/jquery-ui.min.js'></script>
-<script src='/common/mukoni.jquery.js?<?=$tag?>'></script>
-<script src="/common/mkn.js?<?=$tag?>"></script>
-<script src="/common/mkn.render.js?<?=$tag?>"></script>
-<script src="/common/page.js?<?=$tag?>"></script>
+<script src='/common/mukoni.jquery.js'></script>
+<script src="/common/mkn.js"></script>
+<script src="/common/mkn.render.js"></script>
+<script src="/common/page.js"></script>
 <script>
   var request_method = '<?=$config['request_method'];?>';
 </script>
