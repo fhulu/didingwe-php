@@ -465,7 +465,7 @@ class page
 
       $expanded = is_array($value)? merge_options($expanded, $value): $expanded;
 
-      if (is_null($expanded)) return;
+      if (is_null($expanded)) return false;
 
       if ($this->allowed($expanded)) return;
 
@@ -483,7 +483,7 @@ class page
 
   static function not_mergeable($key)
   {
-    return preg_match('/^if /', $key) || in_array($key, page::$non_mergeable, true);
+    return preg_match('/^if |\.\w+$/', $key) || in_array($key, page::$non_mergeable, true);
   }
 
   static function is_render_item($key)
