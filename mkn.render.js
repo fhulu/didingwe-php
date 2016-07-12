@@ -657,7 +657,6 @@ mkn.render = function(options)
   var initLinks = function(object, field)
   {
     return $.when(loadLinks('css', field),loadLinks('script', field)).then(function(x,y){
-      console.log("resolved",x,y)
       if (field.create)
         object.customCreate($.extend({render: me}, field));
     });
