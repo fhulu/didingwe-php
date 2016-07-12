@@ -27,11 +27,11 @@
 .wizard-bookmark-holder-left {
   display: table-cell;
   vertical-align: top;
-  height: 100%;
 }
 
 .wizard-bookmark-holder-left~.wizard-page {
   display: table-cell;
+  border-left: 1px solid lightgrey;
 }
 
 .wizard-bookmark {

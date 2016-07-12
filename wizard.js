@@ -1,7 +1,7 @@
 $.widget( "custom.wizard", {
   _create: function() {
     this.stack = new Array();
-    var el = this.element.addClass('wizard');
+    var el = this.element;
     this.options.render.expandFields(this.options, "steps", this.options.steps);
 
     this.first_step = 0;

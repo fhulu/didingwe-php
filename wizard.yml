@@ -1,14 +1,14 @@
 wizard:
   classes: div
   create: wizard
-  header_class: [w3-center, w3-xlarge]
+  header_class: [w3-center, w3-large]
   script: [/common/wizard.js]
   css: [/common/wizard.css]
   text: $dummy
   dummy: []
   bookmarks:
     type: empty
-    class: [wizard-bookmark-holder-left, w3-pale-blue,w3-quarter]
+    class: [wizard-bookmark-holder-left,w3-quarter]
   step:
     type: empty
     class: [wizard-page, hide,w3-threequarter]
