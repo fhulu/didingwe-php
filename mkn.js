@@ -88,9 +88,14 @@ var mkn = new function() {
       .click(function() { modal.remove(); });
     content.page(params);
     var id = path.replace('/','_');
+    var adjustWidths = function(object, options, attr) {
+      if (options[attr] === undefined) return;
+      object.css(attr, 'auto');
+      content.css(attr, options[attr]);
+    }
     content.one('read_'+id, function(event, object, options) {
-      if (options.width != undefined) content.css('width', options.width);
-      if (options.max_width != undefined) content.css('max-width', options.max_width);
+      adjustWidths(object, options, 'width');
+      adjustWidths(object, options, 'max-width');
       $('<div>').text(options.name).zIndex(0).appendTo(header);
       if (options.header_class) header.addClass(options.header_class.join(' '));
       if (options.class) content.addClass(options.class.join(' '));
