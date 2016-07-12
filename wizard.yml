@@ -8,11 +8,10 @@ wizard:
   dummy: []
   bookmarks:
     type: empty
-    class: [wizard-bookmark-holder-left, w3-pale-blue]
-    width: 250px
+    class: [wizard-bookmark-holder-left, w3-pale-blue,w3-quarter]
   step:
     type: empty
-    class: [w3-rest]
+    class: [wizard-page, hide,w3-threequarter]
   steps: []
   prev:
     type: button

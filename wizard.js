@@ -41,8 +41,10 @@ $.widget( "custom.wizard", {
 
   createPages: function() {
     var me = this;
+    var opts = this.options;
+    var step = opts.render.create(opts, 'step', true);
     $.each(this.options.steps, function(i, info) {
-      $('<div>').attr('step', info.id).addClass('wizard-page wizard-hide').appendTo(me.element);
+      step.clone().attr('step', info.id).appendTo(me.element);
     })
   },
 
