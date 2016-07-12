@@ -114,7 +114,9 @@ checkbox:
 checkgroup:
   classes: div
   text: $options
-  layout: { type: label_right }
+  layout:
+    type: label_right
+    class: [inline-block]
   option:
     type: checkbox
     value: 0
@@ -457,7 +459,9 @@ label:
 labelled:
   templates: div
   sow: [name]
-  label: { classes: label }
+  label:
+    classes: label
+    class: [inline-block,vertical-top]
   subject:
     attr: { title: $desc }
 
@@ -491,7 +495,7 @@ label_left:
     suffix: ":"
     text: $name$suffix&nbsp;
     width: $input_left
-    class: [right-text,inline-block,vertical-top]
+    class: [right-text]
   subject:
     derive: [input_width,input_left]
     width: $input_width
@@ -516,7 +520,7 @@ label_right:
   type: labelled
   label:
     text: $name
-    styles: [left_text]
+    class: [left-text]
   subject:
     class: [input]
     attr: { title: $desc }
