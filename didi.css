@@ -41,7 +41,7 @@ div {
 .inline { display: inline; }
 .inline-block { display: inline-block; }
 .italic { font-style: italic; }
-.left-left { text-align: left; }
+.left-text { text-align: left; }
 .lighter-font { font-weight: lighter; }
 .lowercase { text-transform: lowercase; }
 .medium-font { font-size: 26pt; }
