@@ -475,7 +475,7 @@ labelled_input_page:
 label_inside:
   label: $name
   subject:
-    class: [input,widest]
+    class: [border,widest]
     derive: [label]
     attr: { placeholder: $label, title: $desc}
   text: $field
@@ -586,18 +586,19 @@ menu_item: { templates: li }
 
 multi_input:
   classes: div
-  class: [error-sink]
+  class: [error-sink,inline-block]
   attr: { id: ""}
   text: $inputs
-  split: half
-  spacing: 0
+  split: 49%
+  spacing: 0.9%
   inputs:
     - template: label_inside
     - type: input
     - default:
         derive: [split,spacing]
-        styles: [tallest,hspaced]
-        class: [w3-col,w3-$split,w3-show-inline-block]
+        width: $split
+        class: [border,inline-block]
+        styles: [hspaced]
         space: $spacing
 
 navigate:
@@ -919,7 +920,8 @@ titled_paragraph:
 
 tri_input:
   type: multi_input
-  split: third
+  split: 32.5%
+  spacing: 0.5%
 
 
 twin_input:
