@@ -75,7 +75,9 @@ var mkn = new function() {
   {
     if (path[0] === '/') path = path.substr(1);
     var params = { path: path };
-    if (field) {
+    if (field instanceof Function)
+      callback = field;
+    else if ($.isPlainObject(field)) {
       params.values = field.values;
       params.key = field.key;
     }
@@ -101,7 +103,7 @@ var mkn = new function() {
       if (options.class) content.addClass(options.class.join(' '));
       object.attr('title', options.name);
       modal.show();
-      if (callback) callback();
+      if (callback) callback(object);
     });
   }
 

@@ -4,7 +4,7 @@
 confirm_dialog:
   width: 500
   name: Confirm
-  type: labelled_input_page
+  type: input_page
   desc: Are you sure?
   actions:
     - action: none

@@ -935,11 +935,11 @@ mkn.render = function(options)
     }
     if (!field.confirmation || action)
       dispatch();
-    else mkn.showDialog('/confirm_dialog', {}, function() {
+    else mkn.showDialog('/confirm_dialog', function(dialog) {
       $('#confirm_dialog #synopsis').text(field.confirmation);
       $('#confirm_dialog .action').click(function() {
         if ($(this).attr('id') === 'yes') dispatch();
-        $('#confirm_dialog').dialog('close');
+        mkn.closeDialog(dialog);
       })
     });
   }
