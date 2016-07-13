@@ -319,6 +319,7 @@ flag_icon:
 google_icon:
   tag: i
   class: [material-icons]
+  css: [/common/google-material-icons.css]
   icon: $id
   text: $icon
 
