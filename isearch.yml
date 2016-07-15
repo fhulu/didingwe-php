@@ -7,42 +7,42 @@ isearch:
   class: [ isearch ]
   inputs:
     classes: div
-    class: [isearch, w3-border, w3-show-inline-block]
+    class: [isearch,inline-block,borderless]
     derive: [search,buttons,width,placeholder,add,show_all]
     text: $search $buttons
   search:
     type: input
-    class: [search,w3-input]
+    class: [search,widest,pad,borderless]
     derive: [placeholder]
     attr: { id: "", name: "", placeholder: $placeholder }
   buttons:
     type: container
-    class: [isearch,buttons w3-padding-top, w3-padding-bottom, w3-display-topright]
+    class: [isearch,buttons,top-right,pad-y]
     derive: [add,show_all]
     contents: [$show_all, $add]
   show_all:
     type: google_icon
     icon: arrow_drop_down
-    class: [isearch, show-all, w3-text-dark-grey]
+    class: [isearch, show-all,text-dark-grey]
     tooltip: Show all items
     show: yes
   add:
     type: google_icon
     width: auto
-    class: [isearch,add, w3-text-dark-grey]
+    class: [isearch,add, text-dark-grey]
     derive: [name]
     tooltip: Add new $name
     action: dialog
   drop:
     tag: ul
-    class: [isearch,drop,w3-dropdown-content,w3-card-2,scroll-y,widest]
+    class: [isearch,drop,absolute,scroll-y,widest,nomargin,nopad,white,shadow]
     text: ""
     height: auto
     show: no
     autoload: 10
   option:
     tag: a
-    class: [isearch,option]
+    class: [isearch,option,block,nomargin,undecorated,pad,hover-light-grey]
     value: $1
     name: $2
     embolden: $name

@@ -16,7 +16,7 @@ accordion_tab:
 
 actioner:
   tag: button
-  class: [w3-btn]
+  class: [hover-shadow,vertical-middle]
   attr: { action: $id, id: "", title: $desc }
   styles: [filled]
 
@@ -108,7 +108,7 @@ checkbox:
   immutable: [width]
   format: checkbox
   attr: { values: $values }
-  class: [w3-show-inline-block]
+  class: [inline-block]
 
 
 checkgroup:
@@ -523,7 +523,6 @@ label_right:
     text: $name
     class: [left-text]
   subject:
-    class: [input]
     attr: { title: $desc }
   text: $field $label
 
@@ -635,8 +634,8 @@ page:
   text: $items
   items: []
   tooltip: false
-  header_class: [w3-center, w3-xlarge]
-  class: [w3-padding-bottom]
+  header_class: [center-text, xlarge-font]
+  class: [padding-bottom]
 
 page_title:
   html: <title>$name</title>
@@ -748,7 +747,7 @@ row_inputs:
 
 section_heading:
   classes: p
-  class: [center-text,thinner,widest,vspaced,w3-border-bottom]
+  class: [center-text,thinner,widest,vspaced,border-bottom]
 
 side_spacer:
   space: 2px

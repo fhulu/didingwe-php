@@ -81,11 +81,11 @@ var mkn = new function() {
       params.values = field.values;
       params.key = field.key;
     }
-    var modal = $('<div class="w3-modal">').hide().appendTo('body');
-    var content = $('<div class="w3-modal-content">').appendTo(modal);
-    var header = $('<div class="w3-container header">').appendTo(content);
+    var modal = $('<div class="modal">').hide().appendTo('body');
+    var content = $('<div class="modal-content">').appendTo(modal);
+    var header = $('<div class="container header">').appendTo(content);
     content.draggable({handle: header });
-    var close = $('<div class="w3-closebtn">&times;</div>')
+    var close = $('<div class="closebtn">&times;</div>')
       .appendTo(header).zIndex(1)
       .click(function() { modal.remove(); });
     content.page(params);
@@ -110,7 +110,7 @@ var mkn = new function() {
   this.closeDialog = function(dialog, message)
   {
     if (message) alert(message);
-    var parent = dialog.parents('.w3-modal').eq(0);
+    var parent = dialog.parents('.modal').eq(0);
     if (parent.exists()) parent.remove();
   }
 
