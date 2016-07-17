@@ -67,7 +67,7 @@ div {
 
 
 /* border styles */
-.border{border-width:1px}
+.border{border-width:1px; border-color: #ccc}
 .solid{border-style:solid }
 .borderless { border-top: 0; border-bottom: 0; border-left: 0; border-right: 0; }
 .bottom-border,.border-bottom { border-bottom: 1; }

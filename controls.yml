@@ -500,7 +500,7 @@ label_left:
   subject:
     derive: [input_width,input_left]
     width: $input_width
-    class: [solid,border,pad-small]
+    class: [border,pad-small]
   text: $label$field
   styles: [vspaced]
 
@@ -635,7 +635,7 @@ page:
   items: []
   tooltip: false
   header_class: [center-text, xlarge-font]
-  class: [padding-bottom]
+  class: [pad-bottom]
 
 page_title:
   html: <title>$name</title>
