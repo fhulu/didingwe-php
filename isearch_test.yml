@@ -32,15 +32,14 @@ add:
   access: reg
   desc: Add new country
   width: 600
-  # header_class: [rounded-xlarge,w3-white]
-  header_class: [rounded-xlarge,white]
+  header_class: [rounded-xlarge,^w3-blue-grey, white]
   class: [rounded-xlarge,pad-bottom]
   type: input_page
   inputs:
     - new_country_code
     - new_country_name
   actions:
-    - add: [_reset]
+    - add: { class: [^rounded-xlarge] }
     - close: {action: close_dialog}
   post:
     - sql_insert: [country, code: $new_country_code, name: $new_country_name]
