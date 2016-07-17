@@ -500,7 +500,7 @@ label_left:
   subject:
     derive: [input_width,input_left]
     width: $input_width
-    class: [border,pad-small]
+    class: [solid,border,pad-small]
   text: $label$field
   styles: [vspaced]
 
