@@ -40,6 +40,9 @@ $.fn.page = function(options)
       page.object = object;
       data.values = values;
       object.addClass('page').appendTo(parent);
+      if ($.isPlainObject(data.fields.parent))
+        mkn.setClass(parent, data.fields.parent.class);
+
       parent.trigger('read_'+this.id, [object, data.fields]);
       defer.resolve(object, data.fields);
       return this;

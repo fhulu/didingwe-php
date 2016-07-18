@@ -25,12 +25,10 @@
 }
 
 .wizard-bookmark-holder-left {
-  display: table-cell;
   vertical-align: top;
 }
 
 .wizard-bookmark-holder-left~.wizard-page {
-  display: table-cell;
   border-left: 1px solid lightgrey;
 }
 

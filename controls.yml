@@ -16,10 +16,12 @@ accordion_tab:
 
 actioner:
   tag: button
-  class: [hover-shadow,vertical-middle]
+  class: [borderless,medium-font,hover-shadow,vertical-middle,pad]
   attr: { action: $id, id: "", title: $desc }
   styles: [filled]
 
+body:
+  class: [didi]
 
 alert_message:
   classes: div
@@ -46,6 +48,7 @@ bookmark:
     name: $title
 
 button:
+  type: actioner
   class: [action]
   tag: button
   attr: { title: $desc }
@@ -141,7 +144,8 @@ control:
   html: <$tag>$text</$tag>
   tag: div
   attr: { id: $id }
-  class: []
+  class: [didi]
+  border-color: "#ccc"
   text: $name
 
 date:
@@ -500,7 +504,7 @@ label_left:
   subject:
     derive: [input_width,input_left]
     width: $input_width
-    class: [border,pad-small]
+    class: [border,pad]
   text: $label$field
   styles: [vspaced]
 
@@ -634,7 +638,7 @@ page:
   text: $items
   items: []
   tooltip: false
-  header_class: [center-text, xlarge-font]
+  header_class: [pad-y,center-text, large-font]
   class: [pad-bottom]
 
 page_title:

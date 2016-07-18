@@ -1,17 +1,17 @@
 wizard:
-  classes: div
+  type: page
   create: wizard
-  header_class: [centered, large-font]
+  class: [wizard]
   script: [/common/wizard.js]
   css: [/common/wizard.css]
   text: $dummy
   dummy: []
   bookmarks:
     type: empty
-    class: [wizard-bookmark-holder-left,quarter]
+    class: [wizard-bookmark-holder-left,quarter,float-left]
   step:
     type: empty
-    class: [wizard-page,hide,threequarter]
+    class: [wizard-page,threequarter,float-right]
   steps: []
   prev:
     type: button
