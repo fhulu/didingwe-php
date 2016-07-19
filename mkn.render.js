@@ -295,8 +295,8 @@ mkn.render = function(options)
     do {
       expanded = false;
       for (var field in data) {
-        if ($.isNumeric(field)) continue;
         var value = data[field];
+        if ($.isNumeric(value)) continue;
         if (typeof value !== 'string' || value.indexOf('$') < 0 || exclusions.indexOf(field) >=0) continue;
         var old_value = value = value.replace('$id', parent_id);
         data[field] = value = me.expandValue(data, value, parent_id);
