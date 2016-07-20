@@ -356,6 +356,8 @@ mkn.render = function(options)
     field = this.parentSow(parent, field);
 
     var id = field.id;
+    if (id && field.name === undefined)
+      field.name = toTitleCase(id.replace(/[_\/]/g, ' '));
     if (field.array)
       this.expandArray(field);
     else
@@ -363,8 +365,6 @@ mkn.render = function(options)
 
     var exclusions = ['template','attr', 'text', 'html'];
     this.expandValues(field, field.id, exclusions );
-    if (id && field.name === undefined)
-      field.name = toTitleCase(id.replace(/[_\/]/g, ' '));
     if (field.template && field.template.subject) {
       deriveParent(field.template, field);
       this.expandValues(field, field.id, exclusions);
