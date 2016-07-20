@@ -244,6 +244,7 @@ body.didi {
 .underlined { text-decoration: underline; }
 .uppercase { text-transform: uppercase; }
 .undecorated { text-decoration: none; }
+.nowrap { white-space: nowrap}
 /* scrolling */
 .scroll-horizontal,.scroll-x { overflow-x: auto; }
 .scroll-vertical,.scroll-y { overflow-y: auto; }
