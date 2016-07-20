@@ -554,10 +554,10 @@ line:
 
 
 link:
+  class: [pointer-cursor]
   tag: a
   attr: { title: $desc }
   text: $name
-  style: { cursor: pointer }
   immutable: [url]
   url: /$id
   action: redirect
@@ -573,20 +573,6 @@ list_text:
   type: plain_text
   tag: li
   style: { margin-left: 16 }
-
-menu:
-  type: container
-  class: [menu]
-  css: /common/menu.css
-  tag: ul
-
-  contents: $items
-  items:
-    - template: menu_item
-    - type: link
-    - action: redirect
-
-menu_item: { templates: li }
 
 multi_input:
   classes: div
@@ -803,17 +789,6 @@ submit:
   selector: "#page *"
   call: $class::$invoker($key)
   action: post
-
-sub_menu:
-  templates: div
-  text: |
-    <a id="$id">$name</a>
-    <span>$sub_items</span>
-  action: " "
-  template: $field
-  sub_items:
-    - action: redirect
-    - type: link
 
 table:
   tag: table

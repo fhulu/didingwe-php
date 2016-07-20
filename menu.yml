@@ -1,0 +1,43 @@
+
+menu:
+  type: container
+  class: [menu,nolist,xxlarge]
+  tag: ul
+  contents: $items
+  items:
+    - type: menu_item
+    - action: redirect
+
+menu_item:
+  tag: li
+  class: [block,float-left,nopad,normargin,cursor-pointer,vertical-middle]
+  parent_name: $name
+  url: /$id
+  text: { type: menu_link }
+
+menu_link:
+  tag: a
+  derive: [parent_name]
+  class: [block,undecorated,tallest,pad]
+  text: $parent_name
+
+sub_menu:
+  type: menu_item
+  parent_name: $name
+  class: [hover-dropdown]
+  url: ""
+  action: ""
+  title: { type: menu_link }
+  text: $title $expansion
+  expansion: { type: sub_menu_expansion }
+  sub_items:
+    - action: redirect
+    - type: sub_menu_item
+
+sub_menu_expansion:
+  classes: span
+  class: [absolute,overlay,dropdown]
+  derive: [sub_items]
+  text: $sub_items
+
+sub_menu_item: { type: menu_item }
