@@ -5,7 +5,6 @@
   box-sizing:border-box;
   position: relative;
   font-family: Verdana, sans-serif;
-  line-height: 1.2;
 }
 
 /* Classed Styles */
@@ -93,6 +92,7 @@
 .borderless { border-top: 0; border-bottom: 0; border-left: 0; border-right: 0; }
 .right-border,.border-right { border-right: 1px solid #ccc; }
 .bottom-border,.border-bottom { border-bottom: 1px solid #ccc; }
+.border-top,.top-border{ border-top: 1px solid #ccc; }
 .shadow {box-shadow:0 2px 4px 0 rgba(0,0,0,0.16),0 2px 10px 0 rgba(0,0,0,0.12) }
 .rounded-small{border-radius:2px!important}
 .rounded,.rounded-medium{border-radius:4px!important}
