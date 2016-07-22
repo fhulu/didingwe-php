@@ -29,12 +29,12 @@ sub_menu:
   action: ""
   title: { type: menu_link }
   text: $title $expansion
-  expansion: { type: sub_menu_expansion }
+  expansion: { type: sub_menu_dropdown }
   sub_items:
     - action: redirect
     - type: sub_menu_item
 
-sub_menu_expansion:
+sub_menu_dropdown:
   classes: span
   class: [absolute,overlay,dropdown]
   derive: [sub_items]
