@@ -402,7 +402,7 @@ mkn.render = function(options)
   this.render = function(parent, key) {
     me.root = parent[key] = me.initField(parent[key], parent);
     var obj = me.create(parent, key);
-    obj.triggerHandler('load');
+    obj.trigger('load');
     if (!initModel()) return obj;
     me.updateWatchers();
     return obj.on('keyup input cut paste change', 'input,select,textarea', function() {
