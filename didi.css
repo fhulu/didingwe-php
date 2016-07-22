@@ -35,6 +35,7 @@
 
 /* clearing */
 .clear{clear:both}
+.clear-after:after,.clear-after::after {content:"";display:block;clear:both}
 
 /* cursor */
 .autocursor,.auto-cursor { cursor: auto }
