@@ -36,6 +36,8 @@
 /* clearing */
 .clear{clear:both}
 .clear-after:after,.clear-after::after {content:"";display:block;clear:both}
+.clear-after-4:after,.clear-after-4::after {content:"";display:block;clear:both;padding:4}
+.clear-after-8:after,.clear-after-8::after {content:"";display:block;clear:both;padding:8}
 
 /* cursor */
 .autocursor,.auto-cursor { cursor: auto }
