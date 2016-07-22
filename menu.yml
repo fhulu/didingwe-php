@@ -1,7 +1,7 @@
 
 menu:
   type: container
-  class: [menu,nolist,xxlarge]
+  class: [menu,nolist]
   tag: ul
   contents: $items
   items:
@@ -40,4 +40,8 @@ sub_menu_expansion:
   derive: [sub_items]
   text: $sub_items
 
-sub_menu_item: { type: menu_item }
+sub_menu_item:
+  type: menu_item
+  text: { type: sub_menu_link }
+
+sub_menu_link: { type: menu_link }
