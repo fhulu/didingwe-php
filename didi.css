@@ -122,6 +122,7 @@
 
 /* hover */
 .hover-shadow:hover{box-shadow:0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19)}
+.hover-bold:hover{ font-weight:bold}
 /* colors */
 .hover-none:hover{box-shadow:none;background-color:transparent}
 .amber,.hover-amber:hover{color:#000;background-color:#ffc107}
@@ -231,7 +232,12 @@
 .pad-top{padding-top:8px}
 .pad-x{padding-left: 8px; padding-right: 8px}
 .pad-y{padding-top: 8px; padding-bottom: 8px}
-
+.justify {
+  display: -webkit-flex; /* Safari */
+  -webkit-justify-content: space-between; /* Safari 6.1+ */
+  display: flex;
+  justify-content: space-between;;
+}
 /* text alignment */
 .left-text { text-align: left; }
 .right-text { text-align: right; }
