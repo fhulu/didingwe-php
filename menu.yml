@@ -19,7 +19,7 @@ menu_item:
 menu_link:
   tag: a
   derive: [parent_name]
-  class: [block,undecorated,tallest,pad]
+  class: [block,undecorated,tallest,nopad]
   text: $parent_name
 
 sub_menu:
