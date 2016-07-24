@@ -912,7 +912,8 @@ vspace:
   type: blank
   space: 20
   template: none
-  styles: [block,vspaced]
+  styles: [vspaced]
+  class: [block]
 
 vspaced:
   space: 6px
