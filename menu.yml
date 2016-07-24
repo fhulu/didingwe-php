@@ -13,6 +13,7 @@ menu_item:
   class: [block,float-left,nopad,normargin,cursor-pointer,vertical-middle,nowrap]
   parent_name: $name
   url: /$id
+  trap: [click]
   text: { type: menu_link }
 
 menu_link:
@@ -25,8 +26,6 @@ sub_menu:
   type: menu_item
   parent_name: $name
   class: [hover-dropdown]
-  url: ""
-  action: ""
   title: { type: menu_link }
   text: $title $expansion
   expansion: { type: sub_menu_dropdown }

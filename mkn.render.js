@@ -651,6 +651,9 @@ mkn.render = function(options)
         if (field.url === undefined) field.url = obj.attr('href');
       }
       accept(event, $(this), field);
+      if ($.isArray(field.trap) && field.trap.indexOf('click') >=0 ) {
+        event.stopImmediatePropagation();
+      }
     });
   };
 
