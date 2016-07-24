@@ -416,6 +416,7 @@ mkn.render = function(options)
   this.create =  function(parent, key, init)
   {
     var field = key===undefined? parent: parent[key];
+    if (!field) field = types[key];
     if (init) field = this.initField(field, parent);
     if (field.sub_page)
       return this.createSubPage(parent, key);
