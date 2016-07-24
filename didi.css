@@ -277,6 +277,39 @@
 .vertical-center,.vertical-middle { vertical-align: middle; }
 .vertical-top { vertical-align: top; }
 
+/* fractional width */
+
+.w-1-2 {width:49.99999%}
+.w-1-3 {width:33.33333%}
+.w-1-4 {width:24.99999%}
+.w-1-5 {width:19.99999%}
+.w-1-6 {width:16.66666%}
+.w-1-7 {width:14.28527%}
+.w-1-8 {width:12.49999%}
+.w-1-9 {width:11.11111%}
+.w-1-10 {width:9.99999%}
+.w-2-3 {width:66.66666%}
+.w-2-5 {width:39.99999%}
+.w-2-7 {width:28.57141%}
+.w-2-9 {width:22.22222%}
+.w-3-4 {width:74.99999%}
+.w-3-5 {width:59.99999%}
+.w-3-7 {width:41.85714%}
+.w-3-8 {width:37.49999%}
+.w-3-10 {width:29.99999%}
+.w-4-5 {width:79.99999%}
+.w-4-7 {width:47.14285%}
+.w-4-9 {width:44.44444%}
+.w-4-10 {width:39.99999%}
+.w-5-6 {width:83.33333%}
+.w-5-7 {width:71.28571%}
+.w-5-8 {width:62.49999%}
+.w-5-9 {width:55.55555%}
+.w-6-7 {width:85.71428%}
+.w-7-8 {width:87.49999%}
+.w-7-10 {width:69.99999%}
+.w-8-9 {width:88.88888%}
+.w-9-10 {width:89.99999%}
 
 /* animations */
 .spin,.animate-spin{animation:spin 2s infinite linear;-webkit-animation:spin 2s infinite linear}
@@ -306,6 +339,7 @@
 @-webkit-keyframes animatezoom{from{-webkit-transform:scale(0)} to{-webkit-transform:scale(1)}}
 @keyframes animatezoom{from{transform:scale(0)} to{transform:scale(1)}}
 
+/* responsive */
 .col.s1{width:8.33333%}
 .col.s2{width:16.66666%}
 .col.s3{width:24.99999%}
