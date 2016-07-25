@@ -47,6 +47,7 @@
 .hide { display: none; }
 .inline { display: inline; }
 .inline-block { display: inline-block; }
+.table-cell { display: table-cell}
 
 /* font styles */
 .bold { font-weight: bold; }
