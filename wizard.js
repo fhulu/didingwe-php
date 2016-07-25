@@ -44,7 +44,7 @@ $.widget( "custom.wizard", {
     var opts = this.options;
     var step = opts.render.create(opts, 'step', true);
     $.each(this.options.steps, function(i, info) {
-      step.clone().attr('step', info.id).appendTo(me.element);
+      step.clone().attr('step', info.id).hide().appendTo(me.element);
     })
   },
 
@@ -155,6 +155,7 @@ $.widget( "custom.wizard", {
     var tmp = $('<div class=loading>').appendTo(content);
     content.page({path: path, key: options.key}).then(function(object, info) {
       tmp.replaceWith(object);
+      page.show();
       path = info.path;
       info = options.steps[index] = $.extend({}, info, options.steps[index]);
       info.path = path;

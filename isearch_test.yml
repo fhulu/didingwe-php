@@ -24,7 +24,7 @@ country:
     text: [$label,$flag]
     flag:
       type: flag_icon
-      class: [w3-right]
+      class: [float-right]
       derive: [value]
       country: $value
 
@@ -32,14 +32,14 @@ add:
   access: reg
   desc: Add new country
   width: 600
-  header_class: [w3-round-xlarge,w3-white]
-  class: [w3-round-xlarge,w3-padding-bottom]
+  header_class: [rounded-xlarge,^w3-blue-grey, white]
+  class: [rounded-xlarge,pad-bottom]
   type: input_page
   inputs:
     - new_country_code
     - new_country_name
   actions:
-    - add
+    - add: { class: [^rounded-xlarge] }
     - close: {action: close_dialog}
   post:
     - sql_insert: [country, code: $new_country_code, name: $new_country_name]

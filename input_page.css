@@ -22,14 +22,6 @@
   text-align: center;
 }
 
-.action
-{
-  height: 36px;
-  border: 0px;
-  padding-left: 20px;
-  padding-right: 20px;
-  font-weight: 100;
-}
 
 .desc
 {
@@ -38,11 +30,6 @@
   font-weight: 100;
   border-bottom: 1px solid grey;
 }
-.action:hover,button:hover
-{
-  background-color: rgb(36,94,128);
-}
-
 
 
 .actions

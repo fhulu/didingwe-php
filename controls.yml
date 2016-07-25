@@ -16,10 +16,12 @@ accordion_tab:
 
 actioner:
   tag: button
-  class: [w3-btn]
+  class: [borderless,medium-font,hover-shadow,vertical-middle,pad]
   attr: { action: $id, id: "", title: $desc }
   styles: [filled]
 
+body:
+  class: [didi]
 
 alert_message:
   classes: div
@@ -46,6 +48,7 @@ bookmark:
     name: $title
 
 button:
+  type: actioner
   class: [action]
   tag: button
   attr: { title: $desc }
@@ -108,7 +111,7 @@ checkbox:
   immutable: [width]
   format: checkbox
   attr: { values: $values }
-  class: [w3-show-inline-block]
+  class: [inline-block]
 
 
 checkgroup:
@@ -141,7 +144,8 @@ control:
   html: <$tag>$text</$tag>
   tag: div
   attr: { id: $id }
-  class: []
+  class: [didi]
+  border-color: "#ccc"
   text: $name
 
 date:
@@ -423,6 +427,7 @@ input:
   text: ""
   value: ""
   immutable: [format]
+  class: [medium-font]
   format: text
   attr:
     type: $format
@@ -501,7 +506,7 @@ label_left:
   subject:
     derive: [input_width,input_left]
     width: $input_width
-    class: [border]
+    class: [border,pad]
   text: $label$field
   styles: [vspaced]
 
@@ -524,7 +529,6 @@ label_right:
     text: $name
     class: [left-text]
   subject:
-    class: [input]
     attr: { title: $desc }
   text: $field $label
 
@@ -551,10 +555,10 @@ line:
 
 
 link:
+  class: [pointer-cursor]
   tag: a
   attr: { title: $desc }
   text: $name
-  style: { cursor: pointer }
   immutable: [url]
   url: /$id
   action: redirect
@@ -570,20 +574,6 @@ list_text:
   type: plain_text
   tag: li
   style: { margin-left: 16 }
-
-menu:
-  type: container
-  class: [menu]
-  css: /common/menu.css
-  tag: ul
-
-  contents: $items
-  items:
-    - template: menu_item
-    - type: link
-    - action: redirect
-
-menu_item: { templates: li }
 
 multi_input:
   classes: div
@@ -636,8 +626,8 @@ page:
   text: $items
   items: []
   tooltip: false
-  header_class: [w3-center, w3-xlarge]
-  class: [w3-padding-bottom]
+  header_class: [pad-y,center-text, large-font]
+  class: [pad-bottom]
 
 page_title:
   html: <title>$name</title>
@@ -749,7 +739,7 @@ row_inputs:
 
 section_heading:
   classes: p
-  class: [center-text,thinner,widest,vspaced,w3-border-bottom]
+  class: [center-text,thinner,widest,vspaced,border-bottom]
 
 side_spacer:
   space: 2px
@@ -800,17 +790,6 @@ submit:
   selector: "#page *"
   call: $class::$invoker($key)
   action: post
-
-sub_menu:
-  templates: div
-  text: |
-    <a id="$id">$name</a>
-    <span>$sub_items</span>
-  action: " "
-  template: $field
-  sub_items:
-    - action: redirect
-    - type: link
 
 table:
   tag: table
@@ -934,7 +913,8 @@ vspace:
   type: blank
   space: 20
   template: none
-  styles: [block,vspaced]
+  styles: [vspaced]
+  class: [block]
 
 vspaced:
   space: 6px

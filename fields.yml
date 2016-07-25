@@ -296,7 +296,7 @@ password:
 
 payweb:
   styles: [widest, borderless]
-  height: 800
+  height: 600
   type: iframe
   src: /?path=paygate/request
 

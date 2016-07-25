@@ -295,8 +295,8 @@ mkn.render = function(options)
     do {
       expanded = false;
       for (var field in data) {
-        if ($.isNumeric(field)) continue;
         var value = data[field];
+        if ($.isNumeric(value)) continue;
         if (typeof value !== 'string' || value.indexOf('$') < 0 || exclusions.indexOf(field) >=0) continue;
         var old_value = value = value.replace('$id', parent_id);
         data[field] = value = me.expandValue(data, value, parent_id);
@@ -356,6 +356,8 @@ mkn.render = function(options)
     field = this.parentSow(parent, field);
 
     var id = field.id;
+    if (id && field.name === undefined)
+      field.name = toTitleCase(id.replace(/[_\/]/g, ' '));
     if (field.array)
       this.expandArray(field);
     else
@@ -363,8 +365,6 @@ mkn.render = function(options)
 
     var exclusions = ['template','attr', 'text', 'html'];
     this.expandValues(field, field.id, exclusions );
-    if (id && field.name === undefined)
-      field.name = toTitleCase(id.replace(/[_\/]/g, ' '));
     if (field.template && field.template.subject) {
       deriveParent(field.template, field);
       this.expandValues(field, field.id, exclusions);
@@ -402,7 +402,7 @@ mkn.render = function(options)
   this.render = function(parent, key) {
     me.root = parent[key] = me.initField(parent[key], parent);
     var obj = me.create(parent, key);
-    obj.triggerHandler('load');
+    obj.trigger('load');
     if (!initModel()) return obj;
     me.updateWatchers();
     return obj.on('keyup input cut paste change', 'input,select,textarea', function() {
@@ -416,6 +416,7 @@ mkn.render = function(options)
   this.create =  function(parent, key, init)
   {
     var field = key===undefined? parent: parent[key];
+    if (!field) field = types[key];
     if (init) field = this.initField(field, parent);
     if (field.sub_page)
       return this.createSubPage(parent, key);
@@ -651,6 +652,9 @@ mkn.render = function(options)
         if (field.url === undefined) field.url = obj.attr('href');
       }
       accept(event, $(this), field);
+      if ($.isArray(field.trap) && field.trap.indexOf('click') >=0 ) {
+        event.stopImmediatePropagation();
+      }
     });
   };
 
@@ -694,9 +698,7 @@ mkn.render = function(options)
     if (cls === undefined) return;
     if (typeof cls === 'string') cls = [cls];
     expandVars(field, cls, { sourceFirst: true, recurse: true})
-    for (var i in cls) {
-      obj.addClass(cls[i]);
-    }
+    mkn.setClass(obj, cls);
   }
 
 

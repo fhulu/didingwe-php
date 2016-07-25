@@ -71,6 +71,20 @@ var mkn = new function() {
     return result;
   }
 
+  this.setClass = function(obj, classes)
+  {
+    if (classes === undefined) return;
+    if (typeof classes === 'string') classes = [classes];
+    var del = [], add =[];
+    for (var i in classes) {
+      var cls = classes[i];
+      cls[0]=='^'? del.push(cls.substr(1)): add.push(cls);
+    }
+    obj.addClass(add.join(' '));
+    obj.removeClass(del.join(' '));
+  }
+
+
   this.showDialog = function(path, field, callback)
   {
     if (path[0] === '/') path = path.substr(1);
@@ -81,11 +95,11 @@ var mkn = new function() {
       params.values = field.values;
       params.key = field.key;
     }
-    var modal = $('<div class="w3-modal">').hide().appendTo('body');
-    var content = $('<div class="w3-modal-content">').appendTo(modal);
-    var header = $('<div class="w3-container header">').appendTo(content);
+    var modal = $('<div class="modal">').hide().appendTo('body');
+    var content = $('<div class="modal-content">').appendTo(modal);
+    var header = $('<div class="container header">').appendTo(content);
     content.draggable({handle: header });
-    var close = $('<div class="w3-closebtn">&times;</div>')
+    var close = $('<div class="closebtn pad-x">&times;</div>')
       .appendTo(header).zIndex(1)
       .click(function() { modal.remove(); });
     content.page(params);
@@ -99,8 +113,8 @@ var mkn = new function() {
       adjustWidths(object, options, 'width');
       adjustWidths(object, options, 'max-width');
       $('<div>').text(options.name).zIndex(0).appendTo(header);
-      if (options.header_class) header.addClass(options.header_class.join(' '));
-      if (options.class) content.addClass(options.class.join(' '));
+      mkn.setClass(header,options.header_class);
+      mkn.setClass(content,options.class);
       object.attr('title', options.name);
       modal.show();
       if (callback) callback(object);
@@ -110,7 +124,7 @@ var mkn = new function() {
   this.closeDialog = function(dialog, message)
   {
     if (message) alert(message);
-    var parent = dialog.parents('.w3-modal').eq(0);
+    var parent = dialog.parents('.modal').eq(0);
     if (parent.exists()) parent.remove();
   }
 

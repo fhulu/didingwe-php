@@ -5,4 +5,4 @@ material_test:
     - face
     - computer
     - watch_later
-    - refresh: { class: [w3-spin]}
+    - refresh: { class: [spin]}
