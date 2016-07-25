@@ -73,6 +73,8 @@
 .xxxlarge-font{font-size:48px}
 .jumbo-font{font-size:64px}
 
+/* text-spacing */
+.tight-text { line-height: 1}
 
 /* list styles */
 .nolist { list-style: none }
@@ -292,28 +294,40 @@
 .w-1-8 {width:12.49999%}
 .w-1-9 {width:11.11111%}
 .w-1-10 {width:9.99999%}
+.w-1-11 {width:9.09090%}
+.w-1-12 {width:8.33333%}
 .w-2-3 {width:66.66666%}
 .w-2-5 {width:39.99999%}
 .w-2-7 {width:28.57141%}
 .w-2-9 {width:22.22222%}
+.w-2-11 {width:18.18181%}
 .w-3-4 {width:74.99999%}
 .w-3-5 {width:59.99999%}
 .w-3-7 {width:41.85714%}
 .w-3-8 {width:37.49999%}
 .w-3-10 {width:29.99999%}
+.w-3-11 {width:27.27272%}
 .w-4-5 {width:79.99999%}
 .w-4-7 {width:47.14285%}
 .w-4-9 {width:44.44444%}
 .w-4-10 {width:39.99999%}
+.w-4-11 {width:36.363636%}
 .w-5-6 {width:83.33333%}
 .w-5-7 {width:71.28571%}
 .w-5-8 {width:62.49999%}
 .w-5-9 {width:55.55555%}
+.w-5-11 {width:45.45454%}
+.w-5-12 {width:41.66666%}
 .w-6-7 {width:85.71428%}
+.w-6-11 {width:54.54545%}
 .w-7-8 {width:87.49999%}
 .w-7-10 {width:69.99999%}
+.w-7-11 {width:63.63636%}
+.w-7-12 {width:58.33333%}
 .w-8-9 {width:88.88888%}
+.w-8-11 {width:72.72727%}
 .w-9-10 {width:89.99999%}
+.w-9-11 {width:81.81818%}
 
 /* animations */
 .spin,.animate-spin{animation:spin 2s infinite linear;-webkit-animation:spin 2s infinite linear}
