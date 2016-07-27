@@ -914,11 +914,11 @@ vspace:
   space: 20
   template: none
   styles: [vspaced]
-  class: [^inline-block, ^inline,block]
+  class: [^inline-block, ^inline,block,clear]
 
 vspaced:
   space: 6px
-  margin-top: $space
+  margin-bottom: $space
 
 watermark:
   image: $id.png
