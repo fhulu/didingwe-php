@@ -47,6 +47,9 @@
 .hide { display: none; }
 .inline { display: inline; }
 .inline-block { display: inline-block; }
+.float-contents > *, .float-contents-left > *{float: left;}
+.float-contents-right > *{float: right;}
+
 
 /* font styles */
 .bold { font-weight: bold; }
