@@ -6,6 +6,7 @@
   position: relative;
   font-family: Verdana, sans-serif;
   border-width: 1px;
+  border-color: #ccc;
 }
 
 /* Classed Styles */
@@ -335,6 +336,23 @@
 .pad-16.space:last-child,.pad-xlarge.space:last-child,.pad-y-16.space:last-child{padding-bottom:0}
 .pad-32.space:last-child,.pad-xxlarge.space:last-child,.pad-x-32.space:last-child{padding-right:0}
 .pad-32.space:last-child,.pad-xxlarge.space:last-child,.pad-y-32.space:last-child{padding-bottom:0}
+
+.margin-0,.nomargin{ margin: 0 }
+.hspace-min+.hspace-min,.hspace-1+.hspace-1{margin-left:1}
+.vspace-min+.vspace-min,.vspace-1+.vspace-1{margin-top:1}
+.hspace-tiny+.hspace-tiny,.hspace-2+.hspace-2{margin-left:2}
+.vspace-tiny+.vspace-tiny,.vspace-2+.vspace-2{margin-top:2}
+.hspace-small+.hspace-small,.hspace-4+.hspace-4{margin-left:4}
+.vspace-small+.vspace-small,.vspace-4+.vspace-4{margin-top:4}
+.hspace-medium+.vspace-medium,.hspace+.hspace,.hspace-8+.hspace-8{margin-left:8}
+.vspace,.vspace-medium+.vspace-medium,.vspace+.vspace,.vspace-8+.vspace-8{margin-top:8}
+.hspace-large+.hspace-large,.hspace-12+.hspace-12{margin-left:12}
+.vspace-large+.vspace-large,.vspace-12+.vspace-12{margin-top:12}
+.hspace-xlarge+.hspace-xlarge,.hspace-16+.hspace-16{margin-left:16}
+.vspace-xlarge+.vspace-xlarge,.vspace-16+.vspace-16{margin-top:16}
+.hspace-xxlarge+.hspace-xxlarge,.hspace-32+.hspace-32{margin-left:32}
+.hspace-xxlarge+.hspace-xxlarge,.vspace-32+.vspace-32{margin-top:32}
+
 
 /* text alignment */
 .left-text { text-align: left; }
