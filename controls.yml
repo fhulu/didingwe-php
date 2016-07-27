@@ -913,7 +913,7 @@ vspace:
   space: 20
   template: none
   styles: [vspaced]
-  class: [block]
+  class: [^inline-block, ^inline,block]
 
 vspaced:
   space: 6px
