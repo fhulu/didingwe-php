@@ -330,7 +330,7 @@ google_icon:
 google_map:
   tag: div
   create: mapper
-  script: /common/map.js
+  script: [/common/map.js]
   zoom: 5
   pin: blue_map_marker
   icon_path: /
@@ -461,6 +461,7 @@ input_page:
 
 label:
   tag: label
+  text: $id
 
 labelled:
   templates: div
