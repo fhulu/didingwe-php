@@ -10,7 +10,7 @@ menu:
 
 menu_item:
   tag: li
-  class: [block,float-left,nopad,normargin,cursor-pointer,vertical-middle,nowrap]
+  class: [nopad]
   parent_name: $name
   url: /$id
   trap: [click]
@@ -19,7 +19,7 @@ menu_item:
 menu_link:
   tag: a
   derive: [parent_name]
-  class: [block,undecorated,tallest,nopad]
+  class: [block,undecorated,nopad]
   text: $parent_name
 
 sub_menu:
