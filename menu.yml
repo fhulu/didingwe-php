@@ -10,7 +10,6 @@ menu:
 
 menu_item:
   tag: li
-  class: [nopad]
   parent_name: $name
   url: /$id
   trap: [click]
@@ -19,7 +18,6 @@ menu_item:
 menu_link:
   tag: a
   derive: [parent_name]
-  class: [block,undecorated,nopad]
   text: $parent_name
 
 sub_menu:
