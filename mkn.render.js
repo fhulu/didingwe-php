@@ -351,8 +351,10 @@ mkn.render = function(options)
   this.initField = function(field, parent)
   {
     field.page_id = this.page_id;
-    if (field.template && field.template.subject)
+    if (field.template && field.template.subject) {
       field = mkn.merge(field.template.subject, field);
+      if (!field.template.tag) delete field.template;
+    }
     field = this.mergeType(field);
     deriveParent(parent, field);
     field = this.parentSow(parent, field);
