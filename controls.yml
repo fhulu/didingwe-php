@@ -194,13 +194,6 @@ document_link:
 dropdown:
   tag: select
   unselected: --Select $name--
-  option:
-    tag: option
-    value: $1
-    name: $2
-    text: $name
-    immutable: [name,value,text]
-    attr: { value: $id }
   selected:
     classes: option
     derive: [unselected]
@@ -208,8 +201,21 @@ dropdown:
     attr: { value: ""}
   text: $options
   options:
-    - $selected
-    - type: $option
+    - dropdown_default
+    - type: dropdown_option
+
+dropdown_default:
+    classes: option
+    derive: [unselected]
+    text: $unselected
+    attr: { value: ""}
+
+dropdown_option:
+  tag: option
+  value: $id
+  text: $name
+  immutable: [name,value,text]
+  attr: { value: $id }
 
 element:
   text: ""

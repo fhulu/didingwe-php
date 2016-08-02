@@ -98,7 +98,7 @@ mkn.render = function(options)
     base = mkn.copy(base);
     mkn.deleteKeys(base, ['type', 'styles', 'style'])
     mkn.deleteKeys(base, geometry)
-    return mkn.merge(mkn.merge(base,type), item);
+    return mkn.merge(mkn.merge(type,base), item);
   }
 
   var mergeDefaults = function(item, defaults, base) {
@@ -173,6 +173,7 @@ mkn.render = function(options)
         promoteAttr(item);
         var base = mkn.copy(me.types[id]);
         var merged = mkn.merge(base, item);
+        item.id = id;
         if (mutable(merged))
           item = mergeDefaults(item, defaults, base);
         else
@@ -181,7 +182,8 @@ mkn.render = function(options)
       else if ($.isArray(item)) {
         array = item;
         id = item[0];
-        item = defaults;
+        item = mkn.copy(defaults);
+        if (array.length>1 && item.name === undefined) item.name = array[1]
         item.array = array;
       }
       else {
