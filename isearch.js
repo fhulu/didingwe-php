@@ -25,13 +25,17 @@ $.widget( "custom.isearch", {
 
     me.drop = opts.render.create(opts, 'drop', true)
       .on('click', '.isearch.option', function() {
-        el.val($(this).attr('value'));
-        me.searcher.val($(this).attr('chosen'));
-        me.drop.hide();
-        me.dropped = false;
+        el.trigger('selected', [$(this)]);
       })
       .scroll($.proxy(me._scroll,me))
       .appendTo(me.inputs);
+
+    el.on('selected', function(e, option) {
+      el.val(option.attr('value'));
+      me.searcher.val(option.attr('chosen'));
+      me.drop.hide();
+      me.dropped = false;
+    });
 
     me.dropper = inputs.find('.isearch.show-all').click(function() {
       if (me.dropped) {
