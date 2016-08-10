@@ -626,7 +626,8 @@ mkn.render = function(options)
       if (key.indexOf('on_') != 0) return;
       events.push(key);
       obj.on(key.substr(3), function(event) {
-        accept(event, obj, field, value);
+        value.path = field.path+"/"+key;
+        accept(event, obj, value);
       });
     });
     mkn.deleteKeys(field, events);
