@@ -486,10 +486,9 @@ labelled_input_page:
   type: input_page
 
 label_inside:
-  label: $name
   subject:
     class: [border,widest]
-    derive: [label]
+    label: $name
     attr: { placeholder: $label, title: $desc}
   text: $field
 
