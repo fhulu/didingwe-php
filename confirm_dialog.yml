@@ -10,3 +10,6 @@ confirm_dialog:
     - action: none
     - "yes"
     - "no"
+
+button:
+  class: [center-x]
