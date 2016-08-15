@@ -15,8 +15,14 @@ $.widget( "custom.isearch", {
     me.dropped = me.justDropped = false;
     me.params = { action: 'data', path: opts.path, key: opts.key, offset: 0, size: opts.drop.autoload  };
     var inputs = me.inputs = opts.render.create(opts, 'inputs', true)
-      .insertAfter(el.hide())
+      .insertAfter(el)
       .append(el)
+
+    if (!el.is(":visible")) inputs.hide();
+    el.on('toggle', function(e, v) {
+      el.hide()
+      inputs.toggle(v);
+    }).hide()
     me.searcher = inputs.find('.search').on('keyup input cut paste', function() {
       if (me.params.term == me.searcher.val()) return;
       me.params.offset = 0;

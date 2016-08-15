@@ -5,11 +5,13 @@ isearch:
   script: [/common/isearch.js]
   css: [/common/isearch.css]
   class: [ isearch ]
+  parent_id: $id
   inputs:
     classes: div
-    class: [isearch,inline-block,borderless]
-    derive: [search,buttons,width,placeholder,add,show_all]
+    class: [isearch-container,inline-block,borderless]
+    derive: [search,buttons,width,placeholder,add,show_all,parent_id]
     text: $search $buttons
+    attr: { id: isearch-$parent_id}
   search:
     type: input
     class: [search,widest,pad,borderless]
