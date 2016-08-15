@@ -479,13 +479,13 @@ mkn.render = function(options)
     setDisabled(obj, field);
 
     runJquery(obj, field);
-    initLinks(obj, field).then(function() {
-      if (subitem_count) setValues(obj, field);
-      initEvents(obj, field);
-    });
-
     obj.data('id',  id);
     field['mkn-object'] = obj;
+    initLinks(obj, field).then(function() {
+      if (subitem_count) setValues(obj, field);
+      if (!field.template) initEvents(obj, field);
+    });
+
     if (key !== undefined) parent[key] = field;
     return obj;
   }
@@ -621,20 +621,38 @@ mkn.render = function(options)
   }
 
   var initOnEvents = function(obj, field) {
-    var events = [];
+    var events = {};
+    if (field.action)
+      events['click'] = [field];
     $.each(field, function(key, value) {
       if (key.indexOf('on_') != 0) return;
-      events.push(key);
-      obj.on(key.substr(3), function(event) {
-        value.path = field.path+"/"+key;
-        accept(event, obj, value);
+      var event = key.substr(3);
+      if (!(event in events)) events[event] = [];
+      events[event].push(value);
+    });
+    $.each(events, function(key, values) {
+      obj.on(key, function(e) {
+        // trap trapped events
+        if ($.isArray(field.trap) && field.trap.indexOf(key) >=0 )
+          e.stopImmediatePropagation();
+
+        // ignore default action of an anchor
+        if (obj.prop("tagName") == 'a') {
+          e.preventDefault();
+          if (field.url === undefined) field.url = obj.attr('href');
+        }
+
+        // process event
+        $.each(values, function(i, value) {
+          console.log('responding to ', key, value);
+          if (!value.path) value.path = field.path + '/on_' + key;
+          accept(e, obj, value);
+        });
       });
     });
-    mkn.deleteKeys(field, events);
   }
 
-  var initEvents = function(obj, field)
-  {
+  var initEvents = function(obj, field) {
     initOnEvents(obj, field);
     if (typeof field.enter == 'string') {
       obj.keypress(function(event) {
@@ -650,17 +668,6 @@ mkn.render = function(options)
       respond(result);
     })
     initTooltip(obj);
-    if (!field.action) return;
-    obj.click(function(event) {
-      if (field.tag == 'a') {
-        event.preventDefault();
-        if (field.url === undefined) field.url = obj.attr('href');
-      }
-      accept(event, $(this), field);
-      if ($.isArray(field.trap) && field.trap.indexOf('click') >=0 ) {
-        event.stopImmediatePropagation();
-      }
-    });
   };
 
   var initLinks = function(object, field)
