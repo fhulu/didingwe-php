@@ -3,6 +3,8 @@ mkn.model = {};
 
 mkn.render = function(options)
 {
+  var searchModelRegex = /^~(.+)$|`([^`]+)`/g
+  var evalModelRegex = /(^~.+|`[^`]+`)/g
   var me = this
   me.invoker = options.invoker;
   var types = me.types = options.types;
@@ -1119,9 +1121,11 @@ mkn.render = function(options)
 
     var search = function(key, value, parent) {
       if (typeof key !== 'string' || key.indexOf('mkn-original-') == 0 || typeof value !== 'string') return false;
-      var exprs = value.regexCapture(/<d(?:idi)? ([^>]+)(?:>|$)/g);
+      var exprs = value.regexCapture(searchModelRegex);
+      if (exprs.length) console.log("exprs",key, value, exprs);
       var injections = [];
       $.each(exprs, function(i, e) {
+        if (!e) return;
         var injection = inject(e);
         if (injection) injections.push(injection);
       });
@@ -1147,11 +1151,11 @@ mkn.render = function(options)
       key = key.substr(13);
       if (key == 'html') return false;
       value = field[orig];
-      var exprs = value.regexCapture(/(<d(?:idi)? (?:[^>]+)(?:>|$))/g);
+      var exprs = value.regexCapture(evalModelRegex);
       if (!exprs.length) return false;
       var injections = field['mkn-injections-'+key];
       $.each(exprs, function(i, e) {
-        value = value.replace(e, injections[i]());
+        if (e) value = value.replace(e, injections[i]());
       });
       field[key] = value;
       if (key == 'text') field['mkn-object'].text(value);
