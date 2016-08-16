@@ -8,8 +8,5 @@ confirm_dialog:
   desc: Are you sure?
   actions:
     - action: none
-    - "yes"
-    - "no"
-
-button:
-  class: [center-x]
+    - "yes": {class: [center-x]}
+    - "no": {action: close_dialog,class: [center-x]}
