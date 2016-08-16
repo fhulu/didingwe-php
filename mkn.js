@@ -293,8 +293,8 @@ if (!String.prototype.regexCapture) {
   String.prototype.regexCapture = function(regex) {
     var matches = [];
     var match;
-    while (match = regex.exec(this)) {
-      matches.push(match[1]);
+    while ((match = regex.exec(this)) !== null) {
+      matches = matches.concat(match.slice(1))
     }
     return matches;
   }
