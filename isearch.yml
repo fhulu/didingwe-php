@@ -9,7 +9,7 @@ isearch:
   inputs:
     classes: div
     class: [isearch-container,inline-block,borderless]
-    derive: [search,buttons,width,placeholder,add,show_all,parent_id]
+    derive: [search,buttons,width,placeholder,adder,show_all,parent_id]
     text: $search $buttons
     attr: { id: isearch-$parent_id}
   search:
@@ -20,18 +20,18 @@ isearch:
   buttons:
     type: container
     class: [isearch,buttons,top-right,pad-y]
-    derive: [add,show_all]
-    contents: [$show_all, $add]
+    derive: [adder,show_all]
+    contents: [$show_all, $adder]
   show_all:
     type: google_icon
     icon: arrow_drop_down
     class: [isearch, show-all,text-dark-grey]
     tooltip: Show all items
     show: yes
-  add:
+  adder:
     type: google_icon
     width: auto
-    class: [isearch,add, text-dark-grey]
+    class: [isearch,adder, text-dark-grey]
     derive: [name]
     tooltip: Add new $name
     action: dialog

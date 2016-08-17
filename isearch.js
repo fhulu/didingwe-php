@@ -53,7 +53,7 @@ $.widget( "custom.isearch", {
       me._load();
     });
 
-    if (opts.add && opts.add.url) inputs.find('.isearch.add').show();
+    if (opts.adder && opts.adder.url) inputs.find('.isearch.adder').show();
 
     el.on('isearch_add', function( event, data) {
       el.val(data[0]);
