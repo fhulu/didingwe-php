@@ -14,9 +14,7 @@ test:
     - switched: { name: "Off", value: 0 }
     - string_test:
         type: p
-        # text: >
-        #   <d "color is " + color + " checked " + checked + " switched " + switched
-        text: color <d color> checked <d checked> switched <d switched>
+        text: color `color` checked `checked` switched `switched`
         on_click:
           action: post
           post:
@@ -25,14 +23,14 @@ test:
     - type: input
     - style_test:
         style:
-          background-color: <d color
-          color: <d colors[(color.indexOf(color)+3) % colors.length]
-        value: You chose <d color>
-        on_mousemove: <d moves = moves+1
-    - show_test: { show: <d checked> }
+          background-color: ~color
+          color: ~colors[(colors.indexOf(color)+3) % colors.length]
+        value: You chose `color`
+        on_mousemove: ~moves = moves+1
+    - show_test: { show: ~checked  }
     - checked_and_switched:
-        disabled: <d checked && switched
-        value: <d moves
+        disabled: ~checked && switched
+        value: ~moves
 
 
 

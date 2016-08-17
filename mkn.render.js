@@ -3,6 +3,8 @@ mkn.model = {};
 
 mkn.render = function(options)
 {
+  var searchModelRegex = /^~(.+)$|`([^`]+)`/g
+  var evalModelRegex = /(^~.+|`[^`]+`)/g
   var me = this
   me.invoker = options.invoker;
   var types = me.types = options.types;
@@ -407,14 +409,8 @@ mkn.render = function(options)
     me.root = parent[key] = me.initField(parent[key], parent);
     var obj = me.create(parent, key);
     obj.trigger('load');
-    if (!initModel()) return obj;
-    me.updateWatchers();
-    return obj.on('keyup input cut paste change', 'input,select,textarea', function() {
-      var id = $(this).data('id');
-      if (!(id in mkn.model)) return;
-      mkn.model[id] = $(this).value();
-      me.updateWatchers();
-    });
+    if (initModel()) me.updateWatchers();
+    return obj;
   }
 
   this.create =  function(parent, key, init)
@@ -479,11 +475,10 @@ mkn.render = function(options)
     setDisabled(obj, field);
 
     runJquery(obj, field);
-    obj.data('id',  id);
     field['mkn-object'] = obj;
     initLinks(obj, field).then(function() {
       if (subitem_count) setValues(obj, field);
-      if (!field.template) initEvents(obj, field);
+      initEvents(obj, field);
     });
 
     if (key !== undefined) parent[key] = field;
@@ -631,21 +626,18 @@ mkn.render = function(options)
       events[event].push(value);
     });
     $.each(events, function(key, values) {
-      obj.on(key, function(e) {
-        // trap trapped events
-        if ($.isArray(field.trap) && field.trap.indexOf(key) >=0 )
-          e.stopImmediatePropagation();
+      $.each(values, function(i, value) {
+        if (!value.path) value.path = field.path + '/on_' + key;
+        obj.on(key, function(e) {
+          // trap trapped events
+          if ($.isArray(field.trap) && field.trap.indexOf(key) >=0 )
+            e.stopImmediatePropagation();
 
-        // ignore default action of an anchor
-        if (obj.prop("tagName") == 'a') {
-          e.preventDefault();
-          if (field.url === undefined) field.url = obj.attr('href');
-        }
-
-        // process event
-        $.each(values, function(i, value) {
-          console.log('responding to ', key, value);
-          if (!value.path) value.path = field.path + '/on_' + key;
+          // ignore default action of an anchor
+          if (key == 'click' && obj.prop("tagName").toLowerCase() == 'a') {
+            e.preventDefault();
+            if (field.url === undefined) field.url = obj.attr('href');
+          }
           accept(e, obj, value);
         });
       });
@@ -653,6 +645,7 @@ mkn.render = function(options)
   }
 
   var initEvents = function(obj, field) {
+    if ('attr' in field && field.attr.for == field.id) return;
     initOnEvents(obj, field);
     if (typeof field.enter == 'string') {
       obj.keypress(function(event) {
@@ -668,6 +661,16 @@ mkn.render = function(options)
       respond(result);
     })
     initTooltip(obj);
+
+    var tag = obj.prop("tagName").toLowerCase();
+    if (['input','select','textarea'].indexOf(tag) < 0) return;
+
+    var id = field.id;
+    obj.on('keyup input cut paste change', function() {
+      if (!(id in mkn.model)) return;
+      mkn.model[id] = obj.value();
+      me.updateWatchers();
+    });
   };
 
   var initLinks = function(object, field)
@@ -1118,9 +1121,10 @@ mkn.render = function(options)
 
     var search = function(key, value, parent) {
       if (typeof key !== 'string' || key.indexOf('mkn-original-') == 0 || typeof value !== 'string') return false;
-      var exprs = value.regexCapture(/<d(?:idi)? ([^>]+)(?:>|$)/g);
+      var exprs = value.regexCapture(searchModelRegex);
       var injections = [];
       $.each(exprs, function(i, e) {
+        if (!e) return;
         var injection = inject(e);
         if (injection) injections.push(injection);
       });
@@ -1129,6 +1133,11 @@ mkn.render = function(options)
       parent['mkn-original-'+key] = value;
       return true;
     }
+
+
+    if (me.root.dd_init) $.each(me.root.dd_init, function(key, val) {
+      mkn.model[key] = val;
+    });
 
     var watching = false;
     mkn.walkTree(me.root, function(key, value, parent) {
@@ -1146,11 +1155,11 @@ mkn.render = function(options)
       key = key.substr(13);
       if (key == 'html') return false;
       value = field[orig];
-      var exprs = value.regexCapture(/(<d(?:idi)? (?:[^>]+)(?:>|$))/g);
+      var exprs = value.regexCapture(evalModelRegex);
       if (!exprs.length) return false;
       var injections = field['mkn-injections-'+key];
       $.each(exprs, function(i, e) {
-        value = value.replace(e, injections[i]());
+        if (e) value = value.replace(e, injections[i]());
       });
       field[key] = value;
       if (key == 'text') field['mkn-object'].text(value);
