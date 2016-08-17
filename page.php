@@ -690,14 +690,14 @@ class page
       return call_user_func($function);
 
     $params = explode(',', $params);
-    $context = merge_options($this->fields, $this->context, $_SESSION, $this->request, $this->answer);
+    $context = merge_options($this->context, $_SESSION, $this->request, $this->answer);
     replace_fields($context, $this->request);
     replace_fields($params, $this->request);
     replace_fields($params, $context);
-    log::debug_json("PARAMS", $params);
     foreach($params as &$val) {
       if ($val == 'context') $val = $context;
       if ($val == 'request') $val = $this->request;
+      if ($val == 'root') $val = merge_options($this->fields, $context);
     }
     return call_user_func_array($function, $params);
   }

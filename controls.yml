@@ -232,17 +232,6 @@ empty:
   tag: div
   text: ""
 
-#todo: fix backend inheritance
-export:
-  name: Export to Excel
-  desc: Export to an Excel spreadsheet
-  action: redirect
-  validate: none
-  post:
-    call: datatable::export(context,$key)
-  query: " "
-  target: _blank
-
 fieldset:
   templates: fieldset
   style: { display: table-column}
@@ -671,17 +660,6 @@ plot:
   css: [/common/jquery.jqplot.min.css]
   text: ""
   create: plotter
-
-
-# todo: fix back-end to contextualise
-print:
-  desc: Print above contents
-  action: redirect
-  validate: none
-  post:
-    - call: datatable::pdf(context,$key)
-  query: " "
-  target: _blank
 
 processing:
   classes: span

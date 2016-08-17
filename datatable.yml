@@ -74,3 +74,24 @@ datatable:
     desc: Hide options
 
   slideSpeed: 150
+
+#todo: fix backend inheritance
+export:
+  name: Export to Excel
+  desc: Export to an Excel spreadsheet
+  action: redirect
+  validate: none
+  post:
+    call: datatable::export(root,$key)
+  query: " "
+  target: _blank
+
+ # todo: fix back-end to contextualise
+print:
+ desc: Print above contents
+ action: redirect
+ validate: none
+ post:
+   - call: datatable::pdf(root,$key)
+ query: " "
+ target: _blank
