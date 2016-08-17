@@ -17,6 +17,10 @@ test:
         # text: >
         #   <d "color is " + color + " checked " + checked + " switched " + switched
         text: color <d color> checked <d checked> switched <d switched>
+        on_click:
+          action: post
+          post:
+            - alert: hello
 
     - type: input
     - style_test:
