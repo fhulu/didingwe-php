@@ -24,7 +24,7 @@ test:
     - style_test:
         style:
           background-color: ~color
-          color: ~colors[(color.indexOf(color)+3) % colors.length]
+          color: ~colors[(colors.indexOf(color)+3) % colors.length]
         value: You chose `color`
         on_mousemove: ~moves = moves+1
     - show_test: { show: ~checked  }

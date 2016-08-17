@@ -1122,7 +1122,6 @@ mkn.render = function(options)
     var search = function(key, value, parent) {
       if (typeof key !== 'string' || key.indexOf('mkn-original-') == 0 || typeof value !== 'string') return false;
       var exprs = value.regexCapture(searchModelRegex);
-      if (exprs.length) console.log("exprs",key, value, exprs);
       var injections = [];
       $.each(exprs, function(i, e) {
         if (!e) return;
@@ -1134,6 +1133,11 @@ mkn.render = function(options)
       parent['mkn-original-'+key] = value;
       return true;
     }
+
+
+    if (me.root.dd_init) $.each(me.root.dd_init, function(key, val) {
+      mkn.model[key] = val;
+    });
 
     var watching = false;
     mkn.walkTree(me.root, function(key, value, parent) {
