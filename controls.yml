@@ -441,7 +441,7 @@ input_page:
     derive: [desc]
     space: 16
     type: section_heading
-    text: $desc
+    name: $desc
   inputs:
     - template: $layout
     - type: input
