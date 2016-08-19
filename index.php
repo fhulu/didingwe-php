@@ -27,32 +27,24 @@ if (process_action()) return ;
 <?php
 echo_scripts($config['css'], "<link href='\$script' media='screen' rel='stylesheet' type='text/css' />\n");
 echo_scripts($config['scripts'], "<script src='\$script'></script>\n");
-?>
-<script>
-  var request_method = '<?=$config['request_method'];?>';
-</script>
-<?php
-  global $session;
-  log::debug_json("BROWSER REQUEST", $_REQUEST);
-  $path = $_REQUEST['path'];
-  $content = $_REQUEST['content'];
-  if (isset($path) && !isset($content)) {
-    $request = $options = $_REQUEST;
-  }
-  else {
-    $prefix = $_SESSION['uid'] == 0? 'landing': 'session';
-    $page = $config[$prefix.'_page'];
-    if ($content == '')  $content = $config[$prefix.'_content'];
-    $_SESSION['content'] = $content;
-    $request = $_REQUEST;
-    if (!is_null($content)) $request['content'] = $content;
-    unset($request['path']);
-    $options = array("path"=>$page);
-  }
-  $options['request'] = $request;
+
+log::debug_json("BROWSER REQUEST", $_REQUEST);
+$type = $_SESSION['uid'] == 0? 'landing': 'session';
+$page = $config[$type]['page'];
+$request = $_REQUEST;
+foreach($config[$type] as $sub_page) {
+  if ($page =='page') continue;
+  if (isset($request[$sub_page]))
+    $_SESSION[$sub_page] = $request[$sub_page];
+  else if (isset($_SESSION[$sub_page]))
+    $request[$sub_page] = $_SESSION[$sub_page];
+}
+$options = array("path"=>$page);
+$options['request'] = $request;
 ?>
 <script>
 $(function() {
+  var request_method = '<?=$config['request_method'];?>';
   $("body").page(<?=json_encode($options);?>);
 });
 </script>
