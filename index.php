@@ -1,16 +1,26 @@
 <?php session_start();
-  require_once '../common/log.php';
-  log::init('index', log::DEBUG);
-  require_once('../common/utils.php');
-  $action = REQUEST('action');
-  if (!is_null($action)) {
-    require_once('../common/page.php');
-    return;
-  }
+require_once '../common/log.php';
+require_once('../common/utils.php');
 
-  require_once '../common/session.php';
-  global  $session;
-  $tag = is_null($session)?time(): $session->id;
+function configure() {
+  global $config;
+  $config = load_yaml("app-config.yml", true);
+
+  if ($config['log_dir'] && $config['log_file'])
+    log::init($config['log_file'], log::DEBUG);
+
+  $site_config = load_yaml($config['site_config'], false);
+  $config = merge_options($config, $site_config);
+}
+
+function process_action() {
+  if (is_null($_REQUEST['action'])) return false;
+  require_once('../common/page.php');
+  return true;
+}
+
+configure();
+if (process_action()) return ;
 ?>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">

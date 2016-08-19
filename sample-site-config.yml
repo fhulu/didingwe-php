@@ -1,11 +1,9 @@
-program_name: My Program
-landing_page: index
-landing_content: home
-session_page: index
-session_content: home
 db_name: mydb
 db_user: myuser
 db_password: mypassword
+log_dir: ../log
+log_file: myprogram.log
+upload_dir: ../uploads
 email_otp: yes
 sms_otp: yes
 request_method: get
