@@ -4,7 +4,8 @@ require_once('../common/utils.php');
 
 function configure() {
   global $config;
-  $config = load_yaml("app-config.yml", true);
+  $config = load_yaml("../common/app-config.yml", true);
+  $config = merge_options($config, load_yaml("app-config.yml", false));
 
   if ($config['log_dir'] && $config['log_file'])
     log::init($config['log_file'], log::DEBUG);
@@ -43,8 +44,8 @@ $options = array("path"=>$page);
 $options['request'] = $request;
 ?>
 <script>
+var request_method = '<?=$config['request_method'];?>';
 $(function() {
-  var request_method = '<?=$config['request_method'];?>';
   $("body").page(<?=json_encode($options);?>);
 });
 </script>
