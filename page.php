@@ -6,8 +6,9 @@ require_once('q.php');
 
 class user_exception extends Exception {};
 
-$page = new page();
 try {
+  global $page;
+  $page = new page();
   $page->process();
 }
 catch (user_exception $exception) {
