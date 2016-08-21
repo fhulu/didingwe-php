@@ -33,12 +33,15 @@ log::debug_json("BROWSER REQUEST", $_REQUEST);
 $type = $_SESSION['uid'] == 0? 'landing': 'session';
 $page = $config[$type]['page'];
 $request = $_REQUEST;
-foreach($config[$type] as $sub_page) {
-  if ($page =='page') continue;
-  if (isset($request[$sub_page]))
-    $_SESSION[$sub_page] = $request[$sub_page];
-  else if (isset($_SESSION[$sub_page]))
-    $request[$sub_page] = $_SESSION[$sub_page];
+$session = &$_SESSION[$type];
+foreach($config[$type] as $setting=>$value) {
+  if ($setting =='page') continue;
+  if (isset($request[$setting]))
+    $session[$setting] = $request[$setting];
+  else if (isset($session[$setting]))
+    $request[$setting] = $session[$setting];
+  else
+    $request[$setting] = $session[$setting] = $value;
 }
 $options = array("path"=>$page);
 $options['request'] = $request;
