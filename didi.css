@@ -4,14 +4,10 @@
   -moz-box-sizing:border-box;
   box-sizing:border-box;
   position: relative;
-  font-family: Verdana, sans-serif;
   border-width: 1px;
   border-color: #ccc;
 }
 
-.material-icons {
-  font-family: 'Material Icons' !important;
-}
 /* Classed Styles */
 /* animations */
 .spin,.animate-spin{animation:spin 2s infinite linear;-webkit-animation:spin 2s infinite linear}
@@ -240,6 +236,7 @@
 
 /* positions */
 .absolute { position:absolute}
+.fixed { position: fixed }
 .bottom,.bottom-left,.bottom-right { top: 0; }
 .centered { margin-left: auto; margin-right: auto; }
 .center-all { text-align: center; margin-left: auto; margin-right: auto; vertical-align: center; }
