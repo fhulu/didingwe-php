@@ -5,8 +5,9 @@ session:
   page: /index
   content: /home
 log_dir: ../log
-log_file: qmessenger.log
-css: []
+log_file: access.log
+css:
+  - /common/didi.css
 scripts:
   - /jquery-min.js
   - /jquery-ui.min.js
