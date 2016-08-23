@@ -902,11 +902,11 @@ twin_input:
 
 vspace:
   mutable: false
-  type: blank
+  type: plain_text
+  text: ""
   space: 20
   template: none
-  styles: [vspaced]
-  class: [^inline-block, ^inline,block,clear]
+  style: {padding-bottom: $space}
 
 vspaced:
   space: 6px
