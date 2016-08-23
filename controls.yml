@@ -232,6 +232,12 @@ empty:
   tag: div
   text: ""
 
+font_awesome:
+  tag: i
+  icon: $id
+  class: [fa,fa-$icon]
+  css: [/common/font-awesome/css/font-awesome.min.css]
+
 fieldset:
   templates: fieldset
   style: { display: table-column}
@@ -625,7 +631,8 @@ page:
   class: [pad-bottom]
 
 page_title:
-  html: <title>$name</title>
+  tag: title
+  text: $name
 
 paragraph:
   type: p
