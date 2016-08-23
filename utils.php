@@ -1,5 +1,4 @@
 <?php
-$config = load_yaml(".config.yml", true);
 
 function at($array, $index)
 {
@@ -327,4 +326,11 @@ function to_array($obj)
 function is_function($str)
 {
   return preg_match('/(\w+::)?\w+\(.*\)$/', $str);
+}
+
+function echo_scripts($scripts, $template) {
+  if (!$scripts) return;
+  foreach($scripts as $script) {
+    echo str_replace('$script', $script, $template);
+  }
 }

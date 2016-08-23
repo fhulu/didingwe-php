@@ -310,7 +310,8 @@ login_password:
   valid: is_password_for(mail)
 
 logout:
-  post: [read_session,redirect: $landing_content]
+  read: action
+  post: [read_session, redirect: "/"]
   audit:
     detail: $user_email
     post: [call: session_destroy()]

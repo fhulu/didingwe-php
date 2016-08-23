@@ -6,8 +6,9 @@ require_once('q.php');
 
 class user_exception extends Exception {};
 
-$page = new page();
 try {
+  global $page;
+  $page = new page();
   $page->process();
 }
 catch (user_exception $exception) {
@@ -115,6 +116,7 @@ class page
         $this->root = $path[1];
         $this->page = $this->root;
         array_shift($path);
+        $this->path = $path;
       }
     }
     $this->set_fields();
@@ -560,7 +562,12 @@ class page
   {
     $this->merge_fields($fields);
     $actions = $fields['read'];
-    if (isset($actions)) $this->reply($actions);
+    if (!isset($actions)) return;
+    if ($actions == 'action') {
+      $this->set_context($this->path);
+      return $this->action();
+    }
+    return $this->reply($actions);
   }
 
   function read()

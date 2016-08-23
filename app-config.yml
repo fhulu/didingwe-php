@@ -1,0 +1,16 @@
+site_config: .site-config.yml
+landing:
+  page: /index
+session:
+  page: /index
+  content: /home
+log_dir: ../log
+log_file: qmessenger.log
+css: []
+scripts:
+  - /jquery-min.js
+  - /jquery-ui.min.js
+  - /common/mukoni.jquery.js
+  - /common/mkn.js
+  - /common/mkn.render.js
+  - /common/page.js
