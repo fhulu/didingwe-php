@@ -116,7 +116,6 @@ class page
         $this->root = $path[1];
         $this->page = $this->root;
         array_shift($path);
-        $this->path = $path;
       }
     }
     $this->set_fields();
