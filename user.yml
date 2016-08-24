@@ -377,12 +377,13 @@ profile:
     - email
     - role: { attr: disabled }
   values:
-    - sql_values: |
-        select p.title,p.first_name,p.last_name,u.cellphone,u.email,group_concat(r.name) role
-        from user u join person on u.email = p.email
-          left join role r on find_in_set(r.code,u.roles)
-        where u.id = '$uid'
-        group by u.id
+    - collection_values:
+        - user
+        - first_name
+        - last_name
+        - cellphone
+        - email: identifier
+        - role
   actions:
     - profile_update:
         validate: [title,first_name,last_name,email_address,cellphone]

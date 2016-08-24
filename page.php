@@ -30,7 +30,7 @@ class page
   static $fields_stack = array();
   static $post_items = array('audit', 'call', 'clear_session', 'clear_values', 'db_name', 'error', 'post',
     'q', 'valid', 'validate', 'write_session');
-  static $query_items = array('call', 'read_session', 'read_values', 'ref_list', 'sql', 'sql_values');
+  static $query_items = array('call', 'collection_values','read_session', 'read_values', 'ref_list', 'sql', 'sql_values');
   static $atomic_items = array('action', 'attr', 'css', 'html', 'script', 'sql',
     'style', 'template', 'valid');
   static $user_roles = array('public');
@@ -1053,7 +1053,7 @@ class page
     log::debug_json("REPLY ACTIONS", $actions);
 
     $methods = array('abort', 'alert', 'assert', 'call', 'clear_session', 'clear_values',
-      'close_dialog', 'error', 'foreach', 'let', 'load_lineage', 'logoff', 'read_session', 'read_values',
+      'close_dialog', 'collection_values', 'error', 'foreach', 'let', 'load_lineage', 'logoff', 'read_session', 'read_values',
        'redirect', 'ref_list', 'show_dialog', 'show_captcha', 'sql', 'sql_exec',
        'sql_rows', 'sql_insert','sql_update', 'sql_values', 'refresh', 'trigger',
        'update', 'upload', 'view_doc', 'write_session');
@@ -1320,14 +1320,21 @@ class page
     }
   }
 
-  static function parse_args($args)
+  static function verify_args(&$args, $cmd, $min_count)
   {
-    if (sizeof($args) != 1 || is_assoc($args[0])) return $args;
+    if (!sizeof($args) < $min_count)
+      throw new Exception("Invalid number of arguments for $cmd");
+    return $args;
+  }
+
+  static function parse_args($args, $cmd="", $min_count=0)
+  {
+    if (sizeof($args) != 1 || is_assoc($args[0])) return page::verify_args($args, $cmd, $min_cpount);
     $args = explode (',', $args[0]);
     foreach($args as &$arg) {
       $arg = trim($arg);
     }
-    return $args;
+    return page::verify_args($args, $cmd, $min_count);
   }
 
   function clear_session()
@@ -1479,5 +1486,46 @@ class page
     session_destroy();
     $_SESSION = [];
     $this->read_user(true);
+  }
+
+  function collection_values()
+  {
+    $args = page::parse_args(func_get_args(),"read_collection",2);
+    $collection = array_shift($args);
+    $identifier = "";
+    $primary = [];
+    $sub_fields = [];
+    foreach($args as &$arg) {
+      if (is_string($arg))
+        $name = $alias = $arg;
+      else if (is_assoc($arg)) {
+        list($alias, $name) = assoc_element($arg);
+        if (is_assoc($name)) $name = $alias;
+      }
+
+
+      if ($name == 'identifier')
+        $identifier = "$name $alias, ";
+      else if (empty($primary))
+        $primary = [$name, $alias];
+      else
+        $sub_fields[] = [$name,$alias];
+    }
+
+    $sql = "select $identifier value $primary[1]";
+
+    $sub_queries = [];
+    foreach($sub_fields as $name_alias) {
+      list($name,$alias) = $name_alias;
+      $name = addslashes($name);
+      $alias = addslashes($alias);
+      $sub_queries[] = "(select value from collection where collection = m.collection
+          and version <= m.version and identifier=m.identifier and attribute = '$name'
+          order by version desc limit 1) $alias";
+    }
+    if (!empty($sub_queries))
+      $sql .= "," . implode(",", $sub_queries);
+    $sql .= " from collection m where collection = '$collection' and version = 0 and attribute = '$primary[0]'";
+    return $this->sql_values($sql);
   }
 }
