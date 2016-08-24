@@ -217,6 +217,7 @@ login:
 logout:
   desc: Log out of the system
   access: reg
+  icon: sign-out
   src: /logout_icon.jpg
   action: post
   url: /user/logout
