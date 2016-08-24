@@ -10,12 +10,11 @@ left join collection ul on ul.collection = 'user' and ul.version = u.version  an
 left join collection l on l.collection = 'language' and l.version = u.version and ul.value = l.identifier and l.attribute = 'name'
 where u.collection = 'user' and u.attribute = 'password' and u.version = 0
 
-select identifier,
+select identifier email, value first_name,
 (select value from collection where collection = m.collection and version <= m.version and identifier=m.identifier and attribute = 'first_name' order by version desc limit 1) first_name,
 (select value from collection where collection = m.collection and version <= m.version and identifier=m.identifier and attribute = 'last_name' order by version desc limit 1) last_name,
-(select value from collection where collection = m.collection and version <= m.version and identifier=m.identifier and attribute = 'language' order by version desc limit 1) language_code,
 (select value from collection where collection = 'language' and version <= m.version and identifier = (
   select value from collection where collection = m.collection and version <= m.version and identifier=m.identifier and attribute = 'language' order by version desc limit 1)
   order by version desc limit 1) language
 from collection m
-where collection = 'user' and attribute = 'password' and version = 0
+where collection = 'user' and attribute = 'first_name' and version = 0
