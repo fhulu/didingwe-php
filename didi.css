@@ -4,8 +4,6 @@
   -moz-box-sizing:border-box;
   box-sizing:border-box;
   position: relative;
-  border-width: 1px;
-  border-color: #ccc;
 }
 
 /* Classed Styles */
@@ -234,9 +232,12 @@
 .transparent-8,.hover-transparent-8:hover{opacity:0.80;filter:alpha(opacity=80)}
 .transparent-9,.hover-transparent-9:hover{opacity:0.90;filter:alpha(opacity=90)}
 
-/* positions */
+/* positioning */
 .absolute { position:absolute}
 .fixed { position: fixed }
+.relative: { position: relative}
+
+/* placement */
 .bottom,.bottom-left,.bottom-right { top: 0; }
 .centered { margin-left: auto; margin-right: auto; }
 .center-all { text-align: center; margin-left: auto; margin-right: auto; vertical-align: center; }
