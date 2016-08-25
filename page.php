@@ -1538,18 +1538,19 @@ class page
     $joins = "";
     if (isset($filters)) {
       if (is_string($filters)) $filters = [$filters];
-      $index = 0;
+      $index = -1;
       $filters = array_map(function($filter) use (&$index) {
         list($name,$value) = $this->get_sql_pair($filter);
+        ++$index;
         if ($index == 0)
           return " and m.identifier = $value";
 
         $operator = "";
         if (ctype_alnum($value[0]) || $value[0] == "'")
             $operator .= " = ";
-        return " join collection m$index on m$index.collection = m.collection
+        return " collection m$index on m$index.collection = m.collection
             and m$index.version <= m.version and m$index.identifier=m.identifier
-            and m$index.attribute = '$name' and m1.value $operator $value";
+            and m$index.attribute = '$name' and m$index.value $operator $value";
       }, $filters);
       $where  = array_shift($filters);
       if (!empty($filters))
