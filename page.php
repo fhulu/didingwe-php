@@ -314,7 +314,7 @@ class page
   }
 
  function merge_stack_field(&$stack, $code, &$base_field = null)
-  {
+ {
     foreach ($stack as $fields) {
       $child_field = $fields[$code];
       if (!isset($child_field)) continue;
@@ -327,7 +327,7 @@ class page
   function read_external($path)
   {
     $request = $this->request;
-    $request['path'] = str_replace('.', '/', $path);
+    $request['path'] = $path;
     $page = new page($request);
     $page->sub_page = true;
     $page->process();
@@ -337,7 +337,7 @@ class page
 
   function get_expanded_field($code)
   {
-    if (preg_match('/^\w+\.\w+$/', $code))
+    if (preg_match('/^\w+\/\w+$/', $code))
       return $this->read_external($code);
     $field = $this->merge_stack_field(page::$fields_stack, $code);
     $this->merge_stack_field($this->page_stack, $code, $field);
@@ -1515,7 +1515,7 @@ class page
 
       if ($name == 'identifier')
         $identifier = "m.$name $alias, ";
-      else if (empty($primary))
+      else if (empty($primary) && strpos($name, '.') === false)
         $primary = [$name, $alias];
       else
         $sub_fields[] = [$name,$alias];
@@ -1526,10 +1526,23 @@ class page
       list($name,$alias) = $name_alias;
       $name = addslashes($name);
       $alias = addslashes($alias);
-      $sub_queries[] = "(select value from collection where collection = m.collection"
-          ." and version <= m.version and identifier=m.identifier and attribute = '$name'"
-          ." order by version desc limit 1) $alias";
+      list($foreign_key, $foreign_name) = explode('.', $name);
+      if (!isset($foreign_name)) {
+        $sub_queries[] =
+          "(select value from collection where collection = m.collection
+             and version <= m.version and identifier=m.identifier and attribute = '$name'
+             order by version desc limit 1) $alias";
+        continue;
+      }
+      if ($alias == $name) $alias = $foreign_key;
+      $sub_queries[] =
+        "(select value from collection where collection = '$foreign_key' and version <= m.version and attribute = '$foreign_name'
+            and identifier = (
+              select value from collection where collection = m.collection and version <= m.version
+                and identifier=m.identifier and attribute = '$foreign_key' order by version desc limit 1)
+          order by version desc limit 1) $alias";
     }
+
     if (!empty($sub_queries))
       $sub_queries = "," . implode(",", $sub_queries);
 

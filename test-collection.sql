@@ -12,7 +12,7 @@ where u.collection = 'user' and u.attribute = 'password' and u.version = 0
 
 select identifier email, value first_name,
 (select value from collection where collection = m.collection and version <= m.version and identifier=m.identifier and attribute = 'last_name' order by version desc limit 1) last_name,
-(select value from collection where collection = 'language' and version <= m.version and identifier = (
+(select value from collection where collection = 'language' and version <= m.version and attribute = 'name' and identifier = (
   select value from collection where collection = m.collection and version <= m.version and identifier=m.identifier and attribute = 'language' order by version desc limit 1)
   order by version desc limit 1) language
 from collection m

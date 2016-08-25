@@ -374,6 +374,7 @@ profile:
     - first_name
     - last_name
     - cellphone
+    - language
     - email
     - role: { attr: disabled }
   values:
@@ -384,6 +385,7 @@ profile:
         - last_name
         - cellphone
         - email: identifier
+        - language.name
         - role
   actions:
     - profile_update:
