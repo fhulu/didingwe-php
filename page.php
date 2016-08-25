@@ -910,6 +910,15 @@ class page
     return [$this->get_db_name($arg), $value];
   }
 
+  function get_sql_pairs($args)
+  {
+    $pairs = [];
+    foreach($args as $arg) {
+      $pairs[] = $this->get_sql_pair($arg);
+    }
+    return $pairs;
+  }
+
   function parse_delta(&$args)
   {
     $delta_index = array_search('delta', $args, true);
@@ -1505,27 +1514,49 @@ class page
 
 
       if ($name == 'identifier')
-        $identifier = "$name $alias, ";
+        $identifier = "m.$name $alias, ";
       else if (empty($primary))
         $primary = [$name, $alias];
       else
         $sub_fields[] = [$name,$alias];
     }
 
-    $sql = "select $identifier value $primary[1]";
-
-    $sub_queries = [];
+    $sub_queries = "";
     foreach($sub_fields as $name_alias) {
       list($name,$alias) = $name_alias;
       $name = addslashes($name);
       $alias = addslashes($alias);
-      $sub_queries[] = "(select value from collection where collection = m.collection
-          and version <= m.version and identifier=m.identifier and attribute = '$name'
-          order by version desc limit 1) $alias";
+      $sub_queries[] = "(select value from collection where collection = m.collection"
+          ." and version <= m.version and identifier=m.identifier and attribute = '$name'"
+          ." order by version desc limit 1) $alias";
     }
     if (!empty($sub_queries))
-      $sql .= "," . implode(",", $sub_queries);
-    $sql .= " from collection m where collection = '$collection' and version = 0 and attribute = '$primary[0]'";
+      $sub_queries = "," . implode(",", $sub_queries);
+
+    list($collection, $filters) = assoc_element($collection);
+    $where = "";
+    $joins = "";
+    if (isset($filters)) {
+      if (is_string($filters)) $filters = [$filters];
+      $index = 0;
+      $filters = array_map(function($filter) use (&$index) {
+        list($name,$value) = $this->get_sql_pair($filter);
+        if ($index == 0)
+          return " and m.identifier = $value";
+
+        $operator = "";
+        if (ctype_alnum($value[0]) || $value[0] == "'")
+            $operator .= " = ";
+        return " join collection m$index on m$index.collection = m.collection
+            and m$index.version <= m.version and m$index.identifier=m.identifier
+            and m$index.attribute = '$name' and m1.value $operator $value";
+      }, $filters);
+      $where  = array_shift($filters);
+      if (!empty($filters))
+        $joins = " join " .implode(" join ", $filters);
+    }
+    $sql = "select $identifier m.value $primary[1] $sub_queries from collection m $joins
+       where m.collection = '$collection' and m.version = 0 and m.attribute = '$primary[0]' $where";
     return $this->sql_values($sql);
   }
 }

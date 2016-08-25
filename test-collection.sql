@@ -17,3 +17,12 @@ select identifier email, value first_name,
   order by version desc limit 1) language
 from collection m
 where collection = 'user' and attribute = 'first_name' and version = 0
+
+
+select m.identifier email, m.value first_name,
+(select value from collection where collection = m.collection and version <= m.version and identifier=m.identifier and attribute = 'last_name' order by version desc limit 1) last_name,
+(select value from collection where collection = m.collection and version <= m.version and identifier=m.identifier and attribute = 'cellphone' order by version desc limit 1) cellphone,
+(select value from collection where collection = m.collection and version <= m.version and identifier=m.identifier and attribute = 'role' order by version desc limit 1) role
+from collection m
+join collection m1 on m1.collection = m.collection and m1.version <= m.version and m1.identifier=m.identifier and m1.attribute = 'active' and m1.value = '1'
+where m.collection = 'user' and m.version = 0 and m.identifier = 'fhulu@mukoni.co.za' and m.attribute = 'first_name'

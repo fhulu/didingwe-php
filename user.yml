@@ -377,8 +377,9 @@ profile:
     - email
     - role: { attr: disabled }
   values:
+    - read_session: [user_email]
     - collection_values:
-        - user
+        - user: [email: $user_email]
         - first_name
         - last_name
         - cellphone
