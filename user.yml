@@ -183,19 +183,6 @@ is_active:
     Account $value has been deactivated.
     Please ask the administrator to reactivate your account
 
-is_password_for:
-  valid:
-    - depends(email,email)
-    - depends(email,is_registered)
-    - depends(email,is_active)
-    - depends(email,is_unlocked)
-    - sql(select password=password('$value') from user where email = '$email')
-  error:
-    - sql_exec: update user set attempts = attempts+1 where email = '$email'
-    - sql_exec: >
-        insert into audit_trail(user, action, detail)
-          select id, 'Failed Login Attempt', email from user where email = '$email'
-    - error: Invalid user name or password for $email
 
 is_registered:
   valid: collection(user, $value)
@@ -283,8 +270,8 @@ login:
   desc: Fill in your credentials below and click Login to logon
   enter: "#login"
   inputs:
-    - email: { type: login_email }
-    - login_password: { type: password }
+    - email: { valid: login_email }
+    - password: { valid: login_password }
   actions:
     - login
     - forgot_password: { action: dialog }
@@ -302,12 +289,18 @@ login:
     - redirect: /$start_page
 
 login_email:
-  type: emailbox
   valid: [is_registered, is_active, is_unlocked]
 
 login_password:
-  name: Password
-  valid: is_password_for(mail)
+  valid:
+    - depends(email, validated)
+    - sql(select password=password('$value') from user where email = '$email')
+  error:
+    - sql_exec: update user set attempts = attempts+1 where email = '$email'
+    - sql_exec: >
+        insert into audit_trail(user, action, detail)
+          select id, 'Failed Login Attempt', email from user where email = '$email'
+    - error: [password, Invalid user name or password for $email ]
 
 logout:
   read: action

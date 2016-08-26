@@ -231,9 +231,6 @@ email_input:
   type: input
   format: email
 
-emailbox:
-  type: email_input
-
 empty:
   tag: div
   text: ""
@@ -644,12 +641,9 @@ page_title:
 paragraph:
   type: p
 
-password:
-  type: input
-  attr: { type: password }
-
 password_input:
-  type: password
+  type: input
+  format: password
 
 plain:
   tag: div

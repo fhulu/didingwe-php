@@ -144,11 +144,9 @@ email:
 
   name: Email Address
   format: email
-  valid:
-    - email
+  valid: [email]
 
-email_address:
-  type: email
+email_address: { type: email }
 
 error_page:
   desc: Unexpected error occured. Please report to your System Administrator.
@@ -287,7 +285,7 @@ passport_no:
 
 password:
   desc: A secret combination of letters and number only known to you. Please do not give out your password.
-  valid: password
+  valid: [password]
   format: password
 
 payweb:
