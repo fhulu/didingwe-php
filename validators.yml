@@ -34,6 +34,9 @@ between:
 blank:
   error: $name must be blank
 
+collection:
+  error: Invalid $name
+
 contains_at_least:
   valid: /$1/s
   error: $name must contain at least $2

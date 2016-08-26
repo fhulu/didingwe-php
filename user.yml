@@ -373,13 +373,13 @@ profile:
     - first_name
     - last_name
     - cellphone
-    - language
     - email
     - role: { attr: disabled }
   values:
     - read_session: [user_email]
     - collection:
         - values: [user, identifier: $user_email, active: 1]
+        - title
         - first_name
         - last_name
         - cellphone

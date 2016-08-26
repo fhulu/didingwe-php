@@ -423,4 +423,14 @@ class validator
     return $this->sql($sql);
   }
 
+  function collection()
+  {
+    global $page;
+    $collection = $this->name;
+    $filters = ["identifier"=>$this->value];
+    $result = $page->collection(["values"=>[$collection, $filters]], "identifier");
+    log::debug_json("result", $result);
+    return !empty($result);
+  }
+
 }

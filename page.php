@@ -1528,7 +1528,7 @@ class page
 
 
       if ($name == 'identifier')
-        $identifier = "m.$name $alias, ";
+        $identifier = "m.$name $alias";
       else if (empty($primary) && strpos($name, '.') === false)
         $primary = [$name, $alias];
       else
@@ -1558,14 +1558,14 @@ class page
     }
 
     if (!empty($sub_queries))
-      $sub_queries = "," . implode(",", $sub_queries);
+      $sub_queries = implode(",", $sub_queries);
 
     $where = "";
     $joins = "";
     if (isset($filters)) {
       if (is_string($filters)) $filters = [$filters];
       $index = 0;
-      $joins = array_reduce($filters, function($joins, $filter) use(&$index) {
+      $joins = array_reduce($filters, function($joins, $filter) use(&$index,&$where) {
         ++$index;
         list($name,$value) = $this->get_sql_pair($filter);
         if ($name == 'identifier') {
@@ -1581,8 +1581,15 @@ class page
             and m$index.attribute = '$name' and m$index.value $operator $value";
       });
     }
-    $sql = "select $identifier m.value $primary[1] $sub_queries from collection m $joins
-       where m.collection = '$collection' and m.version = 0 and m.attribute = '$primary[0]' $where";
+
+    $dataset = [$identifier];
+    if (!empty($primary)) {
+      $where .= " and m.attribute = '$primary[0]'";
+      $dataset[] = "m.value $primary[1]";
+    }
+    $dataset[] = $sub_queries;
+    $dataset = implode(",", array_filter($dataset));
+    $sql = "select $dataset from collection m $joins where m.collection = '$collection' and m.version = 0 $where";
     return $this->{"sql_$action"}($sql);
   }
 }

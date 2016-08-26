@@ -208,7 +208,8 @@ dropdown:
 dropdown_collection:
   type: dropdown
   options: [collection]
-  
+  valid: collection
+
 dropdown_default:
     classes: option
     derive: [unselected]
