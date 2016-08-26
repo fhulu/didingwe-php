@@ -362,7 +362,6 @@ otp:
   valid: >
     sql(select 1 from dual where timestampdiff(minute, '$time_of_otp', now()) < 30 and '$otp'='$server_otp')
 
-
 profile:
   type: input_page
   access: [reg]
@@ -370,7 +369,7 @@ profile:
   desc: These are your details on the system. You can make changes here to update them.
   width: 600
   inputs:
-    - title: {type: dropdown}
+    - title: {type: dropdown_collection}
     - first_name
     - last_name
     - cellphone
@@ -380,12 +379,11 @@ profile:
   values:
     - read_session: [user_email]
     - collection:
-        - values: [user, email: $user_email, active: 1]
+        - values: [user, identifier: $user_email, active: 1]
         - first_name
         - last_name
         - cellphone
         - email: identifier
-        - language.name
         - role
   actions:
     - profile_update:

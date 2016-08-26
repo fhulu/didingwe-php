@@ -80,11 +80,6 @@ confirm_password:
   desc: Type in the same password as above to confirm correctness
   valid: matches(password)
 
-country:
-  options:
-    - [za, South Africa]
-    - ref_list
-  valid: ref_list
 
 day_of_month:
   options:
@@ -388,15 +383,6 @@ system_audit_trail:
 
 title:
   desc: A descriptive or distinctive appellation, especially one belonging to a person by right of rank, office, attainment
-  options:
-    - dr
-    - miss
-    - mr
-    - mrs
-    - ms
-    - prof
-    - rev
-    - sir
 
 twitter:
   src: /twitter.png

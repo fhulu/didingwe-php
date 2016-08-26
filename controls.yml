@@ -204,6 +204,11 @@ dropdown:
     - dropdown_default
     - type: dropdown_option
 
+
+dropdown_collection:
+  type: dropdown
+  options: [collection]
+  
 dropdown_default:
     classes: option
     derive: [unselected]

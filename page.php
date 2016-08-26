@@ -35,9 +35,9 @@ class page
     'style', 'template', 'valid');
   static $user_roles = array('public');
   static $non_mergeable = array('action', 'attr', 'audit', 'call', 'clear_session',
-    'clear_values', 'load_lineage', 'post', 'read_session', 'refresh', 'show_dialog',
+    'clear_values', 'collection', 'load_lineage', 'post', 'read_session', 'refresh', 'show_dialog',
     'sql_insert', 'sql_update', 'style', 'trigger', 'valid', 'validate', 'write_session');
-  static $objectify = ['ref_list'];
+  static $objectify = ['collection','ref_list'];
   static $login_vars = ['uid','pid','roles','groups','user_email','user_first_name','user_last_name','user_cellphone'];
   var $request;
   var $object;
@@ -866,12 +866,17 @@ class page
     });
   }
 
-  function sql($sql)
+  function sql_data($sql)
   {
     $sql = $this->translate_sql($sql);
     if (preg_match('/\s*select/i', $sql))
       return $this->db->page_through_indices($sql);
     return $this->db->exec($sql);
+  }
+
+  function sql($sql)
+  {
+    return $this->sql_data();
   }
 
   function translate_sql($sql)
@@ -1499,7 +1504,11 @@ class page
 
   function collection()
   {
-    $args = page::parse_args(func_get_args(),"collection",2);
+    $args = page::parse_args(func_get_args());
+    if (empty($args)) {
+      $collection = $this->path[sizeof($this->path)-2];
+      $args = [["data"=>$collection], "identifier", "name"];
+    }
     list($action, $header) = assoc_element(array_shift($args));
     if (!is_array($header)) $header = [$header];
     page::verify_args($header, "collection header", 1);
@@ -1555,23 +1564,22 @@ class page
     $joins = "";
     if (isset($filters)) {
       if (is_string($filters)) $filters = [$filters];
-      $index = -1;
-      $filters = array_map(function($filter) use (&$index) {
-        list($name,$value) = $this->get_sql_pair($filter);
+      $index = 0;
+      $joins = array_reduce($filters, function($joins, $filter) use(&$index) {
         ++$index;
-        if ($index == 0)
-          return " and m.identifier = $value";
+        list($name,$value) = $this->get_sql_pair($filter);
+        if ($name == 'identifier') {
+          $where = " and m.$name = $value";
+          return "";
+        }
 
         $operator = "";
         if (ctype_alnum($value[0]) || $value[0] == "'")
             $operator .= " = ";
-        return " collection m$index on m$index.collection = m.collection
+        return $joins .= " join collection m$index on m$index.collection = m.collection
             and m$index.version <= m.version and m$index.identifier=m.identifier
             and m$index.attribute = '$name' and m$index.value $operator $value";
-      }, $filters);
-      $where  = array_shift($filters);
-      if (!empty($filters))
-        $joins = " join " .implode(" join ", $filters);
+      });
     }
     $sql = "select $identifier m.value $primary[1] $sub_queries from collection m $joins
        where m.collection = '$collection' and m.version = 0 and m.attribute = '$primary[0]' $where";
