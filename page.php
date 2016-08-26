@@ -35,7 +35,7 @@ class page
     'style', 'template', 'valid');
   static $user_roles = array('public');
   static $non_mergeable = array('action', 'attr', 'audit', 'call', 'clear_session',
-    'clear_values', 'collection', 'load_lineage', 'post', 'read_session', 'refresh', 'show_dialog',
+    'clear_values', 'collection', 'error', 'load_lineage', 'post', 'read_session', 'refresh', 'show_dialog',
     'sql_insert', 'sql_update', 'style', 'trigger', 'valid', 'validate', 'write_session');
   static $objectify = ['collection','ref_list'];
   static $login_vars = ['uid','pid','roles','groups','user_email','user_first_name','user_last_name','user_cellphone'];
@@ -632,14 +632,14 @@ class page
     else
      $include = true;
 
-    $validated = array();
-    walk_recursive_down($field, function($value, $key, $parent) use (&$exclude, &$validated, &$include) {
+    walk_recursive_down($field, function($value, $key, $parent) use (&$exclude, &$include) {
       if (!is_assoc($parent))
         list($code, $value) = assoc_element($value);
       else
         $code = $key;
       if ($include !== true && !in_array($code, $include, true)) return;
-      if (in_array($code, $validated, true)) return false;
+      $validator = &$this->validator;
+      if ($validator->checked($code)) return false;
       if (in_array($code, $exclude, true)) return false;
       if (!is_null($value) && !is_array($value)) return false;
 
@@ -648,17 +648,13 @@ class page
       $valid = $value['valid'];
       if ($valid == "") return;
 
-      $validated[] = $code;
-      $validator = &$this->validator;
-      $result = $validator->check($code, $value)->is($valid);
+      $result = $validator->validate($code, $value, $valid);
       if ($result === true) return;
 
       $error = $validator->error;
-      if (is_array($error)) {
-        list($error) = find_assoc_element($error, 'error');
+      if (is_array($error))
         $this->reply($validator->error);
-      }
-      if (!is_null($error))
+      else if (!is_null($error))
         page::error($code, $error);
 
     });
