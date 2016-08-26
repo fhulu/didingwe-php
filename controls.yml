@@ -208,7 +208,7 @@ dropdown:
 dropdown_collection:
   type: dropdown
   options: [collection]
-  valid: collection
+  valid: collection($name,$value)
 
 dropdown_default:
     classes: option

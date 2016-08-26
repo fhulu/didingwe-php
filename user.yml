@@ -198,7 +198,7 @@ is_password_for:
     - error: Invalid user name or password for $email
 
 is_registered:
-  valid: sql(select 1 from user where email= '$value')
+  valid: collection(user, $value)
   error: >
     There is no such email '$value' registered on the system.<br>
     Click on <b>Register</b> if you would like to register to use the system.
