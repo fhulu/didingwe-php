@@ -30,7 +30,7 @@ class page
   static $fields_stack = array();
   static $post_items = array('audit', 'call', 'clear_session', 'clear_values', 'db_name', 'error', 'post',
     'q', 'valid', 'validate', 'write_session');
-  static $query_items = array('call', 'collection_values','read_session', 'read_values', 'ref_list', 'sql', 'sql_values');
+  static $query_items = array('call', 'collection','read_session', 'read_values', 'ref_list', 'sql', 'sql_values');
   static $atomic_items = array('action', 'attr', 'css', 'html', 'script', 'sql',
     'style', 'template', 'valid');
   static $user_roles = array('public');
@@ -1062,7 +1062,7 @@ class page
     log::debug_json("REPLY ACTIONS", $actions);
 
     $methods = array('abort', 'alert', 'assert', 'call', 'clear_session', 'clear_values',
-      'close_dialog', 'collection_values', 'error', 'foreach', 'let', 'load_lineage', 'logoff', 'read_session', 'read_values',
+      'close_dialog', 'collection', 'error', 'foreach', 'let', 'load_lineage', 'logoff', 'read_session', 'read_values',
        'redirect', 'ref_list', 'show_dialog', 'show_captcha', 'sql', 'sql_exec',
        'sql_rows', 'sql_insert','sql_update', 'sql_values', 'refresh', 'trigger',
        'update', 'upload', 'view_doc', 'write_session');
@@ -1331,19 +1331,19 @@ class page
 
   static function verify_args(&$args, $cmd, $min_count)
   {
-    if (!sizeof($args) < $min_count)
-      throw new Exception("Invalid number of arguments for $cmd");
+    if (sizeof($args) < $min_count)
+      throw new Exception("Too few arguments for $cmd, must be at least $min_count");
     return $args;
   }
 
   static function parse_args($args, $cmd="", $min_count=0)
   {
-    if (sizeof($args) != 1 || is_assoc($args[0])) return page::verify_args($args, $cmd, $min_cpount);
-    $args = explode (',', $args[0]);
-    foreach($args as &$arg) {
-      $arg = trim($arg);
-    }
-    return page::verify_args($args, $cmd, $min_count);
+    if (sizeof($args) != 1) return page::verify_args($args, $cmd, $min_count);
+    $args = array_map(function($arg) {
+      return trim($arg);
+    }, explode (',', $args[0]));
+
+      return page::verify_args($args, $cmd, $min_count);
   }
 
   function clear_session()
@@ -1497,10 +1497,15 @@ class page
     $this->read_user(true);
   }
 
-  function collection_values()
+  function collection()
   {
-    $args = page::parse_args(func_get_args(),"read_collection",2);
-    $collection = array_shift($args);
+    $args = page::parse_args(func_get_args(),"collection",2);
+    list($action, $header) = assoc_element(array_shift($args));
+    if (!is_array($header)) $header = [$header];
+    page::verify_args($header, "collection header", 1);
+    $collection = array_shift($header);
+    $filters = $header;
+
     $identifier = "";
     $primary = [];
     $sub_fields = [];
@@ -1546,7 +1551,6 @@ class page
     if (!empty($sub_queries))
       $sub_queries = "," . implode(",", $sub_queries);
 
-    list($collection, $filters) = assoc_element($collection);
     $where = "";
     $joins = "";
     if (isset($filters)) {
@@ -1571,6 +1575,6 @@ class page
     }
     $sql = "select $identifier m.value $primary[1] $sub_queries from collection m $joins
        where m.collection = '$collection' and m.version = 0 and m.attribute = '$primary[0]' $where";
-    return $this->sql_values($sql);
+    return $this->{"sql_$action"}($sql);
   }
 }
