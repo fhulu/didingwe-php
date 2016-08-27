@@ -276,15 +276,10 @@ login:
     - login
     - forgot_password: { action: dialog }
   post:
-    - sql_values: |
-        select u.id uid, partner pid, u.email user_email, first_name user_first_name, last_name user_last_name,
-          concat(first_name, ' ', last_name) user_full_name,
-          u.cellphone user_cellphone, roles, groups,  ifnull(start_page,'home') start_page
-        from user u join person p on u.person = p.id
-        where u.email='$email'
-    - load_lineage: [roles,role,code,base_code]
-    - sql_exec: update user set attempts = 0 where id = $uid
-    - write_session: uid,pid,roles,user_email,user_first_name,user_last_name,user_full_name,user_cellphone
+    - collection: [values, user, [identifier: $email], partner, first_name, last_name, cellphone, roles, start_page ]
+    # - load_lineage: [roles,role,code,base_code]
+    # - collection: [update, user, [identifier: $email], attempts: 0]
+    - write_session: [uid: $email, pid,roles: [reg],user_email: $email,user_first_name: $first_name,user_last_name: $last_name,user_cellphone: $cellphone]
     - close_dialog
     - redirect: /$start_page
 
@@ -369,15 +364,8 @@ profile:
     - email
     - role: { attr: disabled }
   values:
-    - read_session: [user_email]
-    - collection:
-        - values: [user, identifier: $user_email, active: 1]
-        - title
-        - first_name
-        - last_name
-        - cellphone
-        - email: identifier
-        - role
+    - read_session: [email: user_email]
+    - collection: [values, user, [identifier: $email], title, first_name, last_name, cellphone]
   actions:
     - profile_update:
         validate: [title,first_name,last_name,email_address,cellphone]

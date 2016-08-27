@@ -1266,8 +1266,11 @@ class page
     if (sizeof($vars) == 0) return $_SESSION;
     $values = array();
     foreach($vars as $var) {
+      $alias = $var;
+      if (is_array($var))
+        list($alias,$var) = assoc_element($var);
       if (isset($_SESSION[$var]))
-        $values[$var] = $_SESSION[$var];
+        $values[$alias] = $_SESSION[$var];
     }
     return $values;
   }
@@ -1339,12 +1342,12 @@ class page
 
   static function parse_args($args, $cmd="", $min_count=0)
   {
-    if (sizeof($args) != 1) return page::verify_args($args, $cmd, $min_count);
+    if (empty($args) || sizeof($args) > 1 || is_array($args[0])) return page::verify_args($args, $cmd, $min_count);
     $args = array_map(function($arg) {
       return trim($arg);
     }, explode (',', $args[0]));
 
-      return page::verify_args($args, $cmd, $min_count);
+    return page::verify_args($args, $cmd, $min_count);
   }
 
   function clear_session()
@@ -1501,15 +1504,11 @@ class page
   function collection()
   {
     $args = page::parse_args(func_get_args());
-    if (empty($args)) {
-      $collection = $this->path[sizeof($this->path)-2];
-      $args = [["data"=>$collection], "identifier", "name"];
-    }
-    list($action, $header) = assoc_element(array_shift($args));
-    if (!is_array($header)) $header = [$header];
-    page::verify_args($header, "collection header", 1);
-    $collection = array_shift($header);
-    $filters = $header;
+    if (empty($args))
+      $args = ["data", $this->path[sizeof($this->path)-2], [], "identifier", "name"];
+
+    page::verify_args($args, "collection", 4);
+    list($action, $collection, $filters) = array_splice($args, 0, 3);
 
     $identifier = "";
     $primary = [];
@@ -1558,8 +1557,7 @@ class page
 
     $where = "";
     $joins = "";
-    if (isset($filters)) {
-      if (is_string($filters)) $filters = [$filters];
+    if (!empty($filters)) {
       $index = 0;
       $joins = array_reduce($filters, function($joins, $filter) use(&$index,&$where) {
         ++$index;
