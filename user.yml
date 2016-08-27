@@ -178,7 +178,7 @@ history:
 
 
 is_active:
-  valid: sql(select active from user where email = '$value')
+  valid: collection_filter(user,$value,active)
   error: |
     Account $value has been deactivated.
     Please ask the administrator to reactivate your account
@@ -192,7 +192,7 @@ is_registered:
 
 is_unlocked:
   max_attempts: 5
-  valid: sql(select attempts < $max_attempts from user where email = '$value')
+  valid: collection_filter(user,$value,attempts,<$max_attempts)
   error: |
     Account $value locked because of too many incorrect attempts.
     Please ask the administrator to unlock your account.
@@ -294,7 +294,7 @@ login_email:
 login_password:
   valid:
     - depends(email, validated)
-    - sql(select password=password('$value') from user where email = '$email')
+    - collection_filter(user,$email,password,=password('$value'))
   error:
     - sql_exec: update user set attempts = attempts+1 where email = '$email'
     - sql_exec: >
