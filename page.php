@@ -30,14 +30,13 @@ class page
   static $fields_stack = array();
   static $post_items = array('audit', 'call', 'clear_session', 'clear_values', 'db_name', 'error', 'post',
     'q', 'valid', 'validate', 'write_session');
-  static $query_items = array('call', 'collection','read_session', 'read_values', 'ref_list', 'sql', 'sql_values');
+  static $query_items = array('call','read_session', 'read_values', 'ref_list', 'sql', 'sql_values');
   static $atomic_items = array('action', 'attr', 'css', 'html', 'script', 'sql',
     'style', 'template', 'valid');
   static $user_roles = array('public');
   static $non_mergeable = array('action', 'attr', 'audit', 'call', 'clear_session',
-    'clear_values', 'collection', 'error', 'load_lineage', 'post', 'read_session', 'refresh', 'show_dialog',
+    'clear_values','error', 'load_lineage', 'post', 'read_session', 'refresh', 'show_dialog',
     'sql_insert', 'sql_update', 'style', 'trigger', 'valid', 'validate', 'write_session');
-  static $objectify = ['collection','ref_list'];
   static $login_vars = ['uid','pid','roles','groups','user_email','user_first_name','user_last_name','user_cellphone'];
   var $request;
   var $object;
@@ -64,6 +63,7 @@ class page
   var $context;
   var $sub_page;
   var $includes;
+  var $helpers;
 
   function __construct($request=null, $user_db=null)
   {
@@ -89,6 +89,7 @@ class page
     $this->answer = null;
     $this->expand_stack = array();
     $this->sub_page = false;
+    $this->helpers = [];
   }
 
   function process()
@@ -420,6 +421,23 @@ class page
     }
   }
 
+  static function is_helper($x, &$class="", &$method="")
+  {
+    if (!is_string($x)) return false;
+    global $config;
+    list($class, $method) = explode('.', $x);
+    return in_array($class, $config['helpers']);
+  }
+
+  function get_helper_method($x)
+  {
+    if (!page::is_helper($x, $class, $method)) return false;
+    $helper = $this->helpers[$class];
+    if ($helper) return [$helper,$method];
+    require_once("$class.php");
+    $this->helper[$class] =  $helper = new $class($this);
+    return [$helper,$method];
+  }
 
   function expand_types(&$fields)
   {
@@ -435,7 +453,7 @@ class page
         $type = $value;
         $value = null;
       }
-      if (is_null($value)  && in_array($type, page::$objectify)) {
+      if (is_null($value)  && page::is_helper($type)) {
         $value = [];
         $parent[$key] = [$type=>$value];
       }
@@ -491,7 +509,8 @@ class page
   {
     return !preg_match('/^if /', $key)
       && !in_array($key, page::$post_items, true)
-      && !in_array($key, page::$query_items, true);
+      && !in_array($key, page::$query_items, true)
+      && !page::is_helper($key);
   }
 
   function merge_fields(&$fields, $merged = array())
@@ -551,7 +570,7 @@ class page
     walk_recursive_down($fields, function(&$value, $key, &$parent) {
       if (!$this->is_render_item($key) || $key === 'access')
         unset($parent[$key]);
-      if (in_array($key, page::$query_items, true))
+      if (in_array($key, page::$query_items, true) || page::is_helper($key))
         $parent['query'] = " ";
     });
 
@@ -1020,7 +1039,7 @@ class page
       $context['user_email'] = $user['email'];
       $context['uid'] = $user['uid'];
     }
-    $context['server_host'] = page::base_url();
+    // $context['server_host'] = page::base_url();
     $this->context = $context;
   }
 
@@ -1052,6 +1071,7 @@ class page
     return true;
   }
 
+
   function reply($actions)
   {
     $post = at($actions, 'post');
@@ -1063,7 +1083,7 @@ class page
     log::debug_json("REPLY ACTIONS", $actions);
 
     $methods = array('abort', 'alert', 'assert', 'call', 'clear_session', 'clear_values',
-      'close_dialog', 'collection', 'error', 'foreach', 'let', 'load_lineage', 'logoff', 'read_session', 'read_values',
+      'close_dialog', 'error', 'foreach', 'let', 'load_lineage', 'logoff', 'read_session', 'read_values',
        'redirect', 'ref_list', 'show_dialog', 'show_captcha', 'sql', 'sql_exec',
        'sql_rows', 'sql_insert','sql_update', 'sql_values', 'refresh', 'trigger',
        'update', 'upload', 'view_doc', 'write_session');
@@ -1088,10 +1108,11 @@ class page
       }
       log::debug_json("REPLY ACTION $method", $parameter);
       if ($this->reply_if($method, $parameter)) continue;
-      if (is_callable("q::$method")) {
-        array_unshift($parameter, $method);
-        $method = 'q';
-      }
+
+      $context = $this;
+      $helper_method  = page::get_helper_method($method);
+      if ($helper_method)
+        list($context, $method) = $helper_method;
       else if (is_function($method)) {
         $parameter = [$method];
         $method = 'call';
@@ -1101,7 +1122,7 @@ class page
       if ($method == 'foreach')
         $result = $this->reply_foreach($parameter);
       else
-        $result = call_user_func_array(array($this, $method), $parameter);
+        $result = call_user_func_array(array($context, $method), $parameter);
       if ($result === false) {
         $this->aborted = true;
         return false;
@@ -1501,89 +1522,4 @@ class page
     $this->read_user(true);
   }
 
-  function collection()
-  {
-    $args = page::parse_args(func_get_args());
-    if (empty($args))
-      $args = ["data", $this->path[sizeof($this->path)-2], [], "identifier", "name"];
-
-    page::verify_args($args, "collection", 4);
-    list($action, $collection, $filters) = array_splice($args, 0, 3);
-
-    $identifier = "";
-    $primary = [];
-    $sub_fields = [];
-    foreach($args as &$arg) {
-      if (is_string($arg))
-        $name = $alias = $arg;
-      else if (is_assoc($arg)) {
-        list($alias, $name) = assoc_element($arg);
-        if (is_assoc($name)) $name = $alias;
-      }
-
-
-      if ($name == 'identifier')
-        $identifier = "m.$name $alias";
-      else if (empty($primary) && strpos($name, '.') === false)
-        $primary = [$name, $alias];
-      else
-        $sub_fields[] = [$name,$alias];
-    }
-
-    $sub_queries = "";
-    foreach($sub_fields as $name_alias) {
-      list($name,$alias) = $name_alias;
-      $name = addslashes($name);
-      $alias = addslashes($alias);
-      list($foreign_key, $foreign_name) = explode('.', $name);
-      if (!isset($foreign_name)) {
-        $sub_queries[] =
-          "(select value from collection where collection = m.collection
-             and version <= m.version and identifier=m.identifier and attribute = '$name'
-             order by version desc limit 1) $alias";
-        continue;
-      }
-      if ($alias == $name) $alias = $foreign_key;
-      $sub_queries[] =
-        "(select value from collection where collection = '$foreign_key' and version <= m.version and attribute = '$foreign_name'
-            and identifier = (
-              select value from collection where collection = m.collection and version <= m.version
-                and identifier=m.identifier and attribute = '$foreign_key' order by version desc limit 1)
-          order by version desc limit 1) $alias";
-    }
-
-    if (!empty($sub_queries))
-      $sub_queries = implode(",", $sub_queries);
-
-    $where = "";
-    $joins = "";
-    if (!empty($filters)) {
-      $index = 0;
-      $joins = array_reduce($filters, function($joins, $filter) use(&$index,&$where) {
-        ++$index;
-        list($name,$value) = $this->get_sql_pair($filter);
-        if ($name == 'identifier') {
-          $where = " and m.$name = $value";
-          return "";
-        }
-
-        $operator = "";
-        if (ctype_alnum($value[0]) || $value[0] == "'")
-            $operator .= " = ";
-        return $joins .= " join collection m$index on m$index.collection = m.collection
-            and m$index.version <= m.version and m$index.identifier=m.identifier
-            and m$index.attribute = '$name' and m$index.value $operator $value";
-      });
-    }
-
-    $dataset = [$identifier];
-    if (!empty($primary)) {
-      $where .= " and m.attribute = '$primary[0]'";
-      $dataset[] = "m.value $primary[1]";
-    }
-    $dataset[] = $sub_queries;
-    $dataset = implode(",", array_filter($dataset));
-    $sql = "select $dataset from collection m $joins where m.collection = '$collection' and m.version = 0 $where";
-    return $this->{"sql_$action"}($sql);
-  }
 }

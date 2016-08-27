@@ -15,3 +15,5 @@ scripts:
   - /common/mkn.js
   - /common/mkn.render.js
   - /common/page.js
+helpers:
+  - collection

@@ -276,7 +276,7 @@ login:
     - login
     - forgot_password: { action: dialog }
   post:
-    - collection: [values, user, [identifier: $email], partner, first_name, last_name, cellphone, roles, start_page ]
+    - collection.values: [user, [identifier: $email], partner, first_name, last_name, cellphone, roles, start_page ]
     # - load_lineage: [roles,role,code,base_code]
     # - collection: [update, user, [identifier: $email], attempts: 0]
     - write_session: [uid: $email, pid,roles: [reg],user_email: $email,user_first_name: $first_name,user_last_name: $last_name,user_cellphone: $cellphone]
@@ -365,7 +365,7 @@ profile:
     - role: { attr: disabled }
   values:
     - read_session: [email: user_email]
-    - collection: [values, user, [identifier: $email], title, first_name, last_name, cellphone]
+    - collection.values: [user, [identifier: $email], title, first_name, last_name, cellphone]
   actions:
     - profile_update:
         validate: [title,first_name,last_name,email_address,cellphone]
