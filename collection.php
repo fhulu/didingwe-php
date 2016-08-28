@@ -49,20 +49,19 @@ class collection
       $name = addslashes($name);
       $alias = addslashes($alias);
       list($foreign_key, $foreign_name) = explode('.', $name);
-      if (!isset($foreign_name)) {
-        $queries[] =
-          "(select value from collection where collection = m.collection
-             and version <= m.version and identifier=m.identifier and attribute = '$name'
-             order by version desc limit 1) $alias";
-        continue;
-      }
-      if ($alias == $name) $alias = $foreign_key;
-      $queries[] =
-        "(select value from collection where collection = '$foreign_key' and version <= m.version and attribute = '$foreign_name'
+      if (!isset($foreign_name)) 
+        $query = "select value from collection where collection = m.collection
+             and version <= m.version and identifier=m.identifier and attribute = '$name'";
+     
+      else {
+        if ($alias == $name) $alias = $foreign_key;
+        $query =
+          "select value from collection where collection = '$foreign_key' and version <= m.version and attribute = '$foreign_name'
             and identifier = (
               select value from collection where collection = m.collection and version <= m.version
-                and identifier=m.identifier and attribute = '$foreign_key' order by version desc limit 1)
-          order by version desc limit 1) $alias";
+                and identifier=m.identifier and attribute = '$foreign_key' order by version desc limit 1)";
+      }
+      $queries[] = "ifnull(($query order by version desc limit 1),'\$$name') $alias";
     }
     return implode(",", $queries);
   }
