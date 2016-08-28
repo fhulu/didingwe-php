@@ -1083,7 +1083,7 @@ class page
     log::debug_json("REPLY ACTIONS", $actions);
 
     $methods = array('abort', 'alert', 'assert', 'call', 'clear_session', 'clear_values',
-      'close_dialog', 'error', 'foreach', 'let', 'load_lineage', 'logoff', 'read_session', 'read_values',
+      'close_dialog', 'error', 'foreach', 'let', 'load_lineage', 'logoff', 'read_config', 'read_session', 'read_values',
        'redirect', 'ref_list', 'show_dialog', 'show_captcha', 'sql', 'sql_exec',
        'sql_rows', 'sql_insert','sql_update', 'sql_values', 'refresh', 'trigger',
        'update', 'upload', 'view_doc', 'write_session');
@@ -1281,25 +1281,38 @@ class page
     }
   }
 
-  function read_session()
+  static function read_settings($settings,$args)
   {
-    $vars = page::parse_args(func_get_args());
+    $vars = page::parse_args($args);
     if (sizeof($vars) == 0) return $_SESSION;
     $values = array();
     foreach($vars as $var) {
       $alias = $var;
       if (is_array($var))
         list($alias,$var) = assoc_element($var);
-      if (isset($_SESSION[$var]))
-        $values[$alias] = $_SESSION[$var];
+      if (isset($settings[$var]))
+        $values[$alias] = $settings[$var];
     }
     return $values;
+  }
+
+  function read_session()
+  {
+    return page::read_settings($_SESSION, func_get_args());
   }
 
   function read_session_list()
   {
     $values = call_user_func_array(array($this, 'read_session'), func_get_args());
     return array_values($values);
+  }
+
+  function read_config()
+  {
+    global $config;
+    $result = page::read_settings($config, func_get_args());
+    log::debug_json("result", $result);
+    return $result;
   }
 
   function read_values($values)
