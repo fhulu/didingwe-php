@@ -133,8 +133,23 @@ class collection
         $condition = " and m.attribute = '$name'";
       }
       $attribute = $name== 'identifier'? $name: 'value';
-      $db = $this->db;
       $this->page->sql_exec("update collection m $join set m.$attribute = $value $where $condition");
     }
   }
+
+  function insert()
+  {
+    $args = page::parse_args(func_get_args());
+    page::verify_args($args, "collection.insert", 3);
+    list($collection, $identifier) = array_splice($args, 0, 2);
+    $sql = "insert into collection(version,collection,identifier,attribute,value) values"
+    foreach($args as &$arg) {
+      list($name,$value) = $this->page->get_sql_pair($arg);
+      $name = addslashes($name);
+      $arg = "(0,'$collection', '$identifier','$name',$value)"
+    }
+    $sql .= implode(',', $args);
+    return $this->page->sql_exec($sql);
+  }
+
 }
