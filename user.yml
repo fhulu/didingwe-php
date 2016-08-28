@@ -8,8 +8,8 @@ activate:
   desc: Activate inactive user
   audit: sql(select first_name, last_name, email from person where id = '$key')
   post:
-    - sql_exec: update user set active = 1 where id = '$key'
-    - sql_values: select concat(first_name,' ', last_name) full_name, email from person where id = '$key'
+    - collection.update: [user,[identifier: $key], active: 1]
+    - collection.values: [user, [identifier: $key], first_name, last_name, email]
     - send_email:
         from: $support
         to: $full_name <$email>
@@ -125,11 +125,11 @@ deactivate:
   confirmation: Are you sure you want to deactivate this user?
   audit: sql(select first_name, last_name, email from person where id = '$key')
   post:
-    - sql_exec: update user set active = 0 where id = '$key'
-    - sql_values: select concat(first_name,' ',last_name) full_name, email from person where id = '$key'
+    - collection.update: [user,[identifier: $key], active: 1]
+    - collection.values: [user, [identifier: $key], first_name, last_name, email]
     - send_email:
         from: $support
-        to: $full_name <$email>
+        to: $first_name $last_name <$email>
         subject: Your account has been deactivated
         message: >
           Dear <b>$full_name</b> <br><br>
@@ -278,8 +278,8 @@ login:
   post:
     - collection.values: [user, [identifier: $email], partner, first_name, last_name, cellphone, roles, start_page ]
     # - load_lineage: [roles,role,code,base_code]
-    # - collection: [update, user, [identifier: $email], attempts: 0]
-    - write_session: [uid: $email, pid,roles: [reg],user_email: $email,user_first_name: $first_name,user_last_name: $last_name,user_cellphone: $cellphone]
+    - collection.update: [user, [identifier: $email], attempts: 0]
+    - write_session: [uid: $email, pid, roles: [reg], user_email: $email,user_first_name: $first_name,user_last_name: $last_name,user_cellphone: $cellphone]
     - close_dialog
     - redirect: /$start_page
 
@@ -291,7 +291,7 @@ login_password:
     - depends(email, validated)
     - collection_filter(user,$email,password,=password('$value'))
   error:
-    - sql_exec: update user set attempts = attempts+1 where email = '$email'
+    - collection.update: [user, [identifier: $email], attempts: /value+1]
     - sql_exec: >
         insert into audit_trail(user, action, detail)
           select id, 'Failed Login Attempt', email from user where email = '$email'
@@ -368,16 +368,13 @@ profile:
     - collection.values: [user, [identifier: $email], title, first_name, last_name, cellphone]
   actions:
     - profile_update:
-        validate: [title,first_name,last_name,email_address,cellphone]
+        validate: [title,first_name,last_name,email,cellphone]
 
 profile_update:
   name: Update Profile
   audit: $title $first_name $last_name $cellphone $email
   post:
-    - sql_values: select id, person from user where id = '$uid'
-    - sql_update: [user,id,email]
-    - read_values: {id : $person}
-    - sql_update: [person,id,title,first_name,last_name,cellphone,email]
+    - collection.update: [user, [identifier: $email], title, first_name, last_name, cellphone]
     - close_dialog: Successfully updated
 
 

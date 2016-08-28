@@ -2,11 +2,12 @@
 
 class collection
 {
-
   var $page;
+  var $db;
   function __construct($page)
   {
     $this->page = $page;
+    $this->db = $page->db;
   }
 
   function get_selection($args, &$where)
@@ -114,4 +115,27 @@ class collection
     return $this->read("data", func_get_args());
   }
 
+  function update()
+  {
+    $args = page::parse_args(func_get_args());
+    page::verify_args($args, "collection.update", 3);
+    list($collection, $filters) = array_splice($args, 0, 2);
+
+    $where = " where m.collection = '$collection' and m.version = 0 ";
+    $joins = $this->get_joins($filters, $where);
+    foreach($args as $arg) {
+      list($name,$value) = $this->page->get_sql_pair($arg);
+      if ($name == 'identifier') {
+        $attribute = $name;
+        $condition = "";
+      }
+      else {
+        $attribute = 'value';
+        $condition = " and m.attribute = '$name'";
+      }
+      $attribute = $name== 'identifier'? $name: 'value';
+      $db = $this->db;
+      $this->page->sql_exec("update collection m $join set m.$attribute = $value $where $condition");
+    }
+  }
 }
