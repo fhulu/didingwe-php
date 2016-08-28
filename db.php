@@ -76,7 +76,7 @@ class db
     if (!$this->result) throw new db_exception("SQL='$q', ERROR=".$this->mysqli->error);
     if ($this->result === true) {
       $this->rows_affected = $this->mysqli->affected_rows;
-      return;
+      return $this->rows_affected;
     }
 
     $this->fields = $this->result->fetch_fields();
