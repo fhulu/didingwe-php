@@ -898,7 +898,8 @@ class page
   {
     $sql = page::replace_sql($sql, $this->answer);
     $sql = page::replace_sql($sql, $this->context);
-    return page::replace_sql($sql, $this->request);
+    $sql = page::replace_sql($sql, $this->request);
+    return preg_replace('/\$\w+/', '', $sql);
   }
 
   function sql_values($sql)
