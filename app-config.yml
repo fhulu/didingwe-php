@@ -3,7 +3,8 @@ landing:
   page: /index
 session:
   page: /index
-  content: /home
+  content: home
+start_page: home
 log_dir: ../log
 log_file: access.log
 css:

@@ -276,6 +276,7 @@ login:
     - login
     - forgot_password: { action: dialog }
   post:
+    - read_config: start_page
     - collection.values: [user, [identifier: $email], partner, first_name, last_name, cellphone, roles, start_page ]
     # - load_lineage: [roles,role,code,base_code]
     - collection.update: [user, [identifier: $email], attempts: 0]
