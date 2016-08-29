@@ -71,6 +71,7 @@ class collection
   {
     $index = 0;
     $joins = "";
+    if (!is_array($filters) || is_assoc($filters)) $filters = [$filters];
     foreach($filters as $filter) {
       ++$index;
       list($name,$value) = $this->page->get_sql_pair($filter);
