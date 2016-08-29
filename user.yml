@@ -370,7 +370,7 @@ profile:
     - clear_values: [password,role,attempts]
   actions:
     - profile_update:
-        validate: [title,first_name,last_name,email,cellphone]
+        validate: delta
 
 profile_update:
   name: Update Profile

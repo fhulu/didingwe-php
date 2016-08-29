@@ -641,13 +641,10 @@ class page
 
     $exclude = array('audit','css','post','script','style', 'styles', 'type','valid','validate','values');
 
-    if (is_string($include) && !is_array($include))
+    if (is_string($include))
       $include = explode(',', $include);
-    if (is_array($include)) {
-      $delta_pos = array_search('delta', $include, true);
-      if ($delta_pos !== false)
-        array_splice($include, $delta_pos, 1, explode(',', $this->request['delta']));
-    }
+    if (is_array($include))
+      $this->parse_delta($include);
     else
      $include = true;
 
