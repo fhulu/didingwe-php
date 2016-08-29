@@ -49,10 +49,10 @@ class collection
       $name = addslashes($name);
       $alias = addslashes($alias);
       list($foreign_key, $foreign_name) = explode('.', $name);
-      if (!isset($foreign_name)) 
+      if (!isset($foreign_name))
         $query = "select value from collection where collection = m.collection
              and version <= m.version and identifier=m.identifier and attribute = '$name'";
-     
+
       else {
         if ($alias == $name) $alias = $foreign_key;
         $query =
@@ -89,13 +89,30 @@ class collection
     return $joins;
   }
 
+  function expand_star($collection, &$args)
+  {
+    $expansion = null;
+    $index = -1;
+    foreach($args as $arg) {
+      ++$index;
+      if ($arg != '*') continue;
+      $expansion = $this->db->read_column("select distinct attribute from collection where collection = '$collection' and version = 0");
+      break;
+    }
+    if ($expansion) array_splice($args, $index, 1, $expansion);
+  }
+
   function read($method, $args)
   {
     $args = page::parse_args($args);
-    if (empty($args))
-      $args = [$this->page->path[sizeof($this->page->path)-2], [], "identifier", "name"];
-    page::verify_args($args, "collection.$method", 3);
+    $size = sizeof($args);
+    switch($size) {
+      case 0: $args = [$this->page->path[sizeof($this->page->path)-2], [], "identifier", "name"]; break;
+      case 1: $args = [$args[0],[],'*']; break;
+      case 2: $args[] = '*';
+    }
     list($collection, $filters) = array_splice($args, 0, 2);
+    $this->expand_star($collection, $args);
 
     $where = " where m.collection = '$collection' and m.version = 0 ";
     $selection = $this->get_selection($args, $where);
@@ -142,11 +159,11 @@ class collection
     $args = page::parse_args(func_get_args());
     page::verify_args($args, "collection.insert", 3);
     list($collection, $identifier) = array_splice($args, 0, 2);
-    $sql = "insert into collection(version,collection,identifier,attribute,value) values"
+    $sql = "insert into collection(version,collection,identifier,attribute,value) values";
     foreach($args as &$arg) {
       list($name,$value) = $this->page->get_sql_pair($arg);
       $name = addslashes($name);
-      $arg = "(0,'$collection', '$identifier','$name',$value)"
+      $arg = "(0,'$collection', '$identifier','$name',$value)";
     }
     $sql .= implode(',', $args);
     return $this->page->sql_exec($sql);
