@@ -137,6 +137,7 @@ class collection
     $args = page::parse_args(func_get_args());
     page::verify_args($args, "collection.update", 3);
     list($collection, $filters) = array_splice($args, 0, 2);
+    $this->page->parse_delta($args);
 
     $where = " where m.collection = '$collection' and m.version = 0 ";
     $joins = $this->get_joins($filters, $where);

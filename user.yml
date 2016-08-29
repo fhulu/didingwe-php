@@ -376,7 +376,7 @@ profile_update:
   name: Update Profile
   audit: $title $first_name $last_name $cellphone $email
   post:
-    - collection.update: [user, [identifier: $email], title, first_name, last_name, cellphone]
+    - collection.update: [user, [identifier: $email], delta]
     - close_dialog: Successfully updated
 
 
