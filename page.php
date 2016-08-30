@@ -37,7 +37,7 @@ class page
   static $non_mergeable = array('action', 'attr', 'audit', 'call', 'clear_session',
     'clear_values','error', 'load_lineage', 'post', 'read_session', 'refresh', 'show_dialog',
     'sql_insert', 'sql_update', 'style', 'trigger', 'valid', 'validate', 'write_session');
-  static $login_vars = ['uid','pid','roles','groups','user_email','user_first_name','user_last_name','user_cellphone'];
+  static $login_vars = ['sid','roles'];
   var $request;
   var $object;
   var $method;
@@ -97,7 +97,7 @@ class page
     if (is_null($this->method))
       throw new Exception("No method parameter in request");
 
-    $this->read_user();
+    $this->read_roles();
 
     $path = $this->path;
     if ($path[0] == '/') $path = substr ($path, 1);
@@ -134,16 +134,13 @@ class page
   }
 
 
-  function read_user($reload = false)
+  function read_roles($reload = false)
   {
-    if (!$reload && $this->user && $this->user['uid']) return $this->user;
+    $sid = $_SESSION['sid'];
+    if (!isset($sid)) return $this->roles = ['public'] ;
+    if (!$reload && $this->roles) return $this->roles;
     log::debug_json("SESSION", $_SESSION);
-    $user = $this->read_session('uid,pid,roles,groups,email,first_name,last_name,cellphone');
-    $user['full_name'] = $user['first_name'] . " ". $user['last_name'];
-    if (is_null($user['roles'])) $user['roles'] = array('public');
-    $this->user = $user;
-    log::debug_json("USER",$this->user);
-    return $this->user;
+    return $this->roles = explode(',', $_SESSION['roles']);
   }
 
   function include_external(&$data)
@@ -209,7 +206,7 @@ class page
 
     if (!is_array($access)) $access = explode (',', $access);
 
-    $allowed_roles = array_intersect($this->user['roles'], $access);
+    $allowed_roles = array_intersect($this->roles, $access);
     if (sizeof($allowed_roles) > 0) return true;
     if (!$throw) return false;
     throw new user_exception("Unauthorized access to PATH ".implode('/', $this->path) );
@@ -357,6 +354,7 @@ class page
     if (is_null($field))  $field = $this->merge_fields($this->fields);
     $parent = $field;
     foreach($path as $branch) {
+      log::debug_json("following path $branch", $field);
       if (is_assoc($field)) {
         $new_parent = $field;
         $field = $field[$branch];
@@ -429,15 +427,23 @@ class page
     return in_array($class, $config['helpers']);
   }
 
-  function get_helper_method($x)
+  function get_helper($class, &$method="")
   {
-    if (!page::is_helper($x, $class, $method)) return false;
+    if (!page::is_helper($class, $class, $method)) return false;
     $helper = $this->helpers[$class];
-    if ($helper) return [$helper,$method];
+    if ($helper) return $helper;
     require_once("$class.php");
     $this->helper[$class] =  $helper = new $class($this);
+    return $helper;
+
+  }
+  function get_helper_method($x)
+  {
+    $helper = $this->get_helper($x, $method);
+    if (!$helper) return false;
     return [$helper,$method];
   }
+
 
   function expand_types(&$fields)
   {
@@ -833,12 +839,10 @@ class page
     if (!isset($name)) $name = $this->name($action);
     $name = addslashes($name);
     $detail = addslashes($detail);
-    $user = $this->read_user();
-    $user = $user['uid'];
-    $partner = $field['partner'];
-    $db->insert("insert into audit_trail(user, partner, action, detail)
-      values('$user', '$partner', '$name', '$detail')");
-
+    $collection = $this->get_helper('collection');
+    $sid = $_SESSION['sid'];
+    $user = $collection->values('session',['identifier'=>$sid], 'user');
+    $collection->insert('audit_trail','', ['session'=>'$sid'], $user, ['action'=>$name], ['detail'=>$detail]);
     $post = $field['post'];
     if (isset($post))
       $this->reply($post);
@@ -863,14 +867,10 @@ class page
   static function replace_sql($sql, $options)
   {
     global $page;
-    $user = $page->user;
-    $user_id = $user['uid'];
-    $partner_id = $user['pid'];
+    $sid = $_SESSION['sid'];
     $key = $options['key'];
-    if (isset($user_id))
-      $sql = preg_replace('/\$uid([^\w]|$)/', "$user_id\$1", $sql);
-    if (isset($partner_id))
-      $sql = preg_replace('/\$pid([^\w]|$)/', "$partner_id\$1", $sql);
+    if (isset($sid))
+      $sql = preg_replace('/\$sid([^\w]|$)/', "$sid\$1", $sql);
     if (isset($key))
       $sql = preg_replace('/\$key([^\w]|$)/', "$key\$1", $sql);
     return replace_vars($sql, $options, function(&$val) {
@@ -1030,15 +1030,7 @@ class page
 
   function set_context($path)
   {
-    $context = $this->follow_path($path);
-    if (!is_null($this->user) && is_assoc($context)) {
-      $user = $this->user;
-      $context['user_full_name'] = $user['first_name'].  " ". $user['last_name'];
-      $context['user_email'] = $user['email'];
-      $context['uid'] = $user['uid'];
-    }
-    // $context['server_host'] = page::base_url();
-    $this->context = $context;
+    $this->context = $this->follow_path($path);
   }
 
   function call($method)
@@ -1530,7 +1522,7 @@ class page
   {
     session_destroy();
     $_SESSION = [];
-    $this->read_user(true);
+    $this->read_roles(true);
   }
 
   function read_server()
