@@ -54,7 +54,7 @@ class collection
              and version <= m.version and identifier=m.identifier and attribute = '$name'";
 
       else {
-        if ($alias == $name) $alias = $foreign_key;
+        if ($alias == $name) $alias = $foreign_name;
         $query =
           "select value from collection where collection = '$foreign_key' and version <= m.version and attribute = '$foreign_name'
             and identifier = (
