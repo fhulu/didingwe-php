@@ -281,6 +281,7 @@ login:
     # - load_lineage: [roles,role,code,base_code]
     - collection.update: [user, identifier: $email, attempts: 0]
     - read_server: [HTTP_USER_AGENT,REMOTE_ADDR,REMOTE_HOST,REQUEST_URI]
+    - collection.insert: [session, "", email, roles, HTTP_USER_AGENT, REMOTE_ADDR,REQUEST_URI]
     - write_session: [uid: $email, pid, roles: [reg], user_email: $email,user_first_name: $first_name,user_last_name: $last_name,user_cellphone: $cellphone]
     - close_dialog
     - redirect: /$start_page

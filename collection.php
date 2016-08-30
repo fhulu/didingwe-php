@@ -165,10 +165,12 @@ class collection
     foreach($args as &$arg) {
       list($name,$value) = $this->page->get_sql_pair($arg);
       $name = addslashes($name);
-      $arg = "(0,'$collection', '$identifier','$name',$value)";
+      $this->page->sql_exec($sql . "(0,'$collection', '$identifier','$name',$value)");
+      if ($identifier) continue;
+      $identifier = $this->db->read_one_value("select last_insert_id()");;
+      $this->db->exec("update collection set identifier=$identifier where id = $identifier");
     }
-    $sql .= implode(',', $args);
-    return $this->page->sql_exec($sql);
+    return ['identifier'=>$identifier];
   }
 
 }
