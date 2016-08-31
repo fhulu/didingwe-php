@@ -67,6 +67,7 @@ class collection
 
       else {
         if ($alias == $name) $alias = $foreign_name;
+        $name = $foreign_name;
         $query =
           "select value from collection where collection = '$foreign_key' and version <= m.version and attribute = '$foreign_name'
             and identifier = (
