@@ -354,7 +354,6 @@ class page
     if (is_null($field))  $field = $this->merge_fields($this->fields);
     $parent = $field;
     foreach($path as $branch) {
-      log::debug_json("following path $branch", $field);
       if (is_assoc($field)) {
         $new_parent = $field;
         $field = $field[$branch];
