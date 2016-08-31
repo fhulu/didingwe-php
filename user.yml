@@ -364,8 +364,8 @@ profile:
     - email
     - role: { attr: disabled }
   values:
-    - read_session: [email: user_email]
-    - collection.values: [user, identifier: $email]
+    - collection.values: [session, identifier: $sid, user]
+    - collection.values: [user, identifier: $user]
     - clear_values: [password,role,attempts]
   actions:
     - profile_update:
