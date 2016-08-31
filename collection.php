@@ -10,7 +10,18 @@ class collection
     $this->db = $page->db;
   }
 
-  function get_selection($args, &$where)
+  function update_sort_order(&$sorting, &$name, &$alias)
+  {
+    $matches = [];
+    if (!preg_match('/(\w+) (asc|desc)$/', $alias, $matches)) return;
+    if ($name == $alias)
+      $name = $alias = $matches[1];
+    else
+      $alias = $matches[1];
+    $sorting[] = "$alias $matches[2]";
+  }
+
+  function get_selection($args, &$where, &$sorting)
   {
     $identifier = "";
     $primary = [];
@@ -23,6 +34,7 @@ class collection
         if (is_assoc($name)) $name = $alias;
       }
 
+      $this->update_sort_order($sorting, $name, $alias);
 
       if ($name == 'identifier')
         $identifier = "m.$name $alias";
@@ -97,7 +109,7 @@ class collection
     foreach($args as $arg) {
       ++$index;
       if ($arg != '*') continue;
-      $expansion = $this->db->read_column("select distinct attribute from collection where collection = '$collection' and version = 0");
+      $expansion = $this->db->read_column("select distinct attribute from collection where collection = '$collection' and version = 0 ");
       break;
     }
     if ($expansion) array_splice($args, $index, 1, $expansion);
@@ -108,7 +120,7 @@ class collection
     $args = page::parse_args($args);
     $size = sizeof($args);
     switch($size) {
-      case 0: $args = [$this->page->path[sizeof($this->page->path)-2], [], "identifier", "name"]; break;
+      case 0: $args = [$this->page->path[sizeof($this->page->path)-2], [], "identifier", "name asc"]; break;
       case 1: $args = [$args[0],[],'*']; break;
       case 2: $args[] = '*';
     }
@@ -116,10 +128,12 @@ class collection
     $this->expand_star($collection, $args);
 
     $where = " where m.collection = '$collection' and m.version = 0 ";
-    $selection = $this->get_selection($args, $where);
+    $sorting = [];
+    $selection = $this->get_selection($args, $where, $sorting);
     $joins = $this->get_joins($filters, $where  );
-
-    return $this->page->{"sql_$method"}("select $selection from collection m $joins $where");
+    $sql = "select $selection from collection m $joins $where";
+    if (!empty($sorting)) $sql = "select * from ($sql) tmp order by ".implode(',', $sorting);
+    return $this->page->{"sql_$method"}($sql);
   }
 
   function values()
