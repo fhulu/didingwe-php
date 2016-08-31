@@ -10,7 +10,7 @@
       var form = el.find('form')
         .attr('action',this.options.uploader+'&path='+encodeURIComponent(this.options.path)+'&key='+this.options.key);
       form.att
-      var upload = el.find('#upload').click(function() {
+      var upload = el.find('#upload,[action=upload]').click(function() {
         form.submit();
       });
       var progress = el.find('#progress');
