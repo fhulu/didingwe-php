@@ -257,61 +257,6 @@ file_input:
   type: input
   format: file
 
-file_uploader:
-  tag: div
-  class: [file-uploader error-sink]
-  create: file_uploader
-  script: [/common/file_uploader.js,/common/jquery.form.js]
-  css: [/common/file_uploader.css]
-  uploader: /?action=action
-  max_size: 100
-  parent_id: $id
-  allowed_extensions: pdf
-  text: $form $iframe $progress $buttons
-  form:
-    tag: form
-    width: 70%
-    styles: [top_left]
-    derive: [parent_id,uploader]
-    attr:
-      id: ""
-      enctype: multipart/form-data
-      target: iframe_$parent_id
-    text: $file
-    file:
-      derive: [parent_id]
-      type: file_input
-      attr: { name: file_$parent_id }
-  iframe:
-    tag: iframe
-    derive: [parent_id]
-    hide: yes
-    attr: {name: iframe_$parent_id }
-  progress:
-    type: container
-    styles: [top_right,biggest]
-    show: no
-    contents:
-      - default: { classes: div, styles: [biggest,top_let], text: "" }
-      - bar
-      - percent
-  buttons:
-    type: container
-    styles: [top_right,tallest,center_text]
-    width: 82
-    contents:
-      - default: { styles: [biggest,center_text], show: no }
-      - type: button
-      - upload
-      - cancel
-      - type: control
-      - uploaded
-      - failed
-  post: [ upload ]
-  audit:
-    action: Upload
-    detail: $document_type
-
 filled:
   background-color: $fill
   color: $color
