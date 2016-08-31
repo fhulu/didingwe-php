@@ -294,10 +294,8 @@ login_password:
     - depends(email, validated)
     - collection_filter(user,$email,password,=password('$value'))
   error:
-    - collection.update: [user, [identifier: $email], attempts: /value+1]
-    - sql_exec: >
-        insert into audit_trail(user, action, detail)
-          select id, 'Failed Login Attempt', email from user where email = '$email'
+    - collection.update: [user, identifier: $email, attempts: /value+1]
+    - collection.insert: [audit_trail, "", user: $email, action: Failed Login attempt]
     - error: [password, Invalid user name or password for $email ]
 
 logout:
