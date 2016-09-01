@@ -177,13 +177,18 @@ class collection
     page::verify_args($args, "collection.insert", 3);
     list($collection, $identifier) = array_splice($args, 0, 2);
     $sql = "insert into collection(version,collection,identifier,attribute,value) values";
+    $identifier_func = "last_insert_id()";
     foreach($args as &$arg) {
       list($name,$value) = $this->page->get_sql_pair($arg);
       $name = addslashes($name);
+      if ($identifier[0] == '/') {
+        $identifier_func = substr($identifier,1);
+        $identifier = "";
+      }
       $this->page->sql_exec($sql . "(0,'$collection', '$identifier','$name',$value)");
       if ($identifier) continue;
-      $identifier = $this->db->read_one_value("select last_insert_id()");;
-      $this->db->exec("update collection set identifier=$identifier where id = $identifier");
+      list($identifier,$last_id) = $this->db->read_one("select $identifier_func, last_insert_id()");;
+      $this->db->exec("update collection set identifier='$identifier' where id = $last_id");
     }
     return ['identifier'=>$identifier];
   }
