@@ -41,6 +41,9 @@ collection_filter:
   4: ""
   valid: sql(select value$4 from collection where collection = '$1' and identifier = '$2' and attribute = '$3')
 
+collection_unique:
+  valid: not(in_collection($1))
+
 contains_at_least:
   valid: /$1/s
   error: $name must contain at least $2
@@ -109,6 +112,9 @@ greater_equal:
 
 in:
   error: No such $name ($value)
+
+in_collection:
+  valid: sql(select 1 from collection where collection = '$1' and attribute = '$name' and value='$value')
 
 int_tel:
   valid:
