@@ -91,7 +91,7 @@ exists:
 
 extension:
   valid: /\.$1$/i
-  error: $name must have be of type '$1'
+  error: $name must have be of type '$2'
 
 find_in:
   error: No such $name ($value)
