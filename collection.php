@@ -26,6 +26,8 @@ class collection
     $identifier = "";
     $primary = [];
     $sub_fields = [];
+    $index = 0;
+    $identifier_pos = 0;
     foreach($args as &$arg) {
       if (is_string($arg))
         $name = $alias = $arg;
@@ -36,20 +38,25 @@ class collection
 
       $this->update_sort_order($sorting, $name, $alias);
 
-      if ($name == 'identifier')
+      if ($name == 'identifier') {
         $identifier = "m.$name $alias";
+        $identifier_pos = $index;
+      }
       else if (empty($primary) && strpos($name, '.') === false)
         $primary = [$name, $alias];
       else
         $sub_fields[] = [$name,$alias];
+      ++$index;
     }
     $sub_queries = $this->get_subqueries($sub_fields);
-    $selection = [$identifier];
+    $selection = [];
     if (!empty($primary)) {
       $where .= " and m.attribute = '$primary[0]'";
       $selection[] = "m.value $primary[1]";
     }
     $selection[] = $sub_queries;
+    if ($identifier)
+      array_splice($selection, $identifier_pos, 0, [$identifier]);
     return implode(",", array_filter($selection));
   }
 
@@ -84,6 +91,7 @@ class collection
   {
     $index = 0;
     $joins = "";
+    if (empty($filters)) return "";
     if (!is_array($filters) || is_assoc($filters)) $filters = [$filters];
     foreach($filters as $filter) {
       ++$index;
