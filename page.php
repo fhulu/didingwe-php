@@ -1205,9 +1205,13 @@ class page
       $updates[$name] = $value;
   }
 
-  static function error($name, $value)
+  static function error($name, $value='')
   {
     global $page;
+    if (!$value) {
+      $value = $name;
+      $name = $this->context['id'];
+    }
     log::debug("ERROR $name $value ");
     $result = &$page->result;
     $responses = &$result['_responses'];
