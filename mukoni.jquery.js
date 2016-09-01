@@ -56,7 +56,8 @@ $.fn.getValue = function()
     return values.split(',')[val];
   }
   if (type === 'radio') return this.filter(':checked').val();
-  return this.is('input,select,textarea')? this.val(): this.text();
+  if (this.is('input,select,textarea')) return this.val();
+  return this.is('[value]')? this.attr('value'): this.text();
 }
 
 $.fn.value = function(val)
@@ -81,7 +82,7 @@ $.fn.values = function()
   this.find('.checkgroup').updateCheckGroupValue();
   var data = {};
   var delta = [];
-  this.filter('input,textarea,select,.checkgroup').each(function() {
+  this.filter('input,textarea,select,.checkgroup,[value]').each(function() {
     var ctrl = $(this);
     var name = ctrl.hasAttr('name')? ctrl.attr('name'): ctrl.attr('id');
     if (name === undefined || name.trim() == '') return true;
@@ -522,7 +523,7 @@ $.fn.bindFirst = function(name, fn)
 
   // Thanks to a comment by @Martin, adding support for
   // namespaced events too.
-  this.each(function() {
+  return this.each(function() {
       var handlers = $._data(this, 'events')[name.split('.')[0]];
       // take out the handler we just inserted from the end
       var handler = handlers.pop();
