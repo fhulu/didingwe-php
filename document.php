@@ -1,11 +1,17 @@
 <?php
 
-require_once('session.php');
-
 class document_exception extends Exception {};
 class document
 {
-  static function upload($options)
+  var page;
+  var db;
+  function __construct($page)
+  {
+    $this->page = $page;
+    $this->db = $page->db;
+  }
+
+  function upload($options)
   {
     list($control, $allowed_exts, $type, $user_id, $partner_id) =
       to_array($options,'control', 'allowed_exts', 'type', 'user_id', 'partner_id', 'path', 'ignore_date');

@@ -399,6 +399,7 @@ class validator
   {
     $sql = implode(',', func_get_args());
     $sql = replace_vars($sql, $this->request);
+    $sql = str_replace('$name', $this->name, $sql);
     if (preg_match('/^(update|insert)\b/ims',$sql)) {
       $this->db->exec($sql);
       return true;

@@ -7,7 +7,6 @@ file_uploader:
   uploader: /?action=action
   max_size: 100
   parent_id: $id
-  allowed_extensions: pdf
   text: $form $iframe $progress $buttons
   form:
     tag: form
@@ -43,13 +42,16 @@ file_uploader:
     width: 82
     contents:
       - default: { class: [biggest,center-text], show: no }
-      - type: button
-      - upload
-      - cancel
+      - upload: { type: submit }
+      - cancel: { type: button }
       - type: control
       - uploaded
       - failed
-  post: [ upload ]
+  upload:
+    - document.upload:
+  post:
+    - trigger: "upload,#$id"
   audit:
     action: Upload
     detail: $document_type
+  valid: extension(pdf)

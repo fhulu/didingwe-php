@@ -109,7 +109,7 @@ create:
     - first_name
     - last_name
     - cellphone
-    - email:  { valid: [not_registered] }
+    - email:  { valid: [not_in_use] }
     - type: password_input
     - password
     - confirm_password
@@ -175,6 +175,7 @@ history:
     - what: { width: 30%, name: Action }
     - detail: { width: 55% }
   sql: select create_time, action, detail from audit_trail where user = '$key'
+
 
 
 is_active:
@@ -338,6 +339,10 @@ modify:
     - refresh: "#main table"
   audit: $email $delta
 
+not_in_use:
+  valid: not_registered
+  error: Email address $value already in use
+
 not_registered:
   valid: not(is_registered($1))
   error: |
@@ -361,15 +366,13 @@ profile:
     - first_name
     - last_name
     - cellphone
-    - email
+    - email: { valid: [not_in_use]}
     - role: { attr: disabled }
   values:
-    - collection.values: [session, identifier: $sid, user]
-    - collection.values: [user, identifier: $user]
+    - collection.values: [session, identifier: $sid, user.title, user.first_name, user.last_name, user.cellphone, email: user, role: user.roles]
     - clear_values: [password,role,attempts]
   actions:
-    - profile_update:
-        validate: delta
+    - profile_update: { validate: delta }
 
 profile_update:
   name: Update Profile
