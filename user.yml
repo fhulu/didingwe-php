@@ -282,8 +282,8 @@ login:
     # - load_lineage: [roles,role,code,base_code]
     - collection.update: [user, identifier: $email, attempts: 0]
     - read_server: [HTTP_USER_AGENT,REMOTE_ADDR,REMOTE_HOST,REQUEST_URI]
-    - collection.insert: [session, /sha1(last_insert_id()), user: $email, roles, HTTP_USER_AGENT, REMOTE_ADDR,REQUEST_URI]
-    - write_session: [sid: $identifier, roles]
+    - collection.insert: [session, /sha1(last_insert_id()), user: $email, roles, start_time: /sysdate(6), HTTP_USER_AGENT, REMOTE_ADDR,REQUEST_URI]
+    - write_session: [sid: $new_session_id, roles]
     - close_dialog
     - redirect: /$start_page
 
@@ -301,9 +301,12 @@ login_password:
 
 logout:
   read: action
-  post: [redirect: "/"]
+  post:
+    - collection.insert: [session, $sid, end_time: /sysdate(6)]
+    - redirect: "/"
   audit:
-    post: [call: session_destroy()]
+    post:
+      call: session_destroy()]
 
 modify:
   name: Change User Details

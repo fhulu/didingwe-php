@@ -116,6 +116,13 @@ class collection
     if ($expansion) array_splice($args, $index, 1, $expansion);
   }
 
+  function extract_header(&$args)
+  {
+    list($collection, $filters) = array_splice($args, 0, 2);
+    list($collection) = assoc_element($collection);
+    return [$collection, $filters];
+  }
+
   function read($method, $args)
   {
     $args = page::parse_args($args);
@@ -125,7 +132,7 @@ class collection
       case 1: $args = [$args[0],[],'*']; break;
       case 2: $args[] = '*';
     }
-    list($collection, $filters) = array_splice($args, 0, 2);
+    list($collection, $filters) = $this->extract_header($args);
     $this->expand_star($collection, $args);
 
     $where = " where m.collection = '$collection' and m.version = 0 ";
@@ -151,7 +158,7 @@ class collection
   {
     $args = page::parse_args(func_get_args());
     page::verify_args($args, "collection.update", 3);
-    list($collection, $filters) = array_splice($args, 0, 2);
+    list($collection, $filters) = $this->extract_header($args);
     $this->page->parse_delta($args);
 
     $where = " where m.collection = '$collection' and m.version = 0 ";
@@ -175,7 +182,7 @@ class collection
   {
     $args = page::parse_args(func_get_args());
     page::verify_args($args, "collection.insert", 3);
-    list($collection, $identifier) = array_splice($args, 0, 2);
+    list($collection, $identifier) = $this->extract_header($args);
     $sql = "insert into collection(version,collection,identifier,attribute,value) values";
     $identifier_func = "last_insert_id()";
     foreach($args as &$arg) {
@@ -190,7 +197,7 @@ class collection
       list($identifier,$last_id) = $this->db->read_one("select $identifier_func, last_insert_id()");;
       $this->db->exec("update collection set identifier='$identifier' where id = $last_id");
     }
-    return ['identifier'=>$identifier];
+    return ["new_${collection}_id"=>$identifier];
   }
 
 }
