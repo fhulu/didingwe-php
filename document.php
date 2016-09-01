@@ -27,10 +27,10 @@ class document
     return ['path'=>$path, "mime"=>document::extension($path)];
   }
 
-  static function view($path, $name, $media)
+  function view($path, $name, $media)
   {
     if (!file_exists($path))
-      return $page->error("Document file not found. Please report to System Administrator");
+      return $this->page->error("Document file not found. Please report to System Administrator");
 
     $size = filesize($path);
     $ext = document::extension($path);

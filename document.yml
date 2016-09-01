@@ -63,14 +63,13 @@ upload:
     - trigger: "upload,#page [action=upload]"
 
 
+view:
+  post:
+    - collection.values: [document, identifier: $key, name, path, mime.media]
+    - document.view: [$path, $name, $media]
+
 document_link:
-  tag: a
-  attr: { title: $desc }
-  text: $name
-  style: { cursor: pointer }
+  type: link
   action: redirect
   target: _blank
-  query: " "
-  post:
-    - collection.values: [document, identifier: $value, name, path, mime.media]
-    - document.view: [$path, $name, $media]
+  url: /?action=action&path=document/view&key=$id
