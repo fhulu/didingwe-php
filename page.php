@@ -863,19 +863,20 @@ class page
     return $result;
   }
 
-  static function replace_sql($sql, $options)
+  static function replace_sid(&$str)
   {
-    global $page;
     $sid = $_SESSION['sid'];
-    $key = $options['key'];
     if (isset($sid))
-      $sql = preg_replace('/\$sid([^\w]|$)/', "$sid\$1", $sql);
-    if (isset($key))
-      $sql = preg_replace('/\$key([^\w]|$)/', "$key\$1", $sql);
-    return replace_vars($sql, $options, function(&$val) {
+      $str = preg_replace('/\$sid([^\w]|$)/', "$sid\$1", $str);
+  }
+
+  static function replace_sql(&$sql, $options)
+  {
+    $sql =  replace_vars($sql, $options, function(&$val) {
       $val = addslashes($val);
     });
   }
+
 
   function sql_data($sql)
   {
@@ -892,10 +893,19 @@ class page
 
   function translate_sql($sql)
   {
-    $sql = page::replace_sql($sql, $this->answer);
-    $sql = page::replace_sql($sql, $this->context);
-    $sql = page::replace_sql($sql, $this->request);
+    page::replace_sid($sql);
+    page::replace_sql($sql, $this->answer);
+    page::replace_sql($sql, $this->context);
+    page::replace_sql($sql, $this->request);
     return preg_replace('/\$\w+/', '', $sql);
+  }
+
+  function translate_context($str)
+  {
+    page::replace_sid($str);
+    $str = replace_vars($str, $this->answer);
+    $str = replace_vars($str, $this->context);
+    return replace_vars($str, $this->request);
   }
 
   function sql_values($sql)
@@ -1202,6 +1212,7 @@ class page
     $responses = &$result['_responses'];
     $errors = &$responses['errors'];
     $errors[$name] = $value;
+    return false;
   }
 
   static function collapse($field)
