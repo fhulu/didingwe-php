@@ -180,17 +180,6 @@ disabled_input:
 disabled_text_input:
   type: disabled_input
 
-document_link:
-  tag: a
-  attr: { title: $desc }
-  text: $name
-  style: { cursor: pointer }
-  action: redirect
-  target: _blank
-  query: " "
-  post:
-    - view_doc: $value
-
 dropdown:
   tag: select
   unselected: --Select $name--

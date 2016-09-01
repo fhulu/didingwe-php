@@ -53,11 +53,24 @@ file_uploader:
     - read_config: upload_dir
     - collection.values: [session, identifier: $sid, user, user.partner, user.upload_dir]
     - collection.values: [partner, identifier: $partner, upload_dir]
-    - collection.insert: [document, "", partner, user]
+    - collection.insert: [document, "", partner, user, name]
     - document.upload: [file, $upload_dir, $new_document_id]
-    - collection.insert: [document, $new_document_id, path: $uploaded_path]
+    - collection.insert: [document, $new_document_id, path, mime]
 
 upload:
   derive: [parent_id]
   post:
     - trigger: "upload,#page [action=upload]"
+
+
+document_link:
+  tag: a
+  attr: { title: $desc }
+  text: $name
+  style: { cursor: pointer }
+  action: redirect
+  target: _blank
+  query: " "
+  post:
+    - collection.values: [document, identifier: $value, name, path, mime.media]
+    - document.view: [$path, $name, $media]
