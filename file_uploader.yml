@@ -11,17 +11,14 @@ file_uploader:
   form:
     tag: form
     width: 70%
-    class: [absolute top-left]
+    class: [top-left,inline-block]
     derive: [parent_id,uploader]
     attr:
       id: ""
       enctype: multipart/form-data
       target: iframe_$parent_id
     text: $file
-    file:
-      derive: [parent_id]
-      type: file_input
-      attr: { name: file_$parent_id }
+    file: { type: file_input }
   iframe:
     tag: iframe
     derive: [parent_id]
@@ -39,6 +36,7 @@ file_uploader:
   buttons:
     type: container
     class: [float-right,tallest,center-text]
+    derive: [parent_id]
     width: 82
     contents:
       - default: { class: [biggest,center-text], show: no }
@@ -47,11 +45,19 @@ file_uploader:
       - type: control
       - uploaded
       - failed
-  upload:
-    - document.upload:
-  post:
-    - trigger: "upload,#$id"
   audit:
     action: Upload
     detail: $document_type
   valid: extension(pdf)
+  post:
+    - read_config: upload_dir
+    - collection.values: [session, identifier: $sid, user, user.partner, user.upload_dir]
+    - collection.values: [partner, identifier: $partner, upload_dir]
+    - collection.insert: [document, "", partner, user]
+    - document.upload: [file, $upload_dir, $new_document_id]
+    - collection.insert: [document, $new_document_id, path: $uploaded_path]
+
+upload:
+  derive: [parent_id]
+  post:
+    - trigger: "upload,#page [action=upload]"

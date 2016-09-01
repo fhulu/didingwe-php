@@ -7,6 +7,7 @@ session:
 start_page: home
 log_dir: ../log
 log_file: access.log
+upload_dir: ../uploads
 css:
   - /common/didi.css
 scripts:
