@@ -851,7 +851,8 @@ class page
   {
     $invoker = $this->context;
     log::debug_json("ACTION ".last($this->path), $invoker);
-    if (!isset($this->request['id'])) $this->request['id'] = last($this->path);
+    if (!isset($this->context['id'])) $this->context['id'] = last($this->path);
+    if (!isset($this->context['name'])) $this->context['name'] = $this->name($this->context);
     $this->merge_fields($this->fields);
     $validate = at($invoker, 'validate');
     if ($validate != 'none' && !$this->validate($this->fields, $validate))
