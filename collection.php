@@ -126,9 +126,15 @@ class collection
 
   function extract_header(&$args)
   {
+    if (is_numeric($args[0])) {
+      if (is_numeric($args[1]))
+        list($offset, $size) = array_splice($args, 0, 2);
+      else
+        $size = array_shift($args);
+    }
     list($collection, $filters) = array_splice($args, 0, 2);
     list($collection) = assoc_element($collection);
-    return [$collection, $filters];
+    return [$collection, $filters, $offset, $size];
   }
 
   function read($method, $args)
@@ -140,7 +146,7 @@ class collection
       case 1: $args = [$args[0],[],'*']; break;
       case 2: $args[] = '*';
     }
-    list($collection, $filters) = $this->extract_header($args);
+    list($collection, $filters, $offset, $size) = $this->extract_header($args);
     $this->expand_star($collection, $args);
 
     $where = " where m.collection = '$collection' and m.version = 0 ";
@@ -148,18 +154,28 @@ class collection
     $selection = $this->get_selection($args, $where, $sorting);
     $joins = $this->get_joins($filters, $where  );
     $sql = "select $selection from collection m $joins $where";
+    if (!is_null($offset))
+      $sql .= " limit $offset, $size";
+    else if (!is_null($size))
+      $sql .= " limit $size";
     if (!empty($sorting)) $sql = "select * from ($sql) tmp order by ".implode(',', $sorting);
-    return $this->page->{"sql_$method"}($sql);
+    return $this->page->translate_sql($sql);
   }
 
   function values()
   {
-    return $this->read("values", func_get_args());
+    $a = func_get_args();
+    if (!is_numeric($a[0])) array_splice($a, 0, 0, 1);
+    $sql = $this->read("values", $a);
+    $result = $this->db->read($sql, MYSQLI_ASSOC);
+    if ($result) $result = $result[0];
+    return $result;
   }
 
   function data()
   {
-    return $this->read("data", func_get_args());
+    $sql = $this->read("data", func_get_args());
+    return $this->db->read($sql, MYSQLI_NUM);
   }
 
   function update()
