@@ -376,10 +376,10 @@ input:
 input_page:
   type: page
   text: $synopsis $inputs $controls
-  input_left: 30%
-  input_width: 67%
+  label_class: w-1-3 float-right clear-after
+  input_class: w-2-3 float-right
   layout:
-    derive: [input_left,input_width]
+    derive: [label_class,input_class]
     type: label_left
   synopsis:
     derive: [desc]
@@ -391,9 +391,8 @@ input_page:
     - type: input
   controls:
     tag: div
-    class: [actions]
-    derive: [input_left,actions]
-    style: { margin-left: $input_left }
+    derive: [input_class,actions]
+    class: [actions,$input_class]
     text: $actions
   actions:
     - default: { styles: [hspaced], space: 24}
@@ -435,18 +434,16 @@ labelled_inside_image:
 
 label_left:
   type: labelled
-  derive: [input_left,input_width]
+  derive: [label_class,input_class]
   label:
-    derive: [input_left]
     suffix: ":"
     text: $name$suffix&nbsp;
-    width: $input_left
-    class: [right-text]
+    derive: [label_class]
+    class: [$label_class,right-text,clear-after]
   subject:
-    derive: [input_width,input_left]
-    width: $input_width
-    class: [border,pad,inline-block]
-  text: $label$field
+    derive: [input_class]
+    class: [$input_class,border,pad,inline-block]
+  text: $field$label
   styles: [vspaced]
 
 label_mobile:
