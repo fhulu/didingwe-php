@@ -19,7 +19,7 @@ isearch:
     attr: { id: "", name: "", placeholder: $placeholder }
   buttons:
     type: container
-    class: [isearch,buttons,top-right,pad-y]
+    class: [isearch,buttons,absolute top-right,pad-y]
     derive: [adder,show_all]
     contents: [$show_all, $adder]
   show_all:
