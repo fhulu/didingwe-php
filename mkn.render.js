@@ -263,7 +263,7 @@ mkn.render = function(options)
        if (!('attr' in template)) template.attr = {};
        template.attr['for'] = item.id;
     }
-    item.template = me.initField(mkn.merge(field, template));
+    item.template = me.initField(mkn.merge(template, field));
   };
 
   this.expandFunction = function(value, parent_id)
