@@ -375,11 +375,10 @@ input:
 
 input_page:
   type: page
-  text: $synopsis $inputs $controls
-  label_class: w-1-3 float-right clear-after
+  text: $synopsis $inputs
   input_class: w-2-3 float-right
   layout:
-    derive: [label_class,input_class]
+    derive: [input_class]
     type: label_left
   synopsis:
     derive: [desc]
@@ -389,10 +388,13 @@ input_page:
   inputs:
     - template: $layout
     - type: input
+    - $controls: { push: last}
   controls:
     tag: div
+    name: ""
+    label_suffix: " "
     derive: [input_class,actions]
-    class: [actions,$input_class]
+    class: [actions,$input_class,^pad]
     text: $actions
   actions:
     - default: { styles: [hspaced], space: 24}
@@ -434,12 +436,13 @@ labelled_inside_image:
 
 label_left:
   type: labelled
-  derive: [label_class,input_class]
+  derive: [input_class]
+  label_suffix: ":"
   label:
-    suffix: ":"
-    text: $name$suffix&nbsp;
-    derive: [label_class]
-    class: [$label_class,right-text,clear-after]
+    derive: [label_suffix]
+    suffix: $label_suffix
+    text: $name$suffix
+    class: [float-right,right-text, pad]
   subject:
     derive: [input_class]
     class: [$input_class,border,pad,inline-block]
