@@ -10,23 +10,23 @@ $.widget( "custom.isearch", {
   _create: function ()
   {
     var me = this;
-    var el = me.element;
     var opts = me.options;
     me.dropped = me.justDropped = false;
     me.params = { action: 'data', path: opts.path, key: opts.key, offset: 0, size: opts.drop.autoload  };
-    var inputs = me.inputs = opts.render.create(opts, 'inputs', true)
-      .insertAfter(el)
-      .append(el)
-
-    if (!el.is(":visible")) inputs.hide();
-    el.on('toggle', function(e, v) {
-      el.hide()
-      inputs.toggle(v);
-    }).hide()
-    me.searcher = inputs.find('.search').on('keyup input cut paste', function() {
+    var el = me.element.on('keyup input cut paste', function() {
       if (me.params.term == me.searcher.val()) return;
       me.params.offset = 0;
       me._load();
+    })
+    .on('selected', function(e, option) {
+      el.val(option.attr('value'));
+      me.searcher.val(option.attr('chosen'));
+      me.drop.hide();
+      me.dropped = false;
+    })
+    .on('mouseleave', function() {
+      me.drop.hide();
+      me.dropped = false;
     });
 
     me.drop = opts.render.create(opts, 'drop', true)
@@ -36,22 +36,19 @@ $.widget( "custom.isearch", {
       .scroll($.proxy(me._scroll,me))
       .appendTo(me.inputs);
 
-    el.on('selected', function(e, option) {
-      el.val(option.attr('value'));
-      me.searcher.val(option.attr('chosen'));
-      me.drop.hide();
-      me.dropped = false;
-    });
-
-    me.dropper = inputs.find('.isearch.show-all').click(function() {
-      if (me.dropped) {
-        if (!me.drop.is(':visible')) me.drop.show();
-        return;
-      }
-      me.params.offset = 0;
-      me.searcher.val("");
-      me._load();
-    });
+    var parent = el.parent("[for='"+el.attr('id')+"']");
+    if (!parent.exists()) parent = el;
+    me.show_all = opts.render.create(opts, 'show_all', true)
+      .insertBefore(el)
+      .click(function() {
+        if (me.dropped) {
+          if (!me.drop.is(':visible')) me.drop.show();
+          return;
+        }
+        me.params.offset = 0;
+        el.val("");
+        me._load();
+      });
 
     if (opts.adder && opts.adder.url) inputs.find('.isearch.adder').show();
 
@@ -62,10 +59,6 @@ $.widget( "custom.isearch", {
       me.drop.hide();
     });
 
-    inputs.on('mouseleave', function() {
-      me.drop.hide();
-      me.dropped = false;
-    });
   },
 
 

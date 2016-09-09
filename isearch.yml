@@ -5,36 +5,13 @@ isearch:
   script: [/common/isearch.js]
   css: [/common/isearch.css]
   class: [ isearch ]
-  parent_id: $id
-  inputs:
-    classes: div
-    class: [isearch-container,inline-block,borderless]
-    derive: [search,buttons,width,placeholder,adder,show_all,parent_id]
-    text: $search $buttons
-    attr: { id: isearch-$parent_id}
-  search:
-    type: input
-    class: [search,widest,pad,borderless]
-    derive: [placeholder]
-    attr: { id: "", name: "", placeholder: $placeholder }
-  buttons:
-    type: container
-    class: [isearch,buttons,absolute top-right,pad-y]
-    derive: [adder,show_all]
-    contents: [$show_all, $adder]
+  attr: { placeholder: $placeholder }
   show_all:
-    type: google_icon
-    icon: arrow_drop_down
-    class: [isearch, show-all,text-dark-grey]
+    type: font_awesome
+    icon: caret-down
+    class: [isearch, show-all,text-dark-grey, overlay absolute vertical-middle right, pad]
     tooltip: Show all items
     show: yes
-  adder:
-    type: google_icon
-    width: auto
-    class: [isearch,adder, text-dark-grey]
-    derive: [name]
-    tooltip: Add new $name
-    action: dialog
   drop:
     tag: ul
     class: [isearch,drop,absolute,scroll-y,widest,nomargin,nopad,white,shadow]
