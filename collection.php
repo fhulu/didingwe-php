@@ -1,4 +1,4 @@
-<?php
+    <?php
 
 class collection
 {
@@ -21,6 +21,17 @@ class collection
     $sorting[] = "$alias $matches[2]";
   }
 
+  function get_name_alias($arg)
+  {
+    if (is_string($arg))
+      $name = $alias = $arg;
+    else if (is_assoc($arg)) {
+      list($alias, $name) = assoc_element($arg);
+      if (is_assoc($name)) $name = $alias;
+    }
+    return [$name,$alias];
+  }
+
   function get_selection($args, &$where, &$sorting)
   {
     $identifier = "";
@@ -29,20 +40,14 @@ class collection
     $index = 0;
     $identifier_pos = 0;
     foreach($args as &$arg) {
-      if (is_string($arg))
-        $name = $alias = $arg;
-      else if (is_assoc($arg)) {
-        list($alias, $name) = assoc_element($arg);
-        if (is_assoc($name)) $name = $alias;
-      }
-
+      list($name,$alias) = $this->get_name_alias($arg);
       $this->update_sort_order($sorting, $name, $alias);
 
       if ($name == 'identifier') {
         $identifier = "m.$name $alias";
         $identifier_pos = $index;
       }
-      else if (empty($primary) && strpos($name, '.') === false)
+      else if (!$searching && empty($primary) && strpos($name, '.') === false)
         $primary = [$name, $alias];
       else
         $sub_fields[] = [$name,$alias];
@@ -87,7 +92,7 @@ class collection
   }
 
 
-  function get_joins($filters, &$where)
+  function get_joins($filters, &$where="")
   {
     $index = 0;
     $joins = "";
@@ -103,7 +108,7 @@ class collection
 
       $operator = "";
       if (ctype_alnum($value[0]) || $value[0] == "'")
-          $operator .= " = ";
+        $operator = " = ";
       $joins .= " join collection m$index on m$index.collection = m.collection
           and m$index.version <= m.version and m$index.identifier=m.identifier
           and m$index.attribute = '$name' and m$index.value $operator $value";
@@ -137,28 +142,45 @@ class collection
     return [$collection, $filters, $offset, $size];
   }
 
-  function read($method, $args)
+  function expand_args(&$args)
   {
-    $args = page::parse_args($args);
     $size = sizeof($args);
     switch($size) {
       case 0: $args = [$this->page->path[sizeof($this->page->path)-2], [], "identifier", "name asc"]; break;
       case 1: $args = [$args[0],[],'*']; break;
       case 2: $args[] = '*';
     }
+    return $size;
+  }
+
+  function set_limits(&$sql, $offset, $size)
+  {
+    if (!is_null($offset))
+      $sql .= " limit $offset, $size";
+    else if (!is_null($size))
+      $sql .= " limit $size";
+  }
+
+  function set_sorting(&$sql, $sorting)
+  {
+    if (!empty($sorting))
+      $sql = "select * from ($sql) tmp order by ".implode(',', $sorting);
+  }
+
+  function read($args)
+  {
+    $args = page::parse_args($args);
+    $size = $this->expand_args($args);
     list($collection, $filters, $offset, $size) = $this->extract_header($args);
     $this->expand_star($collection, $args);
 
     $where = " where m.collection = '$collection' and m.version = 0 ";
     $sorting = [];
     $selection = $this->get_selection($args, $where, $sorting);
-    $joins = $this->get_joins($filters, $where  );
-    $sql = "select $selection from collection m $joins $where";
-    if (!is_null($offset))
-      $sql .= " limit $offset, $size";
-    else if (!is_null($size))
-      $sql .= " limit $size";
-    if (!empty($sorting)) $sql = "select * from ($sql) tmp order by ".implode(',', $sorting);
+    $joins = $this->get_joins($filters, $where);
+    $sql = "select $selection from collection m $joins $where $search";
+    $this->set_limits($sql, $offset, $size);
+    $this->set_sorting($sql, $sorting);
     return $this->page->translate_sql($sql);
   }
 
@@ -166,7 +188,7 @@ class collection
   {
     $a = func_get_args();
     if (!is_numeric($a[0])) array_splice($a, 0, 0, 1);
-    $sql = $this->read("values", $a);
+    $sql = $this->read($a);
     $result = $this->db->read($sql, MYSQLI_ASSOC);
     if ($result) $result = $result[0];
     return $result;
@@ -174,7 +196,7 @@ class collection
 
   function data()
   {
-    $sql = $this->read("data", func_get_args());
+    $sql = $this->read(func_get_args());
     return $this->db->read($sql, MYSQLI_NUM);
   }
 
@@ -198,7 +220,7 @@ class collection
         $condition = " and m.attribute = '$name'";
       }
       $attribute = $name== 'identifier'? $name: 'value';
-      $this->page->sql_exec("update collection m $join set m.$attribute = $value $where $condition");
+      $this->page->sql_exec("update collection m $joins set m.$attribute = $value $where $condition");
     }
   }
 
@@ -224,4 +246,43 @@ class collection
     return ["new_${collection}_id"=>$identifier];
   }
 
+  function search()
+  {
+    $args = page::parse_args(func_get_args());
+    log::debug_json("collection.search", $args);
+    page::verify_args($args, "collection.search", 1);
+    $term = array_shift($args);
+    $size = $this->expand_args($args);
+    list($collection, $filters, $offset, $size) = $this->extract_header($args);
+    $this->expand_star($collection, $args);
+    $fields = [];
+    $sorting = [];
+    $identifier = false;
+    foreach($args as &$arg) {
+      list($name,$alias) = $this->get_name_alias($arg);
+      $this->update_sort_order($sorting, $name, $alias);
+
+      if ($name == 'identifier') {
+        $fields[] = "$name $alias";
+        $identifier = true;
+        $where .= " and (m.identifier like '%$term%'";
+      }
+      else
+        $fields[] = "max(case when attribute='$name' then value end) $alias";
+    }
+    $joins = $this->get_joins($filters);
+    $where = " where collection = '$collection' and version <= 0 ";
+    if ($term != "") {
+      if ($identifier)
+        $where .= " and (m.identifier like '%$term%' or m.value like '%$term%')";
+      else
+        $where .= " and m.value like '%$term%'";
+    }
+    $sql = "select ". implode(",", $fields). " from (
+     select m.identifier,m.attribute,m.value FROM collection m $joins $where) tmp
+     group by identifier";
+
+     $this->set_sorting($sql, $sorting);
+    return $this->db->read($sql, MYSQLI_NUM);
+  }
 }

@@ -9,7 +9,7 @@ isearch:
   show_all:
     type: font_awesome
     icon: caret-down
-    class: [isearch, show-all,text-dark-grey, overlay absolute vertical-middle right, pad]
+    class: [isearch, show-all,text-dark-grey, overlay absolute vertical-middle right, pad-y-8, pad-x-16]
     tooltip: Show all items
     show: yes
   drop:
@@ -28,4 +28,4 @@ isearch:
     text: $embolden
     attr: { id: $value, value: $value, chosen: $name }
   post:
-    - call: isearch::q(context)
+    collection.search: [$term,$id,"",identifier,name]

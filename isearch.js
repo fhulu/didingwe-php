@@ -10,17 +10,18 @@ $.widget( "custom.isearch", {
   _create: function ()
   {
     var me = this;
+    var el = me.element;
     var opts = me.options;
     me.dropped = me.justDropped = false;
     me.params = { action: 'data', path: opts.path, key: opts.key, offset: 0, size: opts.drop.autoload  };
     var el = me.element.on('keyup input cut paste', function() {
-      if (me.params.term == me.searcher.val()) return;
+      if (me.params.term == el.val()) return;
       me.params.offset = 0;
       me._load();
     })
     .on('selected', function(e, option) {
-      el.val(option.attr('value'));
-      me.searcher.val(option.attr('chosen'));
+      el.attr('value',option.attr('value'));
+      el.val(option.attr('chosen'));
       me.drop.hide();
       me.dropped = false;
     })
@@ -82,18 +83,17 @@ $.widget( "custom.isearch", {
     me._loading(true);
     var el = me.element;
     var opts = me.options;
-    me.params.term = me.searcher.val();
-    el.val("");
+    me.params.term = el.val();
     me.justDropped = me.dropped = true;
     me.drop.show();
     $.json('/', {data: me.params}, function(data) {
-      if (data._responses)
-        el.triggerHandler('server_response', [data]);
       el.trigger('loaded', [data]);
+      if ($.isPlainObject(data) && data._responses) {
+        el.triggerHandler('server_response', [data]);
+        return;
+      }
       me._populate(data);
       me._loading(false);
-      delete data.rows;
-      $.extend(me.params, data);
     });
   },
 
@@ -104,7 +104,7 @@ $.widget( "custom.isearch", {
     if (!me.params.offset) drop.scrollTop(0).children().remove();
     var maxHeight = parseInt(drop.css('max-height'));
     me.autoScrolls = 0;
-    $.each(data.rows, function(i, row) {
+    $.each(data, function(i, row) {
       var option = mkn.copy(opts.option);
       option.array = row;
       option = opts.render.initField(option, opts);
