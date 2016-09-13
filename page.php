@@ -684,6 +684,8 @@ class page
 
   function data()
   {
+    $this->merge_fields($this->context);
+    if (!isset($this->context['id'])) $this->context['id'] = last($this->path);
     log::debug_json("DATA ".last($this->path), $this->context);
     return $this->reply($this->context);
   }
