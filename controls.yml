@@ -406,6 +406,7 @@ label:
 
 labelled:
   templates: div
+  class: [pad-x]
   sow: [name]
   label:
     classes: label
