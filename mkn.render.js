@@ -587,7 +587,7 @@ mkn.render = function(options)
     if (field.autoload || field.autoload === undefined) {
       $.json('/', serverParams('data', field.path+'/'+name, field.params), function(result) {
         respond(result, object);
-        object.trigger('loaded', [field, result]);
+        object.trigger('loaded', [field, result.data]);
       });
     }
 
