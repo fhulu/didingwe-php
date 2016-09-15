@@ -23,6 +23,7 @@ isearch:
     derive: [name]
     desc: Add a new $name
     action: dialog
+    access: reg
     show: no
   dropper:
     type: [font_awesome,fanthom]
