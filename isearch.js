@@ -38,7 +38,7 @@ $.widget( "custom.isearch", {
 
     el.on('selected', function(e, option) {
       el.attr('value', option.attr('value'));
-      me.searcher.val(option.attr('chosen'));
+      me.searcher.val(option.attr('chosen')).select();
       me.drop.hide();
     })
     .on('added', function( event, data) {
