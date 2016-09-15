@@ -46,4 +46,4 @@ isearch:
     text: $embolden
     attr: { id: "", name: "", value: $value, chosen: $name }
   post:
-    collection.search: [$term,$id,"",identifier,name]
+    collection.search: [$term,$offset, $size, $id,"",identifier,name asc]

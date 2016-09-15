@@ -15,7 +15,7 @@ country:
   # sql: select code, name from country
   fields: [code, name]
   flags: [show_all]
-  add: { url: /isearch_test/add }
+  adder: { access: reg, url: /isearch_test/add }
   drop: { max-height: 180px }
   option:
     embolden: $name ($value)

@@ -12,7 +12,6 @@ $.widget( "custom.isearch", {
     var me = this;
     var el = me.element;
     var opts = me.options;
-    me.dropped = me.justDropped = false;
     me.params = { action: 'data', path: opts.path, key: opts.key, offset: 0, size: opts.drop.autoload  };
     me.searcher = el.find('.isearch-searcher').on('keyup input cut paste', function() {
       if (me.params.term == $(this).val()) return;
@@ -23,10 +22,7 @@ $.widget( "custom.isearch", {
     if (opts.adder && opts.adder.url) el.find('.isearch-adder').show();
 
     var dropper = el.find('.isearch-dropper').click(function() {
-      if (me.dropped) {
-        if (!me.drop.is(':visible')) me.drop.show();
-        return;
-      }
+      if (!me.drop.is(':visible')) me.drop.show();
       me.params.offset = 0;
       me.searcher.val("");
       me._load();
@@ -37,7 +33,6 @@ $.widget( "custom.isearch", {
     })
     .on('mouseleave', function() {
       $(this).hide();
-      me.dropped = false;
     })
     .scroll($.proxy(me._scroll,me))
 
@@ -45,12 +40,10 @@ $.widget( "custom.isearch", {
       el.attr('value', option.attr('value'));
       me.searcher.val(option.attr('chosen'));
       me.drop.hide();
-      me.dropped = false;
     })
     .on('added', function( event, data) {
       el.val(data[0]);
       me.searcher.val(data[1]);
-      me.dropped = false;
       me.drop.hide();
     });
 
@@ -79,7 +72,6 @@ $.widget( "custom.isearch", {
     var opts = me.options;
     me.params.term = me.searcher.val();
     el.val("");
-    me.justDropped = me.dropped = true;
     me.drop.show();
     $.json('/', {data: me.params}, function(result) {
       if (result._responses)
@@ -107,9 +99,6 @@ $.widget( "custom.isearch", {
       option.embolden = me._boldTerm(option.embolden, me.params.term);
       opts.render.create(option).appendTo(drop);
     })
-    if (!me.justDropped) return;
-    me.justDropped = false;
-    drop.scrollTop(0);
   },
 
   _boldTerm: function(text, term)
