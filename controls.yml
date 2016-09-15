@@ -224,6 +224,9 @@ empty:
   tag: div
   text: ""
 
+fanthom:
+  attr: { name: "", id: "", value: ""}
+
 font_awesome:
   tag: i
   icon: $id
