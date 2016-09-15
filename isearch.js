@@ -16,14 +16,16 @@ $.widget( "custom.isearch", {
     me.searcher = el.find('.isearch-searcher').on('keyup input cut paste', function() {
       if (me.params.term == $(this).val()) return;
       me.params.offset = 0;
+      me.drop.show();
       me._load();
     });
 
-    if (opts.adder && opts.adder.url) el.find('.isearch-adder').show();
+    if (opts.adder && opts.adder.url)
+      el.find('.isearch-adder').show().click(function(){ me.drop.hide() })
 
     var dropper = el.find('.isearch-dropper').click(function() {
-      if (!me.drop.is(':visible')) me.drop.show();
       me.params.offset = 0;
+      el.val("");
       me.searcher.val("");
       me._load();
     });
@@ -31,24 +33,23 @@ $.widget( "custom.isearch", {
     me.drop = el.find('.isearch-drop').on('click', '.isearch-option', function() {
       el.trigger('selected', [$(this)]);
     })
-    .on('mouseleave', function() {
-      $(this).hide();
-    })
     .scroll($.proxy(me._scroll,me))
+    .click(function() {  me.drop.hide() })
+
+    $(document).click(function() { me.drop.hide(); });
 
     el.on('selected', function(e, option) {
       el.attr('value', option.attr('value'));
-      me.searcher.val(option.attr('chosen')).select();
+      me.searcher.val(option.attr('chosen')).select
       me.drop.hide();
     })
     .on('added', function( event, data) {
       el.val(data[0]);
       me.searcher.val(data[1]);
-      me.drop.hide();
-    });
-
+      me.drop.hide()
+    })
+    .click(function(e) { e.stopPropagation(); });
   },
-
 
   _scroll: function(e) {
     var me = this;

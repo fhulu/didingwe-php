@@ -29,7 +29,6 @@ isearch:
     icon: caret-down
     class: [isearch-dropper]
     desc: Show all items
-    show: yes
   drop:
     tag: ul
     class: [isearch-drop,overlay absolute,scroll-y,widest,nomargin,nopad,white,shadow]
