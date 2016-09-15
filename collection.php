@@ -197,7 +197,7 @@ class collection
   function data()
   {
     $sql = $this->read(func_get_args());
-    return $this->db->read($sql, MYSQLI_NUM);
+    return ['data'=>$this->db->read($sql, MYSQLI_NUM)];
   }
 
   function update()
@@ -283,6 +283,6 @@ class collection
      group by identifier";
 
      $this->set_sorting($sql, $sorting);
-    return $this->db->read($sql, MYSQLI_NUM);
+    return ['data'=>$this->db->read($sql, MYSQLI_NUM)];
   }
 }
