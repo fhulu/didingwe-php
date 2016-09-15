@@ -5,17 +5,30 @@ isearch:
   script: [/common/isearch.js]
   css: [/common/isearch.css]
   class: [ isearch,^pad ]
-  contents: [ $searcher, $adder, $dropper, $drop]
+  contents: [ $searcher, $buttons, $drop]
   searcher:
     type: [input,fanthom]
     derive: [placeholder]
     attr: { placeholder: $placeholder }
     class: [isearch-searcher, biggest, pad]
+  buttons:
+    class: [overlay absolute top-right, pointer-cursor,pad]
+    type: [container,fanthom]
+    derive: [adder,dropper]
+    contents: [$adder,$dropper]
+  adder:
+    tag: i
+    text: +
+    class: [isearch-adder,pad]
+    derive: [name]
+    desc: Add a new $name
+    action: dialog
+    show: no
   dropper:
     type: [font_awesome,fanthom]
     icon: caret-down
-    class: [isearch-dropper,overlay absolute top-right, pad, pointer-cursor]
-    tooltip: Show all items
+    class: [isearch-dropper]
+    desc: Show all items
     show: yes
   drop:
     tag: ul

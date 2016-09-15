@@ -20,6 +20,8 @@ $.widget( "custom.isearch", {
       me._load();
     });
 
+    if (opts.adder && opts.adder.url) el.find('.isearch-adder').show();
+
     var dropper = el.find('.isearch-dropper').click(function() {
       if (me.dropped) {
         if (!me.drop.is(':visible')) me.drop.show();
@@ -30,8 +32,6 @@ $.widget( "custom.isearch", {
       me._load();
     });
 
-    var adder = el.find('.isearch-adder').click(function() {
-    });
     me.drop = el.find('.isearch-drop').on('click', '.isearch-option', function() {
       el.trigger('selected', [$(this)]);
     })
@@ -40,8 +40,6 @@ $.widget( "custom.isearch", {
       me.dropped = false;
     })
     .scroll($.proxy(me._scroll,me))
-
-    if (opts.adder && opts.adder.url) inputs.find('.isearch.adder').show();
 
     el.on('selected', function(e, option) {
       el.attr('value', option.attr('value'));
