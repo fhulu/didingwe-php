@@ -14,46 +14,42 @@ $.widget( "custom.isearch", {
     var opts = me.options;
     me.dropped = me.justDropped = false;
     me.params = { action: 'data', path: opts.path, key: opts.key, offset: 0, size: opts.drop.autoload  };
-    var el = me.element.on('keyup input cut paste', function() {
-      if (me.params.term == el.val()) return;
+    me.searcher = el.find('.isearch-searcher').on('keyup input cut paste', function() {
+      if (me.params.term == $(this).val()) return;
       me.params.offset = 0;
       me._load();
-    })
-    .on('selected', function(e, option) {
-      el.attr('value',option.attr('value'));
-      el.val(option.attr('chosen'));
-      me.drop.hide();
-      me.dropped = false;
-    })
-    .on('mouseleave', function() {
-      me.drop.hide();
-      me.dropped = false;
     });
 
-    me.drop = opts.render.create(opts, 'drop', true)
-      .on('click', '.isearch.option', function() {
-        el.trigger('selected', [$(this)]);
-      })
-      .scroll($.proxy(me._scroll,me))
-      .appendTo(me.inputs);
+    var dropper = el.find('.isearch-dropper').click(function() {
+      if (me.dropped) {
+        if (!me.drop.is(':visible')) me.drop.show();
+        return;
+      }
+      me.params.offset = 0;
+      me.searcher.val("");
+      me._load();
+    });
 
-    var parent = el.parent("[for='"+el.attr('id')+"']");
-    if (!parent.exists()) parent = el;
-    me.show_all = opts.render.create(opts, 'show_all', true)
-      .insertBefore(el)
-      .click(function() {
-        if (me.dropped) {
-          if (!me.drop.is(':visible')) me.drop.show();
-          return;
-        }
-        me.params.offset = 0;
-        el.val("");
-        me._load();
-      });
+    var adder = el.find('.isearch-adder').click(function() {
+    });
+    me.drop = el.find('.isearch-drop').on('click', '.isearch-option', function() {
+      el.trigger('selected', [$(this)]);
+    })
+    .on('mouseleave', function() {
+      $(this).hide();
+      me.dropped = false;
+    })
+    .scroll($.proxy(me._scroll,me))
 
     if (opts.adder && opts.adder.url) inputs.find('.isearch.adder').show();
 
-    el.on('isearch_add', function( event, data) {
+    el.on('selected', function(e, option) {
+      el.attr('value', option.attr('value'));
+      me.searcher.val(option.attr('chosen'));
+      me.drop.hide();
+      me.dropped = false;
+    })
+    .on('added', function( event, data) {
       el.val(data[0]);
       me.searcher.val(data[1]);
       me.dropped = false;
@@ -83,17 +79,19 @@ $.widget( "custom.isearch", {
     me._loading(true);
     var el = me.element;
     var opts = me.options;
-    me.params.term = el.val();
+    me.params.term = me.searcher.val();
+    el.val("");
     me.justDropped = me.dropped = true;
     me.drop.show();
-    $.json('/', {data: me.params}, function(data) {
-      el.trigger('loaded', [data]);
-      if ($.isPlainObject(data) && data._responses) {
-        el.triggerHandler('server_response', [data]);
-        return;
-      }
-      me._populate(data);
+    $.json('/', {data: me.params}, function(result) {
+      if (result._responses)
+        el.triggerHandler('server_response', [result]);
+      if (!result.data) return;
+      el.trigger('loaded', [result]);
+      me._populate(result.data);
       me._loading(false);
+      delete result.data;
+      $.extend(me.params, result);
     });
   },
 

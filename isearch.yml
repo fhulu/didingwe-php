@@ -1,27 +1,32 @@
 isearch:
-  type: input
+  type: container
   create: isearch
   placeholder: Search $name
   script: [/common/isearch.js]
   css: [/common/isearch.css]
-  class: [ isearch ]
-  attr: { placeholder: $placeholder }
-  show_all:
-    type: font_awesome
+  class: [ isearch,^pad ]
+  contents: [ $searcher, $adder, $dropper, $drop]
+  searcher:
+    type: [input,fanthom]
+    derive: [placeholder]
+    attr: { placeholder: $placeholder }
+    class: [isearch-searcher, biggest, pad]
+  dropper:
+    type: [font_awesome,fanthom]
     icon: caret-down
-    class: [isearch, show-all,text-dark-grey, overlay absolute vertical-middle right, pad-y-8, pad-x-16]
+    class: [isearch-dropper,overlay absolute top-right, pad, pointer-cursor]
     tooltip: Show all items
     show: yes
   drop:
     tag: ul
-    class: [isearch,drop,absolute,scroll-y,widest,nomargin,nopad,white,shadow]
+    class: [isearch-drop,overlay absolute,scroll-y,widest,nomargin,nopad,white,shadow]
     text: ""
     height: auto
     show: no
     autoload: 10
   option:
     tag: a
-    class: [isearch,option,block,nomargin,undecorated,pad,hover-light-grey]
+    class: [isearch-option,block,nomargin,undecorated,pad,hover-light-grey]
     value: $1
     name: $2
     embolden: $name
