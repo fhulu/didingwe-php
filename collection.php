@@ -161,10 +161,13 @@ class collection
       $sql .= " limit $size";
   }
 
-  function set_sorting(&$sql, $sorting)
+  function set_sorting(&$sql, $sorting, $group=true)
   {
-    if (!empty($sorting))
+    if (empty($sorting)) return;
+    if ($group)
       $sql = "select * from ($sql) tmp order by ".implode(',', $sorting);
+    else
+      $sql .= " order by ".implode(',', $sorting);
   }
 
   function read($args)
@@ -282,7 +285,8 @@ class collection
      select m.identifier,m.attribute,m.value FROM collection m $joins $where) tmp
      group by identifier";
 
-     $this->set_sorting($sql, $sorting);
+    $this->set_sorting($sql, $sorting, false);
+    $this->set_limits($sql, $offset, $size);
     return ['data'=>$this->db->read($sql, MYSQLI_NUM)];
   }
 }
