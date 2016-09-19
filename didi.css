@@ -255,7 +255,7 @@
 .relative: { position: relative}
 
 /* placement */
-.bottom,.bottom-left,.bottom-right { top: 0; }
+.bottom,.bottom-left,.bottom-right { bottom: 0; }
 .centered { margin-left: auto; margin-right: auto; }
 .center-all { text-align: center; margin-left: auto; margin-right: auto; vertical-align: center; }
 .center-x,.middle-x,.middle{ left: 50%}
