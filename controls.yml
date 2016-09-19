@@ -80,7 +80,7 @@ captioned_image:
     type: label
     derive: [title]
     text: $title
-    styles: [block]
+    class: [block]
 
 captioned_input:
   type: label_top
