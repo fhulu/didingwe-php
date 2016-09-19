@@ -878,6 +878,7 @@ class page
     $sql =  replace_vars($sql, $options, function(&$val) {
       $val = addslashes($val);
     });
+    return $sql;
   }
 
 
