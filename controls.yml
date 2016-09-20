@@ -79,8 +79,8 @@ captioned_image:
   caption:
     type: label
     derive: [title]
-    text: $title
-    styles: [block]
+    name: $title
+    class: [block]
 
 captioned_input:
   type: label_top
@@ -425,11 +425,12 @@ labelled_input_page:
   type: input_page
 
 label_inside:
+  label: { text: ""}
   subject:
     class: [border,widest]
     label: $name
     attr: { placeholder: $label, title: $desc}
-  text: $field
+  text: $label $field
 
 labelled_inside:
   type: label_inside
