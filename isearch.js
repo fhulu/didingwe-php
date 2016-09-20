@@ -31,22 +31,20 @@ $.widget( "custom.isearch", {
     });
 
     me.drop = el.find('.isearch-drop').on('click', '.isearch-option', function() {
-      el.trigger('selected', [$(this)]);
+      el.trigger('selected', [$(this).attr('value'), $(this).attr('chosen')]);
     })
     .scroll($.proxy(me._scroll,me))
     .click(function() {  me.drop.hide() })
 
     $(document).click(function() { me.drop.hide(); });
 
-    el.on('selected', function(e, option) {
-      el.attr('value', option.attr('value'));
-      me.searcher.val(option.attr('chosen')).select
+    el.on('selected', function(e, value, chosen) {
+      el.attr('value', value);
+      me.searcher.val(chosen).select();
       me.drop.hide();
     })
     .on('added', function( event, data) {
-      el.val(data[0]);
-      me.searcher.val(data[1]);
-      me.drop.hide()
+      el.trigger('selected', [data[0], data[1]]);
     })
     .click(function(e) { e.stopPropagation(); });
   },

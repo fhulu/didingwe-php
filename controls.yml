@@ -143,7 +143,8 @@ container:
 control:
   html: <$tag>$text</$tag>
   tag: div
-  attr: { id: $id }
+  desc: ""
+  attr: { id: $id, title: $desc }
   class: [didi]
   border-color: "#ccc"
   text: $name
@@ -392,14 +393,14 @@ input_page:
   inputs:
     - template: $layout
     - type: input
-    - $controls: { push: last}
-  controls:
-    tag: div
-    name: ""
-    label_suffix: " "
-    derive: [input_class,actions]
-    class: [actions,$input_class,^pad]
-    text: $actions
+    - controls:
+        push: last
+        tag: div
+        name: ""
+        label_suffix: " "
+        derive: [input_class,actions]
+        class: [actions,$input_class,^pad]
+        text: $actions
   actions:
     - default: { styles: [hspaced], space: 24}
     - type: submit
