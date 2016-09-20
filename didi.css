@@ -59,8 +59,10 @@
 .border-medium { border-width: 4px}
 .border-large { border-width: 8px}
 .left-border,.border-left { border-left-style: solid }
+.left-border-thin,.border-left-thin { border-left-style: solid; border-left-width: 1px}
 .right-border,.border-right { border-right-style: solid }
 .bottom-border,.border-bottom { border-bottom-style: solid }
+.bottom-border-thin,.border-bottom-thin { border-bottom-style: solid; border-bottom-width: 1px}
 .border-top,.top-border { border-top-style: solid }
 
 /* border divider */
