@@ -139,6 +139,7 @@ class collection
     }
     list($collection, $filters) = array_splice($args, 0, 2);
     list($collection) = assoc_element($collection);
+    if (is_string($filters)) $filters = ['identifier'=>$filters];
     return [$collection, $filters, $offset, $size];
   }
 
