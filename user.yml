@@ -85,7 +85,7 @@ confirm_registration:
   validate: agree_terms
   post:
     - read_session: title,first_name,last_name,cellphone,email,password
-    - collection.insert: [user, $email, password: /password('$password'), active: 1, roles: 'reg', title, first_name,last_name,cellphone]
+    - collection.insert: [user, $email, password: /password('$password'), active: 1, attempts: 0, roles: 'reg', title, first_name,last_name,cellphone]
     - clear_values
   audit: $title $first_name $last_name $cellphone $email
 
