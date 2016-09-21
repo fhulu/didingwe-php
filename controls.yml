@@ -20,20 +20,23 @@ actioner:
   attr: { action: $id, id: "", title: $desc }
   styles: [filled]
 
-body:
-  class: [didi]
-
 alert_message:
   classes: div
   class: [center-text]
   style: [height_watermark]
   text: $message
 
+background_image:
+  background-image: url(/$id.png)
+  
 blank:
   type: plain_text
   mutable: false
   text: ""
   class: [inline-block]
+
+body:
+  class: [didi]
 
 bookmark:
   tag: div
