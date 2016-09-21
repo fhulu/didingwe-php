@@ -235,7 +235,7 @@ class collection
     list($collection, $identifier) = $this->extract_header($args);
     $sql = "insert into collection(version,collection,identifier,attribute,value) values";
     $identifier_func = "last_insert_id()";
-    list($alias,$value) = assoc_element($identifier);
+    list($alias,$identifier) = assoc_element($identifier);
     if (!is_null($value)) $identifier = $value;
     foreach($args as &$arg) {
       list($name,$value) = $this->page->get_sql_pair($arg);

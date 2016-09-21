@@ -38,7 +38,7 @@ add:
     - add: { class: [^rounded-xlarge] }
     - close: {action: close_dialog}
   post:
-    - collection.insert: [country, identifier: $new_country_code, name: $new_country_name]
+    - collection.insert: [country, $new_country_code, name: $new_country_name]
     - close_dialog
     - trigger: [added,"#country", [$new_country_code, $new_country_name] ]
 
