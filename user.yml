@@ -85,11 +85,7 @@ confirm_registration:
   validate: agree_terms
   post:
     - read_session: title,first_name,last_name,cellphone,email,password
-    - sql_insert: [person,title,first_name,last_name,cellphone,email]
-    - sql_values: select last_insert_id() person, password('$password') password, 1 active, 'reg' roles
-    - sql_insert: [user,person,email,password,cellphone,active,roles]
-    - sql_values: select last_insert_id() uid
-    - write_session: uid
+    - collection.insert: [user, $email, password: /password('$password'), active: 1, attempts: 0, roles: 'reg', title, first_name,last_name,cellphone]
     - clear_values
   audit: $title $first_name $last_name $cellphone $email
 
@@ -152,7 +148,7 @@ enter_credentials:
   type: input_page
   desc: Fill in user information used to uniquely identify the user on the system
   inputs:
-    - title: {type: dropdown}
+    - title: {type: dropdown_collection}
     - first_name
     - last_name
     - cellphone
