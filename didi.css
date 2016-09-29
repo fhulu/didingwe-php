@@ -202,15 +202,15 @@
 .bolder { font-weight: bolder; }
 .italic { font-style: italic; }
 .lighter { font-weight: lighter; }
-.thin,.thinner,.font-100 { font-weight: 100; }
-.font-200 { font-weight: 200; }
-.font-300 { font-weight: 00; }
-.font-400 { font-weight: 400; }
-.font-500,.font-medium-weight { font-weight: 500; }
-.font-600 { font-weight: 600; }
-.font-700 { font-weight: 800; }
-.font-800 { font-weight: 700; }
-.font-900 { font-weight: 900; }
+.font-weight-100,.thin,.thinner{ font-weight: 100; }
+.font-weight-200 { font-weight: 200; }
+.font-weight-300 { font-weight: 300; }
+.font-weight-400 { font-weight: 400; }
+.font-weight-500,.font-weight-medium { font-weight: 500; }
+.font-weight-600 { font-weight: 600; }
+.font-weight-700 { font-weight: 800; }
+.font-weight-800 { font-weight: 700; }
+.font-weight-900 { font-weight: 900; }
 
 /* font sizes */
 .tiny-font{font-size:10px}
