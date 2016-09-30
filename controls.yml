@@ -455,7 +455,7 @@ label_left:
     class: [float-right,right-text, pad]
   subject:
     derive: [input_class]
-    class: [$input_class,border,pad,inline-block]
+    class: [$input_class,pad,inline-block]
   text: $field$label
   styles: [vspaced]
 
