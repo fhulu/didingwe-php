@@ -494,6 +494,7 @@ mkn.render = function(options)
     field.appendChild = false;
     tmp.page($.extend({request: options.request}, field)).then(function(obj) {
       setStyle(obj, field);
+      setClass(obj, field);
       tmp.replaceWith(obj);
       parent[key] = field;
     });
