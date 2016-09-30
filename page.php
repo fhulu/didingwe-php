@@ -161,6 +161,7 @@ class page
   {
     $read_one = false;
     $languages = [''];
+    global $config;
     if ($this->request['lang']) $languages[] = ".". $this->request['lang'];
     foreach($languages as $lang) {
       foreach($search_paths as $path) {
@@ -170,6 +171,7 @@ class page
 
         $this->include_external($data);
         $this->replace_keys($data);
+        replace_fields($data, $config);
         $fields[] = $data;
       }
     }
