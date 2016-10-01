@@ -9,7 +9,8 @@
 
 .error
 {
-  display: none;
+  display: block;
+  clear: both;
   padding: 1px;
   border: 1px solid lightgrey;
   background: #fffff0;
