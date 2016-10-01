@@ -28,6 +28,21 @@ var mkn = new function() {
     return -1;
   }
 
+  this.firstIndexOfKey = function(arr, keyName, keyValue)
+  {
+    return this.indexOfKey(arr, keyName, keyValue);
+  }
+
+  this.lastIndexOfKey = function(arr, keyName, keyValue)
+  {
+    var last = -1;
+    for (var i in arr) {
+      var obj = arr[i];
+      if (obj[keyName] === keyValue) last = i;
+    }
+    return last;
+  }
+
   this.merge = function(a1, a2)
   {
     if (a1 === undefined || a1 === null) return a2;
