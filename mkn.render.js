@@ -197,7 +197,7 @@ mkn.render = function(options)
       var template = item.template;
       if (template == 'none' || template  == '$field')
         delete item.template;
-      else if (typeof item.template == 'string') {
+      else if (typeof template == 'string') {
         var def = {};
         setDefaults(def, {template: template}, parent_field);
         item.template = def.template;
@@ -851,7 +851,7 @@ mkn.render = function(options)
         }
         value = types;
       }
-      if (name == 'template' && $.isPlainObject(item[name]) && item[name].type !== undefined) {
+      if (name == 'template' && $.isPlainObject(item[name]) && item[name].type === undefined) {
         value = mergePrevious(defaults, name, me.initField(value));
         expandVars(value, value.subject, { recurse: true});
       }
