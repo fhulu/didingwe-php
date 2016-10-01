@@ -152,7 +152,6 @@ mkn.render = function(options)
         }
         else
           id = item.id ;
-        if (item.merge) continue;
         if (typeof item === 'string') {
           item = { name: item };
         }
@@ -227,15 +226,23 @@ mkn.render = function(options)
     for (var i in pushed) {
       var item = pushed[i];
       var push = item.push;
-      var pos = mkn.indexOfKey(items, 'id', item.id);
+      delete item.push;
+      var pos = mkn.firstIndexOfKey(items, 'id', item.id);
       item = mkn.copy(item);
-      items.splice(pos, 1);
-      if (push === 'first')
+      if (push === 'first') {
+        items.splice(pos, 1);
         items.unshift(item);
-      else if (push === 'last')
+      }
+      else if (push === 'last') {
+        items.splice(pos, 1);
         items.push(item);
-      else
-        items.splice(mkn.indexOfKey(items, 'id', item.push), 0, item);
+      }
+      else if (push == 'merge') {
+       items.splice(items.indexOf(item), 1 );
+       items[pos] = mkn.merge(items[pos], item);
+     }
+     else
+        items.splice(mkn.firstIndexOfKey(items, 'id', item.push), 0, item);
       if (item.wrap) {
         items[pos].wrap = item.wrap;
         delete item.wrap;
