@@ -68,8 +68,8 @@
 .borderless,.border-less { border-top-width:0;border-bottom-width:0;border-left-width:0;border-right-width:0}
 
 /* border divider */
-.hdivider+.hdivider { border-left-style: solid }
-.vdivider+.vdivider { border-top-style: solid }
+.hdivider+.hdivider { border-left-style: solid; border-left-width: 1px}
+.vdivider+.vdivider { border-top-style: solid; border-top-width: 1px}
 
 /* border shadow */
 .shadow {box-shadow:0 2px 4px 0 rgba(0,0,0,0.16),0 2px 10px 0 rgba(0,0,0,0.12) }
@@ -87,6 +87,7 @@
 .clear-after:after,.clear-after::after {content:"";display:block;clear:both}
 .clear-after-4:after,.clear-after-4::after {content:"";display:block;clear:both;padding:4}
 .clear-after-8:after,.clear-after-8::after {content:"";display:block;clear:both;padding:8}
+.noclear{clear:none}
 
 
 /* closebtn - from w3.css */
@@ -292,16 +293,16 @@
 .height-4{height:4px}
 .height-8,.height-small{height:8px}
 .height-10{height:10px}
-.height-16,.height-large{height:16px}
+.height-16{height:16px}
 .height-20{height:20px}
-.height-24,.height-xlarge{height:24px}
+.height-24,.height-medium{height:24px}
 .height-28{height:28px}
 .height-30{height:30px}
-.height-32,.height-xxlarge{height:32px}
+.height-32,.height-large{height:32px}
 .height-40{height:40px}
-.height-48{height:48px}
+.height-48,.height-xlarge{height:48px}
 .height-50{height:50px}
-.height-60{height:60px}
+.height-60,.height-xxlarge{height:60px}
 .height-56{height:56px}
 .height-64,.height-jumbo{height:64px}
 
