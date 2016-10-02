@@ -28,7 +28,7 @@ alert_message:
 
 background_image:
   background-image: url(/$id.png)
-  
+
 blank:
   type: plain_text
   mutable: false
@@ -384,10 +384,7 @@ input:
 input_page:
   type: page
   text: $synopsis $inputs
-  input_class: w-2-3 float-right
-  layout:
-    derive: [input_class]
-    type: label_left
+  layout: { type: label_left }
   synopsis:
     derive: [desc]
     space: 16
@@ -395,17 +392,15 @@ input_page:
     name: $desc
   inputs:
     - template: $layout
-    - type: input
-    - controls:
+    - actions_pane:
         push: last
         tag: div
-        name: ""
-        label_suffix: " "
-        derive: [input_class,actions]
-        class: [actions,$input_class,^pad]
+        label: ""
+        derive: [actions]
+        class: [actions]
         text: $actions
+    - type: input
   actions:
-    - default: { styles: [hspaced], space: 24}
     - type: submit
 
 label:
@@ -414,7 +409,6 @@ label:
 
 labelled:
   templates: div
-  class: [pad-x]
   sow: [name]
   label:
     classes: label
@@ -446,18 +440,12 @@ labelled_inside_image:
 
 label_left:
   type: labelled
-  derive: [input_class]
-  label_suffix: ":"
   label:
-    derive: [label_suffix]
-    suffix: $label_suffix
+    suffix: ":"
     text: $name$suffix
-    class: [float-right,right-text, pad]
-  subject:
-    derive: [input_class]
-    class: [$input_class,pad,inline-block]
+    class: [float-right,right-text]
+  subject: { class: [float-right,w-2-3] }
   text: $field$label
-  styles: [vspaced]
 
 label_mobile:
   type: labelled
