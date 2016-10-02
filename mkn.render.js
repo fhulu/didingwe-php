@@ -117,8 +117,7 @@ mkn.render = function(options)
   }
 
 
-  var removePopped = function(items, popped)
-  {
+  var removePopped = function(items, popped) {
     var i = items.length;
     while (i--) {
       var item = items[i];
@@ -127,12 +126,73 @@ mkn.render = function(options)
     }
   }
 
-  this.expandFields = function(parent_field, name, items, defaults)
-  {
-    if (!defaults) defaults = { template: "$field" };
-    var path = parent_field.path+'/'+name;
+  var insertPushed = function(items, pushed) {
+    for (var i in pushed) {
+      var item = pushed[i];
+      var push = item.push;
+      delete item.push;
+      var pos = items.indexOf(item);
+      item = mkn.copy(item);
+      if (push === 'first') {
+        items.splice(pos, 1);
+        items.unshift(item);
+      }
+      else if (push === 'last') {
+        items.splice(pos, 1);
+        items.push(item);
+      }
+      else if (push == 'merge') {
+       items.splice(pos, 1 );
+       pos = mkn.firstIndexOfKey(items, 'id', item.id);
+       items[pos] = mkn.merge(items[pos], item);
+      }
+      else
+        items.splice(mkn.firstIndexOfKey(items, 'id', item.push), 0, item);
+    }
+  }
+
+  var pushPop = function(items) {
     var pushed = [];
     var popped = [];
+    for(var i in items) {
+      var item = items[i];
+      if ($.isArray(item)) continue;
+      if (item.id == 'pop')
+        popped.push(item.name);
+      else if (item.push)
+        pushed.push(item);
+      items[i] = item;
+    }
+    removePopped(items, popped);
+    insertPushed(items, pushed);
+  }
+
+  var objectify = function(items) {
+    for (var i in items) {
+      var item = items[i];
+      if (typeof item==='string') item = mkn.toObject(item);
+      if (!$.isPlainObject(item)) continue;
+      var id = item.id;
+      if (id === undefined) {
+        var a = mkn.firstElement(item);
+        id = a[0];
+        if (array_defaults.indexOf(id) >=0 ) continue;
+        item = a[1];
+        if (typeof item == 'string') item = { name: item}
+        item = $.extend({}, item);
+      }
+      if (typeof item === 'string') item = { name: item }
+      item.id = id;
+      items[i] = item;
+    }
+  }
+
+  this.expandFields = function(parent_field, name, items, defaults)
+    {
+    if (!defaults) defaults = { template: "$field" };
+    var path = parent_field.path+'/'+name;
+    objectify(items);
+    pushPop(items);
     var wrap;
     var sow = parent_field.sow;
     var removed = [];
@@ -142,27 +202,13 @@ mkn.render = function(options)
       var array;
       var template;
       removed.push(i);
-      if (typeof item==='string') item = mkn.toObject(item);
       if ($.isPlainObject(item)) {
         if (setDefaults(defaults, item, parent_field)) continue;
-        if (item.id === undefined) {
-          var a = mkn.firstElement(item);
-          id = a[0];
-          item = a[1];
-        }
-        else
-          id = item.id ;
-        if (typeof item === 'string') {
-          item = { name: item };
-        }
+        id = item.id;
         if (id == 'query') {
           item.defaults = mkn.copy(defaults);
         }
 
-        if (id == 'pop') {
-          popped.push(item.name);
-          continue;
-        }
         if (id[0] == '$') {
           id = id.substr(1);
           item = mkn.merge(parent_field[id], item);
@@ -209,8 +255,6 @@ mkn.render = function(options)
         delete defaults.wrap;
       }
       item = this.initField(item, parent_field);
-      if (item.push)
-        pushed.push(item);
 
       if (item.template) initTemplate(item)
       items[i] = item;
@@ -219,34 +263,6 @@ mkn.render = function(options)
 
     for (var i in removed) {
       items.splice(removed[i]-i,1);
-    }
-
-    removePopped(items, popped);
-
-    for (var i in pushed) {
-      var item = pushed[i];
-      var push = item.push;
-      delete item.push;
-      var pos = mkn.firstIndexOfKey(items, 'id', item.id);
-      item = mkn.copy(item);
-      if (push === 'first') {
-        items.splice(pos, 1);
-        items.unshift(item);
-      }
-      else if (push === 'last') {
-        items.splice(pos, 1);
-        items.push(item);
-      }
-      else if (push == 'merge') {
-       items.splice(items.indexOf(item), 1 );
-       items[pos] = mkn.merge(items[pos], item);
-     }
-     else
-        items.splice(mkn.firstIndexOfKey(items, 'id', item.push), 0, item);
-      if (item.wrap) {
-        items[pos].wrap = item.wrap;
-        delete item.wrap;
-      }
     }
   }
 
