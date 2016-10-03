@@ -386,8 +386,7 @@ input_page:
   layout: { type: label_left }
   synopsis:
     derive: [desc]
-    space: 16
-    type: section_heading
+    tag: div
     name: $desc
   inputs:
     - template: $layout
@@ -660,10 +659,6 @@ row_inputs:
     - template: row_inputr
     - type: input
 
-
-section_heading:
-  classes: p
-  class: [center-text,thinner,widest,vspaced,border-bottom]
 
 side_spacer:
   space: 2px
