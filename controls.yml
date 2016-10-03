@@ -394,11 +394,11 @@ input_page:
     - template: $layout
     - actions_pane:
         push: last
-        tag: div
+        type: container
         label: ""
         derive: [actions]
         class: [actions]
-        text: $actions
+        contents: $actions
     - type: input
   actions:
     - type: submit
