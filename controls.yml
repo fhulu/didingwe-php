@@ -18,7 +18,6 @@ actioner:
   tag: button
   class: [borderless,medium-font,hover-shadow,vertical-middle,pad]
   attr: { action: $id, id: "", title: $desc }
-  styles: [filled]
 
 alert_message:
   classes: div
@@ -444,7 +443,7 @@ label_left:
     tag: div
     suffix: ":"
     text: $name$suffix
-    class: [float-right,right-text]
+    class: [float-right,w-1-3,right-text]
   subject: { class: [float-right,w-2-3] }
   text: $field$label
 
