@@ -200,7 +200,7 @@ mkn.render = function(options)
       var item = items[i];
       var id;
       var array;
-      var template;
+      var template; 
       removed.push(i);
       if ($.isPlainObject(item)) {
         if (setDefaults(defaults, item, parent_field)) continue;
@@ -383,6 +383,7 @@ mkn.render = function(options)
     field = this.mergeType(field);
     deriveParent(parent, field);
     field = this.parentSow(parent, field);
+    field = this.mergeType(field);
 
     var id = field.id;
     if (id && field.name === undefined)
