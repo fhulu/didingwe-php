@@ -441,6 +441,7 @@ labelled_inside_image:
 label_left:
   type: labelled
   label:
+    tag: div
     suffix: ":"
     text: $name$suffix
     class: [float-right,right-text]
