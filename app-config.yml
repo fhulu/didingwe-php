@@ -3,16 +3,17 @@ brand_name: $program_name
 brand_path: ../$brand_name
 landing:
   page: /index
-session:
+authenticated:
   page: /index
-  content: home
+  path: /home
+  content: $path
 start_page: home
 log_dir: ../log
-log_file: access.log
+log_file: $brand_name.log
 upload_dir: ../uploads
 css:
   - /common/didi.css
-  - .$brand_name/brand.css
+  - /.$brand_name/brand.css
 scripts:
   - /jquery-min.js
   - /jquery-ui.min.js
