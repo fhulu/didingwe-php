@@ -95,6 +95,7 @@
 .closebtn:hover,.closebtn:focus{color:#000;text-decoration:none;cursor:pointer}
 
 /* colors */
+.whitesmoke,.faded{ background-color:whitesmoke}
 .hover-none:hover{box-shadow:none;background-color:transparent}
 .amber,.hover-amber:hover{color:#000;background-color:#ffc107}
 .aqua,.hover-aqua:hover{color:#000;background-color:#00ffff}
@@ -216,14 +217,14 @@
 .font-weight-900 { font-weight: 900; }
 
 /* font sizes */
-.tiny-font{font-size:10px}
-.small-font{font-size:12px}
-.medium-font{font-size:15px}
-.large-font{font-size:18px}
-.xlarge-font{font-size:24px}
-.xxlarge-font{font-size:36px}
-.xxxlarge-font{font-size:48px}
-.jumbo-font{font-size:64px}
+.tiny-font,.font-tiny{font-size:10px}
+.small-font,.font-small{font-size:12px}
+.medium-font,.font-medium{font-size:15px}
+.large-font,.font-large{font-size:18px}
+.xlarge-font,.font-xlarge{font-size:24px}
+.xxlarge-font,.font-xxlarge{font-size:36px}
+.xxxlarge-font,.font-xxxlarge{font-size:48px}
+.jumbo-font,.font-jumbo{font-size:64px}
 
 /* hover */
 .hover-shadow:hover{box-shadow:0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19)}
@@ -468,8 +469,9 @@
 .col.s10{width:83.33333%}
 .col.s11{width:91.66666%}
 .col.s12,.half,.third,.twothird,.quarter,.threequarter,.widest{width:99.99999%}
+.nav-small {height:100%}
 @media only screen and (max-width:600px){
-.hide-small { display: none}
+.hide-small{display:none}
 }
 @media only screen and (min-width:601px){
 .col.m1{width:8.33333%}
@@ -484,7 +486,8 @@
 .col.m10{width:83.33333%}
 .col.m11{width:91.66666%}
 .col.m12{width:99.99999%}
-.hide-medium { display: none}
+.hide-medium{display:none}
+.nav-medium{height:100%}
 }
 @media only screen and (min-width:993px){
 .col.l1{width:8.33333%}
@@ -499,5 +502,6 @@
 .col.l10{width:83.33333%}
 .col.l11{width:91.66666%}
 .col.l12{width:99.99999%}
-.hide-large { display: none}
+.hide-large{display:none}
+.nav-large{height:100%}
 }
