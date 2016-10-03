@@ -1,4 +1,6 @@
 site_config: .site-config.yml
+brand_name: $program_name
+brand_path: ../$brand_name
 landing:
   page: /index
 session:
@@ -10,6 +12,7 @@ log_file: access.log
 upload_dir: ../uploads
 css:
   - /common/didi.css
+  - .$brand_name/brand.css
 scripts:
   - /jquery-min.js
   - /jquery-ui.min.js
@@ -19,3 +22,21 @@ scripts:
   - /common/page.js
 helpers:
   - collection
+
+email_otp: yes
+sms_otp: yes
+request_method: post
+smtp_host: smtp.example.com
+smtp_user: email@example.com
+smtp_password: mypassword
+send_sms:
+  protocol: http
+  port: 80
+  host: www.qmessenger.co.za
+  user: minime
+  password: mypassword
+  path: web2sms/submit?uid=$user&pw=$password&sms=$message&da=$cellphone
+send_email:
+  host: smtp.example.com
+  user: me@example.com
+  password: mypassword

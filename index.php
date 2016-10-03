@@ -7,11 +7,19 @@ function configure() {
   $config = load_yaml("../common/app-config.yml", true);
   $config = merge_options($config, load_yaml("app-config.yml", false));
 
+  $site_config = load_yaml($config['site_config'], false);
+  $config = merge_options($config, $site_config);
   if ($config['log_dir'] && $config['log_file'])
     log::init($config['log_file'], log::DEBUG);
 
-  $site_config = load_yaml($config['site_config'], false);
-  $config = merge_options($config, $site_config);
+  replace_fields($config,$config,true);
+  $brand_path = $config['brand_path'];
+  log::debug("loading brand path $brand_path");
+  if (!file_exists($brand_path)) return;
+  $brand_link = ".".$config['brand_name'];
+
+  if (file_exists($brand_link)) return;
+  symlink($brand_path,$brand_link);
 }
 
 function process_action() {
