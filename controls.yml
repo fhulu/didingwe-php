@@ -16,7 +16,7 @@ accordion_tab:
 
 actioner:
   tag: button
-  class: [borderless,medium-font,hover-shadow,vertical-middle,pad]
+  class: [borderless,medium-font,hover-shadow,vertical-middle,pad,hspace]
   attr: { action: $id, id: "", title: $desc }
 
 alert_message:
@@ -438,6 +438,7 @@ labelled_inside_image:
 
 label_left:
   type: labelled
+  class: [clear-after]
   label:
     tag: div
     suffix: ":"
