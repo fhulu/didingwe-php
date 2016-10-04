@@ -386,8 +386,9 @@ input_page:
   layout: { type: label_left }
   synopsis:
     derive: [desc]
-    tag: div
-    name: $desc
+    type: p
+    class: [pad-x,center-text]
+    name: $desc $vspace
   inputs:
     - template: $layout
     - actions_pane:
@@ -395,7 +396,7 @@ input_page:
         type: container
         label: ""
         derive: [actions]
-        class: [actions]
+        class: [actions, pad-y]
         contents: $actions
     - type: input
   actions:
