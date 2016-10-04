@@ -512,7 +512,7 @@ mkn.render = function(options)
   {
     var tmp = $('<span>').addClass('loading');
     field = parent;
-    var isTarget = typeof keyOrTarget !== 'string';
+    var isTarget = keyOrTarget instanceof jQuery;
     if (isTarget)
       keyOrTarget.replaceWith(tmp);
     else
