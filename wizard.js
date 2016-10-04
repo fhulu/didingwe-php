@@ -23,20 +23,11 @@ $.widget( "custom.wizard", {
     var me = this;
     var opts = me.options;
     if (!$.isPlainObject(opts.bookmarks)) return;
-    me.bookmarkHolder = opts.render.create(opts, 'bookmarks', true).appendTo(me.element);
-    $.each(me.options.steps, function(i, info) {
-      me.createBookmark(i, info);
-    })
-  },
-
-
-  createBookmark: function(index, info) {
-    var bookmark = $('<div>')
-      .addClass('wizard-bookmark wizard-state-pend')
-      .attr('step',info.id)
-      .appendTo(this.bookmarkHolder);
-    $('<div>').addClass('wizard-bookmark-number').text(++index).appendTo(bookmark);
-    $('<div>').addClass('wizard-bookmark-title').text(info.name).appendTo(bookmark);
+    var bookmarks = opts.render.create(opts, 'bookmarks', true).appendTo(me.element);
+    $.each(opts.steps, function(i, info) {
+      var bookmark = $.extend({step_no: i+1}, info, opts.bookmark);
+      opts.render.create(mkn.copy(bookmark), undefined, true).appendTo(bookmarks);
+    });
   },
 
   createPages: function() {

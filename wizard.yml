@@ -3,15 +3,31 @@ wizard:
   create: wizard
   class: [wizard]
   script: [/common/wizard.js]
-  css: [/common/wizard.css]
+  # css: [/common/wizard.css]
   text: $dummy
   dummy: []
   bookmarks:
-    type: empty
-    class: [wizard-bookmark-holder-left,quarter,float-left]
+    type: container
+    class: [wizard-bookmarks]
+    contents: []
+  bookmark:
+    tag: div
+    sub_page: false
+    class: [wizard-bookmark,wizard-state-pend]
+    attr: { step: $id }
+    number:
+      tag: label
+      class: [bookmark-number]
+      derive: [step_no]
+      name: $step_no
+    title:
+      tag: label
+      class: [bookmark-title]
+      derive: [name]
+    text: $number$title
   step:
     type: empty
-    class: [wizard-page,threequarter,float-right]
+    class: [wizard-page]
   steps: []
   prev:
     type: button
