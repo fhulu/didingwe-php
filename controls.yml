@@ -140,7 +140,7 @@ class:
 container:
   tag: div
   text: $contents
-  contents: []
+  contents: [type: control]
   tooltip: false
 
 control:
@@ -149,7 +149,6 @@ control:
   desc: ""
   attr: { id: $id, title: $desc }
   class: [didi]
-  border-color: "#ccc"
   text: $name
 
 date:
