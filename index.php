@@ -17,7 +17,8 @@ function configure() {
   $brand_path = $config['brand_path'];
   if (!file_exists($brand_path)) return;
 
-  $brand_link = $config['brand_link'] = ".".$config['brand_name'];
+  $brand_link = ".".$config['brand_name'];
+  $config['brand_link']  = "/$brand_link";
   replace_fields($config,$config,true);
 
   if (file_exists($brand_link)) return;
