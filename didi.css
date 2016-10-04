@@ -5,6 +5,7 @@
   box-sizing:border-box;
   position: relative;
   border-width: 0;
+  margin: 0;
 }
 
 .error
@@ -395,6 +396,11 @@
 
 /* text-spacing */
 .tight-text { line-height: 1}
+
+
+/* text letter spacing */
+.letter-space,.letter-space-medium { letter-spacing: 2 }
+.letter-space-large { letter-spacing: 4 }
 
 /* text transformation */
 .lowercase { text-transform: lowercase; }
