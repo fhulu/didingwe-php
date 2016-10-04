@@ -157,11 +157,12 @@ class page
     $data = merge_options($fields, $data);
   }
 
-  function load_field_stack($file, &$fields=array(), $search_paths=array('../common', '.'))
+  function load_field_stack($file, &$fields=array())
   {
     $read_one = false;
     $languages = [''];
     global $config;
+    $search_paths = $config['search_paths'];
     if ($this->request['lang']) $languages[] = ".". $this->request['lang'];
     foreach($languages as $lang) {
       foreach($search_paths as $path) {
@@ -696,16 +697,18 @@ class page
   {
     log::debug("FUNCTION $function PARAMS:".$params);
     list($class, $method) = explode('::', $function);
-    $file = "$class.php";
+    global $config;
+    $search_paths = array_reverse($config['search_paths']);
     if (isset($method)) {
-      if (file_exists($file))
-        require_once("$class.php");
-      else if (file_exists("../common/$file"))
-        require_once("$class.php");
-      else {
+      foreach($search_paths as $path) {
+        $file_path = "$path/$class.php";
+        if (($file_found = file_exists($file_path))) break;
+      }
+      if ($file_found) {
         log::error("No such file $file");
         return;
       }
+      require_once($file_path);
     }
 
     if (!is_callable($function)) {
