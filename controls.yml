@@ -16,8 +16,9 @@ accordion_tab:
 
 actioner:
   tag: button
-  class: [borderless,medium-font,hover-shadow,vertical-middle,pad,hspace]
+  class: [medium-font,hover-shadow,vertical-middle,pad,hspace]
   attr: { action: $id, id: "", title: $desc }
+  action: redirect
 
 alert_message:
   classes: div
@@ -565,7 +566,6 @@ page:
   items: []
   tooltip: false
   header_class: [pad-y,center-text, large-font]
-  class: [pad-bottom]
 
 page_title:
   tag: title
