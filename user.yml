@@ -388,7 +388,6 @@ register:
   type: wizard
   name: Register User
   desc: Register as a new user of the system
-  width: 900
   steps:
     - enter_credentials
     - check_otp: { clear: true }
