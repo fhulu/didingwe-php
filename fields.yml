@@ -56,6 +56,7 @@ change_password:
 
 close:
   action: close_dialog
+  class: [brand-action-cancel]
 
 company_name:
   valid:
