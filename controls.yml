@@ -27,7 +27,7 @@ alert_message:
   text: $message
 
 background_image:
-  background-image: url(/$id.png)
+  background-image: url("$image_path/$id.png")
 
 blank:
   type: plain_text
@@ -61,7 +61,7 @@ button_image:
   class: [action]
   text: <input type="image" src="$src">
   attr: { title: $desc }
-  src: $id.png
+  src: $image_path/$id.png
 
 captcha_image:
   type: image
@@ -72,7 +72,7 @@ captcha_image:
 captioned_image:
   classes: div
   text: $image $caption
-  source: $id.png
+  source: $image_path/$id.png
   title: $name
   image:
     derive: [source,title]
@@ -338,19 +338,20 @@ iframe:
 
 image:
   tag: img
-  attr: {src: $src}
+  attr: {src: "$src"}
   text: ""
   src_type: png
-  src: /$id.$src_type
+  src: $image_path/$id.$src_type
 
 image_button:
   type: button
   text: $pic $name
-  image: $id.png
+  src_type: png
+  image: $image_path/$id.$src_type
   pic:
     type: input
     derive: [image]
-    attr: { type: image, src: $image }
+    attr: { type: image, src: "$image"}
 
 
 
@@ -842,8 +843,8 @@ vspaced:
   margin-bottom: $space
 
 watermark:
-  image: $id.png
-  background-image: url($image)
+  image: $image_path/$id.png
+  background-image: url("$image")
   repeat: no-repeat
   imagex: left
   imagey: center

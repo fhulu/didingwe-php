@@ -1,7 +1,7 @@
 site_config: .site-config.yml
 brand_name: $program_name
 brand_path: ../$brand_name
-image_path: $brand_path/images
+image_path: $brand_link/images
 landing:
   page: /index
   path: /home
