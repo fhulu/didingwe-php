@@ -40,7 +40,7 @@ echo_scripts($config['scripts'], "<script src='\$script'></script>\n");
 log::debug_json("BROWSER REQUEST", $_REQUEST);
 $active = $_SESSION['sid'] == 0? 'landing': 'authenticated';
 $active_config = $config[$active];
-$session = &$_SESSION[$type];
+$session = &$_SESSION[$active];
 $session = merge_options($active_config, $session, $_REQUEST);
 $request = $session;
 replace_fields($request, $request, true);
