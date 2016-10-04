@@ -508,18 +508,25 @@ mkn.render = function(options)
     return obj;
   }
 
-  this.createSubPage = function(parent, key)
+  this.createSubPage = function(parent, keyOrTarget)
   {
     var tmp = $('<span>').addClass('loading');
-    var field = parent[key];
-    var path = field.path = field.url? field.url: field.id;
-    field.sub_page = undefined;
-    field.appendChild = false;
+    field = parent;
+    var isTarget = typeof keyOrTarget !== 'string';
+    if (isTarget)
+      keyOrTarget.replaceWith(tmp);
+    else
+      field = parent[keyOrTarget];
+    delete field.sub_page;
+    delete field.appendChild;
+    field.path = field.url;
     tmp.page($.extend({request: options.request}, field)).then(function(obj) {
       setStyle(obj, field);
       setClass(obj, field);
       tmp.replaceWith(obj);
-      parent[key] = field;
+      if (!isTarget) return;
+      var target_classes = keyOrTarget.selector.regexCapture(/(\.\w[\w\.]*)$/g);
+      if (target_classes.length) obj.addClass(target_classes[0].replace('.', ' '));
     });
     return tmp;
   }
@@ -918,16 +925,8 @@ mkn.render = function(options)
     if (!url) return;
     if (field.target === '_blank')
       window.open(url, field.target);
-    else if (field.target) {
-      var target = $(field.target);
-      var parent = target.parent();
-      if (url[0] === '/') url = url.substr(1);
-      parent.page({path: url});
-      var id = url.replace('/','_');
-      parent.on('read_'+id, function() {
-        target.remove();
-      });
-    }
+    else if (field.target)
+      me.createSubPage({url: url}, $(field.target));
     else
       document.location = url;
   }
