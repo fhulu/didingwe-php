@@ -82,6 +82,7 @@
 .rounded-xlarge{border-radius:16px}
 .rounded-xxlarge{border-radius:32px}
 .rounded-jumbo{border-radius:64px}
+.round,.circle{border-radius:50%}
 
 /* clearing */
 .clear{clear:both}
