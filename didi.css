@@ -309,7 +309,7 @@
 .height-56{height:56px}
 .height-64,.height-jumbo{height:64px}
 
-/* spacing */
+/* spacing - padding */
 .pad-1,.pad-min,.pad-x-1{padding-left:1; padding-right:1}
 .pad-1,.pad-min,.pad-y-1{padding-top:1; padding-bottom:1}
 .pad-2,.pad-tiny,.pad-x-2{padding-left:2; padding-right:2}
@@ -339,57 +339,36 @@
   justify-content: space-between;;
 }
 
-/* spacing between */
-.pad-1.space:first-child,.pad-min.space:first-child,.pad-x-1.space:first-child,
-.pad-2.space:first-child,.pad-tiny.space:first-child,.pad-x-2.space:first-child,
-.pad-4.space:first-child,.pad-small.space:first-child,.pad-x-4.space:first-child,
-.pad-8.space:first-child,.pad.space:first-child,.pad-medium.space:first-child,.pad-x.space:first-child,.pad-x-8.space:first-child,
-.pad-12.space:first-child,.pad-large.space:first-child,.pad-x-12.space:first-child,
-.pad-16.space:first-child,.pad-xlarge.space:first-child,.pad-x-16.space:first-child,
-.pad-32.space:first-child,.pad-xxlarge.space:first-child,.pad-x-32.space:first-child{padding-left:0}
-.pad-1.space:first-child,.pad-min.space:first-child,.pad-y-1.space:first-child,
-.pad-2.space:first-child,.pad-tiny.space:first-child,.pad-y-2.space:first-child,
-.pad-4.space:first-child,.pad-small.space:first-child,.pad-y-4.space:first-child,
-.pad-8.space:first-child,.pad.space:first-child,.pad-medium.space:first-child,.pad-y.space:first-child,.pad-y-8.space:first-child,
-.pad-12.space:first-child,.pad-large.space:first-child,.pad-y-12.space:first-child,
-.pad-16.space:first-child,.pad-xlarge.space:first-child,.pad-y-16.space:first-child,
-.pad-32.space:first-child,.pad-xxlarge.space:first-child,.pad-y-32.space:first-child{padding-top:0}
+/* spacing between - fixed */
+.nomargin{ margin:0px}
+.hspace-1+.hspace-1{margin-left:1px}
+.vspace-1+.vspace-1{margin-top:1px}
+.hspace-2+.hspace-2{margin-left:2px}
+.vspace-2+.vspace-2{margin-top:2px}
+.hspace-4+.hspace-4{margin-left:4px}
+.vspace-4+.vspace-4{margin-top:4px}
+.hspace-8+.hspace-8{margin-left:8px}
+.vspace-8+.vspace-8{margin-top:8px}
+.hspace-12+.hspace-12{margin-left:12px}
+.vspace-12+.vspace-12{margin-top:12px}
+.hspace-16+.hspace-16{margin-left:16px}
+.vspace-16+.vspace-16{margin-top:16px}
+.hspace-24+.hspace-24{margin-left:24px}
+.vspace-24+.vspace-24{margin-top:24px}
+.hspace-32+.hspace-32{margin-left:32px}
+.vspace-32+.vspace-32{margin-top:32px}
+.hspace-64+.hspace-64{margin-left:64px}
+.vspace-64+.vspace-64{margin-top:64px}
 
-.pad-1.space:last-child,.pad-min.space:last-child,.pad-x-1.space:last-child,,
-.pad-2.space:last-child,.pad-tiny.space:last-child,.pad-x-2.space:last-child,
-.pad-4.space:last-child,.pad-small.space:last-child,.pad-x-4.space:last-child,
-.pad-8.space:last-child,.pad.space:last-child,.pad-medium.space:last-child,.pad-x.space:last-child,.pad-x-8.space:last-child,
-.pad-12.space:last-child,.pad-large.space:last-child,.pad-x-12.space:last-child,
-.pad-16.space:last-child,.pad-xlarge.space:last-child,.pad-x-16.space:last-child,
-.pad-32.space:last-child,.pad-xxlarge.space:last-child,.pad-x-32.space:last-child{padding-right:0}
-.pad-1.space:last-child,.pad-min.space:last-child,.pad-y-1.space:last-child,
-.pad-2.space:last-child,.pad-tiny.space:last-child,.pad-y-2.space:last-child,
-.pad-4.space:last-child,.pad-small.space:last-child,.pad-y-4.space:last-child,
-.pad-8.space:last-child,.pad.space:last-child,.pad-medium.space:last-child,.pad-y.space:last-child,.pad-y-8.space:last-child,
-.pad-12.space:last-child,.pad-large.space:last-child,.pad-y-12.space:last-child,
-.pad-16.space:last-child,.pad-xlarge.space:last-child,.pad-y-16.space:last-child,
-.pad-32.space:last-child,.pad-xxlarge.space:last-child,.pad-y-32.space:last-child{padding-bottom:0}
-
-.margin-0,.nomargin{ margin:0px}
-.hspace-min+.hspace-min,.hspace-1+.hspace-1{margin-left:1px}
-.vspace-min+.vspace-min,.vspace-1+.vspace-1{margin-top:1px}
-.hspace-tiny+.hspace-tiny,.hspace-2+.hspace-2{margin-left:2px}
-.vspace-tiny+.vspace-tiny,.vspace-2+.vspace-2{margin-top:2px}
-.hspace-small+.hspace-small,.hspace-4+.hspace-4{margin-left:4px}
-.vspace-small+.vspace-small,.vspace-4+.vspace-4{margin-top:4px}
-.hspace-medium+.hspace-medium,.hspace+.hspace,.hspace-8+.hspace-8{margin-left:8px}
-.vspace,.vspace-medium+.vspace-medium,.vspace+.vspace,.vspace-8+.vspace-8{margin-top:8px}
-.hspace-large+.hspace-large,.hspace-12+.hspace-12{margin-left:12px}
-.vspace-large+.vspace-large,.vspace-12+.vspace-12{margin-top:12px}
-.hspace-xlarge+.hspace-xlarge,.hspace-16+.hspace-16{margin-left:16px}
-.vspace-xlarge+.vspace-xlarge,.vspace-16+.vspace-16{margin-top:16px}
-.hspace-xxlarge+.hspace-xxlarge,.hspace-24+.hspace-24{margin-left:24px}
-.vspace-xxlarge+.vspace-xxlarge,.vspace-24+.vspace-24{margin-top:24px}
-.hspace-xxxlarge+.hspace-xxxlarge,.hspace-32+.hspace-32{margin-left:32px}
-.hspace-xxxlarge+.vspace-xxxlarge,.vspace-32+.vspace-32{margin-top:32px}
-.hspace-jumbo+.hspace-jumbo,.hspace-64+.hspace-64{margin-left:64px}
-.vspace-jumbo+.vspace-jumbo,.vspace-64+.vspace-64{margin-top:64px}
-
+/* spacing between - relative */
+.hspace-tiny+.hspace-tiny{margin-left:1%}
+.vspace-tiny+.vspace-tiny{margin-top:1%}
+.hspace-small+.hspace-small{margin-left:2%}
+.vspace-small+.vspace-small{margin-top:2%}
+.hspace+.hspace,.hspace-medium+.hspace-medium{margin-left:4%}
+.vspace+.vspace,.vspace-medium+.vspace-medium{margin-top:4%}
+.hspace-large+.hspace-large{margin-left:6%}
+.vspace-large+.vspace-large{margin-top:6%}
 
 /* text alignment */
 .left-text { text-align: left; }
@@ -465,7 +444,9 @@
 .col{float:left}
 
 .col.s1{width:8.33333%}
+.col.s1.hspace{width:6.33333%}
 .col.s2{width:16.66666%}
+.col.s2.hspace{width:14.66666%}
 .col.s3{width:24.99999%}
 .col.s4{width:33.33333%}
 .col.s5{width:41.66666%}
@@ -479,6 +460,8 @@
 .nav-small {height:100%}
 @media only screen and (max-width:600px){
 .hide-small{display:none}
+.col.s12[class*=" hspace"],.col.s12[class^="hspace"]{margin-left:0px}
+.col.s12.hspace+.col.s12.hspace{margin-top:3%}
 }
 @media only screen and (min-width:601px){
 .col.m1{width:8.33333%}
@@ -486,6 +469,8 @@
 .col.m3{width:24.99999%}
 .col.m4{width:33.33333%}
 .col.m5{width:41.66666%}
+.col.m6{width:49.99999%}
+.col.m6.hspace{width:47.99999%}
 .col.m6{width:49.99999%}
 .col.m7{width:58.33333%}
 .col.m8{width:66.66666%}
