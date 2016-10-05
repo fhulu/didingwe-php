@@ -515,11 +515,11 @@ mkn.render = function(options)
     var isTarget = keyOrTarget instanceof jQuery;
     if (isTarget)
       keyOrTarget.replaceWith(tmp);
-    else
+    else if (keyOrTarget !== undefined)
       field = parent[keyOrTarget];
     delete field.sub_page;
     delete field.appendChild;
-    field.path = field.url;
+    field.path = field.url? field.url: field.id;
     tmp.page($.extend({request: options.request}, field)).then(function(obj) {
       setStyle(obj, field);
       setClass(obj, field);
