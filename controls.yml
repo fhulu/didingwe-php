@@ -16,7 +16,6 @@ accordion_tab:
 
 actioner:
   tag: button
-  class: [medium-font,hover-shadow,vertical-middle,pad,hspace]
   attr: { action: $id, id: "", title: $desc }
   action: redirect
 
@@ -831,11 +830,12 @@ twin_input:
 
 vspace:
   mutable: false
-  type: plain_text
+  tag: div
   text: ""
   space: 20
   template: none
-  style: {padding-bottom: $space}
+  attr: { id: "" }
+  style: {padding-bottom: $space,display: block}
 
 vspaced:
   space: 6px
