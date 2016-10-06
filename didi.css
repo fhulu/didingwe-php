@@ -465,9 +465,13 @@
 }
 @media only screen and (min-width:601px){
 .col.m1{width:8.33333%}
+.col.m2.hspace{width:6.99999%}
 .col.m2{width:16.66666%}
+.col.m2.hspace{width:24.99999%}
 .col.m3{width:24.99999%}
+.col.m3.hspace{width:21.99999%}
 .col.m4{width:33.33333%}
+.col.m4.hspace{width:30.66666%}
 .col.m5{width:41.66666%}
 .col.m6{width:49.99999%}
 .col.m6.hspace{width:47.99999%}
