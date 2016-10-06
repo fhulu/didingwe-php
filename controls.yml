@@ -835,7 +835,8 @@ vspace:
   space: 20
   template: none
   attr: { id: "" }
-  style: {padding-bottom: $space,display: block}
+  class: [block,widest]
+  style: {padding-bottom: $space,display: block, float: none}
 
 vspaced:
   space: 6px
