@@ -1,10 +1,11 @@
 wizard:
-  type: page
+  type: container
   create: wizard
   class: [wizard]
   script: [/common/wizard.js]
   dummy: []
   parent_path: $path
+  synopsis: ""
   bookmarks:
     type: container
     class: [wizard-bookmarks]
@@ -30,6 +31,7 @@ wizard:
       class: [bookmark-title]
       derive: [name]
     text: $step_no$step_title
+  contents: [$synopsis,$bookmarks]
   step:
     type: empty
     class: [wizard-page]

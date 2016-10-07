@@ -1,10 +1,7 @@
 $.widget( "custom.wizard", {
   _create: function() {
     this.stack = new Array();
-    var el = this.element;
-
     this.first_step = 0;
-    this.createBookmarks();
     this.createPages();
     this.createNavigation();
     this.bindActions();
@@ -16,13 +13,6 @@ $.widget( "custom.wizard", {
   child: function(selector, index) {
     if (!index) index = 0;
     return this.element.find(selector).eq(index);
-  },
-
-  createBookmarks: function() {
-    var me = this;
-    var opts = me.options;
-    if (!$.isPlainObject(opts.bookmarks)) return;
-    opts.render.create(opts, 'bookmarks', true).appendTo(me.element);
   },
 
   createPages: function() {
