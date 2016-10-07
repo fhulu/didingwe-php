@@ -19,8 +19,10 @@ $.widget( "custom.wizard", {
     var me = this;
     var opts = this.options;
     var step = opts.render.create(opts, 'step', true);
+    var styles = opts.state_styles;
     $.each(this.options.steps, function(i, info) {
       step.clone().attr('step', info.id).hide().appendTo(me.element);
+      me.child('.wizard-bookmark', i).addClass(styles['pending'])
     })
   },
 
@@ -72,12 +74,12 @@ $.widget( "custom.wizard", {
 
   updateBookmark: function(index, state)
   {
-    var states = ['pend','active', 'done', 'visited'];
+    var styles = this.options.state_styles;
     var bm = this.child('.wizard-bookmark',index)
-    for (var i in states) {
-      bm.removeClass('wizard-state-'+states[i]);
-    }
-    bm.addClass('wizard-state-'+state);
+    $.each(styles, function(key, style) {
+      bm.removeClass(style);
+    });
+    bm.addClass(styles[state]);
   },
 
   updateNavigation: function(index, info) {

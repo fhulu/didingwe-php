@@ -5,6 +5,11 @@ wizard:
   script: [/common/wizard.js]
   dummy: []
   parent_path: $path
+  state_styles:
+    active: green
+    pending: grey
+    done: teal
+    visited: teal underlined
   synopsis: ""
   bookmarks:
     type: container
@@ -17,7 +22,7 @@ wizard:
   bookmark:
     type: wizard_jump
     sub_page: false
-    class: [wizard-bookmark,wizard-state-pend]
+    class: [wizard-bookmark]
     derive: [parent_path]
     path: $parent_path/$id
     attr: { step: $id }
