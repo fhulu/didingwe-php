@@ -202,7 +202,7 @@ mkn.render = function(options)
   this.expandFields = function(parent_field, name, items, defaults)
   {
     if (!defaults) defaults = { template: "$field" };
-    var path = parent_field.path+'/'+name;
+    var path = parent_field.path? parent_field.path + '/' + name: name;
     objectify(items);
     pushPop(items);
     mergeSubItems(parent_field,items);
@@ -251,7 +251,7 @@ mkn.render = function(options)
       }
       item.id = id;
 
-      if (path)
+      if (path && !item.path)
         item.path = path + '/' + id;
       var template = item.template;
       if (template == 'none' || template  == '$field')

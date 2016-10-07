@@ -4,10 +4,11 @@ wizard:
   class: [wizard]
   script: [/common/wizard.js]
   dummy: []
+  parent_path: $path
   bookmarks:
     type: container
     class: [wizard-bookmarks]
-    derive: [bookmark,steps]
+    derive: [bookmark,steps,parent_path]
     contents:
       - type: $bookmark
       - default: { sub_page: false, hello: africa}
@@ -16,6 +17,8 @@ wizard:
     type: wizard_jump
     sub_page: false
     class: [wizard-bookmark,wizard-state-pend]
+    derive: [parent_path]
+    path: $parent_path/$id
     attr: { step: $id }
     step_no:
       tag: label
