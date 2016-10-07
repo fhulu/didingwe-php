@@ -65,7 +65,7 @@ $.widget( "custom.wizard", {
     }
     else {
       this.updateNavigation(index, props);
-      page.removeClass('wizard-hide').triggerHandler('reload');
+      page.show().triggerHandler('reload');
     }
 
     this.updateBookmark(index, 'active');
