@@ -108,7 +108,7 @@ $.widget( "custom.wizard", {
 
   hidePage: function(index, state)
   {
-    this.child('.wizard-page', index).addClass('wizard-hide');
+    this.child('.wizard-page', index).hide();
     this.updateBookmark(index, state)
   },
 
