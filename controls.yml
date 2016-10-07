@@ -139,7 +139,7 @@ class:
 container:
   tag: div
   text: $contents
-  contents: [type: control]
+  contents: []
   tooltip: false
 
 control:
