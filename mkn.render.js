@@ -107,13 +107,12 @@ mkn.render = function(options)
     if (!item.action && defaults.action) item.action = defaults.action;
     if (defaults.attr) item.attr = mkn.merge(item.attr,defaults.attr);
     if (!item.template) item.template = defaults.template;
+    if (defaults.default) item = mkn.merge(defaults.default, item);
     if (defaults.types)
-      item = mergeDefaultType(base, item, defaults.types.shift());
+      return mergeDefaultType(base, item, defaults.types.shift());
     else if (!item.type && defaults.type)
-      item = mergeDefaultType(base, item, defaults.type);
-    else
-      item = mkn.merge(base, item);
-    return defaults.default? mkn.merge(defaults.default, item): item;
+      return mergeDefaultType(base, item, defaults.type);
+    return mkn.merge(base, item);
   }
 
 
@@ -187,12 +186,26 @@ mkn.render = function(options)
     }
   }
 
+  var mergeSubItems = function(parent,items) {
+    for(var i=0; i < items.length; ++i) {
+      var item = items[i];
+      if (!$.isPlainObject(item) || item.id !== 'merge') continue;
+      var array = parent[item.name];
+      items.splice(i,1);
+      objectify(array);
+      array.forEach(function(value, j) {
+        items.splice(i+j,0,value);
+      });
+    }
+  }
+
   this.expandFields = function(parent_field, name, items, defaults)
-    {
+  {
     if (!defaults) defaults = { template: "$field" };
     var path = parent_field.path+'/'+name;
     objectify(items);
     pushPop(items);
+    mergeSubItems(parent_field,items);
     var wrap;
     var sow = parent_field.sow;
     var removed = [];
@@ -214,7 +227,6 @@ mkn.render = function(options)
           item = mkn.merge(parent_field[id], item);
         }
         id = me.expandValue(parent_field, id);
-
         if (sow && sow.indexOf(id) >=0)
           item = mkn.merge(parent_field[id], item);
         promoteAttr(item);
