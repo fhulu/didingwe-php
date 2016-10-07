@@ -3,13 +3,15 @@ wizard:
   create: wizard
   class: [wizard]
   script: [/common/wizard.js]
-  # css: [/common/wizard.css]
-  text: $dummy
   dummy: []
   bookmarks:
     type: container
     class: [wizard-bookmarks]
-    contents: []
+    derive: [bookmark,steps]
+    contents:
+      - type: $bookmark
+      - default: { sub_page: false, hello: africa}
+      - merge: steps
   bookmark:
     tag: div
     sub_page: false
@@ -18,8 +20,7 @@ wizard:
     number:
       tag: label
       class: [bookmark-number]
-      derive: [step_no]
-      name: $step_no
+      name: $number
     title:
       tag: label
       class: [bookmark-title]

@@ -2,7 +2,6 @@ $.widget( "custom.wizard", {
   _create: function() {
     this.stack = new Array();
     var el = this.element;
-    this.options.render.expandFields(this.options, "steps", this.options.steps);
 
     this.first_step = 0;
     this.createBookmarks();
@@ -23,11 +22,7 @@ $.widget( "custom.wizard", {
     var me = this;
     var opts = me.options;
     if (!$.isPlainObject(opts.bookmarks)) return;
-    var bookmarks = opts.render.create(opts, 'bookmarks', true).appendTo(me.element);
-    $.each(opts.steps, function(i, info) {
-      var bookmark = $.extend({step_no: i+1}, info, opts.bookmark);
-      opts.render.create(mkn.copy(bookmark), undefined, true).appendTo(bookmarks);
-    });
+    opts.render.create(opts, 'bookmarks', true).appendTo(me.element);
   },
 
   createPages: function() {
