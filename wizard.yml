@@ -13,19 +13,20 @@ wizard:
       - default: { sub_page: false, hello: africa}
       - merge: steps
   bookmark:
-    tag: div
+    type: wizard_jump
     sub_page: false
     class: [wizard-bookmark,wizard-state-pend]
     attr: { step: $id }
-    number:
+    step_no:
       tag: label
       class: [bookmark-number]
+      derive: [number]
       name: $number
-    title:
+    step_title:
       tag: label
       class: [bookmark-title]
       derive: [name]
-    text: $number$title
+    text: $step_no$step_title
   step:
     type: empty
     class: [wizard-page]
@@ -48,7 +49,7 @@ wizard:
 
 
 wizard_jump:
-  classes: button
-  type: submit
+  tag: div
+  action: post
   post:
     - trigger: [wizard-jump, .wizard, $id ]
