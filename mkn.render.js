@@ -457,9 +457,13 @@ mkn.render = function(options)
     var field = key===undefined? parent: parent[key];
     if (!field) field = types[key];
     if (init) field = this.initField(field, parent);
-    if (field.sub_page)
-      return this.createSubPage(parent, key);
-
+    if (field.sub_page) {
+      var tmp = $('<div>creating...</div>');
+      this.createSubPage(parent, key).done(function(created) {
+        tmp.replaceWith(created);
+      });
+      return tmp;
+    }
     var id = field.id;
     if (field.html === undefined) return null;
     field.text = this.expandValue(field, field.text);
@@ -536,7 +540,7 @@ mkn.render = function(options)
     delete field.sub_page;
     delete field.appendChild;
     field.path = field.url? field.url: field.id;
-    tmp.page($.extend({request: options.request}, field)).then(function(obj) {
+    return tmp.page($.extend({request: options.request}, field)).done(function(obj) {
       setStyle(obj, field);
       setClass(obj, field);
       tmp.replaceWith(obj);
@@ -544,7 +548,6 @@ mkn.render = function(options)
       var target_classes = keyOrTarget.selector.regexCapture(/(\.\w[\w\.]*)$/g);
       if (target_classes.length) obj.addClass(target_classes[0].replace('.', ' '));
     });
-    return tmp;
   }
 
   this.createItems = function(parent, parent_field, name, items, defaults)
