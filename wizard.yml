@@ -10,6 +10,7 @@ wizard:
     pending: grey
     done: teal
     visited: teal underlined
+    committed: teal underlined text-light-grey
   synopsis: ""
   bookmarks:
     type: container
