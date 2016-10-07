@@ -127,10 +127,8 @@ $.widget( "custom.wizard", {
     else
       path = path.substr(0, path.lastIndexOf('/')+1) + props.id;
     page.empty().removeClass('wizard-hide');
-    var content = $('<div class=wizard-content>').appendTo(page);
-    var tmp = $('<div class=loading>').appendTo(content);
-    content.page({path: path, key: options.key}).then(function(object, info) {
-      tmp.replaceWith(object);
+    options.render.createSubPage({url: path}).then(function(content, info) {
+      content.addClass('wizard-content').appendTo(page);
       page.show();
       path = info.path;
       info = options.steps[index] = $.extend({}, info, options.steps[index]);
