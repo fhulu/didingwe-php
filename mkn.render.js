@@ -209,6 +209,7 @@ mkn.render = function(options)
     var wrap;
     var sow = parent_field.sow;
     var removed = [];
+    var index = 0;
     for(var i in items) {
       var item = items[i];
       var id;
@@ -266,6 +267,9 @@ mkn.render = function(options)
         item.wrap = this.initField(item.wrap, parent_field);
         delete defaults.wrap;
       }
+
+      item = $.extend({ index: index, number: index+1},item);
+      ++index;
       item = this.initField(item, parent_field);
 
       if (item.template) initTemplate(item)
