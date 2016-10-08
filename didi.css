@@ -189,6 +189,7 @@
 /* cursor */
 .autocursor,.auto-cursor { cursor: auto }
 .pointer-cursor,.cursor-pointer { cursor: pointer}
+.cursor-not-allowed{cursor:not-allowed}
 
 /* display styles */
 .block { display: block; }
