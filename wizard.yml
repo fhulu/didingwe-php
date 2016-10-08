@@ -9,7 +9,7 @@ wizard:
   bookmarks:
     type: container
     class: [wizard-bookmarks]
-    state_styles: {pending: "", active: "", done: "", visited: "",committed: ""}
+    state_styles: {pending: [disabled], active: "", done: "", visited: "",committed: [disabled]}
     derive: [bookmark,steps,parent_path]
     contents:
       - type: $bookmark

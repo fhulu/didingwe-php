@@ -19,10 +19,11 @@ $.widget( "custom.wizard", {
     var me = this;
     var opts = this.options;
     var step = opts.render.create(opts, 'step', true);
-    var styles = opts.bookmarks.state_styles;
+    var pending_style = opts.bookmarks.state_styles['pending'];
+    if ($.isArray(pending_style)) pending_style = pending_style.join(' ')
     $.each(this.options.steps, function(i, info) {
       step.clone().attr('step', info.id).hide().appendTo(me.element);
-      me.child('.wizard-bookmark', i).addClass(styles['pending'])
+      me.child('.wizard-bookmark', i).addClass(pending_style);
     })
   },
 
@@ -77,9 +78,12 @@ $.widget( "custom.wizard", {
     var styles = this.options.bookmarks.state_styles;
     var bm = this.child('.wizard-bookmark',index)
     $.each(styles, function(key, style) {
+      if ($.isArray(style)) style = style.join(' ')
       bm.removeClass(style);
     });
-    bm.addClass(styles[state]);
+    var style = styles[state];
+    if ($.isArray(style)) style = style.join(' ')
+    bm.addClass(style);
   },
 
   updateNavigation: function(index, info) {
@@ -128,7 +132,6 @@ $.widget( "custom.wizard", {
       path += '/' + props.id;
     else
       path = path.substr(0, path.lastIndexOf('/')+1) + props.id;
-    page.empty().removeClass('wizard-hide');
     options.render.createSubPage({url: path}).then(function(content, info) {
       content.addClass('wizard-content').appendTo(page);
       page.show();
