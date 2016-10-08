@@ -683,6 +683,10 @@ mkn.render = function(options)
           if ($.isArray(field.trap) && field.trap.indexOf(key) >=0 )
             e.stopImmediatePropagation();
 
+          if (obj.hasClass('disabled')) {
+            e.stopImmediatePropagation();
+            return;
+          }
           // ignore default action of an anchor
           if (key == 'click' && obj.prop("tagName").toLowerCase() == 'a') {
             e.preventDefault();
