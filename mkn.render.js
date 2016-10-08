@@ -606,7 +606,7 @@ mkn.render = function(options)
   {
     id = id || child.attr('id');
     field = field || id;
-    var new_id = "__new__"+id;
+    var new_id = "__new__"+id.replace(/[^\w]/g, '_');
     var new_html = "<div id="+new_id+"></div>";
     parent.replace("\\$"+field, new_html);
     parent.find('#'+new_id).replaceWith(child);
