@@ -256,11 +256,18 @@ class validator
       }
     }
 
+    global $page;
     foreach($funcs as $func) {
       list($func, $args) = validator::expand_function($func);
       $this->update_args($args);
-
-      if (validator::is_static_method($func)) {
+      $helper_method  = $page->get_helper_method($func);
+      if ($helper_method) {
+        list($context, $method) = $helper_method;
+        log::debug("valid helper '$func', $method");
+        $result = call_user_func_array(array($context, $method), $args);
+        array_shift($args);
+      }
+      else if (validator::is_static_method($func)) {
         array_unshift($args, $func);
         $func = 'call';
         $result = call_user_func_array(array($this, $func), $args);
