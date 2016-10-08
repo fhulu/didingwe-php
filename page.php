@@ -442,7 +442,7 @@ class page
   function get_helper_method($x)
   {
     $helper = $this->get_helper($x, $method);
-    if (!$helper) return false;
+    if (!$helper || !$method) return false;
     return [$helper,$method];
   }
 
@@ -1118,7 +1118,7 @@ class page
       if ($this->reply_if($method, $parameter)) continue;
 
       $context = $this;
-      $helper_method  = page::get_helper_method($method);
+      $helper_method  = $this->get_helper_method($method);
       if ($helper_method)
         list($context, $method) = $helper_method;
       else if (is_function($method)) {
