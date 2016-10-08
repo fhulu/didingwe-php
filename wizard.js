@@ -100,7 +100,7 @@ $.widget( "custom.wizard", {
         nav.path = info.path;
         nav.show = true;
       }
-      if (nav.id == 'prev' && index != me.first_step) nav.show = true;
+      if (nav.id == 'prev' && info.prev !== false && index != me.first_step) nav.show = true;
     });
 
     opts.render.create(navigation).appendTo(me.element);
