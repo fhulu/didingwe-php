@@ -2,6 +2,24 @@
 require_once '../common/log.php';
 require_once('../common/utils.php');
 
+
+function configure_brand(&$config) {
+  $brand_path = $config['brand_path'];
+  if (!file_exists($brand_path)) return false;;
+  $brand_config = load_yaml("$brand_path/app-config.yml", false);
+  if ($brand_config) {
+    $config = merge_options($config, $brand_config);
+    replace_fields($config, $config, true);
+  }
+
+  $brand_link = ".".$config['brand_name'];
+  $config['brand_link']  = "/$brand_link";
+  replace_fields($config,$config,true);
+
+  if (!file_exists($brand_link))
+    symlink($brand_path,$brand_link);
+  return true;
+}
 function configure() {
   global $config;
   $config = load_yaml("../common/app-config.yml", true);
@@ -9,20 +27,11 @@ function configure() {
 
   $site_config = load_yaml($config['site_config'], false);
   $config = merge_options($config, $site_config);
-  replace_fields($config,$config,true);
-
+  if (!configure_brand($config))
+    replace_fields($config,$config,true);
+    
   if ($config['log_dir'] && $config['log_file'])
     log::init($config['log_file'], log::DEBUG);
-
-  $brand_path = $config['brand_path'];
-  if (!file_exists($brand_path)) return;
-
-  $brand_link = ".".$config['brand_name'];
-  $config['brand_link']  = "/$brand_link";
-  replace_fields($config,$config,true);
-
-  if (file_exists($brand_link)) return;
-  symlink($brand_path,$brand_link);
 }
 
 function process_action() {

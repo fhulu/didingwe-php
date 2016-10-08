@@ -15,7 +15,6 @@ log_file: $brand_name.log
 upload_dir: ../uploads
 css:
   - /common/didi.css
-  - /.$brand_name/brand.css
 scripts:
   - /jquery-min.js
   - /jquery-ui.min.js
