@@ -5,16 +5,11 @@ wizard:
   script: [/common/wizard.js]
   dummy: []
   parent_path: $path
-  state_styles:
-    active: green
-    pending: grey
-    done: teal
-    visited: teal underlined
-    committed: teal underlined text-light-grey
   synopsis: ""
   bookmarks:
     type: container
     class: [wizard-bookmarks]
+    state_styles: {pending: "", active: "", done: "", visited: "",committed: ""}
     derive: [bookmark,steps,parent_path]
     contents:
       - type: $bookmark
@@ -55,8 +50,6 @@ wizard:
     desc: Go to next step
     class: [action,wizard-next]
   navigate: [$prev,$next]
-
-
 
 
 wizard_jump:
