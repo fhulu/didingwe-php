@@ -266,6 +266,18 @@ flag_icon:
   text: " "
 
 
+filled_page:
+  type: input_page
+  inputs: $lines
+  lines:
+    - type: filled_text
+    - template: label_left
+
+filled_text:
+  classes: label
+  value: ""
+  text: $value
+
 google_icon:
   tag: i
   class: [material-icons]
@@ -351,19 +363,13 @@ image_button:
     derive: [image]
     attr: { type: image, src: "$image"}
 
-
-
 info_page:
-  type: input_page
-  inputs: $lines
+  type: container
+  text: $lines$actions
   lines:
-    - type: info_text
-    - template: labelled_left
-
-info_text:
-  classes: label
-  value: ""
-  text: $value
+    - type: plain_text
+  actions:
+    - type: button
 
 inplace_input:
   type: label_inside
@@ -373,7 +379,6 @@ input:
   text: ""
   value: ""
   immutable: [format]
-  class: [medium-font]
   format: text
   attr:
     type: $format

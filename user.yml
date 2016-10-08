@@ -2,7 +2,6 @@
 ---
 include: [wizard]
 
-
 activate:
   access: [admin]
   fill: teal
@@ -56,16 +55,15 @@ check_otp:
     - clear_values
 
 complete_registration:
-  type: input_page
-  desc: |
-    Thank you. You have been provisionally registered. <be>
-    You will have limited access to the system
-    until your registration has been approved. <br>
-    Please check your email for registration status.
-  inputs:
-    - template: none
-    - type: button
-    - start: { url: user/login, action: dialog, style: {margin-left: 50%,margin-right: 50%} }
+  type: info_page
+  lines:
+    - >
+      Thank you. You have been provisionally registered.
+      You will have limited access to the system
+      until your registration has been approved. <br>
+      Please check your email for registration status.
+  actions:
+    - login: { action: dialog }
 
 confirm_registration:
   type: input_page
@@ -74,14 +72,14 @@ confirm_registration:
     If you are happy with everything, please accept the terms and conditions to
     complete the registration process.
   inputs:
-    - type: info_text
+    - type: filled_text
     - title
     - first_name
     - last_name
     - cellphone
     - email
     - password: { value: "**************" }
-    - agree_terms: { type: checkbox}
+    - agree_terms: { template: question_input, type: checkbox}
   values:
     - read_session: title,first_name,last_name,cellphone,email
   validate: agree_terms
@@ -392,4 +390,4 @@ register:
     - enter_credentials
     - check_otp: { clear: true }
     - confirm_registration: { clear: true}
-    - complete_registration: {name: Completion,prev: false}
+    - complete_registration: { prev: false}
