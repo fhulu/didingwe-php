@@ -25,6 +25,9 @@ scripts:
 helpers:
   - collection
 search_paths: [../common/,.,$brand_path]
+collections:
+  default: collection
+  session: [session,audit_trail]
 
 email_otp: yes
 sms_otp: yes

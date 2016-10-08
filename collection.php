@@ -4,12 +4,30 @@ class collection
 {
   var $page;
   var $db;
+  var $tables;
   function __construct($page)
   {
     $this->page = $page;
     $this->db = $page->db;
+    $this->read_tables();
   }
 
+  function read_tables()
+  {
+    global $config;
+    foreach($config['collections'] as $table=>$collections) {
+      if ($table=='default')
+        $this->tables['default'] = $collections;
+      else foreach($collections as $collection) {
+        $this->tables[$collection] = $table;
+      }
+    }
+  }
+  function get_table($collection)
+  {
+      $table = $this->tables[$collection];
+      return $table? $table: $this->tables['default'];
+  }
   function update_sort_order(&$sorting, &$name, &$alias)
   {
     $matches = [];
@@ -67,23 +85,25 @@ class collection
 
   function get_subqueries($fields)
   {
+    global $config;
     $queries = [];
     foreach($fields as $name_alias) {
       list($name,$alias) = $name_alias;
       $name = addslashes($name);
       $alias = addslashes($alias);
       list($foreign_key, $foreign_name) = explode('.', $name);
+      $table = $this->get_table($forein_key);
       if (!isset($foreign_name))
-        $query = "select value from collection where collection = m.collection
+        $query = "select value from $table where collection = m.collection
              and version <= m.version and identifier=m.identifier and attribute = '$name'";
 
       else {
         if ($alias == $name) $alias = $foreign_name;
         $name = $foreign_name;
         $query =
-          "select value from collection where collection = '$foreign_key' and version <= m.version and attribute = '$foreign_name'
+          "select value from $table where collection = '$foreign_key' and version <= m.version and attribute = '$foreign_name'
             and identifier = (
-              select value from collection where collection = m.collection and version <= m.version
+              select value from $table where collection = m.collection and version <= m.version
                 and identifier=m.identifier and attribute = '$foreign_key' order by version desc limit 1)";
       }
       $queries[] = "ifnull(($query order by version desc limit 1),'\$$name') $alias";
@@ -123,7 +143,8 @@ class collection
     foreach($args as $arg) {
       ++$index;
       if ($arg != '*') continue;
-      $expansion = $this->db->read_column("select distinct attribute from collection where collection = '$collection' and version = 0 ");
+      $table = $this->get_table($collection);
+      $expansion = $this->db->read_column("select distinct attribute from $table where collection = '$collection' and version = 0 ");
       break;
     }
     if ($expansion) array_splice($args, $index, 1, $expansion);
@@ -182,7 +203,8 @@ class collection
     $sorting = [];
     $selection = $this->get_selection($args, $where, $sorting);
     $joins = $this->get_joins($filters, $where);
-    $sql = "select $selection from collection m $joins $where $search";
+    $table = $this->get_table($collection);
+    $sql = "select $selection from $table m $joins $where $search";
     $this->set_limits($sql, $offset, $size);
     $this->set_sorting($sql, $sorting);
     return $this->page->translate_sql($sql);
@@ -213,6 +235,7 @@ class collection
 
     $where = " where m.collection = '$collection' and m.version = 0 ";
     $joins = $this->get_joins($filters, $where);
+    $table = $this->get_table($collection);
     foreach($args as $arg) {
       list($name,$value) = $this->page->get_sql_pair($arg);
       if ($name == 'identifier') {
@@ -224,7 +247,7 @@ class collection
         $condition = " and m.attribute = '$name'";
       }
       $attribute = $name== 'identifier'? $name: 'value';
-      $this->page->sql_exec("update collection m $joins set m.$attribute = $value $where $condition");
+      $this->page->sql_exec("update $table m $joins set m.$attribute = $value $where $condition");
     }
   }
 
@@ -233,7 +256,8 @@ class collection
     $args = page::parse_args(func_get_args());
     page::verify_args($args, "collection.insert", 3);
     list($collection, $identifier) = $this->extract_header($args);
-    $sql = "insert into collection(version,collection,identifier,attribute,value) values";
+    $table = $this->get_table($collection);
+    $sql = "insert into $table(version,collection,identifier,attribute,value) values";
     $identifier_func = "last_insert_id()";
     list($alias,$identifier) = assoc_element($identifier);
     if (!is_null($value)) $identifier = $value;
@@ -247,7 +271,7 @@ class collection
       $this->page->sql_exec($sql . "(0,'$collection', '$identifier','$name',$value)");
       if ($identifier) continue;
       list($identifier,$last_id) = $this->db->read_one("select $identifier_func, last_insert_id()");;
-      $this->db->exec("update collection set identifier='$identifier' where id = $last_id");
+      $this->db->exec("update $table set identifier='$identifier' where id = $last_id");
     }
     return ["new_${collection}_id"=>$identifier];
   }
