@@ -316,4 +316,10 @@ class collection
     $this->set_limits($sql, $offset, $size);
     return ['data'=>$this->db->read($sql, MYSQLI_NUM)];
   }
+
+  function exists($collection, $identifier)
+  {
+    $table = $this->get_table($collection);
+    return $this->db->exists("select 1 from $table where collection='$collection' and identifier='$identifier'");
+  }
 }
