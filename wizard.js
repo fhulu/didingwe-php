@@ -132,6 +132,7 @@ $.widget( "custom.wizard", {
       path += '/' + props.id;
     else
       path = path.substr(0, path.lastIndexOf('/')+1) + props.id;
+    page.empty();
     options.render.createSubPage({url: path}).then(function(content, info) {
       content.addClass('wizard-content').appendTo(page);
       page.show();
