@@ -266,7 +266,7 @@ function expand_function($func)
 {
   $matches = array();
 
-  if (!preg_match('/^(\w+)(?:\((.*)\))?$/', trim($func), $matches))
+  if (!preg_match('/^(\w[\w.]+)(?:\((.*)\))?$/', trim($func), $matches))
     throw new Exception("Invalid function specification --$func--");
   $name = $matches[1];
   $args = $matches[2];
