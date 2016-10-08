@@ -264,9 +264,9 @@
 .transparent-9,.hover-transparent-9:hover{opacity:0.90;filter:alpha(opacity=90)}
 
 /* positioning */
-.absolute { position:absolute}
-.fixed { position: fixed }
-.relative: { position: relative}
+.absolute{position:absolute}
+.fixed{position:fixed }
+.relative{position:relative}
 
 /* placement */
 .bottom,.bottom-left,.bottom-right { bottom: 0; }
