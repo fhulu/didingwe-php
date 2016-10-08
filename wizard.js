@@ -17,11 +17,11 @@ $.widget( "custom.wizard", {
 
   createPages: function() {
     var me = this;
-    var opts = this.options;
+    var opts = me.options;
     var step = opts.render.create(opts, 'step', true);
     var pending_style = opts.bookmarks.state_styles['pending'];
     if ($.isArray(pending_style)) pending_style = pending_style.join(' ')
-    $.each(this.options.steps, function(i, info) {
+    $.each(opts.steps, function(i, info) {
       step.clone().attr('step', info.id).hide().appendTo(me.element);
       me.child('.wizard-bookmark', i).addClass(pending_style);
     })
@@ -29,9 +29,8 @@ $.widget( "custom.wizard", {
 
 
   createNavigation: function() {
-    var me = this;
-    var nav = $('<div class=wizard-navigate>').appendTo(this.element);
-    this.options.render.expandFields(this.options,'navigate',this.options.navigate);
+    var opts = this.options;
+    opts.render.create(opts, 'navigation', true);
   },
 
   jumpTo: function(index) {
@@ -88,27 +87,31 @@ $.widget( "custom.wizard", {
 
   updateNavigation: function(index, info) {
     var me = this;
-    var bar = me.child('.wizard-navigate').empty();
-    if (info.navigate)
-      me.options.render.expandFields(info, "navigate", info.navigate);
-    var navs = $.extend([], me.options.navigate, info.navigate);
+    var opts = me.options;
+    var bar = me.child('.wizard-navigation').remove();
+    if (info.navigate !== undefined && !info.navigate) return;
+    var orig_navigation = mkn.copy(opts.navigation);
+    var navigation = opts.render.initField(opts.navigation, opts);
+    var navs = navigation.contents;
+    $.extend(navs, info.navigate);
     var last_step = me.options.steps.length-1;
     $.each(navs, function(i, nav) {
-      if (nav.id == 'next') {
-        if (info.next === false || index == last_step) return;
+      if (nav.id == 'next' && info.next !== false && index != last_step) {
         nav.path = info.path;
+        nav.show = true;
       }
-      if (nav.id == 'prev' && index == me.first_step) return;
-      me.options.render.create(navs, i).appendTo(bar);
+      if (nav.id == 'prev' && index != me.first_step) nav.show = true;
     });
 
+    opts.render.create(navigation).appendTo(me.element);
     if (info.prev === false) me.element.find('.wizard-bookmark').each(function(i) {
-      if (i < index) $(this).addClass('wizard-state-committed');
+      if (i < index) me.updateBookmark(i, 'committed');
     });
     me.child('.wizard-next').bindFirst('click', function() {
       if (me.next_step === undefined)
         me.next_step = typeof info.next === 'string'? info.next: index+1;
     });
+    opts.navigation = orig_navigation;
   },
 
 
