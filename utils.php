@@ -128,16 +128,12 @@ function merge_options()
       array_shift($options2);
       return $options2;
     }
-    $result = $options2;
-    foreach($options1 as $key=>$value ) {
-      if (!array_key_exists($key, $result)) {
+    $result = $options1;
+    foreach($options2 as $key=>$value ) {
+      if (array_key_exists($key, $result))
+        $result[$key] = $merge($result[$key], $value);
+      else
         $result[$key] = $value;
-        continue;
-      }
-      if (!is_array($value)) continue;
-      $value2 = $result[$key];
-      if (!is_array($value2)) continue;
-      $result[$key] = $merge($value, $value2);
     }
     return $result;
   };
