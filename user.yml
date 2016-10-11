@@ -273,11 +273,11 @@ login:
     - forgot_password: { action: dialog }
   post:
     - read_config: start_page
-    - collection.values: [user, identifier: $email, partner, first_name, last_name, cellphone, roles, start_page ]
-    # - load_lineage: [roles,role,code,base_code]
+    - collection.values: [user, $email, partner, first_name, last_name, cellphone, start_page ]
+    - collection.listing: [user, $email, roles: role ]
     - collection.update: [user, identifier: $email, attempts: 0]
     - read_server: [HTTP_USER_AGENT,REMOTE_ADDR,REMOTE_HOST,REQUEST_URI]
-    - collection.insert: [session, /sha1(last_insert_id()), user: $email, roles, start_time: /sysdate(6), HTTP_USER_AGENT, REMOTE_ADDR,REQUEST_URI]
+    - collection.insert: [session, /sha1(last_insert_id()), user: $email, start_time: /sysdate(6), HTTP_USER_AGENT, REMOTE_ADDR,REQUEST_URI]
     - write_session: [sid: $new_session_id, roles]
     - close_dialog
     - redirect: /$start_page
