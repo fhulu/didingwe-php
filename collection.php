@@ -220,6 +220,16 @@ class collection
     return $result;
   }
 
+  function listing()
+  {
+    $args = func_get_args();
+    page::verify_args($args, "collection.list", 3);
+    $last_arg = array_slice($args, -1)[0];
+    list($name) = $this->page->get_sql_pair($last_arg);
+    $sql = $this->read($args);
+    return [$name=>$this->db->read_column($sql)];
+  }
+
   function data()
   {
     $sql = $this->read(func_get_args());
