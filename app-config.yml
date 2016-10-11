@@ -28,7 +28,7 @@ search_paths: [../common/,.,$brand_path]
 collections:
   default: collection
   session: [session,audit_trail]
-  user: [user,partner]
+  auth: [user,partner,role]
 
 email_otp: yes
 sms_otp: yes
