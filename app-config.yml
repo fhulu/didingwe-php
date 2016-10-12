@@ -24,6 +24,8 @@ scripts:
   - /common/page.js
 helpers:
   - collection
+  - emailer
+
 search_paths: [../common/,.,$brand_path]
 collections:
   default: collection
@@ -46,7 +48,8 @@ send_sms:
   user: minime
   password: mypassword
   path: web2sms/submit?uid=$user&pw=$password&sms=$message&da=$cellphone
-send_email:
-  host: smtp.example.com
-  user: me@example.com
-  password: mypassword
+emailer.send:
+  smtp:
+    host: smtp.example.com
+    user: me@example.com
+    password: mypassword
