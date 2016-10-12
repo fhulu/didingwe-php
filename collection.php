@@ -50,7 +50,7 @@ class collection
     return [$name,$alias];
   }
 
-  function get_selection($args, &$where, &$sorting, &$has_primary_filter)
+  function get_selection($table, $args, &$where, &$sorting, &$has_primary_filter)
   {
     $identifier = "";
     $primary = [];
@@ -71,7 +71,7 @@ class collection
         $sub_fields[] = [$name,$alias];
       ++$index;
     }
-    $sub_queries = $this->get_subqueries($sub_fields);
+    $sub_queries = $this->get_subqueries($table, $sub_fields);
     $selection = [];
     $has_primary_filter = !empty($primary);
     if ($has_primary_filter) {
@@ -84,7 +84,7 @@ class collection
     return implode(",", array_filter($selection));
   }
 
-  function get_subqueries($fields)
+  function get_subqueries($table, $fields)
   {
     global $config;
     $queries = [];
@@ -93,7 +93,6 @@ class collection
       $name = addslashes($name);
       $alias = addslashes($alias);
       list($foreign_key, $foreign_name) = explode('.', $name);
-      $table = $this->get_table($forein_key);
       $value = "value";
       if ($alias[0] == '/') $value = substr($alias,1);
       if (!isset($foreign_name))
@@ -103,10 +102,11 @@ class collection
       else {
         if ($alias == $name) $alias = $foreign_name;
         $name = $foreign_name;
+        $sub_table = $this->get_table($foreign_name);
         $query =
           "select $value from $table where collection = '$foreign_key' and version <= m.version and attribute = '$foreign_name'
             and identifier = (
-              select value from $table where collection = m.collection and version <= m.version
+              select value from $sub_table where collection = m.collection and version <= m.version
                 and identifier=m.identifier and attribute = '$foreign_key' order by version desc limit 1)";
       }
       $queries[] = "ifnull(($query order by version desc limit 1),'\$$name') $alias";
@@ -216,9 +216,9 @@ class collection
 
     $where = " where m.collection = '$collection' and m.version = 0 ";
     $sorting = [];
-    $selection = $this->get_selection($args, $where, $sorting, $has_primary_filter);
-    $joins = $this->get_joins($filters, $where, $has_primary_filter);
     $table = $this->get_table($collection);
+    $selection = $this->get_selection($table, $args, $where, $sorting, $has_primary_filter);
+    $joins = $this->get_joins($filters, $where, $has_primary_filter);
     $sql = "select $selection from $table m $joins $where $search";
     $this->set_limits($sql, $offset, $size);
     $this->set_sorting($sql, $sorting);
