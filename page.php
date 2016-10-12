@@ -1138,10 +1138,7 @@ class page
       if ($this->foreach) return $result;
       if (is_null($result)) continue;
       if (!is_array($result)) $result = array($result);
-      if (is_null($this->answer))
-        $this->answer = $result;
-      else
-        $this->answer = array_merge($this->answer, $result);
+      $this->answer = merge_options($this->answer, $result);
     }
     return $this->answer;
   }
@@ -1369,13 +1366,11 @@ class page
   function clear_values()
   {
     $args = page::parse_args(func_get_args());
-    if (sizeof($args) == 0) {
+    if (sizeof($args) == 0)
       $this->answer = null;
-      return;
-    }
-    foreach($args as $arg)
-    {
+    else foreach($args as $arg) {
       unset($this->answer[$arg]);
+      unset($this->request[$arg]);
     }
   }
 
