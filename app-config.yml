@@ -30,6 +30,9 @@ collections:
   session: [session,audit_trail]
   auth: [user,partner,role]
 
+registrar_role: registrar
+email_new_registration: yes
+
 email_otp: yes
 sms_otp: yes
 request_method: post
