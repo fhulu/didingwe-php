@@ -95,7 +95,7 @@ class collection
       list($foreign_key, $foreign_name) = explode('.', $name);
       $table = $this->get_table($forein_key);
       $value = "value";
-      if ($alias[0] = '/') $value = substr($alias,1);
+      if ($alias[0] == '/') $value = substr($alias,1);
       if (!isset($foreign_name))
         $query = "select $value from $table where collection = m.collection
              and version <= m.version and identifier=m.identifier and attribute = '$name'";
@@ -122,7 +122,7 @@ class collection
     if (empty($filters)) return "";
     if (!is_array($filters) || is_assoc($filters)) $filters = [$filters];
 
-    // use first filter in 'where' we don't have primary filter
+    // use first filter in 'where' when don't have primary filter
     if (!$has_primary_filter) {
       $first_filter = array_shift($filters);
       list($name,$value) = $this->page->get_sql_pair($first_filter);
@@ -248,6 +248,8 @@ class collection
   function data()
   {
     $sql = $this->read(func_get_args());
+    if ($this->page->foreach)
+      return $this->db->read($sql, MYSQLI_ASSOC);
     return ['data'=>$this->db->read($sql, MYSQLI_NUM)];
   }
 
