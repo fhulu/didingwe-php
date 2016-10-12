@@ -1111,8 +1111,8 @@ class page
       global $config;
       if ($method != 'foreach') {
         $values = merge_options($this->request, $config, $this->context, $this->answer);
-        replace_fields($parameter, $values);
-        replace_fields($method, $values);
+        replace_fields($parameter, $values, true);
+        replace_fields($method, $values, true);
       }
       log::debug_json("REPLY ACTION $method", $parameter);
       if ($this->reply_if($method, $parameter)) continue;
@@ -1550,5 +1550,14 @@ class page
   function read_server()
   {
     return $this->read_settings($_SERVER, func_get_args());
+  }
+
+  function merge_context($setting, &$options)
+  {
+    global $config;
+    $options = merge_options($config[$setting], $options);
+    $this->merge_fields($options);
+    replace_fields($options, $options, true);
+    replace_fields($options, $this->answer, true);
   }
 }
