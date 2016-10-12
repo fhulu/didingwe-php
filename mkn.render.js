@@ -120,10 +120,10 @@ mkn.render = function(options)
     var i = items.length;
     while (i--) {
       var item = items[i];
-      if (popped.indexOf(item.id) >= 0)
+      if (popped.indexOf(item.id) >= 0 || item.id == 'pop')
         items.splice(i,1);
     }
-  }
+}
 
   var insertPushed = function(items, pushed) {
     for (var i in pushed) {

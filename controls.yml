@@ -429,7 +429,6 @@ labelled_input_page:
 label_inside:
   label: { text: ""}
   subject:
-    class: [border,widest]
     label: $name
     attr: { placeholder: $label, title: $desc}
   text: $label $field
