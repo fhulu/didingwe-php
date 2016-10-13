@@ -41,18 +41,20 @@ check_otp:
         send_sms:
           message: Your OTP for $program_name is $server_otp
     - if $email_otp:
-        send_email:
-          subject: One Time Password
-          from: $support
-          to: $first_name $last_name <$email>
-          message: >
-            Good day<br><br>
-            You are currently trying to register on $program_name or change your email address.
-            If you have not requested this, please inform the System Adminstrator.<br><br>
-            Your One Time Password is : <b>$server_otp</b>. <br><br>
-            Regards<br>
-            Customer Operations
+        emailer.send: { type: otp_email }
     - clear_values
+
+otp_email:
+  subject: One Time Password
+  from: $support_email
+  to: $first_name $last_name <$email>
+  message: >
+    Good day<br><br>
+    You are currently trying to register on $program_name or change your email address.
+    If you have not requested this, please inform the System Adminstrator.<br><br>
+    Your One Time Password is : <b>$server_otp</b>. <br><br>
+    Regards<br>
+    Customer Operations
 
 complete_registration:
   type: info_page
