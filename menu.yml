@@ -13,12 +13,13 @@ menu_item:
   parent_name: $name
   url: /$id
   trap: [click]
-  text: { type: menu_link }
+  type: container
+  contents: [menu_link]
 
 menu_link:
   tag: a
   derive: [parent_name]
-  text: $parent_name
+  name: $parent_name
 
 sub_menu:
   type: menu_item
