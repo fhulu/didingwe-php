@@ -50,7 +50,7 @@ class collection
     return [$name,$alias];
   }
 
-  function get_selection($args, &$where, &$sorting)
+  function get_selection($table, $args, &$where, &$sorting, &$has_primary_filter)
   {
     $identifier = "";
     $primary = [];
@@ -65,16 +65,17 @@ class collection
         $identifier = "m.$name $alias";
         $identifier_pos = $index;
       }
-      else if (!$searching && empty($primary) && strpos($name, '.') === false)
+      else if (empty($primary) && strpos($name, '.') === false)
         $primary = [$name, $alias];
       else
         $sub_fields[] = [$name,$alias];
       ++$index;
     }
-    $sub_queries = $this->get_subqueries($sub_fields);
+    $sub_queries = $this->get_subqueries($table, $sub_fields);
     $selection = [];
-    if (!empty($primary)) {
-      $where .= " and m.attribute = '$primary[0]'";
+    $has_primary_filter = !empty($primary);
+    if ($has_primary_filter) {
+      $where .= " and m.attribute  = '$primary[0]'";
       $selection[] = "m.value $primary[1]";
     }
     $selection[] = $sub_queries;
@@ -83,7 +84,7 @@ class collection
     return implode(",", array_filter($selection));
   }
 
-  function get_subqueries($fields)
+  function get_subqueries($table, $fields)
   {
     global $config;
     $queries = [];
@@ -92,18 +93,20 @@ class collection
       $name = addslashes($name);
       $alias = addslashes($alias);
       list($foreign_key, $foreign_name) = explode('.', $name);
-      $table = $this->get_table($forein_key);
+      $value = "value";
+      if ($alias[0] == '/') $value = substr($alias,1);
       if (!isset($foreign_name))
-        $query = "select value from $table where collection = m.collection
+        $query = "select $value from $table where collection = m.collection
              and version <= m.version and identifier=m.identifier and attribute = '$name'";
 
       else {
         if ($alias == $name) $alias = $foreign_name;
         $name = $foreign_name;
+        $sub_table = $this->get_table($foreign_name);
         $query =
-          "select value from $table where collection = '$foreign_key' and version <= m.version and attribute = '$foreign_name'
+          "select $value from $table where collection = '$foreign_key' and version <= m.version and attribute = '$foreign_name'
             and identifier = (
-              select value from $table where collection = m.collection and version <= m.version
+              select value from $sub_table where collection = m.collection and version <= m.version
                 and identifier=m.identifier and attribute = '$foreign_key' order by version desc limit 1)";
       }
       $queries[] = "ifnull(($query order by version desc limit 1),'\$$name') $alias";
@@ -112,12 +115,20 @@ class collection
   }
 
 
-  function get_joins($filters, &$where="")
+  function get_joins($filters, &$where="", $has_primary_filter=false)
   {
     $index = 0;
     $joins = "";
     if (empty($filters)) return "";
     if (!is_array($filters) || is_assoc($filters)) $filters = [$filters];
+
+    // use first filter in 'where' when don't have primary filter
+    if (!$has_primary_filter) {
+      $first_filter = array_shift($filters);
+      list($name,$value) = $this->page->get_sql_pair($first_filter);
+      $where .= " and m.attribute = '$name' and m.value = $value";
+    }
+    // create joins for each filter
     foreach($filters as $filter) {
       ++$index;
       list($name,$value) = $this->page->get_sql_pair($filter);
@@ -129,7 +140,8 @@ class collection
       $operator = "";
       if (ctype_alnum($value[0]) || $value[0] == "'")
         $operator = " = ";
-      $joins .= " join collection m$index on m$index.collection = m.collection
+      $table = $this->get_table($name);
+      $joins .= " join $table m$index on m$index.collection = m.collection
           and m$index.version <= m.version and m$index.identifier=m.identifier
           and m$index.attribute = '$name' and m$index.value $operator $value";
     }
@@ -160,7 +172,10 @@ class collection
     }
     list($collection, $filters) = array_splice($args, 0, 2);
     list($collection) = assoc_element($collection);
-    if (is_string($filters)) $filters = ['identifier'=>$filters];
+    if ($filters == '')
+      $filters = [];
+    else if (is_string($filters))
+      $filters = ['identifier'=>$filters];
     return [$collection, $filters, $offset, $size];
   }
 
@@ -201,9 +216,9 @@ class collection
 
     $where = " where m.collection = '$collection' and m.version = 0 ";
     $sorting = [];
-    $selection = $this->get_selection($args, $where, $sorting);
-    $joins = $this->get_joins($filters, $where);
     $table = $this->get_table($collection);
+    $selection = $this->get_selection($table, $args, $where, $sorting, $has_primary_filter);
+    $joins = $this->get_joins($filters, $where, $has_primary_filter);
     $sql = "select $selection from $table m $joins $where $search";
     $this->set_limits($sql, $offset, $size);
     $this->set_sorting($sql, $sorting);
@@ -233,6 +248,8 @@ class collection
   function data()
   {
     $sql = $this->read(func_get_args());
+    if ($this->page->foreach)
+      return $this->db->read($sql, MYSQLI_ASSOC);
     return ['data'=>$this->db->read($sql, MYSQLI_NUM)];
   }
 

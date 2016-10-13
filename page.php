@@ -1111,8 +1111,8 @@ class page
       global $config;
       if ($method != 'foreach') {
         $values = merge_options($this->request, $config, $this->context, $this->answer);
-        replace_fields($parameter, $values);
-        replace_fields($method, $values);
+        replace_fields($parameter, $values, true);
+        replace_fields($method, $values, true);
       }
       log::debug_json("REPLY ACTION $method", $parameter);
       if ($this->reply_if($method, $parameter)) continue;
@@ -1138,10 +1138,7 @@ class page
       if ($this->foreach) return $result;
       if (is_null($result)) continue;
       if (!is_array($result)) $result = array($result);
-      if (is_null($this->answer))
-        $this->answer = $result;
-      else
-        $this->answer = array_merge($this->answer, $result);
+      $this->answer = merge_options($this->answer, $result);
     }
     return $this->answer;
   }
@@ -1369,13 +1366,11 @@ class page
   function clear_values()
   {
     $args = page::parse_args(func_get_args());
-    if (sizeof($args) == 0) {
+    if (sizeof($args) == 0)
       $this->answer = null;
-      return;
-    }
-    foreach($args as $arg)
-    {
+    else foreach($args as $arg) {
       unset($this->answer[$arg]);
+      unset($this->request[$arg]);
     }
   }
 
@@ -1550,5 +1545,14 @@ class page
   function read_server()
   {
     return $this->read_settings($_SERVER, func_get_args());
+  }
+
+  function merge_context($setting, &$options)
+  {
+    global $config;
+    $options = merge_options($config[$setting], $options);
+    $this->merge_fields($options);
+    replace_fields($options, $options, true);
+    replace_fields($options, $this->answer, true);
   }
 }

@@ -86,11 +86,21 @@ confirm_registration:
   post:
     - read_session: title,first_name,last_name,cellphone,email,password
     - collection.insert: [user, $email, password: /password('$password'), active: 1, attempts: 0, roles: 'reg', title, first_name,last_name,cellphone]
+    - let: { registrant_name: $first_name $last_name, registrant_email: $email }
+    - clear_values: [first_name, last_name, email]
+    - foreach:
+        - collection.data: [user, role: $registrar_role, first_name, last_name, email: identifier]
+        - if $email_new_registration:
+            emailer.send: { type: new_registration_email }
+        - clear_values: [first_name, last_name, email]
     - clear_values
   audit: $title $first_name $last_name $cellphone $email
 
-
-
+new_registration_email:
+  subject: New Registration on $program_name
+  from: $registrant_name<$registrant_email>
+  to: $first_name $last_name<$email>
+  message: New user registration on $program_name from $registrant_name
 
 create:
   type: labelled_input_page
