@@ -289,6 +289,7 @@ var mkn = new function() {
       if (type == 'css') element.rel = 'stylesheet';
 
       element.onreadystatechange = element.onload = function() { defer.resolve(link); }
+      element.onerror = function() { defer.resolve(link); }
       document.head.appendChild(element);
     }).promise();
   }
