@@ -94,7 +94,7 @@
         console.log("Load: ", end - start);
         self.populate(data);
         self.element.triggerHandler('refreshed', [data]);
-        delete data.rows;
+        delete data.data;
         $.extend(self.params, data);
         console.log("Populate: ", new Date().getTime() - end);
       });
@@ -298,8 +298,8 @@
       var body = self.body().empty();
       var fields = this.options.fields;
       var tr;
-      for(var i in data.rows) {
-        var row = data.rows[i];
+      for(var i in data.data) {
+        var row = data.data[i];
         if (tr) {
           self.bindRowActions(tr);
           tr.appendTo(body);

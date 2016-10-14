@@ -1,3 +1,4 @@
+include: [datatable]
 base:
   type: datatable
   sort: when
@@ -29,6 +30,10 @@ user:
     select t.id, t.create_time, p.first_name, p.last_name,u.email, t.action, t.detail
       from audit_trail t join user u on t.user = u.id and u.id = '$uid'
       left join person p on u.person = p.id
+  values:
+    - collection.values: [session, $sid, user]
+    - collection.data: [audit_trail, user: $user, session.start_time, user.first_name, user.last_name, user, action]
+    - clear_values: [user]
 
 partner:
   name: Organisation Audit Trail

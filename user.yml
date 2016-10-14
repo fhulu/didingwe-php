@@ -1,6 +1,6 @@
 ## YAML Template.
 ---
-include: [wizard]
+include: [datatable,wizard]
 
 activate:
   access: [admin]
