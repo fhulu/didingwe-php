@@ -1,0 +1,6 @@
+footer:
+  type: container
+  class: [tiny-font center-text,fixed bottom]
+  contents:
+    - type: plain_text
+    - Developed by Mukoni Software
