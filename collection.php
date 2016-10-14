@@ -102,11 +102,11 @@ class collection
       else {
         if ($alias == $name) $alias = $foreign_name;
         $name = $foreign_name;
-        $sub_table = $this->get_table($foreign_name);
+        $sub_table = $this->get_table($foreign_key);
         $query =
-          "select $value from $table where collection = '$foreign_key' and version <= m.version and attribute = '$foreign_name'
+          "select $value from $sub_table where collection = '$foreign_key' and version <= m.version and attribute = '$foreign_name'
             and identifier = (
-              select value from $sub_table where collection = m.collection and version <= m.version
+              select value from $table where collection = m.collection and version <= m.version
                 and identifier=m.identifier and attribute = '$foreign_key' order by version desc limit 1)";
       }
       $queries[] = "ifnull(($query order by version desc limit 1),'\$$name') $alias";
@@ -115,7 +115,7 @@ class collection
   }
 
 
-  function get_joins($filters, &$where="", $has_primary_filter=false)
+  function get_joins($table, $filters, &$where="", $has_primary_filter=false)
   {
     $index = 0;
     $joins = "";
@@ -140,7 +140,6 @@ class collection
       $operator = "";
       if (ctype_alnum($value[0]) || $value[0] == "'")
         $operator = " = ";
-      $table = $this->get_table($name);
       $joins .= " join $table m$index on m$index.collection = m.collection
           and m$index.version <= m.version and m$index.identifier=m.identifier
           and m$index.attribute = '$name' and m$index.value $operator $value";
@@ -218,7 +217,7 @@ class collection
     $sorting = [];
     $table = $this->get_table($collection);
     $selection = $this->get_selection($table, $args, $where, $sorting, $has_primary_filter);
-    $joins = $this->get_joins($filters, $where, $has_primary_filter);
+    $joins = $this->get_joins($table, $filters, $where, $has_primary_filter);
     $sql = "select $selection from $table m $joins $where $search";
     $this->set_limits($sql, $offset, $size);
     $this->set_sorting($sql, $sorting);
