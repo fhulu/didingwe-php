@@ -8,7 +8,9 @@ datatable:
   row_creator: { type: table_row }
   css: [/common/datatable.css,/datatable.css]
   flags: []
-  values: []
+  values:
+    - read_values: { derive: [data] }
+    - call: datatable::read(context,$key)
 
   position: top
   filter:
