@@ -704,8 +704,8 @@ class page
         $file_path = "$path/$class.php";
         if (($file_found = file_exists($file_path))) break;
       }
-      if ($file_found) {
-        log::error("No such file $file");
+      if (!$file_found) {
+        log::error("No such file $class.php");
         return;
       }
       require_once($file_path);
