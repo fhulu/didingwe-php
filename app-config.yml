@@ -29,7 +29,7 @@ helpers:
 search_paths: [../common/,.,$brand_path]
 collections:
   default: collection
-  session: [session,audit_trail]
+  session: [session,audit]
   auth: [user,partner,role]
 
 registrar_role: registrar

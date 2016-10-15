@@ -848,7 +848,8 @@ class page
     $collection = $this->get_helper('collection');
     $sid = $_SESSION['sid'];
     $user = $collection->values('session',['identifier'=>$sid], 'user');
-    $collection->insert('audit','', ['session'=>'$sid'], ['time'=>"/concat(curdate(), ' ', curtime())"], $user, ['action'=>$name], ['detail'=>$detail]);
+    $partner = $collection->values('session',['identifier'=>$sid], 'partner');
+    $collection->insert('audit','', ['session'=>'$sid'], ['time'=>"/concat(curdate(), ' ', curtime())"], $user, $partner, ['action'=>$name], ['detail'=>$detail]);
     $post = $field['post'];
     if (isset($post))
       $this->reply($post);

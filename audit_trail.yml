@@ -13,7 +13,6 @@ base:
     - print
     - export
   fields:
-    - key: { hide: yes}
     - when: { width: 12%,name: Time }
     - first_name: { width: 10% }
     - last_name: { width: 16% }
@@ -26,33 +25,25 @@ user:
   type: base
   name: My Audit Trail
   access: [reg]
-  sql: |
-    select t.id, t.create_time, p.first_name, p.last_name,u.email, t.action, t.detail
-      from audit_trail t join user u on t.user = u.id and u.id = '$uid'
-      left join person p on u.person = p.id
   values:
     - collection.values: [session, $sid, user]
-    - collection.data: [audit_trail, user: $user, session.start_time, user.first_name, user.last_name, user, action]
+    - collection.data: [audit, user: $user, time, user.first_name, user.last_name, user, action, detail]
     - clear_values: [user]
 
 partner:
   name: Organisation Audit Trail
   type: base
   access: [admin]
-  sql: |
-    select t.id, t.create_time, p.first_name, p.last_name,u.email, t.action, t.detail
-      from audit_trail t join user u on t.user = u.id
-      and (u.partner = '$pid' or t.partner = '$pid')
-      left join person p on u.person = p.id
+  values:
+    - collection.values: [session, $sid, partner]
+    - collection.data: [audit, partner: $partner, time, user.first_name, user.last_name, user, action, detail]
+    - clear_values: [partner]
 
 system:
   name: System Audit Trail
   type: base
-  access: [developer]
+  access: [admin]
   fields:
     - organisation: { push: first_name, width: 12% }
-  sql: |
-    select t.id, t.create_time, c.name, p.first_name, p.last_name,u.email, t.action, t.detail
-      from audit_trail t join user u on t.user = u.id
-      left join partner c on c.id = t.partner or c.id = u.partner
-      left join person p on u.person = p.id
+  values:
+    - collection.data: [audit, "", time, partner.name, user.first_name, user.last_name, user, action, detail]
