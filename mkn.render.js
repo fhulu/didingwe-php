@@ -132,21 +132,17 @@ mkn.render = function(options)
       delete item.push;
       var pos = items.indexOf(item);
       item = mkn.copy(item);
-      if (push === 'first') {
-        items.splice(pos, 1);
+      items.splice(pos, 1);
+      if (push === 'first')
         items.unshift(item);
-      }
-      else if (push === 'last') {
-        items.splice(pos, 1);
+      else if (push === 'last')
         items.push(item);
-      }
       else if (push == 'merge') {
-       items.splice(pos, 1 );
        pos = mkn.firstIndexOfKey(items, 'id', item.id);
        items[pos] = mkn.merge(items[pos], item);
       }
       else
-        items.splice(mkn.firstIndexOfKey(items, 'id', item.push), 0, item);
+        items.splice(mkn.firstIndexOfKey(items, 'id', push), 0, item);
     }
   }
 
