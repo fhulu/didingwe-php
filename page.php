@@ -75,7 +75,7 @@ class page
     if (is_null($request)) $request = $_REQUEST;
     log::debug_json("REQUEST",$request);
     $this->request = $request;
-    $this->path = $request['path'];
+    $this->path = replace_vars($request['path'], $request);
     $this->method = $request['action'];
     $this->page_offset = 1;
     $this->fields = array();
@@ -233,7 +233,8 @@ class page
     }
     $expanded = $this->types[$type];
     if (isset($expanded) || in_array($type, $this->expand_stack, true)) return $expanded;
-    $expanded = $this->get_expanded_field($type);
+    if (!is_array($expanded) || !$expanded['sub_page'])
+      $expanded = merge_options($expanded, $this->get_expanded_field($type));
     if (!is_array($expanded)) return null;
     $added[] = $type;
     $this->expand_stack[] = $type;
