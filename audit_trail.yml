@@ -1,6 +1,8 @@
 include: [datatable]
-base:
+user:
   type: datatable
+  access: reg
+  name: My Audit Trail
   sort: when
   sort_order: desc
   page_size: 15
@@ -14,36 +16,33 @@ base:
     - export
   fields:
     - when: { width: 12%,name: Time }
-    - first_name: { width: 10% }
-    - last_name: { width: 16% }
-    - email: { width: 18% }
     - what: { width: 18%, name: Action }
     - detail: { width: 35% }
-
-
-user:
-  type: base
-  name: My Audit Trail
-  access: [reg]
   values:
     - collection.values: [session, $sid, user]
-    - collection.data: [audit, user: $user, time, user.first_name, user.last_name, user, action, detail]
+    - collection.data: [audit, user: $user, time, action, detail]
     - clear_values: [user]
 
 partner:
   name: Organisation Audit Trail
-  type: base
+  type: user
   access: [admin]
+  fields:
+    - first_name: { width: 10%, push: what }
+    - last_name: { width: 16%, push: what }
+    - email: { width: 18%, push: what }
   values:
+    - _reset
     - collection.values: [session, $sid, partner]
     - collection.data: [audit, partner: $partner, time, user.first_name, user.last_name, user, action, detail]
     - clear_values: [partner]
 
 system:
   name: System Audit Trail
-  type: base
+  type: partner
   access: [admin]
   fields:
     - organisation: { push: first_name, width: 12% }
   values:
+    - _reset
     - collection.data: [audit, "", time, partner.name, user.first_name, user.last_name, user, action, detail]
