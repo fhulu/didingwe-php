@@ -226,8 +226,6 @@ list:
     - print
     - export
   fields:
-    - key: { hide: yes }
-    - create_time: { width: 17% }
     - email: { width: 20% }
     - first_name: { width: 13% }
     - last_name: { width: 13% }
@@ -239,18 +237,20 @@ list:
   expand:
     pages:
       - /user/history
-  sql: >
-    select id, create_time, email, first_name, last_name, cellphone, roles, status, status, actions from (
-       select u.id, u.create_time, u.email, p.first_name, p.last_name,
-        u.cellphone, group_concat(r.name) roles,
-        if(u.active=1,'active','inactive') status,
-        if(u.active=1,'expand,slide,edit,deactivate','expand,slide,edit,activate') actions
-      from user u left join person p on p.id = u.person
-        left join role r on find_in_set(r.code,u.roles)
-      where u.partner = '$pid'
-      group by u.id
-    ) tmp where 1 = 1
-
+  values:
+    - collection.values: [session, $sid, partner]
+    - collection.data:
+        - user
+        - partner: $partner
+        - email: identifier
+        - first_name
+        - last_name
+        - cellphone
+        - role
+        - status: /if(active,'active','inactive')
+        - style: /if(active,'active','inactive')
+        - actions: /if(active,'expand,slide,edit,deactivate','expand,slide,edit,activate')
+        - active
 
 list_all:
   name: System Users
@@ -313,7 +313,7 @@ logout:
     - redirect: "/"
   audit:
     post:
-      call: session_destroy()]
+      call: session_destroy()
 
 modify:
   name: Change User Details
