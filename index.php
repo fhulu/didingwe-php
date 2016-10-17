@@ -50,7 +50,7 @@ echo_scripts($config['css'], "<link href='\$script' media='screen' rel='styleshe
 echo_scripts($config['scripts'], "<script src='\$script'></script>\n");
 
 log::debug_json("BROWSER REQUEST", $_REQUEST);
-$active = $_SESSION['sid'] == 0? 'landing': 'authenticated';
+$active = !$_SESSION['sid']? 'landing': 'authenticated';
 $active_config = $config[$active];
 $session = &$_SESSION[$active];
 $session = merge_options($active_config, $session, $_REQUEST);
