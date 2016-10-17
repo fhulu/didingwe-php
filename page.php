@@ -140,7 +140,7 @@ class page
     if (!isset($sid)) return $this->roles = ['public'] ;
     if (!$reload && $this->roles) return $this->roles;
     log::debug_json("SESSION", $_SESSION);
-    return $this->roles = $_SESSION['roles'];
+    return $this->roles = array_merge($_SESSION['roles'], ['reg']);
   }
 
   function include_external(&$data)
