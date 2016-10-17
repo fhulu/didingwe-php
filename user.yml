@@ -246,7 +246,7 @@ list:
         - first_name
         - last_name
         - cellphone
-        - role.name
+        - roles: role.name
         - status: /if(active,'active','inactive')
         - style: /if(active,'active','inactive')
         - actions: /if(active,'expand,slide,edit,deactivate','expand,slide,edit,activate')
@@ -258,17 +258,21 @@ list_all:
   type: list
   fields:
     - organisation: { push: email }
-  sql: >
-    select id, create_time, company_name,  email, first_name, last_name, cellphone, roles, status, status, actions from (
-       select u.id, u.create_time, u.email, p.first_name, p.last_name, org.name company_name,
-        u.cellphone, group_concat(r.name) roles,
-        if(u.active=1,'active','inactive') status,
-        if(u.active=1,'expand,slide,edit,deactivate','expand,slide,edit,activate') actions
-      from user u join partner org on u.partner = org.id and org.active = 1
-        left join person p on p.id = u.person
-        left join role r on find_in_set(r.code,u.roles)
-      group by u.id
-    ) tmp where 1 = 1
+  values:
+    - _reset
+    - collection.scroll:
+        - user
+        - []
+        - partner: partner.name
+        - email: identifier
+        - first_name asc
+        - last_name
+        - cellphone
+        - roles: role.name
+        - status: /if(active,'active','inactive')
+        - style: /if(active,'active','inactive')
+        - actions: /if(active,'expand,slide,edit,deactivate','expand,slide,edit,activate')
+        - active
 
 
 login:
