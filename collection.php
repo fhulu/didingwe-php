@@ -202,7 +202,7 @@ class collection
   {
     if (empty($sorting)) return;
     if ($group)
-      $sql = "select * from ($sql) tmp order by ".implode(',', $sorting);
+      $sql = "select * from ($sql) tmp_sorting order by ".implode(',', $sorting);
     else
       $sql .= " order by ".implode(',', $sorting);
   }
@@ -216,7 +216,7 @@ class collection
       if ($name[0] == "'") {
         list($name, $alias) = explode('.', $alias);
         if (!$alias) $alias = $name;
-        $outer[] = $alias;
+        $outer[] = explode(' ',$alias)[0];
         continue;
       }
       $outer[] = "$name $alias";
@@ -224,6 +224,7 @@ class collection
     }
     if ($wrapped)
       $sql = "select " . join(',', $outer) . " from ($sql) tmp";
+    return $wrapped;
   }
   function read($args)
   {
@@ -239,8 +240,8 @@ class collection
     $joins = $this->get_joins($table, $filters, $where, $has_primary_filter);
     $sql = "select $selection from $table m $joins $where $search";
     $this->set_limits($sql, $offset, $size);
-    $this->wrap_query($sql, $args);
-    $this->set_sorting($sql, $sorting);
+    $wrapped = $this->wrap_query($sql, $args);
+    $this->set_sorting($sql, $sorting, !$wrapped);
     return $this->page->translate_sql($sql);
   }
 
@@ -367,5 +368,14 @@ class collection
   {
     $table = $this->get_table($collection);
     return $this->db->exists("select 1 from $table where collection='$collection' and identifier='$identifier'");
+  }
+
+  function scroll()
+  {
+    $request = $this->page->request;
+    $page_num = $request['page_num'];
+    $page_size = $request['page_size'];
+    $args = array_merge([$page_num*$page_size, $page_size], func_get_args());
+    return call_user_func_array([$this, "data"], $args);
   }
 }
