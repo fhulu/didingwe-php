@@ -59,6 +59,7 @@ class collection
     $identifier_pos = 0;
     foreach($args as &$arg) {
       list($name,$alias) = $this->get_name_alias($arg);
+      if ($alias[0] == '/') continue;
       $this->update_sort_order($sorting, $name, $alias);
 
       if ($name == 'identifier') {
@@ -92,9 +93,9 @@ class collection
       list($name,$alias) = $name_alias;
       $name = addslashes($name);
       $alias = addslashes($alias);
+      if ($alias[0] == '/') continue;
       list($foreign_key, $foreign_name) = explode('.', $name);
       $value = "value";
-      if ($alias[0] == '/') $value = substr($alias,1);
       if (!isset($foreign_name))
         $query = "select $value from $table where collection = m.collection
              and version <= m.version and identifier=m.identifier and attribute = '$name'";
@@ -109,7 +110,7 @@ class collection
               select value from $table where collection = m.collection and version <= m.version
                 and identifier=m.identifier and attribute = '$foreign_key' order by version desc limit 1)";
       }
-      $queries[] = "ifnull(($query order by version desc limit 1),'\$$name') $alias";
+      $queries[] = "($query order by version desc limit 1) $alias";
     }
     return implode(",", $queries);
   }
@@ -206,6 +207,22 @@ class collection
       $sql .= " order by ".implode(',', $sorting);
   }
 
+  function wrap_query(&$sql, $args)
+  {
+    $outer = [];
+    $wrapped = false;
+    foreach($args as $arg) {
+      list($alias,$name) = $this->page->get_sql_pair($arg);
+      if ($name[0] == "'") {
+        $outer[] = $alias;
+        continue;
+      }
+      $outer[] = "$name $alias";
+      $wrapped = true;
+    }
+    if ($wrapped)
+      $sql = "select " . join(',', $outer) . " from ($sql) tmp";
+  }
   function read($args)
   {
     $args = page::parse_args($args);
@@ -220,6 +237,7 @@ class collection
     $joins = $this->get_joins($table, $filters, $where, $has_primary_filter);
     $sql = "select $selection from $table m $joins $where $search";
     $this->set_limits($sql, $offset, $size);
+    $this->wrap_query($sql, $args);
     $this->set_sorting($sql, $sorting);
     return $this->page->translate_sql($sql);
   }
