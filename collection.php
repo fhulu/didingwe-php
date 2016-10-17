@@ -97,7 +97,7 @@ class collection
       list($foreign_key, $foreign_name) = explode('.', $name);
       $value = "value";
       if (!isset($foreign_name))
-        $query = "select $value from $table where collection = m.collection
+        $query = "select group_concat($value) from $table where collection = m.collection
              and version <= m.version and identifier=m.identifier and attribute = '$name'";
 
       else {
@@ -105,10 +105,10 @@ class collection
         $name = $foreign_name;
         $sub_table = $this->get_table($foreign_key);
         $query =
-          "select $value from $sub_table where collection = '$foreign_key' and version <= m.version and attribute = '$foreign_name'
-            and identifier = (
+          "select group_concat($value) from $sub_table where collection = '$foreign_key' and version <= m.version and attribute = '$foreign_name'
+            and identifier in (
               select value from $table where collection = m.collection and version <= m.version
-                and identifier=m.identifier and attribute = '$foreign_key' order by version desc limit 1)";
+                and identifier=m.identifier and attribute = '$foreign_key' order by version desc)";
       }
       $queries[] = "($query order by version desc limit 1) $alias";
     }
@@ -214,6 +214,8 @@ class collection
     foreach($args as $arg) {
       list($alias,$name) = $this->page->get_sql_pair($arg);
       if ($name[0] == "'") {
+        list($name, $alias) = explode('.', $alias);
+        if (!$alias) $alias = $name;
         $outer[] = $alias;
         continue;
       }
