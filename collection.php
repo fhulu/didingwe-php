@@ -123,12 +123,6 @@ class collection
     if (empty($filters)) return "";
     if (!is_array($filters) || is_assoc($filters)) $filters = [$filters];
 
-    // use first filter in 'where' when don't have primary filter
-    if (!$has_primary_filter) {
-      $first_filter = array_shift($filters);
-      list($name,$value) = $this->page->get_sql_pair($first_filter);
-      $where .= " and m.attribute = '$name' and m.value = $value";
-    }
     // create joins for each filter
     foreach($filters as $filter) {
       ++$index;
@@ -139,7 +133,7 @@ class collection
       }
 
       $operator = "";
-      if (ctype_alnum($value[0]) || $value[0] == "'")
+      if ((ctype_alnum($value[0]) || $value[0] == "'" ) && !preg_match('/^\s*like\s/', $value))
         $operator = " = ";
       $joins .= " join $table m$index on m$index.collection = m.collection
           and m$index.version <= m.version and m$index.identifier=m.identifier
@@ -160,6 +154,21 @@ class collection
       break;
     }
     if ($expansion) array_splice($args, $index, 1, $expansion);
+  }
+
+  function add_custom_filters(&$filters, $args)
+  {
+    $index = -1;
+    $request = $this->page->request;
+
+    foreach($args as $arg) {
+      ++$index;
+      $term = $request["f$index"];
+      if (!isset($term)) continue;
+      list($name,$alias) = $this->get_name_alias($arg);
+      $filters[] = [$alias=>"/like '%$term%'"];
+      log::debug_json("got custom filter at $index: $term on $alias=>$name", $filters);
+    }
   }
 
   function extract_header(&$args)
@@ -232,7 +241,7 @@ class collection
     $size = $this->expand_args($args);
     list($collection, $filters, $offset, $size) = $this->extract_header($args);
     $this->expand_star($collection, $args);
-
+    $this->add_custom_filters($filters, $args);
     $where = " where m.collection = '$collection' and m.version = 0 ";
     $sorting = [];
     $table = $this->get_table($collection);

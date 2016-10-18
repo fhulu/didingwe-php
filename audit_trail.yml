@@ -20,7 +20,7 @@ user:
     - detail: { width: 35% }
   values:
     - collection.values: [session, $sid, user]
-    - collection.data: [audit, user: $user, time, action, detail]
+    - collection.data: [audit, [user], time, action, detail]
     - clear_values: [user]
 
 partner:
@@ -34,7 +34,7 @@ partner:
   values:
     - _reset
     - collection.values: [session, $sid, partner]
-    - collection.data: [audit, partner: $partner, time, user.first_name, user.last_name, user, action, detail]
+    - collection.data: [audit, [partner], time, user.first_name, user.last_name, user, action, detail]
     - clear_values: [partner]
 
 system:
@@ -45,4 +45,4 @@ system:
     - organisation: { push: first_name, width: 12% }
   values:
     - _reset
-    - collection.data: [audit, "", time, partner.name, user.first_name, user.last_name, user, action, detail]
+    - collection.data: [audit, [], time, partner.name, user.first_name, user.last_name, user, action, detail]

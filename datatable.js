@@ -591,7 +591,7 @@
           return;
         }
         td = $(cell);
-        $('<input type=text></input>').css('width','10px').appendTo(td);
+        $('<input type=text></input>').css('width','10px').attr('field_id', field.id).appendTo(td);
         td.appendTo(editor);
       });
 
@@ -611,20 +611,16 @@
       filter = self.createEditor(titles, self.options.fields, 'filter', '<th></th>').hide();
       var cols = filter.children();
       filter.find('input').bind('keyup cut paste', function(e) {
-        self.params.filtered = '';
         self.params.page_num = 1;
         self.params.page_size = self.options.page_size;
-        var j = 0;
-        var filters = [];
-        for (var i in fields) {
-          var field = fields[i];
-          if (field.id === 'actions' || field.id === 'style') continue;
-          var filter = '';
-          if (mkn.visible(field))
-            filter = cols.eq(j++).find('input').val();
-          filters.push(filter);
-        }
-        self.params.filtered = filters.join('|');
+        fields.forEach(function(field, index) {
+          delete self.params['f'+index];
+          var obj = filter.findByAttribute('field_id', field.id);
+          if (!obj.exists()) return;
+          var val = obj.value();
+          if (val == '') return;
+          self.params['f'+index] = val;
+        });
         self.refresh();
       });
       return filter;
