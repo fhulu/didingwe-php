@@ -297,6 +297,7 @@ login:
     - write_session: [sid: $new_session_id, roles]
     - close_dialog
     - redirect: $start_url
+  audit: $email
 
 login_email:
   valid: [is_registered, is_active, is_unlocked]
@@ -312,12 +313,11 @@ login_password:
 
 logout:
   read: action
-  post:
-    - collection.insert: [session, $sid, end_time: /sysdate(6)]
-    - redirect: "/"
   audit:
     post:
-      call: session_destroy()
+      - collection.insert: [session, $sid, end_time: /sysdate(6)]
+      - this.logoff
+      - redirect: "/"
 
 modify:
   name: Change User Details
