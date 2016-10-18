@@ -454,10 +454,8 @@ mkn.render = function(options)
     if (!field) field = types[key];
     if (init) field = this.initField(field, parent);
     if (field.sub_page) {
-      var tmp = $('<div>creating...</div>');
-      this.createSubPage(parent, key).done(function(created) {
-        tmp.replaceWith(created);
-      });
+      var tmp = $('<div>loading...</div>');
+      this.createSubPage(parent[key], tmp);
       return tmp;
     }
     var id = field.id;
@@ -524,24 +522,19 @@ mkn.render = function(options)
     return obj;
   }
 
-  this.createSubPage = function(parent, keyOrTarget)
+  this.createSubPage = function(parent, target)
   {
-    var tmp = $('<span>').addClass('loading');
+    if (target == undefined) 
+     target = $('<span>').text('loading...');
     field = parent;
-    var isTarget = keyOrTarget instanceof jQuery;
-    if (isTarget)
-      keyOrTarget.replaceWith(tmp);
-    else if (keyOrTarget !== undefined)
-      field = parent[keyOrTarget];
     delete field.sub_page;
     delete field.appendChild;
     field.path = field.url? field.url: field.id;
-    return tmp.page($.extend({request: options.request}, field)).done(function(obj, field) {
+    return target.page($.extend({request: options.request}, field)).done(function(obj, field) {
       setStyle(obj, field);
       setClass(obj, field);
-      tmp.replaceWith(obj);
-      if (!isTarget) return;
-      var target_classes = keyOrTarget.selector.regexCapture(/(\.\w[\w\.]*)$/g);
+      target.replaceWith(obj);
+      var target_classes = target.selector.regexCapture(/(\.\w[\w\.]*)$/g);
       if (target_classes.length) obj.addClass(target_classes[0].replace('.', ' '));
     });
   }
