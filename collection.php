@@ -295,8 +295,8 @@ class collection
     $this->page->parse_delta($args);
 
     $where = " where m.collection = '$collection' and m.version = 0 ";
-    $joins = $this->get_joins($filters, $where);
     $table = $this->get_table($collection);
+    $joins = $this->get_joins($table, $filters, $where);
     foreach($args as $arg) {
       list($name,$value) = $this->page->get_sql_pair($arg);
       if ($name == 'identifier') {
