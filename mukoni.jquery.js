@@ -531,3 +531,7 @@ $.fn.bindFirst = function(name, fn)
       handlers.splice(0, 0, handler);
   });
 };
+
+$.fn.findByAttribute = function(attr, value) {
+  return this.find("["+attr+"='"+escape(value)+"']");
+}
