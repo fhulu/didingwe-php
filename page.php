@@ -591,7 +591,7 @@ class page
     $actions = $fields['read'];
     if (!isset($actions)) return;
     if ($actions == 'action') {
-      $this->set_context($this->path);
+      $this->context = $fields;
       return $this->action();
     }
     return $this->reply($actions);
