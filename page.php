@@ -89,7 +89,7 @@ class page
     $this->answer = null;
     $this->expand_stack = array();
     $this->sub_page = false;
-    $this->helpers = [];
+    $this->helpers = ['this'=>$this];
   }
 
   function process()
@@ -427,7 +427,7 @@ class page
     if (!is_string($x)) return false;
     global $config;
     list($class, $method) = explode('.', $x);
-    return in_array($class, $config['helpers']);
+    return $class == 'this' || in_array($class, $config['helpers']);
   }
 
   function get_helper($class, &$method="")
@@ -436,7 +436,7 @@ class page
     $helper = $this->helpers[$class];
     if ($helper) return $helper;
     require_once("$class.php");
-    $this->helper[$class] =  $helper = new $class($this);
+    $this->helpers[$class] =  $helper = new $class($this);
     return $helper;
 
   }
