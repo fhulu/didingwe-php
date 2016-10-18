@@ -91,9 +91,9 @@ class collection
     $queries = [];
     foreach($fields as $name_alias) {
       list($name,$alias) = $name_alias;
+      if ($name[0] == '/') continue;
       $name = addslashes($name);
       $alias = addslashes($alias);
-      if ($alias[0] == '/') continue;
       list($foreign_key, $foreign_name) = explode('.', $name);
       $value = "value";
       if (!isset($foreign_name))
