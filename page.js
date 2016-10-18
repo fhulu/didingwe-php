@@ -44,7 +44,7 @@ $.fn.page = function(options)
         mkn.setClass(parent, data.fields.parent.class);
 
       parent.trigger('read_'+this.id, [object, data.fields]);
-      defer.resolve(object, data.fields);
+      defer.resolve(object, options, data.fields);
       return this;
     },
 

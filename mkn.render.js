@@ -453,7 +453,7 @@ mkn.render = function(options)
     var field = key===undefined? parent: parent[key];
     if (!field) field = types[key];
     if (init) field = this.initField(field, parent);
-    if (field.sub_page) 
+    if (field.sub_page)
       return this.createSubPage(parent, key);
     var id = field.id;
     if (field.html === undefined) return null;
@@ -531,7 +531,7 @@ mkn.render = function(options)
     delete field.sub_page;
     delete field.appendChild;
     field.path = field.url? field.url: field.id;
-    tmp.page($.extend({request: options.request}, field)).done(function(obj) {
+    tmp.page($.extend({request: options.request}, field)).done(function(obj, field) {
       setStyle(obj, field);
       setClass(obj, field);
       tmp.replaceWith(obj);
