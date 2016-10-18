@@ -13,6 +13,7 @@ authenticated:
 log_dir: ../log
 log_file: $brand_name.log
 upload_dir: ../uploads
+start_page: /home
 css:
   - /common/didi.css
 scripts:

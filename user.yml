@@ -289,14 +289,14 @@ login:
     - forgot_password: { action: dialog }
   post:
     - read_config: start_page
-    - collection.values: [user, $email, partner, first_name, last_name, cellphone, start_page ]
+    - collection.values: [user, $email, partner, first_name, last_name, cellphone, start_page, start_url: "/ifnull(start_page,'$start_page')" ]
     - collection.listing: [user, $email, roles: role ]
-    - collection.update: [user, identifier: $email, attempts: 0]
+    - collection.update: [user, $email, attempts: 0]
     - read_server: [HTTP_USER_AGENT,REMOTE_ADDR,REMOTE_HOST,REQUEST_URI]
     - collection.insert: [session, /sha1(last_insert_id()), user: $email, partner, start_time: /sysdate(6), HTTP_USER_AGENT, REMOTE_ADDR,REQUEST_URI]
     - write_session: [sid: $new_session_id, roles]
     - close_dialog
-    - redirect: /$start_page
+    - redirect: $start_url
 
 login_email:
   valid: [is_registered, is_active, is_unlocked]
