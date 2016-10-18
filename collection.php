@@ -50,7 +50,7 @@ class collection
     return [$name,$alias];
   }
 
-  function get_selection($table, $args, &$where, &$sorting, &$has_primary_filter)
+  function get_selection($table, $args, &$where, &$sorting, &$primary_attribute)
   {
     $identifier = "";
     $primary = [];
@@ -74,8 +74,8 @@ class collection
     }
     $sub_queries = $this->get_subqueries($table, $sub_fields);
     $selection = [];
-    $has_primary_filter = !empty($primary);
-    if ($has_primary_filter) {
+    if (!empty($primary)) {
+      $primary_attribute = $primary[0];
       $where .= " and m.attribute  = '$primary[0]'";
       $selection[] = "m.value $primary[1]";
     }
@@ -116,7 +116,7 @@ class collection
   }
 
 
-  function get_joins($table, $filters, &$where="", $has_primary_filter=false)
+  function get_joins($table, $filters, &$where="", $primary_attribute="")
   {
     $index = 0;
     $joins = "";
@@ -135,6 +135,11 @@ class collection
       $operator = "";
       if ((ctype_alnum($value[0]) || $value[0] == "'" ) && !preg_match('/^\s*like\s/', $value))
         $operator = " = ";
+
+      if ($name == $primary_attribute) {
+        $where .= " and m.value $operator $value";
+        continue;
+      }
       $joins .= " join $table m$index on m$index.collection = m.collection
           and m$index.version <= m.version and m$index.identifier=m.identifier
           and m$index.attribute = '$name' and m$index.value $operator $value";
@@ -167,7 +172,6 @@ class collection
       if (!isset($term)) continue;
       list($name,$alias) = $this->get_name_alias($arg);
       $filters[] = [$alias=>"/like '%$term%'"];
-      log::debug_json("got custom filter at $index: $term on $alias=>$name", $filters);
     }
   }
 
@@ -235,18 +239,19 @@ class collection
       $sql = "select " . join(',', $outer) . " from ($sql) tmp";
     return $wrapped;
   }
-  function read($args)
+  function read($args, $use_custom_filters=false)
   {
     $args = page::parse_args($args);
     $size = $this->expand_args($args);
     list($collection, $filters, $offset, $size) = $this->extract_header($args);
     $this->expand_star($collection, $args);
-    $this->add_custom_filters($filters, $args);
+    if ($use_custom_filters)
+      $this->add_custom_filters($filters, $args);
     $where = " where m.collection = '$collection' and m.version = 0 ";
     $sorting = [];
     $table = $this->get_table($collection);
-    $selection = $this->get_selection($table, $args, $where, $sorting, $has_primary_filter);
-    $joins = $this->get_joins($table, $filters, $where, $has_primary_filter);
+    $selection = $this->get_selection($table, $args, $where, $sorting, $primary_attribute);
+    $joins = $this->get_joins($table, $filters, $where, $primary_attribute);
     $sql = "select $selection from $table m $joins $where $search";
     $this->set_limits($sql, $offset, $size);
     $wrapped = $this->wrap_query($sql, $args);
@@ -276,7 +281,7 @@ class collection
 
   function data()
   {
-    $sql = $this->read(func_get_args());
+    $sql = $this->read(func_get_args(), true);
     if ($this->page->foreach)
       return $this->db->read($sql, MYSQLI_ASSOC);
     return ['data'=>$this->db->read($sql, MYSQLI_NUM)];
