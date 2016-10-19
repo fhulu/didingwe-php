@@ -199,6 +199,7 @@
 .float-contents > *, .float-contents-left > *{float: left;}
 .float-contents-right > *{float: right;}
 .table-cell { display: table-cell}
+.table-fixed { table-layout: fixed}
 
 /* dropdown */
 .hover-dropdown>.dropdown { display: none;}
