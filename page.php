@@ -842,6 +842,9 @@ class page
       $detail = page::decode_sql($detail);
       $detail = replace_vars($detail,$this->request);
     }
+    $post = $field['post'];
+    if (isset($post))
+      $this->reply($post);
     $name = $field['action'];
     if (!isset($name)) $name = $this->name($action);
     $name = addslashes($name);
@@ -850,10 +853,7 @@ class page
     $sid = $_SESSION['sid'];
     $user = $collection->values('session',['identifier'=>$sid], 'user');
     $partner = $collection->values('session',['identifier'=>$sid], 'partner');
-    $collection->insert('audit','', ['session'=>'$sid'], ['time'=>"/concat(curdate(), ' ', curtime())"], $user, $partner, ['action'=>$name], ['detail'=>$detail]);
-    $post = $field['post'];
-    if (isset($post))
-      $this->reply($post);
+    $collection->insert('audit','', ['session'=>'$sid'], ['time'=>"/sysdate()"], $user, $partner, ['action'=>$name], ['detail'=>$detail]);
   }
 
   function action()
