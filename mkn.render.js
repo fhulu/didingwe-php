@@ -1122,7 +1122,7 @@ mkn.render = function(options)
 
     if (sink) {
       var selector = sink;
-      sink = $(sink.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+me.id+"$2"));
+      sink = $(sink.replace(/(^|[^\w]+)page([^\w]*)/,"$1"+me.id+"$2"));
       if (!sink.exists())
         sink = window.parent.$(selector);
     }
