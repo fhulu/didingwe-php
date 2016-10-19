@@ -7,20 +7,23 @@ activate:
   fill: teal
   validate: none
   desc: Activate inactive user
-  audit: sql(select first_name, last_name, email from person where id = '$key')
+  audit: $first_name $last_name ($key)
   post:
-    - collection.update: [user,[identifier: $key], active: 1]
-    - collection.values: [user, [identifier: $key], first_name, last_name, email]
-    - send_email:
-        from: $support
-        to: $full_name <$email>
-        subject: Your account has been activated
-        message: >
-          Dear <b>$full_name</b> <br><br>
-          The administrator would like to inform you that your account has been activated for $program_name.<br><br>
-          Regards,<br><br>
-          <b>Customer Operations</b>
+    - let: [email: $key]
+    - collection.update: [user, $email, active: 1]
+    - collection.values: [user, $email, first_name, last_name]
+    - emailer.send: { type: activate_email }
     - refresh: "#main table"
+
+activate_email:
+  from: $support_email
+  to: $first_name $last_name <$email>
+  subject: Your account has been activated
+  message: >
+    Dear <b>$first_name $last_name</b> <br><br>
+    The administrator would like to inform you that your account has been activated for $program_name.<br><br>
+    Regards,<br><br>
+    <b>Customer Operations</b>
 
 check_otp:
   type: input_page
@@ -226,7 +229,7 @@ list:
     - print
     - export
   fields:
-    - email: { width: 20% }
+    - email: { width: 20%, key: true }
     - first_name: { width: 13% }
     - last_name: { width: 13% }
     - cellphone: { width: 12% }
