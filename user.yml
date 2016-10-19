@@ -88,16 +88,17 @@ confirm_registration:
     - read_session: title,first_name,last_name,cellphone,email
   validate: agree_terms
   post:
-    - read_session: title,first_name,last_name,cellphone,email,password
-    - collection.insert: [user, $email, password: /password('$password'), active: 1, attempts: 0, title, first_name,last_name,cellphone]
+    - read_session: title,first_name,last_name,cellphone,email,password,registrant_partner
+    - collection.insert: [user, $email, password: /password('$password'), active: 1, attempts: 0, title, first_name,last_name,cellphone,partner: $registrant_partner]
     - let: { registrant_name: $first_name $last_name, registrant_email: $email }
     - clear_values: [first_name, last_name, email]
     - foreach:
-        - collection.data: [user, role: $registrar_role, first_name, last_name, email: identifier]
+        - collection.data: [user, [partner: $registrar, role: $registrar_role],first_name, last_name, email: identifier]
         - if $email_new_registration:
             emailer.send: { type: new_registration_email }
         - clear_values: [first_name, last_name, email]
     - clear_values
+    - clear_session: title,first_name,last_name,cellphone,password
   audit: $title $first_name $last_name $cellphone $email
 
 new_registration_email:
