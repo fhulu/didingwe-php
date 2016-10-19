@@ -4,7 +4,6 @@ include: [datatable,wizard]
 
 activate:
   access: [admin]
-  fill: teal
   validate: none
   desc: Activate inactive user
   audit: $first_name $last_name ($key)
@@ -13,7 +12,7 @@ activate:
     - collection.update: [user, $email, active: 1]
     - collection.values: [user, $email, first_name, last_name]
     - emailer.send: { type: activate_email }
-    - refresh: "#main table"
+    - refresh: "#page"
 
 activate_email:
   from: $support_email
@@ -130,24 +129,25 @@ create:
 
 deactivate:
   access: [admin]
-  fill: red
   validate: none
   desc: Deactivate this user
-  confirmation: Are you sure you want to deactivate this user?
-  audit: sql(select first_name, last_name, email from person where id = '$key')
+  audit: $first_name $last_name ($key)
   post:
-    - collection.update: [user,[identifier: $key], active: 1]
-    - collection.values: [user, [identifier: $key], first_name, last_name, email]
-    - send_email:
-        from: $support
-        to: $first_name $last_name <$email>
-        subject: Your account has been deactivated
-        message: >
-          Dear <b>$full_name</b> <br><br>
-          The administrator would like to inform you that your account has been deactivated for $program_name.<br><br>
-          Regards,<br><br>
-          <b>Customer Operations</b>
-    - refresh: "#main table"
+    - let: [email: $key]
+    - collection.update: [user, $email, active: 0]
+    - collection.values: [user, $email, first_name, last_name]
+    - emailer.send: { type: deactivate_email }
+    - refresh: "#page"
+
+dactivate_email:
+  from: $support_email
+  to: $first_name $last_name <$email>
+  subject: Your account has been deactivated
+  message: >
+    Dear <b>$first_name $last_name</b> <br><br>
+    The administrator would like to inform you that your account has been deactivated on $program_name.<br><br>
+    Regards,<br><br>
+    <b>Customer Operations</b>
 
 delete:
   type: deactivate
