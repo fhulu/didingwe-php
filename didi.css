@@ -394,6 +394,7 @@
 .uppercase { text-transform: uppercase; }
 .undecorated { text-decoration: none; }
 .nowrap { white-space: nowrap}
+.truncate-word {  white-space: nowrap; overflow: hidden; text-overflow: ellipsis}
 
 /* vertical alignment */
 .vertical-bottom { vertical-align: bottom; }
