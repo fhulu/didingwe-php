@@ -121,7 +121,7 @@ class page
     }
     $this->set_fields();
     if (!$this->rendering)
-      $this->set_context($path);
+      $this->set_context(array_slice($path,1) );
     if ($this->sub_page) return;
     $result = $this->{$this->method}();
     return $this->result = null_merge($result, $this->result, false);
@@ -349,8 +349,9 @@ class page
   function get_merged_field($code, &$field=null)
   {
     if (page::not_mergeable($code)) return $field;
-    $field = merge_options($this->expand_type($code), $field);
-    return $this->merge_type($field);
+    $merged = $field;
+    $this->merge_type($merged);
+    return $field = merge_options($this->expand_type($code), $merged, $field);
   }
 
   function follow_path($path, $field = null)
@@ -669,10 +670,8 @@ class page
       if (!is_null($value) && !is_array($value)) return false;
 
 
-      $this->get_merged_field($code, $value);
       $valid = $value['valid'];
       if ($valid == "") return;
-
       $result = $validator->validate($code, $value, $valid);
       if ($result === true) return;
 
