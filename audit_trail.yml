@@ -1,7 +1,7 @@
 include: [datatable]
 user:
   type: datatable
-  access: reg
+  access: auth
   name: My Audit Trail
   sort: when
   sort_order: desc

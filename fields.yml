@@ -49,7 +49,7 @@ cellphone:
 
 change_password:
   desc: Change your current password
-  access: reg
+  access: auth
   action: dialog
   url: /password_changer/change
 
@@ -210,7 +210,7 @@ login:
 
 logout:
   desc: Log out of the system
-  access: reg
+  access: auth
   icon: sign-out
   src: /logout_icon.jpg
   action: post
@@ -267,7 +267,7 @@ mukoni_logo:
 
 my_audit_trail:
   desc: My audit trail
-  access: reg
+  access: auth
   url: /audit_trail/user
 
 
@@ -401,7 +401,7 @@ vat_no:
 
 view_profile:
   desc: View my profile
-  access: reg
+  access: auth
   url: /user/profile
   action: dialog
 
@@ -422,7 +422,7 @@ weekday:
 
 welcome:
   name: ""
-  access: reg
+  access: auth
   url: /user/profile
 
 wizard_post:

@@ -25,7 +25,7 @@ country:
       country: $value
 
 add:
-  access: reg
+  access: auth
   desc: Add new country
   width: 600
   header_class: [rounded-xlarge,^w3-blue-grey, white]

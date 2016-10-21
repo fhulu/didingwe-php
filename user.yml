@@ -89,7 +89,18 @@ confirm_registration:
   validate: agree_terms
   post:
     - read_session: title,first_name,last_name,cellphone,email,password,registrant_partner
-    - collection.insert: [user, $email, password: /password('$password'), active: 1, attempts: 0, title, first_name,last_name,cellphone,partner: $registrant_partner]
+    - collection.insert:
+        - user
+        - $email
+        - password: /password('$password')
+        - active: 1
+        - attempts: 0
+        - title
+        - first_name
+        - last_name
+        - cellphone
+        - partner: $registrant_partner
+        - role: $registrant_role
     - let: { registrant_name: $first_name $last_name, registrant_email: $email }
     - clear_values: [first_name, last_name, email]
     - foreach:
@@ -375,7 +386,7 @@ otp:
 
 profile:
   type: input_page
-  access: [reg]
+  access: auth
   name: View Own Profile
   desc: These are your details on the system. You can make changes here to update them.
   width: 600

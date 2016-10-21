@@ -34,8 +34,11 @@ collections:
   auth: [user,partner,role]
 
 registrar: Mukoni Software
+registrar_role: admin
+
 registrant_partner: Mukoni Software
-registrar_role: registrar
+registrant_role: registrant
+
 email_new_registration: yes
 
 email_otp: yes

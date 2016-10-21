@@ -14,7 +14,7 @@ breach:
     contents:
       - type: list_item
       - r1:
-          access: reg
+          access: auth
           name: Your role was changed since you accessed this function.
       - r2:
           name: The System Administrator has restricted access to this function.
