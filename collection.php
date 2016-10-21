@@ -133,7 +133,7 @@ class collection
       }
 
       $operator = "";
-      if ((ctype_alnum($value[0]) || $value[0] == "'" ) && !preg_match('/^\s*like\s/', $value))
+      if ($value[0] == "'" )
         $operator = " = ";
 
       if ($name == $primary_attribute) {
@@ -378,10 +378,24 @@ class collection
     return ['data'=>$this->db->read($sql, MYSQLI_NUM)];
   }
 
-  function exists($collection, $identifier)
+  function exists()
   {
-    $table = $this->get_table($collection);
-    return $this->db->exists("select 1 from $table where collection='$collection' and identifier='$identifier'");
+    $args = func_get_args();
+    $size = sizeof($args);
+    if ($size < 2) return false;
+    if ($size == 2) {
+      $args[] = 'identifier';
+    }
+    else {
+      $filters = [];
+      for ($i=1; $i < $size; $i+=2) {
+        $filters[] = [$args[$i]=>$args[$i+1]];
+      }
+      $args = [$args[0], $filters, 'identifier' ];
+      log::debug_json("args", $args);
+    }
+    $sql = $this->read($args);
+    return $this->db->exists($sql);
   }
 
   function scroll()
