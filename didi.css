@@ -5,6 +5,7 @@
   box-sizing:border-box;
   position: relative;
   border-width: 0;
+  border-style: none;
   margin: 0;
 }
 
