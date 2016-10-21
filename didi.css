@@ -56,17 +56,16 @@
 @keyframes animatezoom{from{transform:scale(0)} to{transform:scale(1)}}
 
 /* border styles */
-.border-thin,.border { border-style: solid; border-width: 1px}
-.border-small { border-style: solid; border-width: 2px;}
-.border-medium { border-style: solid; border-width: 4px}
-.border-large { border-style: solid; border-width: 8px}
-.left-border,.border-left { border-left-style: solid }
-.left-border-thin,.border-left-thin { border-left-style: solid; border-left-width: 1px}
-.right-border,.border-right { border-right-style: solid }
-.bottom-border,.border-bottom { border-bottom-style: solid }
-.bottom-border-thin,.border-bottom-thin { border-bottom-style: solid; border-bottom-width: 1px}
-.border-top,.top-border { border-top-style: solid }
-.borderless,.border-less { border-top-width:0;border-bottom-width:0;border-left-width:0;border-right-width:0}
+.border-width-thin { border-width: 1px;}
+.border-width-small { border-width: 2px;}
+.border-width-medium { border-width: 4px}
+.border-width-large { border-width: 8px}
+.border-left[class*=border-width-] { border-left-style: solid }
+.border-right[class*=border-width-] { border-right-style: solid }
+.border-bottom[class*=border-width-] { border-bottom-style:solid }
+.border-top[class*=border-width-] { border-top-style:solid }
+.borderless,.border-less { border-top-width:0;border-bottom-width:0;border-left-width:0;border-right-width:0}*/
+
 
 /* border divider */
 .hdivider+.hdivider { border-left-style: solid; border-left-width: 1px}
