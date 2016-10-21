@@ -191,21 +191,21 @@ history:
 
 
 is_active:
-  valid: collection_filter(user,$value,active)
+  valid: collection.exists(user,identifier,$value,active,1)
   error: |
     Account $value has been deactivated.
     Please ask the administrator to reactivate your account
 
 
 is_registered:
-  valid: collection(user, $value)
+  valid: collection.exists(user,$value)
   error: >
     There is no such email '$value' registered on the system.<br>
     Click on <b>Register</b> if you would like to register to use the system.
 
 is_unlocked:
   max_attempts: 5
-  valid: collection_filter(user,$value,attempts,<$max_attempts)
+  valid: collection.exists(user,identifier,$value,attempts,/<$max_attempts)
   error: |
     Account $value locked because of too many incorrect attempts.
     Please ask the administrator to unlock your account.
@@ -309,7 +309,7 @@ login_email:
 login_password:
   valid:
     - depends(email, validated)
-    - collection_filter(user,$email,password,=password('$value'))
+    - collection.exists(user,identifier,$email,password,/=password('$value'))
   error:
     - collection.update: [user, identifier: $email, attempts: /value+1]
     - collection.insert: [audit_trail, "", user: $email, action: Failed Login attempt]
