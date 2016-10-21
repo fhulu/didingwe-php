@@ -43,6 +43,7 @@ table.data>tbody>tr
 table.data>tbody>tr>td
 {
   border-bottom: 1px solid #DFDFDF;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis}
 }
 
 table.data thead>tr>th

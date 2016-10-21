@@ -4,23 +4,25 @@ include: [datatable,wizard]
 
 activate:
   access: [admin]
-  fill: teal
   validate: none
   desc: Activate inactive user
-  audit: sql(select first_name, last_name, email from person where id = '$key')
+  audit: $first_name $last_name ($key)
   post:
-    - collection.update: [user,[identifier: $key], active: 1]
-    - collection.values: [user, [identifier: $key], first_name, last_name, email]
-    - send_email:
-        from: $support
-        to: $full_name <$email>
-        subject: Your account has been activated
-        message: >
-          Dear <b>$full_name</b> <br><br>
-          The administrator would like to inform you that your account has been activated for $program_name.<br><br>
-          Regards,<br><br>
-          <b>Customer Operations</b>
-    - refresh: "#main table"
+    - let: [email: $key]
+    - collection.update: [user, $email, active: 1]
+    - collection.values: [user, $email, first_name, last_name]
+    - emailer.send: { type: activate_email }
+    - refresh: "#page"
+
+activate_email:
+  from: $support_email
+  to: $first_name $last_name <$email>
+  subject: Your account has been activated
+  message: >
+    Dear <b>$first_name $last_name</b> <br><br>
+    The administrator would like to inform you that your account has been activated for $program_name.<br><br>
+    Regards,<br><br>
+    <b>Customer Operations</b>
 
 check_otp:
   type: input_page
@@ -86,16 +88,17 @@ confirm_registration:
     - read_session: title,first_name,last_name,cellphone,email
   validate: agree_terms
   post:
-    - read_session: title,first_name,last_name,cellphone,email,password
-    - collection.insert: [user, $email, password: /password('$password'), active: 1, attempts: 0, title, first_name,last_name,cellphone]
+    - read_session: title,first_name,last_name,cellphone,email,password,registrant_partner
+    - collection.insert: [user, $email, password: /password('$password'), active: 1, attempts: 0, title, first_name,last_name,cellphone,partner: $registrant_partner]
     - let: { registrant_name: $first_name $last_name, registrant_email: $email }
     - clear_values: [first_name, last_name, email]
     - foreach:
-        - collection.data: [user, role: $registrar_role, first_name, last_name, email: identifier]
+        - collection.data: [user, [partner: $registrar, role: $registrar_role],first_name, last_name, email: identifier]
         - if $email_new_registration:
             emailer.send: { type: new_registration_email }
         - clear_values: [first_name, last_name, email]
     - clear_values
+    - clear_session: title,first_name,last_name,cellphone,password
   audit: $title $first_name $last_name $cellphone $email
 
 new_registration_email:
@@ -127,24 +130,25 @@ create:
 
 deactivate:
   access: [admin]
-  fill: red
   validate: none
   desc: Deactivate this user
-  confirmation: Are you sure you want to deactivate this user?
-  audit: sql(select first_name, last_name, email from person where id = '$key')
+  audit: $first_name $last_name ($key)
   post:
-    - collection.update: [user,[identifier: $key], active: 1]
-    - collection.values: [user, [identifier: $key], first_name, last_name, email]
-    - send_email:
-        from: $support
-        to: $first_name $last_name <$email>
-        subject: Your account has been deactivated
-        message: >
-          Dear <b>$full_name</b> <br><br>
-          The administrator would like to inform you that your account has been deactivated for $program_name.<br><br>
-          Regards,<br><br>
-          <b>Customer Operations</b>
-    - refresh: "#main table"
+    - let: [email: $key]
+    - collection.update: [user, $email, active: 0]
+    - collection.values: [user, $email, first_name, last_name]
+    - emailer.send: { type: deactivate_email }
+    - refresh: "#page"
+
+dactivate_email:
+  from: $support_email
+  to: $first_name $last_name <$email>
+  subject: Your account has been deactivated
+  message: >
+    Dear <b>$first_name $last_name</b> <br><br>
+    The administrator would like to inform you that your account has been deactivated on $program_name.<br><br>
+    Regards,<br><br>
+    <b>Customer Operations</b>
 
 delete:
   type: deactivate
@@ -226,7 +230,7 @@ list:
     - print
     - export
   fields:
-    - email: { width: 20% }
+    - email: { width: 20%, key: true }
     - first_name: { width: 13% }
     - last_name: { width: 13% }
     - cellphone: { width: 12% }

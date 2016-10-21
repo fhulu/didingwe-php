@@ -33,6 +33,8 @@ collections:
   session: [session,audit]
   auth: [user,partner,role]
 
+registrar: Mukoni Software
+registrant_partner: Mukoni Software
 registrar_role: registrar
 email_new_registration: yes
 
