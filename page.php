@@ -172,7 +172,6 @@ class page
 
         $this->include_external($data);
         $this->replace_keys($data);
-        replace_fields($data, $config);
         $fields[] = $data;
       }
     }
@@ -339,7 +338,7 @@ class page
 
   function get_expanded_field($code)
   {
-    if (preg_match('/^\w+\/\w+$/', $code))
+    if (preg_match('/^(\/\w|\w+\/)[\w\/]*$/', $code))
       return $this->read_external($code);
     $field = $this->merge_stack_field(page::$fields_stack, $code);
     $this->merge_stack_field($this->page_stack, $code, $field);
@@ -448,9 +447,21 @@ class page
     return [$helper,$method];
   }
 
+  function replace_vars(&$fields)
+  {
+    walk_recursive_down($fields, function(&$value, $key, &$parent) {
+      if (in_array($key, ['action','post', 'audit', 'values', 'valid', 'validate'])) return false;
+      if (!is_string($value) || strpos($value, '$') === false || !is_assoc($parent)) return;
+      global $config;
+      $value = replace_vars($value, $this->request);
+      $value = replace_vars($value, $config);
+    });
+  }
+
 
   function expand_types(&$fields)
   {
+    $this->replace_vars($fields);
     walk_recursive_down($fields, function($value, $key, &$parent) {
       if (!is_assoc($parent))
         list($type, $value) = assoc_element($value);

@@ -29,7 +29,7 @@ function configure() {
   $config = merge_options($config, $site_config);
   if (!configure_brand($config))
     replace_fields($config,$config,true);
-    
+
   if ($config['log_dir'] && $config['log_file'])
     log::init($config['log_file'], log::DEBUG);
 }
@@ -50,12 +50,15 @@ echo_scripts($config['css'], "<link href='\$script' media='screen' rel='styleshe
 echo_scripts($config['scripts'], "<script src='\$script'></script>\n");
 
 log::debug_json("BROWSER REQUEST", $_REQUEST);
-$active = !$_SESSION['sid']? 'landing': 'authenticated';
-$active_config = $config[$active];
+$active = $_SESSION['sid'] == ''? 'landing': 'authenticated';
+$active_config = &$config[$active];
 $session = &$_SESSION[$active];
-$session = merge_options($active_config, $session, $_REQUEST);
+replace_fields($active_config, $_REQUEST, true);
+replace_fields($active_config, $session, true);
+replace_fields($active_config, $active_config, true);
+$session = merge_options($session, $_REQUEST);
+$session = merge_options($active_config, $session);
 $request = $session;
-replace_fields($request, $request, true);
 unset($request['path']);
 unset($request['page']);
 $options = ["path"=>$active_config['page'], 'request'=>$request];
