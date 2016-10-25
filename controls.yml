@@ -365,11 +365,16 @@ image_button:
 
 info_page:
   type: container
-  text: $lines$actions
+  text: $lines $actions_pane
   lines:
     - type: plain_text
+  actions_pane:
+    type: container
+    derive: [actions]
+    contents: $actions
   actions:
     - type: button
+  header_class: [pad-y,center-text, large-font]
 
 inplace_input:
   type: label_inside
@@ -516,6 +521,17 @@ list_text:
   type: plain_text
   tag: li
   style: { margin-left: 16 }
+
+modal_dialog:
+  type: container
+  contents: [$modal_content]
+  modal_content:
+    tag: div
+    derive: [title_bar,close_button,$page_content]
+    contents: $title_bar $close_button $page_content
+  title_bar:
+    tag: div
+
 
 multi_input:
   classes: div
