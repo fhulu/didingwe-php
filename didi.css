@@ -273,6 +273,7 @@
 .bottom,.bottom-left,.bottom-right { bottom: 0; }
 .centered { margin-left: auto; margin-right: auto; }
 .center-all { text-align: center; margin-left: auto; margin-right: auto; vertical-align: center; }
+.center-contents{text-align:center}
 .center-x,.middle-x,.middle{ left: 50%}
 .center-y,.middle-y,.middle{ top: 50%}
 .center-text { text-align: center; }
@@ -449,7 +450,7 @@
 .w-9-11 {width:81.81818%}
 
 /* responsive grid */
-.grid>*,.col{float: left}
+.grid>*,.col{float:left}
 .grid.space>*{margin-bottom:2%;margin-right:2%}
 
 
@@ -554,6 +555,7 @@
   .nav-medium{height:100%}
 }
 @media only screen and (min-width:993px){
+  /* style grid children - enough children */
   .grid.l1>*,.grid.l1.space>*{width:100%;margin-right:0}
   .grid.l2>*{width:50%}
   .grid.l2.space>*{width:49%}
@@ -582,7 +584,6 @@
   .grid.l10>*{width:10%}
   .grid.l10.space>*{width:8.2%}
   .grid.l10.space>:nth-child(10n+10){margin-right:0}
-
 
   .col.l1{width:8.33333%}
   .col.l2{width:16.66666%}
