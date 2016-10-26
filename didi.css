@@ -332,8 +332,8 @@
 .pad-16,.pad-xlarge,.pad-y-16{padding-top:16; padding-bottom:16}
 .pad-32,.pad-xxlarge,.pad-x-32{padding-left:32; padding-right:32}
 .pad-32,.pad-xxlarge,.pad-y-32{padding-top:32; padding-bottom:32}
-.pad-48{padding:48}
-.pad-64{padding:64}
+.pad-48,.pad-xxxlarge{padding:48}
+.pad-64,.pad-jumbo{padding:64}
 .pad-128{padding:128}
 .pad-bottom{padding-bottom:8px}
 .pad-left{padding-left:16px}
