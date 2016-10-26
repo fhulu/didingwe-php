@@ -20,6 +20,11 @@ function configure_brand(&$config) {
     symlink($brand_path,$brand_link);
   return true;
 }
+
+function get_active_config_name()
+{
+  return $_SESSION['sid'] == ''? 'landing': 'authenticated';
+}
 function configure() {
   global $config;
   $config = load_yaml("../common/app-config.yml", true);
@@ -32,6 +37,14 @@ function configure() {
 
   if ($config['log_dir'] && $config['log_file'])
     log::init($config['log_file'], log::DEBUG);
+
+  $active = get_active_config_name();
+  $active_config = &$config[$active];
+  $session = &$_SESSION[$active];
+  replace_fields($active_config, $_REQUEST, true);
+  replace_fields($active_config, $session, true);
+  replace_fields($active_config, $active_config, true);
+  $config = merge_options($config, $active_config);
 }
 
 function process_action() {
@@ -50,15 +63,13 @@ echo_scripts($config['css'], "<link href='\$script' media='screen' rel='styleshe
 echo_scripts($config['scripts'], "<script src='\$script'></script>\n");
 
 log::debug_json("BROWSER REQUEST", $_REQUEST);
-$active = $_SESSION['sid'] == ''? 'landing': 'authenticated';
+$active = get_active_config_name();
 $active_config = &$config[$active];
 $session = &$_SESSION[$active];
-replace_fields($active_config, $_REQUEST, true);
-replace_fields($active_config, $session, true);
-replace_fields($active_config, $active_config, true);
 $session = merge_options($session, $_REQUEST);
 $session = merge_options($active_config, $session);
 $request = $session;
+unset($session['modal']);
 unset($request['path']);
 unset($request['page']);
 $options = ["path"=>$active_config['page'], 'request'=>$request];

@@ -7,7 +7,7 @@ error_page:
     - type: p
     - unexpected_error
   actions:
-    - home
+    - home: { action: [close_dialog, redirect]}
     - close: { action: close_dialog }
   actions_pane:
     class: [pad-xxlarge, grid space s1 m2 l2]

@@ -10,6 +10,7 @@ mkn.render = function(options)
   var types = me.types = options.types;
   me.id = options.id;
   me.options = options;
+  if (options.request) delete options.request.modal;
   me.sink = undefined;
   me.parent = options.parent;
   me.known = {};
@@ -524,11 +525,10 @@ mkn.render = function(options)
     return obj;
   }
 
-  this.createSubPage = function(parent, target)
+  this.createSubPage = function(field, target)
   {
     if (target == undefined)
      target = $('<span>').text('loading...');
-    field = parent;
     delete field.sub_page;
     delete field.appendChild;
     field.path = field.url? field.url: field.id;
@@ -948,10 +948,8 @@ mkn.render = function(options)
 
   var accept = function(event, obj, field, action)
   {
-    var dispatch = function()
-    {
-      if (action === undefined) action = field.action;
-      field.page_id = field.page_id || obj.parents(".page").eq(0).attr('id');
+    field.page_id = field.page_id || obj.closest(".page").attr('id');
+    var dispatch_one = function(action) {
       switch(action) {
         case 'dialog': mkn.showDialog(field.url, {key: field.key}); return;
         case 'close_dialog': mkn.closeDialog(obj);
@@ -986,6 +984,14 @@ mkn.render = function(options)
           else if (field.url)
             document.location = field.url.replace(/\$key(\b|\W|$)?/, field.key+"$1");
       }
+    }
+
+    var dispatch = function() {
+      if (action === undefined) action = field.action;
+      if ($.isArray(action))
+        action.forEach(dispatch_one);
+      else
+        dispatch_one(action);
     }
     if (!field.confirmation || action)
       dispatch();
