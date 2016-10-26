@@ -110,8 +110,9 @@ var mkn = new function() {
     }
     var tmp = $('<div>').hide().appendTo('body');
     return tmp.appendTo('body').page(params).done(function(obj) {
-      tmp.replaceWith(obj);
+      obj.find('.modal-dialog').draggable({handle: obj.find('.modal-title-bar')})
       obj.removeAttr('id').show();
+      tmp.replaceWith(obj);
     });
   }
 

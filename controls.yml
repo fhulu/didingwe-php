@@ -535,11 +535,12 @@ modal_dialog:
   title_bar:
     tag: div
     derive: [name]
-    class: [widest,pad,center-text]
+    class: [modal-title-bar, widest,pad,center-text,cursor-pointer]
+
   close_button:
     tag: div
     name: ""
-    class: [absolute top-right, pad, cursor-pointer, fa fa-times]
+    class: [modal-close-button,absolute top-right, pad, cursor-pointer, fa fa-times]
     action: trigger
     event: .remove
     sink: ".page"
