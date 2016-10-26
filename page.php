@@ -614,12 +614,16 @@ class page
     $page = $this->fields;
     $modal = $this->get_expanded_field('modal_dialog');
     $this->expand_types($modal);
-    $modal['body'] = merge_options($modal['body'], $page);
     $modal['name'] = $page['name'];
     if (is_array($page['modal']))
       $modal = merge_options($modal, $page['modal']);
     $id = implode('_',$this->path);
+    $page = merge_options($modal['body'], $page);
+    $modal[$id] = $page;
     $modal['class'][] = $id;
+    $dialog = &$modal['dialog'];
+    $dialog['derive'][] = $id;
+    $dialog['contents'][] = "\$$id";
     $this->fields = $modal;
   }
 

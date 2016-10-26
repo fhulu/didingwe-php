@@ -524,14 +524,14 @@ list_text:
 
 modal_dialog:
   type: container
-  class: [modal center-contents]
+  class: [modal, center-contents]
   contents: [$dialog]
   dialog:
     type: container
     attr: { id: ""}
-    class: [modal-dialog,inline-block,white,brand-text]
-    derive: [name,title_bar,close_button,body]
-    contents: [$title_bar,$close_button,$body]
+    class: [modal-dialog,relative,inline-block,white,brand-text]
+    derive: [name,title_bar,close_button]
+    contents: [$title_bar,$close_button]
   title_bar:
     tag: div
     derive: [name]
