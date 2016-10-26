@@ -1,12 +1,18 @@
-## YAML Template.
 ---
-
 confirm_dialog:
-  width: 500
+  type: info_page
+  class: [pad-large]
   name: Confirm
-  type: input_page
-  desc: Are you sure?
+  message:
+    type: p
+    name: "Are you sure?"
+  lines: [$message]
+  actions_pane:
+    class: [pad-xxlarge, grid space s1 m2 l2]
   actions:
-    - action: none
-    - "yes": {class: [center-x]}
-    - "no": {action: close_dialog,class: [center-x]}
+    - "yes": {class: [brand-action-success]}
+    - "no": { action: close_dialog,class: [brand-action-cancel]}
+  modal:
+    dialog:
+      class: { class: [col s9 m4 l3]}
+      close_button: ""
