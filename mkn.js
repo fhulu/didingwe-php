@@ -119,7 +119,7 @@ var mkn = new function() {
   this.closeDialog = function(dialog, message)
   {
     if (message) alert(message);
-    var parent = dialog.parents('.modal').eq(0);
+    var parent = dialog.closest('.modal');
     if (parent.exists()) parent.remove();
   }
 
