@@ -519,6 +519,8 @@ mkn.render = function(options)
     });
 
     if (key !== undefined) parent[key] = field;
+    if ($.isPlainObject(field.position))
+      obj.position(field.position);
     return obj;
   }
 
