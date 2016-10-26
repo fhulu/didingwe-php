@@ -524,14 +524,14 @@ list_text:
 
 modal_dialog:
   type: container
-  class: [modal]
-  contents: [$modal_content]
-  modal_content:
+  class: [modal center-contents]
+  contents: [$dialog]
+  dialog:
     type: container
     attr: { id: ""}
-    class: [modal-content,inline-block,white,brand-text]
-    derive: [name,title_bar,close_button]
-    contents: [$title_bar,$close_button]
+    class: [modal-dialog,inline-block,white,brand-text]
+    derive: [name,title_bar,close_button,body]
+    contents: [$title_bar,$close_button,$body]
   title_bar:
     tag: div
     derive: [name]
@@ -543,8 +543,8 @@ modal_dialog:
     action: trigger
     event: .remove
     sink: ".page"
-  page:
-    class: [modal-page]
+  body:
+    class: [modal-body]
 
 
 multi_input:

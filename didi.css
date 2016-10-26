@@ -452,6 +452,7 @@
 /* responsive grid */
 .grid>*,.col{float:left}
 .grid.space>*{margin-bottom:2%;margin-right:2%}
+.center-contents>.col{float:none}
 
 
 @media only screen and (max-width:600px){
@@ -606,5 +607,4 @@
   .col.widest{width:100%}
 }
 
-
-.modal-content>.modal-page{width:100%}
+.modal-dialog>.modal-body{width:100%}
