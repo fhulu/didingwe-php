@@ -5,6 +5,7 @@ confirm_dialog:
   name: Confirm
   message:
     type: p
+    mutable: false
     name: "Are you sure?"
   lines: [$message]
   actions_pane:

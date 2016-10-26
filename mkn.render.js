@@ -526,7 +526,7 @@ mkn.render = function(options)
 
   this.createSubPage = function(parent, target)
   {
-    if (target == undefined) 
+    if (target == undefined)
      target = $('<span>').text('loading...');
     field = parent;
     delete field.sub_page;
@@ -954,7 +954,7 @@ mkn.render = function(options)
       field.page_id = field.page_id || obj.parents(".page").eq(0).attr('id');
       switch(action) {
         case 'dialog': mkn.showDialog(field.url, {key: field.key}); return;
-        case 'close_dialog': mkn.closeDialog(obj.parents(".page").eq(0));
+        case 'close_dialog': mkn.closeDialog(obj);
         case 'redirect': redirect(field); break;
         case 'post':
           var url = field.url? field.url: field.path
@@ -989,11 +989,12 @@ mkn.render = function(options)
     }
     if (!field.confirmation || action)
       dispatch();
-    else mkn.showDialog('/confirm_dialog', function(dialog) {
-      $('#confirm_dialog #synopsis').text(field.confirmation);
-      $('#confirm_dialog .action').click(function() {
-        if ($(this).attr('id') === 'yes') dispatch();
+    else mkn.showDialog('/confirm_dialog').done(function(dialog) {
+      if (typeof field.confirmation == 'string')
+        dialog.find('#message').text(field.confirmation);
+      dialog.find('.action').click(function() {
         mkn.closeDialog(dialog);
+        if ($(this).attr('action') === 'yes') dispatch();
       })
     });
   }
