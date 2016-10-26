@@ -607,4 +607,4 @@
   .col.widest{width:100%}
 }
 
-.modal-dialog>.modal-body{width:100%}
+.widest,.modal-dialog>.modal-body{width:100%}
