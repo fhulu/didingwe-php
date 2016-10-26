@@ -401,7 +401,7 @@ input_page:
     name: $desc $vspace
   inputs:
     - template: $layout
-    - actions_pane:
+    - $actions_pane:
         push: last
         type: container
         label: ""
