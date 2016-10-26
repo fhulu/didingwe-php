@@ -524,13 +524,27 @@ list_text:
 
 modal_dialog:
   type: container
+  class: [modal]
   contents: [$modal_content]
   modal_content:
-    tag: div
-    derive: [title_bar,close_button,$page_content]
-    contents: $title_bar $close_button $page_content
+    type: container
+    attr: { id: ""}
+    class: [modal-content,inline-block,white,brand-text]
+    derive: [name,title_bar,close_button]
+    contents: [$title_bar,$close_button]
   title_bar:
     tag: div
+    derive: [name]
+    class: [widest,pad,center-text]
+  close_button:
+    tag: div
+    name: ""
+    class: [absolute top-right, pad, cursor-pointer, fa fa-times]
+    action: trigger
+    event: .remove
+    sink: ".page"
+  page:
+    class: [modal-page]
 
 
 multi_input:

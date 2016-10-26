@@ -499,7 +499,8 @@
   .col.s9{width:74.99999%}
   .col.s10{width:83.33333%}
   .col.s11{width:91.66666%}
-  .col.s12,.half,.third,.twothird,.quarter,.threequarter,.widest{width:99.99999%}
+  .col.s12{width:99.99999%}
+  .col.widest{width:100%}
 
 }
 @media only screen and (min-width:601px) and (max-width:992px){
@@ -553,6 +554,8 @@
   .col.m12{width:99.99999%}
   .hide-medium{display:none}
   .nav-medium{height:100%}
+
+  .col.widest{width:100%}
 }
 @media only screen and (min-width:993px){
   /* style grid children - enough children */
@@ -599,4 +602,9 @@
   .col.l12{width:99.99999%}
   .hide-large{display:none}
   .nav-large{height:100%}
+
+  .col.widest{width:100%}
 }
+
+
+.modal-content>.modal-page{width:100%}

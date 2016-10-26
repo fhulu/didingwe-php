@@ -2,7 +2,7 @@
 error_page:
   type: info_page
   name: Unexpected Error
-  class: [center-contents pad-xxlarge col s12 m6 l4]
+  class: [center-contents pad-xxlarge]
   position: { my: 'top', at: 'top+100' }
   lines:
     - type: p

@@ -100,41 +100,21 @@ var mkn = new function() {
   }
 
 
-  this.showDialog = function(path, field, callback)
+  this.showDialog = function(path, field)
   {
     if (path[0] === '/') path = path.substr(1);
-    var params = { path: path };
-    if (field instanceof Function)
-      callback = field;
-    else if ($.isPlainObject(field)) {
+    var params = { path: path, request: {modal: 1} };
+    if ($.isPlainObject(field)) {
       params.values = field.values;
       params.key = field.key;
     }
-    var modal = $('<div class="modal">').hide().appendTo('body');
-    var content = $('<div class="modal-content">').appendTo(modal);
-    var header = $('<div class="container header">').appendTo(content);
-    content.draggable({handle: header });
-    var close = $('<div class="closebtn pad-x">&times;</div>')
-      .appendTo(header).zIndex(1)
-      .click(function() { modal.remove(); });
-    content.page(params);
-    var id = path.replace('/','_');
-    var adjustWidths = function(object, options, attr) {
-      if (options[attr] === undefined) return;
-      object.css(attr, 'auto');
-      content.css(attr, options[attr]);
-    }
-    content.one('read_'+id, function(event, object, options) {
-      adjustWidths(object, options, 'width');
-      adjustWidths(object, options, 'max-width');
-      $('<div>').text(options.name).zIndex(0).appendTo(header);
-      mkn.setClass(header,options.header_class);
-      mkn.setClass(content,options.class);
-      object.attr('title', options.name);
-      modal.show();
-      if (callback) callback(object);
+    var tmp = $('<div>').hide().appendTo('body');
+    return tmp.appendTo('body').page(params).done(function(obj) {
+      tmp.replaceWith(obj);
+      obj.removeAttr('id').show();
     });
   }
+
 
   this.closeDialog = function(dialog, message)
   {
