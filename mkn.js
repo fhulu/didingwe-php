@@ -103,16 +103,22 @@ var mkn = new function() {
   this.showDialog = function(path, field)
   {
     if (path[0] === '/') path = path.substr(1);
-    var params = { path: path, request: {modal: 1} };
+    var params = { path: path };
     if ($.isPlainObject(field)) {
       params.values = field.values;
       params.key = field.key;
     }
-    var tmp = $('<div>').hide().appendTo('body');
-    return tmp.appendTo('body').page(params).done(function(obj) {
-      obj.find('.modal-dialog').draggable({handle: obj.find('.modal-title-bar')})
+    var modal = $('<div>').hide().appendTo('body');
+    return modal.appendTo('body').page({path: '/modal/show'}).done(function(obj, field, parent) {
+      var title_bar = obj.find('.modal-title-bar');
+      obj.find('.modal-dialog').draggable({handle: title_bar});
       obj.removeAttr('id').show();
-      tmp.replaceWith(obj);
+      var body = obj.find('.modal-body');
+      body.page(params).done(function(loaded,sent,received) {
+        title_bar.text(received.name);
+        body.replaceWith(loaded);
+      })
+      modal.replaceWith(obj);
     });
   }
 

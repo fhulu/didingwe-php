@@ -609,24 +609,6 @@ class page
     return $this->reply($actions);
   }
 
-  function read_modal()
-  {
-    $page = $this->fields;
-    $modal = $this->get_expanded_field('modal_dialog');
-    $this->expand_types($modal);
-    $modal['name'] = $page['name'];
-    if (is_array($page['modal']))
-      $modal = merge_options($modal, $page['modal']);
-    $id = implode('_',$this->path);
-    $page = merge_options($modal['body'], $page);
-    $modal[$id] = $page;
-    $modal['class'][] = $id;
-    $dialog = &$modal['dialog'];
-    $dialog['derive'][] = $id;
-    $dialog['contents'][] = "\$$id";
-    $this->fields = $modal;
-  }
-
   function read()
   {
     $this->pre_read($this->fields);
@@ -634,9 +616,6 @@ class page
     $this->types['template'] = $this->get_expanded_field('template');
     $this->remove_items($this->fields);
     $this->remove_items($this->types);
-    if ($this->request['modal'] == 1)
-      $this->read_modal();
-
     return array(
       'path'=>implode('/',$this->path),
       'fields'=>$this->fields,

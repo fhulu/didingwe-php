@@ -69,7 +69,6 @@ $session = &$_SESSION[$active];
 $session = merge_options($session, $_REQUEST);
 $session = merge_options($active_config, $session);
 $request = $session;
-unset($session['modal']);
 unset($request['path']);
 unset($request['page']);
 $options = ["path"=>$active_config['page'], 'request'=>$request];
