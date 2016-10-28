@@ -1,0 +1,27 @@
+show:
+  type: container
+  class: [modal, center-contents]
+  contents: [$dialog]
+  attr: { id: ""}
+  dialog:
+    type: container
+    attr: { id: ""}
+    class: [modal-dialog,relative,inline-block,white,brand-text]
+    derive: [title_bar,close_button,body]
+    contents: [$title_bar,$close_button,$body]
+  title_bar:
+    tag: div
+    class: [modal-title-bar, widest,pad,center-text,cursor-pointer]
+
+  close_button:
+    tag: div
+    name: ""
+    class: [modal-close-button,absolute top-right, pad, cursor-pointer, fa fa-times]
+    action: close_dialog
+    css:
+      - /common/font-awesome/css/font-awesome.min.css
+
+  body:
+    tag: div
+    class: [modal-body]
+    name: "Loading..."

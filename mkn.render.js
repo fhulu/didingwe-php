@@ -10,7 +10,6 @@ mkn.render = function(options)
   var types = me.types = options.types;
   me.id = options.id;
   me.options = options;
-  if (options.request) delete options.request.modal;
   me.sink = undefined;
   me.parent = options.parent;
   me.known = {};
