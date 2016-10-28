@@ -17,9 +17,7 @@ show:
     tag: div
     name: ""
     class: [modal-close-button,absolute top-right, pad, cursor-pointer, fa fa-times]
-    action: trigger
-    event: .remove
-    sink: ".modal"
+    action: close_dialog
     css:
       - /common/font-awesome/css/font-awesome.min.css
 
