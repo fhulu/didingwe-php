@@ -131,11 +131,6 @@ checkgroup:
     - template: $layout
     - type: $option
 
-class:
-  tag: div
-  attr: { id: ""}
-  class: $id
-
 container:
   tag: div
   text: $contents
@@ -570,8 +565,6 @@ page:
   classes: div
   attr: { title: $name }
   sub_page: true
-  text: $items
-  items: []
   tooltip: false
   header_class: [pad-y,center-text, large-font]
 
