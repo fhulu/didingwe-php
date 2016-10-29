@@ -106,19 +106,14 @@ class page
     if (last($path) == '') array_pop($path);
 
     $this->object = $this->page = $path[0];
+    if (sizeof($path) < 2)
+      array_unshift($path, $path[0]);
     $this->path = $path;
     $this->load();
 
-    log::debug_json("PATH".sizeof($path), $path);
     $this->root = $path[0];
-    if (sizeof($path) > 1) {
-      $level1 = $this->page_fields[$this->root];
-      if (!isset($level1) || !array_key_exists($path[1], $level1)) {
-        $this->root = $path[1];
-        $this->page = $this->root;
-        array_shift($path);
-      }
-    }
+    log::debug_json("PATH".sizeof($path), $path);
+    $this->root = $path[1];
     $this->set_fields();
     if (!$this->rendering)
       $this->set_context(array_slice($path,1) );
@@ -260,12 +255,6 @@ class page
     return $field;
   }
 
-  function throw_invalid_path()
-  {
-    throw new Exception("Invalid path ".implode('/', $this->path));
-  }
-
-
   function find_array_field($array, $code, $parent)
   {
     $type = null;
@@ -286,6 +275,10 @@ class page
         continue;
       }
 
+      if ($key[0] == '$') {
+        $key = substr($key, 1);
+        $values = merge_options($values, $parent[$key]);
+      }
       if ($key != $code) continue;
       if (is_assoc($values)) {
         $own_type = $values['type'];
@@ -338,8 +331,13 @@ class page
 
   function get_expanded_field($code)
   {
-    if (preg_match('/^(\/\w|\w+\/)[\w\/]*$/', $code))
-      return $this->read_external($code);
+    $matches = [];
+    if (preg_match('/^(\/\w+|\w+\/)([\w\/]*)$/', $code, $matches)) {
+      $page = str_replace('/','', $matches[1]);
+      if ($page != $this->page)
+        return $this->read_external($code);
+      $code = str_replace('/','', $matches[2]); //todo: take care of inner paths greater than 2
+    }
     $field = $this->merge_stack_field(page::$fields_stack, $code);
     $this->merge_stack_field($this->page_stack, $code, $field);
     return $field;
@@ -348,6 +346,8 @@ class page
   function get_merged_field($code, &$field=null)
   {
     if (page::not_mergeable($code)) return $field;
+    if (is_null($field))
+      return $field = $this->expand_type($code);
     $merged = $field;
     $this->merge_type($merged);
     return $field = merge_options($this->expand_type($code), $merged, $field);
@@ -369,7 +369,7 @@ class page
         $field = $this->find_array_field($field, $branch, $parent);
       }
       if (is_null($field))
-        $this->throw_invalid_path ();
+        throw new Exception("Invalid path ".implode('/', $this->path) . " on branch $branch");
       $this->verify_access($field);
     }
     return $field;
@@ -582,8 +582,8 @@ class page
   {
     $this->fields = $this->merge_stack_field(page::$fields_stack, $this->root);
     $this->merge_stack_field($this->page_stack, $this->root, $this->fields);
-    $this->verify_access($this->fields);
     $this->expand_types($this->fields);
+    $this->verify_access($this->fields);
   }
 
   function remove_items(&$fields)
@@ -1060,6 +1060,8 @@ class page
 
   function set_context($path)
   {
+    if ($path[0] == $this->page) array_shift($path);
+    $this->merge_fields($this->fields);
     $this->context = $this->follow_path($path);
   }
 
