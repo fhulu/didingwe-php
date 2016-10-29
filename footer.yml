@@ -1,6 +1,5 @@
 footer:
   type: container
-  class: [tiny-font center-text,fixed bottom]
+  class: [tiny-font center-text,fixed bottom left]
   contents:
-    - type: plain_text
-    - Developed by Mukoni Software
+    - developed_by: { type: link }
