@@ -221,18 +221,10 @@
 .font-weight-900 { font-weight: 900; }
 
 /* font sizes */
-.tiny-font,.font-tiny{font-size:10px}
-.small-font,.font-small{font-size:12px}
-.medium-font,.font-medium{font-size:15px}
-.large-font,.font-large{font-size:18px}
-.xlarge-font,.font-xlarge{font-size:24px}
-.xxlarge-font,.font-xxlarge{font-size:36px}
-.xxxlarge-font,.font-xxxlarge{font-size:48px}
-.jumbo-font,.font-jumbo{font-size:64px}
-
+.font-size-base {font-size: 14px}
 
 /* font-awesome integration */
-.fa::before{font:normal normal normal 14px/1 FontAwesome;}
+.fa::before{font-family:FontAwesome;}
 .fa-right::before {float:right}
 
 /* hover */
@@ -503,6 +495,17 @@
   .col.s12{width:99.99999%}
   .col.widest{width:100%}
 
+  /* font sizes */
+  .tiny-font,.font-tiny{font-size:100%}
+  .small-font,.font-small{font-size:128%}
+  .medium-font,.font-medium{font-size:171%}
+  .large-font,.font-large{font-size:257%}
+  .xlarge-font,.font-xlarge{font-size:342%}
+  .xxlarge-font,.font-xxlarge{font-size:450%}
+  .xxxlarge-font,.font-xxxlarge{font-size:500%}
+  .jumbo-font,.font-jumbo{font-size:600%}
+
+
 }
 @media only screen and (min-width:601px) and (max-width:992px){
 
@@ -557,6 +560,17 @@
   .nav-medium{height:100%}
 
   .col.widest{width:100%}
+
+  /* font sizes */
+  .tiny-font,.font-tiny{font-size:85%}
+  .small-font,.font-small{font-size:100%}
+  .medium-font,.font-medium{font-size:128%}
+  .large-font,.font-large{font-size:171%}
+  .xlarge-font,.font-xlarge{font-size:257%}
+  .xxlarge-font,.font-xxlarge{font-size:342%}
+  .xxxlarge-font,.font-xxxlarge{font-size:450%}
+  .jumbo-font,.font-jumbo{font-size:500%}
+
 }
 @media only screen and (min-width:993px){
   /* style grid children - enough children */
@@ -605,6 +619,18 @@
   .nav-large{height:100%}
 
   .col.widest{width:100%}
+
+  /* font sizes */
+  .tiny-font,.font-tiny{font-size:71%}
+  .small-font,.font-small{font-size:85%}
+  .medium-font,.font-medium{font-size:100%}
+  .large-font,.font-large{font-size:128%}
+  .xlarge-font,.font-xlarge{font-size:171%}
+  .xxlarge-font,.font-xxlarge{font-size:257%}
+  .xxxlarge-font,.font-xxxlarge{font-size:342%}
+  .jumbo-font,.font-jumbo{font-size:257%}
+
+
 }
 
 .widest,.modal-dialog>.modal-body{width:100%}
