@@ -1,5 +1,5 @@
 footer:
   type: container
-  class: [tiny-font center-text,fixed bottom left]
+  class: [tiny-font center-text,fixed bottom left,widest]
   contents:
     - developed_by: { type: link }
