@@ -58,6 +58,7 @@ if (process_action()) return ;
 ?>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name=viewport content="width=device-width, initial-scale=1" />
 <?php
 echo_scripts($config['css'], "<link href='\$script' media='screen' rel='stylesheet' type='text/css' />\n");
 echo_scripts($config['scripts'], "<script src='\$script'></script>\n");
