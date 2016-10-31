@@ -111,10 +111,13 @@ var mkn = new function() {
     var modal = $('<div>').hide().appendTo('body');
     return modal.appendTo('body').page({path: '/modal/show'}).done(function(obj, field, parent) {
       var title_bar = obj.find('.modal-title-bar');
-      obj.find('.modal-dialog').draggable({handle: title_bar});
+      var dialog = obj.find('.modal-dialog');
+      dialog.draggable({handle: title_bar});
       obj.removeAttr('id').show();
       var body = obj.find('.modal-body');
       body.page(params).done(function(loaded,sent,received) {
+        if (received.modal)
+          mkn.setClass(dialog, received.modal.class);
         title_bar.text(received.name);
         body.replaceWith(loaded);
       })
