@@ -359,7 +359,6 @@ class page
     array_splice($path,0,2);
     $field = $this->fields;
     foreach($path as $branch) {
-      log::debug_json("on branch $branch", $field);
       if (is_assoc($field)) {
         $new_parent = $field;
         $field = $field[$branch];
