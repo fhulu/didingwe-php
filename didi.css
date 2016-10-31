@@ -65,6 +65,7 @@
 .border-right[class*=border-width-] { border-right-style: solid }
 .border-bottom[class*=border-width-] { border-bottom-style:solid }
 .border-top[class*=border-width-] { border-top-style:solid }
+.border[class*=border-width-] { border-style:solid }
 .borderless,.border-less { border-top-width:0;border-bottom-width:0;border-left-width:0;border-right-width:0}*/
 
 
@@ -324,6 +325,7 @@
 .pad-small.pad-x,.pad-small.pad-left{padding-left:1.5%}
 .pad-small.pad-x,.pad-small.pad-right{padding-right:1.5%}
 .pad.pad-x,.pad-x.pad-left{padding-left:2%}
+.pad.pad-x,.pad-x.pad-right{padding-right:2%}
 .pad-large.pad-x,.pad-large.pad-left{padding-left:4%}
 .pad-large.pad-x,.pad-large.pad-right{padding-right:4%}
 .pad-xlarge.pad-x,.pad-xlarge.pad-left{padding-left:8%}
