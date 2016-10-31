@@ -361,7 +361,8 @@ class collection
       else
         $fields[] = "max(case when attribute='$name' then value end) $alias";
     }
-    $joins = $this->get_joins($filters);
+    $table = $this->get_table($collection);
+    $joins = $this->get_joins($table, $filters);
     $where = " where collection = '$collection' and version <= 0 ";
     if ($term != "") {
       if ($identifier)
@@ -370,7 +371,7 @@ class collection
         $where .= " and m.value like '%$term%'";
     }
     $sql = "select ". implode(",", $fields). " from (
-     select m.identifier,m.attribute,m.value FROM collection m $joins $where) tmp
+     select m.identifier,m.attribute,m.value FROM $table m $joins $where) tmp
      group by identifier";
 
     $this->set_sorting($sql, $sorting, false);
