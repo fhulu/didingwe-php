@@ -221,7 +221,14 @@
 .font-weight-900 { font-weight: 900; }
 
 /* font sizes */
-.font-size-base {font-size: 14px}
+.tiny-font,.font-tiny{font-size:70%}
+.small-font,.font-small{font-size:85%}
+.medium-font,.font-medium{font-size:100%}
+.large-font,.font-large{font-size:120%}
+.xlarge-font,.font-xlarge{font-size:140%}
+.xxlarge-font,.font-xxlarge{font-size:165%}
+.xxxlarge-font,.font-xxxlarge{font-size:190%}
+.jumbo-font,.font-jumbo{font-size:220%}
 
 /* font-awesome integration */
 .fa::before{font-family:FontAwesome;}
@@ -448,6 +455,8 @@
 
 
 @media only screen and (max-width:600px){
+  .font-size-base {font-size: 18px}
+
   .nav-small {height:100%}
   .hide-small{display:none}
   .grid.s1>*,.grid.s1.space>*{width:100%;margin-right:0}
@@ -495,19 +504,9 @@
   .col.s12{width:99.99999%}
   .col.widest{width:100%}
 
-  /* font sizes */
-  .tiny-font,.font-tiny{font-size:100%}
-  .small-font,.font-small{font-size:120%}
-  .medium-font,.font-medium{font-size:140%}
-  .large-font,.font-large{font-size:164%}
-  .xlarge-font,.font-xlarge{font-size:190%}
-  .xxlarge-font,.font-xxlarge{font-size:220%}
-  .xxxlarge-font,.font-xxxlarge{font-size:260%}
-  .jumbo-font,.font-jumbo{font-size:300%}
-
-
 }
 @media only screen and (min-width:601px) and (max-width:992px){
+   .font-size-base{font-size: 16px}
 
   .grid.m1>*,.grid.m1.space>*{width:100%;margin-right:0}
   .grid.m2>*{width:50%}
@@ -561,18 +560,11 @@
 
   .col.widest{width:100%}
 
-  /* font sizes */
-  .tiny-font,.font-tiny{font-size:85%}
-  .small-font,.font-small{font-size:100%}
-  .medium-font,.font-medium{font-size:120%}
-  .large-font,.font-large{font-size:140%}
-  .xlarge-font,.font-xlarge{font-size:165%}
-  .xxlarge-font,.font-xxlarge{font-size:190%}
-  .xxxlarge-font,.font-xxxlarge{font-size:220%}
-  .jumbo-font,.font-jumbo{font-size:260%}
 
 }
 @media only screen and (min-width:993px){
+  .font-size-base {font-size: 16px}
+
   /* style grid children - enough children */
   .grid.l1>*,.grid.l1.space>*{width:100%;margin-right:0}
   .grid.l2>*{width:50%}
@@ -619,18 +611,6 @@
   .nav-large{height:100%}
 
   .col.widest{width:100%}
-
-  /* font sizes */
-  .tiny-font,.font-tiny{font-size:70%}
-  .small-font,.font-small{font-size:85%}
-  .medium-font,.font-medium{font-size:100%}
-  .large-font,.font-large{font-size:120%}
-  .xlarge-font,.font-xlarge{font-size:140%}
-  .xxlarge-font,.font-xxlarge{font-size:165%}
-  .xxxlarge-font,.font-xxxlarge{font-size:190%}
-  .jumbo-font,.font-jumbo{font-size:220%}
-
-
 }
 
 .widest,.modal-dialog>.modal-body{width:100%}
