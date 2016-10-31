@@ -116,7 +116,7 @@ class page
     $this->root = $path[1];
     $this->set_fields();
     if (!$this->rendering)
-      $this->set_context(array_slice($path,1) );
+      $this->set_context();
     if ($this->sub_page) return;
     $result = $this->{$this->method}();
     return $this->result = null_merge($result, $this->result, false);
@@ -353,16 +353,18 @@ class page
     return $field = merge_options($this->expand_type($code), $merged, $field);
   }
 
-  function follow_path($path, $field = null)
+  function follow_path()
   {
-    if (is_null($field))  $field = $this->merge_fields($this->fields);
-    $parent = $field;
+    $path = $this->path;
+    array_splice($path,0,2);
+    $field = $this->fields;
     foreach($path as $branch) {
+      log::debug_json("on branch $branch", $field);
       if (is_assoc($field)) {
         $new_parent = $field;
         $field = $field[$branch];
-        $this->derive_parent($parent, $field);
-        $field = $this->get_merged_field($branch, $field);
+        if ($parent)
+          $this->derive_parent($parent, $field);
         $parent = $new_parent;
       }
       else {
@@ -1058,11 +1060,10 @@ class page
     replace_fields($options, $context);
   }
 
-  function set_context($path)
+  function set_context()
   {
-    if ($path[0] == $this->page) array_shift($path);
     $this->merge_fields($this->fields);
-    $this->context = $this->follow_path($path);
+    $this->context = $this->follow_path();
   }
 
   function call($method)
