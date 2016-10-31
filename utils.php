@@ -121,6 +121,7 @@ register_shutdown_function('caught_fatal');
 function merge_options()
 {
   $merge = function($options1, $options2) use(&$merge) {
+    if (is_null($options2)) return $options1;
     if (!is_array($options1) || $options1 == $options2) return $options2;
     if (!is_array($options2)) return $options2;
     if (!is_assoc($options1) && !is_assoc($options2)) {
