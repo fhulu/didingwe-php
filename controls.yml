@@ -396,14 +396,14 @@ input_page:
     name: $desc $vspace
   inputs:
     - template: $layout
-    - $actions_pane:
-        push: last
-        type: container
-        label: ""
-        derive: [actions]
-        class: [actions, pad-y]
-        contents: $actions
+    - $actions_pane: { push: last }
     - type: input
+  actions_pane:
+    type: container
+    label: ""
+    derive: [actions]
+    class: [actions]
+    contents: $actions
   actions:
     - type: submit
 
