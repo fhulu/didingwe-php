@@ -66,12 +66,12 @@
 .border-bottom[class*=border-width-] { border-bottom-style:solid }
 .border-top[class*=border-width-] { border-top-style:solid }
 .border[class*=border-width-] { border-style:solid }
-.borderless,.border-less { border-top-width:0;border-bottom-width:0;border-left-width:0;border-right-width:0}*/
+.borderless,.border-less { border-top-width:0;border-bottom-width:0;border-left-width:0;border-right-width:0}
 
 
 /* border divider */
-.hdivider+.hdivider { border-left-style: solid; border-left-width: 1px}
-.vdivider+.vdivider { border-top-style: solid; border-top-width: 1px}
+.hdivider+.hdivider{border-left-style:solid}
+.vdivider+.vdivider{border-top-style:solid}
 
 /* border shadow */
 .shadow {box-shadow:0 2px 4px 0 rgba(0,0,0,0.16),0 2px 10px 0 rgba(0,0,0,0.12) }
