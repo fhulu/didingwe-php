@@ -481,13 +481,10 @@
       var index = 0;
       var load = function() {
         var path = pages[index];
-        tmp.page({path: path, key: key });
-        path = path.replace(/\//, '_');
-        tmp.on('read_'+path, function(e, obj) {
-          td.append(obj);
+        mkn.showPage({path: path, key: key }, td).done(function() {
           if (++index < pages.length)
             load();
-        });
+        })
       };
       load();
     },
