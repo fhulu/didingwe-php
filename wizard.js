@@ -136,8 +136,8 @@ $.widget( "custom.wizard", {
     else
       path = path.substr(0, path.lastIndexOf('/')+1) + props.id;
     page.empty();
-    mkn.showPage({url: path}).then(function(content, info) {
-      content.addClass('wizard-content').appendTo(page);
+    mkn.showPage({path: path}, page).then(function(content, info) {
+      content.addClass('wizard-content');
       page.show();
       path = info.path;
       info = options.steps[index] = $.extend({}, info, options.steps[index]);
