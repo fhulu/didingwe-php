@@ -2,7 +2,7 @@
 error_page:
   type: info_page
   name: Unexpected Error
-  class: [center-contents pad-xxlarge]
+  class: [center-contents pad-large pad-y]
   lines:
     - type: p
     - unexpected_error
@@ -10,7 +10,7 @@ error_page:
     - home: { action: [close_dialog, redirect]}
     - close: { action: close_dialog }
   actions_pane:
-    class: [pad-xxlarge, grid space s1 m2 l2]
+    class: [pad-large pad-x pad-y, grid space s1 m2 l2]
   modal:
     dialog:
       position: { my: 'top', at: 'top+10' }
