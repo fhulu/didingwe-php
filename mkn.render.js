@@ -531,7 +531,7 @@ mkn.render = function(options)
     delete field.sub_page;
     delete field.appendChild;
     field.path = field.url? field.url: field.id;
-    return mkn.showPage($.extend({request: options.request}, field)).done(function(obj, result, field) {
+    return mkn.showPage($.extend({request: options.request}, field), target).done(function(obj, result, field) {
       setStyle(obj, field);
       setClass(obj, field);
       target.replaceWith(obj);

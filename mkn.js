@@ -116,7 +116,7 @@ var mkn = new function() {
   },
 
 
-  this.createPage = function(options, data) {
+  this.createPage = function(options, data, parent) {
     var id = data.fields.id = options.page_id = data.path.replace('/','_');
     var values = data.fields.values || data.values;
     if (data.fields.name === undefined)
@@ -127,6 +127,7 @@ var mkn = new function() {
     var object = r.render(data, 'fields');
     data.values = values;
     object.addClass('page');
+    if(parent) object.appendTo(parent);
     return object;
   }
 
@@ -135,10 +136,9 @@ var mkn = new function() {
     if (parent == undefined) parent = $('body');
     var defer = $.Deferred();
     this.loadPage(options, parent).done(function(result, options) {
-      var object = mkn.createPage(options, result);
+      var object = mkn.createPage(options, result, parent);
       if ($.isPlainObject(result.fields.parent))
         mkn.setClass(parent, result.fields.parent.class);
-      object.appendTo(parent);
       defer.resolve(object,result,options);
     });
     return defer.promise();
@@ -165,7 +165,7 @@ var mkn = new function() {
         modal.removeAttr('id').show();
         var title_bar = modal.find('.modal-title-bar');
         var dialog = modal.find('.modal-dialog');
-        mkn.createPage(params,page).appendTo(dialog);
+        mkn.createPage(params,page,dialog);
         dialog.draggable({handle: title_bar});
         modal.appendTo('body');
         defer.resolve(dialog, page, field);
