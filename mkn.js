@@ -99,6 +99,51 @@ var mkn = new function() {
     obj.removeClass(del.join(' '));
   }
 
+  this.loadPage = function(options, parent)
+  {
+    if (parent == undefined) parent = $('body');
+    var defer = $.Deferred();
+    var path = options.path;
+    if  (path[0] === '/') path=options.path.substr(1);
+    var data = $.extend({key: options.key}, options.request, {path: path, action: 'read'});
+    $.json('/', { data: data }, function(result) {
+      parent.trigger('server_response', result);
+      if (!result.path) return;
+      result.values = $.extend({}, options.values, result.values );
+      defer.resolve(result,options);
+    });
+    return defer.promise();
+  },
+
+
+  this.createPage = function(options, data) {
+    var id = data.fields.id = options.page_id = data.path.replace('/','_');
+    var values = data.fields.values || data.values;
+    if (data.fields.name === undefined)
+      data.fields.name = toTitleCase(data.path.split('/').pop().replace('_',' '));
+    data.fields.path = data.path;
+    data.fields.sub_page = false;
+    var r = new mkn.render({invoker: parent, types: data.types, id: id, key: options.key, request: options.request} );
+    var object = r.render(data, 'fields');
+    data.values = values;
+    object.addClass('page');
+    return object;
+  }
+
+  this.showPage = function(options, parent)
+  {
+    if (parent == undefined) parent = $('body');
+    var defer = $.Deferred();
+    this.loadPage(options, parent).done(function(result, options) {
+      var object = mkn.createPage(options, result);
+      if ($.isPlainObject(result.fields.parent))
+        mkn.setClass(parent, result.fields.parent.class);
+      object.appendTo(parent);
+      defer.resolve(object,result,options);
+    });
+    return defer.promise();
+  },
+
 
   this.showDialog = function(path, field)
   {
@@ -108,21 +153,25 @@ var mkn = new function() {
       params.values = field.values;
       params.key = field.key;
     }
-    var modal = $('<div>').hide().appendTo('body');
-    return modal.appendTo('body').page({path: '/modal/show'}).done(function(obj, field, parent) {
-      var title_bar = obj.find('.modal-title-bar');
-      var dialog = obj.find('.modal-dialog');
-      dialog.draggable({handle: title_bar});
-      obj.removeAttr('id').show();
-      var body = obj.find('.modal-body');
-      body.page(params).done(function(loaded,sent,received) {
-        if (received.modal)
-          mkn.setClass(dialog, received.modal.class);
-        title_bar.text(received.name);
-        body.replaceWith(loaded);
-      })
-      modal.replaceWith(obj);
+
+    var defer = $.Deferred();
+
+    this.loadPage({path: '/modal/show', show: false}).done(function(modal, options) {
+      mkn.loadPage(params).done(function(page) {
+        if (page.fields.modal) modal.fields = mkn.merge(modal.fields, page.fields.modal);
+        if (modal.fields.title_bar) mkn.replaceVars(page.fields, modal.fields.title_bar, {recurse: true});
+        if (modal.fields.close_button) mkn.replaceVars(page.fields, modal.fields.close_button, {recurse: true});
+        modal = mkn.createPage(options,modal);
+        modal.removeAttr('id').show();
+        var title_bar = modal.find('.modal-title-bar');
+        var dialog = modal.find('.modal-dialog');
+        mkn.createPage(params,page).appendTo(dialog);
+        dialog.draggable({handle: title_bar});
+        modal.appendTo('body');
+        defer.resolve(dialog, page, field);
+      });
     });
+    return defer.promise();
   }
 
 
@@ -179,6 +228,41 @@ var mkn = new function() {
       result[key] = val;
     };
     return result;
+  }
+
+  this.replaceVars = function(source, dest, flags)
+  {
+    if (!flags) flags = {};
+    var args = arguments;
+    var replaced = false;
+    var doit = function() {
+      for (var key in dest) {
+        if ($.isArray(dest.constants) && dest.constants.indexOf(key) >= 0) continue;
+        var val = dest[key];
+        if ($.isPlainObject(val) && flags.recurse) {
+          this.replaceVars($.extend({}, source, dest), val, flags);
+          continue;
+        }
+        if (typeof val !== 'string') continue;
+        var matches = getMatches(val, /\$(\w+)/g);
+        for (var i in matches) {
+          var match = matches[i];
+          var index = flags.sourceFirst? 0: 1;
+          var replacement = args[index++][match];
+          if (replacement === undefined || replacement === val) replacement = args[index % 2][match];
+          if (replacement === undefined) continue;
+          var old = val;
+          dest[key] = val = val.replace(new RegExp('\\$'+match+"([^\w]|\b|$)", 'g'), replacement+'$1');
+          if (!replaced)
+            replaced = val != old;
+        }
+      }
+    };
+
+    do {
+      replaced = false;
+      doit();
+    } while (replaced && flags.recurse)
   }
 
   this.selector = {

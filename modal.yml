@@ -12,6 +12,7 @@ show:
   title_bar:
     tag: div
     class: [modal-title-bar, widest,pad,center-text,cursor-pointer]
+    name: $name
 
   close_button:
     tag: div
@@ -20,8 +21,3 @@ show:
     action: close_dialog
     css:
       - /common/font-awesome/css/font-awesome.min.css
-
-  body:
-    tag: div
-    class: [modal-body]
-    name: "Loading..."

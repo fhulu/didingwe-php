@@ -421,7 +421,7 @@ mkn.render = function(options)
 
   var runJquery = function (obj, item) {
     if (!item.jquery) return;
-    expandVars(item,item.params);
+    mkn.replaceVars(item,item.params);
     obj.call(item.jquery, item.params);
   }
 
@@ -531,7 +531,7 @@ mkn.render = function(options)
     delete field.sub_page;
     delete field.appendChild;
     field.path = field.url? field.url: field.id;
-    return target.page($.extend({request: options.request}, field)).done(function(obj, field) {
+    return mkn.showPage($.extend({request: options.request}, field)).done(function(obj, result, field) {
       setStyle(obj, field);
       setClass(obj, field);
       target.replaceWith(obj);
@@ -702,6 +702,7 @@ mkn.render = function(options)
       loadValues(obj, field);
     })
     .on('server_response', function(event, result) {
+      event.stopImmediatePropagation();
       respond(result);
     })
     initTooltip(obj);
@@ -727,7 +728,7 @@ mkn.render = function(options)
 
   var setAttr = function(obj, field)
   {
-    expandVars(field, field.attr, { sourceFirst: true, recurse: true})
+    mkn.replaceVars(field, field.attr, { sourceFirst: true, recurse: true})
     var attr = field.attr;
     if (obj.attr('id') === '') obj.removeAttr('id');
     if (!attr) return;
@@ -756,7 +757,7 @@ mkn.render = function(options)
     var cls = field.class;
     if (cls === undefined) return;
     if (typeof cls === 'string') cls = [cls];
-    expandVars(field, cls, { sourceFirst: true, recurse: true})
+    mkn.replaceVars(field, cls, { sourceFirst: true, recurse: true})
     mkn.setClass(obj, cls);
   }
 
@@ -788,8 +789,8 @@ mkn.render = function(options)
     if (!style) style = {};
     styles = field.styles;
     if (styles) mergeStyles();
-    expandVars(field, style, { sourceFirst: true, recurse: true})
-    expandVars(style, style, { sourceFirst: true, recurse: true})
+    mkn.replaceVars(field, style, { sourceFirst: true, recurse: true})
+    mkn.replaceVars(style, style, { sourceFirst: true, recurse: true})
     setGeometry();
     obj.css(style);
   }
@@ -803,41 +804,6 @@ mkn.render = function(options)
     })
     mkn.deleteKeys(item, removed);
     return item;
-  }
-
-  var expandVars = function(source, dest, flags)
-  {
-    if (!flags) flags = {};
-    var args = arguments;
-    var replaced = false;
-    var doit = function() {
-      for (var key in dest) {
-        if ($.isArray(dest.constants) && dest.constants.indexOf(key) >= 0) continue;
-        var val = dest[key];
-        if ($.isPlainObject(val) && flags.recurse) {
-          expandVars($.extend({}, source, dest), val, flags);
-          continue;
-        }
-        if (typeof val !== 'string') continue;
-        var matches = getMatches(val, /\$(\w+)/g);
-        for (var i in matches) {
-          var match = matches[i];
-          var index = flags.sourceFirst? 0: 1;
-          var replacement = args[index++][match];
-          if (replacement === undefined) replacement = args[index % 2][match];
-          if (replacement === undefined) continue;
-          var old = val;
-          dest[key] = val = val.replace(new RegExp('\\$'+match+"([^\w]|\b|$)", 'g'), replacement+'$1');
-          if (!replaced)
-            replaced = val != old;
-        }
-      }
-    };
-
-    do {
-      replaced = false;
-      doit();
-    } while (replaced && flags.recurse)
   }
 
   var expandSubject = function(template)
@@ -889,7 +855,7 @@ mkn.render = function(options)
       }
       if (name == 'template' && $.isPlainObject(item[name]) && item[name].type === undefined) {
         value = mergePrevious(defaults, name, me.initField(value));
-        expandVars(value, value.subject, { recurse: true});
+        mkn.replaceVars(value, value.subject, { recurse: true});
       }
 
       defaults[name] = value;
