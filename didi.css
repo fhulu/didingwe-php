@@ -319,34 +319,34 @@
 
 /* spacing - padding */
 /* horizontal padding */
-.pad-min.pad-x,.pad-min.pad-left{padding-left:0.5%}
-.pad-min.pad-x,.pad-min.pad-right{padding-right:0.5%}
-.pad-tiny.pad-x,.pad-tiny.pad-left{padding-left:1%}
-.pad-small.pad-x,.pad-small.pad-left{padding-left:1.5%}
-.pad-small.pad-x,.pad-small.pad-right{padding-right:1.5%}
-.pad.pad-x,.pad-x.pad-left{padding-left:2%}
-.pad.pad-x,.pad-x.pad-right{padding-right:2%}
-.pad-large.pad-x,.pad-large.pad-left{padding-left:4%}
-.pad-large.pad-x,.pad-large.pad-right{padding-right:4%}
-.pad-xlarge.pad-x,.pad-xlarge.pad-left{padding-left:8%}
-.pad-xlarge.pad-x,.pad-xlarge.pad-right{padding-right:8%}
-.pad-jumbo.pad-x,.pad-jumbo.pad-left{padding-left:16%}
-.pad-jumbo.pad-x,.pad-jumbo.pad-left{padding-right:16%}
+.pad-min.pad,.pad-min.pad-x,.pad-min.pad-left{padding-left:0.1em}
+.pad-min.pad,.pad-min.pad-x,.pad-min.pad-right{padding-right:0.1em}
+.pad-tiny.pad,.pad-tiny.pad-x,.pad-tiny.pad-left{padding-left:0.25em}
+.pad-small.pad,.pad-small.pad-x,.pad-small.pad-left{padding-left:0.5em}
+.pad-small.pad,.pad-small.pad-x,.pad-small.pad-right{padding-right:0.5em}
+.pad-medium.pad,.pad-medium.pad-x,.pad-x.pad-left{padding-left:1em}
+.pad-medium.pad,.pad-medium.pad-x,.pad-x.pad-right{padding-right:1em}
+.pad-large.pad,.pad-large.pad-x,.pad-large.pad-left{padding-left:2em}
+.pad-large.pad,.pad-large.pad-x,.pad-large.pad-right{padding-right:2em}
+.pad-xlarge.pad,.pad-xlarge.pad-x,.pad-xlarge.pad-left{padding-left:4em}
+.pad-xlarge.pad,.pad-xlarge.pad-x,.pad-xlarge.pad-right{padding-right:4em}
+.pad-jumbo.pad,.pad-jumbo.pad-x,.pad-jumbo.pad-left{padding-left:8em}
+.pad-jumbo.pad,.pad-jumbo.pad-x,.pad-jumbo.pad-left{padding-right:8em}
 
 /* vertical padding */
-.pad-min.pad-y,.pad-min.pad-top{padding-top:0.5%}
-.pad-min.pad-y,.pad-min.pad-bottom{padding-bottom:0.5%}
-.pad-tiny.pad-y,.pad-tiny.pad-top{padding-top:1%}
-.pad-small.pad-y,.pad-small.pad-top{padding-top:1.5%}
-.pad-small.pad-y,.pad-small.pad-bottom{padding-bottom:1.5%}
-.pad.pad-y,.pad.pad-top{padding-top:2%}
-.pad.pad-y,.pad.pad-bottom{padding-bottom:2%}
-.pad-large.pad-y,.pad-large.pad-top{padding-top:4%}
-.pad-large.pad-y,.pad-large.pad-bottom{padding-bottom:4%}
-.pad-xlarge.pad-y,.pad-xlarge.pad-top{padding-top:8%}
-.pad-xlarge.pad-y,.pad-xlarge.pad-bottom{padding-bottom:8%}
-.pad-jumbo.pad-y,.pad-jumbo.pad-top{padding-top:16%}
-.pad-jumbo.pad-y,.pad-jumbo.pad-bottom{padding-bottom:16%}
+.pad-min.pad,.pad-min.pad-y,.pad-min.pad-top{padding-top:0.1em}
+.pad-min.pad,.pad-min.pad-y,.pad-min.pad-bottom{padding-bottom:0.1em}
+.pad-tiny.pad,.pad-tiny.pad-y,.pad-tiny.pad-top{padding-top:0.25em}
+.pad-small.pad,.pad-small.pad-y,.pad-small.pad-top{padding-top:0.5em}
+.pad-small.pad,.pad-small.pad-y,.pad-small.pad-bottom{padding-bottom:0.5em}
+.pad-medium.pad,.pad-medium.pad-y,.pad-medium.pad-top{padding-top:1em}
+.pad-medium.pad,.pad-medium.pad-y,.pad-medium.pad-bottom{padding-bottom:1em}
+.pad-large.pad,.pad-large.pad-y,.pad-large.pad-top{padding-top:2em}
+.pad-large.pad,.pad-large.pad-y,.pad-large.pad-bottom{padding-bottom:2em}
+.pad-xlarge.pad,.pad-xlarge.pad-y,.pad-xlarge.pad-top{padding-top:4em}
+.pad-xlarge.pad,.pad-xlarge.pad-y,.pad-xlarge.pad-bottom{padding-bottom:4em}
+.pad-jumbo.pad,.pad-jumbo.pad-y,.pad-jumbo.pad-top{padding-top:8em}
+.pad-jumbo.pad,.pad-jumbo.pad-y,.pad-jumbo.pad-bottom{padding-bottom:1}
 
 
 .pad-0,.nopad{padding:0}
