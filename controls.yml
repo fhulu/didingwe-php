@@ -407,9 +407,7 @@ input_page:
   actions:
     - type: submit
 
-label:
-  tag: label
-  text: $id
+label: { tag: label }
 
 labelled:
   templates: div
