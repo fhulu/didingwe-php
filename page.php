@@ -903,14 +903,14 @@ class page
   function sql_data($sql)
   {
     $sql = $this->translate_sql($sql);
-    return $this->db->page_through_indices($sql);
+    return ['data'=>$this->db->page_through_indices($sql)];
   }
 
   function sql($sql)
   {
     if (preg_match('/\s*select/i', $sql)) return $this->sql_data($sql);
     $sql = $this->translate_sql($sql);
-    return $this->db->exec($sql);
+    return ['data'=>$this->db->exec($sql)];
   }
 
   function translate_sql($sql)
