@@ -208,6 +208,12 @@
 .hover-dropdown>.dropdown { display: none;}
 .hover-dropdown:hover>.dropdown { display: block;}
 
+
+/* font-awesome integration */
+.fa::before{font-family:FontAwesome;}
+.fa-right::before {float:right}
+
+
 /* font styles */
 .bold { font-weight: bold; }
 .bolder { font-weight: bolder; }
@@ -230,12 +236,8 @@
 .large-font,.font-large{font-size:120%}
 .xlarge-font,.font-xlarge{font-size:140%}
 .xxlarge-font,.font-xxlarge{font-size:165%}
-.xxxlarge-font,.font-xxxlarge{font-size:190%}
-.jumbo-font,.font-jumbo{font-size:220%}
-
-/* font-awesome integration */
-.fa::before{font-family:FontAwesome;}
-.fa-right::before {float:right}
+.xxxlarge-font,.font-xxxlarge{font-size:220%}
+.jumbo-font,.font-jumbo{font-size:500%}
 
 /* hover */
 .hover-shadow:hover{box-shadow:0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19)}
@@ -318,6 +320,20 @@
 .height-60,.height-xxlarge{height:60px}
 .height-56{height:56px}
 .height-64,.height-jumbo{height:64px}
+
+.height-thinner-line { height: 0.0625em}
+.height-thin-line { height: 0.125em}
+.height-quarter-line { height: 0.25em}
+.height-half-line { height: 0.5em}
+.height-line,.height-line-1 { height: 1em}
+.height-double-line,.height-line-2 { height: 2em }
+.height-triple-line,.height-line-3 { height: 3em }
+.height-line-4 { height: 4em}
+.height-line-5 { height: 5em}
+.height-line-6 { height: 6em}
+.height-line-7 { height: 7em}
+.height-line-8 { height: 8em}
+.height-line-9 { height: 9em}
 
 /* spacing - padding */
 /* horizontal padding */
