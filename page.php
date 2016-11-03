@@ -217,6 +217,7 @@ class page
 
   function expand_type($type, &$added = array() )
   {
+
     if (is_array($type)) {
       $result = [];
       foreach($type as $t) {
@@ -227,7 +228,7 @@ class page
     }
     $expanded = $this->types[$type];
     if (isset($expanded) || in_array($type, $this->expand_stack, true)) return $expanded;
-    if (!is_array($expanded) || !$expanded['sub_page'])
+    if (!$expanded['sub_page'])
       $expanded = merge_options($expanded, $this->get_expanded_field($type));
     if (!is_array($expanded)) return null;
     $added[] = $type;
@@ -243,11 +244,17 @@ class page
   {
     $type = $field['type'];
     if (!isset($type) || $type == 'none'  || in_array($type, $this->expand_stack, true)) return $field;
-    $expanded = $this->expand_type($type, $added);
-    if (is_null($expanded)) {
-      log::warn("Unknown type $type");
-      return $field;
+    if (strpos($type, '$') !== false) {
+      global $config;
+      $new_type = replace_vars($type, $this->request);
+      $new_type = replace_vars($new_type, $config);
+      if ($type != $new_type) $field['type'] = $new_type;
+      $type = $new_type;
     }
+    $expanded = $this->expand_type($type, $added);
+    if (is_null($expanded)) 
+      throw new Exception("Unknown type $type");
+   
     if (isset($expanded['type']))
       $field = merge_options($this->merge_type($expanded, $added), $field);
     else
@@ -450,13 +457,18 @@ class page
 
   function replace_vars(&$fields)
   {
-    walk_recursive_down($fields, function(&$value, $key, &$parent) {
-      if (in_array($key, ['action','post', 'audit', 'values', 'valid', 'validate'])) return false;
-      if (!is_string($value) || strpos($value, '$') === false || !is_assoc($parent)) return;
-      global $config;
-      $value = replace_vars($value, $this->request);
-      $value = replace_vars($value, $config);
-    });
+    do {
+      $replaced = false;
+      walk_recursive_down($fields, function(&$value, $key, &$parent) use (&$replaced) {
+        if (in_array($key, ['action','post', 'audit', 'values', 'valid', 'validate'])) return false;
+        if (!is_string($value) || strpos($value, '$') === false) return;
+        global $config;
+        $new_value = replace_vars($value, $this->request);
+        if ($new_value != $value) $replaced = true;
+        $value = replace_vars($new_value, $config);
+        if ($new_value != $value) $replaced = true;
+      });
+    } while ($replaced);
   }
 
 
