@@ -707,8 +707,8 @@ mkn.render = function(options)
     })
     initTooltip(obj);
 
-    var tag = obj.prop("tagName").toLowerCase();
-    if (['input','select','textarea'].indexOf(tag) < 0) return;
+    var tag = obj.prop("tagName");
+    if (!tag || ['input','select','textarea'].indexOf(tag.toLowerCase()) < 0) return;
 
     var id = field.id;
     obj.on('keyup input cut paste change', function() {
