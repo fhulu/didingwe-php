@@ -252,9 +252,9 @@ class page
       $type = $new_type;
     }
     $expanded = $this->expand_type($type, $added);
-    if (is_null($expanded)) 
+    if (is_null($expanded))
       throw new Exception("Unknown type $type");
-   
+
     if (isset($expanded['type']))
       $field = merge_options($this->merge_type($expanded, $added), $field);
     else
@@ -898,9 +898,7 @@ class page
 
   static function replace_sid(&$str)
   {
-    $sid = $_SESSION['sid'];
-    if (isset($sid))
-      $str = preg_replace('/\$sid([^\w]|$)/', "$sid\$1", $str);
+    replace_fields($str, ['sid'=>$_SESSION['sid']]);
   }
 
   static function replace_sql(&$sql, $options)
@@ -1123,6 +1121,7 @@ class page
        'update', 'upload', 'view_doc', 'write_session');
     foreach($actions as $action) {
       if ($this->aborted) return false;
+      if ($this->broken) return $this->answer;
       if (is_array($action)) {
         list($method, $parameter) = assoc_element($action);
       }
@@ -1130,10 +1129,16 @@ class page
         $method = $action;
         $parameter = array();
       }
+      if ($method == 'break') {
+        $this->broken = true;
+        return $this->answer;
+      }
       if (is_null($parameter))
         $parameter = array();
       else if (!is_array($parameter) || is_assoc($parameter))
         $parameter = array($parameter);
+      $this->replace_sid($method);
+      $this->replace_sid($parameter);
       global $config;
       if ($method != 'foreach') {
         $values = merge_options($this->request, $config, $this->context, $this->answer);
