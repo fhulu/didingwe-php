@@ -1104,6 +1104,13 @@ class page
   }
 
 
+  function replace_fields(&$field) {
+    replace_fields($field, $this->answer, true);
+    replace_fields($field, $this->request, true);
+    global $config;
+    replace_fields($field, $config);
+  }
+
   function reply($actions)
   {
     $post = at($actions, 'post');
@@ -1139,11 +1146,11 @@ class page
         $parameter = array($parameter);
       $this->replace_sid($method);
       $this->replace_sid($parameter);
+      $this->replace_fields($method);
       global $config;
       if ($method != 'foreach') {
-        $values = merge_options($this->request, $config, $this->context, $this->answer);
-        replace_fields($parameter, $values, true);
-        replace_fields($method, $values, true);
+        $this->replace_fields($parameter);
+        $this->replace_fields($method);
       }
       log::debug_json("REPLY ACTION $method", $parameter);
       if ($this->reply_if($method, $parameter)) continue;
@@ -1357,10 +1364,7 @@ class page
 
   function read_values($values)
   {
-    replace_fields($values, $this->answer, true);
-    replace_fields($values, $this->request, true);
-    replace_fields($values, $_SESSION, true);
-    replace_fields($values, $this->context, true);
+    $this->replace_fields($values);
     return $values;
   }
 
