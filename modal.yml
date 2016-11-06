@@ -17,7 +17,7 @@ show:
   close_button:
     tag: div
     name: ""
-    class: [modal-close-button,absolute top-right, pad, cursor-pointer, fa fa-times]
+    class: [modal-close-button,absolute top-right,  cursor-pointer, fa fa-times]
     action: close_dialog
     css:
       - /common/font-awesome/css/font-awesome.min.css

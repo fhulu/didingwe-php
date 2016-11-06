@@ -157,7 +157,8 @@ var mkn = new function() {
     var defer = $.Deferred();
 
     this.loadPage({path: '/modal/show', show: false}).done(function(modal, options) {
-      mkn.loadPage(params).done(function(page) {
+      var tmp = $("<div>");
+      mkn.showPage(params, tmp).done(function(obj, page) {
         if (page.fields.modal) modal.fields = mkn.merge(modal.fields, page.fields.modal);
         if (modal.fields.title_bar) mkn.replaceVars(page.fields, modal.fields.title_bar, {recurse: true});
         if (modal.fields.close_button) mkn.replaceVars(page.fields, modal.fields.close_button, {recurse: true});
@@ -165,8 +166,7 @@ var mkn = new function() {
         modal.removeAttr('id').show();
         var title_bar = modal.find('.modal-title-bar');
         var dialog = modal.find('.modal-dialog');
-        mkn.createPage(params,page,dialog);
-        dialog.draggable({handle: title_bar});
+        dialog.append(obj).draggable({handle: title_bar});
         modal.appendTo('body');
         defer.resolve(dialog, page, field);
       });
@@ -245,17 +245,20 @@ var mkn = new function() {
         }
         if (typeof val !== 'string') continue;
         var matches = getMatches(val, /\$(\w+)/g);
-        for (var i in matches) {
-          var match = matches[i];
+        if (!matches) continue;
+        matches.forEach(function(match) {
           var index = flags.sourceFirst? 0: 1;
-          var replacement = args[index++][match];
-          if (replacement === undefined || replacement === val) replacement = args[index % 2][match];
-          if (replacement === undefined) continue;
+          var arg = args[index++];
+          var replacement;
+          if (arg !== undefined) replacement = arg[match];
+          arg = args[index % 2];
+          if (replacement === undefined || replacement === val && arg !== undefined) replacement = arg[match];
+          if (replacement === undefined) return;
           var old = val;
           dest[key] = val = val.replace(new RegExp('\\$'+match+"([^\w]|\b|$)", 'g'), replacement+'$1');
           if (!replaced)
             replaced = val != old;
-        }
+        });
       }
     };
 

@@ -392,8 +392,8 @@ input_page:
   synopsis:
     derive: [desc]
     type: p
-    class: [pad-x,center-text]
-    name: $desc $vspace
+    class: [center-text]
+    name: $desc
   inputs:
     - template: $layout
     - $actions_pane: { push: last }
