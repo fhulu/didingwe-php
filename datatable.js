@@ -256,9 +256,9 @@
         var field = fields[i];
         var id = field.id;
         var visible = mkn.visible(field);
-        if (id == 'key' && visible  || id === 'attr') continue;
+        if (id == 'key' && visible  || id === 'attr' || id == 'style') continue;
         var th = $('<th></th>').appendTo(tr);
-        if (id === 'actions' || id == 'style') continue;
+        if (id === 'actions') continue;
         if ($.isArray(field.name)) field.name = field.name[field.name.length-1];
         th.html(field.name || toTitleCase(id));
         if (self.hasFlag('sortable')) {
