@@ -234,9 +234,6 @@ list:
     - activate
     - deactivate
     - edit: { action: dialog }
-  footer_actions:
-    - print
-    - export
   fields:
     - email: { width: 26%, key: true }
     - first_name: { width: 16% }
@@ -336,34 +333,24 @@ modify:
   type: input_page
   desc: Edit the user details below
   access: [admin]
-  width: 600
   inputs:
     - title: {type: dropdown}
     - first_name
     - last_name
     - cellphone
     - email: { valid: [not_registered] }
-    - role:
-        name: Assigned Role
-        type: dropdown
-        valid: provided
+    - roles: { attr: disabled }
   values:
-    - sql_values: |
-        select p.title,p.first_name,p.last_name,u.cellphone,u.email,group_concat(r.name) role
-        from user u left join person p on p.id = u.person
-          left join role r on find_in_set(r.code,u.roles)
-        where u.id = '$key'
-        group by u.id
+    - collection.values: [user, $key, title, first_name, last_name, cellphone, email: identifier, roles: role]
   actions:
     - modify: { name: Update User Details }
   validate: delta
   post:
-    - sql_update: [user, id: $key, delta]
-    - sql_update: [person, {id: /(select person from user where id = '$key')}, delta]
-    - clear_values
-    - close_dialog: User details updated
-    - refresh: "#main table"
+    - collection.update: [user, $key, delta]
   audit: $email $delta
+  modal:
+    dialog:
+      class: [col s12 m8 l6]
 
 not_in_use:
   valid: not_registered
