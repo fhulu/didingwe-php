@@ -5,10 +5,7 @@ user:
   name: My Audit Trail
   sort: when
   sort_order: desc
-  page_size: 15
   flags:
-    - filter
-    - show_header
     - show_titles
   report_title: User Audit Trail
   actions:
