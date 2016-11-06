@@ -227,10 +227,7 @@ list:
   name: Users
   sort: create_time
   sort_order: desc
-  page_size: 15
   flags:
-    - filter
-    - show_header
     - show_titles
   report_title: User Report
   row_actions:
@@ -241,11 +238,11 @@ list:
     - print
     - export
   fields:
-    - email: { width: 20%, key: true }
-    - first_name: { width: 13% }
-    - last_name: { width: 13% }
+    - email: { width: 26%, key: true }
+    - first_name: { width: 16% }
+    - last_name: { width: 16% }
     - cellphone: { width: 12% }
-    - roles: { width: 9% }
+    - roles: { width: 18% }
     - status: { width: 8% }
     - style
     - actions
@@ -337,7 +334,7 @@ logout:
 modify:
   name: Change User Details
   type: input_page
-  desc: Change user details
+  desc: Edit the user details below
   access: [admin]
   width: 600
   inputs:
@@ -389,16 +386,15 @@ profile:
   access: auth
   name: View Own Profile
   desc: These are your details on the system. You can make changes here to update them.
-  width: 600
   inputs:
     - title: {type: dropdown_collection}
     - first_name
     - last_name
     - cellphone
     - email: { valid: [not_in_use]}
-    - role: { attr: disabled }
+    - roles: { attr: disabled }
   values:
-    - collection.values: [session, identifier: $sid, user.title, user.first_name, user.last_name, user.cellphone, email: user, role: user.roles]
+    - collection.values: [session, $sid, user.title, user.first_name, user.last_name, user.cellphone, email: user, roles: user.role]
     - clear_values: [password,role,attempts]
   actions:
     - profile_update: { validate: delta }
@@ -409,7 +405,6 @@ profile_update:
   post:
     - collection.update: [user, [identifier: $email], delta]
     - close_dialog: Successfully updated
-
 
 register:
   access: public
