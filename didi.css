@@ -426,6 +426,7 @@
 .undecorated { text-decoration: none; }
 .nowrap { white-space: nowrap}
 .truncate-word {  white-space: nowrap; overflow: hidden; text-overflow: ellipsis}
+.break-word{-ms-hyphens: auto;-moz-hyphens: auto;-webkit-hyphens: auto; hyphens: auto;word-wrap: break-word;overflow-wrap:break-word;text-overflow: ellipsis}
 
 /* vertical alignment */
 .vertical-bottom { vertical-align: bottom; }

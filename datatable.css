@@ -9,11 +9,6 @@ table.data
   word-wrap: break-word;
 }
 
-table.data, table.data td, table.data th {
-  font-size: 10pt;
-  font-weight: 100;
-}
-
 table.data>thead
 {
   background-color:  #454545;
@@ -43,7 +38,7 @@ table.data>tbody>tr
 table.data>tbody>tr>td
 {
   border-bottom: 1px solid #DFDFDF;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis}
+  white-space: nowrap; overflow: hidden;  }
 }
 
 table.data thead>tr>th
