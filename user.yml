@@ -40,11 +40,13 @@ check_otp:
     - write_session: server_otp,time_of_otp
     - read_session: email,first_name,last_name,cellphone
     - if $sms_otp:
-        send_sms:
-          message: Your OTP for $program_name is $server_otp
+        sms.send: { type: otp_sms }
     - if $email_otp:
         emailer.send: { type: otp_email }
     - clear_values
+
+otp_sms:
+  message: Your OTP for $program_name is $server_otp
 
 otp_email:
   subject: One Time Password

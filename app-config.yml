@@ -26,6 +26,7 @@ scripts:
 helpers:
   - collection
   - emailer
+  - sms
 
 search_paths: [../common/,.,$brand_path]
 collections:
@@ -47,7 +48,7 @@ request_method: post
 smtp_host: smtp.example.com
 smtp_user: email@example.com
 smtp_password: mypassword
-send_sms:
+sms.send:
   protocol: http
   port: 80
   host: www.qmessenger.co.za
