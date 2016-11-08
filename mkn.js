@@ -148,12 +148,7 @@ var mkn = new function() {
   this.showDialog = function(path, field)
   {
     if (path[0] === '/') path = path.substr(1);
-    var params = { path: path };
-    if ($.isPlainObject(field)) {
-      params.values = field.values;
-      params.key = field.key;
-    }
-
+    var params = $.extend({ path: path }, field);
     var defer = $.Deferred();
 
     this.loadPage({path: '/modal/show', show: false}).done(function(modal, options) {

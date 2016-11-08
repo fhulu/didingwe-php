@@ -658,7 +658,7 @@ mkn.render = function(options)
   function initTimeEvents(obj, field) {
     if (field.every) {
       setInterval(function() {
-        accept(undefined, obj, field, field.every.slice(1));
+        accept(undefined, obj, field, [field.every.slice(1)]);
       }, field.every[0]);
     }
   }
@@ -924,13 +924,18 @@ mkn.render = function(options)
   {
     field.page_id = field.page_id || obj.closest(".page").attr('id');
     var dispatch_one = function(action) {
+      var params = [];
+      if ($.isArray(action)) {
+        params = action.slice(1);
+        action = action[0];
+      }
       switch(action) {
-        case 'dialog': mkn.showDialog(field.url, {key: field.key}); return;
+        case 'dialog': mkn.showDialog(field.url, $.extend({key: field.key}, params[0])); return;
         case 'close_dialog': mkn.closeDialog(obj);
         case 'redirect': redirect(field); break;
         case 'post':
           var url = field.url? field.url: field.path
-          var params = serverParams('action', url, {key: field.key});
+          params = serverParams('action', url, $.extend({key: field.key},params[0]));
           var selector = field.selector;
           if (selector !== undefined) {
             selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+field.page_id+"$2");
@@ -952,7 +957,7 @@ mkn.render = function(options)
           break;
         default:
           if (action[0] == '.')
-            obj[action.substring(1)].apply(obj);
+            obj[action.substring(1)].apply(obj,params);
           else if (isWatchValue(action)) {
             evaluateModelValue(action);
             me.updateWatchers();
