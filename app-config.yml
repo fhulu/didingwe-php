@@ -15,6 +15,7 @@ log_file: $brand_name.log
 upload_dir: ../uploads
 start_page: /home
 css:
+  - /common/font-awesome/css/font-awesome.min.css
   - /common/didi.css
 scripts:
   - /jquery-min.js
