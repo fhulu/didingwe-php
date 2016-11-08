@@ -655,7 +655,16 @@ mkn.render = function(options)
     return /\$@\w+/.test(value);
   }
 
+  function initTimeEvents(obj, field) {
+    if (field.every) {
+      setInterval(function() {
+        accept(undefined, obj, field, field.every.slice(1));
+      }, field.every[0]);
+    }
+  }
+
   var initOnEvents = function(obj, field) {
+    initTimeEvents(obj, field);
     var events = {};
     if (field.action)
       events['click'] = [field];
@@ -942,7 +951,9 @@ mkn.render = function(options)
           trigger(field, obj);
           break;
         default:
-          if (isWatchValue(action)) {
+          if (action[0] == '.')
+            obj[action.substring(1)].apply(obj);
+          else if (isWatchValue(action)) {
             evaluateModelValue(action);
             me.updateWatchers();
           }
