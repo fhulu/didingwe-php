@@ -1,3 +1,6 @@
 index:
   parent:
     class: [didi]
+  type: container
+  contents:
+    - program: { type: page_title}
