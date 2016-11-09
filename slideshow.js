@@ -3,8 +3,6 @@ $.fn.showNextSlide = function(duration) {
   var index = parseInt(this.attr('current_slide'));
   var nextIndex = (index + 1) % slides.length;
   this.attr('current_slide', nextIndex);
-  slides.eq(index).slideToggle(duration, function() {
-    slides.eq(nextIndex).show();
-    slides.eq(index).hide();
-  });
+  slides.eq(index).fadeOut(duration);
+  slides.eq(nextIndex).fadeIn(duration);
 }
