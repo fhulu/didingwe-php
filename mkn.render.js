@@ -656,10 +656,13 @@ mkn.render = function(options)
   }
 
   function initTimeEvents(obj, field) {
-    if (field.every) {
-      setInterval(function() {
-        accept(undefined, obj, field, [field.every.slice(1)]);
-      }, field.every[0]);
+    var timerFunctions = {every: setInterval, after: setTimeout };
+    for (var key in timerFunctions ) {
+      if (!(key in field)) continue;
+      var args = [field[key].slice(1)];
+      timerFunctions[key].call(this, function() {
+        accept(undefined, obj, field, args);
+      }, field[key][0]);
     }
   }
 
