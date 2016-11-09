@@ -769,7 +769,7 @@ mkn.render = function(options)
     var cls = field.class;
     if (cls === undefined) return;
     if (typeof cls === 'string') cls = [cls];
-    mkn.replaceVars(field, cls, { sourceFirst: true, recurse: true})
+    mkn.replaceVars(field, {tmp: cls}, { sourceFirst: true, recurse: true})
     mkn.setClass(obj, cls);
   }
 
