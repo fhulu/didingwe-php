@@ -659,6 +659,7 @@ mkn.render = function(options)
     var timerFunctions = {every: setInterval, after: setTimeout };
     for (var key in timerFunctions ) {
       if (!(key in field)) continue;
+      mkn.replaceVars(field, field[key], {recurse: true, sourceFirst: true});
       var args = [field[key].slice(1)];
       timerFunctions[key].call(this, function() {
         accept(undefined, obj, field, args);
