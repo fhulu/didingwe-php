@@ -7,10 +7,9 @@ function configure_brand(&$config) {
   $brand_path = $config['brand_path'];
   if (!file_exists($brand_path)) return false;;
   $brand_config = load_yaml("$brand_path/app-config.yml", false);
-  if ($brand_config) {
+  if ($brand_config)
     $config = merge_options($config, $brand_config);
-    replace_fields($config, $config, true);
-  }
+  replace_fields($config, $config, true);
 
   $brand_link = ".".$config['brand_name'];
   $config['brand_link']  = "/$brand_link";
