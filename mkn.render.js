@@ -667,7 +667,6 @@ mkn.render = function(options)
   }
 
   var initOnEvents = function(obj, field) {
-    initTimeEvents(obj, field);
     var events = {};
     if (field.action)
       events['click'] = [field];
@@ -702,6 +701,7 @@ mkn.render = function(options)
 
   var initEvents = function(obj, field) {
     if ('attr' in field && field.attr.for == field.id) return;
+    initTimeEvents(obj, field);
     initOnEvents(obj, field);
     if (typeof field.enter == 'string') {
       obj.keypress(function(event) {

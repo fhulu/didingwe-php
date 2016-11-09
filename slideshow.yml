@@ -1,0 +1,13 @@
+slideshow:
+  type: container
+  slide_duration: 5000
+  transition_duration: 400
+  start_slide: 0
+  attr: { current_slide: $start_slide }
+  contents: $slides
+  slides:
+    - default:
+        class: [slide,widest]
+        attr: { slide: $index }
+        show: no
+  every: [$slide_duration, .showNextSlide, $transition_duration]
