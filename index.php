@@ -39,9 +39,7 @@ function configure() {
 
   $active = get_active_config_name();
   $active_config = &$config[$active];
-  $session = &$_SESSION[$active];
   replace_fields($active_config, $_REQUEST, true);
-  replace_fields($active_config, $session, true);
   replace_fields($active_config, $active_config, true);
   $config = merge_options($config, $active_config);
 }
@@ -65,10 +63,7 @@ echo_scripts($config['scripts'], "<script src='\$script'></script>\n");
 log::debug_json("BROWSER REQUEST", $_REQUEST);
 $active = get_active_config_name();
 $active_config = &$config[$active];
-$session = &$_SESSION[$active];
-$session = merge_options($session, $_REQUEST);
-$session = merge_options($active_config, $session);
-$request = $session;
+$request = merge_options($active_config, $_REQUEST);
 unset($request['path']);
 unset($request['page']);
 $options = ["path"=>$active_config['page'], 'request'=>$request];
