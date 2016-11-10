@@ -656,16 +656,22 @@ mkn.render = function(options)
   }
 
   function initTimeEvents(obj, field) {
-    var timerFunctions = {every: setInterval, after: setTimeout };
-    for (var key in timerFunctions ) {
+    var functions = {every: 'Interval', after: 'Timeout' };
+    for (var key in functions ) {
       if (!(key in field)) continue;
       mkn.replaceVars(field, field[key], {recurse: true, sourceFirst: true});
       var args = [field[key].slice(1)];
-      var timer = timerFunctions[key].call(this, function() {
+      var timer = window['set'+functions[key]](function() {
         accept(undefined, obj, field, args);
       }, field[key][0]);
       obj.data(key, timer);
     }
+    obj.on('remove', function() {
+      for (var key in functions ) {
+        if (!(key in field)) continue;
+        window['clear'+functions[key]](obj.data(key));
+      }
+    });
   }
 
   var initOnEvents = function(obj, field) {

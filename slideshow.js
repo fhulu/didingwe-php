@@ -6,11 +6,11 @@ $.fn.slideshow = function(options) {
 }
 
 $.fn.showNextSlide = function(duration) {
-  if (!this.is(':visible')) {
-    clearInterval(this.data('every'));
-    return this;
-  }
-
+  // if (!this.is(':visible')) {
+  //   clearInterval(this.data('every'));
+  //   return this;
+  // }
+  //
   var slides = this.children('.slide');
   var index = parseInt(this.attr('current_slide'));
   var nextIndex = (index + 1) % slides.length;
