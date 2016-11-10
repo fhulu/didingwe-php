@@ -661,9 +661,10 @@ mkn.render = function(options)
       if (!(key in field)) continue;
       mkn.replaceVars(field, field[key], {recurse: true, sourceFirst: true});
       var args = [field[key].slice(1)];
-      timerFunctions[key].call(this, function() {
+      var timer = timerFunctions[key].call(this, function() {
         accept(undefined, obj, field, args);
       }, field[key][0]);
+      obj.data(key, timer);
     }
   }
 

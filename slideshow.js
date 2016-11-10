@@ -1,5 +1,4 @@
 $.fn.slideshow = function(options) {
-  console.log("creating slideshow", options);
   var slides = this.children('.slide').hide();
   slides.eq(options.start_slide).show();
   this.data('effects', options.effects);
@@ -7,7 +6,11 @@ $.fn.slideshow = function(options) {
 }
 
 $.fn.showNextSlide = function(duration) {
-  console.log("slide duration", duration);
+  if (!this.is(':visible')) {
+    clearInterval(this.data('every'));
+    return this;
+  }
+
   var slides = this.children('.slide');
   var index = parseInt(this.attr('current_slide'));
   var nextIndex = (index + 1) % slides.length;
