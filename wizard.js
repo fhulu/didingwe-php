@@ -136,7 +136,7 @@ $.widget( "custom.wizard", {
     else
       path = path.substr(0, path.lastIndexOf('/')+1) + props.id;
     page.empty();
-    mkn.showPage({path: path}, page).then(function(content, info) {
+    mkn.showPage({path: path, key: options.key}, page).then(function(content, info) {
       content.addClass('wizard-content');
       page.show();
       path = info.path;
