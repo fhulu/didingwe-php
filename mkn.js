@@ -227,39 +227,48 @@ var mkn = new function() {
 
   this.replaceVars = function(source, dest, flags)
   {
+
     if (!flags) flags = {};
     var args = arguments;
     var replaced = false;
-    var doit = function() {
-      for (var key in dest) {
-        if ($.isArray(dest.constants) && dest.constants.indexOf(key) >= 0) continue;
-        var val = dest[key];
-        if ($.isPlainObject(val) && flags.recurse) {
-          this.replaceVars($.extend({}, source, dest), val, flags);
-          continue;
-        }
-        if (typeof val !== 'string') continue;
-        var matches = getMatches(val, /\$(\w+)/g);
-        if (!matches) continue;
-        matches.forEach(function(match) {
-          var index = flags.sourceFirst? 0: 1;
-          var arg = args[index++];
-          var replacement;
-          if (arg !== undefined) replacement = arg[match];
-          arg = args[index % 2];
-          if (replacement === undefined || replacement === val && arg !== undefined) replacement = arg[match];
-          if (replacement === undefined) return;
-          var old = val;
-          dest[key] = val = val.replace(new RegExp('\\$'+match+"([^\w]|\b|$)", 'g'), replacement+'$1');
-          if (!replaced)
-            replaced = val != old;
-        });
-      }
-    };
+
+    var replaceOne = function(key, val) {
+      if (typeof val !== 'string') return;
+      var matches = getMatches(val, /\$(\w+)/g);
+      if (!matches) return;
+      matches.forEach(function(match) {
+        var index = flags.sourceFirst? 0: 1;
+        var arg = args[index++];
+        var replacement;
+        if (arg !== undefined) replacement = arg[match];
+        arg = args[index % 2];
+        if (replacement === undefined || replacement === val && arg !== undefined) replacement = arg[match];
+        if (replacement === undefined) return;
+        var old = val;
+        dest[key] = val = val.replace(new RegExp('\\$'+match+"([^\w]|\b|$)", 'g'), replacement+'$1');
+        if (!replaced)
+          replaced = val != old;
+      });
+    }
+
+    var replaceArray = function(key, val) {
+      val.forEach(function(v) {
+        replaceOne(key, v);
+      });
+    }
 
     do {
       replaced = false;
-      doit();
+      for (var key in dest) {
+        if ($.isArray(dest.constants) && dest.constants.indexOf(key) >= 0) continue;
+        var val = dest[key];
+        if ($.isArray(val))
+          replaceArray(key, val);
+        else if ($.isPlainObject(val) && flags.recurse)
+          this.replaceVars($.extend({}, source, dest), val, flags);
+        else
+          replaceOne(key, val)
+      }
     } while (replaced && flags.recurse)
   }
 
