@@ -189,12 +189,7 @@ class page
   {
     if (!is_array($field)) return true;
     $access = $field['access'];
-    if (!isset($access)) return true;
-
-    if (!is_array($access)) $access = explode (',', $access);
-
-    $allowed_roles = array_intersect($this->roles, $access);
-    if (sizeof($allowed_roles) > 0) return true;
+    if (!isset($access) || $this->get_module('auth')->authorized($access)) return true;
     if (!$throw) return false;
     throw new user_exception("Unauthorized access to PATH ".implode('/', $this->path) );
   }
@@ -1086,7 +1081,12 @@ class page
 
     if (sizeof($args) < 1) throw new Exception("Invalid number of parameters for 'if'");
     $condition = $matches[1];
-    if (eval("return $condition;"))
+    if (preg_match('/^(\w+\.\w+)(?:\((.*)\))$/', $condition, $matches)) {
+      list($module, $method) = $this->get_module_method($matches[1]);
+      if (call_user_func_array([$module,$method],explode(',',$matches[2])))
+        $this->reply($args);
+    }
+    else if (eval("return $condition;"))
       $this->reply($args);
     return true;
   }

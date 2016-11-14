@@ -11,8 +11,8 @@ class auth {
 
   function login($sid, $role, $other_roles)
   {
-    $_SESSION["auth"] =
-      ["id"=>$sid, 'roles' => merge_options($other_roles,[$role, 'auth'])];
+    $this->roles = merge_options($other_roles,[$role, 'auth']);
+    $_SESSION["auth"] = ["id"=>$sid, 'roles' => $this->roles];
   }
 
   function get_session_id()
@@ -27,6 +27,17 @@ class auth {
     if (!isset($session)) return $this->roles = ['public'];
     if (!$reload && $this->roles) return $this->roles;
     return $this->roles = $session['roles'];
+  }
+
+  function authorized($roles)
+  {
+    if (!is_array($roles)) $roles = explode (',', $roles);
+    return sizeof(array_intersect($this->roles, $roles)) > 0;
+  }
+
+  function unauthorized($role)
+  {
+    return !$this->authorized([$role]);
   }
 
   function logoff()
