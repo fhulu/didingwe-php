@@ -777,7 +777,16 @@ mkn.render = function(options)
     var cls = field.class;
     if (cls === undefined) return;
     if (typeof cls === 'string') cls = [cls];
-    mkn.replaceVars(field, {tmp: cls}, { sourceFirst: true, recurse: true})
+    cls = cls.map(function(val) {
+      var matches = getMatches(val, /\$(\w+)/g)
+      for (var j in matches) {
+        var match = matches[j];
+        var value = field[match];
+        if (value === undefined || typeof value !== 'string') continue;
+        val = val.replace('$'+match, value);
+      }
+      return val;
+    })
     mkn.setClass(obj, cls);
   }
 
