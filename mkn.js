@@ -231,7 +231,7 @@ var mkn = new function() {
     if (!flags) flags = {};
     var args = arguments;
     var replaced = false;
-
+    var me = this;
     var replaceOne = function(key, val) {
       if (typeof val !== 'string') return;
       var matches = getMatches(val, /\$(\w+)/g);
@@ -245,16 +245,20 @@ var mkn = new function() {
         if (replacement === undefined || replacement === val && arg !== undefined) replacement = arg[match];
         if (replacement === undefined) return;
         var old = val;
-        dest[key] = val = val.replace(new RegExp('\\$'+match+"([^\w]|\b|$)", 'g'), replacement+'$1');
+        val = val.replace(new RegExp('\\$'+match+"([^\w]|\b|$)", 'g'), replacement+'$1');
         if (!replaced)
           replaced = val != old;
       });
+      return val;
     }
+
 
     var replaceArray = function(key, val) {
       val.forEach(function(v) {
-        replaceOne(key, v);
+        me.replaceVars($.extend({}, source, dest), v, flags);
+        val[key] = v;
       });
+      return val;
     }
 
     do {
@@ -263,11 +267,11 @@ var mkn = new function() {
         if ($.isArray(dest.constants) && dest.constants.indexOf(key) >= 0) continue;
         var val = dest[key];
         if ($.isArray(val))
-          replaceArray(key, val);
+          dest[key] = replaceArray(key, val);
         else if ($.isPlainObject(val) && flags.recurse)
           this.replaceVars($.extend({}, source, dest), val, flags);
         else
-          replaceOne(key, val)
+          dest[key] = replaceOne(key, val)
       }
     } while (replaced && flags.recurse)
   }
