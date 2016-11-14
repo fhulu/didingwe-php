@@ -244,7 +244,7 @@ class page
   {
     $type = $field['type'];
     if (!isset($type) || $type == 'none'  || in_array($type, $this->expand_stack, true)) return $field;
-    if (strpos($type, '$') !== false) {
+    if (is_string($type) && strpos($type, '$') !== false) {
       global $config;
       $new_type = replace_vars($type, $this->request);
       $new_type = replace_vars($new_type, $config);
