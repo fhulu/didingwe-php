@@ -349,6 +349,7 @@ modify:
   validate: delta
   post:
     - collection.update: [user, $key, delta]
+    - refresh: "#user_list"
     - close_dialog: Changes saved
   audit: $email $delta
   modal:

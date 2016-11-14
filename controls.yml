@@ -28,6 +28,18 @@ alert_message:
 background_image:
   background-image: url("$image_path/$id.png")
 
+bar:
+  tag: div
+  attr: { value: $value }
+  class: [biggest]
+  graph:
+    tag: div
+    class: [green,text-black,tallest,pad pad-min]
+    derive: [value]
+    width: $value%
+    name: $value%
+  text: $graph
+
 blank:
   type: plain_text
   mutable: false

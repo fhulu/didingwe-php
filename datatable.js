@@ -361,6 +361,7 @@
         return;
       }
       field = mkn.copy(field);
+      delete field.width;
       field.key = key;
       field.value = value;
       if (key !== undefined) {
