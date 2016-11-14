@@ -290,6 +290,7 @@
 .middle-x{ transform: translateX(-50%); transform: ms-translateX(-50%)}
 .middle-y{ transform: translateY(-50%);transform: ms-translateY(-50%)}
 .right,.bottom-right,.top-right { right: 0; }
+.overlay-1 { z-index: 1 }
 .overlay { z-index: 100 }
 .top,.top-left,.top-right { top: 0; }
 
