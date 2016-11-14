@@ -260,10 +260,10 @@ class validator
     foreach($funcs as $func) {
       list($func, $args) = validator::expand_function($func);
       $this->update_args($args);
-      $helper_method  = $page->get_helper_method($func);
-      if ($helper_method) {
-        list($context, $method) = $helper_method;
-        log::debug("valid helper '$func', $method");
+      $module_method  = $page->get_module_method($func);
+      if ($module_method) {
+        list($context, $method) = $module_method;
+        log::debug("valid module '$func', $method");
         $result = call_user_func_array(array($context, $method), $args);
         array_shift($args);
       }

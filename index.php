@@ -22,7 +22,7 @@ function configure_brand(&$config) {
 
 function get_active_config_name()
 {
-  return $_SESSION['sid'] == ''? 'landing': 'authenticated';
+  return $_SESSION['auth']? 'authenticated': 'landing';
 }
 function configure() {
   global $config;

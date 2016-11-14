@@ -37,7 +37,6 @@ class page
   static $non_mergeable = array('action', 'attr', 'audit', 'call', 'clear_session',
     'clear_values','error', 'load_lineage', 'post', 'read_session', 'refresh', 'show_dialog',
     'sql_insert', 'sql_update', 'style', 'trigger', 'valid', 'validate', 'write_session');
-  static $login_vars = ['sid','roles'];
   var $request;
   var $object;
   var $method;
@@ -63,7 +62,7 @@ class page
   var $context;
   var $sub_page;
   var $includes;
-  var $helpers;
+  var $modules;
 
   function __construct($request=null, $user_db=null)
   {
@@ -89,7 +88,7 @@ class page
     $this->answer = null;
     $this->expand_stack = array();
     $this->sub_page = false;
-    $this->helpers = ['this'=>$this];
+    $this->modules = ['this'=>$this];
   }
 
   function process()
@@ -97,8 +96,8 @@ class page
     if (is_null($this->method))
       throw new Exception("No method parameter in request");
 
-    $this->read_roles();
-
+    $this->roles = $this->get_module('auth')->get_roles();
+    log::debug_json("SESSION", $_SESSION);
     $path = $this->path;
     if ($path[0] == '/') $path = substr ($path, 1);
 
@@ -128,15 +127,6 @@ class page
       echo json_encode($this->result);
   }
 
-
-  function read_roles($reload = false)
-  {
-    $sid = $_SESSION['sid'];
-    if (!isset($sid)) return $this->roles = ['public'] ;
-    if (!$reload && $this->roles) return $this->roles;
-    log::debug_json("SESSION", $_SESSION);
-    return $this->roles = array_merge($_SESSION['roles'], ['auth']);
-  }
 
   function include_external(&$data)
   {
@@ -430,29 +420,29 @@ class page
     }
   }
 
-  static function is_helper($x, &$class="", &$method="")
+  static function is_module($x, &$class="", &$method="")
   {
     if (!is_string($x)) return false;
     global $config;
     list($class, $method) = explode('.', $x);
-    return $class == 'this' || in_array($class, $config['helpers']);
+    return $class == 'this' || in_array($class, $config['modules']);
   }
 
-  function get_helper($class, &$method="")
+  function get_module($class, &$method="")
   {
-    if (!page::is_helper($class, $class, $method)) return false;
-    $helper = $this->helpers[$class];
-    if ($helper) return $helper;
+    if (!page::is_module($class, $class, $method)) return false;
+    $module = $this->modules[$class];
+    if ($module) return $module;
     require_once("$class.php");
-    $this->helpers[$class] =  $helper = new $class($this);
-    return $helper;
+    $this->modules[$class] =  $module = new $class($this);
+    return $module;
 
   }
-  function get_helper_method($x)
+  function get_module_method($x)
   {
-    $helper = $this->get_helper($x, $method);
-    if (!$helper || !$method) return false;
-    return [$helper,$method];
+    $module = $this->get_module($x, $method);
+    if (!$module || !$method) return false;
+    return [$module,$method];
   }
 
   function replace_vars(&$fields)
@@ -487,7 +477,7 @@ class page
         $type = $value;
         $value = null;
       }
-      if (is_null($value)  && page::is_helper($type)) {
+      if (is_null($value)  && page::is_module($type)) {
         $value = [];
         $parent[$key] = [$type=>$value];
       }
@@ -544,7 +534,7 @@ class page
     return !preg_match('/^if /', $key)
       && !in_array($key, page::$post_items, true)
       && !in_array($key, page::$query_items, true)
-      && !page::is_helper($key);
+      && !page::is_module($key);
   }
 
   function merge_fields(&$fields, $merged = array())
@@ -604,7 +594,7 @@ class page
     walk_recursive_down($fields, function(&$value, $key, &$parent) {
       if (!$this->is_render_item($key) || $key === 'access')
         unset($parent[$key]);
-      if (in_array($key, page::$query_items, true) || page::is_helper($key))
+      if (in_array($key, page::$query_items, true) || page::is_module($key))
         $parent['query'] = " ";
     });
 
@@ -671,7 +661,7 @@ class page
     $options = merge_options($this->context,$this->request);
     $validators = $this->load_fields('validators');
     $fields = merge_options($this->merge_stack(page::$fields_stack), $this->page_fields, $this->fields);
-    $this->validator = new validator(page::merge_options($_SESSION, $this->request), $fields, $validators);
+    $this->validator = new validator(page::merge_options($_SESSION['variables'], $this->request), $fields, $validators);
 
     $exclude = array('audit','css','post','script','style', 'styles', 'type','valid','validate','values');
 
@@ -713,7 +703,6 @@ class page
   {
     $this->merge_fields($this->context);
     if (!isset($this->context['id'])) $this->context['id'] = last($this->path);
-    log::debug_json("DATA ".last($this->path), $this->context);
     return $this->reply($this->context);
   }
 
@@ -744,7 +733,7 @@ class page
       return call_user_func($function);
 
     $params = explode(',', $params);
-    $context = merge_options($this->context, $_SESSION, $this->request, $this->answer);
+    $context = merge_options($this->context, $_SESSION['variables'], $this->request, $this->answer);
     replace_fields($context, $this->request);
     replace_fields($params, $this->request);
     replace_fields($params, $context);
@@ -851,7 +840,7 @@ class page
     $result = null_merge($fields, $result, false);
     $detail = at($action, 'audit');
     $field = [];
-    $context = merge_options($this->fields, $this->context, $_SESSION, $this->request, $result);
+    $context = merge_options($this->fields, $this->context, $_SESSION['variables'], $this->request, $result);
     if (is_array($detail)) {
       $field = $detail;
       $detail = $field['detail'];
@@ -872,8 +861,8 @@ class page
     if (!isset($name)) $name = $this->name($action);
     $name = addslashes($name);
     $detail = addslashes($detail);
-    $collection = $this->get_helper('collection');
-    $sid = $_SESSION['sid'];
+    $collection = $this->get_module('collection');
+    $auth = $this->get_module('auth')->get_session_id();
     $user = $collection->values('session',['identifier'=>$sid], 'user');
     $partner = $collection->values('session',['identifier'=>$sid], 'partner');
     $collection->insert('audit','', ['session'=>'$sid'], ['time'=>"/sysdate()"], $user, $partner, ['action'=>$name], ['detail'=>$detail]);
@@ -882,7 +871,6 @@ class page
   function action()
   {
     $invoker = $this->context;
-    log::debug_json("ACTION ".last($this->path), $invoker);
     if (!isset($this->context['id'])) $this->context['id'] = last($this->path);
     if (!isset($this->context['name'])) $this->context['name'] = $this->name($this->context);
     $this->merge_fields($this->fields);
@@ -896,9 +884,9 @@ class page
     return $result;
   }
 
-  static function replace_sid(&$str)
+  function replace_sid(&$str)
   {
-    replace_fields($str, ['sid'=>$_SESSION['sid']]);
+    replace_fields($str, ['sid'=>$this->get_module('auth')->get_session_id()]);
   }
 
   static function replace_sql(&$sql, $options)
@@ -1156,9 +1144,9 @@ class page
       if ($this->reply_if($method, $parameter)) continue;
 
       $context = $this;
-      $helper_method  = $this->get_helper_method($method);
-      if ($helper_method)
-        list($context, $method) = $helper_method;
+      $module_method  = $this->get_module_method($method);
+      if ($module_method)
+        list($context, $method) = $module_method;
       else if (is_function($method)) {
         $parameter = [$method];
         $method = 'call';
@@ -1183,7 +1171,6 @@ class page
 
   function values()
   {
-    log::debug_json("VALUES '$this->root'", $this->context);
     $values = $this->context['values'];
     if (is_null($values)) $values = $this->context;
     return $this->reply($values);
@@ -1314,24 +1301,24 @@ class page
   {
     $vars = page::parse_args(func_get_args());
     $this->parse_delta($vars);
+    $session = &$_SESSION['variables'];
     foreach($vars as $var) {
       if ($var == 'request' && !isset($this->request['request']))
         call_user_func_array (array($this, 'write_session'), array_keys($this->request));
       else if (is_array($var)) {
         list($var,$value) = assoc_element($var);
-        $_SESSION[$var] = $value;
+        $session[$var] = $value;
       }
       else if (isset($this->answer[$var]))
-        $_SESSION[$var] = $this->answer[$var];
+        $session[$var] = $this->answer[$var];
       else if   (isset($this->request[$var]))
-        $_SESSION[$var] = $this->request[$var];
+        $session[$var] = $this->request[$var];
     }
   }
 
   static function read_settings($settings,$args)
   {
     $vars = page::parse_args($args);
-    if (sizeof($vars) == 0) return $_SESSION;
     $values = array();
     foreach($vars as $var) {
       $alias = $var;
@@ -1345,7 +1332,10 @@ class page
 
   function read_session()
   {
-    return page::read_settings($_SESSION, func_get_args());
+    $args = func_get_args();
+    $session = &$_SESSION['variables'];
+    if (sizeof($args) == 0) return $session;
+    return page::read_settings($session, $args);
   }
 
   function read_session_list()
@@ -1429,10 +1419,11 @@ class page
   function clear_session()
   {
     $vars = page::parse_args(func_get_args());
-    if (sizeof($vars) == 0) $vars = array_keys($_SESSION);
+    $session = &$_SESSION['variables'];
+    if (sizeof($vars) == 0) $vars = array_keys($session);
     foreach($vars as $var) {
-      if (isset($_SESSION[$var]) && !in_array($var, page::$login_vars))
-        unset($_SESSION[$var]);
+      if (isset($session[$var]))
+        unset($session[$var]);
     }
   }
 
@@ -1570,12 +1561,6 @@ class page
     return null;
   }
 
-  function logoff()
-  {
-    session_destroy();
-    $_SESSION = [];
-    $this->read_roles(true);
-  }
 
   function read_server()
   {

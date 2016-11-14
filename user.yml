@@ -241,7 +241,7 @@ list:
     - first_name: { width: 16% }
     - last_name: { width: 16% }
     - cellphone: { width: 12% }
-    - roles: { width: 18% }
+    - role: { width: 18% }
     - status: { width: 8% }
     - style
     - actions
@@ -257,7 +257,7 @@ list:
         - first_name
         - last_name
         - cellphone
-        - roles: role.name
+        - role: role.name
         - status: /if(active,'active','inactive')
         - style: /if(active,'active','inactive')
         - actions: /if(active,'expand,slide,edit,deactivate','expand,slide,edit,activate')
@@ -279,7 +279,7 @@ list_all:
         - first_name asc
         - last_name
         - cellphone
-        - roles: role.name
+        - role: role.name
         - status: /if(active,'active','inactive')
         - style: /if(active,'active','inactive')
         - actions: /if(active,'expand,slide,edit,deactivate','expand,slide,edit,activate')
@@ -300,12 +300,12 @@ login:
     - forgot_password: { action: dialog }
   post:
     - read_config: start_page
-    - collection.values: [user, $email, partner, first_name, last_name, cellphone, start_page, start_url: "/ifnull(start_page,'$start_page')" ]
-    - collection.listing: [user, $email, roles: role ]
+    - collection.values: [user, $email, partner, first_name, last_name, cellphone, start_page, start_url: "/ifnull(start_page,'$start_page')", role ]
+    - collection.listing: [role, $role, base_roles: role]
     - collection.update: [user, $email, attempts: 0]
     - read_server: [HTTP_USER_AGENT,REMOTE_ADDR,REMOTE_HOST,REQUEST_URI]
     - collection.insert: [session, /sha1(last_insert_id()), user: $email, partner, start_time: /now(), HTTP_USER_AGENT, REMOTE_ADDR,REQUEST_URI]
-    - write_session: [sid: $new_session_id, roles]
+    - auth.login: [$new_session_id, $role, $base_roles]
     - close_dialog
     - redirect: $start_url
   audit: $email
@@ -327,7 +327,7 @@ logout:
   audit:
     post:
       - collection.insert: [session, $sid, end_time: /sysdate(6)]
-      - this.logoff
+      - auth.logoff
       - redirect: "/"
 
 modify:
@@ -336,19 +336,20 @@ modify:
   desc: Edit the user details below
   access: [admin]
   inputs:
-    - title: {type: dropdown}
+    - title: {type: dropdown_collection}
     - first_name
     - last_name
     - cellphone
     - email: { valid: [not_registered] }
-    - roles: { attr: disabled }
+    - role: { type: dropdown_collection }
   values:
-    - collection.values: [user, $key, title, first_name, last_name, cellphone, email: identifier, roles: role]
+    - collection.values: [user, $key, title, first_name, last_name, cellphone, email: identifier, role]
   actions:
     - modify: { name: Update User Details }
   validate: delta
   post:
     - collection.update: [user, $key, delta]
+    - close_dialog: Changes saved
   audit: $email $delta
   modal:
     dialog:

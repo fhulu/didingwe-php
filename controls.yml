@@ -194,7 +194,7 @@ dropdown:
 dropdown_collection:
   type: dropdown
   options: [collection.data]
-  valid: collection($name,$value)
+  valid: collection.exists($name,$value)
 
 dropdown_default:
     classes: option

@@ -276,7 +276,8 @@ table.data td>.actions>*
 
 table.data .actions [action^=edit]
 {
-  background-color: green;
+  background-color: orange;
+  color: black;
 }
 
 table.data .slide [action=cancel],

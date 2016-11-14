@@ -24,7 +24,8 @@ scripts:
   - /common/mkn.js
   - /common/mkn.render.js
   - /common/page.js
-helpers:
+modules:
+  - auth
   - collection
   - emailer
   - sms
@@ -33,7 +34,7 @@ search_paths: [../common/,.,$brand_path]
 collections:
   default: collection
   session: [session,audit]
-  auth: [user,partner,role]
+  auth: [user,partner,role,user_role]
 
 registrar: Mukoni Software
 registrar_role: admin
