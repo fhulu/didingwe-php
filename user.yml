@@ -324,11 +324,12 @@ login_password:
 
 logout:
   read: action
-  audit:
-    post:
-      - collection.insert: [session, $sid, end_time: /sysdate(6)]
-      - auth.logoff
-      - redirect: "/"
+  audit: yes
+  audit_first: yes
+  post:
+    - collection.insert: [session, $sid, end_time: /sysdate(6)]
+    - auth.logoff
+    - redirect: "/"
 
 modify:
   name: Change User Details
