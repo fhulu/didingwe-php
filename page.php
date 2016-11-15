@@ -1095,6 +1095,7 @@ class page
   function replace_fields(&$field) {
     replace_fields($field, $this->answer, true);
     replace_fields($field, $this->request, true);
+    replace_fields($field, $this->context, true);    
     global $config;
     replace_fields($field, $config);
   }
