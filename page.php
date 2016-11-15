@@ -857,9 +857,9 @@ class page
     $name = addslashes($name);
     $detail = addslashes($detail);
     $collection = $this->get_module('collection');
-    $auth = $this->get_module('auth')->get_session_id();
-    $user = $collection->values('session',['identifier'=>$sid], 'user');
-    $partner = $collection->values('session',['identifier'=>$sid], 'partner');
+    $sid = $this->get_module('auth')->get_session_id();
+    $user = $collection->values('session', $sid, 'user');
+    $partner = $collection->values('session', $sid, 'partner');
     $collection->insert('audit','', ['session'=>'$sid'], ['time'=>"/sysdate()"], $user, $partner, ['action'=>$name], ['detail'=>$detail]);
   }
 
