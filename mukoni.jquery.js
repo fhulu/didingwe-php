@@ -137,7 +137,8 @@ $.send = function(url, options, callback)
     });
 
     progress.timeout = setTimeout(function() {
-      progress.box.html('<p>'+options.progress+'</p').show();
+      progress.box.find(".message").text(options.progress);
+      progress.box.show();
     }, 500);
 
     if (options.error ===undefined) {
