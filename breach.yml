@@ -2,16 +2,12 @@
 ---
 
 breach:
-  type: labelled_input_page
+  type: info_page
   name: Unauthorised access
-  position: { my: 'top', at: 'top+100' }
-  width: 600
   desc: |
     You are not authorised to access this page.<br>
     Possible reasons for this message are:
-  inputs:
-    type: container
-    contents:
+  lines:
       - type: list_item
       - r1:
           access: auth
@@ -21,6 +17,12 @@ breach:
       - r3:
           access: public
           name: Your session has timed out.
+  actions_pane:
+    class: [grid space s1 m2 l2, pad pad-large]
   actions:
     - home: { action: redirect }
     - login: { action: dialog }
+  modal:
+    dialog:
+      position: { my: 'top', at: 'top+10' }
+      class: [col s11 m8 l8 ]
