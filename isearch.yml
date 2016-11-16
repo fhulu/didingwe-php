@@ -4,42 +4,41 @@ isearch:
   placeholder: Search $name
   script: [/common/isearch.js]
   css: [/common/isearch.css]
-  class: [ isearch,^pad ]
+  class: [ isearch,relative]
   contents: [ $searcher, $buttons, $drop]
   searcher:
-    type: [input,fanthom]
+    type: input
     derive: [placeholder]
     attr: { placeholder: $placeholder }
-    class: [isearch-searcher, biggest, pad]
+    class: [isearch-searcher, widest]
   buttons:
-    class: [overlay absolute top-right, pointer-cursor,pad]
-    type: [container,fanthom]
+    class: [overlay absolute top-right]
+    type: container
     derive: [adder,dropper]
     contents: [$adder,$dropper]
   adder:
-    tag: i
+    tag: label
     text: +
-    class: [isearch-adder,pad]
+    class: [isearch-adder,hspace-4, pointer-cursor]
     derive: [name]
     desc: Add a new $name
     action: dialog
-    access: auth
     show: no
   dropper:
     type: [font_awesome,fanthom]
     icon: caret-down
-    class: [isearch-dropper]
+    class: [isearch-dropper, hspace-4, pointer-cursor]
     desc: Show all items
   drop:
     tag: ul
-    class: [isearch-drop,overlay absolute,scroll-y,widest,nomargin,nopad,white,shadow]
+    class: [isearch-drop,overlay absolute,scroll-y,widest, white,shadow]
     text: ""
     height: auto
     show: no
     autoload: 10
   option:
     tag: a
-    class: [isearch-option,block,nomargin,undecorated,pad,hover-light-grey]
+    class: [isearch-option,block,nomargin,undecorated,pad pad-small,hover-light-grey]
     value: $1
     name: $2
     embolden: $name
