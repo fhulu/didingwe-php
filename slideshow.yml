@@ -1,18 +1,13 @@
 slideshow:
   create: slideshow
-  tag: div
+  type: container
   slide_duration: 5000
   transition_duration: 400
   every: [$slide_duration, .showNextSlide, $transition_duration]
   start_slide: 0
   zIndex: 1
   attr: { current_slide: $start_slide, zIndex: $zIndex}
-  text: $wrapper
-  wrapper:
-    type: container
-    class: [slideshow-wrapper, biggest, relative]
-    derive: [slides]
-    contents: $slides
+  contents: $slides
   effects: [drop]
   class: [slideshow, relative, table-row]
   slides:
