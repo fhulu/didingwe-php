@@ -309,6 +309,10 @@ login:
     - close_dialog
     - redirect: $start_url
   audit: $email
+  modal:
+    dialog:
+      position: { my: 'top', at: 'top+10' }
+      class: [col s11 m6 l5 ]
 
 login_email:
   valid: [is_registered, is_active, is_unlocked]

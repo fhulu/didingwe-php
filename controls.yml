@@ -31,7 +31,6 @@ background_image:
 bar:
   tag: div
   attr: { value: $value }
-  class: [biggest]
   graph:
     tag: div
     class: [green,text-black,tallest,pad pad-min]
@@ -458,9 +457,8 @@ label_left:
     tag: div
     suffix: ":"
     text: $name$suffix
-    class: [float-right,w-1-3,right-text]
-  subject: { class: [float-right,w-2-3] }
-  text: $field$label
+  subject: { class: [float-right] }
+  text: $label$field
 
 label_mobile:
   type: labelled

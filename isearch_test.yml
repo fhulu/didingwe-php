@@ -1,6 +1,6 @@
 include: [isearch]
 
-test:
+isearch_test:
   desc: Test iSearch
   type: input_page
   inputs:
@@ -25,7 +25,6 @@ country:
       country: $value
 
 add:
-  access: auth
   desc: Add new country
   width: 600
   header_class: [rounded-xlarge,^w3-blue-grey, white]
