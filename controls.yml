@@ -812,23 +812,19 @@ time:
 
 titled_paragraph:
   classes: div
-  text: $heading $content
+  text: $heading $phrase
   title: $id
   body: $name
   heading:
     derive: [title]
     type: plain_text
-    tag: h2
-    styles: [vspaced]
     text: $title
-  content:
-    derive: [body]
+    class: [block]
+  phrase:
+    derive: [name]
     type: plain_text
-    tag: p
-    text: $body
+    text: $name
   space: 30
-  styles: [vspaced]
-
 
 tri_input:
   type: multi_input
