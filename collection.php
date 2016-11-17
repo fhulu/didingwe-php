@@ -52,67 +52,49 @@ class collection
 
   function get_selection($table, $args, &$where, &$sorting, &$primary_attribute)
   {
-    $identifier = "";
-    $primary = [];
-    $sub_fields = [];
-    $index = 0;
-    $identifier_pos = 0;
+    $has_primary = false;
     foreach($args as &$arg) {
       list($name,$alias) = $this->get_name_alias($arg);
       if ($alias[0] == '/') continue;
       $this->update_sort_order($sorting, $name, $alias);
 
       if ($name == 'identifier') {
-        $identifier = "m.$name $alias";
-        $identifier_pos = $index;
+        $selection[] = "m.$name $alias";
       }
-      else if (empty($primary) && strpos($name, '.') === false)
-        $primary = [$name, $alias];
+      else if (!$has_primary && strpos($name, '.') === false) {
+        $selection[] = "m.value $alias";
+        $has_primary = [$name, $alias];
+        $where .= " and m.attribute  = '$name'";
+      }
       else
-        $sub_fields[] = [$name,$alias];
+        $selection[] = $this->get_subquery($table, $name, $alias);
       ++$index;
     }
-    $sub_queries = $this->get_subqueries($table, $sub_fields);
-    $selection = [];
-    if (!empty($primary)) {
-      $primary_attribute = $primary[0];
-      $where .= " and m.attribute  = '$primary[0]'";
-      $selection[] = "m.value $primary[1]";
-    }
-    $selection[] = $sub_queries;
-    if ($identifier)
-      array_splice($selection, $identifier_pos, 0, [$identifier]);
     return implode(",", array_filter($selection));
   }
 
-  function get_subqueries($table, $fields)
+  function get_subquery($table, $name, $alias)
   {
-    global $config;
-    $queries = [];
-    foreach($fields as $name_alias) {
-      list($name,$alias) = $name_alias;
-      if ($name[0] == '/') continue;
-      $name = addslashes($name);
-      $alias = addslashes($alias);
-      list($foreign_key, $foreign_name) = explode('.', $name);
-      $value = "value";
-      if (!isset($foreign_name))
-        $query = "select group_concat($value) from $table where collection = m.collection
-             and version <= m.version and identifier=m.identifier and attribute = '$name'";
+    if ($name[0] == '/') return;
+    $name = addslashes($name);
+    $alias = addslashes($alias);
+    list($foreign_key, $foreign_name) = explode('.', $name);
+    $value = "value";
+    if (!isset($foreign_name))
+      $query = "select group_concat($value) from $table where collection = m.collection
+           and version <= m.version and identifier=m.identifier and attribute = '$name'";
 
-      else {
-        if ($alias == $name) $alias = $foreign_name;
-        $name = $foreign_name;
-        $sub_table = $this->get_table($foreign_key);
-        $query =
-          "select group_concat($value) from $sub_table where collection = '$foreign_key' and version <= m.version and attribute = '$foreign_name'
-            and identifier in (
-              select value from $table where collection = m.collection and version <= m.version
-                and identifier=m.identifier and attribute = '$foreign_key' order by version desc)";
-      }
-      $queries[] = "($query order by version desc limit 1) $alias";
+    else {
+      if ($alias == $name) $alias = $foreign_name;
+      $name = $foreign_name;
+      $sub_table = $this->get_table($foreign_key);
+      $query =
+        "select group_concat($value) from $sub_table where collection = '$foreign_key' and version <= m.version and attribute = '$foreign_name'
+          and identifier in (
+            select value from $table where collection = m.collection and version <= m.version
+              and identifier=m.identifier and attribute = '$foreign_key' order by version desc)";
     }
-    return implode(",", $queries);
+    return "($query order by version desc limit 1) $alias";
   }
 
 
