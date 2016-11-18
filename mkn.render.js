@@ -372,7 +372,9 @@ mkn.render = function(options)
 
   var deriveParent = function(parent, field)
   {
-    if (!parent || !field.derive) return;
+    if (!parent) return;
+    if (!field.parent_id) field.parent_id = parent.id;
+    if (!field.parent_name) field.parent_name = parent.name;
     for (var i in field.derive) {
       var key = field.derive[i];
       var value = field[key];

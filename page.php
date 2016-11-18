@@ -841,7 +841,7 @@ class page
       $detail = $field['detail'];
       replace_fields($field, $context, true);
     }
-    if ($detail) {
+    if (is_string($detail)) {
       $detail = replace_vars($detail, $user);
       if (!$this->audit_delta($detail)) return;
       $detail = replace_vars($detail, $context);
@@ -849,6 +849,7 @@ class page
       $detail = page::decode_sql($detail);
       $detail = replace_vars($detail,$this->request);
     }
+    else $detail = "";
     $post = $field['post'];
     if (isset($post))
       $this->reply($post);
@@ -857,9 +858,9 @@ class page
     $name = addslashes($name);
     $detail = addslashes($detail);
     $collection = $this->get_module('collection');
-    $auth = $this->get_module('auth')->get_session_id();
-    $user = $collection->values('session',['identifier'=>$sid], 'user');
-    $partner = $collection->values('session',['identifier'=>$sid], 'partner');
+    $sid = $this->get_module('auth')->get_session_id();
+    $user = $collection->values('session', $sid, 'user');
+    $partner = $collection->values('session', $sid, 'partner');
     $collection->insert('audit','', ['session'=>'$sid'], ['time'=>"/sysdate()"], $user, $partner, ['action'=>$name], ['detail'=>$detail]);
   }
 
@@ -872,9 +873,11 @@ class page
     $validate = at($invoker, 'validate');
     if ($validate != 'none' && !$this->validate($this->fields, $validate))
       return null;
-
+    $audit_first = $invoker['audit_first'];
+    if ($audit_first)
+      $this->audit($invoker,[]);
     $result = $this->reply($invoker);
-    if (!page::has_errors() && array_key_exists('audit', $invoker))
+    if (!$audit_first && !page::has_errors() && array_key_exists('audit', $invoker))
       $this->audit($invoker, $result);
     return $result;
   }

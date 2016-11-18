@@ -9,9 +9,10 @@ slideshow:
   attr: { current_slide: $start_slide, zIndex: $zIndex}
   contents: $slides
   effects: [drop]
+  class: [slideshow, relative, table-row]
   slides:
     - default:
-        class: [slide,widest,absolute top-left]
         derive: [zIndex]
         style: { z-index: $zIndex}
+        class: [slideshow-slide]
         show: no
