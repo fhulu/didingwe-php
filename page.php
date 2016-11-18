@@ -1136,14 +1136,9 @@ class page
         $parameter = array();
       else if (!is_array($parameter) || is_assoc($parameter))
         $parameter = array($parameter);
+
       $this->replace_sid($method);
       $this->replace_sid($parameter);
-      $this->replace_fields($method);
-      global $config;
-      if ($method != 'foreach') {
-        $this->replace_fields($parameter);
-        $this->replace_fields($method);
-      }
       log::debug_json("REPLY ACTION $method", $parameter);
       if ($this->reply_if($method, $parameter)) continue;
 
@@ -1159,8 +1154,10 @@ class page
 	      continue;
       if ($method == 'foreach')
         $result = $this->reply_foreach($parameter);
-      else
+      else {
+        $this->replace_fields($parameter);
         $result = call_user_func_array(array($context, $method), $parameter);
+      }
       if ($result === false) {
         $this->aborted = true;
         return false;
