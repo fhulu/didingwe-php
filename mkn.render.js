@@ -347,6 +347,11 @@ mkn.render = function(options)
 
   this.expandArray = function(item)
   {
+    if (item.expand_data) {
+      item[item.expand_data] = item[item.expand_data].concat(item.array);
+      delete item.array;
+      return;
+    }
     $.each(item, function(key, value) {
       var matches = getMatches(value, /\$(\d+)/g);
       for (var i in matches) {
@@ -688,7 +693,8 @@ mkn.render = function(options)
     });
     $.each(events, function(key, values) {
       $.each(values, function(i, value) {
-        if (!value.path) value.path = field.path + '/on_' + key;
+        if ($.isPlainObject(value) && !value.path) value.path = field.path + '/on_' + key;
+
         obj.on(key, function(e) {
           // trap trapped events
           if ($.isArray(field.trap) && field.trap.indexOf(key) >=0 )
@@ -703,7 +709,10 @@ mkn.render = function(options)
             e.preventDefault();
             if (field.url === undefined) field.url = obj.attr('href');
           }
-          accept(e, obj, value);
+          if ($.isPlainObject(value))
+            accept(e, obj, value);
+          else if (searchModelRegex.exec(value) !== null) 
+            me.updateWatchers();
         });
       });
     });
@@ -1153,6 +1162,7 @@ mkn.render = function(options)
 
     var inject = function(expr) {
       var captured = expr.regexCapture(/(?:^|[^.a-z_'"])([a-z_][\w]*)(?:[^'"]|$)/gi);
+
       var vars = [];
       $.each(captured, function(i, v) {
         if (!(v in mkn.model)) mkn.model[v] = '';
@@ -1161,7 +1171,9 @@ mkn.render = function(options)
       var source = vars.map(function(v) {
         return "var " + v + " = mkn.model['"+v+"']";
       })
-      .join(";") + "; return " + expr;
+      expr = expr.replace(/(\w+)(\s*[+*-]?=|[+-][+-])/g,"mkn.model['$1']$2"); // allow assignment/post-increment/decrement
+      expr = expr.replace(/([+-][+-])(\w+)([^.\[]|$)/g,"$1mkn.model['$2']$3"); // allow pre-increment/decrement
+      source = source.join(";") + "; return " + expr;
       return new Function(source);
     }
 
@@ -1201,10 +1213,15 @@ mkn.render = function(options)
       var orig = key;
       key = key.substr(13);
       if (key == 'html') return false;
+      var injections = field['mkn-injections-'+key];
+      if (key.indexOf('on_') == 0) {
+        var result = injections[0]();
+        console.log("moves", mkn.model['moves'], result,injections[0].toString());
+        return false;
+      }
       value = field[orig];
       var exprs = value.regexCapture(evalModelRegex);
       if (!exprs.length) return false;
-      var injections = field['mkn-injections-'+key];
       $.each(exprs, function(i, e) {
         if (e) value = value.replace(e, injections[i]());
       });
