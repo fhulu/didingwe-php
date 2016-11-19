@@ -204,6 +204,7 @@
 .float-contents-right > *{float: right;}
 .table-cell { display: table-cell}
 .table-fixed { table-layout: fixed}
+.table-row { display: table-row}
 
 /* dropdown */
 .hover-dropdown>.dropdown { display: none;}

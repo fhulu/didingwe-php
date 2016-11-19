@@ -1,17 +1,12 @@
 $.fn.slideshow = function(options) {
-  var slides = this.children('.slide').hide();
+  var slides = this.children('.slideshow-slide').hide();
   slides.eq(options.start_slide).show();
   this.data('effects', options.effects);
   this.data('effect', -1);
 }
 
 $.fn.showNextSlide = function(duration) {
-  // if (!this.is(':visible')) {
-  //   clearInterval(this.data('every'));
-  //   return this;
-  // }
-  //
-  var slides = this.children('.slide');
+  var slides = this.children('.slideshow-slide');
   var index = parseInt(this.attr('current_slide'));
   var nextIndex = (index + 1) % slides.length;
   this.attr('current_slide', nextIndex);
