@@ -298,6 +298,9 @@ mkn.render = function(options)
        if (!('attr' in template)) template.attr = {};
        template.attr['for'] = item.id;
     }
+    for (var key in field) {
+      if (key.indexOf('on_') == 0) delete field[key];
+    }
     item.template = me.initField(mkn.merge(template, field));
   };
 
@@ -711,8 +714,10 @@ mkn.render = function(options)
           }
           if ($.isPlainObject(value))
             accept(e, obj, value);
-          else if (searchModelRegex.exec(value) !== null) 
-            me.updateWatchers();
+          else if (searchModelRegex.exec(value) !== null) {
+            field['mkn-injections-on_'+key][0]();
+            me.updateWatchers()
+          };
         });
       });
     });
@@ -1212,13 +1217,8 @@ mkn.render = function(options)
       if (typeof key != 'string' || key.indexOf('mkn-original-') < 0 ) return false;
       var orig = key;
       key = key.substr(13);
-      if (key == 'html') return false;
+      if (key == 'html' || key.indexOf('on_') == 0) return false;
       var injections = field['mkn-injections-'+key];
-      if (key.indexOf('on_') == 0) {
-        var result = injections[0]();
-        console.log("moves", mkn.model['moves'], result,injections[0].toString());
-        return false;
-      }
       value = field[orig];
       var exprs = value.regexCapture(evalModelRegex);
       if (!exprs.length) return false;
