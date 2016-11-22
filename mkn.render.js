@@ -1204,7 +1204,7 @@ mkn.render = function(options)
     setFunctions(field);
     setFunctions(field.style);
     setFunctions(field.class);
-    if (funcs.length);
+    if (funcs.length)
       field['didi-functions'] = funcs;
   }
 
