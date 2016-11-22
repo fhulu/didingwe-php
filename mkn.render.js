@@ -2,7 +2,6 @@ mkn.links = {};
 
 mkn.render = function(options)
 {
-  var searchModelRegex = /(^~.+$|`[^`]+`)/g
   var me = this
   me.invoker = options.invoker;
   var types = me.types = options.types;
@@ -1166,17 +1165,26 @@ mkn.render = function(options)
       if (key == 'html') return;
       var value = parent[key];
       if (typeof value != 'string') return;
-      var exprs = value.regexCapture(searchModelRegex);
+      value = value.trim();
+      var exprs;
+      if (value[0] == '~') {
+        value = value.substr(1);
+        exprs = [value];
+      }
+      else {
+        exprs = value.regexCapture(/(`[^`]+`)/g);
+      }
       if (!exprs) return;
       var replaced = false;
+      var ret = /\breturn\s/gm.test(value)?"": " return ";
       exprs.forEach(function(expr, i) {
         if (!expr) return;
         var src;
         if (key.indexOf('on_') < 0)
-          src = "get_"+id+"_"+index+": function() {return ";
+          src = "get_"+id+"_"+index+": function() {\n" + ret;
         else
-          src = key+"_"+id+": function() { ";
-        src += expr.replace(/^~|`/g,'') + ";}";
+          src = key+"_"+id+": function() {\n";
+        src += expr.replace(/`/g,'') + "\n}";
         funcs.push(src);
         value = value.replace(expr, "${"+index+"}");
         replaced = true;
