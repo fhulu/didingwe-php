@@ -662,10 +662,6 @@ mkn.render = function(options)
 
   }
 
-  var isWatchValue = function(value) {
-    return /\$@\w+/.test(value);
-  }
-
   function initTimeEvents(obj, field) {
     var functions = {every: 'Interval', after: 'Timeout' };
     for (var key in functions ) {
@@ -995,10 +991,6 @@ mkn.render = function(options)
         default:
           if (action[0] == '.')
             obj[action.substring(1)].apply(obj,params);
-          else if (isWatchValue(action)) {
-            evaluateModelValue(action);
-            me.updateWatchers();
-          }
           else if (field.url)
             document.location = field.url.replace(/\$key(\b|\W|$)?/, field.key+"$1");
       }
