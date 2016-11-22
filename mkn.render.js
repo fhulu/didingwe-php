@@ -1168,6 +1168,7 @@ mkn.render = function(options)
 
     var funcs = [];
     var index = 0;
+    var id = field.id;
     function setFunction(parent,key) {
 
       if (key == 'html') return;
@@ -1180,9 +1181,9 @@ mkn.render = function(options)
         if (!expr) return;
         var src;
         if (key.indexOf('on_') < 0)
-          src = "get_"+field.id+"_"+index+": function() {return ";
+          src = "get_"+id+"_"+index+": function() {return ";
         else
-          src = key+"_"+field.id+": function() { ";
+          src = key+"_"+id+": function() { ";
         src += expr.replace(/^~|`/g,'') + ";}";
         funcs.push(src);
         value = value.replace(expr, "${"+index+"}");
@@ -1208,31 +1209,46 @@ mkn.render = function(options)
   }
 
   var initModel = function(parent) {
-    var funcs = [];
     var vars = [];
     var field =parent.data('didi-field');
-    var src = "";
-    if (field.dd_init) $.each(field.dd_init, function(key, value) {
-      if (typeof value == 'string' || !$.isNumeric(value)) value = "'"+value+"'";
-      src += "var "+key+"="+value+";\n";
+
+    // add initial vars
+    if (field.dd_init) $.each(field.dd_init, function(key) {
       vars.push(key);
     });
+
+    // add input vars
     parent.find('input,select,textarea').addBack('input,select,textarea').each(function() {
       var field = $(this).data('didi-field');
       var id = field.id;
       if (vars.indexOf(id) < 0) vars.push(id);
-      src += "var "+id+"='';\n";
-      funcs.push("set_"+id+": function(v) {"+id+"=v;}");
     });
 
-    var index = 0;
+    // create set functions
+    var funcs = vars.map(function(v) {
+      return "set_"+v+": function(x) {"+v+"=x;}"
+    });
+
+    // append watchers functions
     parent.find('.didi-watcher').addBack('.didi-watcher').each(function() {
       var field = $(this).data('didi-field');
       funcs = funcs.concat(field['didi-functions']);
     });
-    src += "return {" + funcs.join(",\n") + "}";
+    if (!funcs.length) return;
+
+    // convert funcs to js source
+    var src = "\nreturn {" + funcs.join(",\n") + "}";
+
+    // convert vars and funcs to js source
+    if (vars.length) src = "var " + vars.join(",") + ";\n" + src;
+
+    // create model
     me.model = new Function(src)();
-    console.log("model", me.model)
+
+    // set inital vars
+    if (field.dd_init) $.each(field.dd_init, function(key, value) {
+      me.model["set_"+key](value);
+    });
   }
 
 
@@ -1241,15 +1257,12 @@ mkn.render = function(options)
     function update(obj, field, id) {
       if (!field || !field['didi-model']) return;
       $.each(field['didi-model'], function(key, value) {
+        if (key.indexOf('on_') == 0) return;
         var vars = value.regexCapture(/\$\{(\d+)\}/g);
-        var prefix = key.indexOf('on_') < 0? 'get_': key;
-        prefix += id+"_";
+        var prefix = "get_"+id+"_";
         vars.forEach(function(index) {
           var func = me.model[prefix+index];
-          if (key.indexOf('on_') == 0) return;
-          var result = func();
-          var prev = value;
-          field[key] = value = value.replace(new RegExp("\\$\\{"+index+"\\}",'g'), result);
+          field[key] = value = value.replace(new RegExp("\\$\\{"+index+"\\}",'g'), func());
           if (key == 'text') obj.text(value);
           if (key == 'value') obj.val(value)
         });
