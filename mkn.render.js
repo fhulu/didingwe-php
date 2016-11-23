@@ -1,10 +1,8 @@
 mkn.links = {};
-mkn.model = {};
 
 mkn.render = function(options)
 {
-  var searchModelRegex = /^~(.+)$|`([^`]+)`/g
-  var evalModelRegex = /(^~.+|`[^`]+`)/g
+  var searchModelRegex = /(^~.+$|`[^`]+`)/g
   var me = this
   me.invoker = options.invoker;
   var types = me.types = options.types;
@@ -13,7 +11,6 @@ mkn.render = function(options)
   me.sink = undefined;
   me.parent = options.parent;
   me.known = {};
-  me.root = {};
 
   var array_defaults = [ 'type', 'types', 'template', 'action', 'attr', 'wrap', 'default'];
   var geometry = ['left','right','width','top','bottom','height', 'line-height','max-height', 'max-width'];
@@ -420,6 +417,7 @@ mkn.render = function(options)
       deriveParent(field.template, field);
       this.expandValues(field, field.id, exclusions);
     }
+    setModelFunctions(field);
     return field;
   }
 
@@ -451,10 +449,11 @@ mkn.render = function(options)
   }
 
   this.render = function(parent, key) {
-    me.root = parent[key] = me.initField(parent[key], parent);
-    var obj = me.create(parent, key);
+    parent[key] = me.initField(parent[key], parent);
+    var obj = me.root = me.create(parent, key);
+    initModel(obj);
+    me.updateWatchers();
     obj.trigger('load');
-    if (initModel()) me.updateWatchers();
     return obj;
   }
 
@@ -522,6 +521,8 @@ mkn.render = function(options)
     setDisabled(obj, field);
 
     runJquery(obj, field);
+    obj.data('didi-field', field);
+    if ('didi-functions' in field) obj.addClass('didi-watcher');
     field['mkn-object'] = obj;
     initLinks(obj, field).then(function() {
       if (subitem_count) setValues(obj, field);
@@ -688,6 +689,7 @@ mkn.render = function(options)
     var events = {};
     if (field.action)
       events['click'] = [field];
+    var id = field.id;
     $.each(field, function(key, value) {
       if (key.indexOf('on_') != 0) return;
       var event = key.substr(3);
@@ -714,9 +716,9 @@ mkn.render = function(options)
           }
           if ($.isPlainObject(value))
             accept(e, obj, value);
-          else if (searchModelRegex.exec(value) !== null) {
-            field['mkn-injections-on_'+key][0]();
-            me.updateWatchers()
+          else if ('didi-model' in field && 'on_'+key in field['didi-model']) {
+            me.model["on_"+key+"_"+ id]();
+            me.updateWatchers();
           };
         });
       });
@@ -748,8 +750,7 @@ mkn.render = function(options)
 
     var id = field.id;
     obj.on('keyup input cut paste change', function() {
-      if (!(id in mkn.model)) return;
-      mkn.model[id] = obj.value();
+      me.model["set_"+id]($(this).value());
       me.updateWatchers();
     });
   };
@@ -1163,95 +1164,109 @@ mkn.render = function(options)
     sink.trigger(event, params);
   }
 
-  var initModel = function(expr) {
+  var setModelFunctions = function(field) {
 
-    var inject = function(expr) {
-      var captured = expr.regexCapture(/(?:^|[^.a-z_'"])([a-z_][\w]*)(?:[^'"]|$)/gi);
+    var funcs = [];
+    var index = 0;
+    function setFunction(parent,key) {
 
-      var vars = [];
-      $.each(captured, function(i, v) {
-        if (!(v in mkn.model)) mkn.model[v] = '';
-        if (!(v in vars)) vars.push(v);
-      });
-      var source = vars.map(function(v) {
-        return "var " + v + " = mkn.model['"+v+"']";
-      })
-      expr = expr.replace(/(\w+)(\s*[+*-]?=|[+-][+-])/g,"mkn.model['$1']$2"); // allow assignment/post-increment/decrement
-      expr = expr.replace(/([+-][+-])(\w+)([^.\[]|$)/g,"$1mkn.model['$2']$3"); // allow pre-increment/decrement
-      source = source.join(";") + "; return " + expr;
-      return new Function(source);
-    }
-
-
-    var search = function(key, value, parent) {
-      if (typeof key !== 'string' || key.indexOf('mkn-original-') == 0 || typeof value !== 'string') return false;
+      if (key == 'html') return;
+      var value = parent[key];
+      if (typeof value != 'string') return;
       var exprs = value.regexCapture(searchModelRegex);
-      var injections = [];
-      $.each(exprs, function(i, e) {
-        if (!e) return;
-        var injection = inject(e);
-        if (injection) injections.push(injection);
-      });
-      if (!injections.length) return false;
-      parent['mkn-injections-'+key] = injections;
-      parent['mkn-original-'+key] = value;
-      return true;
+      if (!exprs) return;
+      var replaced = false;
+      exprs.forEach(function(expr, i) {
+        if (!expr) return;
+        var src;
+        if (key.indexOf('on_') < 0)
+          src = "get_"+field.id+"_"+index+": function() {return ";
+        else
+          src = key+"_"+field.id+": function() { ";
+        src += expr.replace(/^~|`/g,'') + ";}";
+        funcs.push(src);
+        value = value.replace(expr, "${"+index+"}");
+        replaced = true;
+        ++index;
+      })
+      if (replaced)
+        parent['didi-model'][key] = value;
+    }
+    function setFunctions(parent) {
+      if (!parent) return;
+      parent['didi-model'] = {}
+      for (var key in parent) {
+        setFunction(parent, key);
+      }
     }
 
+    setFunctions(field);
+    setFunctions(field.style);
+    setFunctions(field.class);
+    if (funcs.length);
+      field['didi-functions'] = funcs;
+  }
 
-    if (me.root.dd_init) $.each(me.root.dd_init, function(key, val) {
-      mkn.model[key] = val;
+  var initModel = function(parent) {
+    var funcs = [];
+    var vars = [];
+    var field =parent.data('didi-field');
+    var src = "";
+    if (field.dd_init) $.each(field.dd_init, function(key, value) {
+      if (typeof value == 'string' || !$.isNumeric(value)) value = "'"+value+"'";
+      src += "var "+key+"="+value+";\n";
+      vars.push(key);
+    });
+    parent.find('input,select,textarea').addBack('input,select,textarea').each(function() {
+      var field = $(this).data('didi-field');
+      var id = field.id;
+      if (vars.indexOf(id) < 0) vars.push(id);
+      src += "var "+id+"='';\n";
+      funcs.push("set_"+id+": function(v) {"+id+"=v;}");
     });
 
-    var watching = false;
-    mkn.walkTree(me.root, function(key, value, parent) {
-      watching |= search(key, value, parent);
+    var index = 0;
+    parent.find('.didi-watcher').addBack('.didi-watcher').each(function() {
+      var field = $(this).data('didi-field');
+      funcs = funcs.concat(field['didi-functions']);
     });
-    return watching;
+    src += "return {" + funcs.join(",\n") + "}";
+    me.model = new Function(src)();
+    console.log("model", me.model)
   }
 
 
   me.updateWatchers = function() {
 
-    var evaluate = function(field, key) {
-      if (typeof key != 'string' || key.indexOf('mkn-original-') < 0 ) return false;
-      var orig = key;
-      key = key.substr(13);
-      if (key == 'html' || key.indexOf('on_') == 0) return false;
-      var injections = field['mkn-injections-'+key];
-      value = field[orig];
-      var exprs = value.regexCapture(evalModelRegex);
-      if (!exprs.length) return false;
-      $.each(exprs, function(i, e) {
-        if (e) value = value.replace(e, injections[i]());
-      });
-      field[key] = value;
-      if (key == 'text') field['mkn-object'].text(value);
-      return true;
+    function update(obj, field, id) {
+      if (!field || !field['didi-model']) return;
+      $.each(field['didi-model'], function(key, value) {
+        var vars = value.regexCapture(/\$\{(\d+)\}/g);
+        var prefix = key.indexOf('on_') < 0? 'get_': key;
+        prefix += id+"_";
+        vars.forEach(function(index) {
+          var func = me.model[prefix+index];
+          if (key.indexOf('on_') == 0) return;
+          var result = func();
+          var prev = value;
+          field[key] = value = value.replace(new RegExp("\\$\\{"+index+"\\}",'g'), result);
+          if (key == 'text') obj.text(value);
+          if (key == 'value') obj.val(value)
+        });
+      })
     }
-
-    var complete = function(field, watching) {
-      var obj = field['mkn-object'];
-      if (!watching || !obj) return watching;
+    me.root.find('.didi-watcher').addBack('.didi-watcher').each(function() {
+      var obj = $(this);
+      var field = obj.data('didi-field');
+      var id = field.id;
+      update(obj, field, id);
+      update(obj, field.style, id);
+      update(obj, field.class, id);
       setAttr(obj, field);
       setClass(obj, field);
       setStyle(obj, field);
       setVisible(obj, field);
       setDisabled(obj, field);
-      return false;
-    }
-
-    var loop = function(parent) {
-      var watching;
-      $.each(parent, function(key, value) {
-        if ($.isPlainObject(value) || $.isArray(value))
-          watching |= loop(value);
-        else if (evaluate(parent, key))
-          watching = true;
-      });
-      return complete(parent, watching);
-    }
-
-    loop(me.root);
+    })
   }
 }
