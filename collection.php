@@ -199,9 +199,9 @@ class collection
       $request = $this->page->request;
       $index = $request['sort'];
       if (!isset($index) || !is_numeric($index)) return;
-      $field = $args[$index];
+      list($field) = assoc_element($args[$index]);
       if (!$field) return;
-      $sorting = $args[$index] . " " . $request['sort_order'];
+      $sorting = $field . " " . $request['sort_order'];
     }
     else {
       $sorting = implode(',', $sorting);
