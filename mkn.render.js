@@ -743,7 +743,7 @@ mkn.render = function(options)
     var tag = obj.prop("tagName");
     if (!tag || ['input','select','textarea'].indexOf(tag.toLowerCase()) < 0) return;
 
-    var id = getFieldId(field)
+    var id = getModelId(field)
     obj.on('keyup input cut paste change', function() {
       me.model["set_"+id]($(this).value());
       me.updateWatchers();
@@ -1155,7 +1155,7 @@ mkn.render = function(options)
     sink.trigger(event, params);
   }
 
-  var getFieldId = function(field) {
+  var getModelId = function(field) {
     return field.attr && field.attr.type =='radio'? field.attr.name: field.id;
   }
 
@@ -1163,7 +1163,7 @@ mkn.render = function(options)
 
     var funcs = [];
     var index = 0;
-    var id = getFieldId(field);
+    var id = field.id;
     function setFunction(parent,key) {
 
       if (key == 'html') return;
@@ -1176,15 +1176,15 @@ mkn.render = function(options)
       else
         exprs = value.regexCapture(/(`[^`]+`)/g);
       var replaced = false;
-      var ret = /\breturn\s/gm.test(value)?"": " return ";
+      var ret = /\breturn\s/gm.test(value)?"": "\t\treturn ";
       exprs.forEach(function(expr, i) {
         if (!expr) return;
         var src;
         if (key.indexOf('on_') < 0)
-          src = "get_"+id+"_"+index+": function() {\n" + ret;
+          src = "\tget_"+id+"_"+index+": function() {\n"+ret;
         else
-          src = key+"_"+id+": function() {\n";
-        src += expr.replace(/^~|`/g,'') + "\n}";
+          src = "\t"+key+"_"+id+": function() {\n";
+        src += expr.replace(/^~|`/g,'') + "\n\t}";
         funcs.push(src);
         value = value.replace(expr, "${"+index+"}");
         replaced = true;
@@ -1220,13 +1220,13 @@ mkn.render = function(options)
     // add input vars
     parent.find('input,select,textarea').addBack('input,select,textarea').each(function() {
       var field = $(this).data('didi-field');
-      var id = getFieldId(field);
+      var id = getModelId(field);
       if (vars.indexOf(id) < 0) vars.push(id);
     });
 
     // create set functions
     var funcs = vars.map(function(v) {
-      return "set_"+v+": function(x) {"+v+"=x;}"
+      return "\tset_"+v+": function(x) {"+v+"=x;}"
     });
 
     // append watchers functions
@@ -1237,7 +1237,7 @@ mkn.render = function(options)
     if (!funcs.length) return;
 
     // convert funcs to js source
-    var src = "\nreturn {" + funcs.join(",\n") + "}";
+    var src = "\nreturn {\n" + funcs.join(",\n") + "}";
 
     // convert vars and funcs to js source
     if (vars.length) src = "var " + vars.join(",") + ";\n" + src;
@@ -1277,7 +1277,7 @@ mkn.render = function(options)
     me.root.find('.didi-watcher').addBack('.didi-watcher').each(function() {
       var obj = $(this);
       var field = obj.data('didi-field');
-      var id = getFieldId(field);
+      var id = field.id
       update(obj, field, id);
       update(obj, field.style, id);
       update(obj, field.class, id);

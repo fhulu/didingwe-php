@@ -11,9 +11,7 @@ model_test:
     # - template: none
     - color: { type: dropdown }
     - checked: { type: checkbox }
-    - type: radiobox
-    - switched: { name: "On", value: 1 }
-    - switched: { name: "Off", value: 0 }
+    - switched: { type: radiogroup, options: ["on","off"] }
     - string_test:
         type: p
         text: color `color` checked `checked` switched `switched`
@@ -33,9 +31,9 @@ model_test:
             return default_text_color;
         value: You chose `color`
         on_mousemove: ~++moves;
-    - show_test: { show: ~color=='blue', value: ~colors.indexOf(color)+1 }
+    - show_test: { show: ~checked, value: ~colors.indexOf(color)+1 }
     - checked_and_switched:
-        disabled: ~checked && switched
+        disabled: ~checked && switched == 'on'
         value: ~moves
 
 

@@ -634,25 +634,17 @@ radiobox:
   type: input
   value: $id
   immutable: [value]
-  attr: { type: radio, value: $value, id: ""}
-  style:
-    width: 24px
-    height: 24px
+  attr: { type: radio, value: $value, id: "", name: $parent_id}
 
 
 radiogroup:
   templates: div
   class: radio
   text: $options
-  group: $id
-  layout:
-    type: label_left
+  layout: { type: label_left }
   options:
     - template: $layout
-    - type:
-        type: radiobox
-        derive: [group]
-        attr: { name: $group }
+    - type: radiobox
 
 
 row_input:
