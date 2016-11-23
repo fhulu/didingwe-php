@@ -10,6 +10,8 @@
   padding: 0;
 }
 
+.didi:focus{outline:none}
+
 .error
 {
   display: block;

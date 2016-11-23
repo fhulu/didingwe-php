@@ -15,6 +15,7 @@ menu_item:
   trap: [click]
   type: container
   contents: [menu_link]
+  attr: { tabindex: $number}
 
 menu_link:
   tag: a
