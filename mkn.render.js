@@ -1258,7 +1258,13 @@ mkn.render = function(options)
         var prefix = "get_"+id+"_";
         vars.forEach(function(index) {
           var func = me.model[prefix+index];
-          field[key] = value = value.replace(new RegExp("\\$\\{"+index+"\\}",'g'), func());
+          var result = func();
+          var regex = "\\$\\{"+index+"\\}";
+          if (new RegExp('^'+regex+'$','g').test(value))
+            value = result;
+          else
+            value =  value.replace(new RegExp(regex,'g'), result);
+          field[key] = value;
           if (key == 'text') obj.text(value);
           if (key == 'value') obj.val(value)
         });

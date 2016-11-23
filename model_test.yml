@@ -27,7 +27,7 @@ model_test:
           color: ~colors[(colors.indexOf(color)+3) % colors.length]
         value: You chose `color`
         on_mousemove: ~++moves;
-    - show_test: { show: ~checked  }
+    - show_test: { show: ~color=='blue' }
     - checked_and_switched:
         disabled: ~checked && switched
         value: ~moves
