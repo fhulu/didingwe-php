@@ -1167,14 +1167,10 @@ mkn.render = function(options)
       if (typeof value != 'string') return;
       value = value.trim();
       var exprs;
-      if (value[0] == '~') {
-        value = value.substr(1);
+      if (value[0] == '~')
         exprs = [value];
-      }
-      else {
+      else
         exprs = value.regexCapture(/(`[^`]+`)/g);
-      }
-      if (!exprs) return;
       var replaced = false;
       var ret = /\breturn\s/gm.test(value)?"": " return ";
       exprs.forEach(function(expr, i) {
@@ -1184,7 +1180,7 @@ mkn.render = function(options)
           src = "get_"+id+"_"+index+": function() {\n" + ret;
         else
           src = key+"_"+id+": function() {\n";
-        src += expr.replace(/`/g,'') + "\n}";
+        src += expr.replace(/^~|`/g,'') + "\n}";
         funcs.push(src);
         value = value.replace(expr, "${"+index+"}");
         replaced = true;
