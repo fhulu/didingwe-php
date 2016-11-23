@@ -4,6 +4,8 @@ model_test:
     moves: 0
     color: red
     colors: [red,orange,yellow,green,blue,indigo,violet]
+    default_text_color: white
+    text_color: {orange: black, yellow: black, white: black }
   type: input_page
   inputs:
     # - template: none
@@ -24,10 +26,14 @@ model_test:
     - style_test:
         style:
           background-color: ~color
-          color: ~colors[(colors.indexOf(color)+3) % colors.length]
+          # color: ~colors[(colors.indexOf(color)+3) % colors.length]
+          color: |
+            ~if (text_color[color])
+               return text_color[color];
+            return default_text_color;
         value: You chose `color`
         on_mousemove: ~++moves;
-    - show_test: { show: ~checked  }
+    - show_test: { show: ~checked, value: ~colors.indexOf(color)+1  }
     - checked_and_switched:
         disabled: ~checked && switched
         value: ~moves
