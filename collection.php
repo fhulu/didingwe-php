@@ -193,13 +193,22 @@ class collection
       $sql .= " limit $size";
   }
 
-  function set_sorting(&$sql, $sorting, $group=true)
+  function set_sorting(&$sql, $sorting, $group=true, $args=[])
   {
-    if (empty($sorting)) return;
+    if (empty($sorting)) {
+      $request = $this->page->request;
+      $index = $request['sort'];
+      if (!isset($index) || !is_numeric($index)) return;
+      $field = $args[$index];
+      if (!$field) return;
+      $sorting = $args[$index] . " " . $request['sort_order'];
+    }
+    else {
+      $sorting = implode(',', $sorting);
+    }
     if ($group)
-      $sql = "select * from ($sql) tmp_sorting order by ".implode(',', $sorting);
-    else
-      $sql .= " order by ".implode(',', $sorting);
+      $sql = "select * from ($sql) tmp_sorting";
+    $sql .= " order by $sorting";
   }
 
   function wrap_query(&$sql, $args)
@@ -237,7 +246,7 @@ class collection
     $sql = "select $selection from $table m $joins $where $search";
     $this->set_limits($sql, $offset, $size);
     $wrapped = $this->wrap_query($sql, $args);
-    $this->set_sorting($sql, $sorting, !$wrapped);
+    $this->set_sorting($sql, $sorting, !$wrapped, $args);
     return $this->page->translate_sql($sql);
   }
 
