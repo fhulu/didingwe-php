@@ -33,7 +33,7 @@ model_test:
             return default_text_color;
         value: You chose `color`
         on_mousemove: ~++moves;
-    - show_test: { show: ~checked, value: ~colors.indexOf(color)+1  }
+    - show_test: { show: ~color=='blue', value: ~colors.indexOf(color)+1 }
     - checked_and_switched:
         disabled: ~checked && switched
         value: ~moves

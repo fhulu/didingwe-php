@@ -416,7 +416,6 @@ mkn.render = function(options)
       deriveParent(field.template, field);
       this.expandValues(field, field.id, exclusions);
     }
-    setModelFunctions(field);
     return field;
   }
 
@@ -478,6 +477,7 @@ mkn.render = function(options)
     setAttr(obj, field);
     setClass(obj, field);
     setStyle(obj, field);
+    setModelFunctions(field);
     if (field.key === undefined) field.key = options.key;
     var values = $.extend({}, this.types, field);
     var matches = getMatches(field.html, /\$(\w+)/g);
@@ -743,7 +743,7 @@ mkn.render = function(options)
     var tag = obj.prop("tagName");
     if (!tag || ['input','select','textarea'].indexOf(tag.toLowerCase()) < 0) return;
 
-    var id = field.id;
+    var id = getFieldId(field)
     obj.on('keyup input cut paste change', function() {
       me.model["set_"+id]($(this).value());
       me.updateWatchers();
@@ -1155,11 +1155,15 @@ mkn.render = function(options)
     sink.trigger(event, params);
   }
 
+  var getFieldId = function(field) {
+    return field.attr && field.attr.type =='radio'? field.attr.name: field.id;
+  }
+
   var setModelFunctions = function(field) {
 
     var funcs = [];
     var index = 0;
-    var id = field.id;
+    var id = getFieldId(field);
     function setFunction(parent,key) {
 
       if (key == 'html') return;
@@ -1216,7 +1220,7 @@ mkn.render = function(options)
     // add input vars
     parent.find('input,select,textarea').addBack('input,select,textarea').each(function() {
       var field = $(this).data('didi-field');
-      var id = field.id;
+      var id = getFieldId(field);
       if (vars.indexOf(id) < 0) vars.push(id);
     });
 
@@ -1258,7 +1262,13 @@ mkn.render = function(options)
         var prefix = "get_"+id+"_";
         vars.forEach(function(index) {
           var func = me.model[prefix+index];
-          field[key] = value = value.replace(new RegExp("\\$\\{"+index+"\\}",'g'), func());
+          var result = func();
+          var regex = "\\$\\{"+index+"\\}";
+          if (new RegExp('^'+regex+'$','g').test(value))
+            value = result;
+          else
+            value =  value.replace(new RegExp(regex,'g'), result);
+          field[key] = value;
           if (key == 'text') obj.text(value);
           if (key == 'value') obj.val(value)
         });
@@ -1267,7 +1277,7 @@ mkn.render = function(options)
     me.root.find('.didi-watcher').addBack('.didi-watcher').each(function() {
       var obj = $(this);
       var field = obj.data('didi-field');
-      var id = field.id;
+      var id = getFieldId(field);
       update(obj, field, id);
       update(obj, field.style, id);
       update(obj, field.class, id);
