@@ -35,6 +35,8 @@ change_password:
   steps:
     - check_otp
     - update_password
+  modal:
+    dialog: {class: [col s12 m8 l7]}
 
 check_otp:
   type: input_page
@@ -222,7 +224,7 @@ forgot_password:
     - check_otp: { clear: yes }
     - update_password: { prev: no}
   modal:
-    dilaog: {class: [col s12 m8 l7]}
+    dialog: {class: [col s12 m8 l7]}
 
 history:
   access: [admin]
