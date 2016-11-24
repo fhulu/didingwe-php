@@ -745,8 +745,8 @@ mkn.render = function(options)
 
     var id = getModelId(field)
     obj.on('keyup input cut paste change', function() {
-      me.model["set_"+id]($(this).value());
-      me.updateWatchers();
+      if (me.model["set_"+id]($(this).value()))
+      	me.updateWatchers();
     });
   };
 
@@ -1226,7 +1226,8 @@ mkn.render = function(options)
 
     // create set functions
     var funcs = vars.map(function(v) {
-      return "\tset_"+v+": function(x) {"+v+"=x;}"
+      return "\tset_"+v+": function(x) {\n\t\tvar changed = this.changed_"+v+"(x);\n\t\t_old_"+v+"="+v+";\n\t\t"+v+"=x\n\t\treturn changed;\n\t},"
+        + "\n\tchanged_"+v+": function(x) { return x!=="+v+";}"
     });
 
     // append watchers functions
@@ -1240,7 +1241,9 @@ mkn.render = function(options)
     var src = "\nreturn {\n" + funcs.join(",\n") + "}";
 
     // convert vars and funcs to js source
-    if (vars.length) src = "var " + vars.join(",") + ";\n" + src;
+    if (vars.length) src = "var " + vars.map(function(v) {
+      return v+",_old_"+v;
+    }).join(",") + src;
 
     // create model
     me.model = new Function(src)();
