@@ -24,6 +24,18 @@ activate_email:
     Regards,<br><br>
     <b>Customer Operations</b>
 
+
+change_password:
+  type: wizard
+  action: none
+  read:
+    - collection.values: [session, $sid, email: user, user.first_name, user.last_name, user.cellphone]
+    - write_session: [email,first_name,last_name,cellphone]
+    - clear_values
+  steps:
+    - check_otp
+    - update_password
+
 check_otp:
   type: input_page
   name: One Time Pin
@@ -418,6 +430,7 @@ profile:
     - clear_values: [password,role,attempts]
   actions:
     - profile_update: { validate: delta }
+    - change_password: { action: dialog }
 
 profile_update:
   name: Update Profile

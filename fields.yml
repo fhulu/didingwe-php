@@ -51,7 +51,7 @@ change_password:
   desc: Change your current password
   access: auth
   action: dialog
-  url: /password_changer/change
+  url: /user/change_password
 
 
 close:
