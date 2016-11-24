@@ -833,7 +833,7 @@ vspace:
   space: 20
   template: none
   attr: { id: "" }
-  class: [clear-after,widest]
+  class: [clear widest block]
   style: {padding-bottom: $space}
 
 vspaced:
