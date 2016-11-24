@@ -712,7 +712,7 @@ mkn.render = function(options)
           if ($.isPlainObject(value))
             accept(e, obj, value);
           else if ('didi-model' in field && 'on_'+key in field['didi-model']) {
-            me.model["on_"+key+"_"+ id]();
+            me.model["on_"+key+"_"+ id](obj);
             me.updateWatchers();
           };
         });
@@ -745,8 +745,8 @@ mkn.render = function(options)
 
     var id = getModelId(field)
     obj.on('keyup input cut paste change', function() {
-      me.model["set_"+id]($(this).value());
-      me.updateWatchers();
+      if (me.model["set_"+id]($(this).value()))
+      	me.updateWatchers();
     });
   };
 
@@ -1179,9 +1179,9 @@ mkn.render = function(options)
         if (!expr) return;
         var src;
         if (key.indexOf('on_') < 0)
-          src = "\tget_"+id+"_"+index+": function() {\n"+ret;
+          src = "\tget_"+id+"_"+index+": function(obj) {\n"+ret;
         else
-          src = "\t"+key+"_"+id+": function() {\n";
+          src = "\t"+key+"_"+id+": function(obj) {\n";
         src += expr.replace(/^~|`/g,'') + "\n\t}";
         funcs.push(src);
         value = value.replace(expr, "${"+index+"}");
@@ -1224,7 +1224,8 @@ mkn.render = function(options)
 
     // create set functions
     var funcs = vars.map(function(v) {
-      return "\tset_"+v+": function(x) {"+v+"=x;}"
+      return "\tset_"+v+": function(x) {\n\t\tvar changed = this.changed_"+v+"(x);\n\t\t_old_"+v+"="+v+";\n\t\t"+v+"=x\n\t\treturn changed;\n\t},"
+        + "\n\tchanged_"+v+": function(x) { return x!=="+v+";}"
     });
 
     // append watchers functions
@@ -1238,7 +1239,9 @@ mkn.render = function(options)
     var src = "\nreturn {\n" + funcs.join(",\n") + "}";
 
     // convert vars and funcs to js source
-    if (vars.length) src = "var " + vars.join(",") + ";\n" + src;
+    if (vars.length) src = "var " + vars.map(function(v) {
+      return v+",_old_"+v;
+    }).join(",") + src;
 
     // create model
     me.model = new Function(src)();
@@ -1260,7 +1263,7 @@ mkn.render = function(options)
         var prefix = "get_"+id+"_";
         vars.forEach(function(index) {
           var func = me.model[prefix+index];
-          var result = func();
+          var result = func(obj);
           var regex = "\\$\\{"+index+"\\}";
           if (new RegExp('^'+regex+'$','g').test(value))
             value = result;
