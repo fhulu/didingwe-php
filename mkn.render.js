@@ -712,7 +712,7 @@ mkn.render = function(options)
           if ($.isPlainObject(value))
             accept(e, obj, value);
           else if ('didi-model' in field && 'on_'+key in field['didi-model']) {
-            me.model["on_"+key+"_"+ id]();
+            me.model["on_"+key+"_"+ id](obj);
             me.updateWatchers();
           };
         });
@@ -1181,9 +1181,9 @@ mkn.render = function(options)
         if (!expr) return;
         var src;
         if (key.indexOf('on_') < 0)
-          src = "\tget_"+id+"_"+index+": function() {\n"+ret;
+          src = "\tget_"+id+"_"+index+": function(obj) {\n"+ret;
         else
-          src = "\t"+key+"_"+id+": function() {\n";
+          src = "\t"+key+"_"+id+": function(obj) {\n";
         src += expr.replace(/^~|`/g,'') + "\n\t}";
         funcs.push(src);
         value = value.replace(expr, "${"+index+"}");
@@ -1262,7 +1262,7 @@ mkn.render = function(options)
         var prefix = "get_"+id+"_";
         vars.forEach(function(index) {
           var func = me.model[prefix+index];
-          var result = func();
+          var result = func(obj);
           var regex = "\\$\\{"+index+"\\}";
           if (new RegExp('^'+regex+'$','g').test(value))
             value = result;
