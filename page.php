@@ -1138,6 +1138,7 @@ class page
         $parameter = array($parameter);
 
       $this->replace_sid($method);
+      $this->replace_fields($method);
       $this->replace_sid($parameter);
       log::debug_json("REPLY ACTION $method", $parameter);
       if ($this->reply_if($method, $parameter)) continue;
