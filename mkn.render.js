@@ -990,8 +990,6 @@ mkn.render = function(options)
         default:
           if (action[0] == '.')
             obj[action.substring(1)].apply(obj,params);
-          else if (field.url)
-            document.location = field.url.replace(/\$key(\b|\W|$)?/, field.key+"$1");
       }
     }
 
