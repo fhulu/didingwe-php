@@ -59,7 +59,6 @@ $.widget( "custom.wizard", {
       this.loadPage(page, index);
     }
     else {
-      this.updateNavigation(index, props);
       page.show().triggerHandler('reload');
     }
 
@@ -121,8 +120,8 @@ $.widget( "custom.wizard", {
     page.empty();
     mkn.loadPage({path: path, key: options.key}, page).then(function(info, options) {
       info.fields = mkn.merge(me.options.step, info.fields);
+      info.fields = mkn.merge(info.fields, props);
       info.fields.path = info.path;
-      console.log("info.fields", info.fields);
       me.updateNavigation(index, info.fields);
       var object = mkn.createPage(options, info, page);
       object.find('.wizard-next').bindFirst('click', function() {
