@@ -9,7 +9,6 @@ slideshow:
   attr: { current_slide: $start_slide, zIndex: $zIndex}
   contents: $slides
   effects: [drop]
-  class: [slideshow, relative, grid s1 m1 l1]
   slides:
     - default:
         derive: [zIndex]
