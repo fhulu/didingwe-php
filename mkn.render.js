@@ -183,6 +183,7 @@ mkn.render = function(options)
       var item = items[i];
       if (!$.isPlainObject(item) || item.id !== 'merge') continue;
       var array = parent[item.name];
+      if (!array) continue;
       items.splice(i,1);
       objectify(array);
       array.forEach(function(value, j) {
@@ -504,7 +505,7 @@ mkn.render = function(options)
         continue;
       }
 
-      value.path = field.path+'/'+code;
+      if (!value.path) value.path = field.path+'/'+code;
       value.id = code;
       var child = this.create(field, code, true);
       if (table_tag)
