@@ -24,6 +24,20 @@ activate_email:
     Regards,<br><br>
     <b>Customer Operations</b>
 
+
+change_password:
+  type: wizard
+  action: none
+  read:
+    - collection.values: [session, $sid, email: user, user.first_name, user.last_name, user.cellphone]
+    - write_session: [email,first_name,last_name,cellphone]
+    - clear_values
+  steps:
+    - check_otp
+    - update_password
+  modal:
+    dialog: {class: [col s12 m8 l7]}
+
 check_otp:
   type: input_page
   name: One Time Pin
@@ -187,6 +201,30 @@ enter_credentials:
     - confirm_password
   post:
     - write_session: [title,first_name,last_name,cellphone,email,password]
+
+enter_email:
+  desc: >
+    Enter the email you used to register on the system below to start
+    changing your password
+  type: input_page
+  inputs:
+    - email: { valid: is_registered }
+  post:
+    - collection.values: [user, $email, first_name, last_name, cellphone]
+    - write_session: [email, first_name, last_name, cellphone]
+
+
+forgot_password:
+  url: /user/forgot_password
+  desc: Reset your password if you have forgotten it
+  position: { my: 'top', at: 'top+50' }
+  type: wizard
+  steps:
+    - enter_email
+    - check_otp: { clear: yes }
+    - update_password: { prev: no}
+  modal:
+    dialog: {class: [col s12 m8 l7]}
 
 history:
   access: [admin]
@@ -394,6 +432,7 @@ profile:
     - clear_values: [password,role,attempts]
   actions:
     - profile_update: { validate: delta }
+    - change_password: { action: dialog }
 
 profile_update:
   name: Update Profile
@@ -413,3 +452,20 @@ register:
     - check_otp: { clear: true }
     - confirm_registration: { clear: true}
     - complete_registration: { prev: false}
+
+update_password:
+  type: input_page
+  name: Change Password
+  desc: Please enter your new password and type it again to confirm it.
+  inputs:
+    - type: password_input
+    - password
+    - confirm_password
+  actions:
+    - update_password
+  post:
+    - read_session: email
+    - collection.update: [user, $email, password: /password('$password')]
+    - clear_values
+    - close_dialog: Password has been changed successfully
+  audit: $email
