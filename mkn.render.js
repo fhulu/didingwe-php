@@ -1218,6 +1218,7 @@ mkn.render = function(options)
     // add input vars
     parent.find('input,select,textarea').addBack('input,select,textarea').each(function() {
       var field = $(this).data('didi-field');
+      if (!field) return;
       var id = getModelId(field);
       if (vars.indexOf(id) < 0) vars.push(id);
     });
