@@ -21,7 +21,7 @@ $.fn.showNextSlide = function(duration) {
     effect = effects[index];
   }
 
-  current.toggle( duration, function() {
+  current.toggle(effect, duration, "linear", function() {
     current.css('z-index', zIndex).hide();
   });
 }
