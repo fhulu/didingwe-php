@@ -90,11 +90,11 @@ $.widget( "custom.wizard", {
       })
     }
     else if (index != me.first_step)
-      info.actions.push({prev: opts.prev});
+      info.actions.unshift({prev: opts.prev});
 
     if (info.next == false || index === last_step) return;
     opts.next.path = info.path;
-    info.actions.unshift({next: opts.next} )
+    info.actions.push({next: opts.next} )
   },
 
 
