@@ -345,7 +345,9 @@ login:
     - auth.login: [$new_session_id, $role, $base_roles]
     - close_dialog
     - redirect: $start_url
-  audit: $email
+  audit:
+    detail: $email, $HTTP_USER_AGENT, $REMOTE_ADDR, $REMOTE_HOST
+    post: [clear_values]
   modal:
     dialog:
       position: { my: 'top', at: 'top+10' }
