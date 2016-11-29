@@ -461,7 +461,7 @@ update_password:
     - type: password_input
     - password
     - confirm_password
-  actions:
+  navigate:
     - update_password
   post:
     - read_session: email

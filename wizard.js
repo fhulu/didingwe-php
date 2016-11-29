@@ -79,7 +79,7 @@ $.widget( "custom.wizard", {
     bm.addClass(style);
   },
 
-  updateNavigation: function(index, info) {
+  updateNavigation: function(index, info, page) {
     var me = this;
     var opts = me.options;
     var last_step = me.options.steps.length-1;
@@ -89,11 +89,20 @@ $.widget( "custom.wizard", {
       })
     }
     else if (index != me.first_step)
-      info.actions.unshift({prev: opts.prev});
+      info.navigate.unshift({prev: opts.prev});
 
-    if (info.next == false || index === last_step) return;
-    opts.next.path = info.path;
-    info.actions.push({next: opts.next} )
+    if (info.next != false && index != last_step) {
+      opts.next.path = info.path;
+      info.navigate.push({next: opts.next});
+    }
+
+    info.navigation.path = info.path;
+    var nav = opts.render.create(info, 'navigation', true);
+    nav.find('.wizard-next').bindFirst('click', function() {
+      if (me.next_step !== undefined) return;
+      me.next_step = typeof info.next === 'string'? info.next: index+1;
+    });
+    page.append(nav);
   },
 
 
@@ -122,11 +131,8 @@ $.widget( "custom.wizard", {
       info.fields = mkn.merge(me.options.step, info.fields);
       info.fields = mkn.merge(info.fields, props);
       info.fields.path = info.path;
-      me.updateNavigation(index, info.fields);
       var object = mkn.createPage(options, info, page);
-      object.find('.wizard-next').bindFirst('click', function() {
-        me.next_step = index+1;
-      });
+      me.updateNavigation(index, info.fields, page);
       page.show();
     });
   },

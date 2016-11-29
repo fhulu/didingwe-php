@@ -38,9 +38,10 @@ wizard:
     type: empty
     class: [wizard-page]
   step:
-    actions_pane:
-      class: [wizard-navigation,widest]
-    actions: []
+    class: [wizard-step]
+    derive: [navigation]
+    navigate:
+      - type: submit
   prev:
     type: button
     name: Previous
@@ -53,6 +54,11 @@ wizard:
     name: Next
     desc: Go to next step
     class: [wizard-next]
+  navigation:
+    tag: div
+    class: [wizard-navigation]
+    derive: [navigate]
+    text: $navigate
 
 
 wizard_jump:
