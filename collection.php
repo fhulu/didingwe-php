@@ -307,12 +307,10 @@ class collection
   {
     $args = page::parse_args(func_get_args());
     page::verify_args($args, "collection.insert", 3);
-    list($collection, $identifier) = $this->extract_header($args);
+    list($collection, $identifier) = array_splice($args, 0, 2);
     $table = $this->get_table($collection);
     $sql = "insert into $table(version,collection,identifier,attribute,value) values";
     $identifier_func = "last_insert_id()";
-    list($alias,$identifier) = assoc_element($identifier);
-    if (!is_null($value)) $identifier = $value;
     foreach($args as &$arg) {
       list($name,$value) = $this->page->get_sql_pair($arg);
       $name = addslashes($name);
