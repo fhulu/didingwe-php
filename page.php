@@ -35,7 +35,7 @@ class page
     'style', 'template', 'valid');
   static $user_roles = array('public');
   static $non_mergeable = array('action', 'attr', 'audit', 'call', 'clear_session',
-    'clear_values','error', 'load_lineage', 'post', 'read_session', 'refresh', 'show_dialog',
+    'clear_values','error', 'for_each', 'load_lineage', 'post', 'read_session', 'refresh', 'show_dialog',
     'sql_insert', 'sql_update', 'style', 'trigger', 'valid', 'validate', 'write_session');
   var $request;
   var $object;
