@@ -33,13 +33,17 @@ wizard:
       derive: [name]
     text: $step_no$step_title
   contents: [$synopsis,$bookmarks]
-  step:
+  steps: []
+  step_container:
     type: empty
     class: [wizard-page]
-  steps: []
+  step:
+    class: [wizard-step]
+    derive: [navigation]
+    navigate:
+      - type: submit
   prev:
     type: button
-    show: no
     name: Previous
     desc: Go to previous step
     action: trigger
@@ -47,18 +51,14 @@ wizard:
     class: [wizard-prev]
   next:
     type: submit
-    show: no
     name: Next
     desc: Go to next step
     class: [wizard-next]
   navigation:
-    type: container
+    tag: div
     class: [wizard-navigation]
-    derive: [navigate,parent_path,prev,next]
-    contents: [merge: navigate]
-  navigate:
-    - $prev
-    - $next
+    derive: [navigate]
+    text: $navigate
 
 
 wizard_jump:

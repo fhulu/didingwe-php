@@ -52,67 +52,49 @@ class collection
 
   function get_selection($table, $args, &$where, &$sorting, &$primary_attribute)
   {
-    $identifier = "";
-    $primary = [];
-    $sub_fields = [];
-    $index = 0;
-    $identifier_pos = 0;
+    $has_primary = false;
     foreach($args as &$arg) {
       list($name,$alias) = $this->get_name_alias($arg);
       if ($alias[0] == '/') continue;
       $this->update_sort_order($sorting, $name, $alias);
 
       if ($name == 'identifier') {
-        $identifier = "m.$name $alias";
-        $identifier_pos = $index;
+        $selection[] = "m.$name $alias";
       }
-      else if (empty($primary) && strpos($name, '.') === false)
-        $primary = [$name, $alias];
+      else if (!$has_primary && strpos($name, '.') === false) {
+        $selection[] = "m.value $alias";
+        $has_primary = [$name, $alias];
+        $where .= " and m.attribute  = '$name'";
+      }
       else
-        $sub_fields[] = [$name,$alias];
+        $selection[] = $this->get_subquery($table, $name, $alias);
       ++$index;
     }
-    $sub_queries = $this->get_subqueries($table, $sub_fields);
-    $selection = [];
-    if (!empty($primary)) {
-      $primary_attribute = $primary[0];
-      $where .= " and m.attribute  = '$primary[0]'";
-      $selection[] = "m.value $primary[1]";
-    }
-    $selection[] = $sub_queries;
-    if ($identifier)
-      array_splice($selection, $identifier_pos, 0, [$identifier]);
     return implode(",", array_filter($selection));
   }
 
-  function get_subqueries($table, $fields)
+  function get_subquery($table, $name, $alias)
   {
-    global $config;
-    $queries = [];
-    foreach($fields as $name_alias) {
-      list($name,$alias) = $name_alias;
-      if ($name[0] == '/') continue;
-      $name = addslashes($name);
-      $alias = addslashes($alias);
-      list($foreign_key, $foreign_name) = explode('.', $name);
-      $value = "value";
-      if (!isset($foreign_name))
-        $query = "select group_concat($value) from $table where collection = m.collection
-             and version <= m.version and identifier=m.identifier and attribute = '$name'";
+    if ($name[0] == '/') return;
+    $name = addslashes($name);
+    $alias = addslashes($alias);
+    list($foreign_key, $foreign_name) = explode('.', $name);
+    $value = "value";
+    if (!isset($foreign_name))
+      $query = "select group_concat($value) from $table where collection = m.collection
+           and version <= m.version and identifier=m.identifier and attribute = '$name'";
 
-      else {
-        if ($alias == $name) $alias = $foreign_name;
-        $name = $foreign_name;
-        $sub_table = $this->get_table($foreign_key);
-        $query =
-          "select group_concat($value) from $sub_table where collection = '$foreign_key' and version <= m.version and attribute = '$foreign_name'
-            and identifier in (
-              select value from $table where collection = m.collection and version <= m.version
-                and identifier=m.identifier and attribute = '$foreign_key' order by version desc)";
-      }
-      $queries[] = "($query order by version desc limit 1) $alias";
+    else {
+      if ($alias == $name) $alias = $foreign_name;
+      $name = $foreign_name;
+      $sub_table = $this->get_table($foreign_key);
+      $query =
+        "select group_concat($value) from $sub_table where collection = '$foreign_key' and version <= m.version and attribute = '$foreign_name'
+          and identifier in (
+            select value from $table where collection = m.collection and version <= m.version
+              and identifier=m.identifier and attribute = '$foreign_key' order by version desc)";
     }
-    return implode(",", $queries);
+    return "($query order by version desc limit 1) $alias";
   }
 
 
@@ -211,13 +193,22 @@ class collection
       $sql .= " limit $size";
   }
 
-  function set_sorting(&$sql, $sorting, $group=true)
+  function set_sorting(&$sql, $sorting, $group=true, $args=[])
   {
-    if (empty($sorting)) return;
+    if (empty($sorting)) {
+      $request = $this->page->request;
+      $index = $request['sort'];
+      if (!isset($index) || !is_numeric($index)) return;
+      list($field) = assoc_element($args[$index]);
+      if (!$field) return;
+      $sorting = $field . " " . $request['sort_order'];
+    }
+    else {
+      $sorting = implode(',', $sorting);
+    }
     if ($group)
-      $sql = "select * from ($sql) tmp_sorting order by ".implode(',', $sorting);
-    else
-      $sql .= " order by ".implode(',', $sorting);
+      $sql = "select * from ($sql) tmp_sorting";
+    $sql .= " order by $sorting";
   }
 
   function wrap_query(&$sql, $args)
@@ -255,7 +246,7 @@ class collection
     $sql = "select $selection from $table m $joins $where $search";
     $this->set_limits($sql, $offset, $size);
     $wrapped = $this->wrap_query($sql, $args);
-    $this->set_sorting($sql, $sorting, !$wrapped);
+    $this->set_sorting($sql, $sorting, !$wrapped, $args);
     return $this->page->translate_sql($sql);
   }
 
@@ -316,12 +307,10 @@ class collection
   {
     $args = page::parse_args(func_get_args());
     page::verify_args($args, "collection.insert", 3);
-    list($collection, $identifier) = $this->extract_header($args);
+    list($collection, $identifier) = array_splice($args, 0, 2);
     $table = $this->get_table($collection);
     $sql = "insert into $table(version,collection,identifier,attribute,value) values";
     $identifier_func = "last_insert_id()";
-    list($alias,$identifier) = assoc_element($identifier);
-    if (!is_null($value)) $identifier = $value;
     foreach($args as &$arg) {
       list($name,$value) = $this->page->get_sql_pair($arg);
       $name = addslashes($name);

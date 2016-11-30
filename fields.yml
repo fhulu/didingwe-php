@@ -51,7 +51,7 @@ change_password:
   desc: Change your current password
   access: auth
   action: dialog
-  url: /password_changer/change
+  url: /user/change_password
 
 
 close:
@@ -163,8 +163,9 @@ first_name:
   valid: name
 
 forgot_password:
+  access: public
   desc: Click here if you have forgotten your password and you need to reset it
-  url: /password_changer/forgot
+  url: /user/forgot_password
 
 full_name:
   desc: Full name and surname

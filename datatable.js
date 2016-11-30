@@ -228,16 +228,16 @@
       if (page > 1) prev.removeAttr('disabled');
     },
 
-    bindSort: function(th, field)
+    bindSort: function(th, field, index)
     {
       var self = this;
       th.click(function() {
         th.siblings().attr('sort','');
         var order = 'asc';
-        if (self.params.sort === field)
+        if (self.params.sort == index)
           order = th.attr('sort')==='asc'?'desc':'asc';
         th.attr('sort', order);
-        self.params.sort = field;
+        self.params.sort = index;
         self.params.sort_order = order;
         self.refresh();
       });
@@ -272,7 +272,7 @@
         }
         ++j;
         if (self.hasFlag('sortable'))
-          self.bindSort(th, id);
+          self.bindSort(th, id, i);
         th.toggle(visible);
       };
       this.spanColumns(head.find('.header th'));
