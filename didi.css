@@ -647,3 +647,4 @@
 .widest,.col.widest{width:100%}
 .no-float,.col.no-float{float:none}
 .float-right,.col.float-right{float:right}
+.no-repeat,.norepeat{background-repeat: no-repeat}
