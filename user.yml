@@ -122,7 +122,7 @@ confirm_registration:
     - foreach:
         - collection.data: [user, [partner: $registrar, role: $registrar_role],first_name, last_name, email: identifier]
         - if $email_new_registration:
-            emailer.send: { type: new_registration_email }
+            emailer.send: { type: new_registration_email, to: $first_name $last_name<$email> }
         - clear_values: [first_name, last_name, email]
     - clear_values
     - clear_session: title,first_name,last_name,cellphone,password
@@ -131,7 +131,6 @@ confirm_registration:
 new_registration_email:
   subject: New Registration on $program_name
   from: $registrant_name<$registrant_email>
-  to: $first_name $last_name<$email>
   message: New user registration on $program_name from $registrant_name
 
 create:
@@ -346,7 +345,9 @@ login:
     - auth.login: [$new_session_id, $role, $base_roles]
     - close_dialog
     - redirect: $start_url
-  audit: $email
+  audit:
+    detail: $email, $HTTP_USER_AGENT, $REMOTE_ADDR, $REMOTE_HOST
+    post: [clear_values]
   modal:
     dialog:
       position: { my: 'top', at: 'top+10' }

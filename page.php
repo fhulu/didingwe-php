@@ -35,7 +35,7 @@ class page
     'style', 'template', 'valid');
   static $user_roles = array('public');
   static $non_mergeable = array('action', 'attr', 'audit', 'call', 'clear_session',
-    'clear_values','error', 'load_lineage', 'post', 'read_session', 'refresh', 'show_dialog',
+    'clear_values','error', 'for_each', 'load_lineage', 'post', 'read_session', 'refresh', 'show_dialog',
     'sql_insert', 'sql_update', 'style', 'trigger', 'valid', 'validate', 'write_session');
   var $request;
   var $object;
@@ -828,11 +828,11 @@ class page
     return ucwords (str_replace ('_', ' ',$code));
   }
 
-  function audit($action, $result)
+  function audit($action)
   {
     global $db;
     $fields = $this->fields[$this->page];
-    $result = null_merge($fields, $result, false);
+    $result = null_merge($fields, $this->answer, false);
     $detail = at($action, 'audit');
     $field = [];
     $context = merge_options($this->fields, $this->context, $_SESSION['variables'], $this->request, $result);
@@ -878,8 +878,8 @@ class page
       $this->audit($invoker,[]);
     $result = $this->reply($invoker);
     if (!$audit_first && !page::has_errors() && array_key_exists('audit', $invoker))
-      $this->audit($invoker, $result);
-    return $result;
+      $this->audit($invoker);
+    return $this->answer;
   }
 
   function replace_sid(&$str)
@@ -1098,7 +1098,7 @@ class page
   function replace_fields(&$field) {
     replace_fields($field, $this->answer, true);
     replace_fields($field, $this->request, true);
-    replace_fields($field, $this->context, true);    
+    replace_fields($field, $this->context, true);
     global $config;
     replace_fields($field, $config);
   }

@@ -80,8 +80,8 @@ captcha_image:
 
 
 captioned_image:
-  classes: div
-  text: $image $caption
+  type: container
+  contents: [$image, $caption]
   source: $image_path/$id.png
   title: $name
   image:
@@ -93,7 +93,6 @@ captioned_image:
     type: label
     derive: [title]
     name: $title
-    class: [block]
 
 captioned_input:
   type: label_top
