@@ -337,9 +337,10 @@ login:
     - forgot_password: { action: dialog }
   post:
     - read_config: start_page
-    - collection.values: [user, $email, partner, first_name, last_name, cellphone, start_page, start_url: "/ifnull(start_page,'$start_page')", role ]
+    - collection.values: [user, $email, partner, first_name, last_name, cellphone, start_page, start_url: "/ifnull(start_page,'$start_page')", role, attempts ]
     - collection.listing: [role, $role, base_roles: role]
-    - collection.update: [user, $email, attempts: 0]
+    - if $attempts > 0:
+          - collection.update: [user, $email, attempts: 0]
     - read_server: [HTTP_USER_AGENT,REMOTE_ADDR,REMOTE_HOST,REQUEST_URI]
     - collection.insert: [session, /sha1(last_insert_id()), user: $email, partner, start_time: /now(), HTTP_USER_AGENT, REMOTE_ADDR,REQUEST_URI]
     - auth.login: [$new_session_id, $role, $base_roles]
