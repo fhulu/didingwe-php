@@ -328,7 +328,7 @@ login:
   type: input_page
   position: { my: 'top', at: 'top+150' }
   desc: Fill in your credentials below and click Login to logon
-  enter: "#login"
+  enter: "#login,[action=login]"
   inputs:
     - email: { valid: login_email }
     - password: { valid: login_password }
