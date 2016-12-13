@@ -347,6 +347,7 @@
 .pad-min.pad,.pad-min.pad-x,.pad-min.pad-left{padding-left:0.1em}
 .pad-min.pad,.pad-min.pad-x,.pad-min.pad-right{padding-right:0.1em}
 .pad-tiny.pad,.pad-tiny.pad-x,.pad-tiny.pad-left{padding-left:0.25em}
+.pad-tiny.pad,.pad-tiny.pad-x,.pad-tiny.pad-left{padding-right:0.25em}
 .pad-small.pad,.pad-small.pad-x,.pad-small.pad-left{padding-left:0.5em}
 .pad-small.pad,.pad-small.pad-x,.pad-small.pad-right{padding-right:0.5em}
 .pad-medium.pad,.pad-medium.pad-x,.pad-x.pad-left{padding-left:1em}
