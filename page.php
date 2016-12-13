@@ -581,7 +581,8 @@ class page
     $this->fields = $this->merge_stack_field(page::$fields_stack, $this->root);
     $this->merge_stack_field($this->page_stack, $this->root, $this->fields);
     $this->expand_types($this->fields);
-    $this->verify_access($this->fields);
+    if (!$this->sub_page)
+      $this->verify_access($this->fields);
   }
 
   function remove_items(&$fields)
