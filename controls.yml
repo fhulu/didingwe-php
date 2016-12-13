@@ -579,6 +579,14 @@ page_title:
   tag: title
   text: $name
 
+panel:
+  type: container
+  title:
+    tag: div
+    name: $parent_name
+  contents:
+    - $title
+
 paragraph:
   type: p
 
