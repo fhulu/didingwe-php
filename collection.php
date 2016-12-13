@@ -78,21 +78,25 @@ class collection
     if ($name[0] == '/') return;
     $name = addslashes($name);
     $alias = addslashes($alias);
-    list($foreign_key, $foreign_name) = explode('.', $name);
+    list($local_name, $foreign_key, $foreign_name) = explode('.', $name);
     $value = "value";
-    if (!isset($foreign_name))
+    if (!isset($foreign_key)) {
       $query = "select group_concat($value) from $table where collection = m.collection
            and version <= m.version and identifier=m.identifier and attribute = '$name'";
-
+    }
     else {
+      if (!isset($foreign_name)) {
+        $foreign_name = $foreign_key;
+        $foreign_key = $local_name;
+      }
       if ($alias == $name) $alias = $foreign_name;
-      $name = $foreign_name;
+      $name = $local_name;
       $sub_table = $this->get_table($foreign_key);
       $query =
         "select group_concat($value) from $sub_table where collection = '$foreign_key' and version <= m.version and attribute = '$foreign_name'
           and identifier in (
             select value from $table where collection = m.collection and version <= m.version
-              and identifier=m.identifier and attribute = '$foreign_key' order by version desc)";
+              and identifier=m.identifier and attribute = '$local_name' order by version desc)";
     }
     return "($query order by version desc limit 1) $alias";
   }
