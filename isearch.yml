@@ -19,7 +19,7 @@ isearch:
   adder:
     tag: label
     text: +
-    class: [isearch-adder,hspace-4, pointer-cursor]
+    class: [isearch-adder,pad pad-small, pointer-cursor]
     derive: [name]
     desc: Add a new $name
     action: dialog
@@ -27,7 +27,7 @@ isearch:
   dropper:
     type: [font_awesome,fanthom]
     icon: caret-down
-    class: [isearch-dropper, hspace-4, pointer-cursor]
+    class: [isearch-dropper, pad pad-small, pointer-cursor]
     desc: Show all items
   drop:
     tag: ul
