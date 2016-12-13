@@ -401,6 +401,19 @@ modify:
     dialog:
       class: [col s12 m8 l6]
 
+my_info:
+  type: container
+  access: auth
+  contents:
+    - type: label
+    - first_name
+    - last_name
+    - email
+    - roles
+  values:
+    - collection.values: [session, $sid, user.title, user.first_name, user.last_name, user.cellphone, email: user, roles: user.role]
+    - let: { full_name: $first_name $last_name }
+
 not_in_use:
   valid: not_registered
   error: Email address $value already in use
