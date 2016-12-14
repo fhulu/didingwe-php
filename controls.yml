@@ -483,12 +483,11 @@ label_right:
 
 label_top:
   type: labelled
-  styles: [inline_block]
+  class: [inline-block]
   label:
-    styles: [block]
-    text: $name
+    class: [block]
   subject:
-    styles: [block]
+    class: [block]
   text: $label$field
 
 left_text:
@@ -582,6 +581,7 @@ page_title:
 panel:
   type: container
   title:
+    desc: ""
     tag: div
     name: $parent_name
   contents:
