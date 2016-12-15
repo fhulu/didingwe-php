@@ -50,30 +50,23 @@ class collection
     return [$name,$alias];
   }
 
-  function get_selection($table, $args, &$where, &$sorting, &$primary_attribute)
+  function get_selection($table, $args, &$where, &$sorting)
   {
-    $has_primary = false;
     foreach($args as &$arg) {
       list($name,$alias) = $this->get_name_alias($arg);
       if ($alias[0] == '/') continue;
       $this->update_sort_order($sorting, $name, $alias);
 
-      if ($name == 'identifier') {
+      if ($name == 'identifier')
         $selection[] = "m.$name $alias";
-      }
-      else if (!$has_primary && strpos($name, '.') === false) {
-        $selection[] = "m.value $alias";
-        $has_primary = [$name, $alias];
-        $where .= " and m.attribute  = '$name'";
-      }
       else
-        $selection[] = $this->get_subquery($table, $name, $alias);
+        $selection[] = $this->get_subquery($table, $name, $alias, $term);
       ++$index;
     }
     return implode(",", array_filter($selection));
   }
 
-  function get_subquery($table, $name, $alias)
+  function get_subquery($table, $name, $alias, $term)
   {
     if ($name[0] == '/') return;
     $name = addslashes($name);
@@ -102,7 +95,7 @@ class collection
   }
 
 
-  function get_joins($table, $filters, &$where="", $primary_attribute="")
+  function get_joins($table, $filters, &$where="")
   {
     $index = 0;
     $joins = "";
@@ -122,10 +115,6 @@ class collection
       if ($value[0] == "'" )
         $operator = " = ";
 
-      if ($name == $primary_attribute) {
-        $where .= " and m.value $operator $value";
-        continue;
-      }
       $joins .= " join $table m$index on m$index.collection = m.collection
           and m$index.version <= m.version and m$index.identifier=m.identifier
           and m$index.attribute = '$name' and m$index.value $operator $value";
@@ -234,7 +223,8 @@ class collection
       $sql = "select " . join(',', $outer) . " from ($sql) tmp";
     return $wrapped;
   }
-  function read($args, $use_custom_filters=false)
+
+  function read($args, $use_custom_filters=false, $term="")
   {
     $args = page::parse_args($args);
     $size = $this->expand_args($args);
@@ -245,9 +235,12 @@ class collection
     $where = " where m.collection = '$collection' and m.version = 0 ";
     $sorting = [];
     $table = $this->get_table($collection);
-    $selection = $this->get_selection($table, $args, $where, $sorting, $primary_attribute);
-    $joins = $this->get_joins($table, $filters, $where, $primary_attribute);
-    $sql = "select $selection from $table m $joins $where $search";
+    $selection = $this->get_selection($table, $args, $where, $sorting, $term);
+    $joins = $this->get_joins($table, $filters, $where);
+    $sql = "select $selection from $table m $joins $where";
+    if ($term != '')
+      $sql .= " and (value like '%$term%' or identifier like '%$term%') ";
+    $sql .= "group by m.identifier";
     $this->set_limits($sql, $offset, $size);
     $wrapped = $this->wrap_query($sql, $args);
     $this->set_sorting($sql, $sorting, !$wrapped, $args);
@@ -330,45 +323,16 @@ class collection
     return ["new_${collection}_id"=>$identifier];
   }
 
+
   function search()
   {
     $args = page::parse_args(func_get_args());
     log::debug_json("collection.search", $args);
-    page::verify_args($args, "collection.search", 1);
-    $term = array_shift($args);
-    $size = $this->expand_args($args);
-    list($collection, $filters, $offset, $size) = $this->extract_header($args);
-    $this->expand_star($collection, $args);
-    $fields = [];
-    $sorting = [];
     $identifier = false;
-    foreach($args as &$arg) {
-      list($name,$alias) = $this->get_name_alias($arg);
-      $this->update_sort_order($sorting, $name, $alias);
-
-      if ($name == 'identifier') {
-        $fields[] = "$name $alias";
-        $identifier = true;
-        $where .= " and (m.identifier like '%$term%'";
-      }
-      else
-        $fields[] = "max(case when attribute='$name' then value end) $alias";
-    }
-    $table = $this->get_table($collection);
-    $joins = $this->get_joins($table, $filters);
-    $where = " where collection = '$collection' and version <= 0 ";
-    if ($term != "") {
-      if ($identifier)
-        $where .= " and (m.identifier like '%$term%' or m.value like '%$term%')";
-      else
-        $where .= " and m.value like '%$term%'";
-    }
-    $sql = "select ". implode(",", $fields). " from (
-     select m.identifier,m.attribute,m.value FROM $table m $joins $where) tmp
-     group by identifier";
-
-    $this->set_sorting($sql, $sorting, false);
-    $this->set_limits($sql, $offset, $size);
+    $term = array_shift($args);
+    $fields = explode(",", array_pop($args));
+    $args = array_merge($args, $fields);
+    $sql = $this->read($args, false, $term);
     return ['data'=>$this->db->read($sql, MYSQLI_NUM)];
   }
 
