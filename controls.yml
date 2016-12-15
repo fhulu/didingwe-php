@@ -266,7 +266,7 @@ form:
 flag_icon:
   tag: span
   class: [flag-icon flag-icon-$country]
-  css: [/common/flag-icon-css/css/flag-icon.min.css]
+  css: [/flag-icon-css/css/flag-icon.min.css]
   country: $id
   text: " "
 
