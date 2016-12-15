@@ -14,7 +14,7 @@ isearch:
   buttons:
     class: [overlay absolute top-right]
     type: container
-    derive: [adder,dropper]
+    derive: [name,adder,dropper]
     contents: [$adder,$dropper]
   adder:
     tag: label
@@ -44,5 +44,7 @@ isearch:
     embolden: $name
     text: $embolden
     attr: { id: "", name: "", value: $value, chosen: $name }
+  search_fields: name asc
+  search_collection: $id
   post:
-    collection.search: [$term,$offset, $size, $id,"",identifier,name asc]
+    collection.search: [$term,$offset, $size, $search_collection,"",identifier,$search_fields]
