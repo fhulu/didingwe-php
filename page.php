@@ -532,17 +532,18 @@ class page
       && !page::is_module($key);
   }
 
-  function merge_fields(&$fields, $merged = array())
+  function merge_fields(&$fields, $parent=[], $merged=[])
   {
     if (is_assoc($fields)) {
       if (isset($fields['type']))
         $this->merge_type($fields);
+      $this->derive_parent($parent, $field);
       foreach($fields as $key=>&$value) {
         if (!is_array($value) || page::not_mergeable($key)) continue;
         $value = $this->get_merged_field($key, $value);
         if (!in_array($key, $merged, true)) {
           $merged[] = $key;
-          $this->merge_fields($value, $merged);
+          $this->merge_fields($value, $parent, $merged);
         }
       }
       return $fields;
@@ -566,7 +567,7 @@ class page
       $field = $this->get_merged_field($key, $field);
       if (is_array($field) && !in_array($key, $merged, true)  ) {
         $merged[] = $key;
-        $this->merge_fields($field, $merged);
+        $this->merge_fields($field, $parent, $merged);
       }
       if (!is_null($default))
         $field = merge_options($default, $field);
@@ -1110,7 +1111,7 @@ class page
     if (isset($post)) $actions = $post;
     if (is_null($actions)) return null;
     if (is_assoc($actions))  $actions = array($actions);
-    $this->merge_fields($actions);
+    $this->merge_fields($actions, $this->fields);
 
     log::debug_json("REPLY ACTIONS", $actions);
 
