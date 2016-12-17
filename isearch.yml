@@ -47,4 +47,4 @@ isearch:
   search_fields: name asc
   search_collection: $id
   post:
-    collection.search: [$term,$offset, $size, $search_collection,"",identifier,$search_fields]
+    - collection.search: [$search_collection,"",identifier,$search_fields]

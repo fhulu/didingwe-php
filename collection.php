@@ -158,6 +158,10 @@ class collection
       else
         $size = array_shift($args);
     }
+    else {
+      $offset = $this->page->request['offset'];
+      $size = $this->page->request['size'];
+    }
     list($collection, $filters) = array_splice($args, 0, 2);
     list($collection) = assoc_element($collection);
     if ($filters == '')
@@ -327,12 +331,9 @@ class collection
   function search()
   {
     $args = page::parse_args(func_get_args());
-    log::debug_json("collection.search", $args);
-    $identifier = false;
-    $term = array_shift($args);
     $fields = explode(",", array_pop($args));
     $args = array_merge($args, $fields);
-    $sql = $this->read($args, false, $term);
+    $sql = $this->read($args, false, $this->page->request['term']);
     return ['data'=>$this->db->read($sql, MYSQLI_NUM)];
   }
 
