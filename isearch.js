@@ -96,22 +96,28 @@ $.widget( "custom.isearch", {
       var option = mkn.copy(opts.option);
       option.array = row;
       option = opts.render.initField(option, opts);
-      option.embolden = me._boldTerm(option.embolden, me.params.term);
+      me._boldTerm(option, me.params.term);
       opts.render.create(option).data('source', row).appendTo(drop);
     })
   },
 
-  _boldTerm: function(text, term)
+  _boldTerm: function(option, term)
   {
-    $.each(term.split(' '), function(i, val) {
-      text = text.replace(
-                new RegExp(
-                  "(?![^&;]+;)(?!<[^<>]*)(" +
-                  $.ui.autocomplete.escapeRegex(val) +
-                  ")(?![^<>]*>)(?![^&;]+;)", "gi"),
-                "<strong>$1</strong>")
-    });
-    return text;
+    var terms = term.split(' ');
+    if (terms.length == 0) return;
+    for (var i in option.embolden) {
+      var key = option.embolden[i];
+      for (var j in terms) {
+        var term = terms[i];
+        if (term == '') continue;
+        option[key] = option[key].replace(
+                  new RegExp(
+                    "(?![^&;]+;)(?!<[^<>]*)(" +
+                    $.ui.autocomplete.escapeRegex(terms[j]) +
+                    ")(?![^<>]*>)(?![^&;]+;)", "gi"),
+                  "<strong>$1</strong>")
+      }
+    }
   },
 
 });

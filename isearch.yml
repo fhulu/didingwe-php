@@ -30,19 +30,18 @@ isearch:
     class: [isearch-dropper, pad pad-small, pointer-cursor]
     desc: Show all items
   drop:
-    tag: ul
+    type: container
     class: [isearch-drop,overlay absolute,scroll-y,widest, white,shadow]
     text: ""
     height: auto
     show: no
     autoload: 10
   option:
-    tag: a
+    type: anchor
     class: [isearch-option,block,nomargin,undecorated,pad pad-small,hover-light-grey]
     value: $1
     name: $2
-    embolden: $name
-    text: $embolden
+    embolden: [name]
     attr: { id: "", name: "", value: $value, chosen: $name }
   search_fields: name asc
   search_collection: $id
