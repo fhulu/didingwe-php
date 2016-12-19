@@ -658,7 +658,7 @@ class page
     $options = merge_options($this->context,$this->request);
     $validators = $this->load_fields('validators');
     $fields = merge_options($this->merge_stack(page::$fields_stack), $this->page_fields, $this->fields);
-    $this->validator = new validator(page::merge_options($_SESSION['variables'], $this->request), $fields, $validators);
+    $this->validator = new validator(merge_options($_SESSION['variables'], $this->request), $fields, $validators);
 
     $exclude = array('audit','css','post','script','style', 'styles', 'type','valid','validate','values');
 
@@ -698,7 +698,6 @@ class page
 
   function data()
   {
-    $this->merge_fields($this->context);
     if (!isset($this->context['id'])) $this->context['id'] = last($this->path);
     return $this->reply($this->context);
   }
