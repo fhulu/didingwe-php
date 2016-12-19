@@ -3,8 +3,6 @@ table.data
   position: relative;
   border-collapse: collapse;
   text-align: left;
-  -moz-box-shadow: 3px 3px 3px 4px lightgray;
-  -webkit-box-shadow: 3px 3px 3px 4px lightgray;
   width: 100%;
   word-wrap: break-word;
 }
