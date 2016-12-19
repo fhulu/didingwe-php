@@ -194,11 +194,9 @@ table.data tr [action]
 {
   font-size: 10pt;
   font-weight: 200;
-  color: white;
   cursor: pointer;
   text-align: center;
   padding: 0px 3px;
-  opacity: 0.88;
   border-radius: 0;
   height: 100%;
 }
