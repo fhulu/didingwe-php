@@ -331,8 +331,9 @@ class collection
   function search()
   {
     $args = page::parse_args(func_get_args());
-    $fields = explode(",", array_pop($args));
-    $args = array_merge($args, $fields);
+    $last = array_slice($args,-1)[0];
+    if (is_string($last))
+      array_splice($args, -1, 1, explode(',', $last));
     $sql = $this->read($args, false, $this->page->request['term']);
     return ['data'=>$this->db->read($sql, MYSQLI_NUM)];
   }
