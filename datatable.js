@@ -39,8 +39,8 @@
       })
       .on('addRow', function(e, data) {
         self.addRow(data);
-      });
-
+      })
+      this.bindRowActions()
     },
 
     _init_params: function()
@@ -350,7 +350,6 @@
         }
         me.showCell(field, td, cell, key);
       }
-      me.bindRowActions(tr);
       tr.appendTo(me.body());
     },
 
@@ -490,14 +489,15 @@
       load();
     },
 
-    bindRowActions: function(tr)
+    bindRowActions: function()
     {
       var self = this;
-      tr.on('slide', function(e) {
+      this.element.on('slide', 'tr', function(e) {
         $(e.target).toggle();
-        self.slide(tr);
+        self.slide($(this));
       })
-      .on('expand', function(e) {
+      .on('expand', 'tr', function(e) {
+        var tr = $(this);
         tr.find('[action=expand]').hide();
         tr.find('[action=collapse]').show();
         if (tr.next().hasClass('expanded')) return;
@@ -505,21 +505,23 @@
         if (!expand.pages) return;
         self.loadSubPages(tr, expand.pages)
       })
-      .on('collapse', function(e) {
+      .on('collapse', 'tr', function(e) {
+        var tr = $(this);
         tr.find('[action=collapse]').hide();
         tr.find('[action=expand]').show();
         var next = tr.next();
         if (next.hasClass('expanded')) next.remove();
       })
-      .on('action', function(evt, btn) {
+      .on('action', 'tr', function(evt, btn) {
         if (!btn.parent('.slide').exists()) return;
         self.slide($(this));
         $(this).find('[action=slide]').toggle();
         var slider = $(this).find('.slide');
         slider.animate({right: -slider.width()}, self.options.slideSpeed*2, function() { slider.hide()});
       })
-      .on('processed_delete', function() {
+      .on('delete', 'tr', function() {
         $(this).remove();
+        return $(this);
       })
     },
 
