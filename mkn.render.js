@@ -713,7 +713,7 @@ mkn.render = function(options)
           if ($.isPlainObject(value))
             accept(e, obj, value);
           else if ('didi-model' in field && 'on_'+key in field['didi-model']) {
-            me.model["on_"+key+"_"+ id](obj);
+            me.model["on_"+key+"_"+ id](e, obj);
             me.updateWatchers();
           };
         });
@@ -1113,10 +1113,7 @@ mkn.render = function(options)
 
   var trigger = function(field, invoker)
   {
-    if (!field.event) {
-      console.log("WARNING: no event defined for field", field);
-      return;
-    }
+    if (!field.event) field.event = field.id
     var sink;
     var event = field.event;
     var params;
@@ -1182,7 +1179,7 @@ mkn.render = function(options)
         if (key.indexOf('on_') < 0)
           src = "\tget_"+id+"_"+index+": function(obj) {\n"+ret;
         else
-          src = "\t"+key+"_"+id+": function(obj) {\n";
+          src = "\t"+key+"_"+id+": function(event,obj) {\n";
         src += expr.replace(/^~|`/g,'') + "\n\t}";
         funcs.push(src);
         value = value.replace(expr, "${"+index+"}");
