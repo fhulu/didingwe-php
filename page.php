@@ -35,7 +35,7 @@ class page
     'style', 'template', 'valid');
   static $user_roles = array('public');
   static $non_mergeable = array('action', 'attr', 'audit', 'call', 'clear_session',
-    'clear_values','error', 'for_each', 'load_lineage', 'post', 'read_session', 'refresh', 'show_dialog',
+    'clear_values','error', 'for_each', 'load_lineage', 'read_session', 'refresh', 'show_dialog',
     'sql_insert', 'sql_update', 'style', 'trigger', 'valid', 'validate', 'write_session');
   var $request;
   var $object;
@@ -741,40 +741,6 @@ class page
     return call_user_func_array($function, $params);
   }
 
-  static function merge_options($options1, $options2)
-  {
-    //return merge_options($options1, $options2);
-    if (is_null($options1)) return $options2;
-    if (is_null($options2) || sizeof($options2) == 0) return $options1;
-    if (!is_array($options2)) return $options2;
-    if (!is_assoc($options1) && is_assoc($options2)) return $options2;
-    if (is_assoc($options1) && !is_assoc($options2)) return $options2;
-    if (!is_assoc($options1)) {
-      $new_values = array();
-      $sowables = array('type', 'template', 'action');
-      foreach($options1 as $v1) {
-        if (!is_array($v1) || array_intersect($sowables,  array_keys($v1)) === array()) continue;
-        $new_values[] = $v1;
-      }
-      return array_merge($new_values, $options2);
-    }
-
-    $result = $options2;
-    foreach($options1 as $key=>$value ) {
-      if (!array_key_exists($key, $result)) {
-        $result[$key] = $value;
-        continue;
-      }
-      if (!is_array($value)) continue;
-      $value2 = $result[$key];
-      if (!is_array($value2)) continue;
-      $result[$key] = page::merge_options($value, $value2);
-    }
-    return $result;
-  }
-
-
-
   static function decode_field($message)
   {
     global $db;
@@ -1052,7 +1018,7 @@ class page
 
   function update_context(&$options)
   {
-    $context = page::merge_options($this->context, $options);
+    $context = merge_options($this->context, $options);
     replace_fields($options, $context);
   }
 
@@ -1537,11 +1503,11 @@ class page
   {
     $merge = $args['merge'];
     if (!isset($merge) || $merge != false) {
-      $args = page::merge_options($this->answer, $args);
+      $args = merge_options($this->answer, $args);
       $this->update_context($args);
       global $config;
-      $args = page::merge_options($this->get_expanded_field($method), $args);
-      $args = page::merge_options($config[$method], $args);
+      $args = merge_options($this->get_expanded_field($method), $args);
+      $args = merge_options($config[$method], $args);
       replace_fields($args,$args,true);
     }
     return q::put($method, $args);
