@@ -31,6 +31,7 @@ $.widget( "custom.isearch", {
     });
 
     me.drop = el.find('.isearch-drop').on('click', '.isearch-option', function() {
+      el.data('source', $(this).data('source'));
       el.trigger('selected', [$(this).attr('value'), $(this).attr('chosen')]);
     })
     .scroll($.proxy(me._scroll,me))
@@ -96,7 +97,7 @@ $.widget( "custom.isearch", {
       option.array = row;
       option = opts.render.initField(option, opts);
       option.embolden = me._boldTerm(option.embolden, me.params.term);
-      opts.render.create(option).appendTo(drop);
+      opts.render.create(option).data('source', row).appendTo(drop);
     })
   },
 
