@@ -37,6 +37,10 @@
         self.load(args);
         e.stopImmediatePropagation();
       })
+      .on('addRow', function(e, data) {
+        self.addRow(data);
+      });
+
     },
 
     _init_params: function()
@@ -294,64 +298,60 @@
 
     showData: function(data)
     {
-      var self = this;
-      var body = self.body().empty();
+      this.body().empty();
       var fields = this.options.fields;
-      var tr;
       for(var i in data.data) {
-        var row = data.data[i];
-        if (tr) {
-          self.bindRowActions(tr);
-          tr.appendTo(body);
-        }
-        tr = $('<tr>');
-        var key;
-        var expandable = false;
-        var col = 0;
-        for (var j in fields) {
-          var field = fields[j];
-          var cell = self.spanData(field, row, col);
-          if (cell === null) cell = '';
-          col += field.span;
-          if (key === undefined && (field.id === 'key' || field.key)) {
-            key = cell;
-            tr.attr('key', key);
-          }
-
-          var hide = field.hide || field.show === false;
-          if (field.id === 'key' && hide) continue;
-
-          if (field.id === 'style') {
-            tr.addClass(cell);
-            continue;
-          }
-          var td = $('<td>').appendTo(tr);
-          if (hide) td.addClass('hidden');
-
-          if (field.id === 'actions') {
-            var actions = cell.split(',');
-            var expandable = actions.indexOf('expand') >= 0;
-            self.createRowActions(tr, td, actions);
-            if (!expandable) continue;
-            td = tr.children().eq(0).addClass('expandable');
-            if (!td.children().exists()) {
-              var text = td.text();
-              td.text('');
-              $('<div>').text(text).appendTo(td).css('display','inline-block');
-            }
-            self.createAction('expand', undefined, tr).prependTo(td);
-            self.createAction('collapse', undefined, tr).prependTo(td).hide();
-            continue;
-          }
-          self.showCell(field, td, cell, key);
-        }
-        key = undefined;
-      }
-      if (tr) {
-        self.bindRowActions(tr);
-        tr.appendTo(body);
+        this.addRow(data.data[i]);
       }
       this.spanColumns(this.head().find('.header>th'));
+    },
+
+    addRow: function(row) {
+      var me = this;
+      var fields = me.options.fields;
+      var tr = $('<tr>');
+      var key;
+      var expandable = false;
+      var col = 0;
+      for (var i in fields) {
+        var field = fields[i];
+        var cell = me.spanData(field, row, col);
+        if (cell === null) cell = '';
+        col += field.span;
+        if (key === undefined && (field.id === 'key' || field.key)) {
+          key = cell;
+          tr.attr('key', key);
+        }
+
+        var hide = field.hide || field.show === false;
+        if (field.id === 'key' && hide) continue;
+
+        if (field.id === 'style') {
+          tr.addClass(cell);
+          continue;
+        }
+        var td = $('<td>').appendTo(tr);
+        if (hide) td.addClass('hidden');
+
+        if (field.id === 'actions') {
+          var actions = cell.split(',');
+          var expandable = actions.indexOf('expand') >= 0;
+          me.createRowActions(tr, td, actions);
+          if (!expandable) continue;
+          td = tr.children().eq(0).addClass('expandable');
+          if (!td.children().exists()) {
+            var text = td.text();
+            td.text('');
+            $('<div>').text(text).appendTo(td).css('display','inline-block');
+          }
+          me.createAction('expand', undefined, tr).prependTo(td);
+          me.createAction('collapse', undefined, tr).prependTo(td).hide();
+          continue;
+        }
+        me.showCell(field, td, cell, key);
+      }
+      me.bindRowActions(tr);
+      tr.appendTo(me.body());
     },
 
     showCell: function(field, td, value, key)
