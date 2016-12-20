@@ -133,7 +133,6 @@ checkgroup:
   text: $options
   layout:
     type: label_right
-    class: [inline-block]
   option:
     type: checkbox
     value: 0
