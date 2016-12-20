@@ -233,7 +233,7 @@ var mkn = new function() {
     var replaced = false;
     var me = this;
     var replaceOne = function(key, val) {
-      if (typeof val !== 'string') return;
+      if (!me.isAtomicValue(val)) return;
       var matches = getMatches(val, /\$(\w+)/g);
       if (!matches) return;
       matches.forEach(function(match) {
@@ -391,6 +391,9 @@ var mkn = new function() {
 
     return text.replace(/[&<>"']/g, function(m) { return map[m]; });
   }
+
+
+  this.isAtomicValue = function(x) { return typeof x == 'string' || typeof x == 'number'; }
 }
 
 if (!String.prototype.trim) {
