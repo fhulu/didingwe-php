@@ -104,19 +104,20 @@ $.widget( "custom.isearch", {
   _boldTerm: function(option, term)
   {
     var terms = term.split(' ');
-    if (terms.length == 0) return;
     for (var i in option.embolden) {
       var key = option.embolden[i];
+      var value = mkn.escapeHtml(option[key]);
       for (var j in terms) {
-        var term = terms[i];
+        var term = terms[j].trim();
         if (term == '') continue;
-        option[key] = option[key].replace(
+        value = value.replace(
                   new RegExp(
                     "(?![^&;]+;)(?!<[^<>]*)(" +
-                    $.ui.autocomplete.escapeRegex(terms[j]) +
+                    $.ui.autocomplete.escapeRegex(term) +
                     ")(?![^<>]*>)(?![^&;]+;)", "gi"),
                   "<strong>$1</strong>")
       }
+      option[key] = value;
     }
   },
 
