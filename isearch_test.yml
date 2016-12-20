@@ -14,15 +14,14 @@ country:
   adder: { url: /isearch_test/add }
   drop: { max-height: 180px }
   option:
-    embolden: $name ($value)
+    type: container
     country: $value
-    label: { derive: [embolden], text: $embolden }
-    text: [$label,$flag]
+    label: { derive: [value], name: $parent_name ($value) }
+    contents: [$label, $flag]
     flag:
       type: flag_icon
       class: [float-right]
-      derive: [value]
-      country: $value
+      derive: [country]
 
 add:
   desc: Add new country

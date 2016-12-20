@@ -567,6 +567,24 @@ one_column_table:
 
 one_row_table: { type: silos }
 
+
+option_panel:
+  tag: div
+  text: $header $body
+  header:
+    type: container
+    name: $parent_name
+    contents:
+      - p: { name: $parent_name, class: [inline-block] }
+      - chosen_$parent_id: { type: checkbox, class: [float-right] }
+  body:
+    id: body_$parent_id
+    tag: div
+    derive: [contents]
+    text: $contents
+    show: ~chosen_$parent_id
+
+
 p: { tag: p}
 
 page:
@@ -835,23 +853,6 @@ tri_input:
 twin_input:
   type: multi_input
   split: half
-
-option_panel:
-  tag: div
-  text: $header $body
-  header:
-    type: container
-    name: $parent_name
-    contents:
-      - p: { name: $parent_name, class: [inline-block] }
-      - chosen_$parent_id: { type: checkbox, class: [float-right] }
-  body:
-    id: body_$parent_id
-    tag: div
-    derive: [contents]
-    text: $contents
-    show: ~chosen_$parent_id
-
 
 vspace:
   mutable: false
