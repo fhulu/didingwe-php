@@ -506,7 +506,7 @@ mkn.render = function(options)
       }
 
       if (!value.path) value.path = field.path+'/'+code;
-      value.id = code;
+      if (value.id === undefined) value.id = code;
       var child = this.create(field, code, true);
       if (table_tag)
         obj.append(child)
