@@ -12,12 +12,11 @@ show:
   title_bar:
     tag: div
     class: [modal-title-bar, widest,pad,center-text,cursor-pointer]
-    name: $name
+    derive: [close_button]
+    text: $name $close_button
 
   close_button:
     tag: div
     name: ""
-    class: [modal-close-button,absolute top-right,  cursor-pointer, fa fa-times]
+    class: [modal-close-button,float-right, cursor-pointer, fa fa-times]
     action: close_dialog
-    css:
-      - /common/font-awesome/css/font-awesome.min.css
