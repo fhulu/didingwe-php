@@ -370,7 +370,7 @@ image_button:
     attr: { type: image, src: "$image"}
 
 info_page:
-  type: container
+  type: page
   text: $lines $actions_pane
   lines:
     - type: plain_text
