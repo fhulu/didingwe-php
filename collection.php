@@ -289,6 +289,7 @@ class collection
     $where = " where m.collection = '$collection' and m.version = 0 ";
     $table = $this->get_table($collection);
     $joins = $this->get_joins($table, $filters, $where);
+    $identifier = $filters['identifier'];
     foreach($args as $arg) {
       list($name,$value) = $this->page->get_sql_pair($arg);
       if ($name == 'identifier') {
@@ -300,7 +301,12 @@ class collection
         $condition = " and m.attribute = '$name'";
       }
       $attribute = $name== 'identifier'? $name: 'value';
-      $this->page->sql_exec("update $table m $joins set m.$attribute = $value $where $condition");
+      $updated = $this->page->sql_exec("update $table m $joins set m.$attribute = $value $where $condition");
+      if (!$updated && $identifier) {
+        $this->page->sql_exec("insert into $table(collection,identifier,attribute,value)
+          select '$collection', '$identifier', '$name', $value from dual where not exists (
+            select 1 from $table m $where $condition)");
+      }
     }
   }
 
