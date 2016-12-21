@@ -7,11 +7,6 @@ table.data
   word-wrap: break-word;
 }
 
-table.data>thead
-{
-  background-color:  #454545;
-  color: white;
-}
 
 table.data>thead>tr
 {
@@ -28,7 +23,6 @@ table.data>thead>tr>td
 table.data>tbody>tr
 {
   border-bottom: 1px solid #DFDFDF;
-  background-color: white;
   height: 24px;
   vertical-align: top;
 }
@@ -49,14 +43,8 @@ table.data>tbody>tr>td
 {
   padding: 0px 4px;
   vertical-align: center;
-  background-color: white;
   background-repeat:no-repeat;
   background-position: center;
-}
-
-table.data>tbody>tr:nth-child(odd) td
-{
-  background-color: whitesmoke;
 }
 
 table.data>tdata tr.actions,
@@ -73,14 +61,12 @@ table.data>thead .heading
 table.data .paging
 {
   float: right;
-  color: black;
 }
 
 table.data .paging *
 {
   margin-right: 1px;
   display: inline-block;
-  color: white;
 }
 table.data .paging div
 {
@@ -93,21 +79,14 @@ table.data .paging input
 {
   width: 26px;
   height: 26px;
-  color: black;
   text-align: center;
 }
 
 table.data .paging [action]
 {
-  background-color:rgb(20,60,90);
   padding: 5px 10px;
 }
 
-table.data .paging [disabled]
-{
-  background-color: lightgrey;
-  color: grey;
-}
 
 table.data th>div
 {
@@ -160,21 +139,6 @@ table.data tr.sort
 table.data td.actions {
   padding: 0px;
 }
-table.data .actions [action=export]
-{
-  background-color:#35d59d;
-}
-
-table.data .actions [action=email]
-{
-  background-color:wheat;
-  color: black;
-}
-
-table.data .actions [action=sms]
-{
-  background-color:lightcoral;
-}
 
 table.data>tbody>tr.expanded>td
 {
@@ -207,7 +171,6 @@ table.data tr [action]:hover
 table.data td.expandable [action]
 {
   height: 100%;
-  color:rgb(20,60,90);
   font-family: monospace;
   font-size: 12pt;
   font-weight: 100;
@@ -216,20 +179,6 @@ table.data td.expandable [action]
   padding-left: 5px;
   padding-right: 5px;
   margin-right: 5px;
-}
-
-table.data td.expandable [action]:hover
-{
-  color:rgb(30,90,135);
-}
-
-
-table.data tr [action=view],
-table.data tr [action=save],
-table.data tr [action=slide],
-table.data tr [action=add]
-{
-  background-color:rgb(20,60,90);
 }
 
 table.data tr [action=slide]
@@ -245,7 +194,6 @@ table.data .slide
   float: right;
   right: 0px;
   height: 100%;
-  color: white;
   cursor: pointer;
 }
 table.data .slide>[action]
@@ -270,25 +218,6 @@ table.data td>.actions>*
   height: 100%;
 }
 
-table.data .actions [action^=edit]
-{
-  background-color: orange;
-  color: black;
-}
-
-table.data .slide [action=cancel],
-table.data .slide [action=delete]
-{
-  background-color: #DD0000;
-}
-
-
-table.data .slide [action$=activate],
-table.data .actions [action^=print],
-table.data .slide [action^=print]
-{
-  background-color: dodgerblue;
-}
 
 table.data tr.actions [action]
 {
