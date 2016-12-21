@@ -28,15 +28,17 @@ class collection
       $table = $this->tables[$collection];
       return $table? $table: $this->tables['default'];
   }
-  function update_sort_order(&$sorting, &$name, &$alias)
+
+  function update_grouping(&$sorting, &$grouping, &$name, &$alias)
   {
     $matches = [];
-    if (!preg_match('/(\w+) (asc|desc)$/', $alias, $matches)) return;
+    if (!preg_match('/^(\w+)(\s+group\s*)?(\s+asc|desc\s*)$/', $alias, $matches)) return;
     if ($name == $alias)
       $name = $alias = $matches[1];
     else
       $alias = $matches[1];
-    $sorting[] = "$alias $matches[2]";
+    if ($grouping[2]) $grouping[] = "$alias $matches[2]";
+    if ($matches[3]) $sorting[] = "$alias $matches[3]";
   }
 
   function get_name_alias($arg)
@@ -50,13 +52,12 @@ class collection
     return [$name,$alias];
   }
 
-  function get_selection($table, $args, &$where, &$sorting)
+  function get_selection($table, $args, &$where, &$sorting, &$grouping)
   {
     foreach($args as &$arg) {
       list($name,$alias) = $this->get_name_alias($arg);
       if ($alias[0] == '/') continue;
-      $this->update_sort_order($sorting, $name, $alias);
-
+      $this->update_grouping($sorting, $grouping, $name, $alias);
       if ($name == 'identifier')
         $selection[] = "m.$name $alias";
       else
@@ -208,6 +209,13 @@ class collection
     $sql .= " order by $sorting";
   }
 
+  function set_grouping(&$sql, $grouping)
+  {
+    if (empty($grouping)) return false;
+    $sql = "select * from ($sql) tmp_grouping group by " . implode(",", $grouping);
+    return true;
+  }
+
   function wrap_query(&$sql, $args)
   {
     $outer = [];
@@ -239,15 +247,16 @@ class collection
     $where = " where m.collection = '$collection' and m.version = 0 ";
     $sorting = [];
     $table = $this->get_table($collection);
-    $selection = $this->get_selection($table, $args, $where, $sorting, $term);
+    $selection = $this->get_selection($table, $args, $where, $sorting, $grouping, $term);
     $joins = $this->get_joins($table, $filters, $where);
     $sql = "select $selection from $table m $joins $where";
     if ($term != '')
       $sql .= " and (value like '%$term%' or identifier like '%$term%') ";
     $sql .= "group by m.identifier";
     $this->set_limits($sql, $offset, $size);
-    $wrapped = $this->wrap_query($sql, $args);
-    $this->set_sorting($sql, $sorting, !$wrapped, $args);
+    $grouped = $this->set_grouping($sql, $grouping);
+    if (!$grouped) $grouped = $this->wrap_query($sql, $args);
+    $this->set_sorting($sql, $sorting, !$grouped, $args);
     return $this->page->translate_sql($sql);
   }
 
@@ -337,6 +346,9 @@ class collection
   function search()
   {
     $args = page::parse_args(func_get_args());
+    $last = array_slice($args,-1)[0];
+    if (is_string($last))
+      array_splice($args, -1, 1, explode(',', $last));
     $sql = $this->read($args, false, $this->page->request['term']);
     return ['data'=>$this->db->read($sql, MYSQLI_NUM)];
   }
