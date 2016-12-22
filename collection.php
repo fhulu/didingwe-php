@@ -29,15 +29,15 @@ class collection
       return $table? $table: $this->tables['default'];
   }
 
-  function update_grouping(&$sorting, &$grouping, &$name, &$alias)
+  function extract_grouping(&$sorting, &$grouping, &$name, &$alias)
   {
     $matches = [];
-    if (!preg_match('/^(\w+)(\s+group\s*)?(\s+asc|desc\s*)$/', $alias, $matches)) return;
+    if (!preg_match('/^(\w[\w\.]*)(\s+group\s*)?(\s+asc|desc\s*)?$/', $alias, $matches)) return;
     if ($name == $alias)
       $name = $alias = $matches[1];
     else
       $alias = $matches[1];
-    if ($grouping[2]) $grouping[] = "$alias $matches[2]";
+    if ($matches[2]) $grouping[] = $alias;
     if ($matches[3]) $sorting[] = "$alias $matches[3]";
   }
 
@@ -57,7 +57,7 @@ class collection
     foreach($args as &$arg) {
       list($name,$alias) = $this->get_name_alias($arg);
       if ($alias[0] == '/') continue;
-      $this->update_grouping($sorting, $grouping, $name, $alias);
+      $this->extract_grouping($sorting, $grouping, $name, $alias);
       if ($name == 'identifier')
         $selection[] = "m.$name $alias";
       else
@@ -211,9 +211,8 @@ class collection
 
   function set_grouping(&$sql, $grouping)
   {
-    if (empty($grouping)) return false;
-    $sql = "select * from ($sql) tmp_grouping group by " . implode(",", $grouping);
-    return true;
+    if (!empty($grouping))
+      $sql .= " group by " . implode(",", $grouping);
   }
 
   function wrap_query(&$sql, $args)
@@ -254,9 +253,9 @@ class collection
       $sql .= " and (value like '%$term%' or identifier like '%$term%') ";
     $sql .= "group by m.identifier";
     $this->set_limits($sql, $offset, $size);
-    $grouped = $this->set_grouping($sql, $grouping);
-    if (!$grouped) $grouped = $this->wrap_query($sql, $args);
-    $this->set_sorting($sql, $sorting, !$grouped, $args);
+    $wrapped = $this->wrap_query($sql, $args);
+    $this->set_grouping($sql, $grouping);
+    $this->set_sorting($sql, $sorting, !$wrapped, $args);
     return $this->page->translate_sql($sql);
   }
 
