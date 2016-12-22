@@ -37,8 +37,10 @@ class collection
       $name = $alias = $matches[1];
     else
       $alias = $matches[1];
-    if ($matches[2]) $grouping[] = array_slice(explode('.',$alias),-1)[0];
-    if ($matches[3]) $sorting[] = "$alias $matches[3]";
+    if (sizeof($matches) < 2) return;
+    $field =  array_slice(explode('.',$alias),-1)[0];
+    if ($matches[2]) $grouping[] = $field;
+    if ($matches[3]) $sorting[] = "$field $matches[3]";
   }
 
   function get_name_alias($arg)
@@ -95,17 +97,18 @@ class collection
     return "($query order by version desc limit 1) $alias";
   }
 
-
-  function get_joins($table, $filters, &$where="")
+  function get_joins($table, $filters, &$where="", $conjuctor="and", $index=0, $new_group=false)
   {
-    $index = 0;
     $joins = "";
-    if (empty($filters)) return "";
-    if (!is_array($filters) || is_assoc($filters)) $filters = [$filters];
-
     // create joins for each filter
     foreach($filters as $filter) {
       ++$index;
+      if (sizeof($filter) > 1) {
+        $where .= " $conjuctor (";
+        $joins .= $this->get_joins($table, $filter, $where, "or", $index, true);
+        $where .= ")";
+        continue;
+      }
       list($name,$value) = $this->page->get_sql_pair($filter);
       if ($name == 'identifier') {
         $where .= " and m.$name = $value";
@@ -117,8 +120,11 @@ class collection
         $operator = " = ";
 
       $joins .= " join $table m$index on m$index.collection = m.collection
-          and m$index.version <= m.version and m$index.identifier=m.identifier
-          and m$index.attribute = '$name' and m$index.value $operator $value";
+                and m$index.version <= m.version and m$index.identifier=m.identifier";
+      if (!$new_group)
+        $where .= " $conjuctor ";
+      else $new_group = false;
+      $where .= "m$index.attribute = '$name' and m$index.value $operator $value";
     }
     return $joins;
   }
@@ -168,7 +174,9 @@ class collection
     if ($filters == '')
       $filters = [];
     else if (is_string($filters))
-      $filters = ['identifier'=>$filters];
+      $filters = [['identifier'=>$filters]];
+    else if (is_assoc($filters))
+      $filters = [$filters];
     return [$collection, $filters, $offset, $size];
   }
 
