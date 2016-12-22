@@ -37,7 +37,7 @@ class collection
       $name = $alias = $matches[1];
     else
       $alias = $matches[1];
-    if ($matches[2]) $grouping[] = $alias;
+    if ($matches[2]) $grouping[] = array_slice(explode('.',$alias),-1)[0];
     if ($matches[3]) $sorting[] = "$alias $matches[3]";
   }
 
