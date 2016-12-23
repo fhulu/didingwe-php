@@ -259,7 +259,7 @@ class collection
     $sql = "select $selection from $table m $joins $where";
     if ($term != '')
       $sql .= " and (value like '%$term%' or identifier like '%$term%') ";
-    $sql .= "group by m.identifier";
+    $sql .= " group by m.identifier";
     $this->set_limits($sql, $offset, $size);
     $wrapped = $this->wrap_query($sql, $args);
     $this->set_grouping($sql, $grouping);
