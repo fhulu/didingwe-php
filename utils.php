@@ -331,3 +331,8 @@ function echo_scripts($scripts, $template) {
     echo str_replace('$script', $script, $template);
   }
 }
+
+function implode_quoted($array, $separator=",", $quote="'")
+{
+  return $quote . implode($separator, $array) . $quote;
+}
