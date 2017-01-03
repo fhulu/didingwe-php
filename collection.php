@@ -9,6 +9,7 @@ class collection
   {
     $this->page = $page;
     $this->db = $page->db;
+    $this->auth = $page->get_module('auth');
     $this->read_tables();
   }
 
@@ -103,24 +104,28 @@ class collection
     // create joins for each filter
     foreach($filters as $filter) {
       ++$index;
-      if (is_array($filter)) {
+      if (is_array($filter) && sizeof($filter) > 1) {
         $where .= " $conjuctor (";
         $joins .= $this->get_joins($table, $filter, $where, "or", $index, true);
         $where .= ")";
         continue;
       }
       if ($filter == '_access') {
+        continue;
 
+        // todo: fix access control
         $member_table = $this->get_table("user_group_member");
+        $user_groups =  implode_quoted($this->auth->get_groups());
         $joins .=
         " join $table m$index on m$index.collection = m.collection
             and m$index.version <= m.version and m$index.identifier=m.identifier
             and m$index.attribute = 'owner'
           join $member_table owner on owner.collection = 'user_group_member'
-            and owner.version <= m.version and owner.attribute = 'user' and owner.value = m$index.value
+            and owner.version <= m.version and owner.attribute = 'user'";
+        $where .= " and (owner.value = m$index.value or m$index.
           join $member_table owner_groups on owner_groups.collection = 'user_group_member'
             and owner_groups.version <= m.version and owner_groups.attribute = 'group' and owner_groups.identifier = owner.identifier
-            and owner_groups.value in ($this->user_groups)";
+            and owner_groups.value in ($user_groups)";
         continue;
       }
       list($name,$value) = $this->page->get_sql_pair($filter);

@@ -34,7 +34,7 @@ search_paths: [../common/,.,$brand_path]
 collections:
   default: collection
   session: [session,audit]
-  auth: [user,partner,role,user_role]
+  auth: [user,partner,role,user_role,user_group,user_group_member]
 
 registrar: Mukoni Software
 registrar_role: admin
