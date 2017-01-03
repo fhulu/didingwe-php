@@ -103,10 +103,24 @@ class collection
     // create joins for each filter
     foreach($filters as $filter) {
       ++$index;
-      if (sizeof($filter) > 1) {
+      if (is_array($filter)) {
         $where .= " $conjuctor (";
         $joins .= $this->get_joins($table, $filter, $where, "or", $index, true);
         $where .= ")";
+        continue;
+      }
+      if ($filter == '_access') {
+
+        $member_table = $this->get_table("user_group_member");
+        $joins .=
+        " join $table m$index on m$index.collection = m.collection
+            and m$index.version <= m.version and m$index.identifier=m.identifier
+            and m$index.attribute = 'owner'
+          join $member_table owner on owner.collection = 'user_group_member'
+            and owner.version <= m.version and owner.attribute = 'user' and owner.value = m$index.value
+          join $member_table owner_groups on owner_groups.collection = 'user_group_member'
+            and owner_groups.version <= m.version and owner_groups.attribute = 'group' and owner_groups.identifier = owner.identifier
+            and owner_groups.value in ($this->user_groups)";
         continue;
       }
       list($name,$value) = $this->page->get_sql_pair($filter);
@@ -258,7 +272,7 @@ class collection
     $joins = $this->get_joins($table, $filters, $where);
     $sql = "select $selection from $table m $joins $where";
     if ($term != '')
-      $sql .= " and (value like '%$term%' or identifier like '%$term%') ";
+      $sql .= " and (m.value like '%$term%' or m.identifier like '%$term%') ";
     $sql .= " group by m.identifier";
     $this->set_limits($sql, $offset, $size);
     $wrapped = $this->wrap_query($sql, $args);
