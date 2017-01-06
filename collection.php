@@ -311,7 +311,7 @@ class collection
     $sql = $this->read(func_get_args(), true);
     if ($this->page->foreach)
       return $this->db->read($sql, MYSQLI_ASSOC);
-    return ['data'=>$this->db->read($sql, MYSQLI_NUM)];
+    return ['data'=>$this->db->read($sql, MYSQLI_NUM), 'count'=>$this->db->row_count()];
   }
 
   function update()
