@@ -8,9 +8,8 @@ activate:
   desc: Activate inactive user
   audit: $first_name $last_name ($key)
   post:
-    - let: [email: $key]
-    - collection.update: [user, $email, active: 1]
-    - collection.values: [user, $email, first_name, last_name]
+    - collection.update: [user, $key, active: 1]
+    - collection.values: [user, $key, email, first_name, last_name]
     - emailer.send: { type: activate_email }
     - refresh: "#page"
 
@@ -107,7 +106,8 @@ confirm_registration:
     - read_session: title,first_name,last_name,cellphone,email,password,registrant_partner
     - collection.insert:
         - user
-        - $email
+        - ""
+        - email
         - password: /password('$password')
         - active: 1
         - attempts: 0
@@ -120,7 +120,7 @@ confirm_registration:
     - let: { registrant_name: $first_name $last_name, registrant_email: $email }
     - clear_values: [first_name, last_name, email]
     - foreach:
-        - collection.data: [user, [partner: $registrar, role: $registrar_role],first_name, last_name, email: identifier]
+        - collection.data: [user, [partner: $registrar, role: $registrar_role],first_name, last_name, email]
         - if $email_new_registration:
             emailer.send: { type: new_registration_email, to: $first_name $last_name<$email> }
         - clear_values: [first_name, last_name, email]
@@ -160,9 +160,8 @@ deactivate:
   desc: Deactivate this user
   audit: $first_name $last_name ($key)
   post:
-    - let: [email: $key]
-    - collection.update: [user, $email, active: 0]
-    - collection.values: [user, $email, first_name, last_name]
+    - collection.update: [user, $key, active: 0]
+    - collection.values: [user, $key, first_name, last_name]
     - emailer.send: { type: deactivate_email }
     - refresh: "#page"
 
@@ -209,7 +208,7 @@ enter_email:
   inputs:
     - email: { valid: is_registered }
   post:
-    - collection.values: [user, $email, first_name, last_name, cellphone]
+    - collection.values: [user, email: $email, first_name, last_name, cellphone]
     - write_session: [email, first_name, last_name, cellphone]
 
 
@@ -241,21 +240,21 @@ history:
 
 
 is_active:
-  valid: collection.exists(user,identifier,$value,active,1)
+  valid: collection.exists(user,email,$value,active,1)
   error: |
     Account $value has been deactivated.
     Please ask the administrator to reactivate your account
 
 
 is_registered:
-  valid: collection.exists(user,$value)
+  valid: collection.exists(user,email,$value )
   error: >
     There is no such email '$value' registered on the system.<br>
     Click on <b>Register</b> if you would like to register to use the system.
 
 is_unlocked:
   max_attempts: 5
-  valid: collection.exists(user,identifier,$value,attempts,/<$max_attempts)
+  valid: collection.exists(user,email,$value,attempts,/<$max_attempts)
   error: |
     Account $value locked because of too many incorrect attempts.
     Please ask the administrator to unlock your account.
@@ -274,7 +273,8 @@ list:
     - deactivate
     - edit: { action: dialog }
   fields:
-    - email: { width: 26%, key: true }
+    - key: { show: false}
+    - email: { width: 26%}
     - first_name: { width: 16% }
     - last_name: { width: 16% }
     - cellphone: { width: 12% }
@@ -290,7 +290,8 @@ list:
     - collection.data:
         - user
         - partner: $partner
-        - email: identifier
+        - identifier
+        - email
         - first_name
         - last_name
         - cellphone
@@ -337,14 +338,14 @@ login:
     - forgot_password: { action: dialog }
   post:
     - read_config: start_page
-    - collection.values: [user, $email, partner, first_name, last_name, cellphone, start_page, start_url: "/ifnull(start_page,'$start_page')", role, attempts ]
+    - collection.values: [user, email: $email, user: identifier, partner, first_name, last_name, cellphone, start_page, start_url: "/ifnull(start_page,'$start_page')", role, attempts ]
     - collection.listing: [role, $role, base_roles: role]
-    - collection.listing: [user_group_member, [user: $email], groups: group]
+    - collection.listing: [user_group_member, [user: $user], groups: group]
     - if $attempts > 0:
-          - collection.update: [user, $email, attempts: 0]
+          - collection.update: [user, user, attempts: 0]
     - read_server: [HTTP_USER_AGENT,REMOTE_ADDR,REMOTE_HOST,REQUEST_URI]
-    - collection.insert: [session, /sha1(last_insert_id()), user: $email, partner, start_time: /now(), HTTP_USER_AGENT, REMOTE_ADDR,REQUEST_URI]
-    - auth.login: [$new_session_id, $email, $role, $base_roles, $groups]
+    - collection.insert: [session, /sha1(last_insert_id()), user, partner, start_time: /now(), HTTP_USER_AGENT, REMOTE_ADDR,REQUEST_URI]
+    - auth.login: [$new_session_id, user, $role, $base_roles, $groups]
     - close_dialog
     - redirect: $start_url
   audit:
@@ -361,10 +362,11 @@ login_email:
 login_password:
   valid:
     - depends(email, validated)
-    - collection.exists(user,identifier,$email,password,/=password('$value'))
+    - collection.exists(user,email,$email,password,/=password('$value'))
   error:
-    - collection.update: [user, identifier: $email, attempts: /value+1]
-    - collection.insert: [audit_trail, "", user: $email, action: Failed Login attempt]
+    - collection.values: [user, email: $email, user: identifier]
+    - collection.update: [user, $user, attempts: /value+1]
+    - collection.insert: [audit, "", user, action: Failed Login attempt]
     - error: [password, Invalid user name or password for $email ]
 
 logout:
@@ -389,7 +391,7 @@ modify:
     - email: { valid: [not_registered] }
     - role: { type: dropdown_collection }
   values:
-    - collection.values: [user, $key, title, first_name, last_name, cellphone, email: identifier, role]
+    - collection.values: [user, $key, title, first_name, last_name, cellphone, email, role]
   actions:
     - modify: { name: Update User Details }
   validate: delta
@@ -444,7 +446,7 @@ profile:
     - email: { valid: [not_in_use]}
     - roles: { attr: disabled }
   values:
-    - collection.values: [session, $sid, user.title, user.first_name, user.last_name, user.cellphone, email: user, roles: user.role]
+    - collection.values: [session, $sid, user.title, user.first_name, user.last_name, user.cellphone, user.email, roles: user.role]
     - clear_values: [password,role,attempts]
   actions:
     - profile_update: { validate: delta }
