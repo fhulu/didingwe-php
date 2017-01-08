@@ -235,7 +235,8 @@ history:
     - when : { width: 14%, name: Time }
     - what: { width: 30%, name: Action }
     - detail: { width: 55% }
-  sql: select create_time, action, detail from audit_trail where user = '$key'
+  values:
+    - collection.data: [10, audit, user: $key, time desc, action, detail]
 
 
 
@@ -366,7 +367,7 @@ login_password:
   error:
     - collection.values: [user, email: $email, user: identifier]
     - collection.update: [user, $user, attempts: /value+1]
-    - collection.insert: [audit, "", user, action: Failed Login attempt]
+    - collection.insert: [audit, "", user, action: Failed Login attempt, time: /sysdate()]
     - error: [password, Invalid user name or password for $email ]
 
 logout:
