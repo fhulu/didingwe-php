@@ -33,7 +33,7 @@ class collection
   function extract_grouping(&$sorting, &$grouping, &$name, &$alias)
   {
     $matches = [];
-    if (!preg_match('/^(\w[\w\.]*)(\s+group\s*)?(\s+asc|desc\s*)?$/', $alias, $matches)) return;
+    if (!preg_match('/^(\w[\w\.]*)(\s+group\s*)?(\s+asc\s*|\s+desc\s*)?$/', $alias, $matches)) return;
     if ($name == $alias)
       $name = $alias = $matches[1];
     else
@@ -279,10 +279,10 @@ class collection
     if ($term != '')
       $sql .= " and (m.value like '%$term%' or m.identifier like '%$term%') ";
     $sql .= " group by m.identifier";
-    $this->set_limits($sql, $offset, $size);
     $wrapped = $this->wrap_query($sql, $args);
     $this->set_grouping($sql, $grouping);
     $this->set_sorting($sql, $sorting, !$wrapped, $args);
+    $this->set_limits($sql, $offset, $size);
     return $this->page->translate_sql($sql);
   }
 
