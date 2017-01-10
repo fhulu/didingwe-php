@@ -120,7 +120,7 @@ int_tel:
   valid:
     - /^\+\d+[- \d]*$/
     - at_least(10,digits)
-  error: Please use international number format for $name, e.g. +27123456789
+  error: Please use international number format for $name, e.g. +27823456789
 
 is: must_be($1)
 

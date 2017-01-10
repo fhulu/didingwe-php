@@ -263,7 +263,6 @@ class validator
       $module_method  = $page->get_module_method($func);
       if ($module_method) {
         list($context, $method) = $module_method;
-        log::debug("valid module '$func', $method");
         $result = call_user_func_array(array($context, $method), $args);
         array_shift($args);
       }
