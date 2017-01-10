@@ -40,9 +40,10 @@ isearch:
     type: anchor
     class: [isearch-option,block,nomargin,undecorated,pad pad-small,hover-light-grey]
     value: $1
+    chosen: $2
     name: $2
     embolden: [name]
-    attr: { id: "", name: "", value: $value, chosen: $name }
+    attr: { id: "", name: "", value: $value, chosen: $chosen }
   search_fields: name asc
   search_collection: $id
   post:
