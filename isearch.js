@@ -14,7 +14,7 @@ $.widget( "custom.isearch", {
     var opts = me.options;
     me.params = { action: 'data', path: opts.path, key: opts.key, offset: 0, size: opts.drop.autoload  };
     me.searcher = el.find('.isearch-searcher').on('keyup input cut paste', function() {
-      if (me.params.term == $(this).val()) return;
+      el.val("")
       me.params.offset = 0;
       me.drop.show();
       me._load();
