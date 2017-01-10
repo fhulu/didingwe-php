@@ -431,7 +431,9 @@
         row_actions.push('slideoff');
 
       td.addClass('actions');
-      var all_actions = this.options.row_actions;
+
+      var opts = this.options;
+      var all_actions = opts.row_actions;
       var key = tr.attr('key');
       var normal_actions = [];
       var slide_actions = [];
@@ -441,12 +443,13 @@
         var id = action.id;
         if (row_actions.indexOf(id) < 0) continue;
         action.key = key;
+        action = mkn.merge(action, opts[id]);
         actions.push(action);
         if (id == 'slide')
           actions = slide_actions;
       }
       if (normal_actions.length)
-        this.options.render.createItems(td, {}, undefined, normal_actions);
+        opts.render.createItems(td, {}, undefined, normal_actions);
       if (!slide_actions.length) return;
       var slider = $('<div class="slide">').toggle(false).appendTo(td);
       slider.data('actions', slide_actions);
