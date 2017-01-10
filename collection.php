@@ -385,6 +385,7 @@ class collection
     $size = sizeof($args);
     if ($size < 2) return false;
     if ($size == 2) {
+      $args[1] = ['identifier'=>$args[1]];
       $args[] = 'identifier';
     }
     else {
@@ -393,7 +394,6 @@ class collection
         $filters[] = [$args[$i]=>$args[$i+1]];
       }
       $args = [$args[0], $filters, 'identifier' ];
-      log::debug_json("args", $args);
     }
     $sql = $this->read($args);
     return $this->db->exists($sql);
