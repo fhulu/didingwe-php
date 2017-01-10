@@ -450,6 +450,15 @@ labelled_inside_image:
   subject:
     styles: [height_watermark,centered_text]
 
+label_bottom:
+  type: labelled
+  class: [inline-block]
+  label:
+    class: [block]
+  subject:
+    class: [block]
+  text: $field$label
+
 label_left:
   type: labelled
   class: [clear-after]
@@ -483,12 +492,7 @@ label_right:
   text: $field $label
 
 label_top:
-  type: labelled
-  class: [inline-block]
-  label:
-    class: [block]
-  subject:
-    class: [block]
+  type: label_bottom
   text: $label$field
 
 left_text:
