@@ -56,7 +56,8 @@ sms.send:
   host: www.qmessenger.co.za
   user: minime
   password: mypassword
-  path: web2sms/submit?uid=$user&pw=$password&sms=$message&da=$cellphone
+  cellphone: $cellphone
+  path: web2sms/submit?uid=$user&pw=$password&sms=$message&da=$msisdn
 emailer.send:
   smtp:
     host: smtp.example.com
