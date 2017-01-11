@@ -117,6 +117,14 @@ confirm_registration:
         - cellphone
         - partner: $registrant_partner
         - role: $registrant_role
+    - collection.insert:
+        - audit
+        - ""
+        - action: New Registration
+        - time: "/sysdate()"
+        - user: $new_user_id
+        - partner: $registrant_partner
+        - detail: $title $first_name $last_name $cellphone $email
     - write_session: new_user_id
     - let: { registrant_name: $first_name $last_name, registrant_email: $email }
     - clear_values: [first_name, last_name, email]
@@ -127,7 +135,6 @@ confirm_registration:
         - clear_values: [first_name, last_name, email]
     - clear_values
     - clear_session: title,first_name,last_name,cellphone,password
-  audit: $title $first_name $last_name $cellphone $email
 
 new_registration_email:
   subject: New Registration on $program_name
