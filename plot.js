@@ -64,6 +64,8 @@ $.widget("ui.plotter", {
     // }
     options.axesDefaults.tickRenderer = $.jqplot.CanvasAxisTickRenderer;
     options.axes.xaxis.renderer = $.jqplot.DateAxisRenderer;
+    options.axes.xaxis.renderer = $.jqplot.CategoryAxisRenderer;
+    options.seriesDefaults.renderer = $.jqplot.BarRenderer;
 
     this.plot = $.jqplot(this.options.id, data, options );
   }
