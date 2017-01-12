@@ -664,3 +664,4 @@
 .no-float,.col.no-float{float:none}
 .float-right,.col.float-right{float:right}
 .no-repeat,.norepeat{background-repeat: no-repeat}
+.no-backcolor{background-color:inherit}
