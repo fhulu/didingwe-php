@@ -31,6 +31,13 @@ $.fn.setValue = function(val)
     return this.prop('checked', val);
   }
 
+  if (type == 'radio') {
+    var parent = this.closest('.radiogroup');
+    var checked = parent.find("[type=radio][name='"+this.attr('name')+"'][value='"+val+"']");
+    checked.prop('checked', true);
+    return this;
+  }
+
   if (this.is('select')) {
     this.val(val);
     if (this.val() == val) return this;
