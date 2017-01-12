@@ -10,16 +10,16 @@ isearch:
     type: input
     derive: [placeholder]
     attr: { placeholder: $placeholder }
-    class: [isearch-searcher, widest]
+    class: [isearch-searcher, widest, pad pad-small]
   buttons:
-    class: [overlay absolute top-right]
+    class: [overlay absolute top-right, pad pad-tiny]
     type: container
     derive: [name,adder,dropper]
     contents: [$adder,$dropper]
   adder:
     tag: label
     text: +
-    class: [isearch-adder,pad pad-small, pointer-cursor]
+    class: [isearch-adder,pad-x pad-tiny,inline-block, pointer-cursor]
     derive: [name]
     desc: Add a new $name
     action: dialog
@@ -27,7 +27,7 @@ isearch:
   dropper:
     type: [font_awesome,fanthom]
     icon: caret-down
-    class: [isearch-dropper, pad pad-small, pointer-cursor]
+    class: [isearch-dropper, pad-x pad-tiny, inline-block, pointer-cursor]
     desc: Show all items
   drop:
     type: container
