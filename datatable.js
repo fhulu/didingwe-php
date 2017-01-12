@@ -306,9 +306,20 @@
       this.spanColumns(this.head().find('.header>th'));
     },
 
+    setRowStyles: function(row, styles) {
+      var row_styles = this.options.row_styles;
+      if (!row_styles) return;
+      styles.split(',').forEach(function(style) {
+        var classes = row_styles[style];
+        if (!classes) return;
+        row.addClass(classes.join(' '));
+      });
+    },
+
     addRow: function(row) {
       var me = this;
-      var fields = me.options.fields;
+      var opts = me.options;
+      var fields = opts.fields;
       var tr = $('<tr>');
       var key;
       var expandable = false;
@@ -327,7 +338,7 @@
         if (field.id === 'key' && hide) continue;
 
         if (field.id === 'style') {
-          tr.addClass(cell);
+          me.setRowStyles(tr, cell);
           continue;
         }
         var td = $('<td>').appendTo(tr);
