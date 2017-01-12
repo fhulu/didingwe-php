@@ -324,7 +324,6 @@ class collection
     $where = " where m.collection = '$collection' and m.version = 0 ";
     $table = $this->get_table($collection);
     $joins = $this->get_joins($table, $filters, $where);
-    $identifier = $filters['identifier'];
     foreach($args as $arg) {
       list($name,$value) = $this->page->get_sql_pair($arg);
       if ($name == 'identifier') {
@@ -337,6 +336,7 @@ class collection
       }
       $attribute = $name== 'identifier'? $name: 'value';
       $updated = $this->page->sql_exec("update $table m $joins set m.$attribute = $value $where $condition");
+      list($identifier) = find_assoc_element($filters, 'identifier');
       if (!$updated && $identifier) {
         $this->page->sql_exec("insert into $table(collection,identifier,attribute,value)
           select '$collection', '$identifier', '$name', $value from dual where not exists (
