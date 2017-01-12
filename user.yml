@@ -6,9 +6,9 @@ activate:
   access: [admin]
   validate: none
   desc: Activate inactive user
-  audit: $first_name $last_name ($key)
+  audit: $first_name $last_name ($email)
   post:
-    - collection.update: [user, $key, active: 1]
+    - collection.update: [user, $key, active: 1, attempts: 0]
     - collection.values: [user, $key, email, first_name, last_name]
     - emailer.send: { type: activate_email }
     - refresh: "#page"
@@ -166,14 +166,14 @@ deactivate:
   access: [admin]
   validate: none
   desc: Deactivate this user
-  audit: $first_name $last_name ($key)
+  audit: $first_name $last_name ($email)
   post:
     - collection.update: [user, $key, active: 0]
-    - collection.values: [user, $key, first_name, last_name]
+    - collection.values: [user, $key, first_name, last_name, email]
     - emailer.send: { type: deactivate_email }
     - refresh: "#page"
 
-dactivate_email:
+deactivate_email:
   from: $support_email
   to: $first_name $last_name <$email>
   subject: Your account has been deactivated
