@@ -199,6 +199,18 @@ $.fn.json = function(url, options, callback)
     options = undefined;
   }
   var data = $(this).values();
+  var prefix = options.post_prefix;
+  if (prefix) {
+    delete options.post_prefix;
+    var result = {};
+    $.each(data, function(key, value) {
+      if (key == 'delta') return;
+      result[prefix+key] = value;
+    });
+    data = result;
+  }
+
+
   if (options !== undefined)
     data = $.extend({}, options.data, data);
 

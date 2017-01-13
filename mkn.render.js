@@ -972,7 +972,7 @@ mkn.render = function(options)
           var selector = field.selector;
           if (selector !== undefined) {
             selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+field.page_id+"$2");
-            params = $.extend(params, {invoker: obj, event: event, async: true });
+            params = $.extend(params, {invoker: obj, event: event, async: true, post_prefix: field.post_prefix });
             me.sink.find(".error").remove();
             $(selector).json('/', params, function(result) {
               obj.trigger('processed', [result]);

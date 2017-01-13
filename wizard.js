@@ -93,7 +93,9 @@ $.widget( "custom.wizard", {
 
     if (info.next != false && index != last_step) {
       opts.next.path = info.path;
-      info.navigate.push({next: opts.next});
+      var next = mkn.copy(opts.next);
+      next.post_prefix = info.post_prefix;
+      info.navigate.push({next: next});
     }
 
     info.navigation.path = info.path;

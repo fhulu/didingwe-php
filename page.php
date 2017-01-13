@@ -655,10 +655,22 @@ class page
 
   function validate($field, $include)
   {
-    $options = merge_options($this->context,$this->request);
+
+    $post_prefix = $field['post_prefix'];
+    if ($post_prefix) {
+      $values = [];
+      $offset = strlen($post_prefix);
+      foreach($this->request as $key=>$value) {
+        if (strpos($key, $post_prefix) === 0)
+          $values[substr($key,$offset)] = $value;
+      }
+    }
+    else
+      $values = $this->request;
+    $options = merge_options($this->context,$values);
     $validators = $this->load_fields('validators');
     $fields = merge_options($this->merge_stack(page::$fields_stack), $this->page_fields, $this->fields);
-    $this->validator = new validator(merge_options($_SESSION['variables'], $this->request), $fields, $validators);
+    $this->validator = new validator(merge_options($_SESSION['variables'], $values), $fields, $validators);
 
     $exclude = array('audit','css','post','script','style', 'styles', 'type','valid','validate','values');
 
@@ -674,6 +686,7 @@ class page
         list($code, $value) = assoc_element($value);
       else
         $code = $key;
+
       if ($include !== true && !in_array($code, $include, true)) return;
       $validator = &$this->validator;
       if ($validator->checked($code)) return false;
