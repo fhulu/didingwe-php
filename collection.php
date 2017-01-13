@@ -93,9 +93,9 @@ class collection
         "select group_concat($value) from $sub_table where collection = '$foreign_key' and version <= m.version and attribute = '$foreign_name'
           and identifier in (
             select value from $table where collection = m.collection and version <= m.version
-              and identifier=m.identifier and attribute = '$local_name' order by version desc)";
+              and identifier=m.identifier and attribute = '$local_name' order by version desc, id desc)";
     }
-    return "($query order by version desc limit 1) $alias";
+    return "($query order by version desc, id desc limit 1) $alias";
   }
 
   function get_joins($table, $filters, &$where="", $conjuctor="and", $index=0, $new_group=false)
