@@ -462,9 +462,10 @@ profile:
 
 profile_update:
   name: Update Profile
-  audit: $title $first_name $last_name $cellphone $email
+  audit: $email $delta
   post:
-    - collection.update: [user, [identifier: $email], delta]
+    - collection.values: [session, $sid, user]
+    - collection.update: [user, $user, delta]
     - close_dialog: Successfully updated
 
 register:

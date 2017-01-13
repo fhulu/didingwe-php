@@ -937,7 +937,11 @@ class page
     if ($delta_index === false) return;
 
     $delta = trim($this->request['delta']);
-    $delta = $delta==''? null: explode(',', $delta);
+    if (!$delta) {
+      array_splice($args, $delta_index, 1);
+      return;
+    }
+    $delta = explode(',', $delta);
     array_splice($args, $delta_index, 1, $delta);
   }
 
