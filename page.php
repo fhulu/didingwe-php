@@ -125,6 +125,7 @@ class page
   {
     if ($this->result !== false)
       echo json_encode($this->result);
+    log::debug_json("OUTPUT", $this->result);
   }
 
 
@@ -591,7 +592,7 @@ class page
     walk_recursive_down($fields, function(&$value, $key, &$parent) {
       if (!$this->is_render_item($key) || $key === 'access')
         unset($parent[$key]);
-      if (in_array($key, page::$query_items, true) || page::is_module($key))
+      if (in_array($key, page::$query_items, true) || page::is_module($key) || preg_match('/^if /', $key))
         $parent['query'] = " ";
     });
 
@@ -1083,8 +1084,6 @@ class page
     replace_fields($field, $this->answer, true);
     replace_fields($field, $this->request, true);
     replace_fields($field, $this->context, true);
-    global $config;
-    replace_fields($field, $config);
   }
 
   function reply($actions)
