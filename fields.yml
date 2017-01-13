@@ -65,8 +65,7 @@ close:
   class: [brand-action-cancel]
 
 company_name:
-  valid:
-    - at_least(2)
+  valid: at_least(2)
 
 company_registration_no:
   name: Company Registration Number
@@ -311,7 +310,7 @@ physical_code:
 
 postal_address:
   attr: { maxlength: 100 }
-  valid: [at_least(15)]
+  valid: at_least(15)
 
 postal_code:
   attr: { min: 0000, max: 9999 }
