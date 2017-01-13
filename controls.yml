@@ -352,6 +352,11 @@ iframe:
   src: /$id
   attr: { src: $src }
 
+iframe_pdf:
+  type: iframe
+  class: [biggest]
+  src: /$id.pdf
+
 image:
   tag: img
   attr: {src: "$src"}
