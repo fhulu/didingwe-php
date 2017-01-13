@@ -350,17 +350,19 @@ login:
     - login
     - forgot_password: { action: dialog }
   post:
-    - read_config: start_page
-    - collection.values: [user, email: $email, user: identifier, partner, first_name, last_name, cellphone, start_page, start_url: "/ifnull(start_page,'$start_page')", role, attempts ]
+    - collection.values: [user, email: $email, user: identifier, partner, first_name, last_name, cellphone, start_page, role, attempts ]
+    - if "$start_page" == '':
+        - collection.values: [partner, $partner, start_page]
+    - if "$start_page" == '': [ read_config: start_page ]
     - collection.listing: [role, $role, base_roles: role]
     - collection.listing: [user_group_member, [user: $user], groups: group]
     - if $attempts > 0:
-          - collection.update: [user, user, attempts: 0]
+        - collection.update: [user, user, attempts: 0]
     - read_server: [HTTP_USER_AGENT,REMOTE_ADDR,REMOTE_HOST,REQUEST_URI]
     - collection.insert: [session, /sha1(last_insert_id()), user, partner, start_time: /now(), HTTP_USER_AGENT, REMOTE_ADDR,REQUEST_URI]
     - auth.login: [$new_session_id, user, $role, $base_roles, $groups]
     - close_dialog
-    - redirect: $start_url
+    - redirect: $start_page
   audit:
     detail: $email, $HTTP_USER_AGENT, $REMOTE_ADDR, $REMOTE_HOST
     post: [clear_values]
