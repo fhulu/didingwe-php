@@ -104,6 +104,10 @@ confirm_registration:
   validate: agree_terms
   post:
     - read_session: title,first_name,last_name,cellphone,email,password,registrant_partner
+    - collection.values: [partner, name: $registrant_partner, partner: identifier]
+    - if $parter == '':
+        - collection.insert: [partner, "", name: $registrant_partner]
+        - let: { partner: $new_partner_id }
     - collection.insert:
         - user
         - ""
@@ -115,7 +119,7 @@ confirm_registration:
         - first_name
         - last_name
         - cellphone
-        - partner: $registrant_partner
+        - partner
         - role: $registrant_role
     - collection.insert:
         - audit
@@ -123,9 +127,9 @@ confirm_registration:
         - action: New Registration
         - time: "/sysdate()"
         - user: $new_user_id
-        - partner: $registrant_partner
+        - partner
         - detail: $title $first_name $last_name $cellphone $email
-    - write_session: new_user_id
+    - write_session: new_user_id,partner
     - let: { registrant_name: $first_name $last_name, registrant_email: $email }
     - clear_values: [first_name, last_name, email]
     - foreach:
