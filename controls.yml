@@ -385,7 +385,6 @@ info_page:
     contents: $actions
   actions:
     - type: button
-  header_class: [pad-y,center-text, large-font]
 
 inplace_input:
   type: label_inside
@@ -600,7 +599,6 @@ page:
   attr: { title: $name }
   sub_page: true
   tooltip: false
-  header_class: [pad-y,center-text, large-font]
 
 page_title:
   tag: title
@@ -629,7 +627,7 @@ plain:
 
 plain_text:
   tag: div
-  text: $id
+  name: $id
   attr: { id: ""}
 
 plot:
