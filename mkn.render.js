@@ -565,6 +565,7 @@ mkn.render = function(options)
       var item = items[i];
       var id = item.id;
       if (id == 'query') {
+        if (loading_data) continue;
         loading_data = true;
         this.loadData(parent, parent_field, name, item.defaults);
         continue;
