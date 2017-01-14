@@ -89,7 +89,7 @@ $.fn.values = function()
   this.find('.checkgroup').updateCheckGroupValue();
   var data = {};
   var delta = [];
-  this.filter('input,textarea,select,.checkgroup,[value]').each(function() {
+  this.filter('input,textarea,select,.checkgroup,:not(option)[value]').each(function() {
     var ctrl = $(this);
     var name = ctrl.hasAttr('name')? ctrl.attr('name'): ctrl.attr('id');
     if (name === undefined || name.trim() == '') return true;
