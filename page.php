@@ -554,6 +554,7 @@ class page
     foreach($fields as &$value) {
       list($key, $field) = assoc_element($value);
       if (page::not_mergeable($key)) continue;
+      if (is_string($field) && $field[0] == '$') $field = $parent[substr($field,1)];
       if ($key == 'type') {
         $default_type = $field;
         continue;
@@ -693,7 +694,6 @@ class page
       if ($validator->checked($code)) return false;
       if (in_array($code, $exclude, true)) return false;
       if (!is_null($value) && !is_array($value)) return false;
-
 
       $valid = $value['valid'];
       if ($valid == 'ignore') return false;
