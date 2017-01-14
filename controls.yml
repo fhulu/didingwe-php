@@ -534,20 +534,13 @@ list_text:
 
 multi_input:
   classes: div
-  class: [error-sink,inline-block]
+  class: [error-sink, grid fit]
   attr: { id: ""}
   text: $inputs
-  split: 49%
-  spacing: 0.9%
+  layout: { type: label_top}
   inputs:
-    - template: label_inside
+    - template: $layout
     - type: input
-    - default:
-        derive: [split,spacing]
-        width: $split
-        class: [border,inline-block]
-        styles: [hspaced]
-        space: $spacing
 
 navigate:
   - type: submit
