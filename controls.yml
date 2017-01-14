@@ -190,35 +190,25 @@ disabled_text_input:
 
 dropdown:
   tag: select
-  unselected: --Select $name--
-  selected:
-    classes: option
-    derive: [unselected]
-    text: $unselected
-    attr: { value: ""}
   text: $options
+  option:
+    tag: option
+    value: $id
+    immutable: [name,value,text]
+    attr: { value: $id }
+  default_option:
+    tag: option
+    name: --Select $parent_name--
+    attr: { value: "", id: ""}
   options:
-    - dropdown_default
-    - type: dropdown_option
+    - $default_option
+    - type: $option
 
 
 dropdown_collection:
   type: dropdown
   options: [collection.data]
   valid: collection.exists($name,$value)
-
-dropdown_default:
-    classes: option
-    derive: [unselected]
-    text: $unselected
-    attr: { value: ""}
-
-dropdown_option:
-  tag: option
-  value: $id
-  text: $name
-  immutable: [name,value,text]
-  attr: { value: $id }
 
 element:
   text: ""
