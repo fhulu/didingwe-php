@@ -235,7 +235,7 @@ mkn.render = function(options)
       else if ($.isArray(item)) {
         array = item;
         id = item[0];
-        item = mkn.copy(defaults);
+        item = me.mergeType(mkn.copy(defaults));
         if (array.length>1 && item.name === undefined) item.name = array[1]
         item.array = array;
       }
