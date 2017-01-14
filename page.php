@@ -1215,7 +1215,9 @@ class page
     $responses = &$result['_responses'];
     $updates = &$responses['update'];
     if (is_array($name))
-      $updates = null_merge ($updates, $name);
+      $updates = merge_options($updates, $name);
+    else if (is_null($value))
+      $updates[$name] = $page->answer[$name];
     else
       $updates[$name] = $value;
   }
