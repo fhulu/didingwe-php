@@ -696,6 +696,7 @@ class page
 
 
       $valid = $value['valid'];
+      if ($valid == 'ignore') return false;
       if ($valid == "") return;
       $result = $validator->validate($code, $value, $valid);
       if ($result === true) return;

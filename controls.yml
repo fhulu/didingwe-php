@@ -519,6 +519,7 @@ link:
   immutable: [url]
   url: /$id
   action: redirect
+  valid: ignore
 
 link_underlined:
   type: link
@@ -738,6 +739,7 @@ submit:
   selector: "#page *"
   call: $class::$invoker($key)
   action: post
+  valid: ignore
 
 table:
   tag: table
