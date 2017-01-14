@@ -105,10 +105,10 @@ future_time:
   error: $name must be in the future
 
 greater:
-  error: $name must be greater than $1 ($v1)
+  error: $name must be greater than $1
 
 greater_equal:
-  error: $name must not be less than $1 ($v1)
+  error: $name must not be less than $1
 
 in:
   error: No such $name ($value)
