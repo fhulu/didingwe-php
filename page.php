@@ -554,8 +554,8 @@ class page
     foreach($fields as &$value) {
       list($key, $field) = assoc_element($value);
       if (page::not_mergeable($key)) continue;
-      if (is_string($field) && $field[0] == '$') $field = $parent[substr($field,1)];
       if ($key == 'type') {
+        if (is_string($field) && $field[0] == '$') $field = $parent[substr($field,1)];
         $default_type = $field;
         continue;
       }
