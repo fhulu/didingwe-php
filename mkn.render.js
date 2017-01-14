@@ -235,8 +235,7 @@ mkn.render = function(options)
       else if ($.isArray(item)) {
         array = item;
         id = item[0];
-        item = me.mergeType(mkn.copy(defaults));
-        if (array.length>1 && item.name === undefined) item.name = array[1]
+        item = mkn.copy(defaults);
         item.array = array;
       }
       else {
@@ -404,6 +403,7 @@ mkn.render = function(options)
     field = this.mergeType(field);
 
     var id = field.id;
+    if (field.array && field.array.length>1 && field.name === undefined) field.name = field.array[1];
     if (id && field.name === undefined)
       field.name = toTitleCase(id.replace(/[_\/]/g, ' '));
     if (field.array)
