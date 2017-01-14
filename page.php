@@ -542,7 +542,7 @@ class page
       foreach($fields as $key=>&$value) {
         if (!is_array($value) || page::not_mergeable($key)) continue;
         $value = $this->get_merged_field($key, $value);
-        if (!in_array($key, $merged, true)) {
+        if (!in_array($key, $merged, true) || !is_assoc($value)) {
           $merged[] = $key;
           $this->merge_fields($value, $parent, $merged);
         }
@@ -566,7 +566,7 @@ class page
       if (is_array($field) && !is_null($default_type) && !isset($field['type']))
         $field['type'] = $default_type;
       $field = $this->get_merged_field($key, $field);
-      if (is_array($field) && !in_array($key, $merged, true)  ) {
+      if (is_array($field) && (!in_array($key, $merged, true) || !is_assoc($field))) {
         $merged[] = $key;
         $this->merge_fields($field, $parent, $merged);
       }
