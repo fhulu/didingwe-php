@@ -292,11 +292,6 @@ password:
   valid: [password]
   format: password
 
-payweb:
-  class: [biggest, borderless]
-  type: iframe
-  src: /?path=paygate/request
-
 physical_address:
   attr: { maxlength: 128 }
   valid: [at_least(15)]
