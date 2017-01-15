@@ -1552,7 +1552,15 @@ class page
 
   function read_server()
   {
-    return $this->read_settings($_SERVER, func_get_args());
+    $args = func_get_args();
+    $result = $this->read_settings($_SERVER, $args);
+    if (!in_array('BASE_URL', $args)) return $result;
+
+    $protocol = 'http';
+    if(isset($_SERVER['HTTPS']))
+      $protocol = ($_SERVER['HTTPS'] && $_SERVER['HTTPS'] != "off") ? "https" : "http";
+    $result['BASE_URL'] = $protocol . "://" . $_SERVER['HTTP_HOST'] . ':' . $_SERVER['SERVER_PORT'];
+    return $result;
   }
 
   function merge_context($setting, &$options)
