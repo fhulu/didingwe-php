@@ -164,11 +164,12 @@ table.data>tbody>tr>td.actions>.slide
   position: absolute;
   float: right;
   right: 0px;
+  white-space: nowrap;
+  overflow: hidden;
 }
 table.data .slide>[action]
 {
   display: inline-block;;
-  float: left;
 }
 
 table.data thead div
