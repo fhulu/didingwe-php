@@ -19,6 +19,7 @@ request:
     - RETURN_URL
     - TRANSACTION_DATE
     - LOCALE
+    - COUNTRY
     - EMAIL
     - CHECKSUM
   values:
@@ -32,7 +33,7 @@ request:
     - let:
         PAYGATE_ID: $paygate_id
         REFERENCE: $new_payment_id
-        AMOUNT: $paygate_amount
+        AMOUNT: 10000
         CURRENCY: $currency
         RETURN_URL: $BASE_URL?page=paygate/response
         TRANSACTION_DATE: $transaction_date
@@ -41,7 +42,7 @@ request:
         EMAIL: $email
         KEY: $paygate_secret
     - sql_values: >
-        select md5('$PAYGATE_ID$REFERENCE$AMOUNT$CURRENCY$RETURN_URL$TRANSACTION_DATE$LOCALE$EMAIL$KEY') CHECKSUM
+        select md5("$PAYGATE_ID$REFERENCE$AMOUNT$CURRENCY$RETURN_URL$TRANSACTION_DATE$LOCALE$COUNTRY$EMAIL$KEY") CHECKSUM
     - trigger: .submit
     - clear_values: [paygate_amount]
 
