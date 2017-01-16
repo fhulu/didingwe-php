@@ -1,4 +1,4 @@
-show:
+modal:
   type: container
   class: [modal, center-contents]
   contents: [$dialog]
