@@ -298,7 +298,9 @@
 
     showData: function(data)
     {
-      this.body().empty();
+      var body = this.body();
+      body.addClass(this.options.body.class.join());
+      body.empty();
       var fields = this.options.fields;
       for(var i in data.data) {
         this.addRow(data.data[i]);

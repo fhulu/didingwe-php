@@ -4,6 +4,8 @@ datatable:
   type: table
   class: [data]
   create: datatable
+  body:
+    class: [table-body]
   script: [/common/datatable.js]
   row_creator: { type: table_row }
   css: [/common/datatable.css,/datatable.css]
