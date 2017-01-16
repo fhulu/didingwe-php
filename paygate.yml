@@ -1,7 +1,11 @@
 payweb:
+  name: PayGate Electronic Payment Interface
   class: [biggest, borderless]
   type: iframe
   src: /?page=paygate/request
+  modal:
+    dialog:
+      class: [col s12 m10 l9]
 
 request:
   class: [widest]
@@ -18,31 +22,28 @@ request:
     - CURRENCY
     - RETURN_URL
     - TRANSACTION_DATE
-    - LOCALE
-    - COUNTRY
     - EMAIL
     - CHECKSUM
   values:
     - read_session: [paygate_amount]
     - collection.values: [session, $sid, partner, partner.currency, user, user.email]
     - collection.insert: [payment, "", partner, user, amount: $paygate_amount, status: pending, method: credit_card ]
-    - sql_values: select now() transaction_date
     - read_config: [paygate_id,paygate_secret]
     - if "$currency" == '': { read_config: currency }
     - read_server: [BASE_URL]
+    - sql_values: select now() TRANSACTION_DATE
     - let:
         PAYGATE_ID: $paygate_id
         REFERENCE: $new_payment_id
-        AMOUNT: 10000
+        AMOUNT: $paygate_amount
         CURRENCY: $currency
         RETURN_URL: $BASE_URL?page=paygate/response
-        TRANSACTION_DATE: $transaction_date
         EMAIL: $email
         SECRET: $paygate_secret
     - sql_values: >
         select md5('$PAYGATE_ID|$REFERENCE|$AMOUNT|$CURRENCY|$RETURN_URL|$TRANSACTION_DATE|$EMAIL|$SECRET') CHECKSUM
     - trigger: .submit
-    - keep_values: [PAYGATE_ID,REFERENCE,AMOUNT,CURRENCY,RETURN_URL,TRANSACTION_DATE,EMAIL,SECRET]
+    - keep_values: [PAYGATE_ID,REFERENCE,AMOUNT,CURRENCY,RETURN_URL,TRANSACTION_DATE,EMAIL,CHECKSUM]
 
 response:
   type: input_page
