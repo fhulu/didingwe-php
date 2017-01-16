@@ -435,6 +435,7 @@
 .nowrap { white-space: nowrap}
 .truncate-word {  white-space: nowrap; overflow: hidden; text-overflow: ellipsis}
 .break-word{-ms-hyphens: auto;-moz-hyphens: auto;-webkit-hyphens: auto; hyphens: auto;word-wrap: break-word;overflow-wrap:break-word;text-overflow: ellipsis}
+.bullet-disc{ list-style-type: disc}
 
 /* vertical alignment */
 .vertical-bottom { vertical-align: bottom; }
@@ -664,3 +665,4 @@
 .no-float,.col.no-float{float:none}
 .float-right,.col.float-right{float:right}
 .no-repeat,.norepeat{background-repeat: no-repeat}
+.no-backcolor{background-color:inherit}

@@ -95,3 +95,9 @@ print:
    - call: datatable::pdf(root,$key)
  query: " "
  target: _blank
+
+
+image_row_action:
+  tag: i
+  name: " "
+  class: [fa, no-backcolor, pad-x pad-tiny, float-right, cursor-pointer]

@@ -306,9 +306,20 @@
       this.spanColumns(this.head().find('.header>th'));
     },
 
+    setRowStyles: function(row, styles) {
+      var row_styles = this.options.row_styles;
+      if (!row_styles) return;
+      styles.split(',').forEach(function(style) {
+        var classes = row_styles[style];
+        if (!classes) return;
+        row.addClass(classes.join(' '));
+      });
+    },
+
     addRow: function(row) {
       var me = this;
-      var fields = me.options.fields;
+      var opts = me.options;
+      var fields = opts.fields;
       var tr = $('<tr>');
       var key;
       var expandable = false;
@@ -327,7 +338,7 @@
         if (field.id === 'key' && hide) continue;
 
         if (field.id === 'style') {
-          tr.addClass(cell);
+          me.setRowStyles(tr, cell);
           continue;
         }
         var td = $('<td>').appendTo(tr);
@@ -431,7 +442,9 @@
         row_actions.push('slideoff');
 
       td.addClass('actions');
-      var all_actions = this.options.row_actions;
+
+      var opts = this.options;
+      var all_actions = opts.row_actions;
       var key = tr.attr('key');
       var normal_actions = [];
       var slide_actions = [];
@@ -441,12 +454,13 @@
         var id = action.id;
         if (row_actions.indexOf(id) < 0) continue;
         action.key = key;
+        action = mkn.merge(action, opts[id]);
         actions.push(action);
         if (id == 'slide')
           actions = slide_actions;
       }
       if (normal_actions.length)
-        this.options.render.createItems(td, {}, undefined, normal_actions);
+        opts.render.createItems(td, {}, undefined, normal_actions);
       if (!slide_actions.length) return;
       var slider = $('<div class="slide">').toggle(false).appendTo(td);
       slider.data('actions', slide_actions);

@@ -125,6 +125,7 @@ class page
   {
     if ($this->result !== false)
       echo json_encode($this->result);
+    log::debug_json("OUTPUT", $this->result);
   }
 
 
@@ -541,7 +542,7 @@ class page
       foreach($fields as $key=>&$value) {
         if (!is_array($value) || page::not_mergeable($key)) continue;
         $value = $this->get_merged_field($key, $value);
-        if (!in_array($key, $merged, true)) {
+        if (!in_array($key, $merged, true) || !is_assoc($value)) {
           $merged[] = $key;
           $this->merge_fields($value, $parent, $merged);
         }
@@ -554,6 +555,7 @@ class page
       list($key, $field) = assoc_element($value);
       if (page::not_mergeable($key)) continue;
       if ($key == 'type') {
+        if (is_string($field) && $field[0] == '$') $field = $parent[substr($field,1)];
         $default_type = $field;
         continue;
       }
@@ -565,7 +567,7 @@ class page
       if (is_array($field) && !is_null($default_type) && !isset($field['type']))
         $field['type'] = $default_type;
       $field = $this->get_merged_field($key, $field);
-      if (is_array($field) && !in_array($key, $merged, true)  ) {
+      if (is_array($field) && (!in_array($key, $merged, true) || !is_assoc($field))) {
         $merged[] = $key;
         $this->merge_fields($field, $parent, $merged);
       }
@@ -591,7 +593,7 @@ class page
     walk_recursive_down($fields, function(&$value, $key, &$parent) {
       if (!$this->is_render_item($key) || $key === 'access')
         unset($parent[$key]);
-      if (in_array($key, page::$query_items, true) || page::is_module($key))
+      if (in_array($key, page::$query_items, true) || page::is_module($key) || preg_match('/^if /', $key))
         $parent['query'] = " ";
     });
 
@@ -655,10 +657,22 @@ class page
 
   function validate($field, $include)
   {
-    $options = merge_options($this->context,$this->request);
+
+    $post_prefix = $field['post_prefix'];
+    if ($post_prefix) {
+      $values = [];
+      $offset = strlen($post_prefix);
+      foreach($this->request as $key=>$value) {
+        if (strpos($key, $post_prefix) === 0)
+          $values[substr($key,$offset)] = $value;
+      }
+    }
+    else
+      $values = $this->request;
+    $options = merge_options($this->context,$values);
     $validators = $this->load_fields('validators');
     $fields = merge_options($this->merge_stack(page::$fields_stack), $this->page_fields, $this->fields);
-    $this->validator = new validator(merge_options($_SESSION['variables'], $this->request), $fields, $validators);
+    $this->validator = new validator(merge_options($_SESSION['variables'], $values), $fields, $validators);
 
     $exclude = array('audit','css','post','script','style', 'styles', 'type','valid','validate','values');
 
@@ -674,14 +688,15 @@ class page
         list($code, $value) = assoc_element($value);
       else
         $code = $key;
+
       if ($include !== true && !in_array($code, $include, true)) return;
       $validator = &$this->validator;
       if ($validator->checked($code)) return false;
       if (in_array($code, $exclude, true)) return false;
       if (!is_null($value) && !is_array($value)) return false;
 
-
       $valid = $value['valid'];
+      if ($valid == 'ignore') return false;
       if ($valid == "") return;
       $result = $validator->validate($code, $value, $valid);
       if ($result === true) return;
@@ -937,7 +952,11 @@ class page
     if ($delta_index === false) return;
 
     $delta = trim($this->request['delta']);
-    $delta = $delta==''? null: explode(',', $delta);
+    if (!$delta) {
+      array_splice($args, $delta_index, 1);
+      return;
+    }
+    $delta = explode(',', $delta);
     array_splice($args, $delta_index, 1, $delta);
   }
 
@@ -1066,8 +1085,6 @@ class page
     replace_fields($field, $this->answer, true);
     replace_fields($field, $this->request, true);
     replace_fields($field, $this->context, true);
-    global $config;
-    replace_fields($field, $config);
   }
 
   function reply($actions)
@@ -1199,7 +1216,9 @@ class page
     $responses = &$result['_responses'];
     $updates = &$responses['update'];
     if (is_array($name))
-      $updates = null_merge ($updates, $name);
+      $updates = merge_options($updates, $name);
+    else if (is_null($value))
+      $updates[$name] = $page->answer[$name];
     else
       $updates[$name] = $value;
   }
@@ -1533,7 +1552,15 @@ class page
 
   function read_server()
   {
-    return $this->read_settings($_SERVER, func_get_args());
+    $args = func_get_args();
+    $result = $this->read_settings($_SERVER, $args);
+    if (!in_array('BASE_URL', $args)) return $result;
+
+    $protocol = 'http';
+    if(isset($_SERVER['HTTPS']))
+      $protocol = ($_SERVER['HTTPS'] && $_SERVER['HTTPS'] != "off") ? "https" : "http";
+    $result['BASE_URL'] = $protocol . "://" . $_SERVER['HTTP_HOST'] . ':' . $_SERVER['SERVER_PORT'];
+    return $result;
   }
 
   function merge_context($setting, &$options)

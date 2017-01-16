@@ -190,35 +190,25 @@ disabled_text_input:
 
 dropdown:
   tag: select
-  unselected: --Select $name--
-  selected:
-    classes: option
-    derive: [unselected]
-    text: $unselected
-    attr: { value: ""}
   text: $options
+  option:
+    tag: option
+    value: $id
+    immutable: [name,value,text]
+    attr: { value: $id }
+  default_option:
+    tag: option
+    name: --Select $parent_name--
+    attr: { value: "", id: ""}
   options:
-    - dropdown_default
-    - type: dropdown_option
+    - $default_option
+    - type: $option
 
 
 dropdown_collection:
   type: dropdown
   options: [collection.data]
   valid: collection.exists($name,$value)
-
-dropdown_default:
-    classes: option
-    derive: [unselected]
-    text: $unselected
-    attr: { value: ""}
-
-dropdown_option:
-  tag: option
-  value: $id
-  text: $name
-  immutable: [name,value,text]
-  attr: { value: $id }
 
 element:
   text: ""
@@ -352,6 +342,11 @@ iframe:
   src: /$id
   attr: { src: $src }
 
+iframe_pdf:
+  type: iframe
+  class: [biggest]
+  src: /$id.pdf
+
 image:
   tag: img
   attr: {src: "$src"}
@@ -380,7 +375,6 @@ info_page:
     contents: $actions
   actions:
     - type: button
-  header_class: [pad-y,center-text, large-font]
 
 inplace_input:
   type: label_inside
@@ -450,6 +444,15 @@ labelled_inside_image:
   subject:
     styles: [height_watermark,centered_text]
 
+label_bottom:
+  type: labelled
+  class: [inline-block]
+  label:
+    class: [block]
+  subject:
+    class: [block]
+  text: $field$label
+
 label_left:
   type: labelled
   class: [clear-after]
@@ -483,12 +486,7 @@ label_right:
   text: $field $label
 
 label_top:
-  type: labelled
-  class: [inline-block]
-  label:
-    class: [block]
-  subject:
-    class: [block]
+  type: label_bottom
   text: $label$field
 
 left_text:
@@ -511,6 +509,7 @@ link:
   immutable: [url]
   url: /$id
   action: redirect
+  valid: ignore
 
 link_underlined:
   type: link
@@ -526,20 +525,13 @@ list_text:
 
 multi_input:
   classes: div
-  class: [error-sink,inline-block]
+  class: [error-sink, grid fit]
   attr: { id: ""}
   text: $inputs
-  split: 49%
-  spacing: 0.9%
+  layout: { type: label_top}
   inputs:
-    - template: label_inside
+    - template: $layout
     - type: input
-    - default:
-        derive: [split,spacing]
-        width: $split
-        class: [border,inline-block]
-        styles: [hspaced]
-        space: $spacing
 
 navigate:
   - type: submit
@@ -574,8 +566,8 @@ option_panel:
     type: container
     name: $parent_name
     contents:
-      - p: { name: $parent_name, class: [inline-block] }
-      - chosen_$parent_id: { type: checkbox, class: [float-right] }
+      - label: { derive: [desc], name: $parent_name, class: [inline-block] }
+      - chosen_$parent_id: { derive: [desc], type: checkbox, class: [float-right] }
   body:
     id: body_$parent_id
     tag: div
@@ -591,7 +583,6 @@ page:
   attr: { title: $name }
   sub_page: true
   tooltip: false
-  header_class: [pad-y,center-text, large-font]
 
 page_title:
   tag: title
@@ -620,7 +611,7 @@ plain:
 
 plain_text:
   tag: div
-  text: $id
+  name: $id
   attr: { id: ""}
 
 plot:
@@ -738,6 +729,7 @@ submit:
   selector: "#page *"
   call: $class::$invoker($key)
   action: post
+  valid: ignore
 
 table:
   tag: table

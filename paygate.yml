@@ -1,9 +1,14 @@
+payweb:
+  class: [biggest, borderless]
+  type: iframe
+  src: /?page=paygate/request
+
 request:
-  styles: [widest]
+  class: [widest]
   desc: ""
   tag: form
   attr:
-    action: "https://www.paygate.co.za/paywebv2/process.trans"
+    action: "https://secure.paygate.co.za/payweb3/initiate.trans"
     method: POST
   text:
     - type: hidden
@@ -13,22 +18,30 @@ request:
     - CURRENCY
     - RETURN_URL
     - TRANSACTION_DATE
+    - LOCALE
     - EMAIL
     - CHECKSUM
   values:
-    - read_session: [paygate_amount,user_email]
-    - sql_insert: [payment, payer_id: $pid, user_id: $uid, amount: $paygate_amount, status: pend, method: creditc ]
-    - sql_values: select now() TRANSACTION_DATE
-    - read_values:
+    - read_session: [paygate_amount]
+    - collection.values: [session, $sid, partner, partner.currency, user, user.email]
+    - collection.insert: [payment, "", partner, user, amount: $paygate_amount, status: pending, method: credit_card ]
+    - sql_values: select now() transaction_date
+    - read_config: [paygate_id,paygate_secret]
+    - if "$currency" == '': { read_config: currency }
+    - read_server: [BASE_URL]
+    - let:
         PAYGATE_ID: $paygate_id
         REFERENCE: $new_payment_id
         AMOUNT: $paygate_amount
-        CURRENCY: ZAR
-        RETURN_URL: $server_host/?path=paygate/response
-        EMAIL: $user_email
-        SECRET: $paygate_secret
+        CURRENCY: $currency
+        RETURN_URL: $BASE_URL?page=paygate/response
+        TRANSACTION_DATE: $transaction_date
+        LOCALE: en
+        COUNTRY: ZAF
+        EMAIL: $email
+        KEY: $paygate_secret
     - sql_values: >
-        select md5('$PAYGATE_ID|$REFERENCE|$AMOUNT|$CURRENCY|$RETURN_URL|$TRANSACTION_DATE|$EMAIL|$SECRET') CHECKSUM
+        select md5('$PAYGATE_ID$REFERENCE$AMOUNT$CURRENCY$RETURN_URL$TRANSACTION_DATE$LOCALE$EMAIL$KEY') CHECKSUM
     - trigger: .submit
     - clear_values: [paygate_amount]
 

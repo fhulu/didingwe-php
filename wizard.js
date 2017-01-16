@@ -54,7 +54,7 @@ $.widget( "custom.wizard", {
   showPage: function(index) {
     var page = this.child('.wizard-page', index);
     var props = this.options.steps[index];
-    if (!page.find('.wizard-content').exists() || props.clear) {
+    if (!page.find('.wizard-step').exists() || props.clear) {
       this.child('.wizard-navigate').empty();
       this.loadPage(page, index);
     }
@@ -93,7 +93,9 @@ $.widget( "custom.wizard", {
 
     if (info.next != false && index != last_step) {
       opts.next.path = info.path;
-      info.navigate.push({next: opts.next});
+      var next = mkn.copy(opts.next);
+      next.post_prefix = info.post_prefix;
+      info.navigate.push({next: next});
     }
 
     info.navigation.path = info.path;

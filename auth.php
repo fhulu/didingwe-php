@@ -9,10 +9,10 @@ class auth {
     $this->page = $page;
   }
 
-  function login($sid, $role, $other_roles)
+  function login($sid, $user, $role, $other_roles, $groups)
   {
-    $this->roles = merge_options($other_roles,[$role, 'auth']);
-    $_SESSION["auth"] = ["id"=>$sid, 'roles' => $this->roles];
+    $roles = merge_options($other_roles,[$role, 'auth']);
+    $_SESSION["auth"] = ["id"=>$sid, 'user'=>$user,'roles'=>$roles, 'groups'=>$groups];
   }
 
   function get_session_id()
@@ -21,18 +21,22 @@ class auth {
     return isset($session)? $session['id']: null;
   }
 
-  function get_roles($reload = false)
+  function get_roles()
   {
     $session = $_SESSION["auth"];
-    if (!isset($session)) return $this->roles = ['public'];
-    if (!$reload && $this->roles) return $this->roles;
-    return $this->roles = $session['roles'];
+    return isset($session)? $session['roles']: ['public'];
+  }
+
+  function get_groups()
+  {
+    $session = $_SESSION["auth"];
+    return isset($session)? $session['groups']: [];
   }
 
   function authorized($roles)
   {
     if (!is_array($roles)) $roles = explode (',', $roles);
-    return sizeof(array_intersect($this->roles, $roles)) > 0;
+    return sizeof(array_intersect($this->get_roles(), $roles)) > 0;
   }
 
   function unauthorized($role)

@@ -13,11 +13,14 @@ administration:
   desc: Perform adminstrative duties
 
 agree_terms:
-  question: I have read and accepted the terms and conditions
+  question: I have read and accepted the $terms
   desc: You must agree to the terms and conditions before continuing
   valid: equals(1)
   error: Must accept and agree to terms and conditions.
 
+terms:
+  name: terms and conditions
+  type: link
 
 audit_trail:
   access: admin
@@ -59,8 +62,7 @@ close:
   class: [brand-action-cancel]
 
 company_name:
-  valid:
-    - at_least(2)
+  valid: at_least(2)
 
 company_registration_no:
   name: Company Registration Number
@@ -290,12 +292,6 @@ password:
   valid: [password]
   format: password
 
-payweb:
-  styles: [widest, borderless]
-  height: 600
-  type: iframe
-  src: /?path=paygate/request
-
 physical_address:
   attr: { maxlength: 128 }
   valid: [at_least(15)]
@@ -306,7 +302,7 @@ physical_code:
 
 postal_address:
   attr: { maxlength: 100 }
-  valid: [at_least(15)]
+  valid: at_least(15)
 
 postal_code:
   attr: { min: 0000, max: 9999 }

@@ -31,6 +31,13 @@ $.fn.setValue = function(val)
     return this.prop('checked', val);
   }
 
+  if (type == 'radio') {
+    var parent = this.closest('.radiogroup');
+    var checked = parent.find("[type=radio][name='"+this.attr('name')+"'][value='"+val+"']");
+    checked.prop('checked', true);
+    return this;
+  }
+
   if (this.is('select')) {
     this.val(val);
     if (this.val() == val) return this;
@@ -82,7 +89,7 @@ $.fn.values = function()
   this.find('.checkgroup').updateCheckGroupValue();
   var data = {};
   var delta = [];
-  this.filter('input,textarea,select,.checkgroup,[value]').each(function() {
+  this.filter('input,textarea,select,.checkgroup,:not(option)[value]').each(function() {
     var ctrl = $(this);
     var name = ctrl.hasAttr('name')? ctrl.attr('name'): ctrl.attr('id');
     if (name === undefined || name.trim() == '') return true;
@@ -192,6 +199,18 @@ $.fn.json = function(url, options, callback)
     options = undefined;
   }
   var data = $(this).values();
+  var prefix = options.post_prefix;
+  if (prefix) {
+    delete options.post_prefix;
+    var result = {};
+    $.each(data, function(key, value) {
+      if (key == 'delta') return;
+      result[prefix+key] = value;
+    });
+    data = result;
+  }
+
+
   if (options !== undefined)
     data = $.extend({}, options.data, data);
 

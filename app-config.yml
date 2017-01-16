@@ -33,8 +33,10 @@ modules:
 search_paths: [../common/,.,$brand_path]
 collections:
   default: collection
+  auth: [user,partner,role,user_role,user_group,user_group_member]
   session: [session,audit]
-  auth: [user,partner,role,user_role]
+  billing: [rate,payment,credit,transaction]
+
 
 registrar: Mukoni Software
 registrar_role: admin
@@ -56,9 +58,14 @@ sms.send:
   host: www.qmessenger.co.za
   user: minime
   password: mypassword
-  path: web2sms/submit?uid=$user&pw=$password&sms=$message&da=$cellphone
+  cellphone: $cellphone
+  path: web2sms/submit?uid=$user&pw=$password&sms=$message&da=$msisdn
 emailer.send:
   smtp:
     host: smtp.example.com
     user: me@example.com
     password: mypassword
+
+paygate_id: 10011072130
+paygate_secret: secret
+paygate_url: https://secure.paygate.co.za/payweb3/initiate.trans

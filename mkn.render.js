@@ -236,7 +236,6 @@ mkn.render = function(options)
         array = item;
         id = item[0];
         item = mkn.copy(defaults);
-        if (array.length>1 && item.name === undefined) item.name = array[1]
         item.array = array;
       }
       else {
@@ -404,6 +403,7 @@ mkn.render = function(options)
     field = this.mergeType(field);
 
     var id = field.id;
+    if (field.array && field.array.length>1 && field.name === undefined) field.name = field.array[1];
     if (id && field.name === undefined)
       field.name = toTitleCase(id.replace(/[_\/]/g, ' '));
     if (field.array)
@@ -565,6 +565,7 @@ mkn.render = function(options)
       var item = items[i];
       var id = item.id;
       if (id == 'query') {
+        if (loading_data) continue;
         loading_data = true;
         this.loadData(parent, parent_field, name, item.defaults);
         continue;
@@ -972,7 +973,7 @@ mkn.render = function(options)
           var selector = field.selector;
           if (selector !== undefined) {
             selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+field.page_id+"$2");
-            params = $.extend(params, {invoker: obj, event: event, async: true });
+            params = $.extend(params, {invoker: obj, event: event, async: true, post_prefix: field.post_prefix });
             me.sink.find(".error").remove();
             $(selector).json('/', params, function(result) {
               obj.trigger('processed', [result]);

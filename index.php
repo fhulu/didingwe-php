@@ -65,8 +65,9 @@ $active = get_active_config_name();
 $active_config = &$config[$active];
 $request = merge_options($active_config, $_REQUEST);
 unset($request['path']);
-unset($request['page']);
-$options = ["path"=>$active_config['page'], 'request'=>$request];
+$page =  $request['page'];
+if (!isset($page)) $page = $active_config['page'];
+$options = ["path"=>$page, 'request'=>$request];
 ?>
 <script>
 var request_method = '<?=$config['request_method'];?>';

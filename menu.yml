@@ -11,6 +11,7 @@ menu:
 menu_item:
   tag: li
   url: /$id
+  mutable: [url]
   trap: [click]
   type: container
   contents: [menu_link]

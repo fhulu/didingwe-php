@@ -9,6 +9,7 @@ class collection
   {
     $this->page = $page;
     $this->db = $page->db;
+    $this->auth = $page->get_module('auth');
     $this->read_tables();
   }
 
@@ -32,13 +33,15 @@ class collection
   function extract_grouping(&$sorting, &$grouping, &$name, &$alias)
   {
     $matches = [];
-    if (!preg_match('/^(\w[\w\.]*)(\s+group\s*)?(\s+asc|desc\s*)?$/', $alias, $matches)) return;
+    if (!preg_match('/^(\w[\w\.]*)(\s+group\s*)?(\s+asc\s*|\s+desc\s*)?$/', $alias, $matches)) return;
     if ($name == $alias)
       $name = $alias = $matches[1];
     else
       $alias = $matches[1];
-    if ($matches[2]) $grouping[] = array_slice(explode('.',$alias),-1)[0];
-    if ($matches[3]) $sorting[] = "$alias $matches[3]";
+    if (sizeof($matches) < 2) return;
+    $field =  array_slice(explode('.',$alias),-1)[0];
+    if ($matches[2]) $grouping[] = $field;
+    if ($matches[3]) $sorting[] = "$field $matches[3]";
   }
 
   function get_name_alias($arg)
@@ -90,22 +93,41 @@ class collection
         "select group_concat($value) from $sub_table where collection = '$foreign_key' and version <= m.version and attribute = '$foreign_name'
           and identifier in (
             select value from $table where collection = m.collection and version <= m.version
-              and identifier=m.identifier and attribute = '$local_name' order by version desc)";
+              and identifier=m.identifier and attribute = '$local_name' order by version desc, id desc)";
     }
-    return "($query order by version desc limit 1) $alias";
+    return "($query order by version desc, id desc limit 1) $alias";
   }
 
-
-  function get_joins($table, $filters, &$where="")
+  function get_joins($table, $filters, &$where="", $conjuctor="and", $index=0, $new_group=false)
   {
-    $index = 0;
     $joins = "";
-    if (empty($filters)) return "";
-    if (!is_array($filters) || is_assoc($filters)) $filters = [$filters];
-
     // create joins for each filter
     foreach($filters as $filter) {
       ++$index;
+      if (is_array($filter) && sizeof($filter) > 1) {
+        $where .= " $conjuctor (";
+        $joins .= $this->get_joins($table, $filter, $where, "or", $index, true);
+        $where .= ")";
+        continue;
+      }
+      if ($filter == '_access') {
+        continue;
+
+        // todo: fix access control
+        $member_table = $this->get_table("user_group_member");
+        $user_groups =  implode_quoted($this->auth->get_groups());
+        $joins .=
+        " join $table m$index on m$index.collection = m.collection
+            and m$index.version <= m.version and m$index.identifier=m.identifier
+            and m$index.attribute = 'owner'
+          join $member_table owner on owner.collection = 'user_group_member'
+            and owner.version <= m.version and owner.attribute = 'user'";
+        $where .= " and (owner.value = m$index.value or m$index.
+          join $member_table owner_groups on owner_groups.collection = 'user_group_member'
+            and owner_groups.version <= m.version and owner_groups.attribute = 'group' and owner_groups.identifier = owner.identifier
+            and owner_groups.value in ($user_groups)";
+        continue;
+      }
       list($name,$value) = $this->page->get_sql_pair($filter);
       if ($name == 'identifier') {
         $where .= " and m.$name = $value";
@@ -117,8 +139,11 @@ class collection
         $operator = " = ";
 
       $joins .= " join $table m$index on m$index.collection = m.collection
-          and m$index.version <= m.version and m$index.identifier=m.identifier
-          and m$index.attribute = '$name' and m$index.value $operator $value";
+                and m$index.version <= m.version and m$index.identifier=m.identifier";
+      if (!$new_group)
+        $where .= " $conjuctor ";
+      else $new_group = false;
+      $where .= "m$index.attribute = '$name' and m$index.value $operator $value";
     }
     return $joins;
   }
@@ -168,7 +193,9 @@ class collection
     if ($filters == '')
       $filters = [];
     else if (is_string($filters))
-      $filters = ['identifier'=>$filters];
+      $filters = [['identifier'=>$filters]];
+    else if (is_assoc($filters))
+      $filters = [$filters];
     return [$collection, $filters, $offset, $size];
   }
 
@@ -250,12 +277,12 @@ class collection
     $joins = $this->get_joins($table, $filters, $where);
     $sql = "select $selection from $table m $joins $where";
     if ($term != '')
-      $sql .= " and (value like '%$term%' or identifier like '%$term%') ";
-    $sql .= "group by m.identifier";
-    $this->set_limits($sql, $offset, $size);
+      $sql .= " and (m.value like '%$term%' or m.identifier like '%$term%') ";
+    $sql .= " group by m.identifier";
     $wrapped = $this->wrap_query($sql, $args);
     $this->set_grouping($sql, $grouping);
     $this->set_sorting($sql, $sorting, !$wrapped, $args);
+    $this->set_limits($sql, $offset, $size);
     return $this->page->translate_sql($sql);
   }
 
@@ -284,7 +311,7 @@ class collection
     $sql = $this->read(func_get_args(), true);
     if ($this->page->foreach)
       return $this->db->read($sql, MYSQLI_ASSOC);
-    return ['data'=>$this->db->read($sql, MYSQLI_NUM)];
+    return ['data'=>$this->db->read($sql, MYSQLI_NUM), 'count'=>$this->db->row_count()];
   }
 
   function update()
@@ -297,7 +324,6 @@ class collection
     $where = " where m.collection = '$collection' and m.version = 0 ";
     $table = $this->get_table($collection);
     $joins = $this->get_joins($table, $filters, $where);
-    $identifier = $filters['identifier'];
     foreach($args as $arg) {
       list($name,$value) = $this->page->get_sql_pair($arg);
       if ($name == 'identifier') {
@@ -310,6 +336,7 @@ class collection
       }
       $attribute = $name== 'identifier'? $name: 'value';
       $updated = $this->page->sql_exec("update $table m $joins set m.$attribute = $value $where $condition");
+      list($identifier) = find_assoc_element($filters, 'identifier');
       if (!$updated && $identifier) {
         $this->page->sql_exec("insert into $table(collection,identifier,attribute,value)
           select '$collection', '$identifier', '$name', $value from dual where not exists (
@@ -358,6 +385,7 @@ class collection
     $size = sizeof($args);
     if ($size < 2) return false;
     if ($size == 2) {
+      $args[1] = ['identifier'=>$args[1]];
       $args[] = 'identifier';
     }
     else {
@@ -366,7 +394,6 @@ class collection
         $filters[] = [$args[$i]=>$args[$i+1]];
       }
       $args = [$args[0], $filters, 'identifier' ];
-      log::debug_json("args", $args);
     }
     $sql = $this->read($args);
     return $this->db->exists($sql);
