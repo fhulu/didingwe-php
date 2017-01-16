@@ -815,7 +815,8 @@ class page
     global $db;
     $fields = $this->fields[$this->page];
     $result = null_merge($fields, $this->answer, false);
-    $detail = at($action, 'audit');
+    $detail = $action['audit'];
+    if (!isset($detail)) $detail = $action;
     $field = [];
     $context = merge_options($this->fields, $this->context, $_SESSION['variables'], $this->request, $result);
     if (is_array($detail)) {
@@ -1097,7 +1098,7 @@ class page
 
     log::debug_json("REPLY ACTIONS", $actions);
 
-    $methods = array('abort', 'alert', 'assert', 'call', 'clear_session', 'clear_values',
+    $methods = array('abort', 'alert', 'assert', 'audit', 'call', 'clear_session', 'clear_values',
       'close_dialog', 'error', 'foreach', 'let', 'load_lineage', 'logoff',  'keep_values', 'read_config',  'read_server', 'read_session', 'read_values',
        'redirect', 'ref_list', 'show_dialog', 'show_captcha', 'sql', 'sql_exec',
        'sql_rows', 'sql_insert','sql_update', 'sql_values', 'refresh', 'trigger',
