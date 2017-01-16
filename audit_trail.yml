@@ -12,9 +12,9 @@ user:
     - print
     - export
   fields:
-    - when: { width: 15%,name: Time }
-    - what: { width: 18%, name: Action }
-    - detail: { width: 30% }
+    - when: { width: 13%,name: Time }
+    - what: { width: 12%, name: Action }
+    - detail: { width: 74% }
   values:
     - collection.values: [session, $sid, user]
     - collection.data: [audit, [user], time, action, detail]
@@ -25,9 +25,13 @@ partner:
   type: user
   access: [admin]
   fields:
-    - first_name: { width: 10%, push: what }
-    - last_name: { width: 16%, push: what }
-    - email: { width: 18%, push: what }
+    - _reset
+    - when: { width: 15%,name: Time }
+    - what: { width: 18%, name: Action }
+    - detail: { width: 30% }
+    - first_name: { width: 10% }
+    - last_name: { width: 16% }
+    - email: { width: 18%}
   values:
     - _reset
     - collection.values: [session, $sid, partner]
