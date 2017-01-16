@@ -12,9 +12,9 @@ user:
     - print
     - export
   fields:
-    - when: { width: 15%,name: Time }
-    - what: { width: 18%, name: Action }
-    - detail: { width: 30% }
+    - when: { width: 13%,name: Time }
+    - what: { width: 12%, name: Action }
+    - detail: { width: 74% }
   values:
     - collection.values: [session, $sid, user]
     - collection.data: [audit, [user], time, action, detail]
