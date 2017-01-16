@@ -8,7 +8,7 @@ request:
   desc: ""
   tag: form
   attr:
-    action: "https://secure.paygate.co.za/payweb3/initiate.trans"
+    action: "https://www.paygate.co.za/paywebv2/process.trans"
     method: POST
   text:
     - type: hidden
@@ -37,14 +37,12 @@ request:
         CURRENCY: $currency
         RETURN_URL: $BASE_URL?page=paygate/response
         TRANSACTION_DATE: $transaction_date
-        LOCALE: en
-        COUNTRY: ZAF
         EMAIL: $email
-        KEY: $paygate_secret
+        SECRET: $paygate_secret
     - sql_values: >
-        select md5("$PAYGATE_ID$REFERENCE$AMOUNT$CURRENCY$RETURN_URL$TRANSACTION_DATE$LOCALE$COUNTRY$EMAIL$KEY") CHECKSUM
+        select md5('$PAYGATE_ID|$REFERENCE|$AMOUNT|$CURRENCY|$RETURN_URL|$TRANSACTION_DATE|$EMAIL|$SECRET') CHECKSUM
     - trigger: .submit
-    - clear_values: [paygate_amount]
+    - keep_values: [PAYGATE_ID,REFERENCE,AMOUNT,CURRENCY,RETURN_URL,TRANSACTION_DATE,EMAIL,SECRET]
 
 response:
   type: input_page
