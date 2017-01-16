@@ -21,9 +21,12 @@
 
     _create: function()
     {
-      if (this.options.sort) this.options.flags.push('sortable');
-      this.options.render.expandFields(this.options, "fields", this.options.fields);
-      this.options.render.expandFields(this.options, "row_actions", this.options.row_actions);
+      var opts = this.options;
+      if (opts.sort) opts.flags.push('sortable');
+      opts.render.expandFields(opts, "fields", opts.fields);
+      $.extend(opts.row_styles,opts.row.styles);
+      opts.row_actions = opts.row_actions.concat(opts.row.actions);
+      opts.render.expandFields(opts, "row_actions", opts.row_actions);
       this._init_params();
       if (this.hasFlag('show_titles') || this.hasFlag('show_header')) {
         $('<thead></thead>').prependTo(this.element);
@@ -33,12 +36,13 @@
       this.showFooterActions();
       this.load();
       var self = this;
+      var row_classes = opts.row.class.join(' ')
       this.element.on('refresh', function(e, args) {
         self.load(args);
         e.stopImmediatePropagation();
       })
       .on('addRow', function(e, data) {
-        self.addRow(data);
+        self.addRow(data, row_classes);
       })
       this.bindRowActions()
     },
@@ -299,11 +303,12 @@
     showData: function(data)
     {
       var body = this.body();
-      body.addClass(this.options.body.class.join());
+      var opts = this.options;
+      body.addClass(opts.body.class.join(' '));
+      var classes = opts.row.class.join(' ')
       body.empty();
-      var fields = this.options.fields;
       for(var i in data.data) {
-        this.addRow(data.data[i]);
+        this.addRow(data.data[i], classes);
       }
       this.spanColumns(this.head().find('.header>th'));
     },
@@ -318,11 +323,12 @@
       });
     },
 
-    addRow: function(row) {
+    addRow: function(row, classes) {
       var me = this;
       var opts = me.options;
       var fields = opts.fields;
       var tr = $('<tr>');
+      tr.addClass(classes);
       var key;
       var expandable = false;
       var col = 0;
