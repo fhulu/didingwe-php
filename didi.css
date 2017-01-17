@@ -273,6 +273,7 @@
 .transparent-7,.hover-transparent-7:hover{opacity:0.70;filter:alpha(opacity=70)}
 .transparent-8,.hover-transparent-8:hover{opacity:0.80;filter:alpha(opacity=80)}
 .transparent-9,.hover-transparent-9:hover{opacity:0.90;filter:alpha(opacity=90)}
+.opaque,.hover-opaque:hover{opacity:1;filter:alpha(opacity=1)}
 
 /* positioning */
 .absolute{position:absolute}
