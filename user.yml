@@ -77,13 +77,16 @@ otp_email:
 complete_registration:
   type: info_page
   lines:
-    - >
+    - complete_registration_message
+  actions:
+    - login: { action: dialog }
+
+complete_registration_message:
+  name: >
       Thank you. You have been provisionally registered.
       You will have limited access to the system
       until your registration has been approved. <br>
       Please check your email for registration status.
-  actions:
-    - login: { action: dialog }
 
 confirm_registration:
   type: input_page
