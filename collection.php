@@ -33,15 +33,15 @@ class collection
   function extract_grouping(&$sorting, &$grouping, &$name, &$alias)
   {
     $matches = [];
-    if (!preg_match('/^(\w[\w\.]*)(\s+group\s*)?(\s+asc\s*|\s+desc\s*)?$/', $alias, $matches)) return;
+    if (!preg_match('/^(\w[\w\.]*)(\s*\+\d+)?(\s+group\s*)?(\s+asc\s*|\s+desc\s*)?$/', $alias, $matches)) return;
     if ($name == $alias)
       $name = $alias = $matches[1];
     else
       $alias = $matches[1];
     if (sizeof($matches) < 2) return;
     $field =  array_slice(explode('.',$alias),-1)[0];
-    if ($matches[2]) $grouping[] = $field;
-    if ($matches[3]) $sorting[] = "$field $matches[3]";
+    if ($matches[3]) $grouping[] = $field;
+    if ($matches[4]) $sorting[] = "$field $matches[2] $matches[4]";
   }
 
   function get_name_alias($arg)
