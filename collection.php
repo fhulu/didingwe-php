@@ -129,14 +129,14 @@ class collection
         continue;
       }
       list($name,$value) = $this->page->get_sql_pair($filter);
-      if ($name == 'identifier') {
-        $where .= " and m.$name = $value";
-        continue;
-      }
-
       $operator = "";
       if ($value[0] == "'" )
         $operator = " = ";
+
+      if ($name == 'identifier') {
+        $where .= " and m.$name $operator $value";
+        continue;
+      }
 
       $joins .= " join $table m$index on m$index.collection = m.collection
                 and m$index.version <= m.version and m$index.identifier=m.identifier";
@@ -336,12 +336,12 @@ class collection
       }
       $attribute = $name== 'identifier'? $name: 'value';
       $updated = $this->page->sql_exec("update $table m $joins set m.$attribute = $value $where $condition");
+      if ($updated) continue;
       list($identifier) = find_assoc_element($filters, 'identifier');
-      if (!$updated && $identifier) {
-        $this->page->sql_exec("insert into $table(collection,identifier,attribute,value)
-          select '$collection', '$identifier', '$name', $value from dual where not exists (
-            select 1 from $table m $where $condition)");
-      }
+      if ($identifier[0] == '/') continue;
+      $this->page->sql_exec("insert into $table(collection,identifier,attribute,value)
+        select '$collection', '$identifier', '$name', $value from dual where not exists (
+          select 1 from $table m $where $condition)");
     }
   }
 
