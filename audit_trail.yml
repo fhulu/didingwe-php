@@ -25,17 +25,16 @@ partner:
   type: user
   access: [admin]
   fields:
-    - _reset
-    - when: { width: 15%,name: Time }
-    - what: { width: 18%, name: Action }
-    - detail: { width: 30% }
-    - first_name: { width: 10% }
-    - last_name: { width: 16% }
-    - email: { width: 18%}
+    - when: { width: 15%, push: merge }
+    - first_name: { width: 10%, push: what }
+    - last_name: { width: 16%, push: what }
+    - email: { width: 18%, push: what}
+    - what: { width: 18%, push: merge }
+    - detail: { width: 30%, push: merge }
   values:
     - _reset
     - collection.values: [session, $sid, partner]
-    - collection.data: [audit, [partner], time, user.first_name, user.last_name, user, action, detail]
+    - collection.data: [audit, [partner], time, user.first_name, user.last_name, user.email, action, detail]
     - clear_values: [partner]
 
 system:

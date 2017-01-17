@@ -151,7 +151,7 @@ var mkn = new function() {
     var params = $.extend({ path: path }, field);
     var defer = $.Deferred();
 
-    this.loadPage({path: '/modal/show', show: false}).done(function(modal, options) {
+    this.loadPage({path: '/modal', show: false}).done(function(modal, options) {
       var tmp = $("<div>");
       mkn.showPage(params, tmp).done(function(obj, page) {
         if (page.fields.modal) modal.fields = mkn.merge(modal.fields, page.fields.modal);

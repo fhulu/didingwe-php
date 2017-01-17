@@ -301,7 +301,9 @@
 /* scrolling */
 .scroll-horizontal,.scroll-x { overflow-x: auto; }
 .scroll-vertical,.scroll-y { overflow-y: auto; }
-.noscroll { overflow: hidden}
+.no-scroll,.noscroll { overflow: hidden}
+.no-scroll-x { overflow-x: hidden}
+.no-scroll-y { overflow-y: hidden}
 
 /* sizes */
 .auto-height,.autoheight { height: auto; }

@@ -20,39 +20,30 @@ table.data>thead>tr>td
 }
 
 
-table.data>tbody>tr
-{
-  border-bottom: 1px solid #DFDFDF;
-  height: 24px;
-  vertical-align: top;
-}
-
-table.data>tbody>tr>td
-{
-  border-bottom: 1px solid #DFDFDF;
-  white-space: nowrap; overflow: hidden;  }
-}
-
-table.data thead>tr>th
+table.data>thead>tr>th
 {
   padding: 1px;
-  font-weight: 100;
 }
 
 table.data>tbody>tr>td
 {
-  padding: 0px 4px;
   vertical-align: center;
   background-repeat:no-repeat;
   background-position: center;
+  white-space: normal;
 }
 
-table.data>tdata tr.actions,
+
+table.data>tbody>tr>td.actions>.slide
+{
+  top: 0px;
+}
+
+
 table.data>thead .heading
 {
   float: left;
   display: inline-block;
-  font-size: 14pt;
   padding-top: 6px;
   padding-left: 4px;
   padding-right: 20px;
@@ -72,7 +63,6 @@ table.data .paging div
 {
   margin-left: 5px;
   margin-right: 5px;
-  font-size: 10pt;
 }
 
 table.data .paging input
@@ -136,14 +126,9 @@ table.data tr.sort
   cursor: pointer;
 }
 
-table.data td.actions {
-  padding: 0px;
-}
-
 table.data>tbody>tr.expanded>td
 {
   padding: 10px;
-  font-size: 9pt;
   width: 100%;
 }
 
@@ -154,11 +139,7 @@ table.data tr.expanded>td>*
 
 table.data tr [action]
 {
-  font-size: 10pt;
-  font-weight: 200;
   cursor: pointer;
-  padding: 0px 3px;
-  border-radius: 0;
   height: 100%;
 }
 
@@ -170,9 +151,6 @@ table.data tr [action]:hover
 table.data td.expandable [action]
 {
   height: 100%;
-  font-family: monospace;
-  font-size: 12pt;
-  font-weight: 100;
   border-right: 1px solid lightgray;
   display: inline-block;
   padding-left: 5px;
@@ -180,20 +158,12 @@ table.data td.expandable [action]
   margin-right: 5px;
 }
 
-table.data tr [action=slide]
-{
-  float: right;
-  height: 100%;
-}
-
-
-table.data .slide
+table.data>tbody>tr>td.actions>[action=slide],
+table.data>tbody>tr>td.actions>.slide
 {
   position: absolute;
   float: right;
   right: 0px;
-  height: 100%;
-  cursor: pointer;
 }
 table.data .slide>[action]
 {
@@ -211,12 +181,6 @@ table.data td>input
   width: 100%;
   height: 100%;
 }
-
-table.data td>.actions>*
-{
-  height: 100%;
-}
-
 
 table.data tr.actions [action]
 {

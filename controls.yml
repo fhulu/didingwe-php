@@ -523,6 +523,11 @@ list_text:
   tag: li
   style: { margin-left: 16 }
 
+loading:
+  type: font_awesome
+  icon: spinner
+  class: [spin]
+
 multi_input:
   classes: div
   class: [error-sink, grid fit]
