@@ -158,6 +158,7 @@ table.data td.expandable [action]
   margin-right: 5px;
 }
 
+table.data>tbody>tr>td.actions{ position: relative }
 table.data>tbody>tr>td.actions>[action=slide],
 table.data>tbody>tr>td.actions>.slide
 {
