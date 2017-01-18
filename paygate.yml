@@ -26,7 +26,7 @@ request:
     - CHECKSUM
   values:
     - read_session: [paygate_amount]
-    - collection.values: [session, $sid, partner, partner.currency, user, user.email, start_time: /now()]
+    - collection.values: [session, $sid, partner, partner.currency, user, user.email, start_time: /now(), paygate_amount: /round($paygate_amount)]
     - collection.insert: [payment, "", partner, user, session: $sid, amount: $paygate_amount, status: pending, method: credit_card, start_time]
     - write_session: [new_payment_id]
     - read_config: [paygate_id,paygate_secret]
