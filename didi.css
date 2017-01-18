@@ -380,6 +380,9 @@
 
 .pad-0,.nopad{padding:0}
 
+.same-height{ overflow: hidden}
+.same-height>*{ padding-bottom: 100em; margin-bottom: -100em}
+
 .justify {
   display: -webkit-flex; /* Safari */
   -webkit-justify-content: space-between; /* Safari 6.1+ */
