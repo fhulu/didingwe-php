@@ -502,7 +502,7 @@ update_password:
     - update_password
   post:
     - read_session: email
-    - collection.update: [user, $email, password: /password('$password'), attempts: 0]
+    - collection.update: [user, [email], password: /password('$password'), attempts: 0]
     - clear_values
     - close_dialog: Password has been changed successfully
   audit: $email
