@@ -1,0 +1,34 @@
+navigator:
+  type: container
+  contents:
+    - $navigation
+    - $target_container
+  navigation:
+    type: container
+    derive: [name,heading, brief, items,item]
+    contents: $items
+    class: [col s12 m2 l2,whitesmoke, pad pad-tiny]
+  heading:
+    tag: div
+    name: $parent_name
+    class: [bold, pad-y pad-medium]
+
+  brief:
+    tag: p
+    class: [italic, font-tiny, pad-y pad-large]
+    name: ""
+  items:
+    - $heading
+    - type: $item
+    - $brief: { push: last }
+  item:
+    tag: div
+    action: redirect
+    url: /$id
+    target: ".navigation-target>*"
+    class: [pointer-cursor, pad-y pad-tiny]
+    immutable: [url]
+  target_container:
+    type: container
+    class: [navigation-target, col s12 m10 l10]
+    contents: [blank  ]
