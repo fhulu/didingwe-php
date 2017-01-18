@@ -11,13 +11,9 @@ navigator:
     tag: div
     name: $parent_name
 
-  brief:
-    tag: p
-    name: ""
   items:
     - $heading
     - type: $item
-    - $brief: { push: last }
   item:
     tag: div
     action: redirect
