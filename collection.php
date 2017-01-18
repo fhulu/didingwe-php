@@ -57,7 +57,12 @@ class collection
 
   function get_selection($table, $args, &$where, &$sorting, &$grouping)
   {
+    $selection = [];
     foreach($args as &$arg) {
+      if (is_array($arg)) {
+        $selection[] = $this->get_selection($table, $arg, $where, $sorting, $grouping);
+        continue;
+      }
       list($name,$alias) = $this->get_name_alias($arg);
       if ($alias[0] == '/') continue;
       $this->extract_grouping($sorting, $grouping, $name, $alias);
@@ -155,8 +160,7 @@ class collection
     foreach($args as $arg) {
       ++$index;
       if ($arg != '*') continue;
-      $table = $this->get_table($collection);
-      $expansion = $this->db->read_column("select distinct attribute from $table where collection = '$collection' and version = 0 ");
+      $expansion = $this->get_fields($collection);
       break;
     }
     if ($expansion) array_splice($args, $index, 1, $expansion);
@@ -406,5 +410,13 @@ class collection
     $page_size = $request['page_size'];
     $args = array_merge([$page_num*$page_size, $page_size], func_get_args());
     return call_user_func_array([$this, "data"], $args);
+  }
+
+  function get_fields($collection)
+  {
+    $table = $this->get_table($collection);
+    return $this->db->read_column(
+      "select attribute from contact where collection = '$table' and identifier = (
+        select identifier from contact where collection = 'contact' order by id desc limit 1)");
   }
 }
