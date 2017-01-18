@@ -338,7 +338,7 @@ class collection
       $updated = $this->page->sql_exec("update $table m $joins set m.$attribute = $value $where $condition");
       if ($updated) continue;
       list($identifier) = find_assoc_element($filters, 'identifier');
-      if ($identifier[0] == '/') continue;
+      if (!$identifier || $identifier[0] == '/') continue;
       $this->page->sql_exec("insert into $table(collection,identifier,attribute,value)
         select '$collection', '$identifier', '$name', $value from dual where not exists (
           select 1 from $table m $where $condition)");
