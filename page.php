@@ -882,14 +882,14 @@ class page
   function sql_data($sql)
   {
     $sql = $this->translate_sql($sql);
-    return ['data'=>$this->db->page_through_indices($sql)];
+    return ['data'=>$this->db->page_through_indices($sql), 'count'=>$this->db->row_count()];
   }
 
   function sql($sql)
   {
     if (preg_match('/\s*select/i', $sql)) return $this->sql_data($sql);
     $sql = $this->translate_sql($sql);
-    return ['data'=>$this->db->exec($sql)];
+    return ['data'=>$this->db->exec($sql),'count'=>$this->db->row_count()];
   }
 
   function translate_sql($sql)
