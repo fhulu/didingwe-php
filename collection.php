@@ -59,7 +59,7 @@ class collection
   {
     $selection = [];
     foreach($args as &$arg) {
-      if (is_array($arg)) {
+      if (is_array($arg) && !is_assoc($arg)) {
         $selection[] = $this->get_selection($table, $arg, $where, $sorting, $grouping);
         continue;
       }
