@@ -13,14 +13,10 @@ administration:
   desc: Perform adminstrative duties
 
 agree_terms:
-  question: I have read and accepted the $terms
+  question: I have read and accepted the $terms_and_conditions
   desc: You must agree to the terms and conditions before continuing
   valid: equals(1)
   error: Must accept and agree to terms and conditions.
-
-terms:
-  name: terms and conditions
-  type: link
 
 audit_trail:
   access: admin
@@ -434,6 +430,9 @@ tax_reference_no:
   name: Tax Reference Number
   attr: { min: 1000000000, max: 9999999999 }
 
+terms_and_conditions:
+  name: terms and conditions
+  type: link
 
 true: { value: 1}
 

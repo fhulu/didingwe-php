@@ -33,15 +33,15 @@ class collection
   function extract_grouping(&$sorting, &$grouping, &$name, &$alias)
   {
     $matches = [];
-    if (!preg_match('/^(\w[\w\.]*)(\s+group\s*)?(\s+asc\s*|\s+desc\s*)?$/', $alias, $matches)) return;
+    if (!preg_match('/^(\w[\w\.]*)(\s*\+\d+)?(\s+group\s*)?(\s+asc\s*|\s+desc\s*)?$/', $alias, $matches)) return;
     if ($name == $alias)
       $name = $alias = $matches[1];
     else
       $alias = $matches[1];
     if (sizeof($matches) < 2) return;
     $field =  array_slice(explode('.',$alias),-1)[0];
-    if ($matches[2]) $grouping[] = $field;
-    if ($matches[3]) $sorting[] = "$field $matches[3]";
+    if ($matches[3]) $grouping[] = $field;
+    if ($matches[4]) $sorting[] = "$field $matches[2] $matches[4]";
   }
 
   function get_name_alias($arg)
@@ -57,7 +57,12 @@ class collection
 
   function get_selection($table, $args, &$where, &$sorting, &$grouping)
   {
+    $selection = [];
     foreach($args as &$arg) {
+      if (is_array($arg) && !is_assoc($arg)) {
+        $selection[] = $this->get_selection($table, $arg, $where, $sorting, $grouping);
+        continue;
+      }
       list($name,$alias) = $this->get_name_alias($arg);
       if ($alias[0] == '/') continue;
       $this->extract_grouping($sorting, $grouping, $name, $alias);
@@ -129,14 +134,14 @@ class collection
         continue;
       }
       list($name,$value) = $this->page->get_sql_pair($filter);
-      if ($name == 'identifier') {
-        $where .= " and m.$name = $value";
-        continue;
-      }
-
       $operator = "";
       if ($value[0] == "'" )
         $operator = " = ";
+
+      if ($name == 'identifier') {
+        $where .= " and m.$name $operator $value";
+        continue;
+      }
 
       $joins .= " join $table m$index on m$index.collection = m.collection
                 and m$index.version <= m.version and m$index.identifier=m.identifier";
@@ -155,8 +160,7 @@ class collection
     foreach($args as $arg) {
       ++$index;
       if ($arg != '*') continue;
-      $table = $this->get_table($collection);
-      $expansion = $this->db->read_column("select distinct attribute from $table where collection = '$collection' and version = 0 ");
+      $expansion = $this->get_fields($collection);
       break;
     }
     if ($expansion) array_splice($args, $index, 1, $expansion);
@@ -336,12 +340,12 @@ class collection
       }
       $attribute = $name== 'identifier'? $name: 'value';
       $updated = $this->page->sql_exec("update $table m $joins set m.$attribute = $value $where $condition");
+      if ($updated) continue;
       list($identifier) = find_assoc_element($filters, 'identifier');
-      if (!$updated && $identifier) {
-        $this->page->sql_exec("insert into $table(collection,identifier,attribute,value)
-          select '$collection', '$identifier', '$name', $value from dual where not exists (
-            select 1 from $table m $where $condition)");
-      }
+      if (!$identifier || $identifier[0] == '/') continue;
+      $this->page->sql_exec("insert into $table(collection,identifier,attribute,value)
+        select '$collection', '$identifier', '$name', $value from dual where not exists (
+          select 1 from $table m $where $condition)");
     }
   }
 
@@ -406,5 +410,13 @@ class collection
     $page_size = $request['page_size'];
     $args = array_merge([$page_num*$page_size, $page_size], func_get_args());
     return call_user_func_array([$this, "data"], $args);
+  }
+
+  function get_fields($collection)
+  {
+    $table = $this->get_table($collection);
+    return $this->db->read_column(
+      "select attribute from contact where collection = '$table' and identifier = (
+        select identifier from contact where collection = 'contact' order by id desc limit 1)");
   }
 }

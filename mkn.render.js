@@ -965,7 +965,7 @@ mkn.render = function(options)
       }
       switch(action) {
         case 'dialog': mkn.showDialog(field.url, $.extend({key: field.key}, params[0])); return;
-        case 'close_dialog': mkn.closeDialog(obj);
+        case 'close_dialog': mkn.closeDialog(obj); break;
         case 'redirect': redirect(field); break;
         case 'post':
           var url = field.url? field.url: field.path

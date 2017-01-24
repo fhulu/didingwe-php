@@ -158,17 +158,19 @@ table.data td.expandable [action]
   margin-right: 5px;
 }
 
+table.data>tbody>tr>td.actions{ position: relative }
 table.data>tbody>tr>td.actions>[action=slide],
 table.data>tbody>tr>td.actions>.slide
 {
   position: absolute;
   float: right;
   right: 0px;
+  white-space: nowrap;
+  overflow: hidden;
 }
 table.data .slide>[action]
 {
   display: inline-block;;
-  float: left;
 }
 
 table.data thead div
