@@ -156,14 +156,19 @@ class collection
   function expand_star($collection, &$args)
   {
     $expansion = null;
-    $index = -1;
+    $star_index = $index = -1;
+    $aliases = [];
     foreach($args as $arg) {
       ++$index;
-      if ($arg != '*') continue;
+      if ($arg != '*') {
+        list($name,$alias) = $this->get_name_alias($arg);
+        $aliases[] = $alias;
+        continue;
+      }
       $expansion = $this->get_fields($collection);
-      break;
+      $star_index = $index;
     }
-    if ($expansion) array_splice($args, $index, 1, $expansion);
+    if ($star_index >= 0) array_splice($args, $star_index, 1, array_diff($expansion, $aliases));
   }
 
   function add_custom_filters(&$filters, $args)
