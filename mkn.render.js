@@ -693,6 +693,8 @@ mkn.render = function(options)
       if (!(event in events)) events[event] = [];
       events[event].push(value);
     });
+    if ($.isEmptyObject(events)) return;
+    obj.addClass('didi-listener')
     $.each(events, function(key, values) {
       $.each(values, function(i, value) {
         if ($.isPlainObject(value) && !value.path) value.path = field.path + '/on_' + key;
@@ -714,7 +716,8 @@ mkn.render = function(options)
           if ($.isPlainObject(value))
             accept(e, obj, value);
           else if ('didi-model' in field && 'on_'+key in field['didi-model']) {
-            me.model["on_"+key+"_"+ id](e, obj);
+            var handler = me.model["on_"+key+"_"+ id];
+            handler.apply(obj, arguments);
             me.updateWatchers();
           };
         });
@@ -1141,8 +1144,10 @@ mkn.render = function(options)
       if (!sink.exists())
         sink = window.parent.$(selector);
     }
-    else
+    else if (invoker)
       sink = invoker;
+    else
+      sink = $('.didi-listener');
     if (event[0] === '.') {
       sink[event.substring(1)].apply(sink,params);
       return;
@@ -1180,7 +1185,7 @@ mkn.render = function(options)
         if (key.indexOf('on_') < 0)
           src = "\tget_"+id+"_"+index+": function(obj) {\n"+ret;
         else
-          src = "\t"+key+"_"+id+": function(event,obj) {\n";
+          src = "\t"+key+"_"+id+": function(event) {\n";
         src += expr.replace(/^~|`/g,'') + "\n\t}";
         funcs.push(src);
         value = value.replace(expr, "${"+index+"}");

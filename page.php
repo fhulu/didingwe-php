@@ -1265,7 +1265,8 @@ class page
       $args = page::parse_args(func_get_args());
     }
     $options = array("event"=>$event);
-    if (!is_null($selector)) $options['sink'] = $selector;
+    if (!$selector) $selector = ".didi-listener";
+    $options['sink'] = $selector;
     if (sizeof($args) > 2) $options['params'] = array_slice($args,2);
     page::respond('trigger', $options);
   }
