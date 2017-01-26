@@ -265,6 +265,7 @@ class collection
       }
       $outer[] = "$name $alias";
       $wrapped = true;
+      if ($alias == $this->lastColumn) break;
     }
     if ($wrapped)
       $sql = "select " . join(',', $outer) . " from ($sql) tmp";
@@ -423,5 +424,12 @@ class collection
     return $this->db->read_column(
       "select attribute from contact where collection = '$table' and identifier = (
         select identifier from contact where collection = 'contact' order by id desc limit 1)");
+  }
+
+  function set($vars)
+  {
+    foreach($vars as $name=>$value) {
+      $this->$name = $value;
+    }
   }
 }
