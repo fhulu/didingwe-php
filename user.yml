@@ -141,7 +141,7 @@ confirm_registration:
         - if $email_new_registration:
             emailer.send: { type: new_registration_email, to: $first_name $last_name<$email> }
         - clear_values: [first_name, last_name, email]
-    - clear_values
+    - keep_values: [new_user_id]
     - clear_session: title,first_name,last_name,cellphone,password
 
 new_registration_email:
@@ -330,7 +330,7 @@ list_all:
         - user
         - []
         - partner: partner.name
-        - email: identifier
+        - email
         - first_name asc
         - last_name
         - cellphone
