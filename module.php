@@ -8,7 +8,16 @@ class module
   function __construct($page)
   {
     $this->page = $page;
-    $this->collection = $page->get_module('collection');
+    if (get_class($this) != 'collection')
+      $this->collection = $page->get_module('collection');
     $this->db = $this->page->db;
   }
+
+  function set($vars)
+  {
+    foreach($vars as $name=>$value) {
+      $this->$name = $value;
+    }
+  }
+
 }
