@@ -1,16 +1,16 @@
 <?php
+require_once("module.php");
 
-class collection
+class collection extends module
 {
-  var $page;
-  var $db;
   var $tables;
+  var $hidden_columns;
   function __construct($page)
   {
-    $this->page = $page;
-    $this->db = $page->db;
+    parent::__construct($page);
     $this->auth = $page->get_module('auth');
     $this->read_tables();
+    $this->hidden_columns = [];
   }
 
   function read_tables()
@@ -254,9 +254,10 @@ class collection
   function wrap_query(&$sql, $args)
   {
     $outer = [];
-    $wrapped = false;
+    $wrapped = $this->lastColumn != '' || !empty($this->hidden_columns);
     foreach($args as $arg) {
       list($alias,$name) = $this->page->get_sql_pair($arg);
+      if (in_array($alias, $this->hidden_columns, true)) continue;
       if ($name[0] == "'") {
         list($name, $alias) = explode('.', $alias);
         if (!$alias) $alias = $name;
@@ -426,10 +427,9 @@ class collection
         select identifier from contact where collection = 'contact' order by id desc limit 1)");
   }
 
-  function set($vars)
+
+  function hide()
   {
-    foreach($vars as $name=>$value) {
-      $this->$name = $value;
-    }
+    $this->hidden_columns = array_merge($this->hidden_columns, func_get_args());
   }
 }
