@@ -4,8 +4,10 @@ datatable:
   type: table
   class: [data]
   create: datatable
+  title:
+    class: [didi]
   body:
-    class: [table-body]
+    class: [didi,table-body]
   row_actions: []
   row_styles: {}
   row:
@@ -13,7 +15,7 @@ datatable:
     styles: {}
     class: [table-row,relative]
   cell:
-    class: []
+    class: [didi]
   script: [/common/datatable.js]
   row_creator: { type: table_row }
   css: [/common/datatable.css,/datatable.css]

@@ -1,44 +1,3 @@
-table.data
-{
-  position: relative;
-  border-collapse: collapse;
-  text-align: left;
-  width: 100%;
-  word-wrap: break-word;
-}
-
-
-table.data>thead>tr
-{
-  vertical-align: bottom;
-  text-align: left;
-}
-
-table.data>thead>tr>td
-{
-  border-bottom: 1px solid whitesmoke;
-}
-
-
-table.data>thead>tr>th
-{
-  padding: 1px;
-}
-
-table.data>tbody>tr>td
-{
-  vertical-align: center;
-  background-repeat:no-repeat;
-  background-position: center;
-}
-
-
-table.data>tbody>tr>td.actions>.slide
-{
-  top: 0px;
-}
-
-
 table.data>thead .heading
 {
   float: left;
@@ -142,10 +101,6 @@ table.data tr [action]
   height: 100%;
 }
 
-table.data tr [action]:hover
-{
-  opacity: 1;
-}
 
 table.data td.expandable [action]
 {

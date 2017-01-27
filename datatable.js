@@ -263,13 +263,14 @@
       if (!tr.exists()) tr = $('<tr class=titles></tr>').appendTo(head);
       var self = this;
       var fields = this.options.fields;
+      var classes = this.options.title.class.join(' ');
       var j = 0;
       for (var i in fields) {
         var field = fields[i];
         var id = field.id;
         var visible = mkn.visible(field);
         if (id == 'key' && visible  || id === 'attr' || id == 'style') continue;
-        var th = $('<th></th>').appendTo(tr);
+        var th = $('<th></th>').addClass(classes).appendTo(tr);
         if (id === 'actions') continue;
         if ($.isArray(field.name)) field.name = field.name[field.name.length-1];
         th.html(field.name || toTitleCase(id));
