@@ -12,6 +12,8 @@ datatable:
     actions: []
     styles: {}
     class: [table-row,relative]
+  cell:
+    class: []
   script: [/common/datatable.js]
   row_creator: { type: table_row }
   css: [/common/datatable.css,/datatable.css]

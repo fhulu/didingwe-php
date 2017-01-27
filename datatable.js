@@ -23,7 +23,12 @@
     {
       var opts = this.options;
       if (opts.sort) opts.flags.push('sortable');
-      opts.render.expandFields(opts, "fields", opts.fields);
+      var r = opts.render;
+      r.expandFields(opts, "fields", opts.fields);
+      var row = r.initField(opts.row, opts);
+      this.row_classes = opts.row.class.join(' ');
+      this.cell = r.initField(opts.cell, opts);
+      this.cell.class = this.cell.class.join(' ')
       $.extend(opts.row_styles,opts.row.styles);
       opts.row_actions = opts.row_actions.concat(opts.row.actions);
       opts.render.expandFields(opts, "row_actions", opts.row_actions);
@@ -36,13 +41,12 @@
       this.showFooterActions();
       this.load();
       var self = this;
-      var row_classes = opts.row.class.join(' ')
       this.element.on('refresh', function(e, args) {
         self.load(args);
         e.stopImmediatePropagation();
       })
       .on('addRow', function(e, data) {
-        self.addRow(data, row_classes);
+        self.addRow(data);
       })
       this.bindRowActions()
     },
@@ -305,10 +309,9 @@
       var body = this.body();
       var opts = this.options;
       body.addClass(opts.body.class.join(' '));
-      var classes = opts.row.class.join(' ')
       body.empty();
       for(var i in data.data) {
-        this.addRow(data.data[i], classes);
+        this.addRow(data.data[i]);
       }
       this.spanColumns(this.head().find('.header>th'));
     },
@@ -323,12 +326,12 @@
       });
     },
 
-    addRow: function(row, classes) {
+    addRow: function(row) {
       var me = this;
       var opts = me.options;
       var fields = opts.fields;
       var tr = $('<tr>');
-      tr.addClass(classes);
+      tr.addClass(me.row_classes);
       var key;
       var expandable = false;
       var col = 0;
@@ -374,6 +377,8 @@
 
     showCell: function(field, td, value, key)
     {
+      if (this.cell.class) td.addClass(this.cell.class);
+      if (field.class) td.addClass(field.class.join(' '))
       if (field.html === undefined) {
         if (value !== undefined && value !== null) td.html(value);
         return;
