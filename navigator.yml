@@ -1,23 +1,24 @@
 navigator:
   type: container
+  base_url: /$id
   contents:
     - $navigation
     - $target_container
   navigation:
     type: container
-    derive: [name,heading, brief, items,item]
+    derive: [name,heading, brief, items,item, base_url]
     contents: $items
   heading:
     tag: div
     name: $parent_name
-
   items:
     - $heading
     - type: $item
   item:
     tag: div
     action: redirect
-    url: /$id
+    derive: [base_url]
+    url: $base_url/$id
     target: .navigation-target>*
     immutable: [url]
   target_container:
