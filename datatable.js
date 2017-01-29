@@ -348,7 +348,7 @@
 
         var hide = field.hide || field.show === false;
         if (field.id === 'key' && hide) continue;
-
+        cell = mkn.escapeHtml(cell);
         if (field.id === 'style') {
           me.setRowStyles(tr, cell);
           continue;
