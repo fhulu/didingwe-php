@@ -21,6 +21,7 @@ navigator:
     url: $base_url/$id
     target: .navigation-target>*
     immutable: [url]
+  default: { sub_page: true }
   target_container:
     type: container
     class: [navigation-target]
