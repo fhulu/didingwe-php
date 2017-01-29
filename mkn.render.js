@@ -104,6 +104,10 @@ mkn.render = function(options)
     if (defaults.attr) item.attr = mkn.merge(item.attr,defaults.attr);
     if (!item.template) item.template = defaults.template;
     if (defaults.default) item = mkn.merge(defaults.default, item);
+    if (base.class) {
+      base = mkn.copy(base);
+      delete base.class;
+    }
     if (defaults.types)
       return mergeDefaultType(base, item, defaults.types.shift());
     else if (!item.type && defaults.type)
