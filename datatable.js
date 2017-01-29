@@ -355,6 +355,8 @@
         }
         var td = $('<td>').appendTo(tr);
         if (hide) td.addClass('hidden');
+        if (me.cell.class) td.addClass(this.cell.class);
+        if (field.class) td.addClass(field.class.join(' '))
 
         if (field.id === 'actions') {
           var actions = cell.split(',');
@@ -378,8 +380,6 @@
 
     showCell: function(field, td, value, key)
     {
-      if (this.cell.class) td.addClass(this.cell.class);
-      if (field.class) td.addClass(field.class.join(' '))
       if (field.html === undefined) {
         if (value !== undefined && value !== null) td.html(value);
         return;
