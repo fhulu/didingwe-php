@@ -94,7 +94,7 @@ mkn.render = function(options)
     type = mkn.copy(type);
     mergeImmutables(item, base, type);
     base = mkn.copy(base);
-    mkn.deleteKeys(base, ['type', 'styles', 'style'])
+    mkn.deleteKeys(base, ['type', 'styles', 'style', 'class'])
     mkn.deleteKeys(base, geometry)
     return mkn.merge(mkn.merge(type,base), item);
   }
@@ -104,10 +104,6 @@ mkn.render = function(options)
     if (defaults.attr) item.attr = mkn.merge(item.attr,defaults.attr);
     if (!item.template) item.template = defaults.template;
     if (defaults.default) item = mkn.merge(defaults.default, item);
-    if (base.class) {
-      base = mkn.copy(base);
-      delete base.class;
-    }
     if (defaults.types)
       return mergeDefaultType(base, item, defaults.types.shift());
     else if (!item.type && defaults.type)
