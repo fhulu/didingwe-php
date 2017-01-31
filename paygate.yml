@@ -43,7 +43,7 @@ request:
         SECRET: $paygate_secret
     - sql_values: >
         select md5('$PAYGATE_ID|$REFERENCE|$AMOUNT|$CURRENCY|$RETURN_URL|$TRANSACTION_DATE|$EMAIL|$SECRET') CHECKSUM
-    - trigger: .submit
+    - trigger: ".submit,#page"
     - audit:
         action: Start Electronic Transaction
         detail: "Amount: $AMOUNT Reference: $REFERENCE"
