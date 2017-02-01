@@ -951,7 +951,7 @@ mkn.render = function(options)
     if (field.target === '_blank')
       window.open(url, field.target);
     else if (field.target)
-      me.createSubPage({url: url}, $(field.target));
+      me.createSubPage({url: url, key: field.key}, $(field.target));
     else
       document.location = url;
   }
