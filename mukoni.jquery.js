@@ -16,6 +16,8 @@ $.fn.filterText = function(text) {
 
 $.fn.setValue = function(val)
 {
+  if ($.isPlainObject(val) || $.isArray(val)) return this;
+  
   if (this.is("a")) {
     var proto = this.attr('proto')==undefined? '': this.attr('proto');
     if (val == null)
@@ -48,6 +50,7 @@ $.fn.setValue = function(val)
     return this;
   }
 
+  val = mkn.escapeHtml(val);
   if (this.hasAttr('value'))
     return this.val(val);
   return this.html(val);
