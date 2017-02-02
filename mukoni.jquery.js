@@ -49,8 +49,8 @@ $.fn.setValue = function(val)
     this.val(option.val());
     return this;
   }
-
-  val = mkn.escapeHtml(val);
+  
+  if (typeof val == 'string')  val = mkn.escapeHtml(val);
   if (this.hasAttr('value'))
     return this.val(val);
   return this.html(val);
