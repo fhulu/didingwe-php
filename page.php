@@ -1356,9 +1356,9 @@ class page
   static function abort()
   {
     $args = page::parse_args(func_get_args());
-    if (sizeof($args) > 1) {
-      list($name, $message) = $args;
-      page::error($name, $message);
+    switch(sizeof($args)) {
+      case 1: page::alert($args[0]); break;
+      case 2: page::error($args[0], $args[1]); break;
     }
     return false;
   }
