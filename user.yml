@@ -176,6 +176,9 @@ deactivate:
   desc: Deactivate this user
   audit: $first_name $last_name ($email)
   post:
+    - collection.values: [session, $sid, user]
+    - if $key == $user:
+        - abort: You can't deactivate current user
     - collection.update: [user, $key, active: 0]
     - collection.values: [user, $key, first_name, last_name, email]
     - emailer.send: { type: deactivate_email }
@@ -303,7 +306,7 @@ list:
     pages:
       - /user/history
   values:
-    - collection.values: [session, $sid, partner]
+    - collection.values: [session, $sid, partner,user]
     - collection.data:
         - user
         - partner: $partner
