@@ -1178,15 +1178,20 @@ mkn.render = function(options)
       else
         exprs = value.regexCapture(/(`[^`]+`)/g);
       var replaced = false;
-      var ret = /\breturn\s/gm.test(value)?"": "\t\treturn ";
       exprs.forEach(function(expr, i) {
         if (!expr) return;
         var src;
-        if (key.indexOf('on_') < 0)
+        var suffix = "\n\t}";
+        var ret = /\breturn\s/gm.test(expr)?"": "\t\treturn ";
+        if (key.indexOf('on_') != 0)
           src = "\tget_"+id+"_"+index+": function(obj) {\n"+ret;
-        else
+        else if (!/^[~`]\s*function\s*\(/gm.test(expr))
           src = "\t"+key+"_"+id+": function(event) {\n";
-        src += expr.replace(/^~|`/g,'') + "\n\t}";
+        else {
+          src = "\t"+key+"_"+id+": ";
+          suffix = "";
+        }
+        src += expr.replace(/^~|`/g,'') + suffix;
         funcs.push(src);
         value = value.replace(expr, "${"+index+"}");
         replaced = true;
