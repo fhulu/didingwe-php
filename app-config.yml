@@ -36,6 +36,7 @@ collections:
   auth: [user,partner,role,user_role,user_group,user_group_member]
   session: [session,audit]
   billing: [rate,payment,credit,transaction]
+  document: [document]
 
 
 registrar: Mukoni Software
