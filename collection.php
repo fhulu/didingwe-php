@@ -361,6 +361,7 @@ class collection extends module
     $args = page::parse_args(func_get_args());
     page::verify_args($args, "collection.insert", 3);
     list($collection, $identifier) = array_splice($args, 0, 2);
+    list($collection) = assoc_element($collection);
     $table = $this->get_table($collection);
     $sql = "insert into $table(version,collection,identifier,attribute,value) values";
     $identifier_func = "last_insert_id()";
