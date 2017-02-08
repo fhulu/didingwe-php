@@ -29,6 +29,7 @@ modules:
   - collection
   - emailer
   - sms
+  - document
 
 search_paths: [../common/,.,$brand_path]
 collections:
