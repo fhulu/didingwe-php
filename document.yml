@@ -56,6 +56,7 @@ file_uploader:
     - collection.insert: [document, "", partner, user, name]
     - document.upload: [file, $upload_dir, $new_document_id]
     - collection.insert: [document, $new_document_id, path, mime]
+    - write_session: new_document_id
 
 upload:
   derive: [parent_id]
