@@ -5,12 +5,18 @@ class collection extends module
 {
   var $tables;
   var $hidden_columns;
+  var $combined_columns;
+  var $star_columns;
+  var $columns;
   function __construct($page)
   {
     parent::__construct($page);
     $this->auth = $page->get_module('auth');
     $this->read_tables();
+    $this->columns = [];
     $this->hidden_columns = [];
+    $this->combined_columns = [];
+    $this->star_columns = [];
   }
 
   function read_tables()
@@ -67,7 +73,7 @@ class collection extends module
       if ($alias[0] == '/') continue;
       $this->extract_grouping($sorting, $grouping, $name, $alias);
       if ($name == 'identifier')
-        $selection[] = "m.$name $alias";
+        $selection[] = "m.$name `$alias`";
       else
         $selection[] = $this->get_subquery($table, $name, $alias, $term);
       ++$index;
@@ -100,7 +106,7 @@ class collection extends module
             select value from $table where collection = m.collection and version <= m.version
               and identifier=m.identifier and attribute = '$local_name' order by version desc, id desc)";
     }
-    return "($query order by version desc, id desc limit 1) $alias";
+    return "($query order by version desc, id desc limit 1) `$alias`";
   }
 
   function get_joins($table, $filters, &$where="", $conjuctor="and", $index=0, $new_group=false)
@@ -165,10 +171,13 @@ class collection extends module
         $aliases[] = $alias;
         continue;
       }
-      $expansion = $this->get_fields($collection);
+      if (empty($this->columns[$collection]))
+        $this->columns[$collection] = $this->get_fields($collection);
       $star_index = $index;
     }
-    if ($star_index >= 0) array_splice($args, $star_index, 1, array_diff($expansion, $aliases));
+    if ($star_index == -1) return;
+    array_splice($args, $star_index, 1, array_diff($this->columns[$collection], $aliases));
+    log::debug_json("args * $star_index", $args);
   }
 
   function add_custom_filters(&$filters, $args)
@@ -254,8 +263,12 @@ class collection extends module
   function wrap_query(&$sql, $args)
   {
     $outer = [];
-    $wrapped = $this->lastColumn != '' || !empty($this->hidden_columns);
+    $wrapped = $this->lastColumn != '' || !empty($this->hidden_columns || !empty($this->combined_columns));
+    $combined = [];
+    $combined_pos = -1;
+    $index = -1;
     foreach($args as $arg) {
+      ++$index;
       list($alias,$name) = $this->page->get_sql_pair($arg);
       if (in_array($alias, $this->hidden_columns, true)) continue;
       if ($name[0] == "'") {
@@ -264,13 +277,22 @@ class collection extends module
         $outer[] = explode(' ',$alias)[0];
         continue;
       }
-      $outer[] = "$name $alias";
+      if (in_array($alias, $this->combined_columns, true)) {
+        $combined[] = $alias;
+        if ($combined_pos==-1) $combined_pos = $index;
+      }
+      else
+        $outer[] = "$name $alias";
       $wrapped = true;
       if ($alias == $this->lastColumn) break;
     }
-    if ($wrapped)
-      $sql = "select " . join(',', $outer) . " from ($sql) tmp";
-    return $wrapped;
+    if (!$wrapped) return false;
+    if (!empty($combined)) {
+      $combined = "concat(". join(' ', $combined).".)";
+      array_splice($outer, $combined_pos, 0, [$combined]);
+    }
+    $sql = "select " . join(',', $outer) . " from ($sql) tmp";
+    return true;
   }
 
   function read($args, $use_custom_filters=false, $term="")
@@ -279,6 +301,8 @@ class collection extends module
     $size = $this->expand_args($args);
     list($collection, $filters, $offset, $size) = $this->extract_header($args);
     $this->expand_star($collection, $args);
+    if (!empty($this->combined_columns))
+      $this->expand_star($collection, $this->combined_columns);
     if ($use_custom_filters)
       $this->add_custom_filters($filters, $args);
     $where = " where m.collection = '$collection' and m.version = 0 ";
@@ -432,5 +456,11 @@ class collection extends module
   function hide()
   {
     $this->hidden_columns = array_merge($this->hidden_columns, func_get_args());
+  }
+
+  function combine()
+  {
+
+    $this->combined_columns = array_merge($this->combined_columns, func_get_args());
   }
 }
