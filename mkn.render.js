@@ -979,7 +979,7 @@ mkn.render = function(options)
             params = $.extend(params, {invoker: obj, event: event, async: true, post_prefix: field.post_prefix });
             me.sink.find(".error").remove();
             $(selector).json('/', params, function(result) {
-              obj.trigger('processed', [result]);
+              obj.trigger('processed-'+field.id, [result]);
               respond(result, obj, event);
             });
             break;

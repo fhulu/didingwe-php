@@ -43,22 +43,32 @@ class document extends module
     return $pos===FALSE? '': substr($file, $pos+1);
   }
 
-  function import_excel($path, $table, $titles )
+  function import_excel($path, $control, $callback=null)
   {
     require_once 'PHPExcel/Classes/PHPExcel/IOFactory.php';
-    $type = PHPExcel_IOFactory::identify($path);
-
-    $reader = PHPExcel_IOFactory::createReader($type);
-    $excel = $reader->load($path);
+    $page = $this->page;
+    try {
+      $type = PHPExcel_IOFactory::identify($path);
+      $reader = PHPExcel_IOFactory::createReader($type);
+      $excel = $reader->load($path);
+    }
+    catch (Exception $e) {
+      $this->page->error($control, "Error loading file $path: ". $e->getMessage());
+      return false;
+    }
     $sheet = $excel->getSheet(0);     //Selecting sheet 0
     $highestRow = $sheet->getHighestRow();     //Getting number of rows
     $highestColumn = $sheet->getHighestColumn();     //Getting number of columns
-    log::debug_json("loading $path of type $type: $highestRow $highestColumn", $sheet);
 
-    for ($row = 0; $row <= $highestRow; $row++) {
+    $result = [];
+    for ($row = 1; $row <= $highestRow; $row++) {
       $data = $sheet->rangeToArray('A' . $row . ':' . $highestColumn . $row,   NULL, TRUE, FALSE);
-      log::debug_json("ROW DATA", $data);
+      if (!$callback)
+        $result[] = $data[0];
+      else if ($callback($row-1, $data[0]) === false)
+        return false;
     }
+    if (!$callback) return $result;
   }
 
 }
