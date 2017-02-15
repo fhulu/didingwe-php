@@ -1,15 +1,9 @@
-<?php
+  <?php
 
+require_once("module.php");
 class document_exception extends Exception {};
-class document
+class document extends module
 {
-  var $page;
-  var $db;
-  function __construct($page)
-  {
-    $this->page = $page;
-    $this->db = $page->db;
-  }
 
   function upload($control, $path, $id)
   {
@@ -48,4 +42,23 @@ class document
     $pos = strrpos($file, '.');
     return $pos===FALSE? '': substr($file, $pos+1);
   }
+
+  function import_excel($path, $table, $titles )
+  {
+    require_once 'PHPExcel/Classes/PHPExcel/IOFactory.php';
+    $type = PHPExcel_IOFactory::identify($path);
+
+    $reader = PHPExcel_IOFactory::createReader($type);
+    $excel = $reader->load($path);
+    $sheet = $excel->getSheet(0);     //Selecting sheet 0
+    $highestRow = $sheet->getHighestRow();     //Getting number of rows
+    $highestColumn = $sheet->getHighestColumn();     //Getting number of columns
+    log::debug_json("loading $path of type $type: $highestRow $highestColumn", $sheet);
+
+    for ($row = 0; $row <= $highestRow; $row++) {
+      $data = $sheet->rangeToArray('A' . $row . ':' . $highestColumn . $row,   NULL, TRUE, FALSE);
+      log::debug_json("ROW DATA", $data);
+    }
+  }
+
 }

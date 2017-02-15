@@ -355,6 +355,7 @@ class page
       if (is_assoc($field)) {
         $new_parent = $field;
         $field = $field[$branch];
+        // $this->merge_fields($field, $parent);
         if ($parent)
           $this->derive_parent($parent, $field);
         $parent = $new_parent;
@@ -862,7 +863,7 @@ class page
     $result = $this->reply($invoker);
     if (!$audit_first && !page::has_errors() && array_key_exists('audit', $invoker))
       $this->audit($invoker);
-    return $this->answer;
+    return $result;
   }
 
   function replace_sid(&$str)
@@ -1293,10 +1294,12 @@ class page
     $this->parse_delta($vars);
     $session = &$_SESSION['variables'];
     foreach($vars as $var) {
+      $this->replace_fields($var);
       if ($var == 'request' && !isset($this->request['request']))
         call_user_func_array (array($this, 'write_session'), array_keys($this->request));
       else if (is_array($var)) {
         list($var,$value) = assoc_element($var);
+        $this->replace_fields($var);
         $session[$var] = $value;
       }
       else if (isset($this->answer[$var]))
@@ -1306,12 +1309,13 @@ class page
     }
   }
 
-  static function read_settings($settings,$args)
+  function read_settings($settings,$args)
   {
     $vars = page::parse_args($args);
     $values = array();
     foreach($vars as $var) {
       $alias = $var;
+      $this->replace_fields($var);
       if (is_array($var))
         list($alias,$var) = assoc_element($var);
       if (isset($settings[$var]))
@@ -1325,7 +1329,7 @@ class page
     $args = func_get_args();
     $session = &$_SESSION['variables'];
     if (sizeof($args) == 0) return $session;
-    return page::read_settings($session, $args);
+    return $this->read_settings($session, $args);
   }
 
   function read_session_list()
@@ -1337,9 +1341,7 @@ class page
   function read_config()
   {
     global $config;
-    $result = page::read_settings($config, func_get_args());
-    log::debug_json("result", $result);
-    return $result;
+    return $this->read_settings($config, func_get_args());
   }
 
   function read_values($values)
