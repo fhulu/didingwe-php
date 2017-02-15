@@ -390,7 +390,7 @@ login_password:
   error:
     - collection.values: [user, email: $email, user: identifier]
     - collection.update: [user, $user, attempts: /value+1]
-    - collection.insert: [audit, "", user, action: Failed Login attempt, time: /sysdate()]
+    - collection.insert: [audit, "", user, action: Failed Login attempt, time: /sysdate(), detail: $email]
     - error: [password, Invalid user name or password for $email ]
 
 logout:
