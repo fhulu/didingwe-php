@@ -57,7 +57,7 @@ file_uploader:
     - document.upload: [file, $upload_dir, $new_document_id]
     - collection.update: [document, $new_document_id, path, mime]
     - trigger: "uploaded,#page,$path"
-    - write_session: new_document_id
+    - write_session: [new_document_id,uploaded_document_path: $path]
 
 upload:
   derive: [parent_id]
