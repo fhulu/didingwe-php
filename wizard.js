@@ -155,7 +155,7 @@ $.widget( "custom.wizard", {
       me.jumpTo(me.stack[me.stack.length-2]);
     })
 
-    .on('processed', function(event, result) {
+    .on('processed-next', function(event, result) {
       if (result && result._responses && result._responses.errors) return;
       if (result && result.next_step) me.next_step = result.next_step;
       if (!me.stack.length || !me.next_step) return;
