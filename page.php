@@ -537,11 +537,8 @@ class page
   function merge_fields(&$fields, $parent=[], $merged=[])
   {
     if (is_assoc($fields)) {
-      $type = $fields['type'];
-      if (isset($type) && !in_array($type, $merged, true)) {
-        $merged[] = $type;
+      if (isset($fields['type']))
         $this->merge_type($fields);
-      }
       $this->derive_parent($parent, $field);
       foreach($fields as $key=>&$value) {
         if (!is_array($value) || page::not_mergeable($key)) continue;
@@ -577,7 +574,6 @@ class page
       }
       if (!is_null($default))
         $field = merge_options($default, $field);
-      unset($field['type']);
       if (is_array($field))
         $value = array($key=>$field);
     }
@@ -857,7 +853,7 @@ class page
     $invoker = $this->context;
     if (!isset($this->context['id'])) $this->context['id'] = last($this->path);
     if (!isset($this->context['name'])) $this->context['name'] = $this->name($this->context);
-    // $this->merge_fields($this->fields);
+    $this->merge_fields($this->fields);
     $validate = at($invoker, 'validate');
     if ($validate != 'none' && !$this->validate($this->fields, $validate))
       return null;
@@ -1099,6 +1095,7 @@ class page
     if (isset($post)) $actions = $post;
     if (is_null($actions)) return null;
     if (is_assoc($actions))  $actions = array($actions);
+    $this->merge_fields($actions, $this->fields);
 
     log::debug_json("REPLY ACTIONS", $actions);
 
