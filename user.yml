@@ -257,7 +257,7 @@ history:
     - what: { width: 30%, name: Action }
     - detail: { width: 55% }
   values:
-    - collection.data: [10, audit, user: $key, time desc, action, detail]
+    - collection.data: [10, audit, user: $key, time , action, detail]
 
 
 
