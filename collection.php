@@ -159,11 +159,14 @@ class collection extends module
     return $joins;
   }
 
-  function expand_star($collection, &$args)
+  function expand_star($collection, &$args, $aliases=[])
   {
     $expansion = null;
     $star_index = $index = -1;
-    $aliases = [];
+    $aliases = array_map(function($value) {
+      list($name,$alias) = $this->get_name_alias($value);
+      return $alias;
+    }, $aliases);
     foreach($args as $arg) {
       ++$index;
       if ($arg != '*') {
@@ -176,8 +179,8 @@ class collection extends module
       $star_index = $index;
     }
     if ($star_index == -1) return;
-    array_splice($args, $star_index, 1, array_diff($this->columns[$collection], $aliases));
-    log::debug_json("args * $star_index", $args);
+    $expanded = array_diff($this->columns[$collection], array_values($aliases));
+    array_splice($args, $star_index, 1, $expanded);
   }
 
   function add_custom_filters(&$filters, $args)
@@ -268,27 +271,29 @@ class collection extends module
     $combined_pos = -1;
     $index = -1;
     foreach($args as $arg) {
-      ++$index;
       list($alias,$name) = $this->page->get_sql_pair($arg);
       if (in_array($alias, $this->hidden_columns, true)) continue;
+      ++$index;
+      if (in_array($alias, $this->combined_columns, true)) {
+        $combined[] = "ifnull(`". $alias. "`, '')";
+        if ($combined_pos==-1) $combined_pos = $index;
+        $wrapped = true;
+        continue;
+      }
       if ($name[0] == "'") {
         list($name, $alias) = explode('.', $alias);
         if (!$alias) $alias = $name;
-        $outer[] = explode(' ',$alias)[0];
+        $outer[] = "`".explode(' ',$alias)[0] . "`";
         continue;
       }
-      if (in_array($alias, $this->combined_columns, true)) {
-        $combined[] = $alias;
-        if ($combined_pos==-1) $combined_pos = $index;
-      }
       else
-        $outer[] = "$name $alias";
+        $outer[] = "$name `$alias`";
       $wrapped = true;
       if ($alias == $this->lastColumn) break;
     }
     if (!$wrapped) return false;
     if (!empty($combined)) {
-      $combined = "concat(". join(' ', $combined).".)";
+      $combined = "concat_ws(' ', " . join(',', $combined) . ")";
       array_splice($outer, $combined_pos, 0, [$combined]);
     }
     $sql = "select " . join(',', $outer) . " from ($sql) tmp";
@@ -300,9 +305,9 @@ class collection extends module
     $args = page::parse_args($args);
     $size = $this->expand_args($args);
     list($collection, $filters, $offset, $size) = $this->extract_header($args);
-    $this->expand_star($collection, $args);
     if (!empty($this->combined_columns))
-      $this->expand_star($collection, $this->combined_columns);
+      $this->expand_star($collection, $this->combined_columns, $args);
+    $this->expand_star($collection, $args);
     if ($use_custom_filters)
       $this->add_custom_filters($filters, $args);
     $where = " where m.collection = '$collection' and m.version = 0 ";
@@ -447,9 +452,7 @@ class collection extends module
   function get_fields($collection)
   {
     $table = $this->get_table($collection);
-    return $this->db->read_column(
-      "select attribute from contact where collection = '$table' and identifier = (
-        select identifier from contact where collection = 'contact' order by id desc limit 1)");
+    return $this->db->read_column("select distinct attribute from `$table` where collection = '$collection'");
   }
 
 
