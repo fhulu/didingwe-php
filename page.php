@@ -1352,7 +1352,7 @@ class page
 
   function let($values)
   {
-    return $this->read_values($values);
+    $this->answer = merge_options($this->answer, $this->read_values($values));
   }
 
   static function abort()
