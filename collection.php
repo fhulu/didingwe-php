@@ -159,7 +159,7 @@ class collection extends module
     return $joins;
   }
 
-  function expand_star($collection, &$args, $aliases=[])
+  function expand_star($default_collection, &$args, $aliases=[])
   {
     $expansion = null;
     $star_index = $index = -1;
@@ -169,17 +169,30 @@ class collection extends module
     }, $aliases);
     foreach($args as $arg) {
       ++$index;
-      if ($arg != '*') {
+      $matches = [];
+      if (!is_string($arg) || !preg_match('/^(?:(\w+)\.)?\*/', $arg, $matches)) {
         list($name,$alias) = $this->get_name_alias($arg);
         $aliases[] = $alias;
         continue;
       }
+      $collection = $default_collection;
+      $foreign = false;
+      if ($matches[1]) {
+        $collection = $matches[1];
+        $foreign = true;
+      }
       if (empty($this->columns[$collection]))
         $this->columns[$collection] = $this->get_fields($collection);
+      $expanded = $this->columns[$collection];
+      if ($foreign) {
+        $expanded = array_map(function($v) use ($collection) {
+          return "$collection.$v";
+        }, $expanded);
+      }
       $star_index = $index;
     }
     if ($star_index == -1) return;
-    $expanded = array_diff($this->columns[$collection], array_values($aliases));
+    $expanded = array_diff($expanded, array_values($aliases));
     array_splice($args, $star_index, 1, $expanded);
   }
 
@@ -275,6 +288,8 @@ class collection extends module
       if (in_array($alias, $this->hidden_columns, true)) continue;
       ++$index;
       if (in_array($alias, $this->combined_columns, true)) {
+        list($name, $alias) = explode('.', $alias);
+        if (!$alias) $alias = $name;
         $combined[] = "ifnull(`". $alias. "`, '')";
         if ($combined_pos==-1) $combined_pos = $index;
         $wrapped = true;
