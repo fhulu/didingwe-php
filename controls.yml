@@ -741,9 +741,6 @@ table:
   head: { type: table_head }
   body: { type: table_body }
   text: $head $body
-  sow: [rows]
-  rows:
-    - type: table_row
 
 table_head: { templates: thead }
 

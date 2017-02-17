@@ -4,16 +4,15 @@ datatable:
   type: table
   class: [data]
   create: datatable
-  title:
-    class: [didi]
-  body:
-    class: [didi,table-body]
+  head: { class: [didi] }
+  title: { class: [didi] }
+  body: { class: [didi,table-body] }
   row_actions: []
   row_styles: {}
   row:
     actions: []
     styles: {}
-    class: [table-row,relative]
+    class: [didi,table-row,relative]
   cell:
     class: [didi]
   script: [/common/datatable.js]

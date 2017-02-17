@@ -21,39 +21,40 @@
 
     _create: function()
     {
-      var opts = this.options;
+      var me = this;
+      var opts = me.options;
       if (opts.sort) opts.flags.push('sortable');
       var r = opts.render;
       r.expandFields(opts, "fields", opts.fields);
       var row = r.initField(opts.row, opts);
-      this.row_classes = opts.row.class.join(' ');
-      this.cell = r.initField(opts.cell, opts);
-      this.cell.class = this.cell.class.join(' ')
+      me.row_classes = opts.row.class.join(' ');
+      me.cell = r.initField(opts.cell, opts);
+      me.cell.class = me.cell.class.join(' ')
       $.extend(opts.row_styles,opts.row.styles);
       opts.row_actions = opts.row_actions.concat(opts.row.actions);
       opts.render.expandFields(opts, "row_actions", opts.row_actions);
-      this._init_params();
-      if (this.hasFlag('show_titles') || this.hasFlag('show_header')) {
-        $('<thead></thead>').prependTo(this.element);
-        if (this.hasFlag('show_header')) this.showHeader();
-        if (this.hasFlag('show_titles')) this.showTitles();
+      me._init_params();
+      if (me.hasFlag('show_titles') || me.hasFlag('show_header')) {
+        me.head().addClass(opts.head.class.join(' ')).prependTo(me.element);
+        if (me.hasFlag('show_header')) me.showHeader();
+        if (me.hasFlag('show_titles')) me.showTitles();
       }
-      this.showFooterActions();
-      this.load();
-      var self = this;
-      this.element.on('refresh', function(e, args) {
-        self.load(args);
+      me.showFooterActions();
+      me.showData();
+      me.element.on('refresh', function(e, args) {
+        me.showData(args);
         e.stopImmediatePropagation();
       })
       .on('addRow', function(e, data) {
-        self.addRow(data);
+        me.addRow(data);
       })
-      this.bindRowActions()
+      me.body().scroll($.proxy(me._scroll,me));
+      me.bindRowActions()
     },
 
     _init_params: function()
     {
-      this.params = { page_num: 1};
+      this.params = { page_num: 1, offset: 0};
       var exclude = [ 'create', 'action', 'css', 'id', 'content', 'disabled',
           'html','name', 'page_id', 'position','script','slideSpeed', 'text', 'tag', 'type'];
       for (var key in this.options) {
@@ -90,24 +91,29 @@
     load: function(args)
     {
       var start = new Date().getTime();
-      var self = this;
-      self.head().find('.paging [action]').attr('disabled','');
-      var data = $.extend(this.options.request, args, {action: 'values'}, self.params);
-      var selector = this.options.selector;
+      var me = this;
+      var opts = me.options;
+      me.head().find('.paging [action]').attr('disabled','');
+      var data = $.extend(opts.request, args, {action: 'values'}, me.params);
+      var selector = opts.selector;
       if (selector !== undefined) {
         $.extend(data, $(selector).values());
       }
+
+      var el = me.element;
+      me.loading = true;
       $.json('/', {data: mkn.plainValues(data)}, function(data) {
         if (!data) return;
         if (data._responses)
-          self.element.triggerHandler('server_response', [data]);
-        self.element.trigger('refreshing', [data]);
+          el.triggerHandler('server_response', [data]);
+        el.trigger('refreshing', [data]);
         var end = new Date().getTime();
         console.log("Load: ", end - start);
-        self.populate(data);
-        self.element.triggerHandler('refreshed', [data]);
+        me.populate(data);
+        me.loading = false;
+        el.triggerHandler('refreshed', [data]);
         delete data.data;
-        $.extend(self.params, data);
+        $.extend(me.params, data);
         console.log("Populate: ", new Date().getTime() - end);
       });
     },
@@ -118,8 +124,12 @@
         console.log('No table data for table:', this.params.field);
         return;
       }
-      this.showData(data);
       if (this.options.page_size !== undefined) this.showPaging(parseInt(data.total));
+
+      for(var i in data.data) {
+        this.addRow(data.data[i]);
+      }
+      this.adjustWidths(this.body().find('tr:first-child'))
     },
 
 
@@ -176,7 +186,7 @@
     {
       if (invoker.hasAttr('disabled')) return;
       this.params.page_num = number;
-      this.params.page_size = invoker.siblings('#page_size').val();
+      this.params.size = invoker.siblings('#page_size').val();
       invoker.siblings('#page_num').val(number);
       this.refresh();
     },
@@ -192,7 +202,7 @@
       var head = self.head();
       head.find(".paging [type='text']").bind('keyup input cut paste', function(e) {
         if (e.keyCode === 13) {
-          self.params.page_size = $(this).val();
+          self.params.size = $(this).val();
           self.refresh();
         }
       });
@@ -219,7 +229,7 @@
       var head = this.head();
       head.find('#page_total').text(total);
       var page = this.params.page_num;
-      var size = this.params.page_size;
+      var size = this.params.size;
       var prev = head.find('[action=goto_first],[action=goto_prev]');
       var next = head.find('[action=goto_last],[action=goto_next]');
       if (page <= 1) {
@@ -269,7 +279,7 @@
         var field = fields[i];
         var id = field.id;
         var visible = mkn.visible(field);
-        if (id == 'key' && visible  || id === 'attr' || id == 'style') continue;
+        if (id == 'key' && !visible  || id === 'attr' || id == 'style') continue;
         var th = $('<th></th>').addClass(classes).appendTo(tr);
         if (id === 'actions') continue;
         if ($.isArray(field.name)) field.name = field.name[field.name.length-1];
@@ -305,16 +315,21 @@
       return span.join(' ');
     },
 
-    showData: function(data)
+    showData: function(args)
     {
-      var body = this.body();
-      var opts = this.options;
+      var me = this;
+      var body = me.body();
+      var opts = me.options;
+      var max_height  = parseInt(body.css('max-height'));
+      if (opts.page_size == 0 || max_height > 0) {
+        var row_height = $('<tr><td>Loading...</td></tr>').appendTo(body).outerHeight(true);
+        if (row_height < 1) row_height = 20;
+        me.params.size = Math.ceil(max_height/row_height)+1;
+      }
       body.addClass(opts.body.class.join(' '));
       body.empty();
-      for(var i in data.data) {
-        this.addRow(data.data[i]);
-      }
-      this.spanColumns(this.head().find('.header>th'));
+      me.load(args);
+      me.spanColumns(me.head().find('.header>th'));
     },
 
     setRowStyles: function(row, styles) {
@@ -563,7 +578,7 @@
     updateWidths: function(row, widths)
     {
       row.children().each(function(i) {
-        var width = $(this).width();
+        var width = $(this).outerWidth(true);
         if (i === widths.length)
           widths.push(width);
         else if (width > widths[i])
@@ -583,21 +598,12 @@
       return widths;
     },
 
-    adjustWidths: function(editor)
+    adjustWidths: function(row)
     {
       var widths = this.getWidths();
-      var input;
-      var fields = this.options.fields;
-      editor.children().each(function(i) {
-        var field = fields[i];
-        if (field === 'actions') {
-          input.css('width', widths[i-1] + widths[i] + 'px');
-          return;
-        }
-        input = $(this).children('*').eq(0);
-        input.css('width', widths[i]+'px');
+      row.children().each(function(i) {
+        $(this).css('width', widths[i]+'px');
       });
-      editor.find('input:last-child').css('width','99%');
     },
 
     createEditor: function(template, fields, type, cell)
@@ -640,8 +646,8 @@
       filter = self.createEditor(titles, self.options.fields, 'filter', '<th></th>').hide();
       var cols = filter.children();
       filter.find('input').bind('keyup cut paste', function(e) {
-        self.params.page_num = 1;
-        self.params.page_size = self.options.page_size;
+        // self.params.page_num = 1;
+        // self.params.page_size = self.options.page_size;
         fields.forEach(function(field, index) {
           delete self.params['f'+index];
           var obj = filter.findByAttribute('field_id', field.id);
@@ -678,7 +684,17 @@
       })
       this.options.render.createItems(td, this.options, undefined, actions);
       this.spanColumns(td);
-    }
+    },
+
+    _scroll: function(e) {
+      var me = this;
+      var opts = me.opts;
+      var body = me.body();
+      if(body.scrollHeight() - body.scrollTop() != body.height() || me.loading) return;
+      if (me.params.total && me.params.offset + me.params.size > me.params.total) return;
+      me.params.offset += me.params.size;
+      me.load();
+    },
 
   })
 }) (jQuery);
