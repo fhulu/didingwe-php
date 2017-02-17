@@ -331,12 +331,13 @@ list_all:
     - organisation: { push: email }
   values:
     - _reset
-    - collection.scroll:
+    - collection.data:
         - user
         - []
-        - partner: partner.name
+        - identifier
+        - partner.name
         - email
-        - first_name asc
+        - first_name
         - last_name
         - cellphone
         - role: role.name
