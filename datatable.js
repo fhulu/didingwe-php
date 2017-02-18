@@ -22,6 +22,7 @@
     _create: function()
     {
       var me = this;
+      me.widths = [];
       var opts = me.options;
       if (opts.sort) opts.flags.push('sortable');
       var r = opts.render;
@@ -33,6 +34,7 @@
       $.extend(opts.row_styles,opts.row.styles);
       opts.row_actions = opts.row_actions.concat(opts.row.actions);
       opts.render.expandFields(opts, "row_actions", opts.row_actions);
+      me.auto_widths = [];
       me._init_params();
       if (me.hasFlag('show_titles') || me.hasFlag('show_header')) {
         me.head().addClass(opts.head.class.join(' ')).prependTo(me.element);
@@ -130,6 +132,7 @@
         this.addRow(data.data[i]);
       }
       this.adjustWidths(this.body().find('tr:first-child'))
+      this.adjustTitleWidths();
     },
 
 
@@ -390,6 +393,29 @@
         me.showCell(field, td, cell, key);
       }
       tr.appendTo(me.body());
+      me.adjustRowWidths(tr);
+    },
+
+    adjustRowWidths: function(tr)
+    {
+      var widths = this.widths;
+      tr.children().each(function(i) {
+        var width = $(this).width();
+        if (i==widths.length)
+          widths.push(width);
+        else if (widths[i] < width)
+          widths[i] = width;
+      });
+    },
+
+    adjustTitleWidths: function()
+    {
+      var widths = this.widths;
+      var titles = this.head().find('.titles>th');
+      titles.each(function(i) {
+        if (!$(this).css('width')) return;
+        $(this).width(widths[i]);
+      })
     },
 
     showCell: function(field, td, value, key)
