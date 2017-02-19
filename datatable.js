@@ -58,9 +58,9 @@
     {
       this.params = { page_num: 1, offset: 0};
       var exclude = [ 'create', 'action', 'css', 'id', 'content', 'disabled',
-          'html','name', 'page_id', 'position','script','slideSpeed', 'text', 'tag', 'type'];
+          'html','name', 'page_id', 'position','script','slideSpeed', 'text', 'tag', 'target', 'type'];
       for (var key in this.options) {
-        if (exclude.indexOf(key) >= 0) continue;
+        if (exclude.indexOf(key) >= 0 || key.indexOf('on_') ==0) continue;
         var val = this.options[key];
         if (typeof val === 'string' || typeof val === "number")
           this.params[key] = val;
