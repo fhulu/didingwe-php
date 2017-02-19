@@ -257,10 +257,8 @@ class collection extends module
     if (empty($sorting)) {
       $request = $this->page->request;
       $index = $request['sort'];
-      if (!isset($index) || !is_numeric($index)) return;
-      list($field) = assoc_element($args[$index]);
-      if (!$field) return;
-      $sorting = $field . " " . $request['sort_order'];
+      if (!isset($index)) return;
+      $sorting = "$index " . $request['sort_order'];
     }
     else {
       $sorting = implode(',', $sorting);
