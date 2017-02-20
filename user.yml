@@ -159,7 +159,7 @@ create:
   name: Add User
   desc:  Add a new user
   inputs:
-    - title: {type: dropdown}
+    - title: {type: dropdown_collection}
     - first_name
     - last_name
     - cellphone
