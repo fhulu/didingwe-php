@@ -58,12 +58,21 @@
     {
       this.params = { page_num: 1, offset: 0};
       var exclude = [ 'create', 'action', 'css', 'id', 'content', 'disabled',
-          'html','name', 'page_id', 'position','script','slideSpeed', 'text', 'tag', 'target', 'type'];
+          'html','name', 'page_id', 'position', 'sort', 'script','slideSpeed', 'text', 'tag', 'target', 'type'];
       for (var key in this.options) {
         if (exclude.indexOf(key) >= 0 || key.indexOf('on_') ==0) continue;
         var val = this.options[key];
         if (typeof val === 'string' || typeof val === "number")
           this.params[key] = val;
+      }
+      var sort = this.options.sort;
+      if (typeof sort != 'string') return;
+      var fields = this.options.fields;
+      for (var i in fields) {
+        var field = fields[i];
+        if (field.id != sort) continue;
+        this.params['sort'] = field.number;
+        return;
       }
     },
 
@@ -253,16 +262,16 @@
       if (page > 1) prev.removeAttr('disabled');
     },
 
-    bindSort: function(th, field, index)
+    bindSort: function(th, field)
     {
       var self = this;
       th.click(function() {
         th.siblings().attr('sort','');
         var order = 'asc';
-        if (self.params.sort == index)
+        if (self.params.sort == field.number)
           order = th.attr('sort')==='asc'?'desc':'asc';
         th.attr('sort', order);
-        self.params.sort = index;
+        self.params.sort = field.number;
         self.params.sort_order = order;
         self.refresh();
       });
@@ -298,7 +307,7 @@
         }
         ++j;
         if (self.hasFlag('sortable'))
-          self.bindSort(th, id, i);
+          self.bindSort(th, field);
         th.toggle(visible);
       };
       this.spanColumns(head.find('.header th'));
@@ -393,10 +402,10 @@
         me.showCell(field, td, cell, key);
       }
       tr.appendTo(me.body());
-      me.adjustRowWidths(tr);
+      me.adjustColWidths(tr);
     },
 
-    adjustRowWidths: function(tr)
+    adjustColWidths: function(tr)
     {
       var widths = this.widths;
       tr.children().each(function(i) {

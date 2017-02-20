@@ -288,7 +288,7 @@ class collection extends module
       if (in_array($alias, $this->combined_columns, true)) {
         list($name, $alias) = explode('.', $alias);
         if (!$alias) $alias = $name;
-        $combined[] = "ifnull(`". $alias. "`, '')";
+        $combined[] = "`$alias`";
         if ($combined_pos==-1) $combined_pos = $index;
         $wrapped = true;
         continue;
@@ -334,7 +334,8 @@ class collection extends module
     $sql .= " group by m.identifier";
     $wrapped = $this->wrap_query($sql, $args);
     $this->set_grouping($sql, $grouping);
-    $this->set_sorting($sql, $sorting, !$wrapped, $args);
+    if (!$this->no_sorting)
+      $this->set_sorting($sql, $sorting, !$wrapped, $args);
     $this->set_limits($sql, $offset, $size);
     return $this->page->translate_sql($sql);
   }
@@ -343,9 +344,11 @@ class collection extends module
   {
     $a = func_get_args();
     if (!is_numeric($a[0])) array_splice($a, 0, 0, 1);
+    $this->no_sorting = true;
     $sql = $this->read($a);
     $result = $this->db->read($sql, MYSQLI_ASSOC);
     if ($result) $result = $result[0];
+    $this->no_sorting = false;
     return $result;
   }
 
