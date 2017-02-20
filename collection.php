@@ -246,7 +246,7 @@ class collection extends module
 
   function set_limits(&$sql, $offset, $size)
   {
-    if (!is_null($offset))
+    if (!is_null($offset) && !is_null($size))
       $sql .= " limit $offset, $size";
     else if (!is_null($size))
       $sql .= " limit $size";
