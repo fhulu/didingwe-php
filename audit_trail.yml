@@ -3,6 +3,8 @@ user:
   type: datatable
   access: auth
   name: My Audit Trail
+  class: [widest,scroll-table]
+  body: { max-height: 400 }
   sort: when
   sort_order: desc
   flags:
