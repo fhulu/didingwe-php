@@ -25,6 +25,8 @@ user:
 partner:
   name: Organisation Audit Trail
   type: user
+  class: [widest,scroll-table]
+  body: { max-height: 400 }
   access: [admin]
   fields:
     - when: { width: 15%, push: merge }
