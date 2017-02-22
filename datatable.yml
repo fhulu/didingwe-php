@@ -20,9 +20,7 @@ datatable:
   css: [/common/datatable.css,/datatable.css]
   flags: []
   values:
-    - read_values: { derive: [data] }
-    - call: datatable::read(context,$key)
-
+    - collection.sort_on: [sort]
   position: top
   filter:
     name: ""

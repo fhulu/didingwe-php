@@ -8,6 +8,7 @@ class collection extends module
   var $combined_columns;
   var $star_columns;
   var $columns;
+  var $sort_columns;
   function __construct($page)
   {
     parent::__construct($page);
@@ -17,6 +18,7 @@ class collection extends module
     $this->hidden_columns = [];
     $this->combined_columns = [];
     $this->star_columns = [];
+    $this->sort_columns = [];
   }
 
   function read_tables()
@@ -256,9 +258,11 @@ class collection extends module
   {
     if (empty($sorting)) {
       $request = $this->page->request;
-      $index = $request['sort'];
-      if (!isset($index)) return;
-      $sorting = "$index " . $request['sort_order'];
+      foreach($this->sort_columns as $field) {
+        $index = $request[$field];
+        if (!isset($index)) return;
+        $sorting = "$index " . $request['sort_order'];
+      }
     }
     else {
       $sorting = implode(',', $sorting);
@@ -478,7 +482,11 @@ class collection extends module
 
   function combine()
   {
-
     $this->combined_columns = array_merge($this->combined_columns, func_get_args());
+  }
+
+  function sort_on()
+  {
+    $this->sort_columns = array_merge($this->sort_columns, func_get_args());
   }
 }
