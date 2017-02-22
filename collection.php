@@ -283,6 +283,7 @@ class collection extends module
     $index = -1;
     foreach($args as $arg) {
       list($alias,$name) = $this->page->get_sql_pair($arg);
+      $this->extract_grouping($grouping,$sorting, $name,$alias);
       if (in_array($alias, $this->hidden_columns, true)) continue;
       ++$index;
       if (in_array($alias, $this->combined_columns, true)) {
