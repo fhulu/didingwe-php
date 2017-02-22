@@ -36,9 +36,9 @@
       opts.render.expandFields(opts, "row_actions", opts.row_actions);
       me.auto_widths = [];
       me._init_params();
-      if (me.hasFlag('show_titles') || me.hasFlag('show_header')) {
+      if (me.hasFlag('show_titles') || me.hasFlag('show_header') || me.hasFlag('filter')) {
         me.head().addClass(opts.head.class.join(' ')).prependTo(me.element);
-        if (me.hasFlag('show_header')) me.showHeader();
+        if (me.hasFlag('show_header') || me.hasFlag('filter')) me.showHeader();
         if (me.hasFlag('show_titles')) me.showTitles();
       }
       me.showFooterActions();
@@ -681,8 +681,7 @@
       filter = self.createEditor(titles, self.options.fields, 'filter', '<th></th>').hide();
       var cols = filter.children();
       filter.find('input').bind('keyup cut paste', function(e) {
-        // self.params.page_num = 1;
-        // self.params.page_size = self.options.page_size;
+        self.params.offset = 0;
         fields.forEach(function(field, index) {
           delete self.params['f'+index];
           var obj = filter.findByAttribute('field_id', field.id);
