@@ -260,9 +260,10 @@ class collection extends module
       $request = $this->page->request;
       foreach($this->sort_columns as $field) {
         $index = $request[$field];
-        if (!isset($index)) return;
+        if (!isset($index)) continue;
         $sorting = "$index " . $request['sort_order'];
       }
+      if (empty($sorting)) return;
     }
     else {
       $sorting = implode(',', $sorting);
