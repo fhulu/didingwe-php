@@ -344,11 +344,9 @@ class collection extends module
   {
     $a = func_get_args();
     if (!is_numeric($a[0])) array_splice($a, 0, 0, 1);
-    $this->no_sorting = true;
     $sql = $this->read($a);
     $result = $this->db->read($sql, MYSQLI_ASSOC);
     if ($result) $result = $result[0];
-    $this->no_sorting = false;
     return $result;
   }
 
