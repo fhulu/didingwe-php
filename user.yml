@@ -288,6 +288,8 @@ list:
   name: Users
   sort: create_time
   sort_order: desc
+  class: [widest,scroll-table]
+  body: { max-height: 400 }
   flags:
     - show_titles
   report_title: User Report
