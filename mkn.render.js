@@ -94,7 +94,7 @@ mkn.render = function(options)
     type = mkn.copy(type);
     mergeImmutables(item, base, type);
     base = mkn.copy(base);
-    mkn.deleteKeys(base, ['type', 'styles', 'style', 'class'])
+    mkn.deleteKeys(base, ['type', 'styles', 'style'])
     mkn.deleteKeys(base, geometry)
     return mkn.merge(mkn.merge(type,base), item);
   }

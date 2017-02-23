@@ -34,7 +34,7 @@ modules:
 search_paths: [../common/,.,$brand_path]
 collections:
   default: collection
-  auth: [user,partner,role,user_role,user_group,user_group_member]
+  auth: [user,partner,user_group,user_group_member]
   session: [session,audit]
   billing: [rate,payment,credit,transaction]
   document: [document]

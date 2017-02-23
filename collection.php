@@ -8,6 +8,7 @@ class collection extends module
   var $combined_columns;
   var $star_columns;
   var $columns;
+  var $sort_columns;
   function __construct($page)
   {
     parent::__construct($page);
@@ -17,6 +18,7 @@ class collection extends module
     $this->hidden_columns = [];
     $this->combined_columns = [];
     $this->star_columns = [];
+    $this->sort_columns = [];
   }
 
   function read_tables()
@@ -246,7 +248,7 @@ class collection extends module
 
   function set_limits(&$sql, $offset, $size)
   {
-    if (!is_null($offset))
+    if (!is_null($offset) && !is_null($size))
       $sql .= " limit $offset, $size";
     else if (!is_null($size))
       $sql .= " limit $size";
@@ -256,11 +258,12 @@ class collection extends module
   {
     if (empty($sorting)) {
       $request = $this->page->request;
-      $index = $request['sort'];
-      if (!isset($index) || !is_numeric($index)) return;
-      list($field) = assoc_element($args[$index]);
-      if (!$field) return;
-      $sorting = $field . " " . $request['sort_order'];
+      foreach($this->sort_columns as $field) {
+        $index = $request[$field];
+        if (!isset($index)) continue;
+        $sorting = "$index " . $request['sort_order'];
+      }
+      if (empty($sorting)) return;
     }
     else {
       $sorting = implode(',', $sorting);
@@ -285,12 +288,13 @@ class collection extends module
     $index = -1;
     foreach($args as $arg) {
       list($alias,$name) = $this->page->get_sql_pair($arg);
+      $this->extract_grouping($grouping,$sorting, $name,$alias);
       if (in_array($alias, $this->hidden_columns, true)) continue;
       ++$index;
       if (in_array($alias, $this->combined_columns, true)) {
         list($name, $alias) = explode('.', $alias);
         if (!$alias) $alias = $name;
-        $combined[] = "ifnull(`". $alias. "`, '')";
+        $combined[] = "`$alias`";
         if ($combined_pos==-1) $combined_pos = $index;
         $wrapped = true;
         continue;
@@ -336,7 +340,8 @@ class collection extends module
     $sql .= " group by m.identifier";
     $wrapped = $this->wrap_query($sql, $args);
     $this->set_grouping($sql, $grouping);
-    $this->set_sorting($sql, $sorting, !$wrapped, $args);
+    if (!$this->no_sorting)
+      $this->set_sorting($sql, $sorting, !$wrapped, $args);
     $this->set_limits($sql, $offset, $size);
     return $this->page->translate_sql($sql);
   }
@@ -478,7 +483,11 @@ class collection extends module
 
   function combine()
   {
-
     $this->combined_columns = array_merge($this->combined_columns, func_get_args());
+  }
+
+  function sort_on()
+  {
+    $this->sort_columns = array_merge($this->sort_columns, func_get_args());
   }
 }
