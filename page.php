@@ -1045,6 +1045,7 @@ class page
 
   function set_context()
   {
+    $this->merge_fields($this->fields);
     $this->context = $this->follow_path();
   }
 
