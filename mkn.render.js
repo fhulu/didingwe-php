@@ -698,16 +698,12 @@ mkn.render = function(options)
     $.each(events, function(key, values) {
       $.each(values, function(i, value) {
         if ($.isPlainObject(value) && !value.path) value.path = field.path + '/on_' + key;
-
         obj.on(key, function(e) {
           // trap trapped events
           if ($.isArray(field.trap) && field.trap.indexOf(key) >=0 )
             e.stopImmediatePropagation();
 
-          if (obj.hasClass('disabled')) {
-            e.stopImmediatePropagation();
-            return;
-          }
+          if (obj.hasClass('disabled')) return;
           // ignore default action of an anchor
           if (key == 'click' && obj.prop("tagName").toLowerCase() == 'a') {
             e.preventDefault();
