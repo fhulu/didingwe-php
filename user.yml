@@ -417,7 +417,7 @@ modify:
     - last_name
     - cellphone
     - email: { valid: [not_registered] }
-    - role: { type: dropdown_collection }
+    - role: { type: dropdown}
   values:
     - collection.values: [user, $key, title, first_name, last_name, cellphone, email, role]
   actions:
