@@ -192,10 +192,11 @@ deactivate_email:
   to: $first_name $last_name <$email>
   subject: Your account has been deactivated
   message: >
-    Dear <b>$first_name $last_name</b> <br><br>
-    The administrator would like to inform you that your account has been deactivated on $program_name.<br><br>
-    Regards,<br><br>
-    <b>Customer Operations</b>
+            Dear <b>$first_name $last_name</b> <br><br>
+            The administrator would like to inform you that your account has been
+            deactivated on $program_name.<br><br>
+            Regards,<br><br>
+            <b>Customer Operations</b>
 
 delete:
   type: deactivate
@@ -417,7 +418,7 @@ modify:
     - last_name
     - cellphone
     - email: { valid: [not_registered] }
-    - role: { type: dropdown }
+    - role: { type: dropdown}
   values:
     - collection.values: [user, $key, title, first_name, last_name, cellphone, email, role]
   actions:
