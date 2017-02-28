@@ -320,7 +320,7 @@ list:
         - first_name
         - last_name
         - cellphone
-        - role
+        - role.name
         - status: /if(active,'active','inactive')
         - style: /if(active,'active','inactive')
         - actions: /if(active,'expand,slide,edit,deactivate','expand,slide,edit,activate')
