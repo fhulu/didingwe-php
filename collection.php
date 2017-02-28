@@ -111,7 +111,7 @@ class collection extends module
     return "($query order by version desc, id desc limit 1) `$alias`";
   }
 
-  function get_joins($table, $filters, &$where="", $conjuctor="and", $index=0, $new_group=false)
+  function get_joins($main_collection, $filters, &$where="", $conjuctor="and", $index=0, $new_group=false)
   {
     $joins = "";
     // create joins for each filter
@@ -119,7 +119,7 @@ class collection extends module
       ++$index;
       if (is_array($filter) && sizeof($filter) > 1) {
         $where .= " $conjuctor (";
-        $joins .= $this->get_joins($table, $filter, $where, "or", $index, true);
+        $joins .= $this->get_joins($main_collection, $filter, $where, "or", $index, true);
         $where .= ")";
         continue;
       }
@@ -150,9 +150,30 @@ class collection extends module
         $where .= " and m.$name $operator $value";
         continue;
       }
+      list($local_name, $foreign_key, $foreign_name) = explode('.', $name);
+      if (!isset($foreign_key)) {
+        $table = $this->get_table($main_collection);
+        $joins .= " join $table m$index on m$index.collection = m.collection
+                  and m$index.version <= m.version and m$index.identifier = m.identifier";
+      }
+      else {
+        if (!isset($foreign_name)) {
+          $collection = $local_name;
+          $name = $foreign_key;
+        }
+        else {
+          $collection = $foreign_key;
+          $name = $foreign_name;
+        }
+        if (substr($value,0,2) == "'$") $value = "'$" . last(explode('.', $value));
+        $table = $this->get_table($collection);
+        $main_table = $this->get_table($main_collection);
+        $joins .= " join $table m$index on m$index.collection = '$collection'
+                  and m$index.version <= m.version
+                  join $main_table m0$index on m0$index.collection = m.collection
+                  and m0$index.identifier = m.identifier and m0$index.attribute = '$local_name'";
+      }
 
-      $joins .= " join $table m$index on m$index.collection = m.collection
-                and m$index.version <= m.version and m$index.identifier=m.identifier";
       if (!$new_group)
         $where .= " $conjuctor ";
       else $new_group = false;
@@ -279,13 +300,14 @@ class collection extends module
       $sql .= " group by " . implode(",", $grouping);
   }
 
-  function wrap_query(&$sql, $args)
+  function wrap_query(&$sql, $args, $term)
   {
     $outer = [];
-    $wrapped = $this->lastColumn != '' || !empty($this->hidden_columns || !empty($this->combined_columns));
+    $wrapped = $this->lastColumn != '' || !empty($this->hidden_columns || !empty($this->combined_columns)) || $term != '';
     $combined = [];
     $combined_pos = -1;
     $index = -1;
+    $aliases = [];
     foreach($args as $arg) {
       list($alias,$name) = $this->page->get_sql_pair($arg);
       $this->extract_grouping($grouping,$sorting, $name,$alias);
@@ -303,19 +325,27 @@ class collection extends module
         list($name, $alias) = explode('.', $alias);
         if (!$alias) $alias = $name;
         $outer[] = "`".explode(' ',$alias)[0] . "`";
+        $aliases[] = $alias;
         continue;
       }
-      else
+      else {
         $outer[] = "$name `$alias`";
+        $aliases[] = $alias;
+      }
       $wrapped = true;
       if ($alias == $this->lastColumn) break;
     }
     if (!$wrapped) return false;
     if (!empty($combined)) {
-      $combined = "concat_ws(' ', " . join(',', $combined) . ")";
+      $combined = "concat_ws(' ', " . join(',', $combined) . ") `combined`";
       array_splice($outer, $combined_pos, 0, [$combined]);
+      $aliases[] = 'combined';
     }
     $sql = "select " . join(',', $outer) . " from ($sql) tmp";
+    if ($term != '') {
+      $aliases = array_map(function($v) use($term) { return "`$v` like '%$term%'"; }, $aliases);
+      $sql = "select * from ($sql) tmp_search where " . join(' or ', $aliases);
+    }
     return true;
   }
 
@@ -332,13 +362,11 @@ class collection extends module
     $where = " where m.collection = '$collection' and m.version = 0 ";
     $sorting = [];
     $table = $this->get_table($collection);
-    $selection = $this->get_selection($table, $args, $where, $sorting, $grouping, $term);
-    $joins = $this->get_joins($table, $filters, $where);
+    $selection = $this->get_selection($table, $args, $where, $sorting, $grouping);
+    $joins = $this->get_joins($collection, $filters, $where);
     $sql = "select $selection from $table m $joins $where";
-    if ($term != '')
-      $sql .= " and (m.value like '%$term%' or m.identifier like '%$term%') ";
     $sql .= " group by m.identifier";
-    $wrapped = $this->wrap_query($sql, $args);
+    $wrapped = $this->wrap_query($sql, $args, $term);
     $this->set_grouping($sql, $grouping);
     if (!$this->no_sorting)
       $this->set_sorting($sql, $sorting, !$wrapped, $args);
@@ -368,7 +396,17 @@ class collection extends module
 
   function data()
   {
-    $sql = $this->read(func_get_args(), true);
+    $args = func_get_args();
+    $size = sizeof($args);
+    $last = $args[$size-1];
+    $callback = null;
+    if (is_function($last)) {
+      array_pop($args);
+      $callback = $last;
+    }
+    $sql = $this->read($args, true);
+    if ($callback)
+      return $this->db->each($sql, $callback, ['fetch_type'=>MYSQLI_ASSOC]);
     if ($this->page->foreach)
       return $this->db->read($sql, MYSQLI_ASSOC);
     return ['data'=>$this->db->read($sql, MYSQLI_NUM), 'count'=>$this->db->row_count()];
@@ -383,7 +421,7 @@ class collection extends module
 
     $where = " where m.collection = '$collection' and m.version = 0 ";
     $table = $this->get_table($collection);
-    $joins = $this->get_joins($table, $filters, $where);
+    $joins = $this->get_joins($collection, $filters, $where);
     foreach($args as $arg) {
       list($name,$value) = $this->page->get_sql_pair($arg);
       if ($name == 'identifier') {
