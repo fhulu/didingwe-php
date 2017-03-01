@@ -1552,13 +1552,16 @@ class page
     $data = $this->reply(array_shift($args));
     if ($data === false) return false;
     $this->foreach = false;
+    $this->broken = false;
     foreach($data as $row) {
       $this->answer = array_merge($this->answer, $row);
       foreach($args as $arg) {
         if ($this->reply($arg) === false) return false;
       }
+      if ($this->broken) break;
       ++$i;
     }
+    $this->broken = false;
     return null;
   }
 
