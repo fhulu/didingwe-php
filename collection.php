@@ -150,11 +150,16 @@ class collection extends module
         $where .= " and m.$name $operator $value";
         continue;
       }
+      $table = $this->get_table($main_collection);
+      $joins .= " join $table m$index on m$index.collection = m.collection
+                and m$index.version <= m.version and m$index.identifier = m.identifier";
       list($local_name, $foreign_key, $foreign_name) = explode('.', $name);
+      if (!$new_group)
+        $where .= " $conjuctor ";
+      else $new_group = false;
+      $where .= " m$index.attribute = '$local_name' ";
       if (!isset($foreign_key)) {
-        $table = $this->get_table($main_collection);
-        $joins .= " join $table m$index on m$index.collection = m.collection
-                  and m$index.version <= m.version and m$index.identifier = m.identifier";
+        $where .= " and m$index.value $operator $value ";
       }
       else {
         if (!isset($foreign_name)) {
@@ -167,17 +172,12 @@ class collection extends module
         }
         if (substr($value,0,2) == "'$") $value = "'$" . last(explode('.', $value));
         $table = $this->get_table($collection);
-        $main_table = $this->get_table($main_collection);
-        $joins .= " join $table m$index on m$index.collection = '$collection'
-                  and m$index.version <= m.version
-                  join $main_table m0$index on m0$index.collection = m.collection
-                  and m0$index.identifier = m.identifier and m0$index.attribute = '$local_name'";
+        $joins .= " join $table m0$index on m0$index.collection = '$collection'
+                  and m0$index.version <= m.version and m0$index.identifier = m$index.value";
+                  
+        $where .= " and m0$index.attribute = '$name' and m0$index.value = $value";
       }
 
-      if (!$new_group)
-        $where .= " $conjuctor ";
-      else $new_group = false;
-      $where .= "m$index.attribute = '$name' and m$index.value $operator $value";
     }
     return $joins;
   }
