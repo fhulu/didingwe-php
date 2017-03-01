@@ -174,7 +174,7 @@ class collection extends module
         $table = $this->get_table($collection);
         $joins .= " join $table m0$index on m0$index.collection = '$collection'
                   and m0$index.version <= m.version and m0$index.identifier = m$index.value";
-                  
+
         $where .= " and m0$index.attribute = '$name' and m0$index.value = $value";
       }
 
@@ -400,7 +400,7 @@ class collection extends module
     $size = sizeof($args);
     $last = $args[$size-1];
     $callback = null;
-    if (is_function($last)) {
+    if (is_callable($last)) {
       array_pop($args);
       $callback = $last;
     }
