@@ -336,3 +336,8 @@ function implode_quoted($array, $separator=",", $quote="'")
 {
   return $quote . implode($separator, $array) . $quote;
 }
+
+function on_null($val, $default)
+{
+  return is_null($val)? $default: $val;
+}
