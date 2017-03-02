@@ -883,7 +883,9 @@ class page
   function sql_data($sql)
   {
     $sql = $this->translate_sql($sql);
-    return ['data'=>$this->db->page_through_indices($sql), 'count'=>$this->db->row_count()];
+    $offset = on_null($this->request['offset'], 0);
+    $size = on_null($this->request['size'], 0);
+    return ['data'=>$this->db->page($sql, $size, $offset, null, ['fetch'=>MYSQLI_NUM]), 'count'=>$this->db->row_count()];
   }
 
   function sql($sql)
