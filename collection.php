@@ -396,17 +396,7 @@ class collection extends module
 
   function data()
   {
-    $args = func_get_args();
-    $size = sizeof($args);
-    $last = $args[$size-1];
-    $callback = null;
-    if (is_callable($last)) {
-      array_pop($args);
-      $callback = $last;
-    }
-    $sql = $this->read($args, true);
-    if ($callback)
-      return $this->db->each($sql, $callback, ['fetch_type'=>MYSQLI_ASSOC]);
+    $sql = $this->read(func_get_args(), true);
     if ($this->page->foreach)
       return $this->db->read($sql, MYSQLI_ASSOC);
     return ['data'=>$this->db->read($sql, MYSQLI_NUM), 'count'=>$this->db->row_count()];
