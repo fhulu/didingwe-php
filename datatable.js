@@ -49,6 +49,7 @@
       })
       .on('addRow', function(e, data) {
         me.addRow(data);
+        me.adjustWidths();
       })
       me.body().scroll($.proxy(me._scroll,me));
       me.bindRowActions()
@@ -140,8 +141,7 @@
       for(var i in data.data) {
         this.addRow(data.data[i]);
       }
-      this.adjustWidths(this.body().find('tr:first-child'))
-      this.adjustTitleWidths();
+      this.adjustWidths();
     },
 
 
@@ -311,6 +311,7 @@
         th.toggle(visible);
       };
       this.spanColumns(head.find('.header th'));
+      this.updateWidths(head.find('.titles'), this.widths);
     },
 
     spanColumns: function(td)
@@ -610,8 +611,9 @@
     },
 
 
-    updateWidths: function(row, widths)
+    updateWidths: function(row)
     {
+      var widths = this.widths;
       row.children().each(function(i) {
         var width = $(this).outerWidth(true);
         if (i === widths.length)
@@ -621,24 +623,20 @@
       })
     },
 
-    getWidths: function()
+    adjustWidths: function()
     {
-      var widths = [];
-      this.updateWidths(this.head().find('.titles'),widths);
-      var self = this;
-      this.body().children('tr').each(function() {
-        if (!$(this).hasClass('actions'))
-          self.updateWidths($(this), widths);
-      });
-      return widths;
-    },
+      var first_row = this.body().find('tr:first-child');
+      this.updateWidths(first_row, this.widths);
+      var first_tds = first_row.children();
+      var title_tds = this.head().find('.titles').children();
 
-    adjustWidths: function(row)
-    {
-      var widths = this.getWidths();
-      row.children().each(function(i) {
-        $(this).css('width', widths[i]+'px');
-      });
+      var sum = this.widths.reduce(function(a,b) { return a + b});
+      console.log("width sum", sum);
+      this.widths.forEach(function(v,i) {
+        var width = (v/sum)+'%';
+        title_tds.eq(i).width(width);
+        first_tds.eq(i).width(width);
+      })
     },
 
     createEditor: function(template, fields, type, cell)
