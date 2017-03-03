@@ -463,8 +463,10 @@ class page
   {
     $this->replace_vars($fields);
     walk_recursive_down($fields, function($value, $key, &$parent) {
-      if (!is_assoc($parent))
+      if (!is_assoc($parent)) {
+        if (is_string($value) && strpos($value, '/') !== false) return;
         list($type, $value) = assoc_element($value);
+      }
       else
         $type = $key;
 
@@ -554,6 +556,7 @@ class page
     $default = null;
     foreach($fields as &$value) {
       list($key, $field) = assoc_element($value);
+      if (strpos($key, '/') !== false) continue;
       if (page::not_mergeable($key)) continue;
       if ($key == 'type') {
         if (is_string($field) && $field[0] == '$') $field = $parent[substr($field,1)];
