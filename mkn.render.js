@@ -709,8 +709,10 @@ mkn.render = function(options)
             e.preventDefault();
             if (field.url === undefined) field.url = obj.attr('href');
           }
-          if ($.isPlainObject(value))
-            accept(e, obj, value);
+          if ($.isPlainObject(value)) {
+            var params = Array.prototype.slice.call(arguments, 1);
+            accept(e, obj, $.extend({}, value, {params: params}));
+          }
           else if ('didi-model' in field && 'on_'+key in field['didi-model']) {
             var handler = me.model["on_"+key+"_"+ id];
             handler.apply(obj, arguments);
@@ -967,8 +969,9 @@ mkn.render = function(options)
         case 'close_dialog': mkn.closeDialog(obj); break;
         case 'redirect': redirect(field); break;
         case 'post':
-          var url = field.url? field.url: field.path
-          params = serverParams('action', url, $.extend({key: field.key},params[0]));
+          var url = field.url? field.url: field.path;
+          params = serverParams('action', url, $.extend({key: field.key}, params[0], field.params[0]));
+          if ($.isArray(field.params)) params = $.extend({}, params, field.params[0]);
           var selector = field.selector;
           if (selector !== undefined) {
             selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+field.page_id+"$2");
