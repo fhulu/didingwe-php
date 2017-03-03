@@ -692,9 +692,9 @@ mkn.render = function(options)
       var event = key.substr(3);
       if (!(event in events)) events[event] = [];
       events[event].push(value);
+      if (!obj.hasClass('didi-listener')) obj.addClass('didi-listener')
     });
     if ($.isEmptyObject(events)) return;
-    obj.addClass('didi-listener')
     $.each(events, function(key, values) {
       $.each(values, function(i, value) {
         if ($.isPlainObject(value) && !value.path) value.path = field.path + '/on_' + key;
