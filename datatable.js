@@ -311,7 +311,8 @@
         th.toggle(visible);
       };
       this.spanColumns(head.find('.header th'));
-      this.updateWidths(head.find('.titles'), this.widths);
+      this.initWidths();
+      this.updateWidths(head.find('.titles').children());
     },
 
     spanColumns: function(td)
@@ -610,32 +611,49 @@
       return (tr.innerHeight()*0.99).toString()+'px';
     },
 
+    initWidths: function()
+    {
+      var ths = this.head().find('.titles').children();
+      var fields = this.options.fields;
+      var widths = this.widths;
+      var col = 0;
+      for (var i in fields) {
+        var field = fields[i];
+        if (!mkn.visible(field)) continue;
+        if (field.width !== undefined)
+          ths.eq(col).css('width', field.width);
+        widths.push(0);
+        ++col;
+      };
+    },
 
-    updateWidths: function(row)
+    updateWidths: function(cells)
     {
       var widths = this.widths;
-      row.children().each(function(i) {
-        var width = $(this).outerWidth(true);
+      cells.each(function(i) {
+        var width = $(this).width();
         if (i === widths.length)
           widths.push(width);
         else if (width > widths[i])
           widths[i] = width;
       })
-    },
+      },
 
     adjustWidths: function()
     {
-      var first_row = this.body().find('tr:first-child');
-      this.updateWidths(first_row, this.widths);
-      var first_tds = first_row.children();
-      var title_tds = this.head().find('.titles').children();
+      var ths = this.head().find('.titles').children();
+      var tds = this.body().find('tr:first-child').children();
+      this.updateWidths(tds);
 
       var sum = this.widths.reduce(function(a,b) { return a + b});
-      console.log("width sum", sum);
       this.widths.forEach(function(v,i) {
-        var width = (v/sum)+'%';
-        title_tds.eq(i).width(width);
-        first_tds.eq(i).width(width);
+        var th = ths.eq(i);
+        var width = ((v/sum)*100) + '%';
+        if (th.exists()) {
+          th.css('width', width);
+          width = th.get(0).style.width
+        }
+        tds.eq(i).css('width', width);
       })
     },
 
