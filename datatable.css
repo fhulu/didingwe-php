@@ -101,6 +101,10 @@ table.data tr [action]
   height: 100%;
 }
 
+table.data td.expandable
+{
+  white-space: nowrap;
+}
 
 table.data td.expandable [action]
 {
@@ -136,11 +140,6 @@ table.data td>input
 {
   width: 100%;
   height: 100%;
-}
-
-table.data tr.actions [action]
-{
-  float: left;
 }
 
 table.data>tfoot tr
