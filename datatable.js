@@ -311,7 +311,6 @@
         th.toggle(visible);
       };
       this.spanColumns(head.find('.header th'));
-      this.initWidths();
       this.updateWidths(head.find('.titles').children());
     },
 
@@ -611,18 +610,27 @@
       return (tr.innerHeight()*0.99).toString()+'px';
     },
 
-    initWidths: function()
+    initWidths: function(ths,tds)
     {
-      var ths = this.head().find('.titles').children();
       var fields = this.options.fields;
       var widths = this.widths;
       var col = 0;
       for (var i in fields) {
         var field = fields[i];
         if (!mkn.visible(field)) continue;
-        if (field.width !== undefined)
-          ths.eq(col).css('width', field.width);
-        widths.push(0);
+        var th = ths.eq(col);
+        var td = tds.eq(col);
+        if (field.width !== undefined) {
+          if (th.exists()) {
+            th.css('width', field.width);
+            td.css('width', th.get(0).style.width);
+          }
+          else td.css('width', field.width);
+        }
+        else {
+          th.css('width', 'auto');
+          td.css('width', 'auto')
+        }
         ++col;
       };
     },
@@ -637,14 +645,14 @@
         else if (width > widths[i])
           widths[i] = width;
       })
-      },
+    },
 
     adjustWidths: function()
     {
       var ths = this.head().find('.titles').children();
       var tds = this.body().find('tr:first-child').children();
+      this.initWidths(ths,tds);
       this.updateWidths(tds);
-
       var sum = this.widths.reduce(function(a,b) { return a + b});
       this.widths.forEach(function(v,i) {
         var th = ths.eq(i);
