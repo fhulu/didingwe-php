@@ -367,7 +367,7 @@
       for (var i in fields) {
         var field = fields[i];
         var cell = me.spanData(field, row, col);
-        if (cell === null) cell = '';
+        if (cell === null || cell === undefined) cell = '';
         col += field.span;
         if (key === undefined && (field.id === 'key' || field.key)) {
           key = cell;
