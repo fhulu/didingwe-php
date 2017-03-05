@@ -19,6 +19,7 @@ class collection extends module
     $this->combined_columns = [];
     $this->star_columns = [];
     $this->sort_columns = [];
+    $this->dynamic_sorting = true;
   }
 
   function read_tables()
@@ -279,6 +280,7 @@ class collection extends module
   {
     if (empty($sorting)) {
       $request = $this->page->request;
+      if (!$this->dynamic_sorting) return;
       foreach($this->sort_columns as $field) {
         $index = $request[$field];
         if (!isset($index)) continue;
@@ -378,7 +380,9 @@ class collection extends module
   {
     $a = func_get_args();
     if (!is_numeric($a[0])) array_splice($a, 0, 0, 1);
+    $this->dynamic_sorting = false;
     $sql = $this->read($a);
+    $this->dynamic_sorting = true;
     $result = $this->db->read($sql, MYSQLI_ASSOC);
     if ($result) $result = $result[0];
     return $result;
