@@ -74,4 +74,4 @@ document_link:
   type: link
   action: redirect
   target: _blank
-  url: /?action=action&path=document/view&key=$id
+  url: /?action=action&path=document/view&key=$value

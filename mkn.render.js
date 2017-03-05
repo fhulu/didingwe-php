@@ -934,6 +934,7 @@ mkn.render = function(options)
   var redirect = function(field)
   {
     if (!$.isPlainObject(field)) field = { url: field };
+    mkn.replaceVars(field,field);
     var url = field.url;
     if ((!url || field.query) && field.target === '_blank') {
       url = '/?action=action';
