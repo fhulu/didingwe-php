@@ -7,6 +7,7 @@ datatable:
   head: { class: [didi] }
   title: { class: [didi] }
   body: { class: [didi,table-body] }
+  min_row_height: 20
   row_actions: []
   row_styles: {}
   row:

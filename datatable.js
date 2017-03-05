@@ -335,8 +335,8 @@
       var opts = me.options;
       var max_height  = parseInt(body.css('max-height'));
       if (opts.page_size == 0 || max_height > 0) {
-        var row_height = $('<tr><td>Loading...</td></tr>').appendTo(body).outerHeight(true);
-        if (row_height < 1) row_height = 20;
+        var row_height = parseInt($('<tr><td>Loading...</td></tr>').appendTo(body).height());
+        if (row_height < 1) row_height = opts.min_row_height;
         me.params.size = Math.ceil(max_height/row_height)+1;
       }
       body.addClass(opts.body.class.join(' '));
