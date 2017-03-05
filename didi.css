@@ -677,6 +677,6 @@
 .no-backcolor{background-color:inherit}
 
 .scroll-table { table-layout: fixed}
-.scroll-table>thead,.scroll-table>tbody { float:left; width: 100% }
+.scroll-table>thead,.scroll-table>tbody { float:left; width: 100%; display: table}
 .scroll-table>tbody { display: block; width: 100%;overflow-y: auto }
 .scroll-table>thead>tr,.scroll-table>tbody>tr { width: 100%; display: table-row-group}
