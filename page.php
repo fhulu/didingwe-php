@@ -888,6 +888,9 @@ class page
     $sql = $this->translate_sql($sql);
     $offset = on_null($this->request['offset'], 0);
     $size = on_null($this->request['size'], 0);
+    $sort = $this->request['sort'];
+    if (isset($sort))
+      $sql .= "order by $sort " . $this->request['sort_order'];
     return ['data'=>$this->db->page($sql, $size, $offset, null, ['fetch'=>MYSQLI_NUM]), 'count'=>$this->db->row_count()];
   }
 
