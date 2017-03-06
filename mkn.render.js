@@ -711,7 +711,9 @@ mkn.render = function(options)
           }
           if ($.isPlainObject(value)) {
             var params = Array.prototype.slice.call(arguments, 1);
-            accept(e, obj, $.extend({}, value, {params: params}));
+            value.params = mkn.merge(value.params, params);
+            mkn.replaceVars(value, value.params);
+            accept(e, obj, value);
           }
           else if ('didi-model' in field && 'on_'+key in field['didi-model']) {
             var handler = me.model["on_"+key+"_"+ id];
