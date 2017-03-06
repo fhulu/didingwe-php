@@ -61,7 +61,6 @@ response:
     - collection.update:
         - payment
         - $REFERENCE
-        - partner
         - status
         - status_reason: $RESULT_DESC
         - reference1: $TRANSACTION_ID
