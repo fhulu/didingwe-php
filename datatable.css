@@ -86,13 +86,7 @@ table.data tr.sort
 
 table.data>tbody>tr.expanded>td
 {
-  padding: 10px;
-  width: 100%;
-}
-
-table.data tr.expanded>td>*
-{
-  width: 100%;
+  padding: 10 16;
 }
 
 table.data tr [action]
