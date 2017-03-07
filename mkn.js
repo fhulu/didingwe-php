@@ -228,14 +228,15 @@ var mkn = new function() {
   this.replaceVars = function(source, dest, flags)
   {
 
+
     if (!flags) flags = {};
     var args = arguments;
     var replaced = false;
     var me = this;
-    var replaceOne = function(key, val) {
-      if (!me.isAtomicValue(val)) return;
+    var replaceOne = function(val) {
+      if (!me.isAtomicValue(val)) return val;
       var matches = getMatches(val, /\$(\w+)/g);
-      if (!matches) return;
+      if (!matches) return val;
       matches.forEach(function(match) {
         var index = flags.sourceFirst? 0: 1;
         var arg = args[index++];
@@ -261,7 +262,10 @@ var mkn = new function() {
       return val;
     }
 
-    do {
+    if ($.isArray(dest))
+      return;
+
+   do {
       replaced = false;
       for (var key in dest) {
         if ($.isArray(dest.constants) && dest.constants.indexOf(key) >= 0) continue;
@@ -271,7 +275,7 @@ var mkn = new function() {
         else if ($.isPlainObject(val) && flags.recurse)
           this.replaceVars($.extend({}, source, dest), val, flags);
         else
-          dest[key] = replaceOne(key, val)
+          dest[key] = replaceOne(val)
       }
     } while (replaced && flags.recurse)
   }
