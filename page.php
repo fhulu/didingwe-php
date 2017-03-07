@@ -30,7 +30,7 @@ class page
   static $fields_stack = array();
   static $post_items = array('audit', 'call', 'clear_session', 'clear_values', 'db_name', 'error', 'post',
     'q', 'valid', 'validate', 'write_session');
-  static $query_items = array('call','read_session', 'read_values', 'ref_list', 'sql', 'sql_values');
+  static $query_items = array('call','read_session', 'read_values', 'ref_list', 'sql', 'sql_values', 'refresh');
   static $atomic_items = array('action', 'attr', 'css', 'html', 'script', 'sql',
     'style', 'template', 'valid');
   static $user_roles = array('public');
