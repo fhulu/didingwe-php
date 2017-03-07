@@ -293,6 +293,7 @@
         var visible = mkn.visible(field);
         if (id == 'key' && !visible  || id === 'attr' || id == 'style') continue;
         var th = $('<th></th>').addClass(classes).appendTo(tr);
+        if (field.class) th.addClass(field.class.join(' '))
         if (id === 'actions') continue;
         if ($.isArray(field.name)) field.name = field.name[field.name.length-1];
         th.html(field.name || toTitleCase(id));
