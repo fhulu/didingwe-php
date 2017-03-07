@@ -46,5 +46,4 @@ isearch:
     attr: { id: "", name: "", value: $value, chosen: $chosen }
   search_fields: name asc
   search_collection: $id
-  post:
-    - collection.search: [$search_collection,"",identifier,$search_fields]
+  post: []
