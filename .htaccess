@@ -1,4 +1,4 @@
-Require all granted
+php_value date.timezone 'Africa/Johannesburg'
 Options +Indexes
 RewriteEngine on
 RewriteRule ^index\.(php|html?)$ index.php [L]
