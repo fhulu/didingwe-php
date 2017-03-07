@@ -16,7 +16,7 @@ $.widget( "custom.isearch", {
     me.searcher = el.find('.isearch-searcher').on('keyup input cut paste', function() {
       el.val("")
       me.params.offset = 0;
-      me.drop.show();
+      me.drop.width(el.width()).show();
       me._load();
     });
 
@@ -72,7 +72,7 @@ $.widget( "custom.isearch", {
     var opts = me.options;
     me.params.term = me.searcher.val();
     el.val("");
-    me.drop.show();
+    me.drop.width(el.width()).show();
     var start = new Date().getTime();
     $.json('/', {data: me.params}, function(result) {
       var end = new Date().getTime();
