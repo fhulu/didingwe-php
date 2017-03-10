@@ -476,7 +476,8 @@ profile:
     - email: { valid: [not_in_use]}
     - roles: { attr: disabled }
   values:
-    - collection.values: [session, $sid, user.title, user.first_name, user.last_name, user.cellphone, user.email, roles: user.role]
+    - collection.values: [session, $sid, user.title, user.first_name, user.last_name, user.cellphone, user.email, role: user.role]
+    - collection.values: [role,$role,roles: name]
   actions:
     - profile_update: { validate: delta }
     - change_password: { action: dialog }
