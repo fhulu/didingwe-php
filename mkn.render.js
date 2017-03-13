@@ -775,7 +775,7 @@ mkn.render = function(options)
     else $.each(attr, function(key, val) {
       if (field.array) {
         var numeric = getMatches(val, /\$(\d+)/g);
-        if (numeric.length) val = field.array[numeric[0]];
+        if (numeric.length) val = field.array[numeric[0]-1];
       }
       var matches = getMatches(val, /\$(\w+)/g)
       for (var j in matches) {
