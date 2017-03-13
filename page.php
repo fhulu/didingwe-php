@@ -864,7 +864,7 @@ class page
     if ($audit_first)
       $this->audit($invoker,[]);
     $result = $this->reply($invoker);
-    if (!$audit_first && !page::has_errors() && array_key_exists('audit', $invoker))
+    if (!$this->aborted && !$audit_first && !page::has_errors() && array_key_exists('audit', $invoker))
       $this->audit($invoker);
     return $result;
   }
