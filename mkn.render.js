@@ -1113,6 +1113,7 @@ mkn.render = function(options)
       else for (var i in result) {
         parent.setChildren(result[i], true);
       }
+      me.updateWatchers();
       respond(result);
     });
   }
