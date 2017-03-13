@@ -492,6 +492,11 @@ class collection extends module
     return $this->db->exists($sql);
   }
 
+  function unique()
+  {
+    return !call_user_func_array([$this, "exists"], func_get_args());
+  }
+
   function scroll()
   {
     $request = $this->page->request;
