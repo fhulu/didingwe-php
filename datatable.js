@@ -695,7 +695,7 @@
           return;
         }
         td = $(cell);
-        $('<input type=text></input>').css('width','10px').attr('field_id', field.id).appendTo(td);
+        $('<input type=text></input>').css('width','100%').attr('field_id', field.id).appendTo(td);
         td.appendTo(editor);
       });
 
