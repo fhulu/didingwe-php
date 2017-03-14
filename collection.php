@@ -296,11 +296,10 @@ class collection extends module
     $sql .= " order by $sorting";
   }
 
-  function set_grouping(&$sql, $grouping, $term)
+  function set_grouping(&$sql, $grouping)
   {
-    $this->filter_term($sql, $grouping, $term);
-    $sql .= " group by " . implode(",", $grouping);
-    return true;
+    if (!empty($grouping))
+      $sql .= " group by " . implode(",", $grouping);
   }
 
   function wrap_query(&$sql, $args, $term)
@@ -345,16 +344,11 @@ class collection extends module
       $aliases[] = 'combined';
     }
     $sql = "select " . join(',', $outer) . " from ($sql) tmp";
-    $this->filter_term($sql, $aliases, $terms);
+    if ($term != '') {
+      $aliases = array_map(function($v) use($term) { return "`$v` like '%$term%'"; }, $aliases);
+      $sql = "select * from ($sql) tmp_search where " . join(' or ', $aliases);
+    }
     return true;
-  }
-
-  function filter_term(&$sql, $args, $term)
-  {
-    if (!$term) return;
-    $args = array_map(function($v) use($term) {
-        return "`$v` like '%$term%'"; }, $args);
-    $sql = "select * from ($sql) tmp_search where " . join(' or ', $args);
   }
 
   function read($args, $use_custom_filters=false, $term="")
@@ -374,10 +368,8 @@ class collection extends module
     $joins = $this->get_joins($collection, $filters, $where);
     $sql = "select $selection from $table m $joins $where";
     $sql .= " group by m.identifier";
-    if (!empty($grouping))
-      $wrapped = $this->set_grouping($sql, $grouping, $term);
-    else
-      $wrapped = $this->wrap_query($sql, $args, $term);
+    $wrapped = $this->wrap_query($sql, $args, $term);
+    $this->set_grouping($sql, $grouping);
     if (!$this->no_sorting)
       $this->set_sorting($sql, $sorting, !$wrapped, $args);
     $this->set_limits($sql, $offset, $size);
