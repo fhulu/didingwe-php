@@ -220,18 +220,21 @@ class collection extends module
     array_splice($args, $star_index, 1, $expanded);
   }
 
-  function add_custom_filters(&$filters, $args)
+  function add_custom_filters(&$sql, $args)
   {
     $index = -1;
     $request = $this->page->request;
-
+    $filters = [];
     foreach($args as $arg) {
+      list($name,$alias) = $this->get_name_alias($arg);
+      if (in_array($alias, $this->hidden_columns, true)) continue;
       ++$index;
       $term = $request["f$index"];
       if (!isset($term)) continue;
-      list($name,$alias) = $this->get_name_alias($arg);
-      $filters[] = [$alias=>"/like '%$term%'"];
+      $filters[] = "$alias like '%$term%'";
     }
+    if (!empty($filters))
+      $sql = "select * from ($sql) tmp_custom_filter where " . join(" and ", $filters);
   }
 
   function extract_header(&$args)
@@ -302,7 +305,7 @@ class collection extends module
       $sql .= " group by " . implode(",", $grouping);
   }
 
-  function wrap_query(&$sql, $args, $term)
+  function wrap_query(&$sql, $args, $term, $use_custom_filters)
   {
     $outer = [];
     $wrapped = $this->lastColumn != '' || !empty($this->hidden_columns || !empty($this->combined_columns)) || $term != '';
@@ -341,12 +344,15 @@ class collection extends module
     if (!empty($combined)) {
       $combined = "concat_ws(' ', " . join(',', $combined) . ") `combined`";
       array_splice($outer, $combined_pos, 0, [$combined]);
-      $aliases[] = 'combined';
+      array_splice($aliases, $combined_pos, 0, 'combined');
     }
     $sql = "select " . join(',', $outer) . " from ($sql) tmp";
     if ($term != '') {
       $aliases = array_map(function($v) use($term) { return "`$v` like '%$term%'"; }, $aliases);
       $sql = "select * from ($sql) tmp_search where " . join(' or ', $aliases);
+    }
+    else if ($use_custom_filters) {
+      $this->add_custom_filters($sql, $aliases);
     }
     return true;
   }
@@ -359,8 +365,6 @@ class collection extends module
     if (!empty($this->combined_columns))
       $this->expand_star($collection, $this->combined_columns, $args);
     $this->expand_star($collection, $args);
-    if ($use_custom_filters)
-      $this->add_custom_filters($filters, $args);
     $where = " where m.collection = '$collection' and m.version = 0 ";
     $sorting = [];
     $table = $this->get_table($collection);
@@ -368,7 +372,7 @@ class collection extends module
     $joins = $this->get_joins($collection, $filters, $where);
     $sql = "select $selection from $table m $joins $where";
     $sql .= " group by m.identifier";
-    $wrapped = $this->wrap_query($sql, $args, $term);
+    $wrapped = $this->wrap_query($sql, $args, $term, $use_custom_filters);
     $this->set_grouping($sql, $grouping);
     if (!$this->no_sorting)
       $this->set_sorting($sql, $sorting, !$wrapped, $args);
