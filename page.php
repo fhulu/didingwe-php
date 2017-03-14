@@ -858,6 +858,9 @@ class page
     if (!isset($this->context['id'])) $this->context['id'] = last($this->path);
     if (!isset($this->context['name'])) $this->context['name'] = $this->name($this->context);
     $this->merge_fields($this->fields);
+    $pre_validation = $invoker['pre_validation'];
+    if ($pre_validation && $this->reply($pre_validation) === false)
+      return false;
     $validate = at($invoker, 'validate');
     if ($validate != 'none' && !$this->validate($this->fields, $validate))
       return null;
