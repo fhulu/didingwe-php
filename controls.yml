@@ -635,7 +635,7 @@ plot:
 
 processing:
   classes: span
-  style: { display: none }
+  style: { display: none, z-index: 1000 }
 
 question_input:
   type: label_top

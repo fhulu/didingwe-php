@@ -76,7 +76,7 @@ $(function() {
 });
 </script>
 <body>
-<div class="didi processing modal font-large center-text" style="display: none">
+<div class="didi processing modal font-large center-text" style="display: none;z-index: 1000">
   <div class="didi light-grey center-text rounded-large shadow pad pad-small col s12 m6 l4 no-float centered">
     <i class="didi fa fa-spin fa-spinner font-large"></i>
     <p class="didi message"></p>
