@@ -525,9 +525,11 @@
         if (id == 'slide')
           actions = slide_actions;
       }
+      if (slide_actions.length < 2)
+        normal_actions.pop();
       if (normal_actions.length)
         opts.render.createItems(td, {}, undefined, normal_actions);
-      if (!slide_actions.length) return;
+      if (slide_actions.length < 2) return;
       var slider = $('<div class="slide">').toggle(false).appendTo(td);
       slider.data('actions', slide_actions);
     },
