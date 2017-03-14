@@ -656,16 +656,23 @@
       var tds = this.body().find('tr:first-child').children();
       this.initWidths(ths,tds);
       this.updateWidths(tds);
-      var sum = this.widths.reduce(function(a,b) { return a + b});
-      this.widths.forEach(function(v,i) {
-        var th = ths.eq(i);
+      var widths = this.widths;
+      var sum = widths.reduce(function(a,b) { return a + b});
+      var fields = this.options.fields;
+      var col = 0;
+      for (var i in fields) {
+        var field = fields[i];
+        if (!mkn.visible(field)) continue;
+        if (field.width !== undefined) return;
+        var th = ths.eq(col);
         var width = ((v/sum)*100) + '%';
         if (th.exists()) {
           th.css('width', width);
           width = th.get(0).style.width
         }
-        tds.eq(i).css('width', width);
-      })
+        tds.eq(col).css('width', width);
+        ++col;
+      }
     },
 
     createEditor: function(template, fields, type, cell)
