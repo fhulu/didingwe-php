@@ -665,7 +665,7 @@
         if (!mkn.visible(field)) continue;
         if (field.width !== undefined) return;
         var th = ths.eq(col);
-        var width = ((v/sum)*100) + '%';
+        var width = ((widths[col]/sum)*100) + '%';
         if (th.exists()) {
           th.css('width', width);
           width = th.get(0).style.width
