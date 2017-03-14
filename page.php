@@ -674,7 +674,8 @@ class page
     }
     else
       $values = $this->request;
-    $options = merge_options($this->context,$values);
+    $values = merge_options($values, $this->answer);
+    $options = merge_options($this->context,$values, $this->answer);
     $validators = $this->load_fields('validators');
     $fields = merge_options($this->merge_stack(page::$fields_stack), $this->page_fields, $this->fields);
     $this->validator = new validator($values, $fields, $validators);
