@@ -656,7 +656,8 @@
     adjustWidths: function()
     {
       var ths = this.head().find('.titles').children();
-      var tds = this.body().find('tr:first-child').children();
+      var tr1 = this.body().find('tr:first-child');
+      var tds = tr1.children();
       this.initWidths(ths,tds);
       this.updateWidths(tds);
       var widths = this.widths;
@@ -666,7 +667,7 @@
       for (var i in fields) {
         var field = fields[i];
         if (!mkn.visible(field)) continue;
-        if (field.width !== undefined) return;
+        if (field.width !== undefined) continue;;
         var th = ths.eq(col);
         var width = ((widths[col]/sum)*100) + '%';
         if (th.exists()) {
@@ -676,7 +677,14 @@
         tds.eq(col).css('width', width);
         ++col;
       }
+
+      tr1.siblings().each(function(i) {
+        $(this).children().each(function(i) {
+          $(this).css('width', tds.eq(i).get(0).style.width);
+        });
+      })
     },
+
 
     createEditor: function(template, fields, type, cell)
     {

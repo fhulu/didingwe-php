@@ -13,7 +13,7 @@ datatable:
   row:
     actions: []
     styles: {}
-    class: [didi,table-row,relative]
+    class: []
   cell:
     class: [didi]
   script: [/common/datatable.js]
