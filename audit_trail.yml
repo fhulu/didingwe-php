@@ -7,8 +7,7 @@ user:
   body: { max-height: 400 }
   sort: when
   sort_order: desc
-  flags:
-    - show_titles
+  flags: [show_titles,filter]
   report_title: User Audit Trail
   actions:
     - print
@@ -27,6 +26,7 @@ partner:
   type: user
   class: [widest,scroll-table]
   body: { max-height: 400 }
+  flags: [show_titles,filter]
   access: [admin]
   fields:
     - when: { width: 15%, push: merge }
@@ -43,6 +43,7 @@ partner:
 
 system:
   name: System Audit Trail
+  flags: [show_titles,filter]
   class: [widest,scroll-table]
   body: { max-height: 400 }
   type: partner
