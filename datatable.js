@@ -515,6 +515,7 @@
       var normal_actions = [];
       var slide_actions = [];
       var actions = normal_actions;
+      var slide_pos = -1;
       for (var i in all_actions) {
         var action = mkn.copy(all_actions[i]);
         var id = action.id;
@@ -522,11 +523,13 @@
         action.key = key;
         action = mkn.merge(action, opts[id]);
         actions.push(action);
-        if (id == 'slide')
+        if (id == 'slide') {
           actions = slide_actions;
+          slide_pos = i;
+        }
       }
-      if (slide_actions.length < 2)
-        normal_actions.pop();
+      if (slide_actions.length == 1)
+        normal_actions.splice(slide_pos,1);
       if (normal_actions.length)
         opts.render.createItems(td, {}, undefined, normal_actions);
       if (slide_actions.length < 2) return;
