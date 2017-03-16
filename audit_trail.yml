@@ -1,5 +1,5 @@
 include: [datatable]
-user:
+user_list:
   type: datatable
   access: auth
   name: My Audit Trail
@@ -21,13 +21,10 @@ user:
     - collection.data: [audit, [user], time, action, detail]
     - clear_values: [user]
 
-partner:
+partner_list:
   name: Organisation Audit Trail
-  type: user
-  class: [widest,scroll-table]
-  body: { max-height: 400 }
-  flags: [show_titles,filter]
-  access: [admin]
+  type: user_list
+  access: admin
   fields:
     - when: { width: 15%, push: merge }
     - first_name: { width: 10%, push: what }
@@ -37,19 +34,18 @@ partner:
     - detail: { width: 30%, push: merge }
   values:
     - _reset
+    - collection.sort_on: sort
     - collection.values: [session, $sid, partner]
     - collection.data: [audit, [partner], time, user.first_name, user.last_name, user.email, action, detail]
     - clear_values: [partner]
 
-system:
+system_list:
   name: System Audit Trail
-  flags: [show_titles,filter]
-  class: [widest,scroll-table]
-  body: { max-height: 400 }
-  type: partner
-  access: [admin]
+  type: partner_list
+  access: admin
   fields:
-    - organisation: { push: first_name, width: 12% }
+    - partner: { push: first_name, width: 12% }
   values:
     - _reset
+    - collection.sort_on: sort
     - collection.data: [audit, [], time, partner.name, user.first_name, user.last_name, user, action, detail]

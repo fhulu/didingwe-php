@@ -268,14 +268,14 @@ mukoni_logo:
 my_audit_trail:
   desc: My audit trail
   access: auth
-  url: /audit_trail/user
+  url: /audit_trail/user_list
 
 
 "no": { value: 0 }
 
 organisation_audit_trail:
-  access: [admin]
-  url: /audit_trail/partner
+  access: admin
+  url: /audit_trail/partner_list
 
 passport_document:
   desc: Certified copy of passport document
@@ -368,8 +368,8 @@ submit_page:
 support_email: Mukoni Support <support@mukoni.co.za>
 
 system_audit_trail:
-  url: /audit_trail/system
-  access: [developer]
+  url: /audit_trail/system_list
+  access: admin
 
 title:
   desc: A descriptive or distinctive appellation, especially one belonging to a person by right of rank, office, attainment
