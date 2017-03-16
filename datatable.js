@@ -277,6 +277,11 @@
       });
     },
 
+    visible: function(field)
+    {
+      return mkn.visible(field) && field.id !== 'attr' && field.id !== 'style';
+    },
+
     showTitles: function()
     {
 
@@ -290,8 +295,7 @@
       for (var i in fields) {
         var field = fields[i];
         var id = field.id;
-        var visible = mkn.visible(field);
-        if (id == 'key' && !visible  || id === 'attr' || id == 'style') continue;
+        if (!this.visible(field)) continue;
         var th = $('<th></th>').addClass(classes).appendTo(tr);
         if (field.class) th.addClass(field.class.join(' '));
         if (id === 'actions') continue;
@@ -309,7 +313,6 @@
         ++j;
         if (self.hasFlag('sortable'))
           self.bindSort(th, field);
-        th.toggle(visible);
       };
       this.spanColumns(head.find('.header th'));
       this.updateWidths(head.find('.titles').children());
@@ -623,7 +626,7 @@
       var col = 0;
       for (var i in fields) {
         var field = fields[i];
-        if (!mkn.visible(field)) continue;
+        if (!this.visible(field)) continue;
         var th = ths.eq(col);
         var td = tds.eq(col);
         if (field.width !== undefined) {
@@ -663,10 +666,11 @@
       var widths = this.widths;
       var sum = widths.reduce(function(a,b) { return a + b});
       var fields = this.options.fields;
-      var col = 0;
+      var col = -1;
       for (var i in fields) {
         var field = fields[i];
-        if (!mkn.visible(field)) continue;
+        if (!this.visible(field)) continue;
+        ++col;
         if (field.width !== undefined) continue;;
         var th = ths.eq(col);
         var width = ((widths[col]/sum)*100) + '%';
@@ -675,7 +679,6 @@
           width = th.get(0).style.width
         }
         tds.eq(col).css('width', width);
-        ++col;
       }
 
       tr1.siblings().each(function(i) {
@@ -698,8 +701,8 @@
       var td;
       template.children().each(function(i) {
         var field = fields[i];
-        if (!mkn.visible(field)) return;
-        if (field.id === 'style' || field.id === 'actions') {
+        if (!this.visible(field)) return;
+        if (field.id === 'actions') {
           var colspan = td.attr('colspan');
           if (!colspan) colspan = 1;
           td.attr('colspan', parseInt(colspan)+1);
