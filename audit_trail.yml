@@ -27,8 +27,6 @@ partner_list:
   access: admin
   fields:
     - when: { width: 15%, push: merge }
-    - first_name: { width: 10%, push: what }
-    - last_name: { width: 10%, push: what }
     - email: { width: 18%, push: what}
     - what: { width: 15%, push: merge }
     - detail: { width: 30%, push: merge }
@@ -36,7 +34,7 @@ partner_list:
     - _reset
     - collection.sort_on: sort
     - collection.values: [session, $sid, partner]
-    - collection.data: [audit, [partner], time, user.first_name, user.last_name, user.email, action, detail]
+    - collection.data: [audit, [partner], time, user.email, action, detail]
     - clear_values: [partner]
 
 system_list:
@@ -44,8 +42,8 @@ system_list:
   type: partner_list
   access: admin
   fields:
-    - partner: { push: first_name, width: 12% }
+    - organisation: { push: email, width: 12% }
   values:
     - _reset
     - collection.sort_on: sort
-    - collection.data: [audit, [], time, partner.name, user.first_name, user.last_name, user, action, detail]
+    - collection.data: [audit, [], time, partner.name, user.email, action, detail]
