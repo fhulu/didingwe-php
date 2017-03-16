@@ -95,11 +95,6 @@ table.data tr [action]
   height: 100%;
 }
 
-table.data td.expandable
-{
-  white-space: nowrap;
-}
-
 table.data td.expandable [action]
 {
   height: 100%;
