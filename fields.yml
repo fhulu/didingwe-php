@@ -240,6 +240,7 @@ manage_users:
 
 manage_all_users:
   access: [admin]
+  name: System Users
   url: /user/list_all
 
 mobile_number:

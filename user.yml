@@ -292,10 +292,9 @@ list:
   name: Users
   sort: create_time
   sort_order: desc
-  class: [widest,scroll-table]
+  class: [scroll-table]
   body: { max-height: 400 }
-  flags:
-    - show_titles
+  on_addUser: ~this.trigger('refresh')
   report_title: User Report
   row_actions:
     - activate
@@ -303,14 +302,15 @@ list:
     - edit: { action: dialog }
   fields:
     - key: { show: false}
-    - email: { width: 26%}
-    - first_name: { width: 16% }
-    - last_name: { width: 16% }
-    - cellphone: { width: 12% }
-    - role: { width: 18% }
-    - status: { width: 8% }
+    - time_added: { width: 21%, class: [truncate-word]}
+    - email: { width: 18%, class: [truncate-word]}
+    - first_name: { width: 13%, class: [truncate-word] }
+    - last_name: { width: 13%, class: [truncate-word] }
+    - cellphone: { width: 16%, class: [truncate-word] }
+    - role: { width: 10%, class: [truncate-word]  }
+    - status: { width: 7% }
     - style
-    - actions
+    - actions: { width: 2%}
   expand:
     pages:
       - /user/history
@@ -320,29 +320,7 @@ list:
         - user
         - partner: $partner
         - identifier
-        - email
-        - first_name
-        - last_name
-        - cellphone
-        - role.name
-        - status: /if(active,'active','inactive')
-        - style: /if(active,'active','inactive')
-        - actions: /if(active,'expand,slide,edit,deactivate','expand,slide,edit,activate')
-        - active
-
-list_all:
-  name: System Users
-  access: [admin]
-  type: list
-  fields:
-    - organisation: { push: email }
-  values:
-    - _reset
-    - collection.data:
-        - user
-        - []
-        - identifier
-        - partner.name
+        - time_added
         - email
         - first_name
         - last_name
@@ -351,6 +329,32 @@ list_all:
         - status: /if(active,'active','inactive')
         - style: /if(active,'active','inactive')
         - actions: /if(active,'expand,slide,edit,deactivate','expand,slide,edit,activate')
+        - active
+
+list_all:
+  name: System Users
+  access: [admin,filter]
+  type: list
+  fields:
+    - pop: group
+    - partner: { push: email, width: 15%,class: [truncate-word] }
+  values:
+    - _reset
+    - collection.sort_on: [sort]
+    - collection.data:
+        - user
+        - []
+        - identifier
+        - time_added
+        - partner.name
+        - email
+        - first_name
+        - last_name
+        - cellphone
+        - role: role.name
+        - status: /if(active,'active','inactive')
+        - style: /if(active,'active','inactive')
+        - actions: /if(active,'slide,edit,deactivate','slide,edit,activate')
         - active
 
 
@@ -515,8 +519,8 @@ update_password:
   navigate:
     - update_password
   post:
-    - read_session: email
-    - collection.update: [user, [email], password: /password('$password'), attempts: 0]
+    - collection.values: [session, $sid, user]
+    - collection.update: [user, $user, password: /password('$password'), attempts: 0]
     - clear_values
     - close_dialog: Password has been changed successfully
   audit: $email
