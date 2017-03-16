@@ -436,7 +436,7 @@
     {
       td.addClass(this.cell.class);
       if (field.html === undefined) {
-        if (value !== undefined && value !== null) td.html(value);
+        if (value !== undefined && value !== null) td.html(value).attr('title', value);
         return;
       }
       field = mkn.copy(field);
