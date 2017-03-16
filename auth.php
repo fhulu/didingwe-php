@@ -40,15 +40,16 @@ class auth {
     return isset($session)? $session['partner_type']: null;
   }
 
+  private function verify($object_rights, $user_rights)
+  {
+    if ($object_rights == '') return true;
+    if (!is_array($object_rights)) $object_rights = explode (',', $object_rights);
+    return sizeof($object_rights) == 0 || sizeof(array_intersect($user_rights, $object_rights)) > 0;
+  }
+
   function authorized($roles, $partner_types)
   {
-
-    if (!is_array($roles)) $roles = explode (',', $roles);
-    if (sizeof($roles) > 0 && sizeof(array_intersect($this->get_roles(), $roles)) == 0) return false;
-
-    if (empty($partner_types)) return true;
-    if (!is_array($partner_types)) $partner_types = explode (',', $partner_types);
-    return in_array($this->get_partner_type(), $partner_types, true);
+    return $this->verify($roles, $this->get_roles()) && $this->verify($partner_types, [$this->get_partner_type()]);
   }
 
   function unauthorized($role, $partner_types)

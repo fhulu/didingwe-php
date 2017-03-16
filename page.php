@@ -191,7 +191,8 @@ class page
     if (!is_array($field)) return true;
     $access = $field['access'];
     $partner_access = $field['partner_access'];
-    if (!(isset($access) || isset($partner_access)) || $this->get_module('auth')->authorized($access, $partner_access)) return true;
+    $restricted = isset($access) || isset($partner_access);
+    if (!$restricted || $this->get_module('auth')->authorized($access, $partner_access)) return true;
     if (!$throw) return false;
     throw new user_exception("Unauthorized access to PATH ".implode('/', $this->path) );
   }
