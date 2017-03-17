@@ -52,6 +52,7 @@ activate_password:
     - read_session: token
     - collection.values: [token, $token, user]
     - collection.update: [user, $user, password: /password('$password'), attempts: 0, active: 1]
+    - collection.update: [token, $token, active: 0]
     - clear_values
     - alert: Your account has been activated successfully
   audit:
@@ -225,7 +226,7 @@ create:
         - detail: $title $first_name $last_name $cellphone $email
     - read_config: [self_activation_validity,program_name]
     - let: { url: /user/activate_self, method: show_dialog }
-    - collection.insert: [token, /md5(last_insert_id()), user: $new_user_id, url, method, valid_until: /sysdate() + interval $self_activation_validity]
+    - collection.insert: [token, /md5(last_insert_id()), user: $new_user_id, url, method, active: 1, valid_until: /sysdate() + interval $self_activation_validity]
     - read_server: BASE_URL
     - sql_values: select "$BASE_URL/home?token=$new_token_id" user_activation_link
     - emailer.send: {type: create_user_email}
