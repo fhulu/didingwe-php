@@ -593,8 +593,12 @@ update_password:
   navigate:
     - update_password
   post:
-    - collection.values: [session, $sid, user]
-    - collection.update: [user, $user, password: /password('$password'), attempts: 0]
+    - collection.values: [user,email: $email, found: identifier]
+    - collection.update:
+        - user
+        - $found
+        - password: /password('$password')
+        - attempts: 0
     - clear_values
     - close_dialog: Password has been changed successfully
   audit: $email
