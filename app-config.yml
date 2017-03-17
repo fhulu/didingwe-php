@@ -35,7 +35,7 @@ search_paths: [../common/,.,$brand_path]
 collections:
   default: collection
   auth: [user,partner,user_group,user_group_member]
-  session: [session,audit]
+  session: [session,audit,token]
   billing: [rate,payment,credit,transaction]
   document: [document]
 
@@ -50,6 +50,8 @@ email_new_registration: yes
 
 email_otp: yes
 sms_otp: yes
+self_activation_validity: 48 hour
+
 request_method: post
 smtp_host: smtp.example.com
 smtp_user: email@example.com

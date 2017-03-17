@@ -24,6 +24,9 @@ activate_email:
     <b>Customer Operations</b>
 
 
+activate_self:
+  type: input_page
+
 change_password:
   type: wizard
   action: none
@@ -129,6 +132,7 @@ confirm_registration:
         - cellphone
         - partner
         - role: $registrant_role
+        - time_added: /now()
     - collection.insert:
         - audit
         - ""
@@ -167,12 +171,49 @@ create:
     - last_name
     - cellphone
     - email:  { valid: [not_in_use] }
-    - type: password_input
-    - password
-    - confirm_password
     - role: { type: dropdown }
+    - group:
+        type: dropdown
+        option:
+          name: $2
+        options:
+          - collection.values: [session, $sid, owner: user, partner]
+          - collection.data: [user_group,[partner, owner, active: 1],identifier,name]
   actions:
     - create
+  post:
+    - collection.values: [session,$sid,partner,user,company_name: partner.name, creator_first_name: user.first_name, creator_last_name: user.last_name]
+    - collection.insert: [user,"",email,password: /password('$password'),active: 1,user_group: $group,attempts: 0,tittle,first_name,last_name,cellphone,country,role,partner,time_added: /now()]
+    - collection.insert:
+        - audit
+        - ""
+        - action: New Registration
+        - time: "/sysdate()"
+        - user: $new_user_id
+        - detail: $title $first_name $last_name $cellphone $email
+    - read_config: [self_activation_validity,program_name]
+    - let: { url: /user/activate_self}
+    - collection.insert: [token, /md5(last_insert_id()), user: $new_user_id, url,valid_until: /sysdate() + interval $self_activation_validity]
+    - read_server: BASE_URL
+    - sql_values: select "$BASE_URL/home?token=$new_token_id" user_activation_link
+    - emailer.send: {type: create_user_email}
+    - alert: User Successfully Added
+    - trigger: addUser
+    - close_dialog
+
+create_user_email:
+  from: $support_email
+  to: $first_name $last_name <$email>
+  subject: New User Account
+  message: >
+      Dear <b>$first_name $last_name </b> <br><br>
+      You have have been registered on $program_name by $creator_first_name $creator_last_name at $company_name. <br>
+      Kindly click on this <a href="$user_activation_link">link</a> below to activate your registration.
+
+      Kind regards, <br><br>
+
+      Support Desk
+
 
 deactivate:
   access: [admin]

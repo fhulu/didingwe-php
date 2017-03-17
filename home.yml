@@ -1,0 +1,7 @@
+home:
+  read:
+    - if "$token" == "": abort
+    - collection.values: [token,$token,url,method]
+    - write_session: token
+    - $method: $url
+  
