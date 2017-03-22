@@ -64,7 +64,7 @@ change_password:
   type: wizard
   action: none
   read:
-    - collection.values: [session, $sid, email: user, user.first_name, user.last_name, user.cellphone]
+    - collection.values: [session, $sid, user.email, user.first_name, user.last_name, user.cellphone]
     - write_session: [email,first_name,last_name,cellphone]
     - clear_values
   steps:
@@ -593,12 +593,9 @@ update_password:
   navigate:
     - update_password
   post:
+    - read_session: email
     - collection.values: [user,email: $email, found: identifier]
-    - collection.update:
-        - user
-        - $found
-        - password: /password('$password')
-        - attempts: 0
+    - collection.update: [user,$found,password: /password('$password'),attempts: 0]
     - clear_values
     - close_dialog: Password has been changed successfully
   audit: $email
