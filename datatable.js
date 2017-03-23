@@ -51,6 +51,10 @@
         me.addRow(data);
         me.adjustWidths();
       })
+      .on('setRowStyles', function(e, selector, styles) {
+        var tr = me.body().find(selector);
+        me.setRowStyles(tr, styles);
+      })
       me.body().scroll($.proxy(me._scroll,me));
       me.bindRowActions()
     },
@@ -368,6 +372,8 @@
     setRowStyles: function(row, styles) {
       var row_styles = this.options.row_styles;
       if (!row_styles) return;
+      row.attr('class','');
+      row.addClass(this.row_classes);
       styles.split(',').forEach(function(style) {
         var classes = row_styles[style];
         if (!classes) return;
