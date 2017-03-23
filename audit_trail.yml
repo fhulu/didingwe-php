@@ -4,7 +4,7 @@ user_list:
   access: auth
   name: My Audit Trail
   class: [widest,scroll-table]
-  body: { max-height: 400 }
+  body: { max-height: 500 }
   sort: when
   sort_order: desc
   flags: [show_titles,filter]
@@ -13,9 +13,9 @@ user_list:
     - print
     - export
   fields:
-    - when: { width: 13%,name: Time }
-    - what: { width: 12%, name: Action }
-    - detail: { width: 74% }
+    - when: { width: 18%,name: Time }
+    - what: { width: 18%, name: Action }
+    - detail: { width: 62% }
   values:
     - collection.values: [session, $sid, user]
     - collection.data: [audit, [user], time, action, detail]
@@ -26,10 +26,10 @@ partner_list:
   type: user_list
   access: admin
   fields:
-    - when: { width: 15%, push: merge }
-    - email: { width: 18%, push: what}
-    - what: { width: 15%, push: merge }
-    - detail: { width: 30%, push: merge }
+    - when: { width: 18%, push: merge }
+    - email: { width: 18%, push: what, class: [truncate-word]}
+    - what: { width: 15%, push: merge, class: [truncate-word]}
+    - detail: { width: 30%, push: merge, class: [truncate-word] }
   values:
     - _reset
     - collection.sort_on: sort
@@ -42,7 +42,7 @@ system_list:
   type: partner_list
   access: admin
   fields:
-    - organisation: { push: email, width: 12% }
+    - organisation: { push: email, width: 15%, class: [truncate-word] }
   values:
     - _reset
     - collection.sort_on: sort
