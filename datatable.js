@@ -36,11 +36,11 @@
       opts.render.expandFields(opts, "row_actions", opts.row_actions);
       me.auto_widths = [];
       me._init_params();
-      if (me.hasFlag('show_titles') || me.hasFlag('show_header') || me.hasFlag('filter')) {
-        me.head().addClass(opts.head.class.join(' ')).prependTo(me.element);
-        if (me.hasFlag('show_header') || me.hasFlag('filter')) me.showHeader();
-        if (me.hasFlag('show_titles')) me.showTitles();
-      }
+      me.head().addClass(opts.head.class.join(' ')).prependTo(me.element);
+      me.showHeader();
+      me.showTitles();
+      me.createRowBlueprint();
+      me.head().toggle(me.hasFlag('show_titles') || me.hasFlag('show_header') || me.hasFlag('filter'));
       me.showFooterActions();
       me.showData();
       me.element.on('refresh', function(e, args) {
@@ -277,26 +277,23 @@
       });
     },
 
-    visible: function(field)
-    {
-      return mkn.visible(field) && field.id !== 'attr' && field.id !== 'style';
-    },
-
     showTitles: function()
     {
-
       var head = this.head();
+      var opts = this.options;
       var tr = head.find('.titles').empty();
-      if (!tr.exists()) tr = $('<tr class=titles></tr>').appendTo(head);
+      if (!tr.exists()) tr = $('<tr class=titles>').appendTo(head);
+      tr.toggle(this.hasFlag('show_titles'));
       var self = this;
-      var fields = this.options.fields;
-      var classes = this.options.title.class.join(' ');
-      var j = 0;
+      var fields = opts.fields;
+      var classes = opts.title.class.join(' ');
       for (var i in fields) {
         var field = fields[i];
         var id = field.id;
-        if (!this.visible(field)) continue;
+        if (field.id=='style') continue;
         var th = $('<th></th>').addClass(classes).appendTo(tr);
+        th.toggle(mkn.visible(field));
+        th.data('field', field);
         if (field.class) th.addClass(field.class.join(' '));
         if (id === 'actions') continue;
         if ($.isArray(field.name)) field.name = field.name[field.name.length-1];
@@ -310,12 +307,31 @@
         if (field.width !== undefined) {
           th.css('width', field.width);
         }
-        ++j;
         if (self.hasFlag('sortable'))
           self.bindSort(th, field);
       };
       this.spanColumns(head.find('.header th'));
       this.updateWidths(head.find('.titles').children());
+    },
+
+    createRowBlueprint: function()
+    {
+      var me = this;
+      var tr = $('<tr>').addClass(me.row_classes);;
+      var cls = me.cell.class;
+      var fields = me.options.fields;
+      for (var i in fields) {
+        var field = fields[i];
+        if (field.id == 'style') continue;
+        var td = $('<td>').appendTo(tr);
+        td.toggle(mkn.visible(field));
+        td.addClass(cls);
+        if (field.html === undefined) continue;
+        field = mkn.copy(field);
+        delete field.width;
+        td.append(me.options.render.create(field));
+      }
+      me.row_blueprint = tr;
     },
 
     spanColumns: function(td)
@@ -360,54 +376,58 @@
     },
 
     addRow: function(row) {
+      var tr = this.row_blueprint.clone();
+      this.updateRow(tr, row);
+      tr.appendTo(this.body());
+    },
+
+    updateRow: function(tr, data)
+    {
       var me = this;
-      var opts = me.options;
-      var fields = opts.fields;
-      var tr = $('<tr>');
-      tr.addClass(me.row_classes);
       var key;
       var expandable = false;
-      var col = 0;
+      var col = -1;
+      var fields = this.options.fields;
       for (var i in fields) {
         var field = fields[i];
-        var cell = me.spanData(field, row, col);
-        if (cell === null || cell === undefined) cell = '';
-        col += field.span;
+        var cell = data[i];
+        if (cell === null || cell === undefined)
+          cell = '';
+        else
+          cell = mkn.escapeHtml(cell);
+        if (field.id == 'style') {
+          me.setRowStyles(tr, cell);
+          continue;
+        }
+        ++col;
         if (key === undefined && (field.id === 'key' || field.key)) {
           key = cell;
           tr.attr('key', key);
         }
 
-        var hide = field.hide || field.show === false;
-        if (field.id === 'key' && hide) continue;
-        cell = mkn.escapeHtml(cell);
-        if (field.id === 'style') {
-          me.setRowStyles(tr, cell);
-          continue;
-        }
-        var td = $('<td>').appendTo(tr);
-        if (hide) td.addClass('hidden');
-        if (field.class) td.addClass(field.class.join(' '))
-
-        if (field.id === 'actions') {
-          var actions = cell.split(',');
-          var expandable = actions.indexOf('expand') >= 0;
-          me.createRowActions(tr, td, actions);
-          if (!expandable) continue;
-          td = tr.children().eq(0).addClass('expandable');
-          if (!td.children().exists()) {
-            var text = td.text();
-            td.text('');
-            $('<div>').text(text).appendTo(td).css('display','inline-block');
-          }
-          me.createAction('expand', undefined, tr).prependTo(td);
-          me.createAction('collapse', undefined, tr).prependTo(td).hide();
-          continue;
-        }
-        me.showCell(field, td, cell, key);
+        var td = tr.children().eq(col);
+        if (field.id === 'actions')
+          me.showActions(field, tr, td, cell)
+        else
+          me.showCell(td, cell)
       }
-      tr.appendTo(me.body());
       me.adjustColWidths(tr);
+    },
+
+    showActions: function(field, tr, td, cell)
+    {
+      var actions = cell.split(',');
+      var expandable = actions.indexOf('expand') >= 0;
+      this.createRowActions(tr, td, actions);
+      if (!expandable) return;
+      td = tr.children().eq(0).addClass('expandable');
+      if (!td.children().exists()) {
+        var text = td.text();
+        td.text('');
+        $('<div>').text(text).appendTo(td).css('display','inline-block');
+      }
+      this.createAction('expand', undefined, tr).prependTo(td);
+      this.createAction('collapse', undefined, tr).prependTo(td).hide();
     },
 
     adjustColWidths: function(tr)
@@ -422,34 +442,14 @@
       });
     },
 
-    adjustTitleWidths: function()
+    showCell: function(td, value)
     {
-      var widths = this.widths;
-      var titles = this.head().find('.titles>th');
-      titles.each(function(i) {
-        if (!$(this).css('width')) return;
-        $(this).width(widths[i]);
-      })
-    },
-
-    showCell: function(field, td, value, key)
-    {
-      td.addClass(this.cell.class);
-      if (field.html === undefined) {
-        if (value !== undefined && value !== null) td.html(value).attr('title', value);
+      var obj = td.children().eq(0);
+      if (!obj.exists()) {
+        td.html(value).attr('title', value);
         return;
       }
-      field = mkn.copy(field);
-      delete field.width;
-      field.key = key;
-      field.value = value;
-      if (key !== undefined) {
-        if (!$.isNumeric(key)) key = key.toLowerCase().replace(/ +/,'_');
-        field.id = field.id + '_' + key;
-      }
-      var created = this.options.render.create(field);
-      if (value !== undefined) created.value(value);
-      td.append(created);
+      obj.value(value);
     },
 
     bindAction: function(obj, props, sink, path)
@@ -623,24 +623,21 @@
     {
       var fields = this.options.fields;
       var widths = this.widths;
-      var col = 0;
+      var col = -1;
       for (var i in fields) {
         var field = fields[i];
-        if (!this.visible(field)) continue;
+        if (field.id == 'style') continue;
+        ++col;
         var th = ths.eq(col);
         var td = tds.eq(col);
         if (field.width !== undefined) {
-          if (th.exists()) {
-            th.css('width', field.width);
-            td.css('width', th.get(0).style.width);
-          }
-          else td.css('width', field.width);
+          th.css('width', field.width);
+          td.css('width', th.get(0).style.width);
         }
         else {
           th.css('width', 'auto');
           td.css('width', 'auto')
         }
-        ++col;
       };
     },
 
@@ -666,11 +663,10 @@
       var widths = this.widths;
       var sum = widths.reduce(function(a,b) { return a + b});
       var fields = this.options.fields;
-      var col = -1;
+      var col = 0;
       for (var i in fields) {
         var field = fields[i];
-        if (!this.visible(field)) continue;
-        ++col;
+        if (field.id == 'style') continue;
         if (field.width !== undefined) continue;;
         var th = ths.eq(col);
         var width = ((widths[col]/sum)*100) + '%';
@@ -679,6 +675,7 @@
           width = th.get(0).style.width
         }
         tds.eq(col).css('width', width);
+        ++col;
       }
 
       tr1.siblings().each(function(i) {
