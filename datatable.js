@@ -51,10 +51,6 @@
         me.addRow(data);
         me.adjustWidths();
       })
-      .on('setRowStyles', function(e, selector, styles) {
-        var tr = me.body().find(selector);
-        me.setRowStyles(tr, styles);
-      })
       me.body().scroll($.proxy(me._scroll,me));
       me.bindRowActions()
     },
@@ -516,7 +512,8 @@
       if (row_actions.indexOf('slide') >= 0)
         row_actions.push('slideoff');
 
-      td.addClass('actions');
+      if (!td.hasClass('actions')) td.addClass('actions');
+      td.empty();
 
       var opts = this.options;
       var all_actions = opts.row_actions;
@@ -584,21 +581,23 @@
       load();
     },
 
+
     bindRowActions: function()
     {
-      var self = this;
+      var me = this;
+      var options = me.options;
       this.element.on('slide', 'tr', function(e) {
         $(e.target).toggle();
-        self.slide($(this));
+        me.slide($(this));
       })
       .on('expand', 'tr', function(e) {
         var tr = $(this);
         tr.find('[action=expand]').hide();
         tr.find('[action=collapse]').show();
         if (tr.next().hasClass('expanded')) return;
-        var expand = self.options['expand'];
+        var expand = options['expand'];
         if (!expand.pages) return;
-        self.loadSubPages(tr, expand.pages)
+        me.loadSubPages(tr, expand.pages)
       })
       .on('collapse', 'tr', function(e) {
         var tr = $(this);
@@ -609,15 +608,30 @@
       })
       .on('action', 'tr', function(evt, btn) {
         if (!btn.parent('.slide').exists()) return;
-        self.slide($(this));
+        me.slide($(this));
         $(this).find('[action=slide]').toggle();
         var slider = $(this).find('.slide');
-        slider.animate({width: 0}, self.options.slideSpeed*2, function() { slider.hide()});
+        slider.animate({width: 0}, options.slideSpeed*2, function() { slider.hide()});
       })
       .on('delete', 'tr', function() {
         $(this).remove();
         return $(this);
       })
+      .on('setRowStyles', function(e, key, styles) {
+        me.setRowStyles(me.getRowByKey(key), styles);
+      })
+      .on('setRowActions', function(e, key, actions) {
+        var tr = me.getRowByKey(key);
+        me.createRowActions(tr, tr.find('.actions'), actions);
+      })
+      .on('replaceRowActions', function(e, key, replaced, replacer) {
+        me.replaceRowActions(me.getRowByKey(key), replaced, replacer);
+      })
+    },
+
+    getRowByKey: function(key)
+    {
+      return this.body().children('[key="'+key+'"]').eq(0);
     },
 
     getActionsHeight: function(tr)
