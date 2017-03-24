@@ -1103,6 +1103,21 @@ class page
     replace_fields($field, $this->context, true);
   }
 
+
+  function replace_special_vars(&$parameter)
+  {
+    $replace = function(&$a, $k, $v) {
+      if (empty($a)) return;
+      $pos = array_search('$_'.$k, $a);
+      if ($pos === false) return;
+      $a['_'.$k] = $v;
+      array_splice($a, $pos, 1);
+    };
+    $replace($parameter, 'request', $this->request);
+    $replace($parameter, 'result', $this->answer);
+    $replace($parameter, 'values', null_merge($this->request, $this->answer));
+  }
+
   function reply($actions)
   {
     $post = at($actions, 'post');
@@ -1140,10 +1155,7 @@ class page
       $this->replace_sid($method);
       $this->replace_fields($method);
       $this->replace_sid($parameter);
-      if (in_array('$_result', $parameter, true)) {
-        $parameter['_result'] = $this->answer;
-        unset($parameter['$_result']);
-      }
+      $this->replace_special_vars($parameter);
 
       log::debug_json("REPLY ACTION $method", $parameter);
       if ($this->reply_if($method, $parameter)) continue;
