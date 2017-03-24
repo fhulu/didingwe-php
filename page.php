@@ -1140,6 +1140,11 @@ class page
       $this->replace_sid($method);
       $this->replace_fields($method);
       $this->replace_sid($parameter);
+      if (in_array('$_result', $parameter, true)) {
+        $parameter['_result'] = $this->answer;
+        unset($parameter['$_result']);
+      }
+
       log::debug_json("REPLY ACTION $method", $parameter);
       if ($this->reply_if($method, $parameter)) continue;
 
