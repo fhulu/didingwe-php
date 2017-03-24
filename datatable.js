@@ -313,11 +313,14 @@
     createRowBlueprint: function()
     {
       var me = this;
-      var tr = $('<tr>').addClass(me.row_classes);;
+      var tr = $('<tr>').addClass(me.row_classes);
       var cls = me.cell.class;
+      me.defaults = {}
       var fields = me.options.fields;
       for (var i in fields) {
         var field = fields[i];
+        me.defaults[field.id] = field.new;
+        delete field.new;
         if (field.id == 'style') continue;
         var td = $('<td>').appendTo(tr);
         td.attr('field', field.id);
@@ -376,6 +379,7 @@
 
     addRow: function(row) {
       var tr = this.row_blueprint.clone();
+      row = $.extend({}, this.defaults, row);
       this.updateRow(tr, row);
       tr.appendTo(this.body());
     },
@@ -385,8 +389,9 @@
       var me = this;
       var key;
       var expandable = false;
-      var col = -1;
+      var col = 0;
       var fields = this.options.fields;
+      var tds = tr.children();
       for (var i in fields) {
         var field = fields[i];
         var cell = data[i];
@@ -398,35 +403,13 @@
           me.setRowStyles(tr, cell);
           continue;
         }
-        ++col;
-        if (key === undefined && (field.id === 'key' || field.key)) {
-          key = cell;
-          tr.attr('key', key);
-        }
+        if (key === undefined && (field.id === 'key' || field.key))
+          tr.attr('key', cell);
 
-        var td = tr.children().eq(col);
-        if (field.id === 'actions')
-          me.showActions(field, tr, td, cell)
-        else
-          me.setCellValue(td, cell)
+        me.setCellValue(tds.eq(col), cell);
+        ++col;
       }
       me.adjustColWidths(tr);
-    },
-
-    showActions: function(field, tr, td, cell)
-    {
-      var actions = cell.split(',');
-      var expandable = actions.indexOf('expand') >= 0;
-      this.createRowActions(td, actions);
-      if (!expandable) return;
-      td = tr.children().eq(0).addClass('expandable');
-      if (!td.children().exists()) {
-        var text = td.text();
-        td.text('');
-        $('<div>').text(text).appendTo(td).css('display','inline-block');
-      }
-      this.createAction('expand', undefined, tr).prependTo(td);
-      this.createAction('collapse', undefined, tr).prependTo(td).hide();
     },
 
     adjustColWidths: function(tr)
@@ -443,6 +426,8 @@
 
     setCellValue: function(td, value)
     {
+      if (td.attr('field') == 'actions')
+        return this.createRowActions(td, value);
       var obj = td.children().eq(0);
       if (!obj.exists()) {
         td.html(value).attr('title', value);
@@ -503,9 +488,24 @@
       return div;
     },
 
+    createExpandActions: function(td)
+    {
+      var tr = td.parent();
+      td = tr.children().eq(0).addClass('expandable');
+      if (!td.children().exists()) {
+        var text = td.text();
+        td.text('');
+        $('<div>').text(text).appendTo(td).css('display','inline-block');
+      }
+      this.createAction('expand', undefined, tr).prependTo(td);
+      this.createAction('collapse', undefined, tr).prependTo(td).hide();
+    },
+
     createRowActions: function(td, row_actions)
     {
       if (!$.isArray(row_actions)) row_actions = row_actions.split(',');
+      if (row_actions.indexOf('expand') >=0)
+        this.createExpandActions(td);
       if (row_actions.indexOf('slide') >= 0)
         row_actions.push('slideoff');
 
@@ -638,22 +638,17 @@
         me.setRowData(tr, data);
         me.adjustWidths();
       })
-},
+    },
 
     setRowData: function(tr, data)
     {
+      data = $.extend({}, this.defaults, data);
       for (var id in data) {
         var val = data[id];
-        if (id == 'style') {
+        if (id == 'style')
           this.setRowStyles(tr, val);
-          continue;
-        }
-
-        var td = this.getCellById(tr, id);
-        if (id == 'actions')
-          this.createRowActions(td, val)
         else
-          this.setCellValue(td, val);
+          this.setCellValue(this.getCellById(tr, id), val);
       }
     },
 
