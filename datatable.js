@@ -629,6 +629,16 @@
         var tr = me.getRowByKey(key);
         me.setCellValue(me.getCellById(tr, id), value);
       })
+      .on('setRowData', function(e, key, data) {
+        me.setRowData(me.getRowByKey(key), data);
+      })
+    },
+
+    setRowData: function(tr, data)
+    {
+      for (var id in data) {
+        this.setCellValue(this.getCellById(tr,id), data[id]);
+      }
     },
 
     getCellById: function(tr, id)
