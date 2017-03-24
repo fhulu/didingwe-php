@@ -421,7 +421,7 @@
     {
       var actions = cell.split(',');
       var expandable = actions.indexOf('expand') >= 0;
-      this.createRowActions(tr, td, actions);
+      this.createRowActions(td, actions);
       if (!expandable) return;
       td = tr.children().eq(0).addClass('expandable');
       if (!td.children().exists()) {
@@ -507,7 +507,7 @@
       return div;
     },
 
-    createRowActions: function(tr, td, row_actions)
+    createRowActions: function(td, row_actions)
     {
       if (!$.isArray(row_actions)) row_actions = row_actions.split(',');
       if (row_actions.indexOf('slide') >= 0)
@@ -518,7 +518,7 @@
 
       var opts = this.options;
       var all_actions = opts.row_actions;
-      var key = tr.attr('key');
+      var key = td.parent().attr('key');
       var normal_actions = [];
       var slide_actions = [];
       var actions = normal_actions;
@@ -623,7 +623,7 @@
       })
       .on('setRowActions', function(e, key, actions) {
         var tr = me.getRowByKey(key);
-        me.createRowActions(tr, me.getCellById(tr, 'actions'), actions);
+        me.createRowActions(me.getCellById(tr, 'actions'), actions);
       })
       .on('setCellValue', function(e, key, id, value) {
         var tr = me.getRowByKey(key);
@@ -637,7 +637,17 @@
     setRowData: function(tr, data)
     {
       for (var id in data) {
-        this.setCellValue(this.getCellById(tr,id), data[id]);
+        var val = data[id];
+        if (id == 'style') {
+          this.setRowStyles(tr, val);
+          continue;
+        }
+
+        var td = this.getCellById(tr, id);
+        if (id == 'actions')
+          this.createRowActions(td, val)
+        else
+          this.setCellValue(td, val);
       }
     },
 

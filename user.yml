@@ -11,9 +11,7 @@ activate:
     - collection.update: [user, $key, active: 1, attempts: 0]
     - collection.values: [user, $key, email, first_name, last_name]
     - emailer.send: { type: activate_email }
-    - trigger: [setCellValue,"", $key, status, active]
-    - trigger: [setRowStyles,"", $key, active]
-    - trigger: [setRowActions,"", $key, 'expand,slide,edit,deactivate']
+    - trigger: [setRowData, "", $key, {status: active, style: active, actions: 'expand,slide,edit,deactivate'}]
 
 activate_email:
   from: $support_email
@@ -264,9 +262,7 @@ deactivate:
     - collection.update: [user, $key, active: 0]
     - collection.values: [user, $key, first_name, last_name, email]
     - emailer.send: { type: deactivate_email }
-    - trigger: [setCellValue,"", $key, status, inactive]
-    - trigger: [setRowStyles,"", $key, inactive]
-    - trigger: [setRowActions,"", $key, 'expand,slide,edit,activate']
+    - trigger: [setRowData,"", $key, {status: inactive, style: inactive, actions: 'expand,slide,edit,activate'}]
 
 deactivate_email:
   from: $support_email
