@@ -511,8 +511,8 @@ modify:
   validate: delta
   post:
     - collection.update: [user, $key, delta]
-    - trigger: [modifyUser,"", $key]
-    - refresh: "#user_list"
+    - collection.values: [user, $key, title, first_name, last_name, cellphone, email, role: role.name]
+    - trigger: [setRowData,"", $key, $_result]
     - close_dialog: Changes saved
   audit: $email $delta
   modal:
