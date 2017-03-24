@@ -456,7 +456,7 @@ login:
     - collection.values: [role, $role, base_roles: role]
     - collection.listing: [user_group_member, [user: $user], groups: group]
     - if $attempts > 0:
-        - collection.update: [user, user, attempts: 0]
+        - collection.update: [user, $user, attempts: 0]
     - read_server: [HTTP_USER_AGENT,REMOTE_ADDR,REMOTE_HOST,REQUEST_URI]
     - collection.insert: [session, /sha1(last_insert_id()), user, partner, start_time: /now(), HTTP_USER_AGENT, REMOTE_ADDR,REQUEST_URI]
     - auth.login: [$new_session_id, user, $role, $base_roles, $groups, $type]
