@@ -408,10 +408,11 @@
         }
 
         var td = tr.children().eq(col);
+        td.attr('field', field.id);
         if (field.id === 'actions')
           me.showActions(field, tr, td, cell)
         else
-          me.showCell(td, cell)
+          me.setCellValue(td, cell)
       }
       me.adjustColWidths(tr);
     },
@@ -444,7 +445,7 @@
       });
     },
 
-    showCell: function(td, value)
+    setCellValue: function(td, value)
     {
       var obj = td.children().eq(0);
       if (!obj.exists()) {
@@ -622,11 +623,17 @@
       })
       .on('setRowActions', function(e, key, actions) {
         var tr = me.getRowByKey(key);
-        me.createRowActions(tr, tr.find('.actions'), actions);
+        me.createRowActions(tr, me.getCellById(tr, 'actions'), actions);
       })
-      .on('replaceRowActions', function(e, key, replaced, replacer) {
-        me.replaceRowActions(me.getRowByKey(key), replaced, replacer);
+      .on('setCellValue', function(e, key, id, value) {
+        var tr = me.getRowByKey(key);
+        me.setCellValue(me.getCellById(tr, id), value);
       })
+    },
+
+    getCellById: function(tr, id)
+    {
+      return tr.children('[field="'+id+'"]').eq(0);
     },
 
     getRowByKey: function(key)
