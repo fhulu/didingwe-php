@@ -11,7 +11,9 @@ activate:
     - collection.update: [user, $key, active: 1, attempts: 0]
     - collection.values: [user, $key, email, first_name, last_name]
     - emailer.send: { type: activate_email }
-    - refresh: "#page"
+    - trigger: [setCellValue,"", $key, status, active]
+    - trigger: [setRowStyles,"", $key, active]
+    - trigger: [setRowActions,"", $key, 'expand,slide,edit,deactivate']
 
 activate_email:
   from: $support_email
@@ -262,7 +264,9 @@ deactivate:
     - collection.update: [user, $key, active: 0]
     - collection.values: [user, $key, first_name, last_name, email]
     - emailer.send: { type: deactivate_email }
-    - refresh: "#page"
+    - trigger: [setCellValue,"", $key, status, inactive]
+    - trigger: [setRowStyles,"", $key, inactive]
+    - trigger: [setRowActions,"", $key, 'expand,slide,edit,activate']
 
 deactivate_email:
   from: $support_email
@@ -384,7 +388,7 @@ list:
     - role: { width: 10%, class: [truncate-word]  }
     - status: { width: 7% }
     - style
-    - actions: { width: 2%}
+    - actions: { width: 0%}
   expand:
     pages:
       - /user/history
@@ -507,6 +511,7 @@ modify:
   validate: delta
   post:
     - collection.update: [user, $key, delta]
+    - trigger: [modifyUser,"", $key]
     - refresh: "#user_list"
     - close_dialog: Changes saved
   audit: $email $delta
