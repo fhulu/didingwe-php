@@ -424,7 +424,9 @@ class page
     if (!is_string($x)) return false;
     global $config;
     list($class, $method) = explode('.', $x);
-    return $class == 'this' || in_array($class, $config['modules']);
+    $options = $config[$x];
+    $active = !isset($options['active']) || $options['active'];
+    return $class == 'this' || in_array($class, $config['modules']) && $active;
   }
 
   function get_module($class, &$method="")
