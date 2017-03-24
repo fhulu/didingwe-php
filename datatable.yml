@@ -2,7 +2,7 @@ datatable:
   head: ""
   tooltip: false
   type: table
-  class: [data]
+  class: [data, didi-watcher]
   create: datatable
   head: { class: [didi] }
   title: { class: [didi] }
