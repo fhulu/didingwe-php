@@ -47,10 +47,6 @@
         me.showData(args);
         e.stopImmediatePropagation();
       })
-      .on('addRow', function(e, data) {
-        me.addRow(data);
-        me.adjustWidths();
-      })
       me.body().scroll($.proxy(me._scroll,me));
       me.bindRowActions()
     },
@@ -324,6 +320,7 @@
         var field = fields[i];
         if (field.id == 'style') continue;
         var td = $('<td>').appendTo(tr);
+        td.attr('field', field.id);
         td.toggle(mkn.visible(field));
         td.addClass(cls);
         if (field.html === undefined) continue;
@@ -408,7 +405,6 @@
         }
 
         var td = tr.children().eq(col);
-        td.attr('field', field.id);
         if (field.id === 'actions')
           me.showActions(field, tr, td, cell)
         else
@@ -632,7 +628,17 @@
       .on('setRowData', function(e, key, data) {
         me.setRowData(me.getRowByKey(key), data);
       })
-    },
+      .on('addRow', function(e, data) {
+        me.addRow(data);
+        me.adjustWidths();
+      })
+      .on('addNewRow', function(e, data) {
+        var tr = me.row_blueprint.clone();
+        me.body().prepend(tr);
+        me.setRowData(tr, data);
+        me.adjustWidths();
+      })
+},
 
     setRowData: function(tr, data)
     {

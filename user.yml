@@ -217,22 +217,18 @@ create:
   post:
     - collection.values: [session,$sid,partner,user,company_name: partner.name, creator_first_name: user.first_name, creator_last_name: user.last_name]
     - collection.insert: [user,"",email,password: /password('$password'),active: 0,user_group: $group,attempts: 0,tittle,first_name,last_name,cellphone,country,role,partner,time_added: /now()]
-    - collection.insert:
-        - audit
-        - ""
-        - action: New Registration
-        - time: "/sysdate()"
-        - user: $new_user_id
-        - detail: $title $first_name $last_name $cellphone $email
     - read_config: [self_activation_validity,program_name]
     - let: { url: /user/activate_self, method: show_dialog }
     - collection.insert: [token, /md5(last_insert_id()), user: $new_user_id, url, method, active: 1, valid_until: /sysdate() + interval $self_activation_validity]
     - read_server: BASE_URL
     - sql_values: select "$BASE_URL/home?token=$new_token_id" user_activation_link
     - emailer.send: {type: create_user_email}
+    - collection.values: [role, $role, role: name, time_added: /now()]
+    - trigger: [addNewRow, "", $_values]
+    - trigger: [addUser, "", $_values]
     - alert: User Successfully Added
-    - trigger: addUser
     - close_dialog
+
 
 create_user_email:
   from: $support_email
@@ -368,7 +364,6 @@ list:
   sort_order: desc
   class: [scroll-table]
   body: { max-height: 400 }
-  on_addUser: ~this.trigger('refresh')
   report_title: User Report
   row_actions:
     - activate
@@ -392,7 +387,7 @@ list:
     - collection.values: [session, $sid, partner,user]
     - collection.data:
         - user
-        - partner: $partner
+        - [partner]
         - identifier
         - time_added
         - email
