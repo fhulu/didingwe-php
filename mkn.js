@@ -159,9 +159,8 @@ var mkn = new function() {
         if (modal.fields.close_button) mkn.replaceVars(page.fields, modal.fields.close_button, {recurse: true});
         modal = mkn.createPage(options,modal);
         modal.removeAttr('id').show();
-        var title_bar = modal.find('.modal-title-bar');
         var dialog = modal.find('.modal-dialog');
-        dialog.append(obj).draggable({handle: title_bar});
+        dialog.append(obj).draggable({handle: ".modal-title-bar"});
         modal.appendTo('body');
         defer.resolve(dialog, page, field);
       });
