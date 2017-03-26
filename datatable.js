@@ -279,7 +279,7 @@
       var opts = this.options;
       var tr = head.find('.titles').empty();
       if (!tr.exists()) tr = $('<tr class=titles>').appendTo(head);
-      tr.toggle(this.hasFlag('show_titles'));
+      if (!this.hasFlag('show_titles')) tr.hide();
       var self = this;
       var fields = opts.fields;
       var classes = opts.title.class.join(' ');
