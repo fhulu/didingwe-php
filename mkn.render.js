@@ -1031,7 +1031,8 @@ mkn.render = function(options)
 
     var box = $("<div class=error>"+error+"</div>");
     parent.after(box);
-    box.zIndex(parent.zIndex()+1);
+    var zIndex = parseInt(parent.css('z-index'));
+    box.css('z-index', zIndex+1);
     box.fadeIn('slow').click(function() { $(this).fadeOut('slow') });
   }
 
