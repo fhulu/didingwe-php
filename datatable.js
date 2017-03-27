@@ -326,6 +326,7 @@
         td.attr('field', field.id);
         td.toggle(mkn.visible(field));
         td.addClass(cls);
+        if (field.class) td.addClass(field.class.join(' '));
         if (field.html === undefined) continue;
         field = mkn.copy(field);
         delete field.width;
