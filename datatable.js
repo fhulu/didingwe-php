@@ -735,32 +735,16 @@
     },
 
 
-    createEditor: function(template, fields, type, cell)
+    createEditor: function(template)
     {
-      var editables = this.options[type];
-      if (editables !== undefined) {
-        editables = editables.fields;
-        if (typeof editables === 'string')
-          editables = editables.split(',');
-      }
-      var editor = $('<tr></tr>').addClass(type);
+      var editor = template.clone();
       var td;
-      template.children().each(function(i) {
-        var field = fields[i];
-        if (!this.visible(field)) return;
-        if (field.id === 'actions') {
-          var colspan = td.attr('colspan');
-          if (!colspan) colspan = 1;
-          td.attr('colspan', parseInt(colspan)+1);
-          return;
-        }
-        td = $(cell);
-        $('<input type=text></input>').css('width','100%').attr('field_id', field.id).appendTo(td);
-        td.appendTo(editor);
+      editor.addClass('datatable-editor');
+      editor.children().each(function(i) {
+        var input = $('<input type=text></input>').css('width','100%');
+        $(this).text('').append(input);
       });
-
       editor.insertAfter(template);
-      this.adjustWidths(editor);
       return editor;
     },
 
@@ -769,22 +753,17 @@
       var filter = this.head().find('.filter');
       if (filter.exists()) return filter;
 
-      var self = this;
-      var titles = self.head().find('.titles');
-      var fields = self.options.fields;
-      filter = self.createEditor(titles, self.options.fields, 'filter', '<th></th>').hide();
-      var cols = filter.children();
+      var me = this;
+      var titles = me.head().find('.titles');
+      var fields = me.options.fields;
+      filter = me.createEditor(titles).hide();
+      var tds = filter.children();
       filter.find('input').bind('keyup cut paste', function(e) {
-        self.params.offset = 0;
-        fields.forEach(function(field, index) {
-          delete self.params['f'+index];
-          var obj = filter.findByAttribute('field_id', field.id);
-          if (!obj.exists()) return;
-          var val = obj.value();
-          if (val == '') return;
-          self.params['f'+index] = val;
-        });
-        self.refresh();
+        me.params.offset = 0;
+        var td = $(this).parent();
+        var index = tds.index(td);
+        me.params['f'+index] = $(this).value();
+        me.refresh();
       });
       return filter;
     },
