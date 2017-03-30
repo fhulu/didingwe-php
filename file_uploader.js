@@ -31,7 +31,7 @@
         beforeSend: function(xhr)
         {
           bar.width('0%');
-          percent.html('0%').zIndex(bar.zIndex()+1);;
+          percent.html('0%').css('z-index', parseInt(bar.css('z-index'))+1);
           progress.width('100%').fadeIn();
           $('.error').remove();
           upload.hide();
