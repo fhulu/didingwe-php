@@ -492,7 +492,13 @@
     createExpandActions: function(td)
     {
       var tr = td.parent();
-      td = tr.children().eq(0).addClass('expandable');
+      tr.children().each(function() {
+        if ($(this).css('display') != 'none') {
+          td = $(this);
+          return false;
+        }
+      })
+      td.addClass('expandable');
       if (!td.children().exists()) {
         var text = td.text();
         td.text('');
