@@ -499,11 +499,6 @@
         }
       })
       td.addClass('expandable');
-      if (!td.children().exists()) {
-        var text = td.text();
-        td.text('');
-        $('<div>').text(text).appendTo(td).css('display','inline-block');
-      }
       this.createAction('expand', undefined, tr).prependTo(td);
       this.createAction('collapse', undefined, tr).prependTo(td).hide();
     },
