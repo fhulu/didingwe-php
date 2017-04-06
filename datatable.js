@@ -645,6 +645,8 @@
     setRowData: function(tr, data)
     {
       data = $.extend({}, this.defaults, data);
+      if ('key' in data)
+        tr.attr('key', data['key']);
       for (var id in data) {
         var val = data[id];
         if (id == 'style')
