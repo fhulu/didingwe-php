@@ -36,7 +36,7 @@ collections:
   default: collection
   auth: [user,partner,user_group,user_group_member]
   session: [session,audit,token]
-  billing: [rate,payment,credit,transaction,country_price]
+  billing: [rate,payment,credit,transaction,country_rate]
   document: [document]
 
 
