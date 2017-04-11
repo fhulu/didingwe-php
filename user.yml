@@ -229,6 +229,20 @@ create:
     - alert: User Successfully Added
     - close_dialog
 
+resend_activation_token:
+  class: [green]
+  name: Resend Token
+  confirmation: yes
+  post:
+    - collection.values: [session,$sid,partner,user,company_name: partner.name, creator_first_name: user.first_name, creator_last_name: user.last_name]
+    - collection.values: [user,$key,first_name,last_name,email]
+    - read_config: [self_activation_validity,program_name]
+    - let: { url: /user/activate_self, method: show_dialog }
+    - collection.insert: [token, /md5(last_insert_id()), user: $key, url, method, active: 1, valid_until: /sysdate() + interval $self_activation_validity]
+    - read_server: BASE_URL
+    - sql_values: select "$BASE_URL/home?token=$new_token_id" user_activation_link
+    - emailer.send: {type: create_user_email}
+
 
 create_user_email:
   from: $support_email
@@ -369,6 +383,7 @@ list:
     - activate
     - deactivate
     - edit: { action: dialog }
+    - resend_activation_token
   fields:
     - key: { show: false}
     - time_added: { width: 21%, class: [truncate-word]}
@@ -397,7 +412,7 @@ list:
         - role: role.name
         - status: /if(active,'active','inactive')
         - style: /if(active,'active','inactive')
-        - actions: /if(active,'expand,slide,edit,deactivate',if(password='', 'slide,edit','expand,slide,edit,activate'))  
+        - actions: /if(active,'expand,slide,edit,deactivate',if(password='', 'slide,edit,resend_activation_token','expand,slide,edit,activate'))
         - active
         - password
 
