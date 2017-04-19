@@ -824,7 +824,7 @@ titled_paragraph:
   tag: div
   class: [titled_paragraph]
   text: $heading $phrase
-  title: $id
+  title: $name
   body: $name
   heading:
     derive: [title]
@@ -862,8 +862,8 @@ vspaced:
   margin-bottom: $space
 
 watermark:
-  image: $image_path/$id.png
-  background-image: url("$image")
+  image: $id.png
+  background-image: url("$image_path/$image")
   repeat: no-repeat
   imagex: left
   imagey: center
