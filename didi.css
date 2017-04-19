@@ -677,6 +677,11 @@ li.paragraph {text-indent: -1em }
 .float-right,.col.float-right{float:right}
 .no-repeat,.norepeat{background-repeat: no-repeat}
 .no-backcolor{background-color:inherit}
+.background-cover{ background-size: cover }
+.background-widest{ background-size: 100% auto }
+.background-tallest{ background-size: auto 100% }
+.background-largest{ background-size: 100% 100%}
+.background-top { background-position: top}
 
 .scroll-table { table-layout: fixed}
 .scroll-table>thead,.scroll-table>tbody { float:left; width: 100%; display: block;table-layout: fixed}
