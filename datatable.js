@@ -380,7 +380,7 @@
 
     addRow: function(row) {
       var tr = this.row_blueprint.clone();
-      row = $.extend({}, this.defaults, row);
+      row = $.extend({}, this.options.defaults, row);
       this.updateRow(tr, row);
       tr.appendTo(this.body());
     },
@@ -644,7 +644,7 @@
 
     setRowData: function(tr, data)
     {
-      data = $.extend({}, this.defaults, data);
+      data = $.extend({}, this.options.defaults, data);
       if ('key' in data)
         tr.attr('key', data['key']);
       for (var id in data) {
