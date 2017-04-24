@@ -449,7 +449,7 @@ mkn.render = function(options)
 
   this.render = function(parent, key) {
     parent[key] = me.initField(parent[key], parent);
-    var obj = me.root = me.create(parent, key);
+    var obj = me.root = me.create(parent, key, false);
     initModel(obj);
     me.updateWatchers();
     obj.trigger('load');
@@ -471,8 +471,9 @@ mkn.render = function(options)
     field.text = this.expandValue(field, field.text);
     field.html = this.expandValue(field, field.html);
     field.html = field.html.trim().replace(/\$tag(\W)/, field.tag+'$1');
-    var table_tag = isTableTag(field.tag)
+    var table_tag = isTableTag(field.tag);
     var obj = table_tag? $('<'+field.tag+'>'): $(field.html);
+    if (field.is_body) obj = $('body').html(obj.html());
     if (this.sink === undefined) this.sink = obj;
     var reserved = ['id', 'create', 'css', 'script', 'name', 'desc', 'data'];
     setAttr(obj, field);
@@ -698,7 +699,9 @@ mkn.render = function(options)
     $.each(events, function(key, values) {
       $.each(values, function(i, value) {
         if ($.isPlainObject(value) && !value.path) value.path = field.path + '/on_' + key;
-        obj.on(key, function(e) {
+        var sink = obj;
+        if (obj.is('body') && key == 'scroll') sink = $(window);
+        sink.on(key, function(e) {
           // trap trapped events
           if ($.isArray(field.trap) && field.trap.indexOf(key) >=0 )
             e.stopImmediatePropagation();

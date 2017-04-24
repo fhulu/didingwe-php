@@ -123,11 +123,13 @@ var mkn = new function() {
       data.fields.name = toTitleCase(data.path.split('/').pop().replace('_',' '));
     data.fields.path = data.path;
     data.fields.sub_page = false;
+    var is_body = data.fields.type == 'body';
     var r = new mkn.render({invoker: parent, types: data.types, id: id, key: options.key, request: options.request} );
     var object = r.render(data, 'fields');
     data.values = values;
     object.addClass('page');
-    if(parent) object.appendTo(parent);
+    if (parent && !object.is('body'))
+      object.appendTo(parent);
     return object;
   }
 
