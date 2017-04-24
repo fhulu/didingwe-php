@@ -230,8 +230,11 @@ font_awesome:
   tag: i
   icon: $id
   class: [fa,fa-$icon]
-  css: [/common/font-awesome/css/font-awesome.min.css]
   text: ""
+
+font_awesome_text:
+  type: font_awesome
+  text: $name
 
 fieldset:
   templates: fieldset

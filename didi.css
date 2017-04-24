@@ -220,6 +220,7 @@
 /* font-awesome integration */
 .fa::before{font-family:FontAwesome;}
 .fa-right::before {float:right}
+.fa{font-family: inherit;}
 
 
 /* font styles */
