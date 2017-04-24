@@ -48,7 +48,8 @@ blank:
   class: [inline-block]
 
 body:
-  class: [didi]
+  type: container
+  is_body: true
 
 bookmark:
   tag: div
