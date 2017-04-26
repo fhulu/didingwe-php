@@ -449,7 +449,7 @@ mkn.render = function(options)
 
   this.render = function(parent, key) {
     parent[key] = me.initField(parent[key], parent);
-    var obj = me.root = me.create(parent, key, false);
+    var obj = me.root = me.create(parent, key);
     initModel(obj);
     me.updateWatchers();
     obj.trigger('load');
@@ -473,7 +473,8 @@ mkn.render = function(options)
     field.html = field.html.trim().replace(/\$tag(\W)/, field.tag+'$1');
     var table_tag = isTableTag(field.tag);
     var obj = table_tag? $('<'+field.tag+'>'): $(field.html);
-    if (field.is_body) obj = $('body').html(obj.html());
+    if (field.is_body)
+      obj = $('body').append(obj.html());
     if (this.sink === undefined) this.sink = obj;
     var reserved = ['id', 'create', 'css', 'script', 'name', 'desc', 'data'];
     setAttr(obj, field);
@@ -547,8 +548,10 @@ mkn.render = function(options)
       setStyle(obj, field);
       setClass(obj, field);
       target.replaceWith(obj);
-      var target_classes = target.selector.regexCapture(/(\.\w[\w\.]*)$/g);
-      if (target_classes.length) obj.addClass(target_classes[0].replace('.', ' '));
+      if (target.selector) {
+        var target_classes = target.selector.regexCapture(/(\.\w[\w\.]*)$/g);
+        if (target_classes.length) obj.addClass(target_classes[0].replace('.', ' '));
+      }
     });
   }
 

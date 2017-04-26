@@ -123,7 +123,6 @@ var mkn = new function() {
       data.fields.name = toTitleCase(data.path.split('/').pop().replace('_',' '));
     data.fields.path = data.path;
     data.fields.sub_page = false;
-    var is_body = data.fields.type == 'body';
     var r = new mkn.render({invoker: parent, types: data.types, id: id, key: options.key, request: options.request} );
     var object = r.render(data, 'fields');
     data.values = values;
@@ -160,10 +159,11 @@ var mkn = new function() {
         if (modal.fields.title_bar) mkn.replaceVars(page.fields, modal.fields.title_bar, {recurse: true});
         if (modal.fields.close_button) mkn.replaceVars(page.fields, modal.fields.close_button, {recurse: true});
         modal = mkn.createPage(options,modal);
-        modal.removeAttr('id').show();
+        modal.removeAttr('id');
         var dialog = modal.find('.modal-dialog');
-        dialog.append(obj).draggable({handle: ".modal-title-bar"});
-        modal.appendTo('body');
+        dialog.append(obj);
+        dialog.draggable({handle: ".modal-title-bar"});
+        modal.appendTo($('body')).show();
         defer.resolve(dialog, page, field);
       });
     });

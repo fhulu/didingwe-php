@@ -47,10 +47,6 @@ blank:
   text: ""
   class: [inline-block]
 
-body:
-  type: container
-  is_body: true
-
 bookmark:
   tag: div
   title: $id
@@ -875,5 +871,8 @@ watermark:
   background-position: $imagex $imagey
   background-color: $fill
 
+window:
+  type: container
+  is_body: true
 
 ...
