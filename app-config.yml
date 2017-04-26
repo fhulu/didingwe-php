@@ -18,8 +18,9 @@ css:
   - /common/font-awesome/css/font-awesome.min.css
   - /common/didi.css
 scripts:
-  - /common/jquery/jquery-min.js
-  - /common/jquery/jquery-ui.min.js
+  - /common/jquery/jquery-3.2.1.min.js
+  - /common/jquery/jquery-migrate-1.4.1.min.js
+  - /common/jquery/jquery-ui-1.12.1/jquery-ui.min.js
   - /common/mukoni.jquery.js
   - /common/mkn.js
   - /common/mkn.render.js
