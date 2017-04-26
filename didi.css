@@ -684,6 +684,7 @@ li.paragraph {text-indent: -1em }
 .background-tallest{ background-size: auto 100% }
 .background-largest{ background-size: 100% 100%}
 .background-top { background-position: top}
+.background-clear { background-color: initial }
 
 .scroll-table { table-layout: fixed}
 .scroll-table>thead,.scroll-table>tbody { float:left; width: 100%; display: block;table-layout: fixed}
