@@ -12,7 +12,6 @@ menu_item:
   tag: li
   url: /$id
   mutable: [url]
-  trap: [click]
   type: container
   contents: [menu_link]
   attr: { tabindex: $number, title: $desc}
@@ -42,5 +41,7 @@ sub_menu_dropdown:
 sub_menu_item:
   type: menu_item
   text: { type: sub_menu_link }
+  trap: [click]
+
 
 sub_menu_link: { type: menu_link }
