@@ -1285,6 +1285,7 @@ mkn.render = function(options)
         var prefix = "get_"+id+"_";
         vars.forEach(function(index) {
           var func = me.model[prefix+index];
+          if (func == undefined) return;
           var result = func(obj);
           var regex = "\\$\\{"+index+"\\}";
           if (new RegExp('^'+regex+'$','g').test(value))
