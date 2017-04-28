@@ -452,7 +452,6 @@ mkn.render = function(options)
     var obj = me.root = me.create(parent, key);
     initModel(obj);
     me.updateWatchers();
-    obj.trigger('load');
     return obj;
   }
 
@@ -526,14 +525,17 @@ mkn.render = function(options)
     obj.data('didi-field', field);
     if ('didi-functions' in field) obj.addClass('didi-watcher');
     field['mkn-object'] = obj;
+
+    if ($.isPlainObject(field.position))
+      obj.position(field.position);
+
     initLinks(obj, field).then(function() {
       if (subitem_count) setValues(obj, field);
       initEvents(obj, field);
+      obj.trigger('created', [field]);
     });
 
     if (key !== undefined) parent[key] = field;
-    if ($.isPlainObject(field.position))
-      obj.position(field.position);
     return obj;
   }
 
