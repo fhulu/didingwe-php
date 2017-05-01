@@ -541,7 +541,7 @@ mkn.render = function(options)
     return obj;
   }
 
-  this.createSubPage = function(field, target)
+  this.createSubPage = function(field, target, selector)
   {
     if (target == undefined)
      target = $('<span>').text('loading...');
@@ -552,10 +552,9 @@ mkn.render = function(options)
       setStyle(obj, field);
       setClass(obj, field);
       target.replaceWith(obj);
-      if (target.selector) {
-        var target_classes = target.selector.regexCapture(/(\.\w[\w\.]*)$/g);
-        if (target_classes.length) obj.addClass(target_classes[0].replace('.', ' '));
-      }
+      if (!selector) return;
+      var classes = selector.regexCapture(/(\.\w[\w\.]*)$/g);
+      if (classes.length) obj.addClass(classes[0].replace('.', ' '));
     });
   }
 
@@ -962,7 +961,7 @@ mkn.render = function(options)
     if (field.target === '_blank')
       window.open(url, field.target);
     else if (field.target)
-      me.createSubPage({url: url, key: field.key}, $(field.target));
+      me.createSubPage({url: url, key: field.key}, $(field.target), field.target);
     else
       document.location = url;
   }
