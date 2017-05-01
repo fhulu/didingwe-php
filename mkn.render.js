@@ -289,7 +289,7 @@ mkn.render = function(options)
     else {
       template = me.mergeType(mkn.copy(template));
       mkn.deleteKeys(field, ['type', 'attr', 'action', 'class', 'tag', 'html',
-       'style', 'styles', 'create','classes','template', 'templates', 'text', 'templated']);
+       'style', 'styles', 'create','classes','template', 'templates', 'text', 'templated', 'didi-functions']);
        mkn.deleteKeys(field, geometry);
        if (!('attr' in template)) template.attr = {};
        template.attr['for'] = item.id;
@@ -448,7 +448,7 @@ mkn.render = function(options)
   }
 
   this.render = function(parent, key) {
-    parent[key] = me.initField(parent[key], parent);
+    var field = parent[key] = me.initField(parent[key], parent);
     var obj = me.root = me.create(parent, key);
     initModel(obj);
     me.updateWatchers();
@@ -460,6 +460,7 @@ mkn.render = function(options)
     var field = key===undefined? parent: parent[key];
     if (!field) field = types[key];
     if (init) field = this.initField(field, parent);
+    if (field.parent_page === undefined) field.parent_page = me.id;
     if (field.sub_page) {
       var tmp = $('<div>loading...</div>');
       this.createSubPage(parent[key], tmp);
@@ -508,6 +509,7 @@ mkn.render = function(options)
 
       if (!value.path) value.path = field.path+'/'+code;
       if (value.id === undefined) value.id = code;
+      value.parent_page = field.parent_page;
       var child = this.create(field, code, true);
       if (table_tag)
         obj.append(child)
@@ -1229,7 +1231,8 @@ mkn.render = function(options)
 
   var initModel = function(parent) {
     var vars = [];
-    var field =parent.data('didi-field');
+    var field = parent.data('didi-field');
+    var parent_id = field.id;
 
     // add initial vars
     if (field.dd_init) $.each(field.dd_init, function(key) {
@@ -1239,7 +1242,7 @@ mkn.render = function(options)
     // add input vars
     parent.find('input,select,textarea').addBack('input,select,textarea').each(function() {
       var field = $(this).data('didi-field');
-      if (!field) return;
+      if (!field || field.parent_page != parent_id) return;
       var id = getModelId(field);
       if (vars.indexOf(id) < 0) vars.push(id);
     });
@@ -1253,6 +1256,7 @@ mkn.render = function(options)
     // append watchers functions
     parent.find('.didi-watcher').addBack('.didi-watcher').each(function() {
       var field = $(this).data('didi-field');
+      if (!field || field.parent_page != parent_id) return;
       funcs = funcs.concat(field['didi-functions']);
     });
     if (!funcs.length) return;
@@ -1285,6 +1289,7 @@ mkn.render = function(options)
         var prefix = "get_"+id+"_";
         vars.forEach(function(index) {
           var func = me.model[prefix+index];
+          if (func === undefined) return;
           var result = func(obj);
           var regex = "\\$\\{"+index+"\\}";
           if (new RegExp('^'+regex+'$','g').test(value))
@@ -1297,10 +1302,15 @@ mkn.render = function(options)
         });
       })
     }
+    var root_field = me.root.data('didi-field');
+    if (!root_field) return;
+    var root_id = root_field.id;
+
     me.root.find('.didi-watcher').addBack('.didi-watcher').each(function() {
       var obj = $(this);
       var field = obj.data('didi-field');
-      var id = field.id
+      if (!field || field.parent_page != root_id) return;
+      var id = field.id;
       update(obj, field, id);
       update(obj, field.style, id);
       update(obj, field.class, id);
