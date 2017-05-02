@@ -646,6 +646,9 @@
         me.setRowData(tr, data);
         me.adjustWidths();
       })
+      .on('removeRow', function(e, key) {
+        me.getRowByKey(key).remove();
+      })
     },
 
     setRowData: function(tr, data)
