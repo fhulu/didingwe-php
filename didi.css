@@ -419,13 +419,13 @@ li.paragraph {text-indent: -1em }
 
 /* spacing between - relative */
 .hspace-tiny+.hspace-tiny{margin-left:1%}
-.vspace-tiny+.vspace-tiny{display:block;margin-top:1%}
+.vspace-tiny+.vspace-tiny:before{content:"";display:block;margin-top:1%}
 .hspace-small+.hspace-small{margin-left:2%}
-.vspace-small+.vspace-small{display:block;margin-top:2%}
+.vspace-small+.vspace-small:before{content:"";display:block;margin-top:2%}
 .hspace+.hspace,.hspace-medium+.hspace-medium{margin-left:4%}
-.vspace+.vspace,.vspace-medium+.vspace-medium{display:block;margin-top:4%}
+.vspace+.vspace:before,.vspace-medium+.vspace-medium:before{content:"";display:block;margin-top:4%}
 .hspace-large+.hspace-large{margin-left:6%}
-.vspace-large+.vspace-large{display:block;margin-top:6%}
+.vspace-large+.vspace-large:before{content:"";display:block;margin-top:6%}
 
 /* text alignment */
 .left-text { text-align: left; }
