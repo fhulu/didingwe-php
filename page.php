@@ -1587,7 +1587,7 @@ class page
     $this->foreach = false;
     $this->broken = false;
     foreach($data as $row) {
-      $this->answer = array_merge($this->answer, $row);
+      $this->answer = null_merge($this->answer, $row);
       foreach($args as $arg) {
         if ($this->reply($arg) === false) return false;
       }
