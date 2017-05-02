@@ -960,8 +960,10 @@ mkn.render = function(options)
     if (!url) return;
     if (field.target === '_blank')
       window.open(url, field.target);
-    else if (field.target)
+    else if (field.target) {
+      mkn.closeDialog(me.sink);
       me.createSubPage({url: url, key: field.key}, $(field.target), field.target);
+    }
     else
       document.location = url;
   }
