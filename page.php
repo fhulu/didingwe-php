@@ -1230,7 +1230,7 @@ class page
   static function show_dialog($dialog, $options=null, $values = null)
   {
     page::respond('show_dialog', $dialog);
-    $options['values'] = $values;
+    if ($values) $options['values'] = $values;
     if (!is_null($options)) page::respond('options', $options);
   }
 
