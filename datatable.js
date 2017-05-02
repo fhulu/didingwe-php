@@ -429,12 +429,16 @@
     {
       if (td.attr('field') == 'actions')
         return this.createRowActions(td, value);
+
+      if (td.hasClass('expandable'))
+        return td.find('.text').eq(0).text(value);
+
       var obj = td.children().eq(0);
-      if (!obj.exists()) {
-        td.html(value).attr('title', value);
-        return;
-      }
+      if (!obj.exists())
+        return td.text(value).attr('title', value);
+
       obj.value(value);
+      return td;
     },
 
     bindAction: function(obj, props, sink, path)
@@ -499,6 +503,8 @@
         }
       })
       td.addClass('expandable');
+      var span = $('<span>').addClass('text').text(td.text());
+      td.text('').append(span);
       this.createAction('expand', undefined, tr).prependTo(td);
       this.createAction('collapse', undefined, tr).prependTo(td).hide();
     },
