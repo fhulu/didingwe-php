@@ -864,12 +864,6 @@ vspaced:
 watermark:
   image: $id.png
   background-image: url("$image_path/$image")
-  repeat: no-repeat
-  imagex: left
-  imagey: center
-  background-repeat: $repeat
-  background-position: $imagex $imagey
-  background-color: $fill
 
 window:
   type: container
