@@ -459,7 +459,7 @@ mkn.render = function(options)
   {
     var field = key===undefined? parent: parent[key];
     if (!field) field = types[key];
-    if (init) field = this.initField(field, parent);
+    if (init === undefined || init) field = this.initField(field, parent);
     if (field.parent_page === undefined) field.parent_page = me.id;
     if (field.sub_page) {
       var tmp = $('<div>loading...</div>');
