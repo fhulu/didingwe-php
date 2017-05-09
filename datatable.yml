@@ -2,6 +2,7 @@ datatable:
   head: ""
   tooltip: false
   type: table
+  text: $head $body $no_records
   class: [data,didi-listener]
   create: datatable
   head: { class: [didi] }
@@ -64,6 +65,9 @@ datatable:
   footer_actions:
     - type: actioner
 
+  no_records:
+    type: datatable_no_records
+    show: no
 
   collapse:
     name: "-"
@@ -111,3 +115,9 @@ image_row_action:
   tag: i
   name: " "
   class: [fa, no-backcolor, pad-x pad-tiny, float-right, cursor-pointer]
+
+
+datatable_no_records:
+  type: p
+  name: No records found.
+  class: [datatable-no-records]

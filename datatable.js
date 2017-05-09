@@ -40,6 +40,8 @@
       me.showHeader();
       me.showTitles();
       me.createRowBlueprint();
+      if (this.options.no_records)
+        this.no_records = this.element.find('#no_records');
       me.head().toggle(me.hasFlag('show_titles') || me.hasFlag('show_header') || me.hasFlag('filter'));
       me.showFooterActions();
       me.showData();
@@ -133,6 +135,9 @@
         return;
       }
       if (this.options.page_size !== undefined) this.showPaging(parseInt(data.total));
+
+      if (data.data.length == 0 && this.body().children().length == 0 && this.no_records) 
+        this.element.replaceWith(this.no_records.show());
 
       for(var i in data.data) {
         this.addRow(data.data[i]);
