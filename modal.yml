@@ -1,0 +1,22 @@
+modal:
+  type: container
+  class: [modal, center-contents]
+  contents: [$dialog]
+  attr: { id: ""}
+  dialog:
+    type: container
+    attr: { id: ""}
+    class: [modal-dialog,relative,inline-block,white,brand-text]
+    derive: [title_bar,close_button,body]
+    contents: [$title_bar,$body]
+  title_bar:
+    tag: div
+    class: [modal-title-bar, widest,pad,center-text,cursor-pointer]
+    derive: [close_button]
+    text: $name $close_button
+
+  close_button:
+    tag: div
+    name: ""
+    class: [modal-close-button,float-right, cursor-pointer, fa fa-times]
+    action: close_dialog

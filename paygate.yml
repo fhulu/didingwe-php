@@ -1,5 +1,14 @@
+payweb:
+  name: PayGate Electronic Payment Interface
+  class: [biggest, borderless]
+  type: iframe
+  src: /?page=paygate/request
+  modal:
+    dialog:
+      class: [col s12 m10 l9]
+
 request:
-  styles: [widest]
+  class: [widest]
   desc: ""
   tag: form
   attr:
@@ -16,59 +25,49 @@ request:
     - EMAIL
     - CHECKSUM
   values:
-    - read_session: [paygate_amount,user_email]
-    - sql_insert: [payment, payer_id: $pid, user_id: $uid, amount: $paygate_amount, status: pend, method: creditc ]
-    - sql_values: select now() TRANSACTION_DATE
-    - read_values:
+    - read_session: [paygate_amount]
+    - collection.values: [session, $sid, partner, partner.currency, user, user.email, start_time: /now(), paygate_amount: /round($paygate_amount)]
+    - collection.insert: [payment, "", partner, user, session: $sid, amount: $paygate_amount, status: pending, payment_method: credit_card, start_time]
+    - write_session: [new_payment_id]
+    - read_config: [paygate_id,paygate_secret]
+    - if "$currency" == '': { read_config: currency }
+    - read_server: [BASE_URL]
+    - let:
         PAYGATE_ID: $paygate_id
         REFERENCE: $new_payment_id
         AMOUNT: $paygate_amount
-        CURRENCY: ZAR
-        RETURN_URL: $server_host/?path=paygate/response
-        EMAIL: $user_email
+        CURRENCY: $currency
+        RETURN_URL: $BASE_URL?page=paygate/response
+        TRANSACTION_DATE: $start_time
+        EMAIL: $email
         SECRET: $paygate_secret
     - sql_values: >
         select md5('$PAYGATE_ID|$REFERENCE|$AMOUNT|$CURRENCY|$RETURN_URL|$TRANSACTION_DATE|$EMAIL|$SECRET') CHECKSUM
-    - trigger: .submit
-    - clear_values: [paygate_amount]
+    - trigger: ".submit,#page"
+    - audit:
+        action: Start Electronic Transaction
+        detail: "Amount: $AMOUNT Reference: $REFERENCE"
+    - keep_values: [PAYGATE_ID,REFERENCE,AMOUNT,CURRENCY,RETURN_URL,TRANSACTION_DATE,EMAIL,CHECKSUM]
 
 response:
   type: input_page
-  name: Complete Electronic Payment
-  desc: >
-    This the the result of the Paygate process:
   inputs:
-    - type: info_text
-    - amount
     - status
-    - result_description
-    - authorisation_code
-    - reference
   values:
-    - read_session
-    - sql_values: select round($paygate_amount/100,2) amount, if ('$status'='appr','Success', 'Failed') status
-    - let:
-        result_description: $paygate_result
-        authorisation_code: $paygate_auth_code
-        reference: $paygate_trx_id
-    - clear_session: [paygate_amount, paygate_status, paygate_result, paygate_auth_code, paygate_trx_id]
-  read:
+    - read_config: paygate_secret
     - sql_values: >
         select md5("$PAYGATE_ID|$REFERENCE|$TRANSACTION_STATUS|$RESULT_CODE|$AUTH_CODE|$AMOUNT|$RESULT_DESC|$TRANSACTION_ID|$RISK_INDICATOR|$paygate_secret") calc_checksum
-    - sql_values: select if('$TRANSACTION_STATUS'='1' and '$calc_checksum' = '$CHECKSUM', 'appr', 'reje') status
-    - write_session:
-        - paygate_status: $TRANSACTION_STATUS
-        - paygate_result: $RESULT_DESC
-        - paygate_auth_code: $AUTH_CODE
-        - paygate_trx_id: $TRANSACTION_ID
-        - paygate_amount: $AMOUNT
+    - sql_values: select if('$TRANSACTION_STATUS'='1' and '$calc_checksum' = '$CHECKSUM', 'approved', 'failed') status
+    - collection.update:
+        - payment
+        - $REFERENCE
         - status
-    - sql_values: select id payment_id, payer_id partner_id from payment where id = '$REFERENCE'
-    - sql_update: [payment, id: $REFERENCE, status, reference1: $TRANSACTION_ID, reference2: $AUTH_CODE ]
-    - sql_insert:
-        - audit_trail
-        - partner: $partner_id
-        - user: $uid
-        - action: Complete Electronic Payment
-        - detail: >
-            Transaction ID: $TRANSACTION_ID Auth Code: $AUTH_CODE Amount: $AMOUNT Result: $RESULT_DESC
+        - status_reason: $RESULT_DESC
+        - reference1: $TRANSACTION_ID
+        - authorisation_code: $AUTH_CODE
+        - end_time: /now()
+    - audit:
+        action: Complete Electronic Payment
+        detail: "Transaction ID: $TRANSACTION_ID Auth Code: $AUTH_CODE Amount: $AMOUNT Result: $RESULT_DESC"
+    - read_session: paygate_handler
+    - trigger: [paygate_$status, $paygate_handler]

@@ -1,5 +1,4 @@
 <?php
-$config = load_yaml(".config.yml", true);
 
 function at($array, $index)
 {
@@ -122,23 +121,20 @@ register_shutdown_function('caught_fatal');
 function merge_options()
 {
   $merge = function($options1, $options2) use(&$merge) {
-    if (!is_array($options1)|| $options1 == $options2) return $options2;
-    if (!is_array($options2)) return $options1;
+    if (is_null($options2)) return $options1;
+    if (!is_array($options1) || $options1 == $options2) return $options2;
+    if (!is_array($options2)) return $options2;
     if (!is_assoc($options1) && !is_assoc($options2)) {
       if ($options2[0] != '_reset') return array_merge($options1, $options2);
       array_shift($options2);
       return $options2;
     }
-    $result = $options2;
-    foreach($options1 as $key=>$value ) {
-      if (!array_key_exists($key, $result)) {
+    $result = $options1;
+    foreach($options2 as $key=>$value ) {
+      if (array_key_exists($key, $result))
+        $result[$key] = $merge($result[$key], $value);
+      else
         $result[$key] = $value;
-        continue;
-      }
-      if (!is_array($value)) continue;
-      $value2 = $result[$key];
-      if (!is_array($value2)) continue;
-      $result[$key] = $merge($value, $value2);
     }
     return $result;
   };
@@ -210,7 +206,7 @@ function replace_fields(&$options, $context, $recurse=false)
   }
   $replaced = false;
   walk_recursive_down($options, function(&$value) use(&$context, &$replaced) {
-    if (!is_string($value)) return;
+    if (!is_numeric($value) && !is_string($value)) return;
     $new = replace_vars($value, $context);
     if ($new != $value) {
       $replaced = true;
@@ -267,7 +263,7 @@ function expand_function($func)
 {
   $matches = array();
 
-  if (!preg_match('/^(\w+)(?:\((.*)\))?$/', trim($func), $matches))
+  if (!preg_match('/^(\w[\w.]+)(?:\((.*)\))?$/', trim($func), $matches))
     throw new Exception("Invalid function specification --$func--");
   $name = $matches[1];
   $args = $matches[2];
@@ -327,4 +323,21 @@ function to_array($obj)
 function is_function($str)
 {
   return preg_match('/(\w+::)?\w+\(.*\)$/', $str);
+}
+
+function echo_scripts($scripts, $template) {
+  if (!$scripts) return;
+  foreach($scripts as $script) {
+    echo str_replace('$script', $script, $template);
+  }
+}
+
+function implode_quoted($array, $separator=",", $quote="'")
+{
+  return $quote . implode($separator, $array) . $quote;
+}
+
+function on_null($val, $default)
+{
+  return is_null($val)? $default: $val;
 }

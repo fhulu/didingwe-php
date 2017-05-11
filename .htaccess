@@ -1,8 +1,7 @@
-Require all granted
+php_value date.timezone 'Africa/Johannesburg'
 Options +Indexes
 RewriteEngine on
-RewriteRule ^index.html$ index.php?path=index&content=home  [L]
-RewriteRule ^([\w\/]+)(?:<(.*))?$ index.php?path=index&content=$1&$2 [L]
-<Files ~ ".yml">
-  Require all denied
-</Files>
+RewriteRule ^index\.(php|html?)$ index.php [L]
+RewriteRule ^(\w+[\w\/]*)(?:\?(.+))?$ index.php?path=$1&$2 [NC,L,QSA]
+RewriteRule \.(yml|conf)$ - [R=404,NC,L]
+RewriteRule ^\.git(/?|/.*)$ - [R=404,NC,L]

@@ -131,7 +131,7 @@ PATTERN;
     else
       $rows = $db->page_indices($sql, $page_size, $offset, $callback);
     $total = $db->row_count();
-    return array('rows' => $rows, 'total' => $total);
+    return array('data' => $rows, 'total' => $total);
   }
 
   static function is_display($field)

@@ -10,15 +10,16 @@ menu:
 
 menu_item:
   tag: li
-  parent_name: $name
   url: /$id
-  trap: [click]
-  text: { type: menu_link }
+  mutable: [url]
+  type: container
+  contents: [menu_link]
+  attr: { tabindex: $number, title: $desc}
 
 menu_link:
   tag: a
-  derive: [parent_name]
-  text: $parent_name
+  derive: [desc]
+  name: $parent_name
 
 sub_menu:
   type: menu_item
@@ -40,5 +41,7 @@ sub_menu_dropdown:
 sub_menu_item:
   type: menu_item
   text: { type: sub_menu_link }
+  trap: [click]
+
 
 sub_menu_link: { type: menu_link }

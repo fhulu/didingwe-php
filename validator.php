@@ -18,6 +18,8 @@ class validator
   var $checked_provided;
   var $report_error;
   var $failed_auto_provided;
+  var $valids;
+  var $tested;
   function __construct($request, $fields, $predicates=null, $db_conn=null)
   {
     $this->request = $request;
@@ -28,6 +30,8 @@ class validator
     $this->has_error = false;
     $this->report_error = true;
     $this->checked_provided = false;
+    $this->valids = [];
+    $this->tested = [];
     global $db;
     $this->db = is_null($db_conn)? $db: $db_conn;
   }
@@ -127,6 +131,7 @@ class validator
   {
     $validator = new validator($this->request, $this->fields, $this->predicates, $this->db);
     log::debug("DEPENDS $field $arg");
+    $validator->valids = $this->valids;
     return $validator->check($field)->is($arg);
   }
 
@@ -251,11 +256,17 @@ class validator
       }
     }
 
+    global $page;
     foreach($funcs as $func) {
       list($func, $args) = validator::expand_function($func);
       $this->update_args($args);
-
-      if (validator::is_static_method($func)) {
+      $module_method  = $page->get_module_method($func);
+      if ($module_method) {
+        list($context, $method) = $module_method;
+        $result = call_user_func_array(array($context, $method), $args);
+        array_shift($args);
+      }
+      else if (validator::is_static_method($func)) {
         array_unshift($args, $func);
         $func = 'call';
         $result = call_user_func_array(array($this, $func), $args);
@@ -394,6 +405,7 @@ class validator
   {
     $sql = implode(',', func_get_args());
     $sql = replace_vars($sql, $this->request);
+    $sql = str_replace('$name', $this->name, $sql);
     if (preg_match('/^(update|insert)\b/ims',$sql)) {
       $this->db->exec($sql);
       return true;
@@ -423,4 +435,21 @@ class validator
     return $this->sql($sql);
   }
 
+  function validate($code, $value, $valid)
+  {
+    $result = $this->check($code, $value)->is($valid);
+    if ($result === true) $this->valids[] = $code;
+    $this->tested[] = $code;
+    return $result;
+  }
+
+  function validated()
+  {
+    return in_array($this->name, $this->valids, true);
+  }
+
+  function checked($code)
+  {
+    return in_array($code, $this->tested, true);
+  }
 }

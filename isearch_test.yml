@@ -1,35 +1,29 @@
 include: [isearch]
 
-test:
+isearch_test:
   desc: Test iSearch
   type: input_page
   inputs:
     - country: { type: isearch }
-    # - bound: { value: <didi test }
+    - bound: { value: <didi test }
   actions: [test]
   post: [write_session: $test]
 
 
 country:
-  table: country
-  # sql: select code, name from country
-  fields: [code, name]
-  flags: [show_all]
-  add: { url: /isearch_test/add }
+  adder: { url: /isearch_test/add }
   drop: { max-height: 180px }
   option:
-    embolden: $name ($value)
+    type: container
     country: $value
-    label: { derive: [embolden], text: $embolden }
-    text: [$label,$flag]
+    label: { derive: [value], name: $parent_name ($value) }
+    contents: [$label, $flag]
     flag:
       type: flag_icon
       class: [float-right]
-      derive: [value]
-      country: $value
+      derive: [country]
 
 add:
-  access: reg
   desc: Add new country
   width: 600
   header_class: [rounded-xlarge,^w3-blue-grey, white]
@@ -42,14 +36,16 @@ add:
     - add: { class: [^rounded-xlarge] }
     - close: {action: close_dialog}
   post:
-    - sql_insert: [country, code: $new_country_code, name: $new_country_name]
+    - collection.insert: [country, $new_country_code, name: $new_country_name]
     - close_dialog
-    - trigger: [isearch_add,"#country", [$new_country_code, $new_country_name] ]
+    - trigger: [added,"#country", [$new_country_code, $new_country_name] ]
 
 new_country_code:
   name: Country Code
-  valid: unique(country.code)
+  valid: not(collection(country,$value))
+  error: Country code already exists
 
 new_country_name:
   name: Country Name
-  valid: unique(country.name)
+  valid: collection_unique(country,name)
+  error: Country name already exists

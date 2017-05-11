@@ -16,19 +16,27 @@ $.fn.filterText = function(text) {
 
 $.fn.setValue = function(val)
 {
+  if ($.isPlainObject(val) || $.isArray(val)) return this;
+
+  if (this.hasAttr('template'))
+    val = this.attr('template').replace(/\$value/,val);
+
   if (this.is("a")) {
-    var proto = this.attr('proto')==undefined? '': this.attr('proto');
-    if (val == null)
-      this.attr('href', '');
-   else
-      this.attr('href', proto+val);
-    return this;
+    if (val == null) val = '';
+    return this.attr('href', val);
   }
   var type = this.attr('type');
   if (type === 'checkbox') {
     var values = this.attr('values');
     if (values != '') val = values.indexOf(val);
     return this.prop('checked', val);
+  }
+
+  if (type == 'radio') {
+    var parent = this.closest('.radiogroup');
+    var checked = parent.find("[type=radio][name='"+this.attr('name')+"'][value='"+val+"']");
+    checked.prop('checked', true);
+    return this;
   }
 
   if (this.is('select')) {
@@ -41,6 +49,7 @@ $.fn.setValue = function(val)
     return this;
   }
 
+  if (typeof val == 'string')  val = mkn.escapeHtml(val);
   if (this.hasAttr('value'))
     return this.val(val);
   return this.html(val);
@@ -56,7 +65,8 @@ $.fn.getValue = function()
     return values.split(',')[val];
   }
   if (type === 'radio') return this.filter(':checked').val();
-  return this.is('input,select,textarea')? this.val(): this.text();
+  if (this.is('input,select,textarea')) return this.val();
+  return this.is('[value]')? this.attr('value'): this.text();
 }
 
 $.fn.value = function(val)
@@ -81,7 +91,7 @@ $.fn.values = function()
   this.find('.checkgroup').updateCheckGroupValue();
   var data = {};
   var delta = [];
-  this.filter('input,textarea,select,.checkgroup').each(function() {
+  this.filter('input,textarea,select,.checkgroup,:not(option)[value]').each(function() {
     var ctrl = $(this);
     var name = ctrl.hasAttr('name')? ctrl.attr('name'): ctrl.attr('id');
     if (name === undefined || name.trim() == '') return true;
@@ -136,7 +146,8 @@ $.send = function(url, options, callback)
     });
 
     progress.timeout = setTimeout(function() {
-      progress.box.html('<p>'+options.progress+'</p').show();
+      progress.box.find(".message").text(options.progress);
+      progress.box.show();
     }, 500);
 
     if (options.error ===undefined) {
@@ -190,6 +201,18 @@ $.fn.json = function(url, options, callback)
     options = undefined;
   }
   var data = $(this).values();
+  var prefix = options.post_prefix;
+  if (prefix) {
+    delete options.post_prefix;
+    var result = {};
+    $.each(data, function(key, value) {
+      if (key == 'delta') return;
+      result[prefix+key] = value;
+    });
+    data = result;
+  }
+
+
   if (options !== undefined)
     data = $.extend({}, options.data, data);
 
@@ -522,7 +545,7 @@ $.fn.bindFirst = function(name, fn)
 
   // Thanks to a comment by @Martin, adding support for
   // namespaced events too.
-  this.each(function() {
+  return this.each(function() {
       var handlers = $._data(this, 'events')[name.split('.')[0]];
       // take out the handler we just inserted from the end
       var handler = handlers.pop();
@@ -530,3 +553,7 @@ $.fn.bindFirst = function(name, fn)
       handlers.splice(0, 0, handler);
   });
 };
+
+$.fn.findByAttribute = function(attr, value) {
+  return this.find("["+attr+"='"+escape(value)+"']");
+}

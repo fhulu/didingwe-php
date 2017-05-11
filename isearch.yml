@@ -1,52 +1,49 @@
 isearch:
-  type: input
+  type: container
   create: isearch
   placeholder: Search $name
   script: [/common/isearch.js]
   css: [/common/isearch.css]
-  class: [ isearch ]
-  inputs:
-    classes: div
-    class: [isearch,inline-block,borderless]
-    derive: [search,buttons,width,placeholder,add,show_all]
-    text: $search $buttons
-  search:
+  class: [ isearch,relative]
+  contents: [ $searcher, $buttons, $drop]
+  searcher:
     type: input
-    class: [search,widest,pad,borderless]
     derive: [placeholder]
-    attr: { id: "", name: "", placeholder: $placeholder }
+    attr: { placeholder: $placeholder }
+    class: [isearch-searcher, widest, pad pad-small]
   buttons:
+    class: [overlay absolute top-right, pad pad-tiny]
     type: container
-    class: [isearch,buttons,top-right,pad-y]
-    derive: [add,show_all]
-    contents: [$show_all, $add]
-  show_all:
-    type: google_icon
-    icon: arrow_drop_down
-    class: [isearch, show-all,text-dark-grey]
-    tooltip: Show all items
-    show: yes
-  add:
-    type: google_icon
-    width: auto
-    class: [isearch,add, text-dark-grey]
+    derive: [name,adder,dropper]
+    contents: [$adder,$dropper]
+  adder:
+    tag: label
+    text: +
+    class: [isearch-adder,pad-x pad-tiny,inline-block, pointer-cursor]
     derive: [name]
-    tooltip: Add new $name
+    desc: Add a new $name
     action: dialog
+    show: no
+  dropper:
+    type: [font_awesome,fanthom]
+    icon: caret-down
+    class: [isearch-dropper, pad-x pad-tiny, inline-block, pointer-cursor]
+    desc: Show all items
   drop:
-    tag: ul
-    class: [isearch,drop,absolute,scroll-y,widest,nomargin,nopad,white,shadow]
+    type: container
+    class: [isearch-drop,overlay,fixed,scroll-y]
     text: ""
     height: auto
     show: no
     autoload: 10
   option:
-    tag: a
-    class: [isearch,option,block,nomargin,undecorated,pad,hover-light-grey]
+    type: anchor
+    class: [isearch-option,block,nomargin,undecorated,pad pad-small,hover-light-grey]
     value: $1
+    chosen: $2
     name: $2
-    embolden: $name
-    text: $embolden
-    attr: { id: $value, value: $value, chosen: $name }
-  post:
-    - call: isearch::q(context)
+    embolden: [name]
+    attr: { id: "", name: "", value: $value, chosen: $chosen }
+  search_fields: name asc
+  search_collection: $id
+  post: []

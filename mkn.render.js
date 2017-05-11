@@ -1,10 +1,7 @@
 mkn.links = {};
-mkn.model = {};
 
 mkn.render = function(options)
 {
-  var searchModelRegex = /^~(.+)$|`([^`]+)`/g
-  var evalModelRegex = /(^~.+|`[^`]+`)/g
   var me = this
   me.invoker = options.invoker;
   var types = me.types = options.types;
@@ -13,7 +10,6 @@ mkn.render = function(options)
   me.sink = undefined;
   me.parent = options.parent;
   me.known = {};
-  me.root = {};
 
   var array_defaults = [ 'type', 'types', 'template', 'action', 'attr', 'wrap', 'default'];
   var geometry = ['left','right','width','top','bottom','height', 'line-height','max-height', 'max-width'];
@@ -107,69 +103,124 @@ mkn.render = function(options)
     if (!item.action && defaults.action) item.action = defaults.action;
     if (defaults.attr) item.attr = mkn.merge(item.attr,defaults.attr);
     if (!item.template) item.template = defaults.template;
+    if (defaults.default) item = mkn.merge(defaults.default, item);
     if (defaults.types)
-      item = mergeDefaultType(base, item, defaults.types.shift());
+      return mergeDefaultType(base, item, defaults.types.shift());
     else if (!item.type && defaults.type)
-      item = mergeDefaultType(base, item, defaults.type);
-    else
-      item = mkn.merge(base, item);
-    return defaults.default? mkn.merge(defaults.default, item): item;
+      return mergeDefaultType(base, item, defaults.type);
+    return mkn.merge(base, item);
   }
 
 
-  var removePopped = function(items, popped)
-  {
+  var removePopped = function(items, popped) {
     var i = items.length;
     while (i--) {
       var item = items[i];
-      if (popped.indexOf(item.id) >= 0)
+      if (popped.indexOf(item.id) >= 0 || item.id == 'pop')
         items.splice(i,1);
+    }
+}
+
+  var insertPushed = function(items, pushed) {
+    for (var i in pushed) {
+      var item = pushed[i];
+      var push = item.push;
+      delete item.push;
+      var pos = items.indexOf(item);
+      item = mkn.copy(item);
+      items.splice(pos, 1);
+      if (push === 'first')
+        items.unshift(item);
+      else if (push === 'last')
+        items.push(item);
+      else if (push == 'merge') {
+       pos = mkn.firstIndexOfKey(items, 'id', item.id);
+       items[pos] = mkn.merge(items[pos], item);
+      }
+      else
+        items.splice(mkn.firstIndexOfKey(items, 'id', push), 0, item);
+    }
+  }
+
+  var pushPop = function(items) {
+    var pushed = [];
+    var popped = [];
+    for(var i in items) {
+      var item = items[i];
+      if ($.isArray(item)) continue;
+      if (item.id == 'pop')
+        popped.push(item.name);
+      else if (item.push)
+        pushed.push(item);
+      items[i] = item;
+    }
+    removePopped(items, popped);
+    insertPushed(items, pushed);
+  }
+
+  var objectify = function(items) {
+    for (var i in items) {
+      var item = items[i];
+      if (typeof item==='string') item = mkn.toObject(item);
+      if (!$.isPlainObject(item)) continue;
+      var id = item.id;
+      if (id === undefined) {
+        var a = mkn.firstElement(item);
+        id = a[0];
+        if (array_defaults.indexOf(id) >=0 ) continue;
+        item = a[1];
+        if (typeof item == 'string') item = { name: item}
+        item = $.extend({}, item);
+      }
+      if (typeof item === 'string') item = { name: item }
+      item.id = id;
+      items[i] = item;
+    }
+  }
+
+  var mergeSubItems = function(parent,items) {
+    for(var i=0; i < items.length; ++i) {
+      var item = items[i];
+      if (!$.isPlainObject(item) || item.id !== 'merge') continue;
+      var array = parent[item.name];
+      if (!array) continue;
+      items.splice(i,1);
+      objectify(array);
+      array.forEach(function(value, j) {
+        items.splice(i+j,0,value);
+      });
     }
   }
 
   this.expandFields = function(parent_field, name, items, defaults)
   {
     if (!defaults) defaults = { template: "$field" };
-    var path = parent_field.path+'/'+name;
-    var pushed = [];
-    var popped = [];
+    var path = parent_field.path? parent_field.path + '/' + name: name;
+    objectify(items);
+    pushPop(items);
+    mergeSubItems(parent_field,items);
     var wrap;
     var sow = parent_field.sow;
     var removed = [];
+    var index = 0;
     for(var i in items) {
       var item = items[i];
       var id;
       var array;
       var template;
       removed.push(i);
-      if (typeof item==='string') item = mkn.toObject(item);
       if ($.isPlainObject(item)) {
         if (setDefaults(defaults, item, parent_field)) continue;
-        if (item.id === undefined) {
-          var a = mkn.firstElement(item);
-          id = a[0];
-          item = a[1];
-        }
-        else
-          id = item.id ;
-        if (item.merge) continue;
-        if (typeof item === 'string') {
-          item = { name: item };
-        }
+        id = item.id;
         if (id == 'query') {
           item.defaults = mkn.copy(defaults);
         }
 
-        if (id == 'pop') {
-          popped.push(item.name);
-          continue;
-        }
         if (id[0] == '$') {
           id = id.substr(1);
           item = mkn.merge(parent_field[id], item);
         }
         id = me.expandValue(parent_field, id);
-
         if (sow && sow.indexOf(id) >=0)
           item = mkn.merge(parent_field[id], item);
         promoteAttr(item);
@@ -185,7 +236,6 @@ mkn.render = function(options)
         array = item;
         id = item[0];
         item = mkn.copy(defaults);
-        if (array.length>1 && item.name === undefined) item.name = array[1]
         item.array = array;
       }
       else {
@@ -193,12 +243,12 @@ mkn.render = function(options)
       }
       item.id = id;
 
-      if (path)
+      if (path && !item.path)
         item.path = path + '/' + id;
       var template = item.template;
       if (template == 'none' || template  == '$field')
         delete item.template;
-      else if (typeof item.template == 'string') {
+      else if (typeof template == 'string') {
         var def = {};
         setDefaults(def, {template: template}, parent_field);
         item.template = def.template;
@@ -209,9 +259,10 @@ mkn.render = function(options)
         item.wrap = this.initField(item.wrap, parent_field);
         delete defaults.wrap;
       }
+
+      item = $.extend({ index: index, number: index+1},item);
+      ++index;
       item = this.initField(item, parent_field);
-      if (item.push)
-        pushed.push(item);
 
       if (item.template) initTemplate(item)
       items[i] = item;
@@ -220,26 +271,6 @@ mkn.render = function(options)
 
     for (var i in removed) {
       items.splice(removed[i]-i,1);
-    }
-
-    removePopped(items, popped);
-
-    for (var i in pushed) {
-      var item = pushed[i];
-      var push = item.push;
-      var pos = mkn.indexOfKey(items, 'id', item.id);
-      item = mkn.copy(item);
-      items.splice(pos, 1);
-      if (push === 'first')
-        items.unshift(item);
-      else if (push === 'last')
-        items.push(item);
-      else
-        items.splice(mkn.indexOfKey(items, 'id', item.push), 0, item);
-      if (item.wrap) {
-        items[pos].wrap = item.wrap;
-        delete item.wrap;
-      }
     }
   }
 
@@ -258,12 +289,15 @@ mkn.render = function(options)
     else {
       template = me.mergeType(mkn.copy(template));
       mkn.deleteKeys(field, ['type', 'attr', 'action', 'class', 'tag', 'html',
-       'style', 'styles', 'create','classes','template', 'templates', 'text', 'templated']);
+       'style', 'styles', 'create','classes','template', 'templates', 'text', 'templated', 'didi-functions']);
        mkn.deleteKeys(field, geometry);
        if (!('attr' in template)) template.attr = {};
        template.attr['for'] = item.id;
     }
-    item.template = me.initField(mkn.merge(field, template));
+    for (var key in field) {
+      if (key.indexOf('on_') == 0) delete field[key];
+    }
+    item.template = me.initField(mkn.merge(template, field));
   };
 
   this.expandFunction = function(value, parent_id)
@@ -312,6 +346,11 @@ mkn.render = function(options)
 
   this.expandArray = function(item)
   {
+    if (item.expand_data) {
+      item[item.expand_data] = item[item.expand_data].concat(item.array);
+      delete item.array;
+      return;
+    }
     $.each(item, function(key, value) {
       var matches = getMatches(value, /\$(\d+)/g);
       for (var i in matches) {
@@ -337,7 +376,9 @@ mkn.render = function(options)
 
   var deriveParent = function(parent, field)
   {
-    if (!parent || !field.derive) return;
+    if (!parent) return;
+    if (!field.parent_id) field.parent_id = parent.id;
+    if (!field.parent_name) field.parent_name = parent.name;
     for (var i in field.derive) {
       var key = field.derive[i];
       var value = field[key];
@@ -357,11 +398,12 @@ mkn.render = function(options)
       field = mkn.merge(field.template.subject, field);
       if (!field.template.tag) delete field.template;
     }
-    field = this.mergeType(field);
     deriveParent(parent, field);
     field = this.parentSow(parent, field);
+    field = this.mergeType(field);
 
     var id = field.id;
+    if (field.array && field.array.length>1 && field.name === undefined) field.name = field.array[1];
     if (id && field.name === undefined)
       field.name = toTitleCase(id.replace(/[_\/]/g, ' '));
     if (field.array)
@@ -386,7 +428,7 @@ mkn.render = function(options)
 
   var runJquery = function (obj, item) {
     if (!item.jquery) return;
-    expandVars(item,item.params);
+    mkn.replaceVars(item,item.params);
     obj.call(item.jquery, item.params);
   }
 
@@ -406,10 +448,10 @@ mkn.render = function(options)
   }
 
   this.render = function(parent, key) {
-    me.root = parent[key] = me.initField(parent[key], parent);
-    var obj = me.create(parent, key);
-    obj.trigger('load');
-    if (initModel()) me.updateWatchers();
+    var field = parent[key] = me.initField(parent[key], parent);
+    var obj = me.root = me.create(parent, key);
+    initModel(obj);
+    me.updateWatchers();
     return obj;
   }
 
@@ -417,22 +459,28 @@ mkn.render = function(options)
   {
     var field = key===undefined? parent: parent[key];
     if (!field) field = types[key];
-    if (init) field = this.initField(field, parent);
-    if (field.sub_page)
-      return this.createSubPage(parent, key);
-
+    if (init === undefined || init) field = this.initField(field, parent);
+    if (field.parent_page === undefined) field.parent_page = me.id;
+    if (field.sub_page) {
+      var tmp = $('<div>loading...</div>');
+      this.createSubPage(parent[key], tmp);
+      return tmp;
+    }
     var id = field.id;
     if (field.html === undefined) return null;
     field.text = this.expandValue(field, field.text);
     field.html = this.expandValue(field, field.html);
     field.html = field.html.trim().replace(/\$tag(\W)/, field.tag+'$1');
-    var table_tag = isTableTag(field.tag)
+    var table_tag = isTableTag(field.tag);
     var obj = table_tag? $('<'+field.tag+'>'): $(field.html);
+    if (field.is_body)
+      obj = $('body').append(obj.html());
     if (this.sink === undefined) this.sink = obj;
     var reserved = ['id', 'create', 'css', 'script', 'name', 'desc', 'data'];
     setAttr(obj, field);
     setClass(obj, field);
     setStyle(obj, field);
+    setModelFunctions(field);
     if (field.key === undefined) field.key = options.key;
     var values = $.extend({}, this.types, field);
     var matches = getMatches(field.html, /\$(\w+)/g);
@@ -459,8 +507,9 @@ mkn.render = function(options)
         continue;
       }
 
-      value.path = field.path+'/'+code;
-      value.id = code;
+      if (!value.path) value.path = field.path+'/'+code;
+      if (value.id === undefined) value.id = code;
+      value.parent_page = field.parent_page;
       var child = this.create(field, code, true);
       if (table_tag)
         obj.append(child)
@@ -475,29 +524,38 @@ mkn.render = function(options)
     setDisabled(obj, field);
 
     runJquery(obj, field);
+    obj.data('didi-field', field);
+    if ('didi-functions' in field) obj.addClass('didi-watcher');
     field['mkn-object'] = obj;
+
+    if ($.isPlainObject(field.position))
+      obj.position(field.position);
+
     initLinks(obj, field).then(function() {
       if (subitem_count) setValues(obj, field);
       initEvents(obj, field);
+      obj.trigger('created', [field]);
     });
 
     if (key !== undefined) parent[key] = field;
     return obj;
   }
 
-  this.createSubPage = function(parent, key)
+  this.createSubPage = function(field, target, selector)
   {
-    var tmp = $('<span>').addClass('loading');
-    var field = parent[key];
-    var path = field.path = field.url? field.url: field.id;
-    field.sub_page = undefined;
-    field.appendChild = false;
-    tmp.page($.extend({request: options.request}, field)).then(function(obj) {
+    if (target == undefined)
+     target = $('<span>').text('loading...');
+    delete field.sub_page;
+    delete field.appendChild;
+    field.path = field.url? field.url: field.id;
+    return mkn.showPage($.extend({request: options.request}, field), target).done(function(obj, result, field) {
       setStyle(obj, field);
-      tmp.replaceWith(obj);
-      parent[key] = field;
+      setClass(obj, field);
+      target.replaceWith(obj);
+      if (!selector) return;
+      var classes = selector.regexCapture(/(\.\w[\w\.]*)$/g);
+      if (classes.length) obj.addClass(classes[0].replace('.', ' '));
     });
-    return tmp;
   }
 
   this.createItems = function(parent, parent_field, name, items, defaults)
@@ -514,6 +572,7 @@ mkn.render = function(options)
       var item = items[i];
       var id = item.id;
       if (id == 'query') {
+        if (loading_data) continue;
         loading_data = true;
         this.loadData(parent, parent_field, name, item.defaults);
         continue;
@@ -556,7 +615,7 @@ mkn.render = function(options)
   {
     id = id || child.attr('id');
     field = field || id;
-    var new_id = "__new__"+id;
+    var new_id = "__new__"+id.replace(/[^\w]/g, '_');
     var new_html = "<div id="+new_id+"></div>";
     parent.replace("\\$"+field, new_html);
     parent.find('#'+new_id).replaceWith(child);
@@ -587,7 +646,7 @@ mkn.render = function(options)
     if (field.autoload || field.autoload === undefined) {
       $.json('/', serverParams('data', field.path+'/'+name, field.params), function(result) {
         respond(result, object);
-        object.trigger('loaded', [field, result]);
+        object.trigger('loaded', [field, result.data]);
       });
     }
 
@@ -611,34 +670,65 @@ mkn.render = function(options)
 
   }
 
-  var isWatchValue = function(value) {
-    return /\$@\w+/.test(value);
+  function initTimeEvents(obj, field) {
+    var functions = {every: 'Interval', after: 'Timeout' };
+    for (var key in functions ) {
+      if (!(key in field)) continue;
+      mkn.replaceVars(field, field[key], {recurse: true, sourceFirst: true});
+      var args = [field[key].slice(1)];
+      var timer = window['set'+functions[key]](function() {
+        accept(undefined, obj, field, args);
+      }, field[key][0]);
+      obj.data(key, timer);
+    }
+    obj.on('remove', function() {
+      for (var key in functions ) {
+        if (!(key in field)) continue;
+        window['clear'+functions[key]](obj.data(key));
+      }
+    });
   }
 
   var initOnEvents = function(obj, field) {
     var events = {};
     if (field.action)
       events['click'] = [field];
+    var id = field.id;
     $.each(field, function(key, value) {
       if (key.indexOf('on_') != 0) return;
       var event = key.substr(3);
       if (!(event in events)) events[event] = [];
       events[event].push(value);
+      if (!obj.hasClass('didi-listener')) obj.addClass('didi-listener')
     });
+    if ($.isEmptyObject(events)) return;
     $.each(events, function(key, values) {
       $.each(values, function(i, value) {
-        if (!value.path) value.path = field.path + '/on_' + key;
-        obj.on(key, function(e) {
+        if ($.isPlainObject(value) && !value.path) value.path = field.path + '/on_' + key;
+        var sink = obj;
+        if (obj.is('body') && key == 'scroll') sink = $(window);
+        sink.on(key, function(e) {
           // trap trapped events
           if ($.isArray(field.trap) && field.trap.indexOf(key) >=0 )
             e.stopImmediatePropagation();
 
+          if (obj.hasClass('disabled')) return;
           // ignore default action of an anchor
           if (key == 'click' && obj.prop("tagName").toLowerCase() == 'a') {
             e.preventDefault();
             if (field.url === undefined) field.url = obj.attr('href');
           }
-          accept(e, obj, value);
+          if ($.isPlainObject(value)) {
+            var params = Array.prototype.slice.call(arguments, 1);
+            value.params = mkn.merge(value.params, params);
+            mkn.replaceVars(value, value.params);
+            accept(e, obj, value);
+          }
+          else if ('didi-model' in field && 'on_'+key in field['didi-model']) {
+            var handler = me.model["on_"+key+"_"+ id];
+            handler.apply(obj, arguments);
+            me.updateWatchers();
+          };
         });
       });
     });
@@ -646,6 +736,7 @@ mkn.render = function(options)
 
   var initEvents = function(obj, field) {
     if ('attr' in field && field.attr.for == field.id) return;
+    initTimeEvents(obj, field);
     initOnEvents(obj, field);
     if (typeof field.enter == 'string') {
       obj.keypress(function(event) {
@@ -658,18 +749,18 @@ mkn.render = function(options)
       loadValues(obj, field);
     })
     .on('server_response', function(event, result) {
+      event.stopImmediatePropagation();
       respond(result);
     })
     initTooltip(obj);
 
-    var tag = obj.prop("tagName").toLowerCase();
-    if (['input','select','textarea'].indexOf(tag) < 0) return;
+    var tag = obj.prop("tagName");
+    if (!tag || ['input','select','textarea'].indexOf(tag.toLowerCase()) < 0) return;
 
-    var id = field.id;
+    var id = getModelId(field)
     obj.on('keyup input cut paste change', function() {
-      if (!(id in mkn.model)) return;
-      mkn.model[id] = obj.value();
-      me.updateWatchers();
+      if (me.model["set_"+id]($(this).value()))
+      	me.updateWatchers();
     });
   };
 
@@ -683,7 +774,7 @@ mkn.render = function(options)
 
   var setAttr = function(obj, field)
   {
-    expandVars(field, field.attr, { sourceFirst: true, recurse: true})
+    mkn.replaceVars(field, field.attr, { sourceFirst: true, recurse: true})
     var attr = field.attr;
     if (obj.attr('id') === '') obj.removeAttr('id');
     if (!attr) return;
@@ -693,7 +784,7 @@ mkn.render = function(options)
     else $.each(attr, function(key, val) {
       if (field.array) {
         var numeric = getMatches(val, /\$(\d+)/g);
-        if (numeric.length) val = field.array[numeric[0]];
+        if (numeric.length) val = field.array[numeric[0]-1];
       }
       var matches = getMatches(val, /\$(\w+)/g)
       for (var j in matches) {
@@ -712,7 +803,16 @@ mkn.render = function(options)
     var cls = field.class;
     if (cls === undefined) return;
     if (typeof cls === 'string') cls = [cls];
-    expandVars(field, cls, { sourceFirst: true, recurse: true})
+    cls = cls.map(function(val) {
+      var matches = getMatches(val, /\$(\w+)/g)
+      for (var j in matches) {
+        var match = matches[j];
+        var value = field[match];
+        if (value === undefined || typeof value !== 'string') continue;
+        val = val.replace('$'+match, value);
+      }
+      return val;
+    })
     mkn.setClass(obj, cls);
   }
 
@@ -744,8 +844,8 @@ mkn.render = function(options)
     if (!style) style = {};
     styles = field.styles;
     if (styles) mergeStyles();
-    expandVars(field, style, { sourceFirst: true, recurse: true})
-    expandVars(style, style, { sourceFirst: true, recurse: true})
+    mkn.replaceVars(field, style, { sourceFirst: true, recurse: true})
+    mkn.replaceVars(style, style, { sourceFirst: true, recurse: true})
     setGeometry();
     obj.css(style);
   }
@@ -759,41 +859,6 @@ mkn.render = function(options)
     })
     mkn.deleteKeys(item, removed);
     return item;
-  }
-
-  var expandVars = function(source, dest, flags)
-  {
-    if (!flags) flags = {};
-    var args = arguments;
-    var replaced = false;
-    var doit = function() {
-      for (var key in dest) {
-        if ($.isArray(dest.constants) && dest.constants.indexOf(key) >= 0) continue;
-        var val = dest[key];
-        if ($.isPlainObject(val) && flags.recurse) {
-          expandVars($.extend({}, source, dest), val, flags);
-          continue;
-        }
-        if (typeof val !== 'string') continue;
-        var matches = getMatches(val, /\$(\w+)/g);
-        for (var i in matches) {
-          var match = matches[i];
-          var index = flags.sourceFirst? 0: 1;
-          var replacement = args[index++][match];
-          if (replacement === undefined) replacement = args[index % 2][match];
-          if (replacement === undefined) continue;
-          var old = val;
-          dest[key] = val = val.replace(new RegExp('\\$'+match+"([^\w]|\b|$)", 'g'), replacement+'$1');
-          if (!replaced)
-            replaced = val != old;
-        }
-      }
-    };
-
-    do {
-      replaced = false;
-      doit();
-    } while (replaced && flags.recurse)
   }
 
   var expandSubject = function(template)
@@ -843,9 +908,9 @@ mkn.render = function(options)
         }
         value = types;
       }
-      if (name == 'template' && $.isPlainObject(item[name]) && item[name].type !== undefined) {
+      if (name == 'template' && $.isPlainObject(item[name]) && item[name].type === undefined) {
         value = mergePrevious(defaults, name, me.initField(value));
-        expandVars(value, value.subject, { recurse: true});
+        mkn.replaceVars(value, value.subject, { recurse: true});
       }
 
       defaults[name] = value;
@@ -880,6 +945,7 @@ mkn.render = function(options)
   var redirect = function(field)
   {
     if (!$.isPlainObject(field)) field = { url: field };
+    mkn.replaceVars(field,field);
     var url = field.url;
     if ((!url || field.query) && field.target === '_blank') {
       url = '/?action=action';
@@ -895,14 +961,8 @@ mkn.render = function(options)
     if (field.target === '_blank')
       window.open(url, field.target);
     else if (field.target) {
-      var target = $(field.target);
-      var parent = target.parent();
-      if (url[0] === '/') url = url.substr(1);
-      parent.page({path: url});
-      var id = url.replace('/','_');
-      parent.on('read_'+id, function() {
-        target.remove();
-      });
+      mkn.closeDialog(me.sink);
+      me.createSubPage({url: url, key: field.key}, $(field.target), field.target);
     }
     else
       document.location = url;
@@ -911,24 +971,28 @@ mkn.render = function(options)
 
   var accept = function(event, obj, field, action)
   {
-    var dispatch = function()
-    {
-      if (action === undefined) action = field.action;
-      field.page_id = field.page_id || obj.parents(".page").eq(0).attr('id');
+    field.page_id = field.page_id || obj.closest(".page").attr('id');
+    var dispatch_one = function(action) {
+      var params = [];
+      if ($.isArray(action)) {
+        params = action.slice(1);
+        action = action[0];
+      }
       switch(action) {
-        case 'dialog': mkn.showDialog(field.url, {key: field.key}); return;
-        case 'close_dialog': mkn.closeDialog(obj.parents(".page").eq(0));
+        case 'dialog': mkn.showDialog(field.url, $.extend({key: field.key}, params[0])); return;
+        case 'close_dialog': mkn.closeDialog(obj); break;
         case 'redirect': redirect(field); break;
         case 'post':
-          var url = field.url? field.url: field.path
-          var params = serverParams('action', url, {key: field.key});
+          var url = field.url? field.url: field.path;
+          params = serverParams('action', url, $.extend({key: field.key}, params[0], field.params[0]));
+          if ($.isArray(field.params)) params = $.extend({}, params, field.params[0]);
           var selector = field.selector;
           if (selector !== undefined) {
             selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+field.page_id+"$2");
-            params = $.extend(params, {invoker: obj, event: event, async: true });
+            params = $.extend(params, {invoker: obj, event: event, async: true, post_prefix: field.post_prefix });
             me.sink.find(".error").remove();
             $(selector).json('/', params, function(result) {
-              obj.trigger('processed', [result]);
+              obj.trigger('processed-'+field.id, [result]);
               respond(result, obj, event);
             });
             break;
@@ -942,21 +1006,26 @@ mkn.render = function(options)
           trigger(field, obj);
           break;
         default:
-          if (isWatchValue(action)) {
-            evaluateModelValue(action);
-            me.updateWatchers();
-          }
-          else if (field.url)
-            document.location = field.url.replace(/\$key(\b|\W|$)?/, field.key+"$1");
+          if (action[0] == '.')
+            obj[action.substring(1)].apply(obj,params);
       }
+    }
+
+    var dispatch = function() {
+      if (action === undefined) action = field.action;
+      if ($.isArray(action))
+        action.forEach(dispatch_one);
+      else
+        dispatch_one(action);
     }
     if (!field.confirmation || action)
       dispatch();
-    else mkn.showDialog('/confirm_dialog', function(dialog) {
-      $('#confirm_dialog #synopsis').text(field.confirmation);
-      $('#confirm_dialog .action').click(function() {
-        if ($(this).attr('id') === 'yes') dispatch();
+    else mkn.showDialog('/confirm_dialog').done(function(dialog) {
+      if (typeof field.confirmation == 'string')
+        dialog.find('#message').text(field.confirmation);
+      dialog.find('.action').click(function() {
         mkn.closeDialog(dialog);
+        if ($(this).attr('action') === 'yes') dispatch();
       })
     });
   }
@@ -973,7 +1042,8 @@ mkn.render = function(options)
 
     var box = $("<div class=error>"+error+"</div>");
     parent.after(box);
-    box.zIndex(parent.zIndex()+1);
+    var zIndex = parseInt(parent.css('z-index'));
+    box.css('z-index', zIndex+1);
     box.fadeIn('slow').click(function() { $(this).fadeOut('slow') });
   }
 
@@ -1055,16 +1125,14 @@ mkn.render = function(options)
       else for (var i in result) {
         parent.setChildren(result[i], true);
       }
+      me.updateWatchers();
       respond(result);
     });
   }
 
   var trigger = function(field, invoker)
   {
-    if (!field.event) {
-      console.log("WARNING: no event defined for field", field);
-      return;
-    }
+    if (!field.event) field.event = field.id
     var sink;
     var event = field.event;
     var params;
@@ -1087,12 +1155,14 @@ mkn.render = function(options)
 
     if (sink) {
       var selector = sink;
-      sink = $(sink.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+me.id+"$2"));
+      sink = $(sink.replace(/(^|[^\w]+)page([^\w]*)/,"$1"+me.id+"$2"));
       if (!sink.exists())
         sink = window.parent.$(selector);
     }
-    else
+    else if (invoker)
       sink = invoker;
+    else
+      sink = $('.didi-listener');
     if (event[0] === '.') {
       sink[event.substring(1)].apply(sink,params);
       return;
@@ -1102,92 +1172,154 @@ mkn.render = function(options)
     sink.trigger(event, params);
   }
 
-  var initModel = function(expr) {
+  var getModelId = function(field) {
+    return field.attr && field.attr.type =='radio'? field.attr.name: field.id;
+  }
 
-    var inject = function(expr) {
-      var captured = expr.regexCapture(/(?:^|[^.a-z_'"])([a-z_][\w]*)(?:[^'"]|$)/gi);
-      var vars = [];
-      $.each(captured, function(i, v) {
-        if (!(v in mkn.model)) mkn.model[v] = '';
-        if (!(v in vars)) vars.push(v);
-      });
-      var source = vars.map(function(v) {
-        return "var " + v + " = mkn.model['"+v+"']";
+  var setModelFunctions = function(field) {
+
+    var funcs = [];
+    var index = 0;
+    var id = field.id;
+    function setFunction(parent,key) {
+
+      if (key == 'html') return;
+      var value = parent[key];
+      if (typeof value != 'string') return;
+      value = value.trim();
+      var exprs;
+      if (value[0] == '~')
+        exprs = [value];
+      else
+        exprs = value.regexCapture(/(`[^`]+`)/g);
+      var replaced = false;
+      exprs.forEach(function(expr, i) {
+        if (!expr) return;
+        var src;
+        var suffix = "\n\t}";
+        var ret = /\breturn\s/gm.test(expr)?"": "\t\treturn ";
+        if (key.indexOf('on_') != 0)
+          src = "\tget_"+id+"_"+index+": function(obj) {\n"+ret;
+        else if (!/^[~`]\s*function\s*\(/gm.test(expr))
+          src = "\t"+key+"_"+id+": function(event) {\n";
+        else {
+          src = "\t"+key+"_"+id+": ";
+          suffix = "";
+        }
+        src += expr.replace(/^~|`/g,'') + suffix;
+        funcs.push(src);
+        value = value.replace(expr, "${"+index+"}");
+        replaced = true;
+        ++index;
       })
-      .join(";") + "; return " + expr;
-      return new Function(source);
+      if (replaced)
+        parent['didi-model'][key] = value;
+    }
+    function setFunctions(parent) {
+      if (!parent) return;
+      parent['didi-model'] = {}
+      for (var key in parent) {
+        setFunction(parent, key);
+      }
     }
 
+    setFunctions(field);
+    setFunctions(field.style);
+    setFunctions(field.class);
+    if (funcs.length)
+      field['didi-functions'] = funcs;
+  }
 
-    var search = function(key, value, parent) {
-      if (typeof key !== 'string' || key.indexOf('mkn-original-') == 0 || typeof value !== 'string') return false;
-      var exprs = value.regexCapture(searchModelRegex);
-      var injections = [];
-      $.each(exprs, function(i, e) {
-        if (!e) return;
-        var injection = inject(e);
-        if (injection) injections.push(injection);
-      });
-      if (!injections.length) return false;
-      parent['mkn-injections-'+key] = injections;
-      parent['mkn-original-'+key] = value;
-      return true;
-    }
+  var initModel = function(parent) {
+    var vars = [];
+    var field = parent.data('didi-field');
+    var parent_id = field.id;
 
-
-    if (me.root.dd_init) $.each(me.root.dd_init, function(key, val) {
-      mkn.model[key] = val;
+    // add initial vars
+    if (field.dd_init) $.each(field.dd_init, function(key) {
+      vars.push(key);
     });
 
-    var watching = false;
-    mkn.walkTree(me.root, function(key, value, parent) {
-      watching |= search(key, value, parent);
+    // add input vars
+    parent.find('input,select,textarea').addBack('input,select,textarea').each(function() {
+      var field = $(this).data('didi-field');
+      if (!field || field.parent_page != parent_id) return;
+      var id = getModelId(field);
+      if (vars.indexOf(id) < 0) vars.push(id);
     });
-    return watching;
+
+    // create set functions
+    var funcs = vars.map(function(v) {
+      return "\tset_"+v+": function(x) {\n\t\tvar changed = this.changed_"+v+"(x);\n\t\t_old_"+v+"="+v+";\n\t\t"+v+"=x\n\t\treturn changed;\n\t},"
+        + "\n\tchanged_"+v+": function(x) { return x!=="+v+";}"
+    });
+
+    // append watchers functions
+    parent.find('.didi-watcher').addBack('.didi-watcher').each(function() {
+      var field = $(this).data('didi-field');
+      if (!field || field.parent_page != parent_id) return;
+      funcs = funcs.concat(field['didi-functions']);
+    });
+    if (!funcs.length) return;
+
+    // convert funcs to js source
+    var src = "\nreturn {\n" + funcs.join(",\n") + "}";
+
+    // convert vars and funcs to js source
+    if (vars.length) src = "var " + vars.map(function(v) {
+      return v+",_old_"+v;
+    }).join(",") + src;
+
+    // create model
+    me.model = new Function(src)();
+
+    // set inital vars
+    if (field.dd_init) $.each(field.dd_init, function(key, value) {
+      me.model["set_"+key](value);
+    });
   }
 
 
   me.updateWatchers = function() {
 
-    var evaluate = function(field, key) {
-      if (typeof key != 'string' || key.indexOf('mkn-original-') < 0 ) return false;
-      var orig = key;
-      key = key.substr(13);
-      if (key == 'html') return false;
-      value = field[orig];
-      var exprs = value.regexCapture(evalModelRegex);
-      if (!exprs.length) return false;
-      var injections = field['mkn-injections-'+key];
-      $.each(exprs, function(i, e) {
-        if (e) value = value.replace(e, injections[i]());
-      });
-      field[key] = value;
-      if (key == 'text') field['mkn-object'].text(value);
-      return true;
+    function update(obj, field, id) {
+      if (!field || !field['didi-model']) return;
+      $.each(field['didi-model'], function(key, value) {
+        if (key.indexOf('on_') == 0) return;
+        var vars = value.regexCapture(/\$\{(\d+)\}/g);
+        var prefix = "get_"+id+"_";
+        vars.forEach(function(index) {
+          var func = me.model[prefix+index];
+          if (func === undefined) return;
+          var result = func(obj);
+          var regex = "\\$\\{"+index+"\\}";
+          if (new RegExp('^'+regex+'$','g').test(value))
+            value = result;
+          else
+            value =  value.replace(new RegExp(regex,'g'), result);
+          field[key] = value;
+          if (key == 'text') obj.text(value);
+          if (key == 'value') obj.val(value)
+        });
+      })
     }
+    var root_field = me.root.data('didi-field');
+    if (!root_field) return;
+    var root_id = root_field.id;
 
-    var complete = function(field, watching) {
-      var obj = field['mkn-object'];
-      if (!watching || !obj) return watching;
+    me.root.find('.didi-watcher').addBack('.didi-watcher').each(function() {
+      var obj = $(this);
+      var field = obj.data('didi-field');
+      if (!field || field.parent_page != root_id) return;
+      var id = field.id;
+      update(obj, field, id);
+      update(obj, field.style, id);
+      update(obj, field.class, id);
       setAttr(obj, field);
       setClass(obj, field);
       setStyle(obj, field);
       setVisible(obj, field);
       setDisabled(obj, field);
-      return false;
-    }
-
-    var loop = function(parent) {
-      var watching;
-      $.each(parent, function(key, value) {
-        if ($.isPlainObject(value) || $.isArray(value))
-          watching |= loop(value);
-        else if (evaluate(parent, key))
-          watching = true;
-      });
-      return complete(parent, watching);
-    }
-
-    loop(me.root);
+    })
   }
 }

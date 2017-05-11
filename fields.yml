@@ -13,11 +13,10 @@ administration:
   desc: Perform adminstrative duties
 
 agree_terms:
-  question: I have read and accepted the terms and conditions
+  question: I have read and accepted the $terms_and_conditions
   desc: You must agree to the terms and conditions before continuing
   valid: equals(1)
   error: Must accept and agree to terms and conditions.
-
 
 audit_trail:
   access: admin
@@ -49,17 +48,17 @@ cellphone:
 
 change_password:
   desc: Change your current password
-  access: reg
+  access: auth
   action: dialog
-  url: /password_changer/change
+  url: /user/change_password
 
 
 close:
   action: close_dialog
+  class: [brand-action-cancel]
 
 company_name:
-  valid:
-    - at_least(2)
+  valid: at_least(2)
 
 company_registration_no:
   name: Company Registration Number
@@ -80,11 +79,6 @@ confirm_password:
   desc: Type in the same password as above to confirm correctness
   valid: matches(password)
 
-country:
-  options:
-    - [za, South Africa]
-    - ref_list
-  valid: ref_list
 
 day_of_month:
   options:
@@ -149,11 +143,9 @@ email:
 
   name: Email Address
   format: email
-  valid:
-    - email
+  valid: [email]
 
-email_address:
-  type: email
+email_address: { type: email }
 
 error_page:
   desc: Unexpected error occured. Please report to your System Administrator.
@@ -169,8 +161,9 @@ first_name:
   valid: name
 
 forgot_password:
+  access: public
   desc: Click here if you have forgotten your password and you need to reset it
-  url: /password_changer/forgot
+  url: /user/forgot_password
 
 full_name:
   desc: Full name and surname
@@ -216,7 +209,8 @@ login:
 
 logout:
   desc: Log out of the system
-  access: reg
+  access: auth
+  icon: sign-out
   src: /logout_icon.jpg
   action: post
   url: /user/logout
@@ -246,6 +240,7 @@ manage_users:
 
 manage_all_users:
   access: [admin]
+  name: System Users
   url: /user/list_all
 
 mobile_number:
@@ -272,15 +267,15 @@ mukoni_logo:
 
 my_audit_trail:
   desc: My audit trail
-  access: reg
-  url: /audit_trail/user
+  access: auth
+  url: /audit_trail/user_list
 
 
 "no": { value: 0 }
 
 organisation_audit_trail:
-  access: [admin]
-  url: /audit_trail/partner
+  access: admin
+  url: /audit_trail/partner_list
 
 passport_document:
   desc: Certified copy of passport document
@@ -291,22 +286,8 @@ passport_no:
 
 password:
   desc: A secret combination of letters and number only known to you. Please do not give out your password.
-  valid: password
+  valid: [password]
   format: password
-
-payweb:
-  styles: [widest, borderless]
-  height: 600
-  type: iframe
-  src: /?path=paygate/request
-
-postal_address:
-  attr: { maxlength: 100 }
-  valid: [at_least(15)]
-
-postal_code:
-  attr: { min: 0000, max: 9999 }
-  valid: za_code
 
 physical_address:
   attr: { maxlength: 128 }
@@ -315,6 +296,17 @@ physical_address:
 physical_code:
   attr: { min: 0000, max: 9999 }
   valid: za_code
+
+postal_address:
+  attr: { maxlength: 100 }
+  valid: at_least(15)
+
+postal_code:
+  attr: { min: 0000, max: 9999 }
+  valid: za_code
+
+program:
+  name: $program_name
 
 query:
   type: button
@@ -347,16 +339,10 @@ register:
 rest_post:
   merge: false
 
-role:
-  db_name: roles
-
 send_email:
-  support: Mukoni Support <support@mukoni.co.za>
   headers:
     - MIME-Version: "1.0"
     - Content-type: text/html; charset=iso-8859-1
-  from: $from_user <$from_email>
-  to: $to_user <$to_email>
   smtp:
     host: $smtp_host
     auth: true
@@ -382,20 +368,11 @@ submit_page:
 support_email: Mukoni Support <support@mukoni.co.za>
 
 system_audit_trail:
-  url: /audit_trail/system
-  access: [developer]
+  url: /audit_trail/system_list
+  access: admin
 
 title:
   desc: A descriptive or distinctive appellation, especially one belonging to a person by right of rank, office, attainment
-  options:
-    - dr
-    - miss
-    - mr
-    - mrs
-    - ms
-    - prof
-    - rev
-    - sir
 
 twitter:
   src: /twitter.png
@@ -418,7 +395,7 @@ vat_no:
 
 view_profile:
   desc: View my profile
-  access: reg
+  access: auth
   url: /user/profile
   action: dialog
 
@@ -439,7 +416,7 @@ weekday:
 
 welcome:
   name: ""
-  access: reg
+  access: auth
   url: /user/profile
 
 wizard_post:
@@ -454,6 +431,9 @@ tax_reference_no:
   name: Tax Reference Number
   attr: { min: 1000000000, max: 9999999999 }
 
+terms_and_conditions:
+  name: terms and conditions
+  type: link
 
 true: { value: 1}
 

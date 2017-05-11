@@ -1,18 +1,47 @@
 wizard:
-  type: page
+  type: container
   create: wizard
   class: [wizard]
   script: [/common/wizard.js]
-  css: [/common/wizard.css]
-  text: $dummy
   dummy: []
+  parent_path: $path
+  synopsis: ""
   bookmarks:
-    type: empty
-    class: [wizard-bookmark-holder-left,quarter,float-left]
-  step:
-    type: empty
-    class: [wizard-page,threequarter,float-right]
+    type: container
+    class: [wizard-bookmarks]
+    state_styles: {pending: [disabled], active: "", done: "", visited: "",committed: [disabled]}
+    derive: [bookmark,steps,parent_path]
+    contents:
+      - type: $bookmark
+      - default: { sub_page: false, hello: africa}
+      - merge: steps
+  bookmark:
+    type: wizard_jump
+    sub_page: false
+    class: [wizard-bookmark]
+    derive: [parent_path]
+    path: $parent_path/$id
+    attr: { step: $id }
+    step_no:
+      tag: label
+      class: [bookmark-number]
+      derive: [number]
+      name: $number
+    step_title:
+      tag: label
+      class: [bookmark-title]
+      derive: [name]
+    text: $step_no$step_title
+  contents: [$synopsis,$bookmarks]
   steps: []
+  step_container:
+    type: empty
+    class: [wizard-page]
+  step:
+    class: [wizard-step]
+    derive: [navigation]
+    navigate:
+      - type: submit
   prev:
     type: button
     name: Previous
@@ -24,14 +53,16 @@ wizard:
     type: submit
     name: Next
     desc: Go to next step
-    class: [action,wizard-next]
-  navigate: [$prev,$next]
-
-
+    class: [wizard-next]
+  navigation:
+    tag: div
+    class: [wizard-navigation]
+    derive: [navigate]
+    text: $navigate
 
 
 wizard_jump:
-  classes: button
-  type: submit
+  tag: div
+  action: post
   post:
     - trigger: [wizard-jump, .wizard, $id ]

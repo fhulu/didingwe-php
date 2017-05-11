@@ -34,6 +34,17 @@ between:
 blank:
   error: $name must be blank
 
+collection:
+  valid: collection.exists($1,$2)
+
+collection_filter:
+  4: ""
+  valid: sql(select value$4 from collection where collection = '$1' and identifier = '$2' and attribute = '$3')
+
+collection_unique:
+  valid: collection.unique($1,$2,$value)
+  error: $name already exists
+
 contains_at_least:
   valid: /$1/s
   error: $name must contain at least $2
@@ -95,27 +106,24 @@ future_time:
   error: $name must be in the future
 
 greater:
-  error: $name must be greater than $1 ($v1)
+  error: $name must be greater than $1
 
 greater_equal:
-  error: $name must not be less than $1 ($v1)
+  error: $name must not be less than $1
 
 in:
   error: No such $name ($value)
 
+in_collection:
+  valid: sql(select 1 from collection where collection = '$1' and attribute = '$name' and value='$value')
+
 int_tel:
   valid:
-    - /^\+\d+[- \d]*$/
+    - /^\+\d+[-\d]*$/
     - at_least(10,digits)
-  error: Please use international number format for $name, e.g. +27123456789
+  error: Please use international number format without space/s in betweeen for $name, e.g. +27823456789
 
 is: must_be($1)
-
-is_registered:
-  valid: sql(select 1 from user where email= '$value')
-  error: >
-    There is no such email '$value' registered on the system.<br>
-    Click on <b>Register</b> if you would like to register to use the system.
 
 less:
   error: $name must be less that $1 ($v1)
@@ -154,12 +162,6 @@ not:
 not_same:
   valid: not(equal($1))
   error: $name must not be the same as $1
-
-not_registered:
-  valid: not(is_registered($1))
-  error: |
-    User $value is already registered on the system. If you have forgotten the
-    password, use <i>Login/Forgot Password</i> feature to reset your password.
 
 numeric: must_be(-?\d+(\.\d+)?,numeric)
 

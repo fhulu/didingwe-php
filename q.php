@@ -184,31 +184,6 @@ class q
     return q::post_http($options);
   }
 
-  static function send_email($options)
-  {
-    $headers = $options['headers'];
-    $from = $options['from'];
-    $to = $options['to'];
-    $message = $options['message'];
-    $subject = $options ['subject'];
-    log::debug("SENDMAIL from $from to $to SUBJECT $subject");
-    $headers['From'] = $from;
-    $headers['Subject'] = $subject;
-    $headers['To'] = $to;
-
-    set_include_path("./common/pear");
-    require_once "Mail.php";
-    require_once("Mail/mime.php");
-    $mime = new Mail_mime("\n");
-    $mime->setHTMLBody($message);
-    $message = $mime->get();
-    $headers = $mime->headers($headers);
-    $smtp = Mail::factory('smtp',  $options['smtp']);
-    $result = $smtp->send($to, $headers, $message);
-    restore_include_path();
-    return $result;
-  }
-
   static function rest_post($options)
   {
     $user = $options['username'];
