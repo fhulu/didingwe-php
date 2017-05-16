@@ -27,7 +27,7 @@ sub_menu:
   class: [hover-dropdown]
   title: { type: menu_link }
   text: $title $expansion
-  expansion: { type: sub_menu_dropdown }
+  expansion: { type: sub_menu_dropdown, derive: [sub_items] }
   sub_items:
     - action: redirect
     - type: sub_menu_item
