@@ -433,6 +433,10 @@ li.paragraph {text-indent: -1em }
 
 /* text-spacing */
 .tight-text { line-height: 1}
+.single-spaing { line-height: 1em}
+.one-half-spacing { line-height: 1.5em }
+.double-spacing { line-height: 2em }
+.tripple-spacing { line-height: 3em }
 
 
 /* text letter spacing */
