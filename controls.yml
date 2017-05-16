@@ -615,7 +615,7 @@ plain:
   text: $value
 
 plain_text:
-  tag: div
+  tag: span
   name: $id
   attr: { id: ""}
 
