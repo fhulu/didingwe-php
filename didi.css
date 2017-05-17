@@ -349,6 +349,7 @@ li.paragraph {text-indent: -1em }
 .height-line-7 { height: 7em}
 .height-line-8 { height: 8em}
 .height-line-9 { height: 9em}
+.min-height { min-height: 1px}
 
 /* spacing - padding */
 /* horizontal padding */
@@ -359,7 +360,7 @@ li.paragraph {text-indent: -1em }
 .pad-small.pad,.pad-small.pad-x,.pad-small.pad-left{padding-left:0.5em}
 .pad-small.pad,.pad-small.pad-x,.pad-small.pad-right{padding-right:0.5em}
 .pad-medium.pad,.pad-medium.pad-x,.pad-x.pad-left{padding-left:1em}
-.pad-medium.pad,.pad-medium.pad-x,.pad-x.pad-right{padding-right:1em}
+.pad-medium.pad,.pad-medium.pad-x,.pad-medium.pad-right{padding-right:1em}
 .pad-large.pad,.pad-large.pad-x,.pad-large.pad-left{padding-left:2em}
 .pad-large.pad,.pad-large.pad-x,.pad-large.pad-right{padding-right:2em}
 .pad-xlarge.pad,.pad-xlarge.pad-x,.pad-xlarge.pad-left{padding-left:4em}
@@ -433,7 +434,7 @@ li.paragraph {text-indent: -1em }
 
 /* text-spacing */
 .tight-text { line-height: 1}
-.single-spaing { line-height: 1em}
+.single-spacing { line-height: 1em}
 .one-half-spacing { line-height: 1.5em }
 .double-spacing { line-height: 2em }
 .tripple-spacing { line-height: 3em }
