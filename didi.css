@@ -356,7 +356,7 @@ li.paragraph {text-indent: -1em }
 .pad-min.pad,.pad-min.pad-x,.pad-min.pad-left{padding-left:0.1em}
 .pad-min.pad,.pad-min.pad-x,.pad-min.pad-right{padding-right:0.1em}
 .pad-tiny.pad,.pad-tiny.pad-x,.pad-tiny.pad-left{padding-left:0.25em}
-.pad-tiny.pad,.pad-tiny.pad-x,.pad-tiny.pad-left{padding-right:0.25em}
+.pad-tiny.pad,.pad-tiny.pad-x,.pad-tiny.pad-right{padding-right:0.25em}
 .pad-small.pad,.pad-small.pad-x,.pad-small.pad-left{padding-left:0.5em}
 .pad-small.pad,.pad-small.pad-x,.pad-small.pad-right{padding-right:0.5em}
 .pad-medium.pad,.pad-medium.pad-x,.pad-x.pad-left{padding-left:1em}
@@ -366,7 +366,7 @@ li.paragraph {text-indent: -1em }
 .pad-xlarge.pad,.pad-xlarge.pad-x,.pad-xlarge.pad-left{padding-left:4em}
 .pad-xlarge.pad,.pad-xlarge.pad-x,.pad-xlarge.pad-right{padding-right:4em}
 .pad-jumbo.pad,.pad-jumbo.pad-x,.pad-jumbo.pad-left{padding-left:8em}
-.pad-jumbo.pad,.pad-jumbo.pad-x,.pad-jumbo.pad-left{padding-right:8em}
+.pad-jumbo.pad,.pad-jumbo.pad-x,.pad-jumbo.pad-right{padding-right:8em}
 
 /* vertical padding */
 .pad-min.pad,.pad-min.pad-y,.pad-min.pad-top{padding-top:0.1em}
