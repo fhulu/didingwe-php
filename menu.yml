@@ -23,7 +23,6 @@ menu_link:
 
 sub_menu:
   type: menu_item
-  parent_name: $name
   class: [hover-dropdown]
   title: { type: menu_link }
   text: $title $expansion
