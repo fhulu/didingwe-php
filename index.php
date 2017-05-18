@@ -5,15 +5,20 @@ require_once('../common/utils.php');
 
 function configure_brand(&$config) {
   $brand_path = $config['brand_path'];
-  if (!$brand_path || !file_exists($brand_path)) return false;;
-  $brand_config = load_yaml("$brand_path/app-config.yml", false);
-  if ($brand_config)
-    $config = merge_options($config, $brand_config);
-  replace_fields($config, $config, true);
+  if ($brand_path && file_exists($brand_path)) {
+    $brand_config = load_yaml("$brand_path/app-config.yml", false);
+    if ($brand_config)
+      $config = merge_options($config, $brand_config);
+    replace_fields($config, $config, true);
 
+  }
+  else {
+    $brand_path = "./";
+  }
   $brand_link = ".".$config['brand_name'];
   $config['brand_link']  = "/$brand_link";
-  replace_fields($config,$config,true);
+  if ($brand_path != "./")
+    replace_fields($config,$config,true);
 
   if (!file_exists($brand_link))
     symlink($brand_path,$brand_link);
