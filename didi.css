@@ -10,7 +10,7 @@
   margin: 0;
   padding: 0;
   font-size: inherit;
-  font-weight: normal;
+  font-weight: inherit;
   text-decoration: none;
 }
 
@@ -224,7 +224,7 @@
 
 
 /* font styles */
-.bold { font-weight: bold; }
+.bold,.focus-bold:focus,.hover-bold:hover { font-weight: bold; }
 .bolder { font-weight: bolder; }
 .italic { font-style: italic; }
 .lighter { font-weight: lighter; }
