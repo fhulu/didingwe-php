@@ -45,9 +45,6 @@ file_uploader:
       - type: control
       - uploaded
       - failed
-  audit:
-    action: Upload
-    detail: $document_type
   valid: extension(pdf)
   post:
     - read_config: upload_dir
