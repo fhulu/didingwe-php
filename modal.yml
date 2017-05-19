@@ -6,7 +6,7 @@ modal:
   dialog:
     type: container
     attr: { id: ""}
-    class: [modal-dialog,relative,inline-block,white,brand-text]
+    class: [modal-dialog,relative,inline-block,brand-text]
     derive: [title_bar,close_button,body]
     contents: [$title_bar,$body]
   title_bar:
