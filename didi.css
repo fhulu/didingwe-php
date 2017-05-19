@@ -36,7 +36,7 @@
 
 /* Classed Styles */
 /* animations */
-.spin,.animate-spin{animation:spin 2s infinite linear;-webkit-animation:spin 2s infinite linear}
+.spin,.animate-spin,.hover-spin:hover{animation:spin 2s infinite linear;-webkit-animation:spin 2s infinite linear}
 @-webkit-keyframes spin{
 0%{-webkit-transform:rotate(0deg);transform:rotate(0deg)}100%{-webkit-transform:rotate(359deg);transform:rotate(359deg)}}
 @keyframes spin{
@@ -59,7 +59,7 @@
 .animate-bottom{position:relative;-webkit-animation:animatebottom 0.4s;animation:animatebottom 0.4s}
 @-webkit-keyframes animatebottom{from{bottom:-300px;opacity:0} to{bottom:0px;opacity:1}}
 @keyframes animatebottom{from{bottom:-300px;opacity:0} to{bottom:0;opacity:1}}
-.animate-zoom {-webkit-animation:animatezoom 0.6s;animation:animatezoom 0.6s}
+.animate-zoom,.hover-zoom:hover {-webkit-animation:animatezoom 0.6s;animation:animatezoom 0.6s}
 @-webkit-keyframes animatezoom{from{-webkit-transform:scale(0)} to{-webkit-transform:scale(1)}}
 @keyframes animatezoom{from{transform:scale(0)} to{transform:scale(1)}}
 
