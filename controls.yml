@@ -47,6 +47,10 @@ blank:
   text: ""
   class: [inline-block]
 
+block_text:
+  type: plain_text
+  class: [block]
+  
 bookmark:
   tag: div
   title: $id
