@@ -389,6 +389,7 @@ var mkn = new function() {
     var result = text;
     if (exclude) {
       if (typeof exclude == "string") exclude = exclude.split(" ");
+      if ($.isNumeric(exclude[0]) && parseInt(exclude[0]) == 0) return result;
       exclude.map(function(v) {
         result = result.replace(new RegExp("<(\/?)"+v+"(\/?)>",'g'), '~~~$1'+v+'$2~~~');
       })
