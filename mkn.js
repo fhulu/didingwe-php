@@ -385,7 +385,14 @@ var mkn = new function() {
   }
 
   // from stackoverflow http://stackoverflow.com/questions/1787322/htmlspecialchars-equivalent-in-javascript/4835406#4835406
-  this.escapeHtml = function(text) {
+  this.escapeHtml = function(text, exclude) {
+    var result = text;
+    if (exclude) {
+      if (typeof exclude == "string") exclude = exclude.split(" ");
+      exclude.map(function(v) {
+        result = result.replace(new RegExp("<(\/?)"+v+"(\/?)>",'g'), '~~~$1'+v+'$2~~~');
+      })
+    }
     var map = {
       '&': '&amp;',
       '<': '&lt;',
@@ -394,7 +401,13 @@ var mkn = new function() {
       "'": '&#039;'
     };
 
-    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    result = result.replace(/[&<>"']/g, function(m) { return map[m]; });
+    if (exclude) {
+      exclude.map(function(v) {
+        result = result.replace(new RegExp("~~~(\/?)"+v+"(\/?)~~~",'g'), '<$1'+v+'$2>');
+      })
+    }
+    return result;
   }
 
 
