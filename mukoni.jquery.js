@@ -49,7 +49,7 @@ $.fn.setValue = function(val)
     return this;
   }
 
-  if (typeof val == 'string')  val = mkn.escapeHtml(val, this.attr('parseHtml'));
+  if (typeof val == 'string')  val = mkn.escapeHtml(val, this.attr('parseHtml'), this.attr('escapeHtml'));
   if (this.hasAttr('value'))
     return this.val(val);
   return this.html(val);

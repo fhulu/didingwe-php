@@ -385,7 +385,7 @@ var mkn = new function() {
   }
 
   // from stackoverflow http://stackoverflow.com/questions/1787322/htmlspecialchars-equivalent-in-javascript/4835406#4835406
-  this.escapeHtml = function(text, exclude) {
+  this.escapeHtml = function(text, exclude, include) {
     var result = text;
     if (exclude) {
       if (typeof exclude == "string") exclude = exclude.split(" ");
@@ -393,15 +393,25 @@ var mkn = new function() {
         result = result.replace(new RegExp("<(\/?)"+v+"(\/?)>",'g'), '~~~$1'+v+'$2~~~');
       })
     }
-    var map = {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#039;'
-    };
 
-    result = result.replace(/[&<>"']/g, function(m) { return map[m]; });
+    if (include) {
+      console.log("include", include);
+      if (typeof include == "string") include = include.split(" ");
+      include.map(function(v) {
+        result = result.replace(new RegExp("<(\/?)"+v+"(\/?)>",'g'), '&lt;$1'+v+'$2&gt;');
+      });
+    }
+    else {
+      var map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      };
+      result = result.replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+
     if (exclude) {
       exclude.map(function(v) {
         result = result.replace(new RegExp("~~~(\/?)"+v+"(\/?)~~~",'g'), '<$1'+v+'$2>');
