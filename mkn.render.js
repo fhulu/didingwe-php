@@ -1058,6 +1058,7 @@ mkn.render = function(options)
   var respond = function(result, invoker, event)
   {
     if (!result) return;
+    mkn.removeXSS(result);
     var responses = result._responses;
     if (!$.isPlainObject(responses)) return this;
     var parent = me.sink;
