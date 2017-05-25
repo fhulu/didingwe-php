@@ -510,12 +510,21 @@ class collection extends module
     return call_user_func_array([$this, "data"], $args);
   }
 
-  function get_fields($collection)
+  private function get_fields($collection, $key=null, $exclusions=null)
   {
     $table = $this->get_table($collection);
-    return $this->db->read_column("select distinct attribute from `$table` where collection = '$collection'");
+    $sql = "select distinct attribute from `$table` where collection = '$collection'";
+    if (!is_null($key)) $sql .= " and identifier = '$key'";
+    if (!is_null($exclusions)) $sql .= " and attribute not in ('" . implode("','", $exclusions) ."')";
+    return $this->db->read_column($sql);
   }
 
+  function fields($collection, $key)
+  {
+    $exclusions = array_slice(func_get_args(), 2);
+    $data = $this->get_fields($collection, $key, $exclusions);
+    return ['data'=>$data, 'count'=>sizeof($data)];
+  }
 
   function hide()
   {
