@@ -402,7 +402,7 @@
         var field = fields[i];
         var cell = data[i];
         if (cell === null || cell === undefined)
-          cell = '';
+          cell = this.options.defaults[field.id];
         else
           cell = mkn.escapeHtml(cell);
         if (field.id == 'style') {
@@ -700,7 +700,7 @@
           th.css('width', field.width);
           td.css('width', th.get(0).style.width);
         }
-        else {
+        else if (field.width !== 'auto') {
           th.css('width', 'auto');
           td.css('width', 'auto')
         }

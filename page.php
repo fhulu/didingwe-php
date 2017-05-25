@@ -394,8 +394,9 @@ class page
   function derive_parent($parent, &$field)
   {
     $derive = $field['derive'];
-    if (!isset($derive)) return $field;
+    if (!is_array($derive)) return $field;
     foreach($derive as $key) {
+      if (!is_string($key)) continue;
       $value = $field[$key];
       if (!isset($value))
         $field[$key] = $parent[$key];

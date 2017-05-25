@@ -810,11 +810,10 @@ template:
   attr: { id: ""}
 
 textarea:
+  type: input
   tag: textarea
-  value: ""
   text: $value
-
-text_area: { type: textarea}
+  attr: { value: "" }
 
 text_input: {type: input }
 

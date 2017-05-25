@@ -385,21 +385,65 @@ var mkn = new function() {
   }
 
   // from stackoverflow http://stackoverflow.com/questions/1787322/htmlspecialchars-equivalent-in-javascript/4835406#4835406
-  this.escapeHtml = function(text) {
-    var map = {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#039;'
-    };
+  this.escapeHtml = function(text, exclude, include) {
+    var result = text;
+    if (exclude) {
+      if (typeof exclude == "string") exclude = exclude.split(" ");
+      if ($.isNumeric(exclude[0]) && parseInt(exclude[0]) == 0) return result;
+      exclude.map(function(v) {
+        result = result.replace(new RegExp("<(\/?)"+v+"(\/?)>",'g'), '~~~$1'+v+'$2~~~');
+      })
+    }
 
-    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    if (include) {
+      if (typeof include == "string") include = include.split(" ");
+      include.map(function(v) {
+        result = result.replace(new RegExp("<(\/?)"+v+"(\/?)>",'g'), '&lt;$1'+v+'$2&gt;');
+      });
+    }
+    else {
+      var map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      };
+      result = result.replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+
+    if (exclude) {
+      exclude.map(function(v) {
+        result = result.replace(new RegExp("~~~(\/?)"+v+"(\/?)~~~",'g'), '<$1'+v+'$2>');
+      })
+    }
+    return result;
   }
 
-
   this.isAtomicValue = function(x) { return typeof x == 'string' || typeof x == 'number'; }
+
+  this.removeXSS = function(object) {
+    var r = /<script(?:\s+[^>]*)?>.*<\/script>/;
+    var replace = function(x) {
+      var replaced = false;
+      for (var i in x) {
+          var v = x[i];
+          var p;
+          if ($.isArray(v) || $.isPlainObject(v))
+            replace(x[i]);
+          else if (typeof v == 'string' && (p=v.search(r))>=0) {
+            var m = v.match(r);
+            x[i] = v.substr(0,p)+mkn.escapeHtml(m[0])+v.substr(p+m[0].length);
+            replaced = true;
+          }
+      }
+      if (replaced) replace(x);
+    }
+    replace(object);
+  }
+
 }
+
 
 if (!String.prototype.trim) {
   (function() {
