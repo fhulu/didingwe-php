@@ -136,7 +136,7 @@
       }
       if (this.options.page_size !== undefined) this.showPaging(parseInt(data.total));
 
-      if (data.data.length == 0 && this.body().children().length == 0 && this.no_records) 
+      if (data.data.length == 0 && this.body().children().length == 0 && this.no_records)
         this.element.replaceWith(this.no_records.show());
 
       for(var i in data.data) {
@@ -403,8 +403,9 @@
         var cell = data[i];
         if (cell === null || cell === undefined)
           cell = this.options.defaults[field.id];
-        else
+        else if (field.escapeHtml)
           cell = mkn.escapeHtml(cell);
+
         if (field.id == 'style') {
           me.setRowStyles(tr, cell);
           continue;
