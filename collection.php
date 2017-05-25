@@ -531,6 +531,15 @@ class collection extends module
     $this->hidden_columns = array_merge($this->hidden_columns, func_get_args());
   }
 
+  function unhide()
+  {
+    $args = func_get_args();
+    if (sizeof($args) == 0)
+      $this->hidden_columns = [];
+    else
+      $this->hidden_columns = array_diff($this->hidden_columns, $args);
+  }
+
   function combine()
   {
     $this->combined_columns = array_merge($this->combined_columns, func_get_args());
