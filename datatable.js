@@ -600,6 +600,7 @@
       this.element.on('slide', 'tr', function(e) {
         $(e.target).toggle();
         me.slide($(this));
+        e.stopPropagation();
       })
       .on('expand', 'tr', function(e) {
         var tr = $(this);
@@ -609,6 +610,7 @@
         var expand = options['expand'];
         if (!expand.pages) return;
         me.loadSubPages(tr, expand.pages)
+        e.stopPropagation();
       })
       .on('collapse', 'tr', function(e) {
         var tr = $(this);
@@ -616,41 +618,50 @@
         tr.find('[action=expand]').show();
         var next = tr.next();
         if (next.hasClass('expanded')) next.remove();
+        e.stopPropagation();
       })
-      .on('action', 'tr', function(evt, btn) {
+      .on('action', 'tr', function(e, btn) {
         if (!btn.parent('.slide').exists()) return;
         me.slide($(this));
         $(this).find('[action=slide]').toggle();
         var slider = $(this).find('.slide');
         slider.animate({width: 0}, options.slideSpeed*2, function() { slider.hide()});
+        e.stopPropagation();
       })
-      .on('delete', 'tr', function() {
+      .on('delete', 'tr', function(e) {
         $(this).remove();
         return $(this);
+        e.stopPropagation();
       })
       .on('setRowStyles', function(e, key, styles) {
         me.setRowStyles(me.getRowByKey(key), styles);
-      })
+        e.stopPropagation();
+    })
       .on('setRowActions', function(e, key, actions) {
         var tr = me.getRowByKey(key);
         me.createRowActions(me.getCellById(tr, 'actions'), actions);
+        e.stopPropagation();
       })
       .on('setCellValue', function(e, key, id, value) {
         var tr = me.getRowByKey(key);
         me.setCellValue(me.getCellById(tr, id), value);
+        e.stopPropagation();
       })
       .on('setRowData', function(e, key, data) {
         me.setRowData(me.getRowByKey(key), data);
+        e.stopPropagation();
       })
       .on('addRow', function(e, data) {
         me.addRow(data);
         me.adjustWidths();
+        e.stopPropagation();
       })
       .on('addNewRow', function(e, data) {
         var tr = me.row_blueprint.clone();
         me.body().prepend(tr);
         me.setRowData(tr, data);
         me.adjustWidths();
+        e.stopPropagation();
       })
       .on('removeRow', function(e, key) {
         me.getRowByKey(key).remove();
