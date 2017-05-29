@@ -597,7 +597,8 @@
     {
       var me = this;
       var options = me.options;
-      this.element.on('slide', 'tr', function(e) {
+      var el = this.element;
+      el.on('slide', 'tr', function(e) {
         $(e.target).toggle();
         me.slide($(this));
         e.stopPropagation();
@@ -634,34 +635,34 @@
         e.stopPropagation();
       })
       .on('setRowStyles', function(e, key, styles) {
+        if (!$(e.target).is(el)) return;
         me.setRowStyles(me.getRowByKey(key), styles);
-        e.stopPropagation();
     })
       .on('setRowActions', function(e, key, actions) {
+        if (!$(e.target).is(el)) return;
         var tr = me.getRowByKey(key);
         me.createRowActions(me.getCellById(tr, 'actions'), actions);
-        e.stopPropagation();
       })
       .on('setCellValue', function(e, key, id, value) {
+        if (!$(e.target).is(el)) return;
         var tr = me.getRowByKey(key);
         me.setCellValue(me.getCellById(tr, id), value);
-        e.stopPropagation();
       })
       .on('setRowData', function(e, key, data) {
+        if (!$(e.target).is(el)) return;
         me.setRowData(me.getRowByKey(key), data);
-        e.stopPropagation();
       })
       .on('addRow', function(e, data) {
+        if (!$(e.target).is(el)) return;
         me.addRow(data);
         me.adjustWidths();
-        e.stopPropagation();
       })
       .on('addNewRow', function(e, data) {
+        if (!$(e.target).is(el)) return;
         var tr = me.row_blueprint.clone();
         me.body().prepend(tr);
         me.setRowData(tr, data);
         me.adjustWidths();
-        e.stopPropagation();
       })
       .on('removeRow', function(e, key) {
         me.getRowByKey(key).remove();
