@@ -9,6 +9,7 @@ datatable:
   title: { class: [didi] }
   body: { class: [didi,table-body] }
   min_row_height: 20
+  defaults: {}
   row_actions: []
   row_styles: {}
   row:
