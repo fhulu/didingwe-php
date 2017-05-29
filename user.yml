@@ -460,7 +460,7 @@ login:
     - if "$start_page" == '':
         - collection.values: [partner, $partner, start_page]
     - if "$start_page" == '': [ read_config: start_page ]
-    - collection.values: [role, $role, base_roles: role]
+    - collection.values: [role, $role, base_roles: includes]
     - collection.listing: [user_group_member, [user: $user], groups: group]
     - if $attempts > 0:
         - collection.update: [user, $user, attempts: 0]
