@@ -1168,8 +1168,6 @@ mkn.render = function(options)
       sink[event.substring(1)].apply(sink,params);
       return;
     }
-    event = $.Event(event);
-    event.target = invoker[0];
     sink.trigger(event, params);
   }
 
