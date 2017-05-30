@@ -599,12 +599,13 @@ page_title:
   text: $name
 
 panel:
-  type: container
+  tag: div
   title:
     desc: ""
     tag: div
     name: $parent_name
-  contents:
+  text: $panes
+  panes:
     - $title
 
 paragraph:
