@@ -44,9 +44,10 @@ request:
     - sql_values: >
         select md5('$PAYGATE_ID|$REFERENCE|$AMOUNT|$CURRENCY|$RETURN_URL|$TRANSACTION_DATE|$EMAIL|$SECRET') CHECKSUM
     - trigger: ".submit,#page"
+    - sql_values: select round($AMOUNT/100,2) amount
     - audit:
         action: Start Electronic Transaction
-        detail: "Amount: $AMOUNT Reference: $REFERENCE"
+        detail: "Amount: $amount Reference: $REFERENCE"
     - keep_values: [PAYGATE_ID,REFERENCE,AMOUNT,CURRENCY,RETURN_URL,TRANSACTION_DATE,EMAIL,CHECKSUM]
 
 response:
@@ -66,8 +67,9 @@ response:
         - reference1: $TRANSACTION_ID
         - authorisation_code: $AUTH_CODE
         - end_time: /now()
+    - sql_values: select round($AMOUNT/100,2) amount
     - audit:
         action: Complete Electronic Payment
-        detail: "Transaction ID: $TRANSACTION_ID Auth Code: $AUTH_CODE Amount: $AMOUNT Result: $RESULT_DESC"
+        detail: "Transaction ID: $TRANSACTION_ID Auth Code: $AUTH_CODE Amount: $amount Result: $RESULT_DESC"
     - read_session: paygate_handler
     - trigger: [paygate_$status, $paygate_handler]
