@@ -94,7 +94,7 @@ class page
   function process()
   {
     if (is_null($this->method))
-      throw new Exception("No method parameter in request");
+      return;
 
     $this->roles = $this->get_module('auth')->get_roles();
     log::debug_json("SESSION", $_SESSION);

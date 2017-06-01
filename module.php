@@ -5,9 +5,10 @@ class module
   var $page;
   var $collection;
   var $db;
-  function __construct($page)
+  function __construct($context=null)
   {
-    $this->page = $page;
+    global $page;
+    $this->page = $context? $context: $page;
     if (get_class($this) != 'collection')
       $this->collection = $page->get_module('collection');
     $this->db = $this->page->db;
