@@ -46,7 +46,9 @@ request:
     - trigger: ".submit,#page"
     - audit:
         action: Start Electronic Transaction
-        detail: "Amount: $AMOUNT Reference: $REFERENCE"
+        post:
+          - sql_values: select round($AMOUNT/100,2) amount
+        detail: "Amount: $amount $currency Reference: $REFERENCE"
     - keep_values: [PAYGATE_ID,REFERENCE,AMOUNT,CURRENCY,RETURN_URL,TRANSACTION_DATE,EMAIL,CHECKSUM]
 
 response:
@@ -68,6 +70,8 @@ response:
         - end_time: /now()
     - audit:
         action: Complete Electronic Payment
-        detail: "Transaction ID: $TRANSACTION_ID Auth Code: $AUTH_CODE Amount: $AMOUNT Result: $RESULT_DESC"
+        post:
+          - sql_values: select round($AMOUNT/100,2) amount
+        detail: "Transaction ID: $TRANSACTION_ID Auth Code: $AUTH_CODE Amount: $amount Result: $RESULT_DESC"
     - read_session: paygate_handler
     - trigger: [paygate_$status, $paygate_handler]
