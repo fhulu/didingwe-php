@@ -374,6 +374,11 @@ function remove_accents($string) {
     if ( !preg_match('/[\x80-\xff]/', $string) )
         return $string;
 
+    $string = str_replace('®', '(c)', $string);
+    $string = str_replace('•', '.', $string);
+    $string = str_replace('´', '.', $string);
+    $string = str_replace('±', '+/-', $string);
+
     if (seems_utf8($string)) {
         $chars = array(
         // Decompositions for Latin-1 Supplement
@@ -492,9 +497,9 @@ function remove_accents($string) {
         $chars['out'] = "EfSZszYcY'u.AAAAAACEEEEIIIINOOOOOOxUUUUYaaaaaaceeeeiiiinoooooouuuuyy";
 
         $string = strtr($string, $chars['in'], $chars['out']);
-        $double_chars['in'] = array(chr(140), chr(156), chr(177), chr(188), chr(189),
+        $double_chars['in'] = array(chr(140), chr(156), chr(169), chr(177), chr(188), chr(189),
             chr(190), chr(198), chr(208), chr(222), chr(223), chr(230), chr(240), chr(254));
-        $double_chars['out'] = array('OE', 'oe', '+-', '1/4', '1/2', '3/4', 'AE', 'DH', 'TH', 'ss', 'ae', 'dh', 'th');
+        $double_chars['out'] = array('OE', 'oe', '(c)', '+-', '1/4', '1/2', '3/4', 'AE', 'DH', 'TH', 'ss', 'ae', 'dh', 'th');
         $string = str_replace($double_chars['in'], $double_chars['out'], $string);
     }
 
@@ -503,6 +508,6 @@ function remove_accents($string) {
 
 function translate_special_chars($str)
 {
-  setlocale(LC_ALL, 'en_US');
+  setlocale(LC_ALL, 'en_GB');
   return iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', remove_accents($str));
 }
