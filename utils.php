@@ -375,10 +375,11 @@ function remove_accents($string) {
         return $string;
 
     $string = str_replace('®', '(c)', $string);
-    $string = str_replace('•', '.', $string);
+    $string = str_replace('∙', '.', $string);
     $string = str_replace('´', '.', $string);
     $string = str_replace('±', '+/-', $string);
-
+    $string = str_replace('⁃', '-', $string);
+    
     if (seems_utf8($string)) {
         $chars = array(
         // Decompositions for Latin-1 Supplement
