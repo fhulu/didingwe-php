@@ -37,7 +37,7 @@ class auth {
   function get_partner_type()
   {
     $session = $_SESSION["auth"];
-    return isset($session)? $session['partner_type']: null;
+    return isset($session)? $session['partner_type']: 'public';
   }
 
   private function verify($object_rights, $user_rights)
