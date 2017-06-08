@@ -1085,6 +1085,7 @@ class page
 
   function reply_if($method, $args)
   {
+    $method = str_replace("\n", " ", str_replace("\r", " ", $method));
     $matches = array();
     if (!preg_match('/^if\s+(.+)$/', $method, $matches)) return false;
 
