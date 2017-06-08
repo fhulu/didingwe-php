@@ -118,6 +118,7 @@ class collection extends module
     // create joins for each filter
     foreach($filters as $filter) {
       ++$index;
+      if ($filter == "") continue;
       if (is_array($filter) && sizeof($filter) > 1) {
         $where .= " $conjuctor (";
         $joins .= $this->get_joins($main_collection, $filter, $where, "or", $index, true);
