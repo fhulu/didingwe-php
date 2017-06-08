@@ -2,5 +2,7 @@ index:
   parent:
     class: [didi]
   type: container
+  read:
+    - this.post: trigger/fire
   contents:
     - program: { type: page_title}

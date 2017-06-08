@@ -1,0 +1,10 @@
+fire:
+  post:
+    - foreach:
+      - collection.data: [hook, [trigger.active: 1, trigger.start_time: /<=now(), trigger.end_time: />=now(), run: before], url, method, parameters, roles, partner_type]
+      - if auth.authorized($roles,$partner_type):
+          - let: $parameters
+          - if "$url" == "":
+              - $method: $parameters
+          - if "$url" != "":
+              - $method: [$url,$parameters]
