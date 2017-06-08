@@ -645,7 +645,7 @@ mkn.render = function(options)
     });
     if (field.autoload || field.autoload === undefined) {
       $.json('/', serverParams('data', field.path+'/'+name, field.params), function(result) {
-        respond(result, object);
+        me.respond(result, object);
         object.trigger('loaded', [field, result.data]);
       });
     }
@@ -750,7 +750,7 @@ mkn.render = function(options)
     })
     .on('server_response', function(event, result) {
       event.stopImmediatePropagation();
-      respond(result);
+      me.respond(result);
     })
     initTooltip(obj);
 
@@ -993,13 +993,13 @@ mkn.render = function(options)
             me.sink.find(".error").remove();
             $(selector).json('/', params, function(result) {
               obj.trigger('processed-'+field.id, [result]);
-              respond(result, obj, event);
+              me.respond(result, obj, event);
             });
             break;
           }
           $.json('/', params, function(result) {
             obj.trigger('straight processed', [result]);
-            respond(result, obj);
+            me.respond(result, obj);
           });
           break;
         case 'trigger':
@@ -1055,7 +1055,7 @@ mkn.render = function(options)
     if (event) event.stopImmediatePropagation();
   }
 
-  var respond = function(result, invoker, event)
+  this.respond = function(result, invoker, event)
   {
     if (!result) return;
     mkn.removeXSS(result);
@@ -1127,7 +1127,7 @@ mkn.render = function(options)
         parent.setChildren(result[i], true);
       }
       me.updateWatchers();
-      respond(result);
+      me.respond(result);
     });
   }
 

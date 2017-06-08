@@ -125,6 +125,7 @@ var mkn = new function() {
     data.fields.sub_page = false;
     var r = new mkn.render({invoker: parent, types: data.types, id: id, key: options.key, request: options.request} );
     var object = r.render(data, 'fields');
+    if (data._responses)  r.respond(data);
     data.values = values;
     object.addClass('page');
     if (parent && !object.is('body'))
