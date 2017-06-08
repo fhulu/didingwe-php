@@ -47,12 +47,12 @@ class auth {
     return sizeof($object_rights) == 0 || sizeof(array_intersect($user_rights, $object_rights)) > 0;
   }
 
-  function authorized($roles, $partner_types)
+  function authorized($roles, $partner_types='')
   {
     return $this->verify($roles, $this->get_roles()) && $this->verify($partner_types, [$this->get_partner_type()]);
   }
 
-  function unauthorized($role, $partner_types)
+  function unauthorized($role, $partner_types='')
   {
     return !$this->authorized([$role], $partner_types);
   }
