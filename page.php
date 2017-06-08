@@ -1630,8 +1630,9 @@ class page
     replace_fields($options, $this->answer, true);
   }
 
-  function post($url)
+  function post($url, $values=null)
   {
+    if ($values) $this->let($values);
     $path = explode('/', $url);
     $file = array_shift($path);
     $fields = [];
