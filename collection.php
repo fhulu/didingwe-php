@@ -176,7 +176,7 @@ class collection extends module
         $joins .= " join `$table` m0$index on m0$index.collection = '$collection'
                   and m0$index.version <= m.version and m0$index.identifier = m$index.value";
 
-        $where .= " and m0$index.attribute = '$name' and m0$index.value = $value";
+        $where .= " and m0$index.attribute = '$name' and m0$index.value $operator $value";
       }
 
     }
