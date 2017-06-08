@@ -92,7 +92,7 @@ class collection extends module
     list($local_name, $foreign_key, $foreign_name) = explode('.', $name);
     $value = "value";
     if (!isset($foreign_key)) {
-      $query = "select $value from $table where collection = m.collection
+      $query = "select $value from `$table` where collection = m.collection
            and version <= m.version and identifier=m.identifier and attribute = '$name'";
     }
     else {
@@ -106,7 +106,7 @@ class collection extends module
       $query =
         "select $value from $sub_table where collection = '$foreign_key' and version <= m.version and attribute = '$foreign_name'
           and identifier in (
-            select value from $table where collection = m.collection and version <= m.version
+            select value from `$table` where collection = m.collection and version <= m.version
               and identifier=m.identifier and attribute = '$local_name' order by version desc, id desc)";
     }
     return "($query order by version desc, id desc limit 1) `$alias`";
@@ -131,7 +131,7 @@ class collection extends module
         $member_table = $this->get_table("user_group_member");
         $user_groups =  implode_quoted($this->auth->get_groups());
         $joins .=
-        " join $table m$index on m$index.collection = m.collection
+        " join `$table` m$index on m$index.collection = m.collection
             and m$index.version <= m.version and m$index.identifier=m.identifier
             and m$index.attribute = 'owner'
           join $member_table owner on owner.collection = 'user_group_member'
@@ -152,7 +152,7 @@ class collection extends module
         continue;
       }
       $table = $this->get_table($main_collection);
-      $joins .= " join $table m$index on m$index.collection = m.collection
+      $joins .= " join `$table` m$index on m$index.collection = m.collection
                 and m$index.version <= m.version and m$index.identifier = m.identifier";
       list($local_name, $foreign_key, $foreign_name) = explode('.', $name);
       if (!$new_group)
@@ -173,7 +173,7 @@ class collection extends module
         }
         if (substr($value,0,2) == "'$") $value = "'$" . last(explode('.', $value));
         $table = $this->get_table($collection);
-        $joins .= " join $table m0$index on m0$index.collection = '$collection'
+        $joins .= " join `$table` m0$index on m0$index.collection = '$collection'
                   and m0$index.version <= m.version and m0$index.identifier = m$index.value";
 
         $where .= " and m0$index.attribute = '$name' and m0$index.value = $value";
@@ -370,7 +370,7 @@ class collection extends module
     $table = $this->get_table($collection);
     $selection = $this->get_selection($table, $args, $where, $sorting, $grouping);
     $joins = $this->get_joins($collection, $filters, $where);
-    $sql = "select $selection from $table m $joins $where";
+    $sql = "select $selection from `$table` m $joins $where";
     $sql .= " group by m.identifier";
     $wrapped = $this->wrap_query($sql, $args, $term, $use_custom_filters);
     $this->set_grouping($sql, $grouping);
@@ -431,13 +431,13 @@ class collection extends module
         $condition = " and m.attribute = '$name'";
       }
       $attribute = $name== 'identifier'? $name: 'value';
-      $updated = $this->page->sql_exec("update $table m $joins set m.$attribute = $value $where $condition");
+      $updated = $this->page->sql_exec("update `$table` m $joins set m.$attribute = $value $where $condition");
       if ($updated) continue;
       list($identifier) = find_assoc_element($filters, 'identifier');
       if (!$identifier || $identifier[0] == '/') continue;
-      $this->page->sql_exec("insert into $table(collection,identifier,attribute,value)
+      $this->page->sql_exec("insert into `$table`(collection,identifier,attribute,value)
         select '$collection', '$identifier', '$name', $value from dual where not exists (
-          select 1 from $table m $where $condition)");
+          select 1 from `$table` m $where $condition)");
     }
   }
 
@@ -448,7 +448,7 @@ class collection extends module
     list($collection, $identifier) = array_splice($args, 0, 2);
     list($collection) = assoc_element($collection);
     $table = $this->get_table($collection);
-    $sql = "insert into $table(version,collection,identifier,attribute,value) values";
+    $sql = "insert into `$table`(version,collection,identifier,attribute,value) values";
     $identifier_func = "last_insert_id()";
     foreach($args as &$arg) {
       list($name,$value) = $this->page->get_sql_pair($arg);
@@ -460,7 +460,7 @@ class collection extends module
       $this->page->sql_exec($sql . "(0,'$collection', '$identifier','$name',$value)");
       if ($identifier) continue;
       list($identifier,$last_id) = $this->db->read_one("select $identifier_func, last_insert_id()");;
-      $this->db->exec("update $table set identifier='$identifier' where id = $last_id");
+      $this->db->exec("update `$table` set identifier='$identifier' where id = $last_id");
     }
     return ["new_${collection}_id"=>$identifier];
   }
