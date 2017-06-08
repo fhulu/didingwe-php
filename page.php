@@ -1388,6 +1388,10 @@ class page
 
   function let($values)
   {
+    if (is_string($values)) {
+      $values = json_decode($values, true);
+      if (!$values) return;
+    }
     $this->answer = merge_options($this->answer, $this->read_values($values));
   }
 
