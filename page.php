@@ -129,9 +129,9 @@ class page
   }
 
 
-  function include_external(&$data)
+  function include_external(&$data, $files=null)
   {
-    $files = $data['include'];
+    if (!$files) $files = $data['include'];
     if (!isset($files)) return;
     $fields = [];
     foreach($files as $file) {
@@ -348,11 +348,13 @@ class page
     return $field = merge_options($this->expand_type($code), $merged, $field);
   }
 
-  function follow_path()
+  function follow_path($path=null, $field=null)
   {
-    $path = $this->path;
-    array_splice($path,0,2);
-    $field = $this->fields;
+    if (!$path) {
+      $path = $this->path;
+      array_splice($path,0,2);
+    }
+    if (!$field) $field = $this->fields;
     foreach($path as $branch) {
       if (is_assoc($field)) {
         $new_parent = $field;
@@ -1626,5 +1628,15 @@ class page
     $this->merge_fields($options);
     replace_fields($options, $options, true);
     replace_fields($options, $this->answer, true);
+  }
+
+  function post($url)
+  {
+    $path = explode('/', $url);
+    $file = array_shift($path);
+    $fields = [];
+    $this->include_external($fields, [$file]);
+    $result = $this->follow_path($path, $fields);
+    return $this->reply($result);
   }
 }
