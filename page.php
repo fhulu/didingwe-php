@@ -876,8 +876,10 @@ class page
     if ($audit_first)
       $this->audit($invoker,[]);
     $result = $this->reply($invoker);
-    if (!$this->aborted && !$audit_first && !page::has_errors() && array_key_exists('audit', $invoker))
+    if ($this->aborted) return $result;
+    if (!$audit_first && !page::has_errors() && array_key_exists('audit', $invoker))
       $this->audit($invoker);
+    $this->post("trigger/fire", ["trigger_url"=>implode("/", $this->path)]);
     return $result;
   }
 
@@ -1139,7 +1141,7 @@ class page
     log::debug_json("REPLY ACTIONS", $actions);
 
     $methods = array('abort', 'alert', 'assert', 'audit', 'call', 'clear_session', 'clear_values',
-      'close_dialog', 'error', 'foreach', 'let', 'load_lineage', 'logoff',  'keep_values', 'read_config',  'read_server', 'read_session', 'read_values',
+      'close_dialog', 'error', 'foreach', 'let', 'load_lineage', 'logoff',  'keep_values', 'post', 'read_config',  'read_server', 'read_session', 'read_values',
        'redirect', 'ref_list', 'show_dialog', 'show_captcha', 'sql', 'sql_exec',
        'sql_rows', 'sql_insert','sql_update', 'sql_values', 'refresh', 'trigger',
        'update', 'upload', 'view_doc', 'write_session');
@@ -1638,9 +1640,10 @@ class page
     if ($values) $this->let($values);
     $path = explode('/', $url);
     $file = array_shift($path);
-    $fields = [];
-    $this->include_external($fields, [$file]);
-    $result = $this->follow_path($path, $fields);
-    return $this->reply($result);
+    $fields = [$path[0]=>$this->read_external($url)];
+    $this->fields = merge_options($this->fields, $fields);
+    $result = $this->follow_path($path);
+    $actions = $result['post'];
+    return $this->reply($actions);
   }
 }
