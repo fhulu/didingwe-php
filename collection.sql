@@ -28,6 +28,20 @@ select `contact`.identifier, `contact`.attribute, `contact`.value
       and `owner`.attribute = 'owner' and `owner`.value = 527
     where `contact`.collection = 'contact' and `contact`.attribute in ('time_added','cellphone','contact_info','access_level')
   order by 1
+  -- 0.0149
+
+  -- select time_added, cellphone, contact_info, access_level from contact where owner = 527 and contact_info like '%ANC%'
+  select `contact`.identifier, `contact`.attribute, `contact`.value
+    from contact `contact`
+      join contact `owner`
+        on  `owner`.collection = `contact`.collection and `contact`.identifier = `owner`.identifier
+        and `owner`.attribute = 'owner' and `owner`.value = 527
+      join contact `filter_contact_info`
+        on `filter_contact_info`.collection = `contact`.collection and `contact`.identifier = `filter_contact_info`.identifier
+        and `filter_contact_info`.attribute = 'contact_info' and `filter_contact_info`.value like '%ANC%'
+      where `contact`.collection = 'contact' and `contact`.attribute in ('time_added','cellphone','contact_info','access_level')
+    order by 1
+    -- 0.0046
 
 -- select time_added, cellphone, contact_info, access_level from contact where owner = 527 order by cellphone
 select `contact`.identifier, `contact`.attribute, `contact`.value
@@ -84,10 +98,3 @@ select `contact`.identifier, `contact`.attribute, `contact`.value
     where `contact`.collection = 'contact' and `contact`.attribute in ('time_added','cellphone','contact_info','access_level', 'blacklisted')
     order by sorter.value, contact.identifier
     --0.0500 seconds
-
--- select time, action, detail from audit where action like 'log%'
-select value from session
-  where collection = 'audit' and attribute in ('time','action','detail')
-  and (attribute != 'action' or attribute = 'action' and value like '%log%')
-  order by identifier
--- 0.0008 seconds
