@@ -886,9 +886,11 @@ class page
     replace_fields($str, ['sid'=>$this->get_module('auth')->get_session_id()]);
   }
 
-  static function replace_sql(&$sql, $options)
+  function replace_sql(&$sql, $options)
   {
     $sql =  replace_vars($sql, $options, function(&$val) {
+      if (is_array($val))
+        $val = json_encode($this->replace_fields($val));  
       $val = addslashes($val);
     });
     return $sql;
@@ -916,9 +918,9 @@ class page
   function translate_sql($sql)
   {
     page::replace_sid($sql);
-    page::replace_sql($sql, $this->answer);
-    page::replace_sql($sql, $this->context);
-    page::replace_sql($sql, $this->request);
+    $this->replace_sql($sql, $this->answer);
+    $this->replace_sql($sql, $this->context);
+    $this->replace_sql($sql, $this->request);
     return preg_replace('/\$\w+/', '', $sql);
   }
 
@@ -954,7 +956,7 @@ class page
     list($arg,$value) = assoc_element($arg);
     if ($value[0] == '/')
       $value = substr($value,1);
-    else
+    else if (!is_array($value))
       $value = "'". addslashes($value). "'";
     return [$this->get_db_name($arg), $value];
   }
@@ -1108,6 +1110,7 @@ class page
     replace_fields($field, $this->answer, true);
     replace_fields($field, $this->request, true);
     replace_fields($field, $this->context, true);
+    return $field;
   }
 
 
