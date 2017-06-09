@@ -1643,7 +1643,6 @@ class page
     $fields = [$path[0]=>$this->read_external($url)];
     $this->fields = merge_options($this->fields, $fields);
     $result = $this->follow_path($path);
-    $actions = $result['post'];
-    return $this->reply($actions);
+    return $this->reply($result);
   }
 }
