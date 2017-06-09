@@ -104,7 +104,7 @@ class collection extends module
       $name = $local_name;
       $sub_table = $this->get_table($foreign_key);
       $query =
-        "select $value from $sub_table where collection = '$foreign_key' and version <= m.version and attribute = '$foreign_name'
+        "select $value from `$sub_table` where collection = '$foreign_key' and version <= m.version and attribute = '$foreign_name'
           and identifier in (
             select value from `$table` where collection = m.collection and version <= m.version
               and identifier=m.identifier and attribute = '$local_name' order by version desc, id desc)";
