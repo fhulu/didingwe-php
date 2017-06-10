@@ -30,18 +30,31 @@ select `contact`.identifier, `contact`.attribute, `contact`.value
   order by 1
   -- 0.0149
 
-  -- select time_added, cellphone, contact_info, access_level from contact where owner = 527 and contact_info like '%ANC%'
-  select `contact`.identifier, `contact`.attribute, `contact`.value
-    from contact `contact`
-      join contact `owner`
-        on  `owner`.collection = `contact`.collection and `contact`.identifier = `owner`.identifier
-        and `owner`.attribute = 'owner' and `owner`.value = 527
-      join contact `filter_contact_info`
-        on `filter_contact_info`.collection = `contact`.collection and `contact`.identifier = `filter_contact_info`.identifier
-        and `filter_contact_info`.attribute = 'contact_info' and `filter_contact_info`.value like '%ANC%'
-      where `contact`.collection = 'contact' and `contact`.attribute in ('time_added','cellphone','contact_info','access_level')
-    order by 1
+-- select time_added, cellphone, contact_info, access_level from contact where owner = 527 and contact_info like '%ANC%'
+select `contact`.identifier, `contact`.attribute, `contact`.value
+  from contact `contact`
+    join contact `owner`
+      on  `owner`.collection = `contact`.collection and `contact`.identifier = `owner`.identifier
+      and `owner`.attribute = 'owner' and `owner`.value = 527
+    join contact `filter_contact_info`
+      on `filter_contact_info`.collection = `contact`.collection and `contact`.identifier = `filter_contact_info`.identifier
+      and `filter_contact_info`.attribute = 'contact_info' and `filter_contact_info`.value like '%ANC%'
+    where `contact`.collection = 'contact' and `contact`.attribute in ('time_added','cellphone','contact_info','access_level')
+  order by 1
     -- 0.0046
+
+-- select time_added, cellphone, contact_info, access_level from contact where owner = 527 and any value like '%a%'
+select `contact`.identifier, `contact`.attribute, `contact`.value
+  from contact `contact`
+    join contact `owner`
+      on  `owner`.collection = `contact`.collection and `contact`.identifier = `owner`.identifier
+      and `owner`.attribute = 'owner' and `owner`.value = 527
+    left join contact `searcher`
+      on  `searcher`.collection = `contact`.collection and `contact`.identifier = `searcher`.identifier
+      and `searcher`.value like '%a%'
+    where `contact`.collection = 'contact' and `contact`.attribute in ('time_added','cellphone','contact_info','access_level')
+  order by 1
+  -- 0.0046
 
 -- select time_added, cellphone, contact_info, access_level from contact where owner = 527 order by cellphone
 select `contact`.identifier, `contact`.attribute, `contact`.value
