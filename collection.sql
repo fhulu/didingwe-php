@@ -150,3 +150,26 @@ from contact `contact`
       on `contact`.collection = sorter.collection and `contact`.identifier = sorter.identifier and sorter.attribute = 'cellphone'
   order by sorter.value, 1
 -- 0.1080 seconds
+
+-- select time_added, cellphone, contact_info, access_level, u.email , u.first_name
+-- from contact c join user u on c.owner = user.id on where c.partner  = 526 and c.active = 1 and first_name like '%f%' and u.partner =
+select `contact`.identifier, ifnull(user.attribute, `contact`.attribute), ifnull(user.value,`contact`.value)
+  from contact `contact`
+    join contact `active`
+      on `contact`.collection = 'contact' and `contact`.attribute in ('time_added','cellphone','contact_info','access_level', 'owner')
+      and  `active`.collection = `contact`.collection and `contact`.identifier = `active`.identifier
+      and `active`.attribute = 'active' and `active`.value = 1
+    join contact `partner`
+      on  `partner`.collection = `contact`.collection and `contact`.identifier = `partner`.identifier
+      and `partner`.attribute = 'partner' and `partner`.value = 526
+    join auth `first`
+      on `first`.collection = 'user'
+      and `first`.identifier = (
+          select value from contact t where identifier = `contact`.identifier and attribute = 'owner')
+      and `first`.attribute = 'first_name'
+      and first.value like '%a%'
+    left join auth `user`
+        on `user`.collection = 'user' and `user`.attribute in ('email','first_name')
+        and `contact`.collection = 'contact' and `contact`.attribute = 'owner'
+        and `user`.identifier = `contact`.value
+  order by 1
