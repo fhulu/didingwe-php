@@ -162,10 +162,12 @@ select `contact`.identifier, ifnull(user.attribute, `contact`.attribute), ifnull
     join contact `partner`
       on  `partner`.collection = `contact`.collection and `contact`.identifier = `partner`.identifier
       and `partner`.attribute = 'partner' and `partner`.value = 526
+    join contact `owner`
+      on  `owner`.collection = `contact`.collection and `contact`.identifier = `owner`.identifier
+      and `owner`.attribute = 'owner'
     join auth `first`
       on `first`.collection = 'user'
-      and `first`.identifier = (
-          select value from contact t where identifier = `contact`.identifier and attribute = 'owner')
+      and `first`.identifier = owner.value
       and `first`.attribute = 'first_name'
       and first.value like '%a%'
     left join auth `user`
