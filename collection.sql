@@ -4,6 +4,18 @@ select identifier, attribute,value from contact
   order by identifier
 --0.0005 seconds
 
+select max(case when attribute='time_added' then value end) time_added,
+   max(case when attribute='cellphone' then value end) cellphone,
+   max(case when attribute='contact_info' then value end) contact_info,
+   max(case when attribute='access_level' then value end) access_level
+from (
+select identifier, attribute,value from contact
+  where collection = 'contact' and attribute in ('time_added','cellphone','contact_info', 'access_level')
+  order by 1
+  limit 100
+) group by identifier
+-- 0.0012
+
 -- select time_added, cellphone, contact_info, access_level from contact order by cellphone
 select contact.identifier, contact.attribute, contact.value from contact `contact`
   left join contact sorter
@@ -133,7 +145,7 @@ select `contact`.identifier, ifnull(user.attribute, `contact`.attribute), ifnull
 -- select time_added, cellphone, contact_info, access_level, u.email , u.first_name
 -- from contact c join user u on c.owner = user.id on where c.partner  = 526 and c.active = 1
 -- order by c.cellphone
-select `contact`.identifier, ifnull(user.attribute, `contact`.attribute), ifnull(user.value,`contact`.value)
+select `contact`.identifier, ifnull(user.attribute, `contact`.attribute) `attribute`, ifnull(user.value,`contact`.value) `value`
 from contact `contact`
   join contact `active`
     on `contact`.collection = 'contact' and `contact`.attribute in ('time_added','cellphone','contact_info','access_level','owner')
@@ -149,11 +161,39 @@ from contact `contact`
   left join contact sorter
       on `contact`.collection = sorter.collection and `contact`.identifier = sorter.identifier and sorter.attribute = 'cellphone'
   order by sorter.value, 1
--- 0.1080 seconds
+-- 0.0910 seconds
+
+select max(case when attribute='time_added' then value end) time_added,
+   max(case when attribute='cellphone' then value end) cellphone,
+   max(case when attribute='contact_info' then value end) contact_info,
+   max(case when attribute='access_level' then value end) access_level,
+   max(case when attribute='email' then value end) email,
+   max(case when attribute='first_name' then value end) first_name
+from (
+  select `contact`.identifier, ifnull(user.attribute, `contact`.attribute) `attribute`, ifnull(user.value,`contact`.value) `value`
+  from contact `contact`
+    join contact `active`
+      on `contact`.collection = 'contact' and `contact`.attribute in ('time_added','cellphone','contact_info','access_level','owner')
+      and  `active`.collection = `contact`.collection and `contact`.identifier = `active`.identifier
+      and `active`.attribute = 'active' and `active`.value = 1
+    join contact `partner`
+      on  `partner`.collection = `contact`.collection and `contact`.identifier = `partner`.identifier
+      and `partner`.attribute = 'partner' and `partner`.value = 526
+    left join auth `user`
+        on `user`.collection = 'user' and `user`.attribute in ('email','first_name')
+        and `contact`.collection = 'contact' and `contact`.attribute = 'owner'
+        and `user`.identifier = `contact`.value
+    left join contact sorter
+        on `contact`.collection = sorter.collection and `contact`.identifier = sorter.identifier and sorter.attribute = 'cellphone'
+    order by sorter.value, 1
+    limit 100
+  ) tmp
+  group by identifier
+-- 0.0925 seconds
 
 -- select time_added, cellphone, contact_info, access_level, u.email , u.first_name
--- from contact c join user u on c.owner = user.id on where c.partner  = 526 and c.active = 1 and first_name like '%f%' and u.partner =
-select `contact`.identifier, ifnull(user.attribute, `contact`.attribute), ifnull(user.value,`contact`.value)
+-- from contact c join user u on c.owner = user.id on where c.partner  = 526 and c.active = 1 and first_name like '%f%'
+select `contact`.identifier, ifnull(user.attribute, `contact`.attribute) `attribute`, ifnull(user.value,`contact`.value) `value`
   from contact `contact`
     join contact `active`
       on `contact`.collection = 'contact' and `contact`.attribute in ('time_added','cellphone','contact_info','access_level', 'owner')
@@ -175,3 +215,38 @@ select `contact`.identifier, ifnull(user.attribute, `contact`.attribute), ifnull
         and `contact`.collection = 'contact' and `contact`.attribute = 'owner'
         and `user`.identifier = `contact`.value
   order by 1
+-- 0.0510
+
+select max(case when attribute='time_added' then value end) time_added,
+   max(case when attribute='cellphone' then value end) cellphone,
+   max(case when attribute='contact_info' then value end) contact_info,
+   max(case when attribute='access_level' then value end) access_level,
+   max(case when attribute='email' then value end) email,
+   max(case when attribute='first_name' then value end) first_name
+from (
+  select `contact`.identifier, ifnull(user.attribute, `contact`.attribute) `attribute`, ifnull(user.value,`contact`.value) `value`
+    from contact `contact`
+      join contact `active`
+        on `contact`.collection = 'contact' and `contact`.attribute in ('time_added','cellphone','contact_info','access_level', 'owner')
+        and  `active`.collection = `contact`.collection and `contact`.identifier = `active`.identifier
+        and `active`.attribute = 'active' and `active`.value = 1
+      join contact `partner`
+        on  `partner`.collection = `contact`.collection and `contact`.identifier = `partner`.identifier
+        and `partner`.attribute = 'partner' and `partner`.value = 526
+      join contact `owner`
+        on  `owner`.collection = `contact`.collection and `contact`.identifier = `owner`.identifier
+        and `owner`.attribute = 'owner'
+      join auth `first`
+        on `first`.collection = 'user'
+        and `first`.identifier = owner.value
+        and `first`.attribute = 'first_name'
+        and first.value like '%a%'
+      left join auth `user`
+          on `user`.collection = 'user' and `user`.attribute in ('email','first_name')
+          and `contact`.collection = 'contact' and `contact`.attribute = 'owner'
+          and `user`.identifier = `contact`.value
+    order by 1
+    limit 100
+  ) tmp
+  group by identifier
+  -- 0.0500
