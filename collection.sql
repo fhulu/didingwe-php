@@ -114,59 +114,39 @@ select `contact`.identifier, `contact`.attribute, `contact`.value
 
 -- select time_added, cellphone, contact_info, access_level, u.email , u.first_name
 -- from contact c join user u on c.owner = user.id on where c.partner  = 526 and c.active = 1
-select `contact`.identifier, `contact`.attribute, `contact`.value
+select `contact`.identifier, ifnull(user.attribute, `contact`.attribute), ifnull(user.value,`contact`.value)
   from contact `contact`
     join contact `active`
-      on  `active`.collection = `contact`.collection and `contact`.identifier = `active`.identifier
+      on `contact`.collection = 'contact' and `contact`.attribute in ('time_added','cellphone','contact_info','access_level','owner')
+      and  `active`.collection = `contact`.collection and `contact`.identifier = `active`.identifier
       and `active`.attribute = 'active' and `active`.value = 1
     join contact `partner`
       on  `partner`.collection = `contact`.collection and `contact`.identifier = `partner`.identifier
       and `partner`.attribute = 'partner' and `partner`.value = 526
-    where `contact`.collection = 'contact' and `contact`.attribute in ('time_added','cellphone','contact_info','access_level')
-  union
-  select `contact`.identifier, `user`.attribute, `user`.value
-    from auth `user`
-      join contact `contact`
-        on `contact`.collection = 'contact' and `contact`.attribute = 'owner'
+    left join auth `user`
+        on `user`.collection = 'user' and `user`.attribute in ('email','first_name')
+        and `contact`.collection = 'contact' and `contact`.attribute = 'owner'
         and `user`.identifier = `contact`.value
-      join contact `active`
-        on  `active`.collection = `contact`.collection and `contact`.identifier = `active`.identifier
-        and `active`.attribute = 'active' and `active`.value = 1
-      join contact `partner`
-        on  `partner`.collection = `contact`.collection and `contact`.identifier = `partner`.identifier
-        and `partner`.attribute = 'partner' and `partner`.value = 526
-    where `user`.collection = 'user' and `user`.attribute in ('email','first_name')
   order by 1
--- 0.0640 seconds
+-- 0.0604 seconds
 
 -- select time_added, cellphone, contact_info, access_level, u.email , u.first_name
 -- from contact c join user u on c.owner = user.id on where c.partner  = 526 and c.active = 1
 -- order by c.cellphone
-select `contact`.identifier, `contact`.attribute, `contact`.value, sorter.value sorter
-  from contact `contact`
-    join contact `active`
-      on  `active`.collection = `contact`.collection and `contact`.identifier = `active`.identifier
-      and `active`.attribute = 'active' and `active`.value = 1
-    join contact `partner`
-      on  `partner`.collection = `contact`.collection and `contact`.identifier = `partner`.identifier
-      and `partner`.attribute = 'partner' and `partner`.value = 526
-    left join contact sorter
-        on `contact`.collection = sorter.collection and `contact`.identifier = sorter.identifier and sorter.attribute = 'cellphone'
-    where `contact`.collection = 'contact' and `contact`.attribute in ('time_added','cellphone','contact_info','access_level')
-  union
-  select `contact`.identifier, `user`.attribute, `user`.value, sorter.value sorter
-    from auth `user`
-      join contact `contact`
-        on `contact`.collection = 'contact' and `contact`.attribute = 'owner'
-        and `user`.identifier = `contact`.value
-      join contact `active`
-        on  `active`.collection = `contact`.collection and `contact`.identifier = `active`.identifier
-        and `active`.attribute = 'active' and `active`.value = 1
-      join contact `partner`
-        on  `partner`.collection = `contact`.collection and `contact`.identifier = `partner`.identifier
-        and `partner`.attribute = 'partner' and `partner`.value = 526
-      left join contact sorter
-          on `contact`.collection = sorter.collection and `contact`.identifier = sorter.identifier and sorter.attribute = 'cellphone'
-    where `user`.collection = 'user' and `user`.attribute in ('email','first_name')
-  order by sorter, 1
--- 0.1016 seconds
+select `contact`.identifier, ifnull(user.attribute, `contact`.attribute), ifnull(user.value,`contact`.value)
+from contact `contact`
+  join contact `active`
+    on `contact`.collection = 'contact' and `contact`.attribute in ('time_added','cellphone','contact_info','access_level','owner')
+    and  `active`.collection = `contact`.collection and `contact`.identifier = `active`.identifier
+    and `active`.attribute = 'active' and `active`.value = 1
+  join contact `partner`
+    on  `partner`.collection = `contact`.collection and `contact`.identifier = `partner`.identifier
+    and `partner`.attribute = 'partner' and `partner`.value = 526
+  left join auth `user`
+      on `user`.collection = 'user' and `user`.attribute in ('email','first_name')
+      and `contact`.collection = 'contact' and `contact`.attribute = 'owner'
+      and `user`.identifier = `contact`.value
+  left join contact sorter
+      on `contact`.collection = sorter.collection and `contact`.identifier = sorter.identifier and sorter.attribute = 'cellphone'
+  order by sorter.value, 1
+-- 0.1080 seconds
