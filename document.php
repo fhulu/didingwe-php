@@ -16,7 +16,7 @@ class document extends module
     if (!file_exists($path)) mkdir($path, 755, true);
     $path = "$path/$id-$file_name";
     if ($file_name == '' || !is_uploaded_file($temp_name) || !move_uploaded_file($temp_name, $path))
-      return $page->error("Error uploading document $path. File may be too large");
+      return $page->error($control, "Error uploading document $path. File may be too large");
 
     return ['path'=>$path, "mime"=>document::extension($path)];
   }
@@ -53,7 +53,7 @@ class document extends module
       $excel = $reader->load($path);
     }
     catch (Exception $e) {
-      $this->page->error($control, "Error loading file $path: ". $e->getMessage());
+      if ($control) $this->page->error($control, "Error loading file $path: ". $e->getMessage());
       return false;
     }
     $sheet = $excel->getSheet(0);     //Selecting sheet 0

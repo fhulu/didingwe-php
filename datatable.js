@@ -765,11 +765,11 @@
     },
 
 
-    createEditor: function(template)
+    createEditor: function(template, cls)
     {
       var editor = template.clone();
       var td;
-      editor.addClass('datatable-editor');
+      editor.addClass('datatable-editor').addClass(cls);
       editor.children().each(function(i) {
         var input = $('<input type=text></input>').css('width','100%');
         $(this).text('').append(input);
@@ -786,7 +786,7 @@
       var me = this;
       var titles = me.head().find('.titles');
       var fields = me.options.fields;
-      filter = me.createEditor(titles).hide();
+      filter = me.createEditor(titles,'filter').hide();
       var tds = filter.children();
       filter.find('input').bind('keyup cut paste', function(e) {
         me.params.offset = 0;
