@@ -38,7 +38,7 @@ collections:
   session: [session,audit,token]
   billing: [rate,payment,credit,transaction,country_rate]
   document: [document]
-  trigger: [trigger,hook]
+  trigger: [trigger,hook,promo_entry]
 
 
 registrar: Mukoni Software
