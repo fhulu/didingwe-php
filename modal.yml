@@ -6,17 +6,19 @@ modal:
   dialog:
     type: container
     attr: { id: ""}
-    class: [modal-dialog,relative,inline-block,brand-text]
+    class: [modal-dialog,relative,inline-block,brand-text,show-overflow]
     derive: [title_bar,close_button,body]
-    contents: [$title_bar,$body]
+    contents: [$close_button, $title_bar,$body]
   title_bar:
     tag: div
     class: [modal-title-bar, widest,pad,center-text,cursor-pointer]
     derive: [close_button]
-    text: $name $close_button
+    text: $name
 
   close_button:
     tag: div
     name: ""
-    class: [modal-close-button,float-right, cursor-pointer, fa fa-times]
+    class: [modal-close-button, absolute, top-right, overlay, cursor-pointer, fa fa-times, transparent-color]
     action: close_dialog
+    top: -24
+    right: -16
