@@ -1,9 +1,9 @@
 popup:
   type: container
+  message:
+      type: p
+      attr: { parseHtml: br}
   contents:
-    - message:
-        type: p
-        class: [text-green, font-xlarge, pad pad-large]
-        attr: { parseHtml: br}
+    - $message
   modal:
     title_bar: ""
