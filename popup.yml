@@ -1,0 +1,8 @@
+popup:
+  type: container
+  contents:
+    - message:
+        type: p
+        class: [text-green, font-xlarge, pad pad-large]
+  modal:
+    title_bar: ""
