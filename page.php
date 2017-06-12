@@ -1240,6 +1240,8 @@ class page
   static function show_dialog($dialog, $options=null, $values = null)
   {
     page::respond('show_dialog', $dialog);
+    if (is_string($options))
+      $options = json_decode($options, true);
     if ($values) $options['values'] = $values;
     if (!is_null($options)) page::respond('options', $options);
   }
