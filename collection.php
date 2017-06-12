@@ -39,79 +39,94 @@ class collection extends module
       return $table? $table: $this->tables['default'];
   }
 
-  function extract_grouping(&$sorting, &$grouping, &$name, &$alias)
+  function extract_grouping(&$attr)
   {
     $matches = [];
-    if (!preg_match('/^(\w[\w\.]*)(\s*\+\d+)?(\s+group\s*)?(\s+asc\s*|\s+desc\s*)?$/', $alias, $matches)) return;
-    if ($name == $alias)
-      $name = $alias = $matches[1];
+    if (!preg_match('/^(\w[\w\.]*)(\s*\+\d+)?(\s+group\s*)?(\s+asc\s*|\s+desc\s*)?$/', $attr['alias'], $matches)) return;
+    if (!$attr['aliased']) {
+      $attr['name'] = $attr['alias'] = $matches[1];
     else
-      $alias = $matches[1];
+      $attr['alias'] = $matches[1];
     if (sizeof($matches) < 2) return;
-    $field =  array_slice(explode('.',$alias),-1)[0];
-    if ($matches[3]) $grouping[] = $field;
-    if ($matches[4]) $sorting[] = "$field $matches[2] $matches[4]";
+    $field =  array_slice(explode('.',$attr['alias']),-1)[0];
+    if ($matches[3]) $attr['group'] = true;
+    if ($matches[4]) {
+      $attr['sort_order'] = $matches[4];
+      if ($matches[2]) $attr['sort_convert'] = $matches[2];
+      $this->sorts[] = $attr;
+    }
   }
 
-  function get_name_alias($arg)
+  function init_attr($arg)
   {
-    if (is_string($arg))
+    if (($aliased = is_string($arg)))
       $name = $alias = $arg;
     else if (is_assoc($arg)) {
       list($alias, $name) = assoc_element($arg);
       if (is_assoc($name)) $name = $alias;
     }
-    return [$name,$alias];
-  }
-
-  function get_selection($table, $args, &$where, &$sorting, &$grouping)
-  {
-    $selection = [];
-    foreach($args as &$arg) {
-      if (is_array($arg) && !is_assoc($arg)) {
-        $selection[] = $this->get_selection($table, $arg, $where, $sorting, $grouping);
-        continue;
-      }
-      list($name,$alias) = $this->get_name_alias($arg);
-      if ($alias[0] == '/') continue;
-      $this->extract_grouping($sorting, $grouping, $name, $alias);
-      if ($name == 'identifier')
-        $selection[] = "m.$name `$alias`";
-      else
-        $selection[] = $this->get_subquery($table, $name, $alias, $term);
-      ++$index;
-    }
-    return implode(",", array_filter($selection));
-  }
-
-  function get_subquery($table, $name, $alias, $term)
-  {
-    if ($name[0] == '/') return;
-    $name = addslashes($name);
-    $alias = addslashes($alias);
     list($local_name, $foreign_key, $foreign_name) = explode('.', $name);
-    $value = "value";
-    if (!isset($foreign_key)) {
-      $query = "select $value from `$table` where collection = m.collection
-           and version <= m.version and identifier=m.identifier and attribute = '$name'";
+    if (isset($foreign_key)) {
+      $name = $local_name;
+      $attr['foreign_key'] = $foreign_key;
+      if (!isset($foreign_name)) $foreign_name = $name;
+      $attr['foreign_name'] = $foreign_name;
+      $attr['table'] = $this->get_table($foreign_key);
+      $attr['collection'] = $foreign_key;
+      if (!in_array($foreign_key, $this->foreigners))
+        $this->foreigners[] = $foreign_key;
     }
     else {
-      if (!isset($foreign_name)) {
-        $foreign_name = $foreign_key;
-        $foreign_key = $local_name;
-      }
-      if ($alias == $name) $alias = $foreign_name;
-      $name = $local_name;
-      $sub_table = $this->get_table($foreign_key);
-      $query =
-        "select $value from `$sub_table` where collection = '$foreign_key' and version <= m.version and attribute = '$foreign_name'
-          and identifier in (
-            select value from `$table` where collection = m.collection and version <= m.version
-              and identifier=m.identifier and attribute = '$local_name' order by version desc, id desc)";
+      $attr['table'] = $this->main_table;
+      $attr['collection'] = $this->main_collection;
     }
-    return "($query order by version desc, id desc limit 1) `$alias`";
+
+    $attr['name'] = $name;
+    $attt['alias'] = $alias;
+    $attr['aggregated'] = $name[0] == '/';
+    $attr['aliased'] = $aliased;
+    $this->extract_grouping($attr);
+
+    return $attr;
   }
 
+  function set_attributes($args)
+  {
+    foreach($args as &$arg) {
+      $this->attributes[] = $this->init_attr($attr, $arg);
+    }
+  }
+
+  function create_main_sort()
+  {
+    foreach($this->sorts as &$attr) {
+      $collection = $attr['collection'];
+      if ($collection != $this->main_collection) continue;
+      $table = "`$this->main_table`";
+      $alias = $attr['alias'];
+      $name = $attr['name'];
+      $attr['sort_join'] = "left join $table `sorter_$alias`"
+          . " on $table.collection = '$collection' and $table.identifier = `sorter_$alias`.identifier "
+          . " and `sorter_$alias`.attribute = '$name'";
+    }
+  }
+
+  function create_inner_select()
+  {
+    $main_alias = "`$this->main_table`";
+    $sql = "select $main_alias.identifier, ";
+    foreach($this->foreigners as $foreign) {
+      $foreign_attrs .= "case when `$foreign`.attribute is not null then `$foreign`.attribute\n";
+      $foreign_vals  .= "case when `$foreign`.value is not null then `$foreign`.value\n";
+    }
+    if ($foreign_attrs) {
+      $sql .= "$foreign_attrs else $mail_alias.attribute end `attribute`, "
+      $sql .= "$foreign_vals  else $main_alias.value end `value` ";
+    }
+    else {
+      $sql .= "$main_alias.attribute, $main_alias.value";
+    }
+  }
   function get_joins($main_collection, $filters, &$where="", $conjuctor="and", $index=0, $new_group=false)
   {
     $joins = "";
@@ -184,22 +199,12 @@ class collection extends module
     return $joins;
   }
 
-  function expand_star($default_collection, &$args, $aliases=[])
+  function expand_star($arg)
   {
-    $expansion = null;
-    $star_index = $index = -1;
-    $aliases = array_map(function($value) {
-      list($name,$alias) = $this->get_name_alias($value);
-      return $alias;
-    }, $aliases);
-    foreach($args as $arg) {
       ++$index;
       $matches = [];
-      if (!is_string($arg) || !preg_match('/^(?:(\w+)\.)?\*/', $arg, $matches)) {
-        list($name,$alias) = $this->get_name_alias($arg);
-        $aliases[] = $alias;
+      if (!is_string($arg) || !preg_match('/^(?:(\w+)\.)?\*/', $arg, $matches))
         continue;
-      }
       $collection = $default_collection;
       $foreign = false;
       if ($matches[1]) {
@@ -258,8 +263,12 @@ class collection extends module
       $filters = [['identifier'=>$filters]];
     else if (is_assoc($filters))
       $filters = [$filters];
-    return [$collection, $filters, $offset, $size];
+    $this->main_collection = $collection;
+    $this->filters = $filters;
+    $this->offset = $offset;
+    $this->size = $size;
   }
+
 
   function expand_args(&$args)
   {
@@ -358,17 +367,19 @@ class collection extends module
     return true;
   }
 
+
   function read($args, $use_custom_filters=false, $term="")
   {
     $args = page::parse_args($args);
-    $size = $this->expand_args($args);
-    list($collection, $filters, $offset, $size) = $this->extract_header($args);
-    if (!empty($this->combined_columns))
-      $this->expand_star($collection, $this->combined_columns, $args);
-    $this->expand_star($collection, $args);
-    $where = " where m.collection = '$collection' and m.version = 0 ";
+    $this->expand_args($args);
+    $this->extract_header($args);
+    // if (!empty($this->combined_columns))
+    //   $this->expand_star($collection, $this->combined_columns, $args);
+    // $this->expand_star($collection, $args);
+    // $where = " where m.collection = '$collection' and m.version = 0 ";
     $sorting = [];
     $table = $this->get_table($collection);
+
     $selection = $this->get_selection($table, $args, $where, $sorting, $grouping);
     $joins = $this->get_joins($collection, $filters, $where);
     $sql = "select $selection from `$table` m $joins $where";

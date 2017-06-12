@@ -1,4 +1,4 @@
--- select time_added, cellphone, contact_info, access_level from contact
+  -- select time_added, cellphone, contact_info, access_level from contact
 select identifier, attribute,value from contact
   where collection = 'contact' and attribute in ('time_added','cellphone','contact_info', 'access_level')
   order by identifier
@@ -154,14 +154,15 @@ from contact `contact`
   join contact `partner`
     on  `partner`.collection = `contact`.collection and `contact`.identifier = `partner`.identifier
     and `partner`.attribute = 'partner' and `partner`.value = 526
+  left join auth sorter
+      on `contact`.collection = sorter.collection and `contact`.identifier = sorter.identifier and sorter.attribute = 'cellphone'
   left join auth `user`
       on `user`.collection = 'user' and `user`.attribute in ('email','first_name')
       and `contact`.collection = 'contact' and `contact`.attribute = 'owner'
       and `user`.identifier = `contact`.value
-  left join contact sorter
-      on `contact`.collection = sorter.collection and `contact`.identifier = sorter.identifier and sorter.attribute = 'cellphone'
   order by sorter.value, 1
 -- 0.0910 seconds
+
 
 select max(case when attribute='time_added' then value end) time_added,
    max(case when attribute='cellphone' then value end) cellphone,
@@ -190,6 +191,36 @@ from (
   ) tmp
   group by identifier
 -- 0.0925 seconds
+
+
+-- select time_added, cellphone, contact_info, access_level, u.email , u.first_name
+-- from contact c join user u on c.owner = user.id on where c.partner  = 526 and c.active = 1
+-- order by u.first_name
+select max(case when attribute='time_added' then value end) time_added,
+   max(case when attribute='cellphone' then value end) cellphone,
+   max(case when attribute='contact_info' then value end) contact_info,
+   max(case when attribute='access_level' then value end) access_level,
+   max(case when attribute='email' then value end) email,
+   max(case when attribute='first_name' then value end) first_name
+from (
+select `contact`.identifier, ifnull(user.attribute, `contact`.attribute) `attribute`, ifnull(user.value,`contact`.value) `value`
+from contact `contact`
+  join contact `active`
+    on `contact`.collection = 'contact' and `contact`.attribute in ('time_added','cellphone','contact_info','access_level','owner')
+    and  `active`.collection = `contact`.collection and `contact`.identifier = `active`.identifier
+    and `active`.attribute = 'active' and `active`.value = 1
+  join contact `partner`
+    on  `partner`.collection = `contact`.collection and `contact`.identifier = `partner`.identifier
+    and `partner`.attribute = 'partner' and `partner`.value = 526
+  left join auth `user`
+      on `user`.collection = 'user' and `user`.attribute in ('email','first_name')
+      and `contact`.collection = 'contact' and `contact`.attribute = 'owner'
+      and `user`.identifier = `contact`.value
+) tmp
+group by tmp.identifier
+order by first_name
+-- 0.0910 seconds
+
 
 -- select time_added, cellphone, contact_info, access_level, u.email , u.first_name
 -- from contact c join user u on c.owner = user.id on where c.partner  = 526 and c.active = 1 and first_name like '%f%'
@@ -224,7 +255,9 @@ select max(case when attribute='time_added' then value end) time_added,
    max(case when attribute='email' then value end) email,
    max(case when attribute='first_name' then value end) first_name
 from (
-  select `contact`.identifier, ifnull(user.attribute, `contact`.attribute) `attribute`, ifnull(user.value,`contact`.value) `value`
+  select `contact`.identifier,
+    case when user.attribute is not null then user.attribute else `contact`.attribute end `attribute`,
+    case when user.value is not null then user.value else `contact`.value end `value`
     from contact `contact`
       join contact `active`
         on `contact`.collection = 'contact' and `contact`.attribute in ('time_added','cellphone','contact_info','access_level', 'owner')
@@ -250,3 +283,35 @@ from (
   ) tmp
   group by identifier
   -- 0.0500
+
+-- select identifier, time_added, cellphone, contact_info, access_level, style, actions order by cellphone
+select identifier, time_added, cellphone, contact_info, access_level,
+    if(blacklisted,'blacklisted','') style,
+    if(blacklisted,"slide,edit,delete,whitelist","slide,edit,delete,blacklist") actions, blacklisted
+from (
+  select identifier,
+     max(case when attribute='time_added' then value end) time_added,
+     max(case when attribute='cellphone' then value end) cellphone,
+     max(case when attribute='contact_info' then value end) contact_info,
+     max(case when attribute='access_level' then value end) access_level,
+     max(case when attribute='blacklisted' then value end) blacklisted
+  from (
+    select `contact`.identifier,   `contact`.attribute `attribute`, `contact`.value `value`
+      from contact `contact`
+        join contact `active`
+          on `contact`.collection = 'contact' and `contact`.attribute in ('time_added','cellphone','contact_info','access_level', 'blacklisted')
+          and  `active`.collection = `contact`.collection and `contact`.identifier = `active`.identifier
+          and `active`.attribute = 'active' and `active`.value = 1
+        join contact `owner`
+          on  `owner`.collection = `contact`.collection and `contact`.identifier = `owner`.identifier
+          and `owner`.attribute = 'owner' and `owner`.value = 527
+        join contact sorter
+          on `contact`.collection = sorter.collection and `contact`.identifier = sorter.identifier and sorter.attribute = 'time_added'
+        order by sorter.value desc, 1
+        limit 100
+    ) tmp
+    group by identifier
+    order by 2 desc
+    limit 0,15
+  )tmp2
+  --order by blacklisted desc
