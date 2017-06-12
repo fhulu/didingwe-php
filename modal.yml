@@ -18,7 +18,5 @@ modal:
   close_button:
     tag: div
     name: ""
-    class: [modal-close-button, absolute, top-right, overlay, cursor-pointer, fa fa-times, transparent-color]
+    class: [modal-close-button, absolute, top-right, overlay, cursor-pointer, fa fa-times]
     action: close_dialog
-    top: -24
-    right: -16
