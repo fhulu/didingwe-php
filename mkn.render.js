@@ -532,7 +532,7 @@ mkn.render = function(options)
       obj.position(field.position);
 
     initLinks(obj, field).then(function() {
-      if (subitem_count) setValues(obj, field);
+      if (subitem_count) me.setValues(obj, field);
       initEvents(obj, field);
       obj.trigger('created', [field]);
     });
@@ -1093,7 +1093,7 @@ mkn.render = function(options)
     }
   }
 
-  var setValues = function(parent, data)
+  this.setValues = function(parent, data)
   {
     var query_values;
     for (var i in data.values) {

@@ -127,6 +127,7 @@ var mkn = new function() {
     var object = r.render(data, 'fields');
     if (data._responses)  r.respond(data);
     data.values = values;
+    r.setValues(object, data);
     object.addClass('page');
     if (parent && !object.is('body'))
       object.appendTo(parent);
