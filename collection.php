@@ -432,6 +432,7 @@ class collection extends module
         $condition = " and m.attribute = '$name'";
       }
       $attribute = $name== 'identifier'? $name: 'value';
+      $value = $this->encode_array($value);      
       $updated = $this->page->sql_exec("update `$table` m $joins set m.$attribute = $value $where $condition");
       if ($updated) continue;
       list($identifier) = find_assoc_element($filters, 'identifier');
@@ -440,6 +441,14 @@ class collection extends module
         select '$collection', '$identifier', '$name', $value from dual where not exists (
           select 1 from `$table` m $where $condition)");
     }
+  }
+
+  function encode_array($value)
+  {
+    if (!is_array($value)) return $value;
+    $encoded = json_encode($value);
+    if (!$encoded) return $value;
+    return "'". addslashes($encoded) . "'";
   }
 
   function insert()
@@ -458,6 +467,7 @@ class collection extends module
         $identifier_func = substr($identifier,1);
         $identifier = "";
       }
+      $value = $this->encode_array($value);
       $this->page->sql_exec($sql . "(0,'$collection', '$identifier','$name',$value)");
       if ($identifier) continue;
       list($identifier,$last_id) = $this->db->read_one("select $identifier_func, last_insert_id()");;
