@@ -4,5 +4,6 @@ popup:
     - message:
         type: p
         class: [text-green, font-xlarge, pad pad-large]
+        attr: { parseHtml: br}
   modal:
     title_bar: ""
