@@ -39,6 +39,7 @@ collections:
   billing: [rate,payment,credit,transaction,country_rate]
   document: [document]
   trigger: [trigger,hook,promo_entry]
+use_triggers: no
 
 
 registrar: Mukoni Software

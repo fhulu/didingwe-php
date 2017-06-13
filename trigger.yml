@@ -1,5 +1,7 @@
 fire:
   post:
+    - read_config: use_triggers
+    - if !"$use_triggers": abort
     - foreach:
       - collection.data:
           - hook
