@@ -99,34 +99,38 @@ class collection extends module
 
   function create_main_sort()
   {
+    $sql = "";
     foreach($this->sorts as &$attr) {
       $collection = $attr['collection'];
       if ($collection != $this->main_collection) continue;
       $table = "`$this->main_table`";
       $alias = $attr['alias'];
       $name = $attr['name'];
-      $attr['sort_join'] = "left join $table `sorter_$alias`"
+      $sql .= " left join $table `sorter_$alias`"
           . " on $table.collection = '$collection' and $table.identifier = `sorter_$alias`.identifier "
           . " and `sorter_$alias`.attribute = '$name'";
     }
+    return $sql;
   }
 
   function create_inner_select()
   {
-    $main_alias = "`$this->main_table`";
+    $main = "`$this->main_table`";
     $sql = "select $main_alias.identifier, ";
     foreach($this->foreigners as $foreign) {
       $foreign_attrs .= "case when `$foreign`.attribute is not null then `$foreign`.attribute\n";
       $foreign_vals  .= "case when `$foreign`.value is not null then `$foreign`.value\n";
     }
     if ($foreign_attrs) {
-      $sql .= "$foreign_attrs else $mail_alias.attribute end `attribute`, "
-      $sql .= "$foreign_vals  else $main_alias.value end `value` ";
+      $sql .= "$foreign_attrs else $mail.attribute end `attribute`, "
+      $sql .= "$foreign_vals  else $main.value end `value` ";
     }
     else {
-      $sql .= "$main_alias.attribute, $main_alias.value";
+      $sql .= "$mains.attribute, $main.value";
     }
+    return $sql;
   }
+
   function get_joins($main_collection, $filters, &$where="", $conjuctor="and", $index=0, $new_group=false)
   {
     $joins = "";
