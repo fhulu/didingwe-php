@@ -13,7 +13,7 @@ select identifier, attribute,value from contact
   where collection = 'contact' and attribute in ('time_added','cellphone','contact_info', 'access_level')
   order by 1
   limit 100
-) group by identifier
+) tmp group by identifier
 -- 0.0012
 
 -- select time_added, cellphone, contact_info, access_level from contact order by cellphone
@@ -129,16 +129,15 @@ select `contact`.identifier, `contact`.attribute, `contact`.value
 select `contact`.identifier, ifnull(user.attribute, `contact`.attribute), ifnull(user.value,`contact`.value)
   from contact `contact`
     join contact `active`
-      on `contact`.collection = 'contact' and `contact`.attribute in ('time_added','cellphone','contact_info','access_level','owner')
-      and  `active`.collection = `contact`.collection and `contact`.identifier = `active`.identifier
+      on  `active`.collection = `contact`.collection and `contact`.identifier = `active`.identifier
       and `active`.attribute = 'active' and `active`.value = 1
     join contact `partner`
       on  `partner`.collection = `contact`.collection and `contact`.identifier = `partner`.identifier
       and `partner`.attribute = 'partner' and `partner`.value = 526
     left join auth `user`
         on `user`.collection = 'user' and `user`.attribute in ('email','first_name')
-        and `contact`.collection = 'contact' and `contact`.attribute = 'owner'
-        and `user`.identifier = `contact`.value
+        and `contact`.attribute = 'owner' and `user`.identifier = `contact`.value
+  where `contact`.attribute in ('time_added','cellphone','contact_info','access_level','owner')
   order by 1
 -- 0.0604 seconds
 
