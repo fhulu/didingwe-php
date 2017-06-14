@@ -304,13 +304,13 @@ from (
         join contact `owner`
           on  `owner`.collection = `contact`.collection and `contact`.identifier = `owner`.identifier
           and `owner`.attribute = 'owner' and `owner`.value = 527
-        join contact sorter
+        left join contact sorter
           on `contact`.collection = sorter.collection and `contact`.identifier = sorter.identifier and sorter.attribute = 'time_added'
         order by sorter.value desc, 1
         limit 100
     ) tmp
     group by identifier
-    order by 2 desc
+    order by time_added desc
     limit 0,15
   )tmp2
   --order by blacklisted desc

@@ -55,7 +55,6 @@ class collection extends module
 
     $attr['sort_order'] = $matches[4];
     if ($matches[2]) $attr['sort_convert'] = $matches[2];
-    $this->sorts[] = $attr;
   }
 
 
@@ -102,7 +101,7 @@ class collection extends module
     }
 
     $attr['name'] = $name;
-    $attt['alias'] = $alias;
+    $attr['alias'] = $alias;
     $attr['aggregated'] = $name[0] == '/';
     $attr['aliased'] = $name != $alias;
     $this->extract_grouping($attr);
@@ -112,27 +111,35 @@ class collection extends module
 
   function init_attributes($args)
   {
-    log::debug_json("args", $args);
     $this->attributes = [];
+    $index = 1;
+    log::debug_json("sort_columns", $this->sort_columns);
     foreach($args as $arg) {
-      $this->attributes[] = $this->init_attr($arg);
+      $attr = $this->init_attr($arg);
+      if (in_array($attr['alias'], $this->sort_columns) || in_array("$index", $this->sort_columns)) {
+        if (!$attr['sort_order']) $attr['sort_order'] = $this->page->request['sort_order'];
+      }
+      ++$index;
+      $this->attributes[] = $attr ;
     }
-    log::debug_json("attributes", $this->attributes);
   }
 
   function create_sort_joins()
   {
-    $sql = "";
-    $table = "`$this->main_table`";
-    foreach($this->sorts as &$attr) {
-      if ($attr['foreign_name']) continue;
-      $alias = $attr['alias'];
+    $joins_sql = "";
+    $order_sql = [];
+    foreach($this->attributes  as $attr) {
+      if (!$attr['sort_order'] || $attr['foreign_name']) continue;
+      $sorter = "`sorter_" . $attr['alias']. "`";
       $name = $attr['name'];
-      $sql .= " left join $table `sorter_$alias`"
-          . " on $table.collection = '$this->main_collection' and $table.identifier = `sorter_$alias`.identifier "
-          . " and `sorter_$alias`.attribute = '$name'";
+      $joins_sql .= " left join `$this->main_table` $sorter"
+          . " on $sorter.collection = '$this->main_collection' and `$this->main_collection`.identifier = $sorter.identifier "
+          . " and $sorter.attribute = '$name'";
+      $order_sql[] = " $sorter " . $attr['sort_order'];
+      $fields[] = "$sorter.value $sorter";
     }
-    return $sql;
+    $order_sql = "order by ". implode(",", $order_sql);
+    return [$fields, $joins_sql, $order_sql];
   }
 
   function create_filter_joins()
@@ -163,7 +170,7 @@ class collection extends module
     return $sql;
   }
 
-  function create_inner_select()
+  function create_inner_select($sort_fields)
   {
     $main = "`$this->main_collection`";
     $sql = "select $main.identifier, ";
@@ -175,6 +182,7 @@ class collection extends module
       $sql .= "$foreign_attrs else $main.attribute end `attribute`\n, $foreign_vals else $main.value end `value` ";
     else
       $sql .= "$main.attribute `attribute`, $main.value `value`";
+    $sql .= "," . implode(",", $sort_fields);
     return $sql;
   }
 
@@ -198,16 +206,18 @@ class collection extends module
       $names[] = "max(case when attribute='$name' then value end) `$name`";
     }
     $names = implode(",\n", $names);
+    list($sort_fields, $sort_joins, $order_sql) = $this->create_sort_joins();
     $sql =  "select $names from ("
-      . $this->create_inner_select()
+      . $this->create_inner_select($sort_fields)
       . " from `$this->main_table` `$this->main_collection` "
-      . $this->create_filter_joins()
-      . $this->create_sort_joins()
-      . " where ". $this->get_attribute_filter($this->main_collection);
+      . $this->create_filter_joins();
+
+    $sql .= "$sort_joins where ". $this->get_attribute_filter($this->main_collection);
+
     if ($this->identifier_filter)
       $sql .= " and `$this->main_collection`.identifier = '$this->identifier_filter'";
 
-    return $sql . ") tmp group by identifier";
+    return $sql . " $order_sql) tmp group by identifier $order_sql";
 
   }
 
@@ -630,6 +640,10 @@ class collection extends module
 
   function sort_on()
   {
-    $this->sort_columns = array_merge($this->sort_columns, func_get_args());
+    foreach(func_get_args() as $arg) {
+      $columns[] = $this->page->request[$arg];
+    }
+    log::debug_json("sort_columns", $columns);
+    $this->sort_columns = array_merge($this->sort_columns, $columns);
   }
 }
