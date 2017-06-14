@@ -61,16 +61,21 @@ class collection extends module
 
   function init_filters()
   {
-    foreach($this->filters as $filter) {
+    log::debug_json("filters before", $this->filters);
+    foreach($this->filters as &$filter) {
       list($name, $value) = assoc_element($filter);
-      $attr = $this->init_attr($name, $collection, $table);
-      if ($value[0] == '/')
+      $attr = $this->init_attr($name);
+      if (is_null($value))
+        $value = "= '\$$name'";
+      else if ($value[0] == '/')
         $value = substr($value,1);
       else if (!is_array($value))
         $value = "= '". addslashes($value). "'";
       $filter = $attr;
+
       $filter['value'] = $value;
     }
+    log::debug_json("filters after", $this->filters);
   }
 
   function init_attr($arg)
@@ -133,6 +138,7 @@ class collection extends module
   function create_filter_joins()
   {
     $sql = "";
+    log::debug_json("filters", $this->filters);
     foreach($this->filters as &$filter) {
       $name = $filter['name'];
       $alias = $filter['alias'];
@@ -159,7 +165,7 @@ class collection extends module
 
   function create_inner_select()
   {
-    $main = "`$this->main_table`";
+    $main = "`$this->main_collection`";
     $sql = "select $main.identifier, ";
     foreach($this->foreigners as $foreign) {
       $foreign_attrs .= "case when `$foreign`.attribute is not null then `$foreign`.attribute\n";
@@ -201,7 +207,7 @@ class collection extends module
     if ($this->identifier_filter)
       $sql .= " and `$this->main_collection`.identifier = '$this->identifier_filter'";
 
-    return $sql . ") tmp";
+    return $sql . ") tmp group by identifier";
 
   }
 
