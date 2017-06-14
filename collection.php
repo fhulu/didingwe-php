@@ -60,7 +60,6 @@ class collection extends module
 
   function init_filters()
   {
-    log::debug_json("filters before", $this->filters);
     foreach($this->filters as &$filter) {
       list($name, $value) = assoc_element($filter);
       $attr = $this->init_attr($name);
@@ -74,7 +73,6 @@ class collection extends module
 
       $filter['value'] = $value;
     }
-    log::debug_json("filters after", $this->filters);
   }
 
   function init_attr($arg)
@@ -113,7 +111,6 @@ class collection extends module
   {
     $this->attributes = [];
     $index = 1;
-    log::debug_json("sort_columns", $this->sort_columns);
     foreach($args as $arg) {
       $attr = $this->init_attr($arg);
       if (in_array($attr['alias'], $this->sort_columns) || in_array("$index", $this->sort_columns)) {
@@ -138,14 +135,16 @@ class collection extends module
       $order_sql[] = " $sorter " . $attr['sort_order'];
       $fields[] = "$sorter.value $sorter";
     }
-    $order_sql = "order by ". implode(",", $order_sql);
+    if (sizeof($order_sql))
+      $order_sql = "order by ". implode(",", $order_sql);
+    else
+      $order_sql = "";
     return [$fields, $joins_sql, $order_sql];
   }
 
   function create_filter_joins()
   {
     $sql = "";
-    log::debug_json("filters", $this->filters);
     foreach($this->filters as &$filter) {
       $name = $filter['name'];
       $alias = $filter['alias'];
@@ -182,7 +181,8 @@ class collection extends module
       $sql .= "$foreign_attrs else $main.attribute end `attribute`\n, $foreign_vals else $main.value end `value` ";
     else
       $sql .= "$main.attribute `attribute`, $main.value `value`";
-    $sql .= "," . implode(",", $sort_fields);
+    if ($sort_fields)
+      $sql .= "," . implode(",", $sort_fields);
     return $sql;
   }
 
@@ -200,7 +200,6 @@ class collection extends module
 
   function create_outer_select()
   {
-    // log::debug_json("attributes", $this->attributes);
     foreach ($this->attributes as $attr) {
       $name = $attr['name'];
       $names[] = "max(case when attribute='$name' then value end) `$name`";
@@ -379,26 +378,6 @@ class collection extends module
       $sql .= " limit $size";
   }
 
-  function set_sorting(&$sql, $sorting, $group=true, $args=[])
-  {
-    if (empty($sorting)) {
-      $request = $this->page->request;
-      if (!$this->dynamic_sorting) return;
-      foreach($this->sort_columns as $field) {
-        $index = $request[$field];
-        if (!isset($index)) continue;
-        $sorting = "$index " . $request['sort_order'];
-      }
-      if (empty($sorting)) return;
-    }
-    else {
-      $sorting = implode(',', $sorting);
-    }
-    if ($group)
-      $sql = "select * from ($sql) tmp_sorting";
-    $sql .= " order by $sorting";
-  }
-
   function set_grouping(&$sql, $grouping)
   {
     if (!empty($grouping))
@@ -469,7 +448,7 @@ class collection extends module
     // if (!empty($this->combined_columns))
     //   $this->expand_star($collection, $this->combined_columns, $args);
     // $this->expand_star($collection, $args);
-    //$this->set_limits($sql, $offset, $size);
+    $this->set_limits($sql, $this->offset, $this->size);
     return $this->page->translate_sql($sql);
   }
 
@@ -643,7 +622,6 @@ class collection extends module
     foreach(func_get_args() as $arg) {
       $columns[] = $this->page->request[$arg];
     }
-    log::debug_json("sort_columns", $columns);
     $this->sort_columns = array_merge($this->sort_columns, $columns);
   }
 }
