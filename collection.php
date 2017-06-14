@@ -20,6 +20,8 @@ class collection extends module
     $this->star_columns = [];
     $this->sort_columns = [];
     $this->dynamic_sorting = true;
+    $this->foreigners = [];
+    $this->sorts = [];
   }
 
   function read_tables()
@@ -43,23 +45,37 @@ class collection extends module
   {
     $matches = [];
     if (!preg_match('/^(\w[\w\.]*)(\s*\+\d+)?(\s+group\s*)?(\s+asc\s*|\s+desc\s*)?$/', $attr['alias'], $matches)) return;
-    if (!$attr['aliased']) {
+    if (!$attr['aliased'])
       $attr['name'] = $attr['alias'] = $matches[1];
     else
       $attr['alias'] = $matches[1];
-    if (sizeof($matches) < 2) return;
-    $field =  array_slice(explode('.',$attr['alias']),-1)[0];
+
     if ($matches[3]) $attr['group'] = true;
-    if ($matches[4]) {
-      $attr['sort_order'] = $matches[4];
-      if ($matches[2]) $attr['sort_convert'] = $matches[2];
-      $this->sorts[] = $attr;
+    if (!$matches[4]) retjurn;
+
+    $attr['sort_order'] = $matches[4];
+    if ($matches[2]) $attr['sort_convert'] = $matches[2];
+    $this->sorts[] = $attr;
+  }
+
+
+  function init_filters()
+  {
+    foreach($this->filters as $filter) {
+      list($name, $value) = assoc_element($filter);
+      $attr = $this->init_attr($name, $collection, $table);
+      if ($value[0] == '/')
+        $value = substr($value,1);
+      else if (!is_array($value))
+        $value = "= '". addslashes($value). "'";
+      $filter = $attr;
+      $filter['value'] = $value;
     }
   }
 
   function init_attr($arg)
   {
-    if (($aliased = is_string($arg)))
+    if (is_string($arg))
       $name = $alias = $arg;
     else if (is_assoc($arg)) {
       list($alias, $name) = assoc_element($arg);
@@ -83,17 +99,20 @@ class collection extends module
     $attr['name'] = $name;
     $attt['alias'] = $alias;
     $attr['aggregated'] = $name[0] == '/';
-    $attr['aliased'] = $aliased;
+    $attr['aliased'] = $name != $alias;
     $this->extract_grouping($attr);
 
     return $attr;
   }
 
-  function set_attributes($args)
+  function init_attributes($args)
   {
-    foreach($args as &$arg) {
-      $this->attributes[] = $this->init_attr($attr, $arg);
+    log::debug_json("args", $args);
+    $this->attributes = [];
+    foreach($args as $arg) {
+      $this->attributes[] = $this->init_attr($arg);
     }
+    log::debug_json("attributes", $this->attributes);
   }
 
   function create_sort_joins()
@@ -115,21 +134,24 @@ class collection extends module
   {
     $sql = "";
     foreach($this->filters as &$filter) {
-      $alias = $filter['alias'];
       $name = $filter['name'];
+      $alias = $filter['alias'];
       $value = $filter['value'];
       $foreign_name = $filter['foreign_name'];
       if (!$foreign_name) {
         $sql .= " join `$this->main_table` `$name` "
             . " on  `$name`.collection = `$this->main_collection`.collection and `$this->main_collection`.identifier = `$name`.identifier "
             . " and `$name`.attribute = '$name' and `$name`.value $value ";
+
       }
       else {
         $collection = $filter['collection'];
         $table = $filter['table'];
-        $sql .= " left join $table `$collection` on "
-            . $this->get_attribute_filter($collection)
-            . " and `$this->main_collection`.attribute = '$name' and `$collection`.identifier = `$this->main_collection`.value";
+        $sql .= " left join $table `$collection` on " . $this->get_attribute_filter($collection);
+        if ($name=='identifier')
+          $sql .= " and `$collection`.identifier = '$identifier'";
+        else
+          $sql .= " and `$this->main_collection`.attribute = '$name' and `$collection`.identifier = `$this->main_collection`.value";
       }
     }
     return $sql;
@@ -143,13 +165,10 @@ class collection extends module
       $foreign_attrs .= "case when `$foreign`.attribute is not null then `$foreign`.attribute\n";
       $foreign_vals  .= "case when `$foreign`.value is not null then `$foreign`.value\n";
     }
-    if ($foreign_attrs) {
-      $sql .= "$foreign_attrs else $main.attribute end `attribute`, "
-      $sql .= "$foreign_vals  else $main.value end `value` ";
-    }
-    else {
+    if ($foreign_attrs)
+      $sql .= "$foreign_attrs else $main.attribute end `attribute`\n, $foreign_vals else $main.value end `value` ";
+    else
       $sql .= "$main.attribute `attribute`, $main.value `value`";
-    }
     return $sql;
   }
 
@@ -158,7 +177,7 @@ class collection extends module
     $names = [];
     foreach($this->attributes as $attr) {
       if ($attr['collection'] != $collection) continue;
-      $names[] = $attr['foreign_name']? $attr['foreign_name']: $attr['name';]
+      $names[] = $attr['foreign_name']? $attr['foreign_name']: $attr['name'];
     }
     $names = implode("','", $names);
     return "`$collection`.collection = '$collection' and `$collection`.attribute in ('$names')";
@@ -167,19 +186,25 @@ class collection extends module
 
   function create_outer_select()
   {
+    // log::debug_json("attributes", $this->attributes);
     foreach ($this->attributes as $attr) {
       $name = $attr['name'];
       $names[] = "max(case when attribute='$name' then value end) `$name`";
     }
-    $names
-    $sql = "select " . implode(",\n", $names) . " from ("
-      . $this->create_inner_select();
+    $names = implode(",\n", $names);
+    $sql =  "select $names from ("
+      . $this->create_inner_select()
       . " from `$this->main_table` `$this->main_collection` "
       . $this->create_filter_joins()
       . $this->create_sort_joins()
-      . " where " . $this->get_attribute_filter($this->main_collection)
-      . ") tmp";
+      . " where ". $this->get_attribute_filter($this->main_collection);
+    if ($this->identifier_filter)
+      $sql .= " and `$this->main_collection`.identifier = '$this->identifier_filter'";
+
+    return $sql . ") tmp";
+
   }
+
   function get_joins($main_collection, $filters, &$where="", $conjuctor="and", $index=0, $new_group=false)
   {
     $joins = "";
@@ -254,29 +279,23 @@ class collection extends module
 
   function expand_star($arg)
   {
-      ++$index;
-      $matches = [];
-      if (!is_string($arg) || !preg_match('/^(?:(\w+)\.)?\*/', $arg, $matches))
-        continue;
-      $collection = $default_collection;
-      $foreign = false;
-      if ($matches[1]) {
-        $collection = $matches[1];
-        $foreign = true;
-      }
-      if (empty($this->columns[$collection]))
-        $this->columns[$collection] = $this->get_fields($collection);
-      $expanded = $this->columns[$collection];
-      if ($foreign) {
-        $expanded = array_map(function($v) use ($collection) {
-          return "$collection.$v";
-        }, $expanded);
-      }
-      $star_index = $index;
+    $matches = [];
+    if (!is_string($arg) || !preg_match('/^(?:(\w+)\.)?\*/', $arg, $matches))
+      continue;
+    $collection = $default_collection;
+    $foreign = false;
+    if ($matches[1]) {
+      $collection = $matches[1];
+      $foreign = true;
     }
-    if ($star_index == -1) return;
-    $expanded = array_diff($expanded, array_values($aliases));
-    array_splice($args, $star_index, 1, $expanded);
+    if (empty($this->columns[$collection]))
+      $this->columns[$collection] = $this->get_fields($collection);
+    $expanded = $this->columns[$collection];
+    if ($foreign) {
+      $expanded = array_map(function($v) use ($collection) {
+        return "$collection.$v";
+      }, $expanded);
+    }
   }
 
   function add_custom_filters(&$sql, $args)
@@ -310,13 +329,15 @@ class collection extends module
     }
     list($collection, $filters) = array_splice($args, 0, 2);
     list($collection) = assoc_element($collection);
-    if ($filters == '')
+    $this->identifier_filter = null;
+    if (is_string($filters)) {
+      $this->identifier_filter = $filters;
       $filters = [];
-    else if (is_string($filters))
-      $filters = [['identifier'=>$filters]];
+    }
     else if (is_assoc($filters))
       $filters = [$filters];
     $this->main_collection = $collection;
+    $this->main_table = $this->get_table($collection);
     $this->filters = $filters;
     $this->offset = $offset;
     $this->size = $size;
@@ -426,22 +447,13 @@ class collection extends module
     $args = page::parse_args($args);
     $this->expand_args($args);
     $this->extract_header($args);
+    $this->init_attributes($args);
+    $this->init_filters();
+    $sql = $this->create_outer_select();
     // if (!empty($this->combined_columns))
     //   $this->expand_star($collection, $this->combined_columns, $args);
     // $this->expand_star($collection, $args);
-    // $where = " where m.collection = '$collection' and m.version = 0 ";
-    $sorting = [];
-    $table = $this->get_table($collection);
-
-    $selection = $this->get_selection($table, $args, $where, $sorting, $grouping);
-    $joins = $this->get_joins($collection, $filters, $where);
-    $sql = "select $selection from `$table` m $joins $where";
-    $sql .= " group by m.identifier";
-    $wrapped = $this->wrap_query($sql, $args, $term, $use_custom_filters);
-    $this->set_grouping($sql, $grouping);
-    if (!$this->no_sorting)
-      $this->set_sorting($sql, $sorting, !$wrapped, $args);
-    $this->set_limits($sql, $offset, $size);
+    //$this->set_limits($sql, $offset, $size);
     return $this->page->translate_sql($sql);
   }
 
