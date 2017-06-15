@@ -79,19 +79,26 @@ class collection extends module
   {
     if (is_string($arg))
       $name = $alias = $arg;
-    else if (is_assoc($arg)) {
+    else if (($aliased = is_assoc($arg))) {
       list($alias, $name) = assoc_element($arg);
       if (is_assoc($name)) $name = $alias;
     }
-    list($local_name, $foreign_key, $foreign_name) = explode('.', $name);
-    if (isset($foreign_key)) {
-      $name = $local_name;
-      if (!isset($foreign_name)) $foreign_name = $name;
+    list($local_name, $foreign_collection, $foreign_name) = explode('.', $name);
+    if (isset($foreign_collection)) {
+      if (isset($foreign_name)) {
+        $name = $foreign_name;
+      }
+      else {
+        $name = $foreign_name = $foreign_collection;
+        $foreign_collection = $local_name;
+      }
+      $attr['local_name'] = $local_name;
       $attr['foreign_name'] = $foreign_name;
-      $attr['table'] = $this->get_table($foreign_key);
-      $attr['collection'] = $foreign_key;
-      if (!in_array($foreign_key, $this->foreigners))
-        $this->foreigners[] = $foreign_key;
+      $attr['table'] = $this->get_table($foreign_collection);
+      $attr['collection'] = $foreign_collection;
+      if (!in_array($foreign_name, $this->foreigners))
+        $this->foreigners[] = $foreign_collection;
+      if (!$aliased) $alias = $name;
     }
     else {
       $attr['table'] = $this->main_table;
@@ -126,7 +133,7 @@ class collection extends module
     $joins_sql = "";
     $order_sql = [];
     foreach($this->attributes  as $attr) {
-      if (!$attr['sort_order'] || $attr['foreign_name']) continue;
+      if (!$attr['sort_order'] || $attr['foreign_name'] || $attr['aggregated']) continue;
       $sorter = "`sorter_" . $attr['alias']. "`";
       $name = $attr['name'];
       $joins_sql .= " left join `$this->main_table` $sorter"
@@ -150,7 +157,7 @@ class collection extends module
       $alias = $filter['alias'];
       $value = $filter['value'];
       $foreign_name = $filter['foreign_name'];
-      if (!$foreign_name) {
+      if (is_null($foreign_name)) {
         $sql .= " join `$this->main_table` `$name` "
             . " on  `$name`.collection = `$this->main_collection`.collection and `$this->main_collection`.identifier = `$name`.identifier "
             . " and `$name`.attribute = '$name' and `$name`.value $value ";
@@ -159,12 +166,30 @@ class collection extends module
       else {
         $collection = $filter['collection'];
         $table = $filter['table'];
-        $sql .= " left join $table `$collection` on " . $this->get_attribute_filter($collection);
-        if ($name=='identifier')
-          $sql .= " and `$collection`.identifier = '$identifier'";
-        else
-          $sql .= " and `$this->main_collection`.attribute = '$name' and `$collection`.identifier = `$this->main_collection`.value";
+        // $sql .= " left join $table `$collection` on " . $this->get_attribute_filter($collection)
+        //  . " and `$this->main_collection`.attribute = '$name' and `$collection`.identifier = `$this->main_collection`.value";
       }
+    }
+    return $sql;
+  }
+
+  function join_foreigners()
+  {
+    $sql = "";
+    $joined = [];
+    $main = $this->main_collection;
+    foreach($this->attributes as $attr) {
+      $foreign = $attr['foreign_name'];
+      if (!$foreign) continue;
+      $collection = $attr['collection'];
+      if (in_array($collection, $joined)) continue;
+      log::debug_json("foreign", $attr);
+      $table = $attr['table'];
+      $local = $attr['local_name'];
+      $sql .= " left join `$table` `$collection` "
+            . " on  `$collection`.identifier = `$main`.value and `$main`.attribute = '$local' "
+            . " and " .  $this->get_attribute_filter($collection);
+      $joined[] = $foreign;
     }
     return $sql;
   }
@@ -173,9 +198,14 @@ class collection extends module
   {
     $main = "`$this->main_collection`";
     $sql = "select $main.identifier, ";
-    foreach($this->foreigners as $foreign) {
-      $foreign_attrs .= "case when `$foreign`.attribute is not null then `$foreign`.attribute\n";
-      $foreign_vals  .= "case when `$foreign`.value is not null then `$foreign`.value\n";
+    $selected = [];
+    foreach($this->attributes as $attr) {
+      if (!$attr['foreign_name']) continue;
+      $collection = $attr['collection'];
+      if (in_array($collection, $selected)) continue;
+      $local_name = $attr['name'];
+      $foreign_attrs .= "case when `$collection`.attribute is not null then '$local_name' \n";
+      $foreign_vals  .= "case when `$collection`.value is not null then `$collection`.value\n";
     }
     if ($foreign_attrs)
       $sql .= "$foreign_attrs else $main.attribute end `attribute`\n, $foreign_vals else $main.value end `value` ";
@@ -186,12 +216,18 @@ class collection extends module
     return $sql;
   }
 
-  function get_attribute_filter($collection)
+  function get_attribute_filter($collection, $foreigners=[])
   {
     $names = [];
-    foreach($this->attributes as $attr) {
-      if ($attr['collection'] != $collection) continue;
-      $names[] = $attr['foreign_name']? $attr['foreign_name']: $attr['name'];
+    $set_names = function($collection, $foreign) use (&$names) {
+      foreach($this->attributes as $attr) {
+        if ($attr['aggregated'] || $attr['collection'] != $collection) continue;
+        $names[] = $foreign? $attr['local_name']: $attr['name'];
+      }
+    };
+    $set_names($collection, false);
+    foreach($foreigners as $foreigner) {
+      $set_names($foreigner, true);
     }
     $names = implode("','", $names);
     return "`$collection`.collection = '$collection' and `$collection`.attribute in ('$names')";
@@ -201,6 +237,7 @@ class collection extends module
   function create_outer_select()
   {
     foreach ($this->attributes as $attr) {
+      if ($attr['aggregated']) continue;
       $name = $attr['name'];
       $names[] = "max(case when attribute='$name' then value end) `$name`";
     }
@@ -209,9 +246,10 @@ class collection extends module
     $sql =  "select $names from ("
       . $this->create_inner_select($sort_fields)
       . " from `$this->main_table` `$this->main_collection` "
-      . $this->create_filter_joins();
+      . $this->create_filter_joins()
+      . $this->join_foreigners();
 
-    $sql .= "$sort_joins where ". $this->get_attribute_filter($this->main_collection);
+    $sql .= "$sort_joins where ". $this->get_attribute_filter($this->main_collection, $this->foreigners);
 
     if ($this->identifier_filter)
       $sql .= " and `$this->main_collection`.identifier = '$this->identifier_filter'";

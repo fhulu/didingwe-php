@@ -144,7 +144,9 @@ select `contact`.identifier, ifnull(user.attribute, `contact`.attribute), ifnull
 -- select time_added, cellphone, contact_info, access_level, u.email , u.first_name
 -- from contact c join user u on c.owner = user.id on where c.partner  = 526 and c.active = 1
 -- order by c.cellphone
-select `contact`.identifier, ifnull(user.attribute, `contact`.attribute) `attribute`, ifnull(user.value,`contact`.value) `value`
+select `contact`.identifier,
+  case when user.attribute is not null then 'owner' else `contact`.attribute end `attribute`,
+   ifnull(user.value,`contact`.value) `value`, sorter.value sorter
 from contact `contact`
   join contact `active`
     on `contact`.collection = 'contact' and `contact`.attribute in ('time_added','cellphone','contact_info','access_level','owner')
@@ -153,13 +155,14 @@ from contact `contact`
   join contact `partner`
     on  `partner`.collection = `contact`.collection and `contact`.identifier = `partner`.identifier
     and `partner`.attribute = 'partner' and `partner`.value = 526
-  left join auth sorter
-      on `contact`.collection = sorter.collection and `contact`.identifier = sorter.identifier and sorter.attribute = 'cellphone'
   left join auth `user`
       on `user`.collection = 'user' and `user`.attribute in ('email','first_name')
-      and `contact`.collection = 'contact' and `contact`.attribute = 'owner'
+      and `contact`.attribute = 'owner'
       and `user`.identifier = `contact`.value
-  order by sorter.value, 1
+  left join contact sorter
+      on `contact`.collection = sorter.collection and `contact`.identifier = sorter.identifier and sorter.attribute = 'time_added'
+  order by sorter desc, 1
+  limit 100
 -- 0.0910 seconds
 
 
