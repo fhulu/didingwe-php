@@ -107,9 +107,10 @@ class collection extends module
 
     $attr['name'] = $name;
     $attr['alias'] = $alias;
-    $attr['aggregated'] = $name[0] == '/';
     $attr['aliased'] = $name != $alias;
     $this->extract_grouping($attr);
+    $attr['aggregated'] = $aggregated = $name[0] == '/';
+    if ($aggregated) $this->aggregated = true;
 
     return $attr;
   }
@@ -117,6 +118,7 @@ class collection extends module
   function init_attributes($args)
   {
     $this->attributes = [];
+    $this->aggregated = false;
     $index = 1;
     foreach($args as $arg) {
       $attr = $this->init_attr($arg);
@@ -255,7 +257,19 @@ class collection extends module
       $sql .= " and `$this->main_collection`.identifier = '$this->identifier_filter'";
 
     return $sql . " $order_sql) tmp group by identifier $order_sql";
+  }
 
+  function aggregate($sql)
+  {
+    foreach ($this->attributes as $attr) {
+      $alias = $attr['alias'];
+      if ($attr['aggregated'])
+        $names[] = substr($attr['name'], 1) . " `$alias`";
+      else
+        $names[] = "`$alias`";
+    }
+    $names = implode(",", $names);
+    return "select $names from ($sql) tmp";
   }
 
   function get_joins($main_collection, $filters, &$where="", $conjuctor="and", $index=0, $new_group=false)
@@ -483,6 +497,8 @@ class collection extends module
     $this->init_attributes($args);
     $this->init_filters();
     $sql = $this->create_outer_select();
+    if ($this->aggregated)
+      $sql = $this->aggregate($sql);
     // if (!empty($this->combined_columns))
     //   $this->expand_star($collection, $this->combined_columns, $args);
     // $this->expand_star($collection, $args);
