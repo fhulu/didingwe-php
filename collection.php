@@ -241,7 +241,8 @@ class collection extends module
     foreach ($this->attributes as $attr) {
       if ($attr['aggregated']) continue;
       $name = $attr['name'];
-      $names[] = "max(case when attribute='$name' then value end) `$name`";
+      $alias = $attr['alias'];
+      $names[] = "max(case when attribute='$name' then value end) `$alias`";
     }
     $names = implode(",\n", $names);
     list($sort_fields, $sort_joins, $order_sql) = $this->create_sort_joins();
