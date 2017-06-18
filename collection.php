@@ -156,20 +156,21 @@ class collection extends module
     $sql = "";
     foreach($this->filters as &$filter) {
       $name = $filter['name'];
-      $alias = $filter['alias'];
+      $alias = "filter_$name";
       $value = $filter['value'];
-      $foreign_name = $filter['foreign_name'];
-      if (is_null($foreign_name)) {
-        $sql .= " join `$this->main_table` `$name` "
-            . " on  `$name`.collection = `$this->main_collection`.collection and `$this->main_collection`.identifier = `$name`.identifier "
-            . " and `$name`.attribute = '$name' and `$name`.value $value ";
+      $table = $filter['table'];
+      $local_name = $filter['local_name'];
+      if (is_null($local_name)) {
+        $sql .= " join `$this->main_table` `$alias` "
+            . " on  `$alias`.collection = `$this->main_collection`.collection and `$this->main_collection`.identifier = `$alias`.identifier "
+            . " and `$alias`.attribute = '$name' and `$alias`.value $value ";
 
       }
       else {
         $collection = $filter['collection'];
         $table = $filter['table'];
-        // $sql .= " left join $table `$collection` on " . $this->get_attribute_filter($collection)
-        //  . " and `$this->main_collection`.attribute = '$name' and `$collection`.identifier = `$this->main_collection`.value";
+        $sql .= " join `$table` `$alias` on `$alias`.collection = '$collection'"
+         . " and `$this->main_collection`.attribute = '$local_name' and `$alias`.identifier = `$this->main_collection`.value";
       }
     }
     return $sql;
@@ -185,13 +186,12 @@ class collection extends module
       if (!$foreign) continue;
       $collection = $attr['collection'];
       if (in_array($collection, $joined)) continue;
-      log::debug_json("foreign", $attr);
       $table = $attr['table'];
       $local = $attr['local_name'];
       $sql .= " left join `$table` `$collection` "
             . " on  `$collection`.identifier = `$main`.value and `$main`.attribute = '$local' "
             . " and " .  $this->get_attribute_filter($collection);
-      $joined[] = $foreign;
+      $joined[] = $collection;
     }
     return $sql;
   }
@@ -205,12 +205,12 @@ class collection extends module
       if (!$attr['foreign_name']) continue;
       $collection = $attr['collection'];
       if (in_array($collection, $selected)) continue;
-      $local_name = $attr['name'];
-      $foreign_attrs .= "case when `$collection`.attribute is not null then '$local_name' \n";
-      $foreign_vals  .= "case when `$collection`.value is not null then `$collection`.value\n";
+      $name = $attr['name'];
+      $foreign_attrs .= "when `$collection`.attribute is not null then '$name' \n";
+      $foreign_vals  .= "when `$collection`.value is not null then `$collection`.value\n";
     }
     if ($foreign_attrs)
-      $sql .= "$foreign_attrs else $main.attribute end `attribute`\n, $foreign_vals else $main.value end `value` ";
+      $sql .= "case $foreign_attrs else $main.attribute end `attribute`\n, case $foreign_vals else $main.value end `value`\n ";
     else
       $sql .= "$main.attribute `attribute`, $main.value `value`";
     if ($sort_fields)
