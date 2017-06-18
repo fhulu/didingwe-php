@@ -223,16 +223,20 @@ class collection extends module
     $names = [];
     $set_names = function($collection, $foreign) use (&$names) {
       foreach($this->attributes as $attr) {
-        if ($attr['aggregated'] || $attr['collection'] != $collection) continue;
-        $names[] = $foreign? $attr['local_name']: $attr['name'];
+        if ($attr['aggregated'] || $attr['collection'] != $collection || $attr['name'] == 'identifier') continue;
+        $name = $foreign? $attr['local_name']: $attr['name'];
+        $names[] = "'$name'";
       }
     };
     $set_names($collection, false);
     foreach($foreigners as $foreigner) {
       $set_names($foreigner, true);
     }
-    $names = implode("','", $names);
-    return "`$collection`.collection = '$collection' and `$collection`.attribute in ('$names')";
+    $sql = "`$collection`.collection = '$collection' ";
+    if (empty($names)) return $sql;
+
+    $names = implode(",", $names);
+    return $sql . " and `$collection`.attribute in ($names)";
   }
 
 
