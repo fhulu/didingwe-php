@@ -512,3 +512,10 @@ function translate_special_chars($str)
   setlocale(LC_ALL, 'en_GB');
   return iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', remove_accents($str));
 }
+
+
+function swap(&$x,&$y) {
+  $tmp=$x;
+  $x=$y;
+  $y=$tmp;
+}
