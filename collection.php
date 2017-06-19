@@ -85,20 +85,18 @@ class collection extends module
     }
     list($local_name, $foreign_collection, $foreign_name) = explode('.', $name);
     if (isset($foreign_collection)) {
-      if (isset($foreign_name)) {
-        $name = $foreign_name;
-      }
-      else {
-        $name = $foreign_name = $foreign_collection;
+      if (!isset($foreign_name)) {
+        $foreign_name = $foreign_collection;
         $foreign_collection = $local_name;
       }
+      $name = "$foreign_collection.$foreign_name";
       $attr['local_name'] = $local_name;
       $attr['foreign_name'] = $foreign_name;
       $attr['table'] = $this->get_table($foreign_collection);
       $attr['collection'] = $foreign_collection;
       if (!in_array($foreign_name, $this->foreigners))
         $this->foreigners[] = $foreign_collection;
-      if (!$aliased) $alias = $name;
+      if (!$aliased) $alias = $foreign_name;
     }
     else {
       $attr['table'] = $this->main_table;
@@ -198,21 +196,16 @@ class collection extends module
 
   function create_inner_select($sort_fields)
   {
-    $main = "`$this->main_collection`";
-    $sql = "select $main.identifier, ";
+    $main = "$this->main_collection";
+    $sql = "select `$main`.identifier, `$main`.attribute `$main.attribute`, `$main`.value `$main.value`";
     $selected = [];
     foreach($this->attributes as $attr) {
       if (!$attr['foreign_name']) continue;
       $collection = $attr['collection'];
       if (in_array($collection, $selected)) continue;
-      $name = $attr['name'];
-      $foreign_attrs .= "when `$collection`.attribute is not null then '$name' \n";
-      $foreign_vals  .= "when `$collection`.value is not null then `$collection`.value\n";
+      $selected[] = $collection;
+      $sql .= ", `$collection`.attribute `$collection.attribute`, `$collection`.value `$collection.value`";
     }
-    if ($foreign_attrs)
-      $sql .= "case $foreign_attrs else $main.attribute end `attribute`\n, case $foreign_vals else $main.value end `value`\n ";
-    else
-      $sql .= "$main.attribute `attribute`, $main.value `value`";
     if ($sort_fields)
       $sql .= "," . implode(",", $sort_fields);
     return $sql;
@@ -224,7 +217,12 @@ class collection extends module
     $set_names = function($collection, $foreign) use (&$names) {
       foreach($this->attributes as $attr) {
         if ($attr['aggregated'] || $attr['collection'] != $collection || $attr['name'] == 'identifier') continue;
-        $name = $foreign? $attr['local_name']: $attr['name'];
+        if ($foreign)
+          $name = $attr['local_name'];
+        else if ($attr['foreign_name'])
+          $name = $attr['foreign_name'];
+        else
+          $name = $attr['name'];
         $names[] = "'$name'";
       }
     };
@@ -244,9 +242,13 @@ class collection extends module
   {
     foreach ($this->attributes as $attr) {
       if ($attr['aggregated']) continue;
-      $name = $attr['name'];
+      $name = $attr['foreign_name']? $attr['foreign_name']: $attr['name'];
       $alias = $attr['alias'];
-      $names[] = "max(case when attribute='$name' then value end) `$alias`";
+      $collection = $attr['collection'];
+      if ($name == 'identifier')
+        $names[] = "identifier `$alias`";
+      else
+        $names[] = "max(case when `$collection.attribute`='$name' then `$collection.value` end) `$alias`";
     }
     $names = implode(",\n", $names);
     list($sort_fields, $sort_joins, $order_sql) = $this->create_sort_joins();
