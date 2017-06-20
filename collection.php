@@ -547,12 +547,15 @@ class collection extends module
   {
     $args = page::parse_args(func_get_args());
     page::verify_args($args, "collection.update", 3);
-    list($collection, $filters) = $this->extract_header($args);
+    $this->extract_header($args);
     $this->page->parse_delta($args);
-
-    $where = " where m.collection = '$collection' and m.version = 0 ";
-    $table = $this->get_table($collection);
-    $joins = $this->get_joins($collection, $filters, $where);
+    $this->init_filters();
+    $joins = $this->create_filter_joins();
+    $table = "`$this->main_table`";
+    $collection = $this->main_collection;
+    $where = " where `$collection`.collection = '$collection' and `$collection`.version = 0 ";
+    if ($this->identifier_filter)
+      $where .= " and `$collection`.identifier = '$this->identifier_filter'";
     foreach($args as $arg) {
       list($name,$value) = $this->page->get_sql_pair($arg);
       if ($name == 'identifier') {
@@ -561,16 +564,15 @@ class collection extends module
       }
       else {
         $attribute = 'value';
-        $condition = " and m.attribute = '$name'";
+        $condition = " and `$collection`.attribute = '$name'";
       }
       $attribute = $name== 'identifier'? $name: 'value';
-      $updated = $this->page->sql_exec("update `$table` m $joins set m.$attribute = $value $where $condition");
+      $updated = $this->page->sql_exec("update $table `$collection` $joins set `$collection`.$attribute = $value $where $condition");
       if ($updated) continue;
-      list($identifier) = find_assoc_element($filters, 'identifier');
-      if (!$identifier || $identifier[0] == '/') continue;
-      $this->page->sql_exec("insert into `$table`(collection,identifier,attribute,value)
-        select '$collection', '$identifier', '$name', $value from dual where not exists (
-          select 1 from `$table` m $where $condition)");
+      if (!$this->identifier_filter) continue;
+      $this->page->sql_exec("insert into $table(collection,identifier,attribute,value)
+        select '$collection', '$this->identifier_filter', '$name', $value from dual where not exists (
+          select 1 from $table $where $condition)");
     }
   }
 
