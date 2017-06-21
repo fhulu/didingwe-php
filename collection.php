@@ -149,12 +149,12 @@ class collection extends module
     return [$fields, $joins_sql, $order_sql];
   }
 
-  function create_filter_joins()
+  function create_filter_joins($filters, $suffix="")
   {
     $sql = "";
-    foreach($this->filters as &$filter) {
+    foreach($filters as &$filter) {
       $name = $filter['name'];
-      $alias = "filter_$name";
+      $alias = "filter_$name".$suffix;
       $value = $filter['value'];
       $table = $filter['table'];
       $local_name = $filter['local_name'];
@@ -260,7 +260,8 @@ class collection extends module
   }
 
 
-  function create_outer_select($term)
+
+  function create_outer_select($use_custom_filters, $term)
   {
     foreach ($this->attributes as $attr) {
       if ($attr['aggregated']) continue;
@@ -277,11 +278,12 @@ class collection extends module
     $sql =  "select $names from ("
       . $this->create_inner_select($sort_fields)
       . " from `$this->main_table` `$this->main_collection` "
-      . $this->create_filter_joins()
+      . $this->create_filter_joins($this->filters)
+      . $this->join_custom_filters($use_custom_filters)
       . $this->join_foreigners()
-      . $this->create_search_join($term);
-
-    $sql .= "$sort_joins where ". $this->get_attribute_filter($this->main_collection, $this->foreigners);
+      . $this->create_search_join($term)
+      . "$sort_joins where "
+      . $this->get_attribute_filter($this->main_collection, $this->foreigners);
 
     if ($this->identifier_filter)
       $sql .= " and `$this->main_collection`.identifier = '$this->identifier_filter'";
@@ -395,21 +397,24 @@ class collection extends module
     }
   }
 
-  function add_custom_filters(&$sql, $args)
+  function join_custom_filters($use)
   {
+    if (!$use) return "";
+
     $index = -1;
     $request = $this->page->request;
     $filters = [];
-    foreach($args as $arg) {
-      list($name,$alias) = $this->get_name_alias($arg);
+    foreach($this->attributes as $attr) {
+      $alias = $attr['alias'];
       if (in_array($alias, $this->hidden_columns, true)) continue;
       ++$index;
       $term = $request["f$index"];
       if (!isset($term)) continue;
-      $filters[] = "$alias like '%$term%'";
+      $filter = $attr;
+      $filter['value'] = " like '%$term%'";
+      $filters[] = $filter;
     }
-    if (!empty($filters))
-      $sql = "select * from ($sql) tmp_custom_filter where " . join(" and ", $filters);
+    return $this->create_filter_joins($filters, "_custom");
   }
 
   function extract_header(&$args)
@@ -526,7 +531,7 @@ class collection extends module
     $this->extract_header($args);
     $this->init_attributes($args);
     $this->init_filters();
-    $sql = $this->create_outer_select($term);
+    $sql = $this->create_outer_select($use_custom_filters, $term);
     if ($this->aggregated)
       $sql = $this->aggregate($sql);
     // if (!empty($this->combined_columns))
