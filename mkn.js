@@ -118,6 +118,7 @@ var mkn = new function() {
 
   this.createPage = function(options, data, parent) {
     var id = data.fields.id = options.page_id = data.path.replace('/','_');
+    data.fields.local_id = data.path.split('/').pop();
     var values = data.fields.values || data.values;
     if (data.fields.name === undefined)
       data.fields.name = toTitleCase(data.path.split('/').pop().replace('_',' '));
