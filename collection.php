@@ -166,11 +166,32 @@ class collection extends module
       }
       else {
         $collection = $filter['collection'];
-        $table = $filter['table'];
         $sql .= " join `$table` `$alias` on `$alias`.collection = '$collection'"
          . " and `$this->main_collection`.attribute = '$local_name' and `$alias`.identifier = `$this->main_collection`.value";
       }
     }
+    return $sql;
+  }
+
+  function create_search_join($term)
+  {
+    if ($term == "") return "";
+
+    $sql = "";
+    $searched = [];
+    foreach($this->attributes  as $attr) {
+      $collection = $attr['collection'];
+      if (in_array($collection, $searched)) continue;
+      $searched[] = $collection;
+      $table = $attr['table'];
+      $alias = "`search_$collection`";
+      $sql .= " join `$table` $alias "
+          . " on `$collection`.identifier = $alias.identifier "
+          . " and $alias.value like '%$term%'"
+          . " and " .  $this->get_attribute_filter($collection, [], $alias);
+
+    }
+    log::debug("joins $sql");
     return $sql;
   }
 
@@ -211,7 +232,7 @@ class collection extends module
     return $sql;
   }
 
-  function get_attribute_filter($collection, $foreigners=[])
+  function get_attribute_filter($collection, $foreigners=[], $alias="")
   {
     $names = [];
     $set_names = function($collection, $foreign) use (&$names) {
@@ -230,15 +251,16 @@ class collection extends module
     foreach($foreigners as $foreigner) {
       $set_names($foreigner, true);
     }
-    $sql = "`$collection`.collection = '$collection' ";
+    if (!$alias) $alias = "`$collection`";
+    $sql = "$alias.collection = '$collection' ";
     if (empty($names)) return $sql;
 
     $names = implode(",", $names);
-    return $sql . " and `$collection`.attribute in ($names)";
+    return $sql . " and $alias.attribute in ($names)";
   }
 
 
-  function create_outer_select()
+  function create_outer_select($term)
   {
     foreach ($this->attributes as $attr) {
       if ($attr['aggregated']) continue;
@@ -256,7 +278,8 @@ class collection extends module
       . $this->create_inner_select($sort_fields)
       . " from `$this->main_table` `$this->main_collection` "
       . $this->create_filter_joins()
-      . $this->join_foreigners();
+      . $this->join_foreigners()
+      . $this->create_search_join($term);
 
     $sql .= "$sort_joins where ". $this->get_attribute_filter($this->main_collection, $this->foreigners);
 
@@ -503,7 +526,7 @@ class collection extends module
     $this->extract_header($args);
     $this->init_attributes($args);
     $this->init_filters();
-    $sql = $this->create_outer_select();
+    $sql = $this->create_outer_select($term);
     if ($this->aggregated)
       $sql = $this->aggregate($sql);
     // if (!empty($this->combined_columns))
