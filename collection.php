@@ -113,19 +113,27 @@ class collection extends module
     return $attr;
   }
 
-  function init_attributes($args, &$index=1, &$aliases=[])
+  function init_attributes($args, $parent=null, &$index=1, &$aliases=[])
   {
     foreach($args as $arg) {
-      $star_args = $this->expand_star($arg, $aliases);
-      if (sizeof($star_args)) {
-        $this->init_attributes($star_args, $index, $aliases);
+      list($alias, $name) = assoc_element($arg);
+      if (is_array($name)) {
+        $aliases[] = $alias;
+        $this->init_attributes($name, $alias, $index);
         continue;
       }
+      list($alias, $star_args) = $this->expand_star($arg, $aliases);
+      if (sizeof($star_args)) {
+        $this->init_attributes($star_args, $alias? $alias: $parent, $index, $aliases);
+        continue;
+      }
+
       $attr = $this->init_attr($arg);
       if (in_array($attr['alias'], $this->sort_columns) || in_array("$index", $this->sort_columns)) {
         if (!$attr['sort_order']) $attr['sort_order'] = $this->page->request['sort_order'];
       }
       ++$index;
+      $attr['parent'] = $parent;
       $this->attributes[] = $attr;
       $aliases[] = $attr['alias'];
     }
@@ -266,19 +274,47 @@ class collection extends module
 
   function create_outer_select($use_custom_filters, $term)
   {
+    $prev_parent = null;
+    $values = [];
+    $siblings = [];
+    $count = sizeof($this->attributes);
     foreach ($this->attributes as $attr) {
+      ++$counted;
       if ($attr['aggregated']) continue;
-      $name = $attr['foreign_name']? $attr['foreign_name']: $attr['name'];
       $alias = $attr['alias'];
+      if (in_array($alias, $this->hidden_columns, true)) continue;
+      $name = $attr['foreign_name']? $attr['foreign_name']: $attr['name'];
+      $parent = $attr['parent'];
+      if ($parent)
+        $alias = "";
+      else
+        $alias = "`$alias`";
       $collection = $attr['collection'];
       if ($name == 'identifier')
-        $names[] = "identifier `$alias`";
+        $value = "identifier $alias";
       else
-        $names[] = "max(case when `$collection.attribute`='$name' then `$collection.value` end) `$alias`";
+        $value = "max(case when `$collection.attribute`='$name' then `$collection.value` end) $alias";
+
+      $parent = $attr['parent'];
+      if ($prev_parent && $parent != $prev_parent) {
+        if (sizeof($siblings)) $values[] = "concat_ws(' ',". implode(',', $siblings) . ") `$prev_parent`";
+        $siblings = [$value];
+        $prev_parent = $parent;
+      }
+      else if ($parent)
+        $siblings[] = $value;
+      else {
+        $values[] = $value;
+        $siblings = [];
+      }
+      $prev_parent = $parent;
     }
-    $names = implode(",\n", $names);
+    if (sizeof($siblings))
+      $values[] = "concat_ws(' ',". implode(',', $siblings) . ") `$parent`";
+
+    $values = implode(",\n", $values);
     list($sort_fields, $sort_joins, $order_sql) = $this->create_sort_joins();
-    $sql =  "select $names from ("
+    $sql =  "select $values from ("
       . $this->create_inner_select($sort_fields)
       . " from `$this->main_table` `$this->main_collection` "
       . $this->create_filter_joins($this->filters)
@@ -382,7 +418,9 @@ class collection extends module
   function expand_star($arg, $ignore)
   {
     $matches = [];
-    if (!is_string($arg) || !preg_match('/^(?:(\w+)\.)?\*/', $arg, $matches))
+    list($alias, $name) = assoc_element($arg);
+    if (!$name) $name = $alias;
+    if (!is_string($name) || !preg_match('/^(?:(\w+)\.)?\*/', $name, $matches))
       return [];
     $collection = $this->main_collection;
     if (($foreign=$matches[1]))
@@ -394,10 +432,12 @@ class collection extends module
     $expanded = array_filter($this->columns[$collection], function($element) use(&$ignore) {
       return !in_array($element, $ignore);
     });
-    if (!$foreign) return $expanded;
-    return array_map(function($v) use ($collection) {
-      return "$collection.$v";
-    }, $expanded);
+    if ($foreign) {
+      $expanded = array_map(function($v) use ($collection) {
+        return "$collection.$v";
+      }, $expanded);
+    }
+    return [$alias, $expanded];
   }
 
   function join_custom_filters($use)
