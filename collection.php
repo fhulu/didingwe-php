@@ -108,7 +108,7 @@ class collection extends module
     $attr['aliased'] = $name != $alias;
     $this->extract_grouping($attr);
     $attr['aggregated'] = $aggregated = $name[0] == '/';
-    if ($aggregated) $this->aggregated = true;
+    if ($aggregated) $this->aggregated = true || $attr['group'];
 
     return $attr;
   }
@@ -334,6 +334,7 @@ class collection extends module
 
   function aggregate($sql)
   {
+    $groups = [];
     foreach ($this->attributes as $attr) {
       $alias = $attr['alias'];
       if (in_array($alias, $this->hidden_columns)) continue;
@@ -341,81 +342,13 @@ class collection extends module
         $names[] = substr($attr['name'], 1) . " `$alias`";
       else
         $names[] = "`$alias`";
+      if ($attr['group']) $groups[] = $alias;
     }
     $names = implode(",", $names);
-    return "select $names from ($sql) tmp";
-  }
-
-  function get_joins($main_collection, $filters, &$where="", $conjuctor="and", $index=0, $new_group=false)
-  {
-    $joins = "";
-    // create joins for each filter
-    foreach($filters as $filter) {
-      ++$index;
-      if ($filter == "") continue;
-      if (is_array($filter) && sizeof($filter) > 1) {
-        $where .= " $conjuctor (";
-        $joins .= $this->get_joins($main_collection, $filter, $where, "or", $index, true);
-        $where .= ")";
-        continue;
-      }
-      if ($filter == '_access') {
-        continue;
-
-        // todo: fix access control
-        $member_table = $this->get_table("user_group_member");
-        $user_groups =  implode_quoted($this->auth->get_groups());
-        $joins .=
-        " join `$table` m$index on m$index.collection = m.collection
-            and m$index.version <= m.version and m$index.identifier=m.identifier
-            and m$index.attribute = 'owner'
-          join $member_table owner on owner.collection = 'user_group_member'
-            and owner.version <= m.version and owner.attribute = 'user'";
-        $where .= " and (owner.value = m$index.value or m$index.
-          join $member_table owner_groups on owner_groups.collection = 'user_group_member'
-            and owner_groups.version <= m.version and owner_groups.attribute = 'group' and owner_groups.identifier = owner.identifier
-            and owner_groups.value in ($user_groups)";
-        continue;
-      }
-      list($name,$value) = $this->page->get_sql_pair($filter);
-      $operator = "";
-      if ($value[0] == "'" )
-        $operator = " = ";
-
-      if ($name == 'identifier') {
-        $where .= " and m.$name $operator $value";
-        continue;
-      }
-      $table = $this->get_table($main_collection);
-      $joins .= " join `$table` m$index on m$index.collection = m.collection
-                and m$index.version <= m.version and m$index.identifier = m.identifier";
-      list($local_name, $foreign_key, $foreign_name) = explode('.', $name);
-      if (!$new_group)
-        $where .= " $conjuctor ";
-      else $new_group = false;
-      $where .= " m$index.attribute = '$local_name' ";
-      if (!isset($foreign_key)) {
-        $where .= " and m$index.value $operator $value ";
-      }
-      else {
-        if (!isset($foreign_name)) {
-          $collection = $local_name;
-          $name = $foreign_key;
-        }
-        else {
-          $collection = $foreign_key;
-          $name = $foreign_name;
-        }
-        if (substr($value,0,2) == "'$") $value = "'$" . last(explode('.', $value));
-        $table = $this->get_table($collection);
-        $joins .= " join `$table` m0$index on m0$index.collection = '$collection'
-                  and m0$index.version <= m.version and m0$index.identifier = m$index.value";
-
-        $where .= " and m0$index.attribute = '$name' and m0$index.value $operator $value";
-      }
-
-    }
-    return $joins;
+    $sql = "select $names from ($sql) tmp";
+    if (sizeof($groups))
+      $sql .= " group by " . implode(",", $groups);
+    return $sql;
   }
 
   function expand_star($arg, $ignore)
@@ -515,65 +448,6 @@ class collection extends module
     else if (!is_null($size))
       $sql .= " limit $size";
   }
-
-  function set_grouping(&$sql, $grouping)
-  {
-    if (!empty($grouping))
-      $sql .= " group by " . implode(",", $grouping);
-  }
-
-  function wrap_query(&$sql, $args, $term, $use_custom_filters)
-  {
-    $outer = [];
-    $wrapped = $this->lastColumn != '' || !empty($this->hidden_columns || !empty($this->combined_columns)) || $term != '';
-    $combined = [];
-    $combined_pos = -1;
-    $index = -1;
-    $aliases = [];
-    foreach($args as $arg) {
-      list($alias,$name) = $this->page->get_sql_pair($arg);
-      $this->extract_grouping($grouping,$sorting, $name,$alias);
-      if (in_array($alias, $this->hidden_columns, true)) continue;
-      ++$index;
-      if (in_array($alias, $this->combined_columns, true)) {
-        list($name, $alias) = explode('.', $alias);
-        if (!$alias) $alias = $name;
-        $combined[] = "`$alias`";
-        if ($combined_pos==-1) $combined_pos = $index;
-        $wrapped = true;
-        continue;
-      }
-      if ($name[0] == "'") {
-        list($name, $alias) = explode('.', $alias);
-        if (!$alias) $alias = $name;
-        $outer[] = "`".explode(' ',$alias)[0] . "`";
-        $aliases[] = $alias;
-        continue;
-      }
-      else {
-        $outer[] = "$name `$alias`";
-        $aliases[] = $alias;
-      }
-      $wrapped = true;
-      if ($alias == $this->lastColumn) break;
-    }
-    if (!$wrapped) return false;
-    if (!empty($combined)) {
-      $combined = "concat_ws(' ', " . join(',', $combined) . ") `combined`";
-      array_splice($outer, $combined_pos, 0, [$combined]);
-      array_splice($aliases, $combined_pos, 0, 'combined');
-    }
-    $sql = "select " . join(',', $outer) . " from ($sql) tmp";
-    if ($term != '') {
-      $aliases = array_map(function($v) use($term) { return "`$v` like '%$term%'"; }, $aliases);
-      $sql = "select * from ($sql) tmp_search where " . join(' or ', $aliases);
-    }
-    else if ($use_custom_filters) {
-      $this->add_custom_filters($sql, $aliases);
-    }
-    return true;
-  }
-
 
   function read($args, $use_custom_filters=false, $term="")
   {
