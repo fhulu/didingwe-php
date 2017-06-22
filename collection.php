@@ -281,8 +281,10 @@ class collection extends module
     foreach ($this->attributes as $attr) {
       ++$counted;
       if ($attr['aggregated']) continue;
+
       $alias = $attr['alias'];
-      if (in_array($alias, $this->hidden_columns, true)) continue;
+      if (!$this->aggregated && in_array($alias, $this->hidden_columns)) continue;
+
       $name = $attr['foreign_name']? $attr['foreign_name']: $attr['name'];
       $parent = $attr['parent'];
       if ($parent)
@@ -334,6 +336,7 @@ class collection extends module
   {
     foreach ($this->attributes as $attr) {
       $alias = $attr['alias'];
+      if (in_array($alias, $this->hidden_columns)) continue;
       if ($attr['aggregated'])
         $names[] = substr($attr['name'], 1) . " `$alias`";
       else
@@ -419,7 +422,10 @@ class collection extends module
   {
     $matches = [];
     list($alias, $name) = assoc_element($arg);
-    if (!$name) $name = $alias;
+    if (!$name) {
+      $name = $alias;
+      $alias = null;
+    }
     if (!is_string($name) || !preg_match('/^(?:(\w+)\.)?\*/', $name, $matches))
       return [];
     $collection = $this->main_collection;
