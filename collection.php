@@ -113,18 +113,21 @@ class collection extends module
     return $attr;
   }
 
-  function init_attributes($args)
+  function init_attributes($args, &$index=1, &$aliases=[])
   {
-    $this->attributes = [];
-    $this->aggregated = false;
-    $index = 1;
     foreach($args as $arg) {
+      $star_args = $this->expand_star($arg, $aliases);
+      if (sizeof($star_args)) {
+        $this->init_attributes($star_args, $index, $aliases);
+        continue;
+      }
       $attr = $this->init_attr($arg);
       if (in_array($attr['alias'], $this->sort_columns) || in_array("$index", $this->sort_columns)) {
         if (!$attr['sort_order']) $attr['sort_order'] = $this->page->request['sort_order'];
       }
       ++$index;
-      $this->attributes[] = $attr ;
+      $this->attributes[] = $attr;
+      $aliases[] = $attr['alias'];
     }
   }
 
@@ -376,25 +379,25 @@ class collection extends module
     return $joins;
   }
 
-  function expand_star($arg)
+  function expand_star($arg, $ignore)
   {
     $matches = [];
     if (!is_string($arg) || !preg_match('/^(?:(\w+)\.)?\*/', $arg, $matches))
-      continue;
-    $collection = $default_collection;
-    $foreign = false;
-    if ($matches[1]) {
+      return [];
+    $collection = $this->main_collection;
+    if (($foreign=$matches[1]))
       $collection = $matches[1];
-      $foreign = true;
-    }
+
     if (empty($this->columns[$collection]))
       $this->columns[$collection] = $this->get_fields($collection);
-    $expanded = $this->columns[$collection];
-    if ($foreign) {
-      $expanded = array_map(function($v) use ($collection) {
-        return "$collection.$v";
-      }, $expanded);
-    }
+
+    $expanded = array_filter($this->columns[$collection], function($element) use(&$ignore) {
+      return !in_array($element, $ignore);
+    });
+    if (!$foreign) return $expanded;
+    return array_map(function($v) use ($collection) {
+      return "$collection.$v";
+    }, $expanded);
   }
 
   function join_custom_filters($use)
@@ -443,6 +446,8 @@ class collection extends module
     $this->filters = $filters;
     $this->offset = $offset;
     $this->size = $size;
+    $this->aggregated = false;
+    $this->attributes = [];
   }
 
 
@@ -534,9 +539,6 @@ class collection extends module
     $sql = $this->create_outer_select($use_custom_filters, $term);
     if ($this->aggregated)
       $sql = $this->aggregate($sql);
-    // if (!empty($this->combined_columns))
-    //   $this->expand_star($collection, $this->combined_columns, $args);
-    // $this->expand_star($collection, $args);
     $this->set_limits($sql, $this->offset, $this->size);
     return $this->page->translate_sql($sql);
   }
