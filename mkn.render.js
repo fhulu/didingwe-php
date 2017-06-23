@@ -1071,7 +1071,6 @@ mkn.render = function(options)
 
     var handle = function(action, val)
     {
-      console.log("response", me.id, action, val);
       switch(action) {
         case 'alert': alert(val); break;
         case 'show_dialog': mkn.showDialog(val, responses.options); break;
