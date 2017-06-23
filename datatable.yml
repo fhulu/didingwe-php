@@ -20,7 +20,7 @@ datatable:
     class: [didi]
   script: [/common/datatable.js]
   row_creator: { type: table_row }
-  css: [/common/datatable.css,/datatable.css]
+  css: [/common/datatable.css]
   flags: []
   values:
     - collection.sort_on: [sort]
