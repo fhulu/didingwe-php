@@ -54,6 +54,7 @@ class document extends module
     }
     catch (Exception $e) {
       if ($control) $this->page->error($control, "Error loading file $path: ". $e->getMessage());
+      log::error("Error loading file $path: ". $e->getMessage());
       return false;
     }
     $sheet = $excel->getSheet(0);     //Selecting sheet 0
