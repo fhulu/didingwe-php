@@ -631,8 +631,8 @@
       })
       .on('delete', 'tr', function(e) {
         $(this).remove();
-        return $(this);
         e.stopPropagation();
+        return $(this);
       })
       .on('setRowStyles', function(e, key, styles) {
         if (!$(e.target).is(el)) return;
