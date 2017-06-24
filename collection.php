@@ -500,7 +500,7 @@ class collection extends module
     $this->extract_header($args);
     $this->page->parse_delta($args);
     $this->init_filters();
-    $joins = $this->create_filter_joins();
+    $joins = $this->create_filter_joins($this->filters);
     $table = "`$this->main_table`";
     $collection = $this->main_collection;
     $where = " where `$collection`.collection = '$collection' and `$collection`.version = 0 ";
@@ -520,9 +520,9 @@ class collection extends module
       $updated = $this->page->sql_exec("update $table `$collection` $joins set `$collection`.$attribute = $value $where $condition");
       if ($updated) continue;
       if (!$this->identifier_filter) continue;
-      $this->page->sql_exec("insert into $table(collection,identifier,attribute,value)
+      $this->page->sql_exec("insert into $table (collection,identifier,attribute,value)
         select '$collection', '$this->identifier_filter', '$name', $value from dual where not exists (
-          select 1 from $table $where $condition)");
+          select 1 from $table `$collection` $where $condition)");
     }
   }
 
