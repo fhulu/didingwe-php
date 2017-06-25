@@ -212,7 +212,7 @@ create:
     - create
   post:
     - collection.values: [session,$sid,partner,user,company_name: partner.name, creator_first_name: user.first_name, creator_last_name: user.last_name]
-    - collection.insert: [user,"",email,password: /password('$password'),active: 0,user_group: $group,attempts: 0,tittle,first_name,last_name,cellphone,country,role,partner,time_added: /now()]
+    - collection.insert: [user,"",email,password: /password('$password'),active: 0,user_group: $group,attempts: 0,title,first_name,last_name,cellphone,country,role,partner,time_added: /now()]
     - read_config: [self_activation_validity,program_name]
     - let: { url: /user/activate_self, method: show_dialog }
     - collection.insert: [token, /md5(last_insert_id()), user: $new_user_id, url, method, active: 1, valid_until: /sysdate() + interval $self_activation_validity]
