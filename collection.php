@@ -168,19 +168,24 @@ class collection extends module
       $alias = "filter_$name".$suffix;
       $value = $filter['value'];
       $table = $filter['table'];
+      $collection = $filter['collection'];
       $local_name = $filter['local_name'];
       if (is_null($local_name)) {
-        $sql .= " join `$this->main_table` `$alias` "
-            . " on  `$alias`.collection = `$this->main_collection`.collection and `$this->main_collection`.identifier = `$alias`.identifier "
-            . " and `$alias`.attribute = '$name' and `$alias`.value $value ";
-
+        $sql .= " join `$table` `$alias` on `$alias`.collection = '$collection'"
+        . " and `$collection`.identifier = `$alias`.identifier";
+        if ($name == 'identifier')
+          $sql .= " and `$alias`.identifier $value";
+        else
+          $sql .= " and `$alias`.attribute = '$name' and `$alias`.value $value ";
       }
       else {
-        $collection = $filter['collection'];
-        $sql .= " join `$table` `$alias` on `$alias`.collection = '$collection'"
-         . " and `$this->main_collection`.attribute = '$local_name' and `$alias`.identifier = `$this->main_collection`.value";
+        $sql .= " join `$this->main_table` `main_$alias` on `main_$alias`.collection = '$this->main_collection'"
+          . " and `main_$alias`.identifier = `$this->main_collection`.identifier and `main_$alias`.attribute = '$local_name'"
+          . " join `$table` `$alias` on `$alias`.collection = '$collection' and `$alias`.identifier = `main_$alias`.value"
+          . " and `$alias`.attribute = '$name' and `$alias`.value $value ";
       }
     }
+
     return $sql;
   }
 
@@ -391,7 +396,7 @@ class collection extends module
       if (in_array($alias, $this->hidden_columns, true)) continue;
       ++$index;
       $term = $request["f$index"];
-      if (!isset($term)) continue;
+      if ($term=='') continue;
       $filter = $attr;
       $filter['value'] = " like '%$term%'";
       $filters[] = $filter;
