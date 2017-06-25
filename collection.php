@@ -179,10 +179,11 @@ class collection extends module
           $sql .= " and `$alias`.attribute = '$name' and `$alias`.value $value ";
       }
       else {
-        $sql .= " join `$this->main_table` `main_$alias` on `main_$alias`.collection = '$this->main_collection'"
+        $foreign_name = $filter['foreign_name'];
+        $sql .= " join `$this->main_table` `main_$alias` on `main_$alias`.collection = `$this->main_collection`.collection"
           . " and `main_$alias`.identifier = `$this->main_collection`.identifier and `main_$alias`.attribute = '$local_name'"
           . " join `$table` `$alias` on `$alias`.collection = '$collection' and `$alias`.identifier = `main_$alias`.value"
-          . " and `$alias`.attribute = '$name' and `$alias`.value $value ";
+          . " and `$alias`.attribute = '$foreign_name' and `$alias`.value $value ";
       }
     }
 
