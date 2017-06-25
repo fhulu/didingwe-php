@@ -55,10 +55,6 @@ activate_password:
     - collection.update: [token, $token, active: 0]
     - clear_values
     - alert: Your account has been activated successfully
-  audit:
-    name: Activate acount
-    detail: $email
-
 
 change_password:
   type: wizard
