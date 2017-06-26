@@ -854,6 +854,7 @@ class page
     $detail = addslashes($detail);
     $collection = $this->get_module('collection');
     $sid = $this->get_module('auth')->get_session_id();
+    if (!$sid) return;
     $collection->unhide('user','partner');
     $user = $collection->values('session', $sid, 'user');
     $partner = $collection->values('session', $sid, 'partner');
@@ -892,7 +893,7 @@ class page
   {
     $sql =  replace_vars($sql, $options, function(&$val) {
       if (is_array($val))
-        $val = json_encode($this->replace_fields($val));  
+        $val = json_encode($this->replace_fields($val));
       $val = addslashes($val);
     });
     return $sql;
