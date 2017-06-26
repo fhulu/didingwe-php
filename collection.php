@@ -151,7 +151,8 @@ class collection extends module
           . " on $sorter.collection = '$this->main_collection' and `$this->main_collection`.identifier = $sorter.identifier "
           . " and $sorter.attribute = '$name'";
       $order_sql[] = " $sorter " . $attr['sort_order'];
-      $fields[] = "$sorter.value $sorter";
+      $conversion = $attr['sort_convert'];
+      $fields[] = "$sorter.value$conversion $sorter";
     }
     if (sizeof($order_sql))
       $order_sql = "order by ". implode(",", $order_sql);
