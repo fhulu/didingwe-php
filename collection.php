@@ -421,7 +421,9 @@ class collection extends module
     list($collection, $filters) = array_splice($args, 0, 2);
     list($collection) = assoc_element($collection);
     $this->identifier_filter = null;
-    if (is_string($filters)) {
+    if ($filters == '') 
+      $filters = [];
+    else if (is_string($filters)) {
       $this->identifier_filter = $filters;
       $filters = [];
     }
