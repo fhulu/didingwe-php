@@ -551,6 +551,7 @@ mkn.render = function(options)
     return mkn.showPage($.extend({request: options.request}, field), target).done(function(obj, result, field) {
       setStyle(obj, field);
       setClass(obj, field);
+      target.trigger('dying');
       target.replaceWith(obj);
       if (!selector) return;
       var classes = selector.regexCapture(/(\.\w[\w\.]*)$/g);
