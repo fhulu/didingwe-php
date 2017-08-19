@@ -480,7 +480,7 @@ mkn.render = function(options)
     setAttr(obj, field);
     setClass(obj, field);
     setStyle(obj, field);
-    setModelFunctions(field);
+    setModelFunctions(obj,field);
     if (field.key === undefined) field.key = options.key;
     var values = $.extend({}, this.types, field);
     var matches = getMatches(field.html, /\$(\w+)/g);
@@ -699,7 +699,11 @@ mkn.render = function(options)
       if (key.indexOf('on_') != 0) return;
       var event = key.substr(3);
       if (!(event in events)) events[event] = [];
-      events[event].push(value);
+      if ($.isArray(value))
+        events[event].concat(value);
+      else
+        events[event].push(value);
+
       if (!obj.hasClass('didi-listener')) obj.addClass('didi-listener')
     });
     if ($.isEmptyObject(events)) return;
@@ -727,7 +731,8 @@ mkn.render = function(options)
           }
           else if ('didi-model' in field && 'on_'+key in field['didi-model']) {
             var handler = me.model["on_"+key+"_"+ id];
-            handler.apply(obj, arguments);
+            if (handler)
+              handler.apply(obj, arguments);
             me.updateWatchers();
           };
         });
@@ -1176,16 +1181,13 @@ mkn.render = function(options)
     return field.attr && field.attr.type =='radio'? field.attr.name: field.id;
   }
 
-  var setModelFunctions = function(field) {
+  var setModelFunctions = function(obj, field) {
 
     var funcs = [];
     var index = 0;
     var id = field.id;
-    function setFunction(parent,key) {
 
-      if (key == 'html') return;
-      var value = parent[key];
-      if (typeof value != 'string') return;
+    function setInlineExpr(parent, key, value) {
       value = value.trim();
       var exprs;
       if (value[0] == '~')
@@ -1199,11 +1201,11 @@ mkn.render = function(options)
         var suffix = "\n\t}";
         var ret = /\breturn\s/gm.test(expr)?"": "\t\treturn ";
         if (key.indexOf('on_') != 0)
-          src = "\tget_"+id+"_"+index+": function(obj) {\n"+ret;
+          src = "\tget_"+id+"_"+  index+": function(obj) {\n"+ret;
         else if (!/^[~`]\s*function\s*\(/gm.test(expr))
-          src = "\t"+key+"_"+id+": function(event) {\n";
+          src = "\t"+key+"_"+id+"_0: function(event) {\n";
         else {
-          src = "\t"+key+"_"+id+": ";
+          src = "\t"+key+"_"+id+"_0: ";
           suffix = "";
         }
         src += expr.replace(/^~|`/g,'') + suffix;
@@ -1214,7 +1216,28 @@ mkn.render = function(options)
       })
       if (replaced)
         parent['didi-model'][key] = value;
+
     }
+
+    function setOnHandler(event, scripts) {
+      for (var i in scripts) {
+        var src = scripts[i]['script'];
+        if (!src) return;
+        if (/^[~`]\s*function\s*\(/gm.test(src))  src =  "function(event) { " + src + " }";
+        obj.on(event, $.proxy(Function(src), obj));
+      }
+    }
+
+    function setFunction(parent,key) {
+
+      if (key == 'html') return;
+      var value = parent[key];
+      if (typeof value == 'string')
+        setInlineExpr(parent, key, value);
+      else if (key.indexOf('on_') == 0 && $.isArray(value))
+        setOnHandler(key.substr(3), value)
+    }
+
     function setFunctions(parent) {
       if (!parent) return;
       parent['didi-model'] = {}
