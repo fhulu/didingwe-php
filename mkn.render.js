@@ -1203,9 +1203,9 @@ mkn.render = function(options)
         if (key.indexOf('on_') != 0)
           src = "\tget_"+id+"_"+  index+": function(obj) {\n"+ret;
         else if (!/^[~`]\s*function\s*\(/gm.test(expr))
-          src = "\t"+key+"_"+id+"_0: function(event) {\n";
+          src = "\t"+key+"_"+id+": function(event) {\n";
         else {
-          src = "\t"+key+"_"+id+"_0: ";
+          src = "\t"+key+"_"+id+": ";
           suffix = "";
         }
         src += expr.replace(/^~|`/g,'') + suffix;
@@ -1224,7 +1224,9 @@ mkn.render = function(options)
         var src = scripts[i]['script'];
         if (!src) return;
         if (/^[~`]\s*function\s*\(/gm.test(src))  src =  "function(event) { " + src + " }";
-        obj.on(event, $.proxy(Function(src), obj));
+        var sink = obj;
+        if (obj.is('body') && event == 'scroll') sink = $(window);
+        sink.on(event, $.proxy(Function(src), obj));
       }
     }
 
