@@ -1,6 +1,6 @@
 payweb:
   name: PayGate Electronic Payment Interface
-  class: [biggest, borderless]
+  class: [biggest, borderless,payweb]
   type: iframe
   src: /?page=paygate/request
   modal:
@@ -59,6 +59,7 @@ response:
     - sql_values: >
         select md5("$PAYGATE_ID|$REFERENCE|$TRANSACTION_STATUS|$RESULT_CODE|$AUTH_CODE|$AMOUNT|$RESULT_DESC|$TRANSACTION_ID|$RISK_INDICATOR|$paygate_secret") calc_checksum
     - sql_values: select if('$TRANSACTION_STATUS'='1' and '$calc_checksum' = '$CHECKSUM', 'approved', 'failed') status
+    - clear_values: [paygate_secret,calc_checksum,CHECKSUM]
     - collection.update:
         - payment
         - $REFERENCE
