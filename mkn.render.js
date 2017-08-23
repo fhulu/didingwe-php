@@ -700,7 +700,7 @@ mkn.render = function(options)
       var event = key.substr(3);
       if (!(event in events)) events[event] = [];
       if ($.isArray(value))
-        events[event].concat(value);
+        events[event] = events[event].concat(value);
       else
         events[event].push(value);
 
@@ -1012,7 +1012,7 @@ mkn.render = function(options)
           trigger(field, obj);
           break;
         default:
-          if (action[0] == '.')
+          if (action && action[0] == '.')
             obj[action.substring(1)].apply(obj,params);
       }
     }
