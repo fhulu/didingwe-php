@@ -3,10 +3,26 @@ menu:
   type: container
   class: [menu,nolist]
   tag: ul
-  contents: $items
-  items:
+  contents:
+    - mobile_anchor
+    - desktop_anchor
+
+mobile_anchor:
+  class: [hide-medium,hide-large,font-large,float-right,hover-dropdown,right-text,fixed]
+  derive: [items]
+  type: font_awesome
+  icon: bars
+  text:
     - type: menu_item
     - action: redirect
+    - default: { class: [dropdown,right-text,widest] }
+    - merge: items
+
+desktop_anchor:
+  derive: [items]
+  class: [hide-small]
+  tag: div
+  text: $items
 
 menu_item:
   tag: li
@@ -15,6 +31,7 @@ menu_item:
   type: container
   contents: [menu_link]
   attr: { tabindex: $number, title: $desc}
+  class: [col s12]
 
 menu_link:
   tag: a
