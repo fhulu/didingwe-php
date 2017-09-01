@@ -4,25 +4,33 @@ menu:
   class: [menu,nolist]
   tag: ul
   contents:
-    - mobile_anchor
-    - desktop_anchor
+    - type: container
+    - mobile_menu_anchor
+    - desktop_menu_anchor
 
-mobile_anchor:
-  class: [hide-medium,hide-large,font-large,float-right,hover-dropdown,right-text,fixed]
+mobile_menu_anchor:
+  class: [hide-medium,hide-large,float-right]
   derive: [items]
-  type: font_awesome
-  icon: bars
-  text:
-    - type: menu_item
-    - action: redirect
-    - default: { class: [dropdown,right-text,widest] }
-    - merge: items
+  contents:
+    - mobile_menu_bars:
+        type: font_awesome
+        icon: bars
+        class: [cursor-pointer,focus-dropdown]
+        attr: { tabindex: $number}
+    - mobile_menu_items:
+        type: container
+        derive: [items]
+        class: [dropdown]
+        contents:
+          - type: menu_item
+          - action: redirect
+          - default: { class: [float-right,widest] }
+          - merge: items
 
-desktop_anchor:
+desktop_menu_anchor:
   derive: [items]
   class: [hide-small]
-  tag: div
-  text: $items
+  contents: [merge: items]
 
 menu_item:
   tag: li
