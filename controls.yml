@@ -44,8 +44,8 @@ bar:
 blank:
   type: plain_text
   mutable: false
-  text: ""
-  class: [inline-block]
+  text: "b"
+  class: [inline-block,transparent]
 
 block_text:
   type: plain_text
