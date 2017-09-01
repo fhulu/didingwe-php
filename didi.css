@@ -216,8 +216,8 @@
 .show-overflow { overflow: visible}
 
 /* dropdown */
-.hover-dropdown>.dropdown { display: none;}
-.hover-dropdown:hover>.dropdown { display: block;}
+.hover-dropdown>.dropdown,.focus-dropdown+.dropdown { display: none;}
+.hover-dropdown:hover>.dropdown,.focus-dropdown:focus+.dropdown { display: block;}
 
 
 /* font-awesome integration */
@@ -276,7 +276,8 @@ li.paragraph {text-indent: -1em }
 }
 
 /* opacity */
-.transparent,.transparent-5.hover-transparent:hover,.hover-transparent-5{opacity:0.50;filter:alpha(opacity=50)}
+.transparent,.hover-transparent:hover{opacity:0;filter:alpha(opacity=0)}
+.transparent-5,.hover-transparent-5{opacity:0.50;filter:alpha(opacity=50)}
 .transparent-6,.hover-transparent-7:hover{opacity:0.60;filter:alpha(opacity=60)}
 .transparent-7,.hover-transparent-7:hover{opacity:0.70;filter:alpha(opacity=70)}
 .transparent-8,.hover-transparent-8:hover{opacity:0.80;filter:alpha(opacity=80)}
