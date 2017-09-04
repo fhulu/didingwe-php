@@ -4,32 +4,32 @@ menu:
   class: [menu,nolist]
   tag: ul
   contents:
-    - type: container
     - mobile_menu_anchor
-    - desktop_menu_anchor
+    - mobile_menu_items
+    - desktop_menu_items
 
 mobile_menu_anchor:
-  class: [hide-medium,hide-large,float-right]
-  derive: [items]
-  contents:
-    - mobile_menu_bars:
-        type: font_awesome
-        icon: bars
-        class: [cursor-pointer,focus-dropdown]
-        attr: { tabindex: $number}
-    - mobile_menu_items:
-        type: container
-        derive: [items]
-        class: [dropdown]
-        contents:
-          - type: menu_item
-          - action: redirect
-          - default: { class: [float-right,widest] }
-          - merge: items
+  type: font_awesome
+  class: [hide-medium,hide-large,cursor-pointer,float-right]
+  attr: { tabindex: $number, title: $desc}
+  icon: bars
+  on_click:
+    - script: this.parent().find('.dropdown').show()
 
-desktop_menu_anchor:
+
+mobile_menu_items:
+  type: container
+  class: [hide-medium,hide-large,dropdown]
   derive: [items]
+  show: no
+  contents: [merge: items]
+  on_click:
+    - script: this.hide()
+
+desktop_menu_items:
+  type: container
   class: [hide-small]
+  derive: [items]
   contents: [merge: items]
 
 menu_item:
