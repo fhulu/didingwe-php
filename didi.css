@@ -196,6 +196,7 @@
 .border-pale-green,.hover-border-pale-green:hover{border-color:#e7ffe7}
 .border-pale-yellow,.hover-border-pale-yellow:hover{border-color:#ffffd7}
 .border-pale-blue,.hover-border-pale-blue:hover{border-color:#e7ffff}
+.border-lightgrey,.hover-border-lightgrey:hover{border-color:lightgrey}
 
 /* cursor */
 .autocursor,.auto-cursor { cursor: auto }
