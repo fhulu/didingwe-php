@@ -3,6 +3,9 @@ menu:
   type: container
   class: [menu,nolist]
   tag: ul
+  items:
+    - type: menu_item
+    - action: redirect
   contents:
     - mobile_menu_anchor
     - mobile_menu_items
