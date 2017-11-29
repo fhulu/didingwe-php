@@ -45,7 +45,7 @@ class document extends module
 
   function import_excel($path, $control, $callback=null)
   {
-    require_once 'PHPExcel/Classes/PHPExcel/IOFactory.php';
+    require_once '../common/PHPExcel/Classes/PHPExcel/IOFactory.php';
     $page = $this->page;
     try {
       $type = PHPExcel_IOFactory::identify($path);
