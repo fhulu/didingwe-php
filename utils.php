@@ -336,3 +336,13 @@ function implode_quoted($array, $separator=",", $quote="'")
 {
   return $quote . implode($separator, $array) . $quote;
 }
+
+// get array_keys for associative arrays otherwise get array values
+function array_keys_first($array)
+{
+  if (is_assoc($array)) return array_keys($array);
+  foreach($array as &$value) {
+    list($value) = assoc_element($value);
+  }
+  return $array;
+}
