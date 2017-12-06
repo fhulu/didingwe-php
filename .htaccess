@@ -5,3 +5,5 @@ RewriteRule ^index\.(php|html?)$ index.php [L]
 RewriteRule ^(\w+[\w\/]*)(?:\?(.+))?$ index.php?path=$1&$2 [NC,L,QSA]
 RewriteRule \.(yml|conf)$ - [R=404,NC,L]
 RewriteRule ^\.git(/?|/.*)$ - [R=404,NC,L]
+php_flag log_errors on
+#php_flag display_errors on
