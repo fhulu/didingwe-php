@@ -186,7 +186,7 @@ class page
     return $this->merge_stack($stack);
   }
 
-  function get_access($field, $key) 
+  function get_access($field, $key)
   {
     $access = $field[$key];
     if (is_null($access)) return null;
@@ -198,7 +198,7 @@ class page
   {
     if (!is_array($field)) return true;
     $access = $this->get_access($field,'access');
-    $partner_access = $this->get_access(field, 'partner_access');
+    $partner_access = $this->get_access($field, 'partner_access');
     $restricted = isset($access) || isset($partner_access);
     if (!$restricted || $this->get_module('auth')->authorized($access, $partner_access)) return true;
     if (!$throw) return false;
