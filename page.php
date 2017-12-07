@@ -30,7 +30,7 @@ class page
   static $fields_stack = array();
   static $post_items = array('audit', 'call', 'clear_session', 'clear_values', 'db_name', 'error', 'let', 'keep_values','post',
     'q', 'valid', 'validate', 'write_session');
-  static $query_items = array('call','read_session', 'read_values', 'ref_list', 'sql', 'sql_values');
+  static $query_items = array('call', 'let', 'keep_values','read_session', 'read_values', 'ref_list', 'sql', 'sql_values', 'refresh');
   static $atomic_items = array('action', 'attr', 'css', 'html', 'script', 'sql',
     'style', 'template', 'valid');
   static $user_roles = array('public');
@@ -186,14 +186,21 @@ class page
     return $this->merge_stack($stack);
   }
 
+  function get_access($field, $key) 
+  {
+    $access = $field[$key];
+    if (is_null($access)) return null;
+    if (!is_array($access)) $access = [$access];
+    return array_keys_first($access);
+  }
+
   function allowed($field, $throw=false)
   {
     if (!is_array($field)) return true;
-    $access = $field['access'];
-    if (is_null($access)) return true;
-    if (!is_array($access)) $access = [$access];
-    $access = array_keys_first($access);
-    if (!isset($access) || $this->get_module('auth')->authorized($access)) return true;
+    $access = $this->get_access($field,'access');
+    $partner_access = $this->get_access(field, 'partner_access');
+    $restricted = isset($access) || isset($partner_access);
+    if (!$restricted || $this->get_module('auth')->authorized($access, $partner_access)) return true;
     if (!$throw) return false;
     throw new user_exception("Unauthorized access [". implode(",", $access) . "] to PATH ".implode('/', $this->path)  );
   }

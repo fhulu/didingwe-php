@@ -1,5 +1,0 @@
-footer:
-  type: container
-  class: [center-text]
-  contents:
-    - developed_by: { type: link}
