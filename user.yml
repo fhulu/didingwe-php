@@ -11,7 +11,7 @@ activate:
     - collection.update: [user, $key, active: 1, attempts: 0]
     - collection.values: [user, $key, email, first_name, last_name]
     - emailer.send: { type: activate_email }
-    - refresh: "#page"
+    - trigger: [setRowData, "", $key, {status: active, style: active, actions: 'expand,slide,edit,deactivate'}]
 
 activate_email:
   from: $support_email
@@ -24,11 +24,43 @@ activate_email:
     <b>Customer Operations</b>
 
 
+activate_self:
+  type: wizard
+  name: Activate Account
+  modal:
+    dialog:
+      position: { my: 'top', at: 'top+10' }
+      class: [col s12 m8 l7 ]
+  access: public
+  read:
+    - read_session: token
+    - collection.values: [token,$token,user.cellphone,user.email,user.first_name,user.last_name]
+    - write_session: [cellphone,email,first_name,last_name]
+  steps:
+    - check_otp
+    - activate_password
+    - login
+
+activate_password:
+  type: input_page
+  desc: Please enter your desired password and type it again to confirm it.
+  inputs:
+    - type: password_input
+    - password
+    - confirm_password
+  post:
+    - read_session: token
+    - collection.values: [token, $token, user]
+    - collection.update: [user, $user, password: /password('$password'), attempts: 0, active: 1]
+    - collection.update: [token, $token, active: 0]
+    - clear_values
+    - alert: Your account has been activated successfully
+
 change_password:
   type: wizard
   action: none
   read:
-    - collection.values: [session, $sid, email: user, user.first_name, user.last_name, user.cellphone]
+    - collection.values: [session, $sid, user.email, user.first_name, user.last_name, user.cellphone]
     - write_session: [email,first_name,last_name,cellphone]
     - clear_values
   steps:
@@ -48,9 +80,11 @@ check_otp:
     Please make sure you enter this OTP instead of the first one.
   inputs:
     - otp
+  pre_validation:
+    - read_session: [server_otp,time_of_otp]
   values:
     - sql_values: select lpad(floor(rand()*9999),4,'0') server_otp, now() time_of_otp
-    - write_session: server_otp,time_of_otp
+    - write_session: [server_otp,time_of_otp]
     - read_session: email,first_name,last_name,cellphone
     - read_config: sms_otp,email_otp
     - if $sms_otp:
@@ -105,8 +139,10 @@ confirm_registration:
     - agree_terms: { template: question_input, type: checkbox}
   values:
     - read_session: title,first_name,last_name,cellphone,email
+    - collection.values: [title, $title, title: name]
   validate: agree_terms
   post:
+    - read_config: [registrant_partner, registrant_role]
     - read_session: title,first_name,last_name,cellphone,email,password,registrant_partner
     - collection.values: [partner, name: $registrant_partner, partner: identifier]
     - if $parter == '':
@@ -125,6 +161,7 @@ confirm_registration:
         - cellphone
         - partner
         - role: $registrant_role
+        - time_added: /now()
     - collection.insert:
         - audit
         - ""
@@ -158,38 +195,91 @@ create:
   name: Add User
   desc:  Add a new user
   inputs:
-    - title: {type: dropdown}
+    - title: {type: dropdown_collection}
     - first_name
     - last_name
     - cellphone
     - email:  { valid: [not_in_use] }
-    - type: password_input
-    - password
-    - confirm_password
     - role: { type: dropdown }
+    - group:
+        type: dropdown
+        option:
+          name: $2
+        options:
+          - collection.values: [session, $sid, owner: user, partner]
+          - collection.data: [user_group,[partner, owner, active: 1],identifier,name]
   actions:
     - create
+  post:
+    - collection.values: [session,$sid,partner,user,company_name: partner.name, creator_first_name: user.first_name, creator_last_name: user.last_name]
+    - collection.insert: [user,"",email,password: /password('$password'),active: 0,user_group: $group,attempts: 0,title,first_name,last_name,cellphone,country,role,partner,time_added: /now()]
+    - read_config: [self_activation_validity,program_name]
+    - let: { url: /user/activate_self, method: show_dialog }
+    - collection.insert: [token, /md5(last_insert_id()), user: $new_user_id, url, method, active: 1, valid_until: /sysdate() + interval $self_activation_validity]
+    - read_server: BASE_URL
+    - sql_values: select "$BASE_URL/home?token=$new_token_id" user_activation_link
+    - emailer.send: {type: create_user_email}
+    - collection.values: [role, $role, role: name, time_added: /now()]
+    - trigger: [addNewRow, "", $_values]
+    - trigger: [addUser, "", $_values]
+    - alert: User Successfully Added
+    - close_dialog
+
+resend_activation_token:
+  class: [green]
+  name: Resend Token
+  confirmation: yes
+  post:
+    - collection.values: [session,$sid,partner,user,company_name: partner.name, creator_first_name: user.first_name, creator_last_name: user.last_name]
+    - collection.values: [user,$key,first_name,last_name,email]
+    - read_config: [self_activation_validity,program_name]
+    - let: { url: /user/activate_self, method: show_dialog }
+    - collection.insert: [token, /md5(last_insert_id()), user: $key, url, method, active: 1, valid_until: /sysdate() + interval $self_activation_validity]
+    - read_server: BASE_URL
+    - sql_values: select "$BASE_URL/home?token=$new_token_id" user_activation_link
+    - emailer.send: {type: create_user_email}
+
+
+create_user_email:
+  from: $support_email
+  to: $first_name $last_name <$email>
+  subject: New User Account
+  message: >
+      Dear <b>$first_name $last_name </b> <br><br>
+      You have have been registered on $program_name by $creator_first_name $creator_last_name at $company_name. <br>
+      Kindly click on this <a href="$user_activation_link">link</a> below to activate your registration.
+
+      Kind regards, <br><br>
+
+      Support Desk
+
 
 deactivate:
   access: [admin]
   validate: none
+  confirmation: yes
   desc: Deactivate this user
   audit: $first_name $last_name ($email)
   post:
+    - collection.values: [session, $sid, user]
+    - if $key == $user:
+        - clear_values
+        - abort: You can't deactivate current user
     - collection.update: [user, $key, active: 0]
     - collection.values: [user, $key, first_name, last_name, email]
     - emailer.send: { type: deactivate_email }
-    - refresh: "#page"
+    - trigger: [setRowData,"", $key, {status: inactive, style: inactive, actions: 'expand,slide,edit,activate'}]
 
 deactivate_email:
   from: $support_email
   to: $first_name $last_name <$email>
   subject: Your account has been deactivated
   message: >
-    Dear <b>$first_name $last_name</b> <br><br>
-    The administrator would like to inform you that your account has been deactivated on $program_name.<br><br>
-    Regards,<br><br>
-    <b>Customer Operations</b>
+            Dear <b>$first_name $last_name</b> <br><br>
+            The administrator would like to inform you that your account has been
+            deactivated on $program_name.<br><br>
+            Regards,<br><br>
+            <b>Customer Operations</b>
 
 delete:
   type: deactivate
@@ -252,7 +342,7 @@ history:
     - what: { width: 30%, name: Action }
     - detail: { width: 55% }
   values:
-    - collection.data: [10, audit, user: $key, time desc, action, detail]
+    - collection.data: [10, audit, user: $key, time , action, detail]
 
 
 
@@ -282,62 +372,70 @@ list:
   name: Users
   sort: create_time
   sort_order: desc
-  flags:
-    - show_titles
+  class: [scroll-table]
+  body: { max-height: 400 }
   report_title: User Report
   row_actions:
     - activate
     - deactivate
     - edit: { action: dialog }
+    - resend_activation_token
   fields:
     - key: { show: false}
-    - email: { width: 26%}
-    - first_name: { width: 16% }
-    - last_name: { width: 16% }
-    - cellphone: { width: 12% }
-    - role: { width: 18% }
-    - status: { width: 8% }
-    - style
-    - actions
+    - time_added: { width: 21%, class: [truncate-word]}
+    - email: { width: 18%, class: [truncate-word]}
+    - first_name: { width: 13%, class: [truncate-word] }
+    - last_name: { width: 13%, class: [truncate-word] }
+    - cellphone: { width: 16%, class: [truncate-word] }
+    - role: { width: 10%, class: [truncate-word]  }
+    - status: { width: 7%, new: inactive }
+    - style: { new: inactive }
+    - actions: { width: 0%, new: 'expand,slide,edit'}
   expand:
     pages:
       - /user/history
   values:
-    - collection.values: [session, $sid, partner]
+    - collection.values: [session, $sid, partner,user]
     - collection.data:
         - user
-        - partner: $partner
+        - [partner]
         - identifier
+        - time_added
         - email
         - first_name
-        - last_name
-        - cellphone
-        - role
-        - status: /if(active,'active','inactive')
-        - style: /if(active,'active','inactive')
-        - actions: /if(active,'expand,slide,edit,deactivate','expand,slide,edit,activate')
-        - active
-
-list_all:
-  name: System Users
-  access: [admin]
-  type: list
-  fields:
-    - organisation: { push: email }
-  values:
-    - _reset
-    - collection.scroll:
-        - user
-        - []
-        - partner: partner.name
-        - email
-        - first_name asc
         - last_name
         - cellphone
         - role: role.name
         - status: /if(active,'active','inactive')
         - style: /if(active,'active','inactive')
-        - actions: /if(active,'expand,slide,edit,deactivate','expand,slide,edit,activate')
+        - actions: /if(active,'expand,slide,edit,deactivate',if(password='', 'slide,edit,resend_activation_token','expand,slide,edit,activate'))
+        - active
+        - password
+
+list_all:
+  name: System Users
+  access: [admin,filter]
+  type: list
+  fields:
+    - pop: group
+    - partner: { push: email, width: 15%,class: [truncate-word] }
+  values:
+    - _reset
+    - collection.sort_on: [sort]
+    - collection.data:
+        - user
+        - []
+        - identifier
+        - time_added
+        - partner.name
+        - email
+        - first_name
+        - last_name
+        - cellphone
+        - role: role.name
+        - status: /if(active,'active','inactive')
+        - style: /if(active,'active','inactive')
+        - actions: /if(active,'slide,edit,deactivate','slide,edit,activate')
         - active
 
 
@@ -354,17 +452,17 @@ login:
     - login
     - forgot_password: { action: dialog }
   post:
-    - collection.values: [user, [email], user: identifier, partner, first_name, last_name, cellphone, start_page, role, attempts ]
+    - collection.values: [user, [email], user: identifier, partner, first_name, last_name, cellphone, start_page, role, attempts, partner.type ]
     - if "$start_page" == '':
         - collection.values: [partner, $partner, start_page]
     - if "$start_page" == '': [ read_config: start_page ]
-    - collection.listing: [role, $role, base_roles: role]
+    - collection.values: [role, $role, base_roles: includes]
     - collection.listing: [user_group_member, [user: $user], groups: group]
     - if $attempts > 0:
-        - collection.update: [user, user, attempts: 0]
+        - collection.update: [user, $user, attempts: 0]
     - read_server: [HTTP_USER_AGENT,REMOTE_ADDR,REMOTE_HOST,REQUEST_URI]
     - collection.insert: [session, /sha1(last_insert_id()), user, partner, start_time: /now(), HTTP_USER_AGENT, REMOTE_ADDR,REQUEST_URI]
-    - auth.login: [$new_session_id, user, $role, $base_roles, $groups]
+    - auth.login: [$new_session_id, user, $role, $base_roles, $groups, $type]
     - close_dialog
     - redirect: $start_page
   audit:
@@ -385,7 +483,7 @@ login_password:
   error:
     - collection.values: [user, email: $email, user: identifier]
     - collection.update: [user, $user, attempts: /value+1]
-    - collection.insert: [audit, "", user, action: Failed Login attempt, time: /sysdate()]
+    - collection.insert: [audit, "", user, action: Failed Login attempt, time: /sysdate(), detail: $email]
     - error: [password, Invalid user name or password for $email ]
 
 logout:
@@ -408,7 +506,7 @@ modify:
     - last_name
     - cellphone
     - email: { valid: [not_registered] }
-    - role: { type: dropdown_collection }
+    - role: { type: dropdown}
   values:
     - collection.values: [user, $key, title, first_name, last_name, cellphone, email, role]
   actions:
@@ -416,7 +514,8 @@ modify:
   validate: delta
   post:
     - collection.update: [user, $key, delta]
-    - refresh: "#user_list"
+    - collection.values: [user, $key, title, first_name, last_name, cellphone, email, role: role.name]
+    - trigger: [setRowData,"", $key, $_result]
     - close_dialog: Changes saved
   audit: $email $delta
   modal:
@@ -449,7 +548,7 @@ not_registered:
 otp:
   name: OTP
   desc: One Time Pin
-  valid: >
+  valid:
     sql(select 1 from dual where timestampdiff(minute, '$time_of_otp', now()) < 30 and '$otp'='$server_otp')
 
 profile:
@@ -465,7 +564,8 @@ profile:
     - email: { valid: [not_in_use]}
     - roles: { attr: disabled }
   values:
-    - collection.values: [session, $sid, user.title, user.first_name, user.last_name, user.cellphone, user.email, roles: user.role]
+    - collection.values: [session, $sid, user.title, user.first_name, user.last_name, user.cellphone, user.email, role: user.role]
+    - collection.values: [role,$role,roles: name]
   actions:
     - profile_update: { validate: delta }
     - change_password: { action: dialog }
@@ -502,7 +602,8 @@ update_password:
     - update_password
   post:
     - read_session: email
-    - collection.update: [user, [email], password: /password('$password'), attempts: 0]
+    - collection.values: [user,email: $email, found: identifier]
+    - collection.update: [user,$found,password: /password('$password'),attempts: 0]
     - clear_values
     - close_dialog: Password has been changed successfully
   audit: $email

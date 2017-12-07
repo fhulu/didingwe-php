@@ -1,48 +1,49 @@
 include: [datatable]
-user:
+user_list:
   type: datatable
   access: auth
   name: My Audit Trail
+  class: [widest,scroll-table]
+  body: { max-height: 500 }
   sort: when
   sort_order: desc
-  flags:
-    - show_titles
+  flags: [show_titles,filter]
   report_title: User Audit Trail
   actions:
     - print
     - export
   fields:
-    - when: { width: 13%,name: Time }
-    - what: { width: 12%, name: Action }
-    - detail: { width: 74% }
+    - when: { width: 18%,name: Time }
+    - what: { width: 18%, name: Action }
+    - detail: { width: 62% }
   values:
     - collection.values: [session, $sid, user]
     - collection.data: [audit, [user], time, action, detail]
     - clear_values: [user]
 
-partner:
+partner_list:
   name: Organisation Audit Trail
-  type: user
-  access: [admin]
+  type: user_list
+  access: admin
   fields:
-    - when: { width: 15%, push: merge }
-    - first_name: { width: 10%, push: what }
-    - last_name: { width: 10%, push: what }
-    - email: { width: 18%, push: what}
-    - what: { width: 15%, push: merge }
-    - detail: { width: 30%, push: merge }
+    - when: { width: 18%, push: merge }
+    - email: { width: 18%, push: what, class: [truncate-word]}
+    - what: { width: 15%, push: merge, class: [truncate-word]}
+    - detail: { width: 30%, push: merge, class: [truncate-word] }
   values:
     - _reset
+    - collection.sort_on: sort
     - collection.values: [session, $sid, partner]
-    - collection.data: [audit, [partner], time, user.first_name, user.last_name, user.email, action, detail]
+    - collection.data: [audit, [partner], time, user.email, action, detail]
     - clear_values: [partner]
 
-system:
+system_list:
   name: System Audit Trail
-  type: partner
-  access: [admin]
+  type: partner_list
+  access: admin
   fields:
-    - organisation: { push: first_name, width: 12% }
+    - organisation: { push: email, width: 15%, class: [truncate-word] }
   values:
     - _reset
-    - collection.data: [audit, [], time, partner.name, user.first_name, user.last_name, user, action, detail]
+    - collection.sort_on: sort
+    - collection.data: [audit, [], time, partner.name, user.email, action, detail]

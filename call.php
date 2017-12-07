@@ -1,3 +1,5 @@
+#!/usr/bin/php
+
 <?php
 
 list($class, $method) = explode('::', $argv[1]);

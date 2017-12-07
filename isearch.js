@@ -16,7 +16,7 @@ $.widget( "custom.isearch", {
     me.searcher = el.find('.isearch-searcher').on('keyup input cut paste', function() {
       el.val("")
       me.params.offset = 0;
-      me.drop.show();
+      me.drop.width(el.width()).show();
       me._load();
     });
 
@@ -72,8 +72,11 @@ $.widget( "custom.isearch", {
     var opts = me.options;
     me.params.term = me.searcher.val();
     el.val("");
-    me.drop.show();
+    me.drop.width(el.width()).show();
+    var start = new Date().getTime();
     $.json('/', {data: me.params}, function(result) {
+      var end = new Date().getTime();
+      console.log("Load: ", end - start);
       if (result._responses)
         el.triggerHandler('server_response', [result]);
       if (!result.data) return;
@@ -82,6 +85,7 @@ $.widget( "custom.isearch", {
       me._loading(false);
       delete result.data;
       $.extend(me.params, result);
+      console.log("Populate: ", new Date().getTime() - end);
     });
   },
 

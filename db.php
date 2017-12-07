@@ -198,27 +198,20 @@ class db
   }
 
 
-  function page_through($sql, $size, $offset=0, $callback=null, $options=null)
+  function page_through($sql, $size, $offset=0, $callback=null, $options=['fetch'=>MYSQLI_BOTH])
   {
     $options['size'] = $size;
     $options['start'] = $offset;
-    $pagenum = 0;
-    $rows = array();
+    $index = 0;
+    $rows = [];
     do {
-      $paged = false;
-      $last_row_index = 0;
-      $this->each($sql, function($index, $row) use (&$paged, &$callback, &$pagenum, &$last_row_index, &$rows) {
-        $paged = true;
-        $last_row_index = $index;
-        if (is_null($callback))
-          $rows[]  = $row;
-        else if ($callback($row, $pagenum, $index) === false)
-          return false;
-        return true;
-      }, $options);
-      $options['start']  += $size;
-      ++$pagenum;
-    } while ($paged && $last_row_index == $size-1);
+      $batch = $this->read($sql, $options['fetch'], $size, $offset);
+      if (is_null($callback))
+        $rows = array_merge($rows, $batch);
+      else
+        $callback($batch, $index++);
+      $offset += $size;
+    } while (sizeof($batch) == $size);
     return $rows;
   }
 

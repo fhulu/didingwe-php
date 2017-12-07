@@ -12,7 +12,7 @@ isearch:
     attr: { placeholder: $placeholder }
     class: [isearch-searcher, widest, pad pad-small]
   buttons:
-    class: [overlay absolute top-right, pad pad-tiny]
+    class: [absolute top-right, pad pad-tiny]
     type: container
     derive: [name,adder,dropper]
     contents: [$adder,$dropper]
@@ -31,7 +31,7 @@ isearch:
     desc: Show all items
   drop:
     type: container
-    class: [isearch-drop,overlay absolute,scroll-y,widest, white,shadow]
+    class: [isearch-drop,overlay,fixed,scroll-y]
     text: ""
     height: auto
     show: no
@@ -46,5 +46,4 @@ isearch:
     attr: { id: "", name: "", value: $value, chosen: $chosen }
   search_fields: name asc
   search_collection: $id
-  post:
-    - collection.search: [$search_collection,"",identifier,$search_fields]
+  post: []

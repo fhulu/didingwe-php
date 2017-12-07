@@ -16,13 +16,14 @@ $.fn.filterText = function(text) {
 
 $.fn.setValue = function(val)
 {
+  if ($.isPlainObject(val) || $.isArray(val)) return this;
+
+  if (this.hasAttr('template'))
+    val = this.attr('template').replace(/\$value/,val);
+
   if (this.is("a")) {
-    var proto = this.attr('proto')==undefined? '': this.attr('proto');
-    if (val == null)
-      this.attr('href', '');
-   else
-      this.attr('href', proto+val);
-    return this;
+    if (val == null) val = '';
+    return this.attr('href', val);
   }
   var type = this.attr('type');
   if (type === 'checkbox') {
@@ -48,6 +49,7 @@ $.fn.setValue = function(val)
     return this;
   }
 
+  if (typeof val == 'string')  val = mkn.escapeHtml(val, this.attr('parseHtml'), this.attr('escapeHtml'));
   if (this.hasAttr('value'))
     return this.val(val);
   return this.html(val);

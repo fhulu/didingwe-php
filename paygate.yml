@@ -1,6 +1,6 @@
 payweb:
   name: PayGate Electronic Payment Interface
-  class: [biggest, borderless]
+  class: [biggest, borderless,payweb]
   type: iframe
   src: /?page=paygate/request
   modal:
@@ -27,7 +27,7 @@ request:
   values:
     - read_session: [paygate_amount]
     - collection.values: [session, $sid, partner, partner.currency, user, user.email, start_time: /now(), paygate_amount: /round($paygate_amount)]
-    - collection.insert: [payment, "", partner, user, session: $sid, amount: $paygate_amount, status: pending, method: credit_card, start_time]
+    - collection.insert: [payment, "", partner, user, session: $sid, amount: $paygate_amount, status: pending, payment_method: credit_card, start_time]
     - write_session: [new_payment_id]
     - read_config: [paygate_id,paygate_secret]
     - if "$currency" == '': { read_config: currency }
@@ -43,10 +43,11 @@ request:
         SECRET: $paygate_secret
     - sql_values: >
         select md5('$PAYGATE_ID|$REFERENCE|$AMOUNT|$CURRENCY|$RETURN_URL|$TRANSACTION_DATE|$EMAIL|$SECRET') CHECKSUM
-    - trigger: .submit
+    - trigger: ".submit,#page"
+    - sql_values: select round($AMOUNT/100,2) amount
     - audit:
         action: Start Electronic Transaction
-        detail: "Amount: $AMOUNT Reference: $REFERENCE"
+        detail: "Amount: $amount Reference: $REFERENCE"
     - keep_values: [PAYGATE_ID,REFERENCE,AMOUNT,CURRENCY,RETURN_URL,TRANSACTION_DATE,EMAIL,CHECKSUM]
 
 response:
@@ -58,17 +59,18 @@ response:
     - sql_values: >
         select md5("$PAYGATE_ID|$REFERENCE|$TRANSACTION_STATUS|$RESULT_CODE|$AUTH_CODE|$AMOUNT|$RESULT_DESC|$TRANSACTION_ID|$RISK_INDICATOR|$paygate_secret") calc_checksum
     - sql_values: select if('$TRANSACTION_STATUS'='1' and '$calc_checksum' = '$CHECKSUM', 'approved', 'failed') status
+    - clear_values: [paygate_secret,calc_checksum,CHECKSUM]
     - collection.update:
         - payment
         - $REFERENCE
-        - partner
         - status
         - status_reason: $RESULT_DESC
         - reference1: $TRANSACTION_ID
         - authorisation_code: $AUTH_CODE
         - end_time: /now()
+    - sql_values: select round($AMOUNT/100,2) amount
     - audit:
         action: Complete Electronic Payment
-        detail: "Transaction ID: $TRANSACTION_ID Auth Code: $AUTH_CODE Amount: $AMOUNT Result: $RESULT_DESC"
+        detail: "Transaction ID: $TRANSACTION_ID Auth Code: $AUTH_CODE Amount: $amount Result: $RESULT_DESC"
     - read_session: paygate_handler
     - trigger: [paygate_$status, $paygate_handler]

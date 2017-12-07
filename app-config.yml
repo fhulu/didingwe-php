@@ -18,8 +18,8 @@ css:
   - /common/font-awesome/css/font-awesome.min.css
   - /common/didi.css
 scripts:
-  - /common/jquery/jquery-min.js
-  - /common/jquery/jquery-ui.min.js
+  - /common/jquery/jquery-3.2.1.min.js
+  - /common/jquery/jquery-ui-1.12.1/jquery-ui.min.js
   - /common/mukoni.jquery.js
   - /common/mkn.js
   - /common/mkn.render.js
@@ -29,13 +29,17 @@ modules:
   - collection
   - emailer
   - sms
+  - document
 
 search_paths: [../common/,.,$brand_path]
 collections:
   default: collection
-  auth: [user,partner,role,user_role,user_group,user_group_member]
-  session: [session,audit]
-  billing: [rate,payment,credit,transaction]
+  auth: [user,partner,user_group,user_group_member]
+  session: [session,audit,token]
+  billing: [rate,payment,credit,transaction,country_rate]
+  document: [document]
+  trigger: [trigger,hook,promo_entry]
+use_triggers: no
 
 
 registrar: Mukoni Software
@@ -48,6 +52,8 @@ email_new_registration: yes
 
 email_otp: yes
 sms_otp: yes
+self_activation_validity: 48 hour
+
 request_method: post
 smtp_host: smtp.example.com
 smtp_user: email@example.com
