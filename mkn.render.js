@@ -452,7 +452,7 @@ mkn.render = function(options)
   this.render = function(parent, key) {
     var field = parent[key] = me.initField(parent[key], parent);
     var obj = me.root = me.create(parent, key);
-    initModel(obj);
+    initModel(obj, field);
     me.updateWatchers();
     return obj;
   }
@@ -1263,9 +1263,8 @@ mkn.render = function(options)
       field['didi-functions'] = funcs;
   }
 
-  var initModel = function(parent) {
+  var initModel = function(parent, field) {
     var vars = [];
-    var field = parent.data('didi-field');
     var parent_id = field.id;
 
     // add initial vars
