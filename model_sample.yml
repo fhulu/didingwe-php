@@ -25,6 +25,10 @@ test:
           color: <d colors[(color.indexOf(color)+3) % colors.length]
         value: You chose <d color>
         on_mousemove: <d moves = moves+1
+        on_click:
+          action: post
+          post:
+            - alert: hello
     - show_test: { show: <d checked> }
     - checked_and_switched:
         disabled: <d checked && switched
