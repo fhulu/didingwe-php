@@ -25,12 +25,15 @@
           self.addPoints(data);
         });
       }
-      var pos = this.options.position;
-      if (pos)
-        this.addPoint(pos);
-
-
       this.show();
+
+      var pos = this.options.position;
+      if (pos) {
+        pos.unshift(this.options.id);
+        this.addPoint(pos);
+      }
+
+
       if (this.options.markOnClick) this.markOnClick();
     },
 
@@ -60,19 +63,18 @@
     {
       if ($.isPlainObject(value))
         value = [value.id, value.latitude, value.longitude, value.color, value.hint]
-      var colors = this.options.colors;
       var self = this;
       var map = this.map;
-      var icon_path = this.options.icon_path;
 
       var position = new google.maps.LatLng(parseFloat(value[1]), parseFloat(value[2]));
-      var color = value[3];
-      var icon = icon_path+colors[color]+'-dot.png';
-
+      if (value.length < 3) return;
+      var icon = this.options.icon_path+"/"+ value[3] + this.options.icon_ext;
       var id = value[0];
+      console.log("name", this.options.name);
       var marker = new google.maps.Marker({
         position: position,
-        map: self.map,
+        map: map,
+        title: this.options.name,
         icon: icon,
         id: id
       });

@@ -6,13 +6,15 @@
 
     _create: function()
     {
-      var el = this.element
-      var form = el.find('form')
-        .attr('action',this.options.uploader+'&path='+encodeURIComponent(this.options.path)+'&key='+this.options.key);
-      form.att
-      var upload = el.find('#upload').click(function() {
+      var options = this.options;
+      var el = this.element;
+      var upload = el.find('#upload,[action=upload]').bindFirst('click',function() {
+        el.attr('value', el.find('#file').val());
+      })
+      .on('upload', function() {
+        form.attr('action', '/?action=action&path='+encodeURIComponent(options.path)+'&key='+options.key+'&'+el.attr('id')+'='+el.attr('value'));
         form.submit();
-      });
+      })
       var progress = el.find('#progress');
       var file = el.find("#file").change(function() {
         uploaded.hide();
@@ -25,11 +27,11 @@
       var cancel = el.find('#cancel');
       var uploaded = el.find('#uploaded');
       var failed = el.find('#failed');
-      form.ajaxForm({
+      var form = el.find('form').ajaxForm({
         beforeSend: function(xhr)
         {
           bar.width('0%');
-          percent.html('0%').zIndex(bar.zIndex()+1);;
+          percent.html('0%').css('z-index', parseInt(bar.css('z-index'))+1);
           progress.width('100%').fadeIn();
           $('.error').remove();
           upload.hide();

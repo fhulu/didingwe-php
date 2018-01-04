@@ -14,7 +14,7 @@ Copyright Expression year is undefined on line 4, column 29 in file:///Users/fhu
 
 .file-uploader #buttons>*
 {
-  color: white;
+  /*color: white;*/
   padding: 2 0;
 }
 

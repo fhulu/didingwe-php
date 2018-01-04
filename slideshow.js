@@ -1,47 +1,27 @@
-(function( $ ) {
-  $.widget( "ui.slideshow", {
-    options: {
-      fadesAfter: 2500,
-      changesEvery: 5000
-    },
+$.fn.slideshow = function(options) {
+  var slides = this.children('.slideshow-slide').hide();
+  slides.eq(options.start_slide).show();
+  this.data('effects', options.effects);
+  this.data('effect', -1);
+}
 
-    _create: function() 
-    {
-      this.cur_idx = 0;
-      this.container = this.element;
-      this.slides = this.element.children();
-      this.cur_slide = null;
-    },
-	
-    fade: function()
-    {
-      var self = this;
-    },
+$.fn.showNextSlide = function(duration) {
+  var slides = this.children('.slideshow-slide');
+  var index = parseInt(this.attr('current_slide'));
+  var nextIndex = (index + 1) % slides.length;
+  this.attr('current_slide', nextIndex);
+  var zIndex = parseInt(this.attr('zIndex'));
+  var current = slides.eq(index).css('z-index', zIndex+1);
+  slides.eq(nextIndex).show();
+  var effect = current.attr('effect');
+  if (!effect) {
+    var effects = this.data('effects');
+    index = (this.data('effect')+1) % effects.length;
+    this.data('effect', index);
+    effect = effects[index];
+  }
 
-    start: function(start_idx)
-    {
-      this.slides.css('z-index', this.container.css('z-index')).hide();
-      if (start_idx == undefined) start_idx = 0;
-      this.cur_slide = this.slides.eq(start_idx);
-      this.cur_slide.show();
-      var self = this;
-      this.interval_id = setInterval(function() {
-        ++self.cur_idx;
-        self.cur_idx %= self.slides.length;
-        var next_slide = self.slides.eq(self.cur_idx);
-        var zindex = self.cur_slide.css('z-index');
-        next_slide.css('z-index', zindex-1).show();
-        self.cur_slide.fadeOut(self.options.fadesAfter, function() {
-          next_slide.css('z-index', zindex);
-          self.cur_slide = next_slide;
-        });
-      }, this.options.changesEvery); 
-    },
-    
-    stop: function()
-    {
-      if (this.interval_id == undefinded) return;
-      clearInterval(this.interval_id);
-    }
+  current.toggle(effect, duration, "linear", function() {
+    current.css('z-index', zIndex).hide();
   });
-}) (jQuery);
+}

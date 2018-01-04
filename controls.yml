@@ -16,12 +16,8 @@ accordion_tab:
 
 actioner:
   tag: button
-  class: [borderless,medium-font,hover-shadow,vertical-middle,pad]
   attr: { action: $id, id: "", title: $desc }
-  styles: [filled]
-
-body:
-  class: [didi]
+  action: redirect
 
 alert_message:
   classes: div
@@ -29,12 +25,32 @@ alert_message:
   style: [height_watermark]
   text: $message
 
+anchor: { tag: a }
+
+background_image:
+  background-image: url("$image_path/$id.png")
+
+bar:
+  tag: div
+  attr: { value: $value }
+  graph:
+    tag: div
+    class: [green,text-black,tallest,pad pad-min]
+    derive: [value]
+    width: $value%
+    name: $value%
+  text: $graph
+
 blank:
   type: plain_text
   mutable: false
-  text: ""
-  class: [inline-block]
+  text: "b"
+  class: [inline-block,transparent]
 
+block_text:
+  type: plain_text
+  class: [block]
+  
 bookmark:
   tag: div
   title: $id
@@ -58,7 +74,7 @@ button_image:
   class: [action]
   text: <input type="image" src="$src">
   attr: { title: $desc }
-  src: $id.png
+  src: $image_path/$id.png
 
 captcha_image:
   type: image
@@ -67,9 +83,9 @@ captcha_image:
 
 
 captioned_image:
-  classes: div
-  text: $image $caption
-  source: $id.png
+  type: container
+  contents: [$image, $caption]
+  source: $image_path/$id.png
   title: $name
   image:
     derive: [source,title]
@@ -79,8 +95,7 @@ captioned_image:
   caption:
     type: label
     derive: [title]
-    text: $title
-    styles: [block]
+    name: $title
 
 captioned_input:
   type: label_top
@@ -119,7 +134,6 @@ checkgroup:
   text: $options
   layout:
     type: label_right
-    class: [inline-block]
   option:
     type: checkbox
     value: 0
@@ -128,11 +142,6 @@ checkgroup:
   options:
     - template: $layout
     - type: $option
-
-class:
-  tag: div
-  attr: { id: ""}
-  class: $id
 
 container:
   tag: div
@@ -143,9 +152,9 @@ container:
 control:
   html: <$tag>$text</$tag>
   tag: div
-  attr: { id: $id }
+  desc: ""
+  attr: { id: $id, title: $desc }
   class: [didi]
-  border-color: "#ccc"
   text: $name
 
 date:
@@ -180,42 +189,27 @@ disabled_input:
 disabled_text_input:
   type: disabled_input
 
-document_link:
-  tag: a
-  attr: { title: $desc }
-  text: $name
-  style: { cursor: pointer }
-  action: redirect
-  target: _blank
-  query: " "
-  post:
-    - view_doc: $value
-
 dropdown:
   tag: select
-  unselected: --Select $name--
-  selected:
-    classes: option
-    derive: [unselected]
-    text: $unselected
-    attr: { value: ""}
   text: $options
+  option:
+    tag: option
+    value: $id
+    immutable: [name,value,text]
+    attr: { value: $id }
+  default_option:
+    tag: option
+    name: --Select $parent_name--
+    attr: { value: "", id: ""}
   options:
-    - dropdown_default
-    - type: dropdown_option
+    - $default_option
+    - type: $option
 
-dropdown_default:
-    classes: option
-    derive: [unselected]
-    text: $unselected
-    attr: { value: ""}
 
-dropdown_option:
-  tag: option
-  value: $id
-  text: $name
-  immutable: [name,value,text]
-  attr: { value: $id }
+dropdown_collection:
+  type: dropdown
+  options: [collection.data]
+  valid: collection.exists($name,$value)
 
 element:
   text: ""
@@ -225,23 +219,22 @@ email_input:
   type: input
   format: email
 
-emailbox:
-  type: email_input
-
 empty:
   tag: div
   text: ""
 
-#todo: fix backend inheritance
-export:
-  name: Export to Excel
-  desc: Export to an Excel spreadsheet
-  action: redirect
-  validate: none
-  post:
-    call: datatable::export(context,$key)
-  query: " "
-  target: _blank
+fanthom:
+  attr: { name: "", id: "", value: ""}
+
+font_awesome:
+  tag: i
+  icon: $id
+  class: [fa,fa-$icon]
+  text: ""
+
+font_awesome_text:
+  type: font_awesome
+  text: $name
 
 fieldset:
   templates: fieldset
@@ -258,61 +251,6 @@ file_input:
   type: input
   format: file
 
-file_uploader:
-  tag: div
-  class: [file-uploader error-sink]
-  create: file_uploader
-  script: [/common/file_uploader.js,/common/jquery.form.js]
-  css: [/common/file_uploader.css]
-  uploader: /?action=action
-  max_size: 100
-  parent_id: $id
-  allowed_extensions: pdf
-  text: $form $iframe $progress $buttons
-  form:
-    tag: form
-    width: 70%
-    styles: [top_left]
-    derive: [parent_id,uploader]
-    attr:
-      id: ""
-      enctype: multipart/form-data
-      target: iframe_$parent_id
-    text: $file
-    file:
-      derive: [parent_id]
-      type: file_input
-      attr: { name: file_$parent_id }
-  iframe:
-    tag: iframe
-    derive: [parent_id]
-    hide: yes
-    attr: {name: iframe_$parent_id }
-  progress:
-    type: container
-    styles: [top_right,biggest]
-    show: no
-    contents:
-      - default: { classes: div, styles: [biggest,top_let], text: "" }
-      - bar
-      - percent
-  buttons:
-    type: container
-    styles: [top_right,tallest,center_text]
-    width: 82
-    contents:
-      - default: { styles: [biggest,center_text], show: no }
-      - type: button
-      - upload
-      - cancel
-      - type: control
-      - uploaded
-      - failed
-  post: [ upload ]
-  audit:
-    action: Upload
-    detail: $document_type
-
 filled:
   background-color: $fill
   color: $color
@@ -323,9 +261,22 @@ form:
 flag_icon:
   tag: span
   class: [flag-icon flag-icon-$country]
+  css: [/flag-icon-css/css/flag-icon.min.css]
   country: $id
   text: " "
 
+
+filled_page:
+  type: input_page
+  inputs: $lines
+  lines:
+    - type: filled_text
+    - template: label_left
+
+filled_text:
+  classes: label
+  value: ""
+  text: $value
 
 google_icon:
   tag: i
@@ -337,10 +288,10 @@ google_icon:
 google_map:
   tag: div
   create: mapper
-  script: [/common/map.js]
   zoom: 5
   pin: blue_map_marker
-  icon_path: /
+  icon_path: $image_path
+  icon_ext: .png
   colors:
    - blue
    - green
@@ -395,35 +346,43 @@ iframe:
   src: /$id
   attr: { src: $src }
 
+iframe_pdf:
+  type: iframe
+  class: [biggest]
+  src: /$id.pdf
+
 image:
   tag: img
-  attr: {src: $src}
+  attr: {src: "$src"}
   text: ""
   src_type: png
-  src: /$id.$src_type
+  file_name: $id
+  file_ext: $src_type
+  file_dir: $image_path
+  file_path: $file_dir/$file_name.$file_ext
+  src: $file_path
 
 image_button:
   type: button
   text: $pic $name
-  image: $id.png
+  src_type: png
+  image: $image_path/$id.$src_type
   pic:
     type: input
     derive: [image]
-    attr: { type: image, src: $image }
-
-
+    attr: { type: image, src: "$image"}
 
 info_page:
-  type: input_page
-  inputs: $lines
+  type: page
+  text: $lines $actions_pane
   lines:
-    - type: info_text
-    - template: labelled_left
-
-info_text:
-  classes: label
-  value: ""
-  text: $value
+    - type: plain_text
+  actions_pane:
+    type: container
+    derive: [actions]
+    contents: $actions
+  actions:
+    - type: button
 
 inplace_input:
   type: label_inside
@@ -433,42 +392,36 @@ input:
   text: ""
   value: ""
   immutable: [format]
-  class: [medium-font]
   format: text
   attr:
     type: $format
     value: $value
     name: $id
+    parseHtml: 0
 
 input_page:
   type: page
-  text: $synopsis $inputs $controls
-  input_left: 30%
-  input_width: 67%
-  layout:
-    derive: [input_left,input_width]
-    type: label_left
+  text: $synopsis $inputs
+  layout: { type: label_left }
   synopsis:
     derive: [desc]
-    space: 16
-    type: section_heading
-    text: $desc
+    type: p
+    class: [center-text]
+    name: $desc
   inputs:
     - template: $layout
+    - $actions_pane: { push: last }
     - type: input
-  controls:
-    tag: div
+  actions_pane:
+    type: container
+    label: ""
+    derive: [actions]
     class: [actions]
-    derive: [input_left,actions]
-    style: { margin-left: $input_left }
-    text: $actions
+    contents: $actions
   actions:
-    - default: { styles: [hspaced], space: 24}
     - type: submit
 
-label:
-  tag: label
-  text: $id
+label: { tag: label }
 
 labelled:
   templates: div
@@ -486,11 +439,11 @@ labelled_input_page:
   type: input_page
 
 label_inside:
+  label: { text: ""}
   subject:
-    class: [border,widest]
     label: $name
     attr: { placeholder: $label, title: $desc}
-  text: $field
+  text: $label $field
 
 labelled_inside:
   type: label_inside
@@ -500,21 +453,24 @@ labelled_inside_image:
   subject:
     styles: [height_watermark,centered_text]
 
+label_bottom:
+  type: labelled
+  class: [inline-block]
+  label:
+    class: [block]
+  subject:
+    class: [block]
+  text: $field$label
+
 label_left:
   type: labelled
-  derive: [input_left,input_width]
+  class: [clear-after]
   label:
-    derive: [input_left]
+    tag: div
     suffix: ":"
-    text: $name$suffix&nbsp;
-    width: $input_left
-    class: [right-text]
-  subject:
-    derive: [input_width,input_left]
-    width: $input_width
-    class: [border,pad]
+    text: $name$suffix
+  subject: { class: [float-right] }
   text: $label$field
-  styles: [vspaced]
 
 label_mobile:
   type: labelled
@@ -539,13 +495,7 @@ label_right:
   text: $field $label
 
 label_top:
-  type: labelled
-  styles: [inline_block]
-  label:
-    styles: [block]
-    text: $name
-  subject:
-    styles: [block]
+  type: label_bottom
   text: $label$field
 
 left_text:
@@ -563,11 +513,12 @@ line:
 link:
   class: [pointer-cursor]
   tag: a
-  attr: { title: $desc }
+  attr: { title: $desc, template: $url }
   text: $name
   immutable: [url]
   url: /$id
   action: redirect
+  valid: ignore
 
 link_underlined:
   type: link
@@ -581,22 +532,20 @@ list_text:
   tag: li
   style: { margin-left: 16 }
 
+loading:
+  type: font_awesome
+  icon: spinner
+  class: [spin]
+
 multi_input:
   classes: div
-  class: [error-sink,inline-block]
+  class: [error-sink, grid fit]
   attr: { id: ""}
   text: $inputs
-  split: 49%
-  spacing: 0.9%
+  layout: { type: label_top}
   inputs:
-    - template: label_inside
+    - template: $layout
     - type: input
-    - default:
-        derive: [split,spacing]
-        width: $split
-        class: [border,inline-block]
-        styles: [hspaced]
-        space: $spacing
 
 navigate:
   - type: submit
@@ -623,30 +572,52 @@ one_column_table:
 
 one_row_table: { type: silos }
 
+
+option_panel:
+  tag: div
+  text: $header $body
+  header:
+    type: container
+    name: $parent_name
+    contents:
+      - label: { derive: [desc], name: $parent_name, class: [inline-block] }
+      - chosen_$parent_id: { derive: [desc], type: checkbox, class: [float-right] }
+  body:
+    id: body_$parent_id
+    tag: div
+    derive: [contents]
+    text: $contents
+    show: ~chosen_$parent_id
+
+
 p: { tag: p}
 
 page:
   classes: div
   attr: { title: $name }
   sub_page: true
-  text: $items
-  items: []
   tooltip: false
-  header_class: [pad-y,center-text, large-font]
-  class: [pad-bottom]
 
 page_title:
-  html: <title>$name</title>
+  tag: title
+  text: $name
+
+panel:
+  tag: div
+  title:
+    desc: ""
+    tag: div
+    name: $parent_name
+  text: $panes
+  panes:
+    - $title
 
 paragraph:
   type: p
 
-password:
-  type: input
-  attr: { type: password }
-
 password_input:
-  type: password
+  type: input
+  format: password
 
 plain:
   tag: div
@@ -654,8 +625,8 @@ plain:
   text: $value
 
 plain_text:
-  tag: div
-  text: $id
+  tag: span
+  name: $id
   attr: { id: ""}
 
 plot:
@@ -672,20 +643,9 @@ plot:
   text: ""
   create: plotter
 
-
-# todo: fix back-end to contextualise
-print:
-  desc: Print above contents
-  action: redirect
-  validate: none
-  post:
-    - call: datatable::pdf(context,$key)
-  query: " "
-  target: _blank
-
 processing:
   classes: span
-  style: { display: none }
+  style: { display: none, z-index: 1000 }
 
 question_input:
   type: label_top
@@ -706,25 +666,17 @@ radiobox:
   type: input
   value: $id
   immutable: [value]
-  attr: { type: radio, value: $value, id: ""}
-  style:
-    width: 24px
-    height: 24px
+  attr: { type: radio, value: $value, id: "", name: $parent_id}
 
 
 radiogroup:
   templates: div
   class: radio
   text: $options
-  group: $id
-  layout:
-    type: label_left
+  layout: { type: label_left }
   options:
     - template: $layout
-    - type:
-        type: radiobox
-        derive: [group]
-        attr: { name: $group }
+    - type: radiobox
 
 
 row_input:
@@ -742,10 +694,6 @@ row_inputs:
     - template: row_inputr
     - type: input
 
-
-section_heading:
-  classes: p
-  class: [center-text,thinner,widest,vspaced,border-bottom]
 
 side_spacer:
   space: 2px
@@ -796,15 +744,13 @@ submit:
   selector: "#page *"
   call: $class::$invoker($key)
   action: post
+  valid: ignore
 
 table:
   tag: table
   head: { type: table_head }
   body: { type: table_body }
   text: $head $body
-  sow: [rows]
-  rows:
-    - type: table_row
 
 table_head: { templates: thead }
 
@@ -870,11 +816,10 @@ template:
   attr: { id: ""}
 
 textarea:
+  type: input
   tag: textarea
-  value: ""
   text: $value
-
-text_area: { type: textarea}
+  attr: { value: "" }
 
 text_input: {type: input }
 
@@ -885,24 +830,21 @@ time:
   format: H:i
 
 titled_paragraph:
-  classes: div
-  text: $heading $content
-  title: $id
+  tag: div
+  class: [titled_paragraph]
+  text: $heading $phrase
+  title: $name
   body: $name
   heading:
     derive: [title]
     type: plain_text
-    tag: h2
-    styles: [vspaced]
     text: $title
-  content:
+    class: [block]
+  phrase:
     derive: [body]
     type: plain_text
-    tag: p
     text: $body
   space: 30
-  styles: [vspaced]
-
 
 tri_input:
   type: multi_input
@@ -916,11 +858,13 @@ twin_input:
 
 vspace:
   mutable: false
-  type: blank
+  tag: div
+  text: ""
   space: 20
   template: none
-  styles: [vspaced]
-  class: [^inline-block, ^inline,block,clear]
+  attr: { id: "" }
+  class: [clear widest block]
+  style: {padding-bottom: $space}
 
 vspaced:
   space: 6px
@@ -928,13 +872,10 @@ vspaced:
 
 watermark:
   image: $id.png
-  background-image: url($image)
-  repeat: no-repeat
-  imagex: left
-  imagey: center
-  background-repeat: $repeat
-  background-position: $imagex $imagey
-  background-color: $fill
+  background-image: url("$image_path/$image")
 
+window:
+  type: container
+  is_body: true
 
 ...

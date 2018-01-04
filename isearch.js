@@ -12,56 +12,43 @@ $.widget( "custom.isearch", {
     var me = this;
     var el = me.element;
     var opts = me.options;
-    me.dropped = me.justDropped = false;
     me.params = { action: 'data', path: opts.path, key: opts.key, offset: 0, size: opts.drop.autoload  };
-    var inputs = me.inputs = opts.render.create(opts, 'inputs', true)
-      .insertAfter(el.hide())
-      .append(el)
-    me.searcher = inputs.find('.search').on('keyup input cut paste', function() {
-      if (me.params.term == me.searcher.val()) return;
+    me.searcher = el.find('.isearch-searcher').on('keyup input cut paste', function() {
+      el.val("")
       me.params.offset = 0;
+      me.drop.width(el.width()).show();
       me._load();
     });
 
-    me.drop = opts.render.create(opts, 'drop', true)
-      .on('click', '.isearch.option', function() {
-        el.trigger('selected', [$(this)]);
-      })
-      .scroll($.proxy(me._scroll,me))
-      .appendTo(me.inputs);
+    if (opts.adder && opts.adder.url)
+      el.find('.isearch-adder').show().click(function(){ me.drop.hide() })
 
-    el.on('selected', function(e, option) {
-      el.val(option.attr('value'));
-      me.searcher.val(option.attr('chosen'));
-      me.drop.hide();
-      me.dropped = false;
-    });
-
-    me.dropper = inputs.find('.isearch.show-all').click(function() {
-      if (me.dropped) {
-        if (!me.drop.is(':visible')) me.drop.show();
-        return;
-      }
+    var dropper = el.find('.isearch-dropper').click(function() {
       me.params.offset = 0;
+      el.val("");
       me.searcher.val("");
       me._load();
     });
 
-    if (opts.add && opts.add.url) inputs.find('.isearch.add').show();
+    me.drop = el.find('.isearch-drop').on('click', '.isearch-option', function() {
+      el.data('source', $(this).data('source'));
+      el.trigger('selected', [$(this).attr('value'), $(this).attr('chosen')]);
+    })
+    .scroll($.proxy(me._scroll,me))
+    .click(function() {  me.drop.hide() })
 
-    el.on('isearch_add', function( event, data) {
-      el.val(data[0]);
-      me.searcher.val(data[1]);
-      me.dropped = false;
-      me.drop.hide();
-    });
+    $(document).click(function() { me.drop.hide(); });
 
-    inputs.on('mouseleave', function() {
+    el.on('selected', function(e, value, chosen) {
+      el.attr('value', value);
+      me.searcher.val(chosen).select();
       me.drop.hide();
-      me.dropped = false;
-    });
+    })
+    .on('added', function( event, data) {
+      el.trigger('selected', [data[0], data[1]]);
+    })
+    .click(function(e) { e.stopPropagation(); });
   },
-
 
   _scroll: function(e) {
     var me = this;
@@ -85,16 +72,20 @@ $.widget( "custom.isearch", {
     var opts = me.options;
     me.params.term = me.searcher.val();
     el.val("");
-    me.justDropped = me.dropped = true;
-    me.drop.show();
-    $.json('/', {data: me.params}, function(data) {
-      if (data._responses)
-        el.triggerHandler('server_response', [data]);
-      el.trigger('loaded', [data]);
-      me._populate(data);
+    me.drop.width(el.width()).show();
+    var start = new Date().getTime();
+    $.json('/', {data: me.params}, function(result) {
+      var end = new Date().getTime();
+      console.log("Load: ", end - start);
+      if (result._responses)
+        el.triggerHandler('server_response', [result]);
+      if (!result.data) return;
+      el.trigger('loaded', [result]);
+      me._populate(result.data);
       me._loading(false);
-      delete data.rows;
-      $.extend(me.params, data);
+      delete result.data;
+      $.extend(me.params, result);
+      console.log("Populate: ", new Date().getTime() - end);
     });
   },
 
@@ -105,29 +96,33 @@ $.widget( "custom.isearch", {
     if (!me.params.offset) drop.scrollTop(0).children().remove();
     var maxHeight = parseInt(drop.css('max-height'));
     me.autoScrolls = 0;
-    $.each(data.rows, function(i, row) {
+    $.each(data, function(i, row) {
       var option = mkn.copy(opts.option);
       option.array = row;
       option = opts.render.initField(option, opts);
-      option.embolden = me._boldTerm(option.embolden, me.params.term);
-      opts.render.create(option).appendTo(drop);
+      me._boldTerm(option, me.params.term);
+      opts.render.create(option).data('source', row).appendTo(drop);
     })
-    if (!me.justDropped) return;
-    me.justDropped = false;
-    drop.scrollTop(0);
   },
 
-  _boldTerm: function(text, term)
+  _boldTerm: function(option, term)
   {
-    $.each(term.split(' '), function(i, val) {
-      text = text.replace(
-                new RegExp(
-                  "(?![^&;]+;)(?!<[^<>]*)(" +
-                  $.ui.autocomplete.escapeRegex(val) +
-                  ")(?![^<>]*>)(?![^&;]+;)", "gi"),
-                "<strong>$1</strong>")
-    });
-    return text;
+    var terms = term.split(' ');
+    for (var i in option.embolden) {
+      var key = option.embolden[i];
+      var value = mkn.escapeHtml(option[key]);
+      for (var j in terms) {
+        var term = terms[j].trim();
+        if (term == '') continue;
+        value = value.replace(
+                  new RegExp(
+                    "(?![^&;]+;)(?!<[^<>]*)(" +
+                    $.ui.autocomplete.escapeRegex(term) +
+                    ")(?![^<>]*>)(?![^&;]+;)", "gi"),
+                  "<strong>$1</strong>")
+      }
+      option[key] = value;
+    }
   },
 
 });
