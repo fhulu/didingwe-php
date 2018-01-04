@@ -236,7 +236,6 @@ mkn.render = function(options)
         array = item;
         id = item[0];
         item = mkn.copy(defaults);
-        if (array.length>1 && item.name === undefined) item.name = array[1]
         item.array = array;
       }
       else {
@@ -290,7 +289,7 @@ mkn.render = function(options)
     else {
       template = me.mergeType(mkn.copy(template));
       mkn.deleteKeys(field, ['type', 'attr', 'action', 'class', 'tag', 'html',
-       'style', 'styles', 'create','classes','template', 'templates', 'text', 'templated']);
+       'style', 'styles', 'create','classes','template', 'templates', 'text', 'templated', 'didi-functions']);
        mkn.deleteKeys(field, geometry);
        if (!('attr' in template)) template.attr = {};
        template.attr['for'] = item.id;
@@ -404,6 +403,7 @@ mkn.render = function(options)
     field = this.mergeType(field);
 
     var id = field.id;
+    if (field.array && field.array.length>1 && field.name === undefined) field.name = field.array[1];
     if (id && field.name === undefined)
       field.name = toTitleCase(id.replace(/[_\/]/g, ' '));
     if (field.array)
@@ -448,11 +448,10 @@ mkn.render = function(options)
   }
 
   this.render = function(parent, key) {
-    parent[key] = me.initField(parent[key], parent);
+    var field = parent[key] = me.initField(parent[key], parent);
     var obj = me.root = me.create(parent, key);
     initModel(obj);
     me.updateWatchers();
-    obj.trigger('load');
     return obj;
   }
 
@@ -460,7 +459,8 @@ mkn.render = function(options)
   {
     var field = key===undefined? parent: parent[key];
     if (!field) field = types[key];
-    if (init) field = this.initField(field, parent);
+    if (init === undefined || init) field = this.initField(field, parent);
+    if (field.parent_page === undefined) field.parent_page = me.id;
     if (field.sub_page) {
       var tmp = $('<div>loading...</div>');
       this.createSubPage(parent[key], tmp);
@@ -471,14 +471,16 @@ mkn.render = function(options)
     field.text = this.expandValue(field, field.text);
     field.html = this.expandValue(field, field.html);
     field.html = field.html.trim().replace(/\$tag(\W)/, field.tag+'$1');
-    var table_tag = isTableTag(field.tag)
+    var table_tag = isTableTag(field.tag);
     var obj = table_tag? $('<'+field.tag+'>'): $(field.html);
+    if (field.is_body)
+      obj = $('body').append(obj.html());
     if (this.sink === undefined) this.sink = obj;
     var reserved = ['id', 'create', 'css', 'script', 'name', 'desc', 'data'];
     setAttr(obj, field);
     setClass(obj, field);
     setStyle(obj, field);
-    setModelFunctions(field);
+    setModelFunctions(obj,field);
     if (field.key === undefined) field.key = options.key;
     var values = $.extend({}, this.types, field);
     var matches = getMatches(field.html, /\$(\w+)/g);
@@ -506,7 +508,8 @@ mkn.render = function(options)
       }
 
       if (!value.path) value.path = field.path+'/'+code;
-      value.id = code;
+      if (value.id === undefined) value.id = code;
+      value.parent_page = field.parent_page;
       var child = this.create(field, code, true);
       if (table_tag)
         obj.append(child)
@@ -524,18 +527,21 @@ mkn.render = function(options)
     obj.data('didi-field', field);
     if ('didi-functions' in field) obj.addClass('didi-watcher');
     field['mkn-object'] = obj;
+
+    if ($.isPlainObject(field.position))
+      obj.position(field.position);
+
     initLinks(obj, field).then(function() {
-      if (subitem_count) setValues(obj, field);
+      if (subitem_count) me.setValues(obj, field);
       initEvents(obj, field);
+      obj.trigger('created', [field]);
     });
 
     if (key !== undefined) parent[key] = field;
-    if ($.isPlainObject(field.position))
-      obj.position(field.position);
     return obj;
   }
 
-  this.createSubPage = function(field, target)
+  this.createSubPage = function(field, target, selector)
   {
     if (target == undefined)
      target = $('<span>').text('loading...');
@@ -545,9 +551,11 @@ mkn.render = function(options)
     return mkn.showPage($.extend({request: options.request}, field), target).done(function(obj, result, field) {
       setStyle(obj, field);
       setClass(obj, field);
+      target.trigger('dying');
       target.replaceWith(obj);
-      var target_classes = target.selector.regexCapture(/(\.\w[\w\.]*)$/g);
-      if (target_classes.length) obj.addClass(target_classes[0].replace('.', ' '));
+      if (!selector) return;
+      var classes = selector.regexCapture(/(\.\w[\w\.]*)$/g);
+      if (classes.length) obj.addClass(classes[0].replace('.', ' '));
     });
   }
 
@@ -565,6 +573,7 @@ mkn.render = function(options)
       var item = items[i];
       var id = item.id;
       if (id == 'query') {
+        if (loading_data) continue;
         loading_data = true;
         this.loadData(parent, parent_field, name, item.defaults);
         continue;
@@ -637,7 +646,7 @@ mkn.render = function(options)
     });
     if (field.autoload || field.autoload === undefined) {
       $.json('/', serverParams('data', field.path+'/'+name, field.params), function(result) {
-        respond(result, object);
+        me.respond(result, object);
         object.trigger('loaded', [field, result.data]);
       });
     }
@@ -690,30 +699,40 @@ mkn.render = function(options)
       if (key.indexOf('on_') != 0) return;
       var event = key.substr(3);
       if (!(event in events)) events[event] = [];
-      events[event].push(value);
+      if ($.isArray(value))
+        events[event] = events[event].concat(value);
+      else
+        events[event].push(value);
+
+      if (!obj.hasClass('didi-listener')) obj.addClass('didi-listener')
     });
+    if ($.isEmptyObject(events)) return;
     $.each(events, function(key, values) {
       $.each(values, function(i, value) {
         if ($.isPlainObject(value) && !value.path) value.path = field.path + '/on_' + key;
-
-        obj.on(key, function(e) {
+        var sink = obj;
+        if (obj.is('body') && key == 'scroll') sink = $(window);
+        sink.on(key, function(e) {
           // trap trapped events
           if ($.isArray(field.trap) && field.trap.indexOf(key) >=0 )
             e.stopImmediatePropagation();
 
-          if (obj.hasClass('disabled')) {
-            e.stopImmediatePropagation();
-            return;
-          }
+          if (obj.hasClass('disabled')) return;
           // ignore default action of an anchor
           if (key == 'click' && obj.prop("tagName").toLowerCase() == 'a') {
             e.preventDefault();
             if (field.url === undefined) field.url = obj.attr('href');
           }
-          if ($.isPlainObject(value))
+          if ($.isPlainObject(value)) {
+            var params = Array.prototype.slice.call(arguments, 1);
+            value.params = mkn.merge(value.params, params);
+            mkn.replaceVars(value, value.params);
             accept(e, obj, value);
+          }
           else if ('didi-model' in field && 'on_'+key in field['didi-model']) {
-            me.model["on_"+key+"_"+ id](obj);
+            var handler = me.model["on_"+key+"_"+ id];
+            if (handler)
+              handler.apply(obj, arguments);
             me.updateWatchers();
           };
         });
@@ -737,7 +756,7 @@ mkn.render = function(options)
     })
     .on('server_response', function(event, result) {
       event.stopImmediatePropagation();
-      respond(result);
+      me.respond(result);
     })
     initTooltip(obj);
 
@@ -771,7 +790,7 @@ mkn.render = function(options)
     else $.each(attr, function(key, val) {
       if (field.array) {
         var numeric = getMatches(val, /\$(\d+)/g);
-        if (numeric.length) val = field.array[numeric[0]];
+        if (numeric.length) val = field.array[numeric[0]-1];
       }
       var matches = getMatches(val, /\$(\w+)/g)
       for (var j in matches) {
@@ -932,6 +951,7 @@ mkn.render = function(options)
   var redirect = function(field)
   {
     if (!$.isPlainObject(field)) field = { url: field };
+    mkn.replaceVars(field,field);
     var url = field.url;
     if ((!url || field.query) && field.target === '_blank') {
       url = '/?action=action';
@@ -946,8 +966,10 @@ mkn.render = function(options)
     if (!url) return;
     if (field.target === '_blank')
       window.open(url, field.target);
-    else if (field.target)
-      me.createSubPage({url: url}, $(field.target));
+    else if (field.target) {
+      mkn.closeDialog(me.sink);
+      me.createSubPage({url: url, key: field.key}, $(field.target), field.target);
+    }
     else
       document.location = url;
   }
@@ -964,32 +986,33 @@ mkn.render = function(options)
       }
       switch(action) {
         case 'dialog': mkn.showDialog(field.url, $.extend({key: field.key}, params[0])); return;
-        case 'close_dialog': mkn.closeDialog(obj);
+        case 'close_dialog': mkn.closeDialog(obj); break;
         case 'redirect': redirect(field); break;
         case 'post':
-          var url = field.url? field.url: field.path
-          params = serverParams('action', url, $.extend({key: field.key},params[0]));
+          var url = field.url? field.url: field.path;
+          params = serverParams('action', url, $.extend({key: field.key}, params[0], field.params[0]));
+          if ($.isArray(field.params)) params = $.extend({}, params, field.params[0]);
           var selector = field.selector;
           if (selector !== undefined) {
             selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+field.page_id+"$2");
-            params = $.extend(params, {invoker: obj, event: event, async: true });
+            params = $.extend(params, {invoker: obj, event: event, async: true, post_prefix: field.post_prefix });
             me.sink.find(".error").remove();
             $(selector).json('/', params, function(result) {
-              obj.trigger('processed', [result]);
-              respond(result, obj, event);
+              obj.trigger('processed-'+field.id, [result]);
+              me.respond(result, obj, event);
             });
             break;
           }
           $.json('/', params, function(result) {
             obj.trigger('straight processed', [result]);
-            respond(result, obj);
+            me.respond(result, obj);
           });
           break;
         case 'trigger':
           trigger(field, obj);
           break;
         default:
-          if (action[0] == '.')
+          if (action && action[0] == '.')
             obj[action.substring(1)].apply(obj,params);
       }
     }
@@ -1025,7 +1048,8 @@ mkn.render = function(options)
 
     var box = $("<div class=error>"+error+"</div>");
     parent.after(box);
-    box.zIndex(parent.zIndex()+1);
+    var zIndex = parseInt(parent.css('z-index'));
+    box.css('z-index', zIndex+1);
     box.fadeIn('slow').click(function() { $(this).fadeOut('slow') });
   }
 
@@ -1037,10 +1061,12 @@ mkn.render = function(options)
     if (event) event.stopImmediatePropagation();
   }
 
-  var respond = function(result, invoker, event)
+  this.respond = function(result, invoker, event)
   {
     if (!result) return;
+    mkn.removeXSS(result);
     var responses = result._responses;
+    delete result._responses;
     if (!$.isPlainObject(responses)) return this;
     var parent = me.sink;
     if (invoker) {
@@ -1051,7 +1077,6 @@ mkn.render = function(options)
 
     var handle = function(action, val)
     {
-      console.log("response", me.id, action, val);
       switch(action) {
         case 'alert': alert(val); break;
         case 'show_dialog': mkn.showDialog(val, responses.options); break;
@@ -1073,7 +1098,7 @@ mkn.render = function(options)
     }
   }
 
-  var setValues = function(parent, data)
+  this.setValues = function(parent, data)
   {
     var query_values;
     for (var i in data.values) {
@@ -1107,16 +1132,14 @@ mkn.render = function(options)
       else for (var i in result) {
         parent.setChildren(result[i], true);
       }
-      respond(result);
+      me.updateWatchers();
+      me.respond(result);
     });
   }
 
   var trigger = function(field, invoker)
   {
-    if (!field.event) {
-      console.log("WARNING: no event defined for field", field);
-      return;
-    }
+    if (!field.event) field.event = field.id
     var sink;
     var event = field.event;
     var params;
@@ -1143,14 +1166,14 @@ mkn.render = function(options)
       if (!sink.exists())
         sink = window.parent.$(selector);
     }
-    else
+    else if (invoker)
       sink = invoker;
+    else
+      sink = $('.didi-listener');
     if (event[0] === '.') {
       sink[event.substring(1)].apply(sink,params);
       return;
     }
-    event = $.Event(event);
-    event.target = invoker[0];
     sink.trigger(event, params);
   }
 
@@ -1158,16 +1181,13 @@ mkn.render = function(options)
     return field.attr && field.attr.type =='radio'? field.attr.name: field.id;
   }
 
-  var setModelFunctions = function(field) {
+  var setModelFunctions = function(obj, field) {
 
     var funcs = [];
     var index = 0;
     var id = field.id;
-    function setFunction(parent,key) {
 
-      if (key == 'html') return;
-      var value = parent[key];
-      if (typeof value != 'string') return;
+    function setInlineExpr(parent, key, value) {
       value = value.trim();
       var exprs;
       if (value[0] == '~')
@@ -1175,15 +1195,20 @@ mkn.render = function(options)
       else
         exprs = value.regexCapture(/(`[^`]+`)/g);
       var replaced = false;
-      var ret = /\breturn\s/gm.test(value)?"": "\t\treturn ";
       exprs.forEach(function(expr, i) {
         if (!expr) return;
         var src;
-        if (key.indexOf('on_') < 0)
-          src = "\tget_"+id+"_"+index+": function(obj) {\n"+ret;
-        else
-          src = "\t"+key+"_"+id+": function(obj) {\n";
-        src += expr.replace(/^~|`/g,'') + "\n\t}";
+        var suffix = "\n\t}";
+        var ret = /\breturn\s/gm.test(expr)?"": "\t\treturn ";
+        if (key.indexOf('on_') != 0)
+          src = "\tget_"+id+"_"+  index+": function(obj) {\n"+ret;
+        else if (!/^[~`]\s*function\s*\(/gm.test(expr))
+          src = "\t"+key+"_"+id+": function(event) {\n";
+        else {
+          src = "\t"+key+"_"+id+": ";
+          suffix = "";
+        }
+        src += expr.replace(/^~|`/g,'') + suffix;
         funcs.push(src);
         value = value.replace(expr, "${"+index+"}");
         replaced = true;
@@ -1191,7 +1216,30 @@ mkn.render = function(options)
       })
       if (replaced)
         parent['didi-model'][key] = value;
+
     }
+
+    function setOnHandler(event, scripts) {
+      for (var i in scripts) {
+        var src = scripts[i]['script'];
+        if (!src) return;
+        if (/^[~`]\s*function\s*\(/gm.test(src))  src =  "function(event) { " + src + " }";
+        var sink = obj;
+        if (obj.is('body') && event == 'scroll') sink = $(window);
+        sink.on(event, $.proxy(Function(src), obj));
+      }
+    }
+
+    function setFunction(parent,key) {
+
+      if (key == 'html') return;
+      var value = parent[key];
+      if (typeof value == 'string')
+        setInlineExpr(parent, key, value);
+      else if (key.indexOf('on_') == 0 && $.isArray(value))
+        setOnHandler(key.substr(3), value)
+    }
+
     function setFunctions(parent) {
       if (!parent) return;
       parent['didi-model'] = {}
@@ -1209,7 +1257,8 @@ mkn.render = function(options)
 
   var initModel = function(parent) {
     var vars = [];
-    var field =parent.data('didi-field');
+    var field = parent.data('didi-field');
+    var parent_id = field.id;
 
     // add initial vars
     if (field.dd_init) $.each(field.dd_init, function(key) {
@@ -1219,7 +1268,7 @@ mkn.render = function(options)
     // add input vars
     parent.find('input,select,textarea').addBack('input,select,textarea').each(function() {
       var field = $(this).data('didi-field');
-      if (!field) return;
+      if (!field || field.parent_page != parent_id) return;
       var id = getModelId(field);
       if (vars.indexOf(id) < 0) vars.push(id);
     });
@@ -1233,6 +1282,7 @@ mkn.render = function(options)
     // append watchers functions
     parent.find('.didi-watcher').addBack('.didi-watcher').each(function() {
       var field = $(this).data('didi-field');
+      if (!field || field.parent_page != parent_id) return;
       funcs = funcs.concat(field['didi-functions']);
     });
     if (!funcs.length) return;
@@ -1265,6 +1315,7 @@ mkn.render = function(options)
         var prefix = "get_"+id+"_";
         vars.forEach(function(index) {
           var func = me.model[prefix+index];
+          if (func === undefined) return;
           var result = func(obj);
           var regex = "\\$\\{"+index+"\\}";
           if (new RegExp('^'+regex+'$','g').test(value))
@@ -1277,10 +1328,15 @@ mkn.render = function(options)
         });
       })
     }
+    var root_field = me.root.data('didi-field');
+    if (!root_field) return;
+    var root_id = root_field.id;
+
     me.root.find('.didi-watcher').addBack('.didi-watcher').each(function() {
       var obj = $(this);
       var field = obj.data('didi-field');
-      var id = field.id
+      if (!field || field.parent_page != root_id) return;
+      var id = field.id;
       update(obj, field, id);
       update(obj, field.style, id);
       update(obj, field.class, id);

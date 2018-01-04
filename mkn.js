@@ -118,16 +118,19 @@ var mkn = new function() {
 
   this.createPage = function(options, data, parent) {
     var id = data.fields.id = options.page_id = data.path.replace('/','_');
+    data.fields.local_id = data.path.split('/').pop();
     var values = data.fields.values || data.values;
     if (data.fields.name === undefined)
       data.fields.name = toTitleCase(data.path.split('/').pop().replace('_',' '));
     data.fields.path = data.path;
     data.fields.sub_page = false;
+    data.fields.values = values;
     var r = new mkn.render({invoker: parent, types: data.types, id: id, key: options.key, request: options.request} );
     var object = r.render(data, 'fields');
-    data.values = values;
+    if (data._responses)  r.respond(data);
     object.addClass('page');
-    if(parent) object.appendTo(parent);
+    if (parent && !object.is('body'))
+      object.appendTo(parent);
     return object;
   }
 
@@ -151,18 +154,18 @@ var mkn = new function() {
     var params = $.extend({ path: path }, field);
     var defer = $.Deferred();
 
-    this.loadPage({path: '/modal/show', show: false}).done(function(modal, options) {
+    this.loadPage({path: '/modal', show: false}).done(function(modal, options) {
       var tmp = $("<div>");
       mkn.showPage(params, tmp).done(function(obj, page) {
         if (page.fields.modal) modal.fields = mkn.merge(modal.fields, page.fields.modal);
         if (modal.fields.title_bar) mkn.replaceVars(page.fields, modal.fields.title_bar, {recurse: true});
         if (modal.fields.close_button) mkn.replaceVars(page.fields, modal.fields.close_button, {recurse: true});
         modal = mkn.createPage(options,modal);
-        modal.removeAttr('id').show();
-        var title_bar = modal.find('.modal-title-bar');
+        modal.removeAttr('id');
         var dialog = modal.find('.modal-dialog');
-        dialog.append(obj).draggable({handle: title_bar});
-        modal.appendTo('body');
+        dialog.append(obj);
+        dialog.draggable({handle: ".modal-title-bar"});
+        modal.appendTo($('body')).show();
         defer.resolve(dialog, page, field);
       });
     });
@@ -228,14 +231,15 @@ var mkn = new function() {
   this.replaceVars = function(source, dest, flags)
   {
 
+
     if (!flags) flags = {};
     var args = arguments;
     var replaced = false;
     var me = this;
-    var replaceOne = function(key, val) {
-      if (typeof val !== 'string') return;
+    var replaceOne = function(val) {
+      if (!me.isAtomicValue(val)) return val;
       var matches = getMatches(val, /\$(\w+)/g);
-      if (!matches) return;
+      if (!matches) return val;
       matches.forEach(function(match) {
         var index = flags.sourceFirst? 0: 1;
         var arg = args[index++];
@@ -261,7 +265,10 @@ var mkn = new function() {
       return val;
     }
 
-    do {
+    if ($.isArray(dest))
+      return;
+
+   do {
       replaced = false;
       for (var key in dest) {
         if ($.isArray(dest.constants) && dest.constants.indexOf(key) >= 0) continue;
@@ -271,7 +278,7 @@ var mkn = new function() {
         else if ($.isPlainObject(val) && flags.recurse)
           this.replaceVars($.extend({}, source, dest), val, flags);
         else
-          dest[key] = replaceOne(key, val)
+          dest[key] = replaceOne(val)
       }
     } while (replaced && flags.recurse)
   }
@@ -378,7 +385,67 @@ var mkn = new function() {
       document.head.appendChild(element);
     }).promise();
   }
+
+  // from stackoverflow http://stackoverflow.com/questions/1787322/htmlspecialchars-equivalent-in-javascript/4835406#4835406
+  this.escapeHtml = function(text, exclude, include) {
+    var result = text;
+    if (exclude) {
+      if (typeof exclude == "string") exclude = exclude.split(" ");
+      if ($.isNumeric(exclude[0]) && parseInt(exclude[0]) == 0) return result;
+      exclude.map(function(v) {
+        result = result.replace(new RegExp("<(\/?)"+v+"(\/?)>",'g'), '~~~$1'+v+'$2~~~');
+      })
+    }
+
+    if (include) {
+      if (typeof include == "string") include = include.split(" ");
+      include.map(function(v) {
+        result = result.replace(new RegExp("<(\/?)"+v+"(\/?)>",'g'), '&lt;$1'+v+'$2&gt;');
+      });
+    }
+    else {
+      var map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      };
+      result = result.replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+
+    if (exclude) {
+      exclude.map(function(v) {
+        result = result.replace(new RegExp("~~~(\/?)"+v+"(\/?)~~~",'g'), '<$1'+v+'$2>');
+      })
+    }
+    return result;
+  }
+
+  this.isAtomicValue = function(x) { return typeof x == 'string' || typeof x == 'number'; }
+
+  this.removeXSS = function(object) {
+    var r = /<script(?:\s+[^>]*)?>.*<\/script>/;
+    var replace = function(x) {
+      var replaced = false;
+      for (var i in x) {
+          var v = x[i];
+          var p;
+          if ($.isArray(v) || $.isPlainObject(v))
+            replace(x[i]);
+          else if (typeof v == 'string' && (p=v.search(r))>=0) {
+            var m = v.match(r);
+            x[i] = v.substr(0,p)+mkn.escapeHtml(m[0])+v.substr(p+m[0].length);
+            replaced = true;
+          }
+      }
+      if (replaced) replace(x);
+    }
+    replace(object);
+  }
+
 }
+
 
 if (!String.prototype.trim) {
   (function() {

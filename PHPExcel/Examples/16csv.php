@@ -2,7 +2,7 @@
 /**
  * PHPExcel
  *
- * Copyright (C) 2006 - 2014 PHPExcel
+ * Copyright (c) 2006 - 2015 PHPExcel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,9 +20,9 @@
  *
  * @category   PHPExcel
  * @package    PHPExcel
- * @copyright  Copyright (c) 2006 - 2014 PHPExcel (http://www.codeplex.com/PHPExcel)
+ * @copyright  Copyright (c) 2006 - 2015 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
- * @version    1.8.0, 2014-03-02
+ * @version    ##VERSION##, ##DATE##
  */
 
 /** Error reporting */
@@ -46,7 +46,6 @@ $callStartTime = microtime(true);
 
 $objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'CSV')->setDelimiter(',')
                                                                   ->setEnclosure('"')
-                                                                  ->setLineEnding("\r\n")
                                                                   ->setSheetIndex(0)
                                                                   ->save(str_replace('.php', '.csv', __FILE__));
 $callEndTime = microtime(true);
@@ -61,7 +60,6 @@ echo date('H:i:s') , " Read from CSV format" , EOL;
 $callStartTime = microtime(true);
 $objReader = PHPExcel_IOFactory::createReader('CSV')->setDelimiter(',')
                                                     ->setEnclosure('"')
-                                                    ->setLineEnding("\r\n")
                                                     ->setSheetIndex(0);
 $objPHPExcelFromCSV = $objReader->load(str_replace('.php', '.csv', __FILE__));
 

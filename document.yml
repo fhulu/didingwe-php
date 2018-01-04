@@ -45,17 +45,16 @@ file_uploader:
       - type: control
       - uploaded
       - failed
-  audit:
-    action: Upload
-    detail: $document_type
   valid: extension(pdf)
   post:
     - read_config: upload_dir
-    - collection.values: [session, identifier: $sid, user, user.partner, user.upload_dir]
-    - collection.values: [partner, identifier: $partner, upload_dir]
-    - collection.insert: [document, "", partner, user, name]
+    - collection.values: [session, $sid, user, partner, partner.upload_dir]
+    - collection.values: [user, $user, upload_dir]
+    - collection.insert: [document, "", partner, user, name, active: 1]
     - document.upload: [file, $upload_dir, $new_document_id]
-    - collection.insert: [document, $new_document_id, path, mime]
+    - collection.update: [document, $new_document_id, path, mime]
+    - trigger: "uploaded,#page,$path"
+    - write_session: [new_document_id,uploaded_document_path: $path]
 
 upload:
   derive: [parent_id]
@@ -65,11 +64,11 @@ upload:
 
 view:
   post:
-    - collection.values: [document, identifier: $key, name, path, mime.media]
+    - collection.values: [document, $key, name, path, mime.media]
     - document.view: [$path, $name, $media]
 
 document_link:
   type: link
   action: redirect
   target: _blank
-  url: /?action=action&path=document/view&key=$id
+  url: /?action=action&path=document/view&key=$value

@@ -42,7 +42,8 @@ collection_filter:
   valid: sql(select value$4 from collection where collection = '$1' and identifier = '$2' and attribute = '$3')
 
 collection_unique:
-  valid: not(in_collection($1))
+  valid: collection.unique($1,$2,$value)
+  error: $name already exists
 
 contains_at_least:
   valid: /$1/s
@@ -91,7 +92,7 @@ exists:
 
 extension:
   valid: /\.$1$/i
-  error: $name must have be of type '$2'
+  error: $name must have be of type '$1'
 
 find_in:
   error: No such $name ($value)
@@ -105,10 +106,10 @@ future_time:
   error: $name must be in the future
 
 greater:
-  error: $name must be greater than $1 ($v1)
+  error: $name must be greater than $1
 
 greater_equal:
-  error: $name must not be less than $1 ($v1)
+  error: $name must not be less than $1
 
 in:
   error: No such $name ($value)
@@ -118,9 +119,9 @@ in_collection:
 
 int_tel:
   valid:
-    - /^\+\d+[- \d]*$/
+    - /^\+\d+[-\d]*$/
     - at_least(10,digits)
-  error: Please use international number format for $name, e.g. +27123456789
+  error: Please use international number format without space/s in betweeen for $name, e.g. +27823456789
 
 is: must_be($1)
 
@@ -146,7 +147,7 @@ must_be:
 name:
   valid:
     - at_least(2,characters)
-    - /^[\w\d'][\w\d\s'-]*$/
+    - /^[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð ,.'-]+$/u
     - /^((?!'').)*$/
 
 national_tel:

@@ -1,4 +1,4 @@
-show:
+modal:
   type: container
   class: [modal, center-contents]
   contents: [$dialog]
@@ -6,18 +6,17 @@ show:
   dialog:
     type: container
     attr: { id: ""}
-    class: [modal-dialog,relative,inline-block,white,brand-text]
+    class: [modal-dialog,relative,inline-block,brand-text,show-overflow]
     derive: [title_bar,close_button,body]
-    contents: [$title_bar,$close_button,$body]
+    contents: [$close_button, $title_bar,$body]
   title_bar:
     tag: div
     class: [modal-title-bar, widest,pad,center-text,cursor-pointer]
-    name: $name
+    derive: [close_button]
+    text: $name
 
   close_button:
     tag: div
     name: ""
-    class: [modal-close-button,absolute top-right,  cursor-pointer, fa fa-times]
+    class: [modal-close-button, absolute, top-right, overlay, cursor-pointer, fa fa-times]
     action: close_dialog
-    css:
-      - /common/font-awesome/css/font-awesome.min.css

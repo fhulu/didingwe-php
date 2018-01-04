@@ -35,6 +35,7 @@ class emailer
     $smtp = Mail::factory('smtp',  $options['smtp']);
     $result = $smtp->send($to, $headers, $message);
     restore_include_path();
-    return $result;
+    if (!$result)
+      return log::error("Error sending email to $to");
   }
 }

@@ -25,6 +25,8 @@ alert_message:
   style: [height_watermark]
   text: $message
 
+anchor: { tag: a }
+
 background_image:
   background-image: url("$image_path/$id.png")
 
@@ -42,12 +44,13 @@ bar:
 blank:
   type: plain_text
   mutable: false
-  text: ""
-  class: [inline-block]
+  text: "b"
+  class: [inline-block,transparent]
 
-body:
-  class: [didi]
-
+block_text:
+  type: plain_text
+  class: [block]
+  
 bookmark:
   tag: div
   title: $id
@@ -131,7 +134,6 @@ checkgroup:
   text: $options
   layout:
     type: label_right
-    class: [inline-block]
   option:
     type: checkbox
     value: 0
@@ -189,35 +191,25 @@ disabled_text_input:
 
 dropdown:
   tag: select
-  unselected: --Select $name--
-  selected:
-    classes: option
-    derive: [unselected]
-    text: $unselected
-    attr: { value: ""}
   text: $options
+  option:
+    tag: option
+    value: $id
+    immutable: [name,value,text]
+    attr: { value: $id }
+  default_option:
+    tag: option
+    name: --Select $parent_name--
+    attr: { value: "", id: ""}
   options:
-    - dropdown_default
-    - type: dropdown_option
+    - $default_option
+    - type: $option
 
 
 dropdown_collection:
   type: dropdown
   options: [collection.data]
   valid: collection.exists($name,$value)
-
-dropdown_default:
-    classes: option
-    derive: [unselected]
-    text: $unselected
-    attr: { value: ""}
-
-dropdown_option:
-  tag: option
-  value: $id
-  text: $name
-  immutable: [name,value,text]
-  attr: { value: $id }
 
 element:
   text: ""
@@ -238,8 +230,11 @@ font_awesome:
   tag: i
   icon: $id
   class: [fa,fa-$icon]
-  css: [/common/font-awesome/css/font-awesome.min.css]
   text: ""
+
+font_awesome_text:
+  type: font_awesome
+  text: $name
 
 fieldset:
   templates: fieldset
@@ -266,7 +261,7 @@ form:
 flag_icon:
   tag: span
   class: [flag-icon flag-icon-$country]
-  css: [/common/flag-icon-css/css/flag-icon.min.css]
+  css: [/flag-icon-css/css/flag-icon.min.css]
   country: $id
   text: " "
 
@@ -293,10 +288,10 @@ google_icon:
 google_map:
   tag: div
   create: mapper
-  script: [/common/map.js]
   zoom: 5
   pin: blue_map_marker
-  icon_path: /
+  icon_path: $image_path
+  icon_ext: .png
   colors:
    - blue
    - green
@@ -351,12 +346,21 @@ iframe:
   src: /$id
   attr: { src: $src }
 
+iframe_pdf:
+  type: iframe
+  class: [biggest]
+  src: /$id.pdf
+
 image:
   tag: img
   attr: {src: "$src"}
   text: ""
   src_type: png
-  src: $image_path/$id.$src_type
+  file_name: $id
+  file_ext: $src_type
+  file_dir: $image_path
+  file_path: $file_dir/$file_name.$file_ext
+  src: $file_path
 
 image_button:
   type: button
@@ -369,7 +373,7 @@ image_button:
     attr: { type: image, src: "$image"}
 
 info_page:
-  type: container
+  type: page
   text: $lines $actions_pane
   lines:
     - type: plain_text
@@ -379,7 +383,6 @@ info_page:
     contents: $actions
   actions:
     - type: button
-  header_class: [pad-y,center-text, large-font]
 
 inplace_input:
   type: label_inside
@@ -394,6 +397,7 @@ input:
     type: $format
     value: $value
     name: $id
+    parseHtml: 0
 
 input_page:
   type: page
@@ -449,6 +453,15 @@ labelled_inside_image:
   subject:
     styles: [height_watermark,centered_text]
 
+label_bottom:
+  type: labelled
+  class: [inline-block]
+  label:
+    class: [block]
+  subject:
+    class: [block]
+  text: $field$label
+
 label_left:
   type: labelled
   class: [clear-after]
@@ -482,13 +495,7 @@ label_right:
   text: $field $label
 
 label_top:
-  type: labelled
-  styles: [inline_block]
-  label:
-    styles: [block]
-    text: $name
-  subject:
-    styles: [block]
+  type: label_bottom
   text: $label$field
 
 left_text:
@@ -506,11 +513,12 @@ line:
 link:
   class: [pointer-cursor]
   tag: a
-  attr: { title: $desc }
+  attr: { title: $desc, template: $url }
   text: $name
   immutable: [url]
   url: /$id
   action: redirect
+  valid: ignore
 
 link_underlined:
   type: link
@@ -524,22 +532,20 @@ list_text:
   tag: li
   style: { margin-left: 16 }
 
+loading:
+  type: font_awesome
+  icon: spinner
+  class: [spin]
+
 multi_input:
   classes: div
-  class: [error-sink,inline-block]
+  class: [error-sink, grid fit]
   attr: { id: ""}
   text: $inputs
-  split: 49%
-  spacing: 0.9%
+  layout: { type: label_top}
   inputs:
-    - template: label_inside
+    - template: $layout
     - type: input
-    - default:
-        derive: [split,spacing]
-        width: $split
-        class: [border,inline-block]
-        styles: [hspaced]
-        space: $spacing
 
 navigate:
   - type: submit
@@ -566,6 +572,24 @@ one_column_table:
 
 one_row_table: { type: silos }
 
+
+option_panel:
+  tag: div
+  text: $header $body
+  header:
+    type: container
+    name: $parent_name
+    contents:
+      - label: { derive: [desc], name: $parent_name, class: [inline-block] }
+      - chosen_$parent_id: { derive: [desc], type: checkbox, class: [float-right] }
+  body:
+    id: body_$parent_id
+    tag: div
+    derive: [contents]
+    text: $contents
+    show: ~chosen_$parent_id
+
+
 p: { tag: p}
 
 page:
@@ -573,11 +597,20 @@ page:
   attr: { title: $name }
   sub_page: true
   tooltip: false
-  header_class: [pad-y,center-text, large-font]
 
 page_title:
   tag: title
   text: $name
+
+panel:
+  tag: div
+  title:
+    desc: ""
+    tag: div
+    name: $parent_name
+  text: $panes
+  panes:
+    - $title
 
 paragraph:
   type: p
@@ -592,8 +625,8 @@ plain:
   text: $value
 
 plain_text:
-  tag: div
-  text: $id
+  tag: span
+  name: $id
   attr: { id: ""}
 
 plot:
@@ -612,7 +645,7 @@ plot:
 
 processing:
   classes: span
-  style: { display: none }
+  style: { display: none, z-index: 1000 }
 
 question_input:
   type: label_top
@@ -711,15 +744,13 @@ submit:
   selector: "#page *"
   call: $class::$invoker($key)
   action: post
+  valid: ignore
 
 table:
   tag: table
   head: { type: table_head }
   body: { type: table_body }
   text: $head $body
-  sow: [rows]
-  rows:
-    - type: table_row
 
 table_head: { templates: thead }
 
@@ -785,11 +816,10 @@ template:
   attr: { id: ""}
 
 textarea:
+  type: input
   tag: textarea
-  value: ""
   text: $value
-
-text_area: { type: textarea}
+  attr: { value: "" }
 
 text_input: {type: input }
 
@@ -800,9 +830,10 @@ time:
   format: H:i
 
 titled_paragraph:
-  classes: div
+  tag: div
+  class: [titled_paragraph]
   text: $heading $phrase
-  title: $id
+  title: $name
   body: $name
   heading:
     derive: [title]
@@ -810,9 +841,9 @@ titled_paragraph:
     text: $title
     class: [block]
   phrase:
-    derive: [name]
+    derive: [body]
     type: plain_text
-    text: $name
+    text: $body
   space: 30
 
 tri_input:
@@ -840,14 +871,11 @@ vspaced:
   margin-bottom: $space
 
 watermark:
-  image: $image_path/$id.png
-  background-image: url("$image")
-  repeat: no-repeat
-  imagex: left
-  imagey: center
-  background-repeat: $repeat
-  background-position: $imagex $imagey
-  background-color: $fill
+  image: $id.png
+  background-image: url("$image_path/$image")
 
+window:
+  type: container
+  is_body: true
 
 ...

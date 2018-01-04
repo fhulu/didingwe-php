@@ -2,16 +2,28 @@ datatable:
   head: ""
   tooltip: false
   type: table
-  class: [data]
+  text: $head $body $no_records
+  class: [data,didi-listener]
   create: datatable
+  head: { class: [didi] }
+  title: { class: [didi] }
+  body: { class: [didi,table-body] }
+  min_row_height: 20
+  defaults: {}
+  row_actions: []
+  row_styles: {}
+  row:
+    actions: []
+    styles: {}
+    class: []
+  cell:
+    class: [didi]
   script: [/common/datatable.js]
   row_creator: { type: table_row }
-  css: [/common/datatable.css,/datatable.css]
+  css: [/common/datatable.css]
   flags: []
   values:
-    - read_values: { derive: [data] }
-    - call: datatable::read(context,$key)
-
+    - collection.sort_on: [sort]
   position: top
   filter:
     name: ""
@@ -54,6 +66,9 @@ datatable:
   footer_actions:
     - type: actioner
 
+  no_records:
+    type: datatable_no_records
+    show: no
 
   collapse:
     name: "-"
@@ -95,3 +110,15 @@ print:
    - call: datatable::pdf(root,$key)
  query: " "
  target: _blank
+
+
+image_row_action:
+  tag: i
+  name: " "
+  class: [fa, no-backcolor, pad-x pad-tiny, float-right, cursor-pointer]
+
+
+datatable_no_records:
+  type: p
+  name: No records found.
+  class: [datatable-no-records]

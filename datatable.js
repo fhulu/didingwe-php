@@ -21,34 +21,57 @@
 
     _create: function()
     {
-      if (this.options.sort) this.options.flags.push('sortable');
-      this.options.render.expandFields(this.options, "fields", this.options.fields);
-      this.options.render.expandFields(this.options, "row_actions", this.options.row_actions);
-      this._init_params();
-      if (this.hasFlag('show_titles') || this.hasFlag('show_header')) {
-        $('<thead></thead>').prependTo(this.element);
-        if (this.hasFlag('show_header')) this.showHeader();
-        if (this.hasFlag('show_titles')) this.showTitles();
-      }
-      this.showFooterActions();
-      this.load();
-      var self = this;
-      this.element.on('refresh', function(e, args) {
-        self.load(args);
+      var me = this;
+      me.widths = [];
+      var opts = me.options;
+      if (opts.sort) opts.flags.push('sortable');
+      var r = opts.render;
+      r.expandFields(opts, "fields", opts.fields);
+      var row = r.initField(opts.row, opts);
+      me.row_classes = opts.row.class.join(' ');
+      me.cell = r.initField(opts.cell, opts);
+      me.cell.class = me.cell.class.join(' ')
+      $.extend(opts.row_styles,opts.row.styles);
+      opts.row_actions = opts.row_actions.concat(opts.row.actions);
+      opts.render.expandFields(opts, "row_actions", opts.row_actions);
+      me.auto_widths = [];
+      me._init_params();
+      me.head().addClass(opts.head.class.join(' ')).prependTo(me.element);
+      me.showHeader();
+      me.showTitles();
+      me.createRowBlueprint();
+      if (this.options.no_records)
+        this.no_records = this.element.find('#no_records');
+      me.head().toggle(me.hasFlag('show_titles') || me.hasFlag('show_header') || me.hasFlag('filter'));
+      me.showFooterActions();
+      me.showData();
+      me.element.on('refresh', function(e, args) {
+        me.showData(args);
         e.stopImmediatePropagation();
       })
+      me.body().scroll($.proxy(me._scroll,me));
+      me.bindRowActions()
     },
 
     _init_params: function()
     {
-      this.params = { page_num: 1};
+      this.params = { page_num: 1, offset: 0};
       var exclude = [ 'create', 'action', 'css', 'id', 'content', 'disabled',
-          'html','name', 'page_id', 'position','script','slideSpeed', 'text', 'tag', 'type'];
+          'html','name', 'page_id', 'position', 'sort', 'script','slideSpeed', 'text', 'tag', 'target', 'type'];
       for (var key in this.options) {
-        if (exclude.indexOf(key) >= 0) continue;
+        if (exclude.indexOf(key) >= 0 || key.indexOf('on_') ==0) continue;
         var val = this.options[key];
         if (typeof val === 'string' || typeof val === "number")
           this.params[key] = val;
+      }
+      var sort = this.options.sort;
+      if (typeof sort != 'string') return;
+      var fields = this.options.fields;
+      for (var i in fields) {
+        var field = fields[i];
+        if (field.id != sort) continue;
+        this.params['sort'] = field.number;
+        return;
       }
     },
 
@@ -78,24 +101,29 @@
     load: function(args)
     {
       var start = new Date().getTime();
-      var self = this;
-      self.head().find('.paging [action]').attr('disabled','');
-      var data = $.extend(this.options.request, args, {action: 'values'}, self.params);
-      var selector = this.options.selector;
+      var me = this;
+      var opts = me.options;
+      me.head().find('.paging [action]').attr('disabled','');
+      var data = $.extend(opts.request, args, {action: 'values'}, me.params);
+      var selector = opts.selector;
       if (selector !== undefined) {
         $.extend(data, $(selector).values());
       }
+
+      var el = me.element;
+      me.loading = true;
       $.json('/', {data: mkn.plainValues(data)}, function(data) {
         if (!data) return;
         if (data._responses)
-          self.element.triggerHandler('server_response', [data]);
-        self.element.trigger('refreshing', [data]);
+          el.triggerHandler('server_response', [data]);
+        el.trigger('refreshing', [data]);
         var end = new Date().getTime();
         console.log("Load: ", end - start);
-        self.populate(data);
-        self.element.triggerHandler('refreshed', [data]);
+        me.populate(data);
+        me.loading = false;
+        el.triggerHandler('refreshed', [data]);
         delete data.data;
-        $.extend(self.params, data);
+        $.extend(me.params, data);
         console.log("Populate: ", new Date().getTime() - end);
       });
     },
@@ -106,8 +134,15 @@
         console.log('No table data for table:', this.params.field);
         return;
       }
-      this.showData(data);
       if (this.options.page_size !== undefined) this.showPaging(parseInt(data.total));
+
+      if (data.data.length == 0 && this.body().children().length == 0 && this.no_records)
+        this.element.replaceWith(this.no_records.show());
+
+      for(var i in data.data) {
+        this.addRow(data.data[i]);
+      }
+      this.adjustWidths();
     },
 
 
@@ -164,7 +199,7 @@
     {
       if (invoker.hasAttr('disabled')) return;
       this.params.page_num = number;
-      this.params.page_size = invoker.siblings('#page_size').val();
+      this.params.size = invoker.siblings('#page_size').val();
       invoker.siblings('#page_num').val(number);
       this.refresh();
     },
@@ -180,7 +215,7 @@
       var head = self.head();
       head.find(".paging [type='text']").bind('keyup input cut paste', function(e) {
         if (e.keyCode === 13) {
-          self.params.page_size = $(this).val();
+          self.params.size = $(this).val();
           self.refresh();
         }
       });
@@ -207,7 +242,7 @@
       var head = this.head();
       head.find('#page_total').text(total);
       var page = this.params.page_num;
-      var size = this.params.page_size;
+      var size = this.params.size;
       var prev = head.find('[action=goto_first],[action=goto_prev]');
       var next = head.find('[action=goto_last],[action=goto_next]');
       if (page <= 1) {
@@ -228,16 +263,16 @@
       if (page > 1) prev.removeAttr('disabled');
     },
 
-    bindSort: function(th, field, index)
+    bindSort: function(th, field)
     {
       var self = this;
       th.click(function() {
         th.siblings().attr('sort','');
         var order = 'asc';
-        if (self.params.sort == index)
+        if (self.params.sort == field.number)
           order = th.attr('sort')==='asc'?'desc':'asc';
         th.attr('sort', order);
-        self.params.sort = index;
+        self.params.sort = field.number;
         self.params.sort_order = order;
         self.refresh();
       });
@@ -245,19 +280,22 @@
 
     showTitles: function()
     {
-
       var head = this.head();
+      var opts = this.options;
       var tr = head.find('.titles').empty();
-      if (!tr.exists()) tr = $('<tr class=titles></tr>').appendTo(head);
+      if (!tr.exists()) tr = $('<tr class=titles>').appendTo(head);
+      if (!this.hasFlag('show_titles')) tr.hide();
       var self = this;
-      var fields = this.options.fields;
-      var j = 0;
+      var fields = opts.fields;
+      var classes = opts.title.class.join(' ');
       for (var i in fields) {
         var field = fields[i];
         var id = field.id;
-        var visible = mkn.visible(field);
-        if (id == 'key' && visible  || id === 'attr' || id == 'style') continue;
-        var th = $('<th></th>').appendTo(tr);
+        if (field.id=='style') continue;
+        var th = $('<th></th>').addClass(classes).appendTo(tr);
+        th.toggle(mkn.visible(field));
+        th.data('field', field);
+        if (field.class) th.addClass(field.class.join(' '));
         if (id === 'actions') continue;
         if ($.isArray(field.name)) field.name = field.name[field.name.length-1];
         th.html(field.name || toTitleCase(id));
@@ -270,12 +308,36 @@
         if (field.width !== undefined) {
           th.css('width', field.width);
         }
-        ++j;
         if (self.hasFlag('sortable'))
-          self.bindSort(th, id, i);
-        th.toggle(visible);
+          self.bindSort(th, field);
       };
       this.spanColumns(head.find('.header th'));
+      this.updateWidths(head.find('.titles').children());
+    },
+
+    createRowBlueprint: function()
+    {
+      var me = this;
+      var tr = $('<tr>').addClass(me.row_classes);
+      var cls = me.cell.class;
+      me.defaults = {}
+      var fields = me.options.fields;
+      for (var i in fields) {
+        var field = fields[i];
+        me.defaults[field.id] = field.new;
+        delete field.new;
+        if (field.id == 'style') continue;
+        var td = $('<td>').appendTo(tr);
+        td.attr('field', field.id);
+        td.toggle(mkn.visible(field));
+        td.addClass(cls);
+        if (field.class) td.addClass(field.class.join(' '));
+        if (field.html === undefined) continue;
+        field = mkn.copy(field);
+        delete field.width;
+        td.append(me.options.render.create(field));
+      }
+      me.row_blueprint = tr;
     },
 
     spanColumns: function(td)
@@ -292,85 +354,97 @@
       return span.join(' ');
     },
 
-    showData: function(data)
+    showData: function(args)
     {
-      var self = this;
-      var body = self.body().empty();
-      var fields = this.options.fields;
-      var tr;
-      for(var i in data.data) {
-        var row = data.data[i];
-        if (tr) {
-          self.bindRowActions(tr);
-          tr.appendTo(body);
-        }
-        tr = $('<tr>');
-        var key;
-        var expandable = false;
-        var col = 0;
-        for (var j in fields) {
-          var field = fields[j];
-          var cell = self.spanData(field, row, col);
-          if (cell === null) cell = '';
-          col += field.span;
-          if (key === undefined && (field.id === 'key' || field.key)) {
-            key = cell;
-            tr.attr('key', key);
-          }
-
-          var hide = field.hide || field.show === false;
-          if (field.id === 'key' && hide) continue;
-
-          if (field.id === 'style') {
-            tr.addClass(cell);
-            continue;
-          }
-          var td = $('<td>').appendTo(tr);
-          if (hide) td.addClass('hidden');
-
-          if (field.id === 'actions') {
-            var actions = cell.split(',');
-            var expandable = actions.indexOf('expand') >= 0;
-            self.createRowActions(tr, td, actions);
-            if (!expandable) continue;
-            td = tr.children().eq(0).addClass('expandable');
-            if (!td.children().exists()) {
-              var text = td.text();
-              td.text('');
-              $('<div>').text(text).appendTo(td).css('display','inline-block');
-            }
-            self.createAction('expand', undefined, tr).prependTo(td);
-            self.createAction('collapse', undefined, tr).prependTo(td).hide();
-            continue;
-          }
-          self.showCell(field, td, cell, key);
-        }
-        key = undefined;
+      var me = this;
+      var body = me.body();
+      var opts = me.options;
+      var max_height  = parseInt(body.css('max-height'));
+      if (opts.page_size == 0 || max_height > 0) {
+        var row_height = parseInt($('<tr><td>Loading...</td></tr>').appendTo(body).height());
+        if (row_height < 1) row_height = opts.min_row_height;
+        me.params.size = Math.ceil(max_height/row_height)+1;
       }
-      if (tr) {
-        self.bindRowActions(tr);
-        tr.appendTo(body);
-      }
-      this.spanColumns(this.head().find('.header>th'));
+      body.addClass(opts.body.class.join(' '));
+      body.empty();
+      me.load(args);
+      me.spanColumns(me.head().find('.header>th'));
     },
 
-    showCell: function(field, td, value, key)
+    setRowStyles: function(row, styles) {
+      var row_styles = this.options.row_styles;
+      if (!row_styles) return;
+      row.attr('class','');
+      row.addClass(this.row_classes);
+      styles.split(',').forEach(function(style) {
+        var classes = row_styles[style];
+        if (!classes) return;
+        row.addClass(classes.join(' '));
+      });
+    },
+
+    addRow: function(row) {
+      var tr = this.row_blueprint.clone();
+      row = $.extend({}, this.options.defaults, row);
+      this.updateRow(tr, row);
+      tr.appendTo(this.body());
+    },
+
+    updateRow: function(tr, data)
     {
-      if (field.html === undefined) {
-        if (value !== undefined && value !== null) td.html(value);
-        return;
+      var me = this;
+      var key;
+      var expandable = false;
+      var col = 0;
+      var fields = this.options.fields;
+      var tds = tr.children();
+      for (var i in fields) {
+        var field = fields[i];
+        var cell = data[i];
+        if (cell === null || cell === undefined)
+          cell = this.options.defaults[field.id];
+        else if (field.escapeHtml)
+          cell = mkn.escapeHtml(cell);
+
+        if (field.id == 'style') {
+          me.setRowStyles(tr, cell);
+          continue;
+        }
+        if (key === undefined && (field.id === 'key' || field.key))
+          tr.attr('key', cell);
+
+        me.setCellValue(tds.eq(col), cell);
+        ++col;
       }
-      field = mkn.copy(field);
-      delete field.width;
-      field.key = key;
-      field.value = value;
-      if (key !== undefined) {
-        if (!$.isNumeric(key)) key = key.toLowerCase().replace(/ +/,'_');
-        field.id = field.id + '_' + key;
-      }
-      var created = this.options.render.create(field);
-      if (value !== undefined) created.value(value);
-      td.append(created);
+      me.adjustColWidths(tr);
+    },
+
+    adjustColWidths: function(tr)
+    {
+      var widths = this.widths;
+      tr.children().each(function(i) {
+        var width = $(this).width();
+        if (i==widths.length)
+          widths.push(width);
+        else if (widths[i] < width)
+          widths[i] = width;
+      });
+    },
+
+    setCellValue: function(td, value)
+    {
+      if (td.attr('field') == 'actions')
+        return this.createRowActions(td, value);
+
+      if (td.hasClass('expandable'))
+        return td.find('.text').eq(0).text(value);
+
+      var obj = td.children().eq(0);
+      if (!obj.exists())
+        return td.text(value).attr('title', value);
+
+      obj.value(value);
+      return td;
     },
 
     bindAction: function(obj, props, sink, path)
@@ -425,30 +499,57 @@
       return div;
     },
 
-    createRowActions: function(tr, td, row_actions)
+    createExpandActions: function(td)
+    {
+      var tr = td.parent();
+      tr.children().each(function() {
+        if ($(this).css('display') != 'none') {
+          td = $(this);
+          return false;
+        }
+      })
+      td.addClass('expandable');
+      var span = $('<span>').addClass('text').text(td.text());
+      td.text('').append(span);
+      this.createAction('expand', undefined, tr).prependTo(td);
+      this.createAction('collapse', undefined, tr).prependTo(td).hide();
+    },
+
+    createRowActions: function(td, row_actions)
     {
       if (!$.isArray(row_actions)) row_actions = row_actions.split(',');
+      if (row_actions.indexOf('expand') >=0)
+        this.createExpandActions(td);
       if (row_actions.indexOf('slide') >= 0)
         row_actions.push('slideoff');
 
-      td.addClass('actions');
-      var all_actions = this.options.row_actions;
-      var key = tr.attr('key');
+      if (!td.hasClass('actions')) td.addClass('actions');
+      td.empty();
+
+      var opts = this.options;
+      var all_actions = opts.row_actions;
+      var key = td.parent().attr('key');
       var normal_actions = [];
       var slide_actions = [];
       var actions = normal_actions;
+      var slide_pos = -1;
       for (var i in all_actions) {
         var action = mkn.copy(all_actions[i]);
         var id = action.id;
         if (row_actions.indexOf(id) < 0) continue;
         action.key = key;
+        action = mkn.merge(action, opts[id]);
         actions.push(action);
-        if (id == 'slide')
+        if (id == 'slide') {
           actions = slide_actions;
+          slide_pos = i;
+        }
       }
+      if (slide_actions.length == 1)
+        normal_actions.splice(slide_pos,1);
       if (normal_actions.length)
-        this.options.render.createItems(td, {}, undefined, normal_actions);
-      if (!slide_actions.length) return;
+        opts.render.createItems(td, {}, undefined, normal_actions);
+      if (slide_actions.length < 2) return;
       var slider = $('<div class="slide">').toggle(false).appendTo(td);
       slider.data('actions', slide_actions);
     },
@@ -462,10 +563,11 @@
         slider.find('[action]').click(function() {
           slider.parent().trigger('action',[$(this),'', $(this).attr('action')]);
         });
-        slider.css('right', -slider.width());
+        slider.data('width', slider.width());
+        slider.width(0);
       }
       slider.find('[action]').height(height);
-      slider.show().animate({right:'0px'}, this.options.slideSpeed);
+      slider.show().animate({width: slider.data('width')}, this.options.slideSpeed);
     },
 
 
@@ -490,37 +592,105 @@
       load();
     },
 
-    bindRowActions: function(tr)
+
+    bindRowActions: function()
     {
-      var self = this;
-      tr.on('slide', function(e) {
+      var me = this;
+      var options = me.options;
+      var el = this.element;
+      el.on('slide', 'tr', function(e) {
         $(e.target).toggle();
-        self.slide(tr);
+        me.slide($(this));
+        e.stopPropagation();
       })
-      .on('expand', function(e) {
+      .on('expand', 'tr', function(e) {
+        var tr = $(this);
         tr.find('[action=expand]').hide();
         tr.find('[action=collapse]').show();
         if (tr.next().hasClass('expanded')) return;
-        var expand = self.options['expand'];
+        var expand = options['expand'];
         if (!expand.pages) return;
-        self.loadSubPages(tr, expand.pages)
+        me.loadSubPages(tr, expand.pages)
+        e.stopPropagation();
       })
-      .on('collapse', function(e) {
+      .on('collapse', 'tr', function(e) {
+        var tr = $(this);
         tr.find('[action=collapse]').hide();
         tr.find('[action=expand]').show();
         var next = tr.next();
         if (next.hasClass('expanded')) next.remove();
+        e.stopPropagation();
       })
-      .on('action', function(evt, btn) {
+      .on('action', 'tr', function(e, btn) {
         if (!btn.parent('.slide').exists()) return;
-        self.slide($(this));
+        me.slide($(this));
         $(this).find('[action=slide]').toggle();
         var slider = $(this).find('.slide');
-        slider.animate({right: -slider.width()}, self.options.slideSpeed*2, function() { slider.hide()});
+        slider.animate({width: 0}, options.slideSpeed*2, function() { slider.hide()});
+        e.stopPropagation();
       })
-      .on('processed_delete', function() {
+      .on('delete', 'tr', function(e) {
         $(this).remove();
+        e.stopPropagation();
+        return $(this);
       })
+      .on('setRowStyles', function(e, key, styles) {
+        if (!$(e.target).is(el)) return;
+        me.setRowStyles(me.getRowByKey(key), styles);
+    })
+      .on('setRowActions', function(e, key, actions) {
+        if (!$(e.target).is(el)) return;
+        var tr = me.getRowByKey(key);
+        me.createRowActions(me.getCellById(tr, 'actions'), actions);
+      })
+      .on('setCellValue', function(e, key, id, value) {
+        if (!$(e.target).is(el)) return;
+        var tr = me.getRowByKey(key);
+        me.setCellValue(me.getCellById(tr, id), value);
+      })
+      .on('setRowData', function(e, key, data) {
+        if (!$(e.target).is(el)) return;
+        me.setRowData(me.getRowByKey(key), data);
+      })
+      .on('addRow', function(e, data) {
+        if (!$(e.target).is(el)) return;
+        me.addRow(data);
+        me.adjustWidths();
+      })
+      .on('addNewRow', function(e, data) {
+        if (!$(e.target).is(el)) return;
+        var tr = me.row_blueprint.clone();
+        me.body().prepend(tr);
+        me.setRowData(tr, data);
+        me.adjustWidths();
+      })
+      .on('removeRow', function(e, key) {
+        me.getRowByKey(key).remove();
+      })
+    },
+
+    setRowData: function(tr, data)
+    {
+      data = $.extend({}, this.options.defaults, data);
+      if ('key' in data)
+        tr.attr('key', data['key']);
+      for (var id in data) {
+        var val = data[id];
+        if (id == 'style')
+          this.setRowStyles(tr, val);
+        else
+          this.setCellValue(this.getCellById(tr, id), val);
+      }
+    },
+
+    getCellById: function(tr, id)
+    {
+      return tr.children('[field="'+id+'"]').eq(0);
+    },
+
+    getRowByKey: function(key)
+    {
+      return this.body().children('[key="'+key+'"]').eq(0);
     },
 
     getActionsHeight: function(tr)
@@ -528,10 +698,32 @@
       return (tr.innerHeight()*0.99).toString()+'px';
     },
 
-
-    updateWidths: function(row, widths)
+    initWidths: function(ths,tds)
     {
-      row.children().each(function(i) {
+      var fields = this.options.fields;
+      var widths = this.widths;
+      var col = -1;
+      for (var i in fields) {
+        var field = fields[i];
+        if (field.id == 'style') continue;
+        ++col;
+        var th = ths.eq(col);
+        var td = tds.eq(col);
+        if (field.width !== undefined) {
+          th.css('width', field.width);
+          td.css('width', th.get(0).style.width);
+        }
+        else if (field.width !== 'auto') {
+          th.css('width', 'auto');
+          td.css('width', 'auto')
+        }
+      };
+    },
+
+    updateWidths: function(cells)
+    {
+      var widths = this.widths;
+      cells.each(function(i) {
         var width = $(this).width();
         if (i === widths.length)
           widths.push(width);
@@ -540,61 +732,49 @@
       })
     },
 
-    getWidths: function()
+    adjustWidths: function()
     {
-      var widths = [];
-      this.updateWidths(this.head().find('.titles'),widths);
-      var self = this;
-      this.body().children('tr').each(function() {
-        if (!$(this).hasClass('actions'))
-          self.updateWidths($(this), widths);
-      });
-      return widths;
-    },
-
-    adjustWidths: function(editor)
-    {
-      var widths = this.getWidths();
-      var input;
+      var ths = this.head().find('.titles').children();
+      var tr1 = this.body().find('tr:first-child');
+      var tds = tr1.children();
+      this.initWidths(ths,tds);
+      this.updateWidths(tds);
+      var widths = this.widths;
+      var sum = widths.reduce(function(a,b) { return a + b});
       var fields = this.options.fields;
-      editor.children().each(function(i) {
+      var col = 0;
+      for (var i in fields) {
         var field = fields[i];
-        if (field === 'actions') {
-          input.css('width', widths[i-1] + widths[i] + 'px');
-          return;
+        if (field.id == 'style') continue;
+        if (field.width !== undefined) continue;;
+        var th = ths.eq(col);
+        var width = ((widths[col]/sum)*100) + '%';
+        if (th.exists()) {
+          th.css('width', width);
+          width = th.get(0).style.width
         }
-        input = $(this).children('*').eq(0);
-        input.css('width', widths[i]+'px');
-      });
-      editor.find('input:last-child').css('width','99%');
+        tds.eq(col).css('width', width);
+        ++col;
+      }
+
+      tr1.siblings().each(function(i) {
+        $(this).children().each(function(i) {
+          $(this).css('width', tds.eq(i).get(0).style.width);
+        });
+      })
     },
 
-    createEditor: function(template, fields, type, cell)
-    {
-      var editables = this.options[type];
-      if (editables !== undefined) {
-        editables = editables.fields;
-        if (typeof editables === 'string')
-          editables = editables.split(',');
-      }
-      var editor = $('<tr></tr>').addClass(type);
-      var td;
-      template.children().each(function(i) {
-        var field = fields[i];
-        if (!mkn.visible(field)) return;
-        if (field.id === 'style' || field.id === 'actions') {
-          var colspan = td.attr('colspan');
-          if (!colspan) colspan = 1;
-          td.attr('colspan', parseInt(colspan)+1);
-          return;
-        }
-        td = $(cell);
-        $('<input type=text></input>').css('width','10px').attr('field_id', field.id).appendTo(td);
-        td.appendTo(editor);
-      });
 
+    createEditor: function(template, cls)
+    {
+      var editor = template.clone();
+      var td;
+      editor.addClass('datatable-editor').addClass(cls);
+      editor.children().each(function(i) {
+        var input = $('<input type=text></input>').css('width','100%');
+        $(this).text('').append(input);
+      });
       editor.insertAfter(template);
-      this.adjustWidths(editor);
       return editor;
     },
 
@@ -603,23 +783,17 @@
       var filter = this.head().find('.filter');
       if (filter.exists()) return filter;
 
-      var self = this;
-      var titles = self.head().find('.titles');
-      var fields = self.options.fields;
-      filter = self.createEditor(titles, self.options.fields, 'filter', '<th></th>').hide();
-      var cols = filter.children();
+      var me = this;
+      var titles = me.head().find('.titles');
+      var fields = me.options.fields;
+      filter = me.createEditor(titles,'filter').hide();
+      var tds = filter.children();
       filter.find('input').bind('keyup cut paste', function(e) {
-        self.params.page_num = 1;
-        self.params.page_size = self.options.page_size;
-        fields.forEach(function(field, index) {
-          delete self.params['f'+index];
-          var obj = filter.findByAttribute('field_id', field.id);
-          if (!obj.exists()) return;
-          var val = obj.value();
-          if (val == '') return;
-          self.params['f'+index] = val;
-        });
-        self.refresh();
+        me.params.offset = 0;
+        var td = $(this).parent();
+        var index = tds.index(td);
+        me.params['f'+index] = $(this).value();
+        me.refresh();
       });
       return filter;
     },
@@ -647,7 +821,17 @@
       })
       this.options.render.createItems(td, this.options, undefined, actions);
       this.spanColumns(td);
-    }
+    },
+
+    _scroll: function(e) {
+      var me = this;
+      var opts = me.opts;
+      var body = me.body();
+      if(body.scrollHeight() - body.scrollTop() != body.height() || me.loading) return;
+      if (me.params.total && me.params.offset + me.params.size > me.params.total) return;
+      me.params.offset += me.params.size;
+      me.load();
+    },
 
   })
 }) (jQuery);

@@ -28,14 +28,14 @@ $page->output();
 class page
 {
   static $fields_stack = array();
-  static $post_items = array('audit', 'call', 'clear_session', 'clear_values', 'db_name', 'error', 'post',
+  static $post_items = array('audit', 'call', 'clear_session', 'clear_values', 'db_name', 'error', 'let', 'keep_values','post',
     'q', 'valid', 'validate', 'write_session');
-  static $query_items = array('call','read_session', 'read_values', 'ref_list', 'sql', 'sql_values');
+  static $query_items = array('call', 'let', 'keep_values','read_session', 'read_values', 'ref_list', 'sql', 'sql_values', 'refresh');
   static $atomic_items = array('action', 'attr', 'css', 'html', 'script', 'sql',
     'style', 'template', 'valid');
   static $user_roles = array('public');
   static $non_mergeable = array('action', 'attr', 'audit', 'call', 'clear_session',
-    'clear_values','error', 'for_each', 'load_lineage', 'post', 'read_session', 'refresh', 'show_dialog',
+    'clear_values', 'error', 'for_each', 'load_lineage', 'keep_values', 'read_session', 'refresh', 'show_dialog',
     'sql_insert', 'sql_update', 'style', 'trigger', 'valid', 'validate', 'write_session');
   var $request;
   var $object;
@@ -94,7 +94,7 @@ class page
   function process()
   {
     if (is_null($this->method))
-      throw new Exception("No method parameter in request");
+      return;
 
     $this->roles = $this->get_module('auth')->get_roles();
     log::debug_json("SESSION", $_SESSION);
@@ -125,12 +125,13 @@ class page
   {
     if ($this->result !== false)
       echo json_encode($this->result);
+    log::debug_json("OUTPUT", $this->result);
   }
 
 
-  function include_external(&$data)
+  function include_external(&$data, $files=null)
   {
-    $files = $data['include'];
+    if (!$files) $files = $data['include'];
     if (!isset($files)) return;
     $fields = [];
     foreach($files as $file) {
@@ -185,13 +186,23 @@ class page
     return $this->merge_stack($stack);
   }
 
+  function get_access($field, $key)
+  {
+    $access = $field[$key];
+    if (is_null($access)) return null;
+    if (!is_array($access)) $access = [$access];
+    return array_keys_first($access);
+  }
+
   function allowed($field, $throw=false)
   {
     if (!is_array($field)) return true;
-    $access = $field['access'];
-    if (!isset($access) || $this->get_module('auth')->authorized($access)) return true;
+    $access = $this->get_access($field,'access');
+    $partner_access = $this->get_access($field, 'partner_access');
+    $restricted = isset($access) || isset($partner_access);
+    if (!$restricted || $this->get_module('auth')->authorized($access, $partner_access)) return true;
     if (!$throw) return false;
-    throw new user_exception("Unauthorized access to PATH ".implode('/', $this->path) );
+    throw new user_exception("Unauthorized access [". implode(",", $access) . "] to PATH ".implode('/', $this->path)  );
   }
 
   function verify_access($field)
@@ -345,15 +356,18 @@ class page
     return $field = merge_options($this->expand_type($code), $merged, $field);
   }
 
-  function follow_path()
+  function follow_path($path=null, $field=null)
   {
-    $path = $this->path;
-    array_splice($path,0,2);
-    $field = $this->fields;
+    if (!$path) {
+      $path = $this->path;
+      array_splice($path,0,2);
+    }
+    if (!$field) $field = $this->fields;
     foreach($path as $branch) {
       if (is_assoc($field)) {
         $new_parent = $field;
         $field = $field[$branch];
+        // $this->merge_fields($field, $parent);
         if ($parent)
           $this->derive_parent($parent, $field);
         $parent = $new_parent;
@@ -390,8 +404,9 @@ class page
   function derive_parent($parent, &$field)
   {
     $derive = $field['derive'];
-    if (!isset($derive)) return $field;
+    if (!is_array($derive)) return $field;
     foreach($derive as $key) {
+      if (!is_string($key)) continue;
       $value = $field[$key];
       if (!isset($value))
         $field[$key] = $parent[$key];
@@ -407,7 +422,7 @@ class page
     $matches = array();
     if (!preg_match_all('/\$(\w+)\b/', $value, $matches, PREG_SET_ORDER)) return;
 
-    $exclude = array('classes', 'code', 'id', 'text', 'name','desc', 'field', 'templates');
+    $exclude = array('classes', 'code', 'id', 'text', 'name','desc', 'field', 'templates', 'access');
     foreach($matches as $match) {
       $var = $match[1];
       if (in_array($var, $exclude, true)) continue;
@@ -420,7 +435,9 @@ class page
     if (!is_string($x)) return false;
     global $config;
     list($class, $method) = explode('.', $x);
-    return $class == 'this' || in_array($class, $config['modules']);
+    $options = $config[$x];
+    $active = !isset($options['active']) || $options['active'];
+    return $class == 'this' || in_array($class, $config['modules']) && $active;
   }
 
   function get_module($class, &$method="")
@@ -461,8 +478,10 @@ class page
   {
     $this->replace_vars($fields);
     walk_recursive_down($fields, function($value, $key, &$parent) {
-      if (!is_assoc($parent))
+      if (!is_assoc($parent)) {
+        if (is_string($value) && strpos($value, '/') !== false) return;
         list($type, $value) = assoc_element($value);
+      }
       else
         $type = $key;
 
@@ -532,17 +551,18 @@ class page
       && !page::is_module($key);
   }
 
-  function merge_fields(&$fields, $merged = array())
+  function merge_fields(&$fields, $parent=[], $merged=[])
   {
     if (is_assoc($fields)) {
       if (isset($fields['type']))
         $this->merge_type($fields);
+      $this->derive_parent($parent, $field);
       foreach($fields as $key=>&$value) {
         if (!is_array($value) || page::not_mergeable($key)) continue;
         $value = $this->get_merged_field($key, $value);
-        if (!in_array($key, $merged, true)) {
+        if (!in_array($key, $merged, true) || !is_assoc($value)) {
           $merged[] = $key;
-          $this->merge_fields($value, $merged);
+          $this->merge_fields($value, $parent, $merged);
         }
       }
       return $fields;
@@ -551,8 +571,10 @@ class page
     $default = null;
     foreach($fields as &$value) {
       list($key, $field) = assoc_element($value);
+      if (strpos($key, '/') !== false) continue;
       if (page::not_mergeable($key)) continue;
       if ($key == 'type') {
+        if (is_string($field) && $field[0] == '$') $field = $parent[substr($field,1)];
         $default_type = $field;
         continue;
       }
@@ -564,9 +586,9 @@ class page
       if (is_array($field) && !is_null($default_type) && !isset($field['type']))
         $field['type'] = $default_type;
       $field = $this->get_merged_field($key, $field);
-      if (is_array($field) && !in_array($key, $merged, true)  ) {
+      if (is_array($field) && (!in_array($key, $merged, true) || !is_assoc($field))) {
         $merged[] = $key;
-        $this->merge_fields($field, $merged);
+        $this->merge_fields($field, $parent, $merged);
       }
       if (!is_null($default))
         $field = merge_options($default, $field);
@@ -581,7 +603,8 @@ class page
     $this->fields = $this->merge_stack_field(page::$fields_stack, $this->root);
     $this->merge_stack_field($this->page_stack, $this->root, $this->fields);
     $this->expand_types($this->fields);
-    $this->verify_access($this->fields);
+    if (!$this->sub_page)
+      $this->verify_access($this->fields);
   }
 
   function remove_items(&$fields)
@@ -589,7 +612,7 @@ class page
     walk_recursive_down($fields, function(&$value, $key, &$parent) {
       if (!$this->is_render_item($key) || $key === 'access')
         unset($parent[$key]);
-      if (in_array($key, page::$query_items, true) || page::is_module($key))
+      if (in_array($key, page::$query_items, true) || page::is_module($key) || preg_match('/^if /', $key))
         $parent['query'] = " ";
     });
 
@@ -653,10 +676,23 @@ class page
 
   function validate($field, $include)
   {
-    $options = merge_options($this->context,$this->request);
+
+    $post_prefix = $field['post_prefix'];
+    if ($post_prefix) {
+      $values = [];
+      $offset = strlen($post_prefix);
+      foreach($this->request as $key=>$value) {
+        if (strpos($key, $post_prefix) === 0)
+          $values[substr($key,$offset)] = $value;
+      }
+    }
+    else
+      $values = $this->request;
+    $values = merge_options($values, $this->answer, $this->read_session());
+    $options = merge_options($this->context,$values, $this->answer);
     $validators = $this->load_fields('validators');
     $fields = merge_options($this->merge_stack(page::$fields_stack), $this->page_fields, $this->fields);
-    $this->validator = new validator(page::merge_options($_SESSION['variables'], $this->request), $fields, $validators);
+    $this->validator = new validator($values, $fields, $validators);
 
     $exclude = array('audit','css','post','script','style', 'styles', 'type','valid','validate','values');
 
@@ -672,14 +708,15 @@ class page
         list($code, $value) = assoc_element($value);
       else
         $code = $key;
+
       if ($include !== true && !in_array($code, $include, true)) return;
       $validator = &$this->validator;
       if ($validator->checked($code)) return false;
       if (in_array($code, $exclude, true)) return false;
       if (!is_null($value) && !is_array($value)) return false;
 
-
       $valid = $value['valid'];
+      if ($valid == 'ignore') return false;
       if ($valid == "") return;
       $result = $validator->validate($code, $value, $valid);
       if ($result === true) return;
@@ -696,7 +733,6 @@ class page
 
   function data()
   {
-    $this->merge_fields($this->context);
     if (!isset($this->context['id'])) $this->context['id'] = last($this->path);
     return $this->reply($this->context);
   }
@@ -739,40 +775,6 @@ class page
     }
     return call_user_func_array($function, $params);
   }
-
-  static function merge_options($options1, $options2)
-  {
-    //return merge_options($options1, $options2);
-    if (is_null($options1)) return $options2;
-    if (is_null($options2) || sizeof($options2) == 0) return $options1;
-    if (!is_array($options2)) return $options2;
-    if (!is_assoc($options1) && is_assoc($options2)) return $options2;
-    if (is_assoc($options1) && !is_assoc($options2)) return $options2;
-    if (!is_assoc($options1)) {
-      $new_values = array();
-      $sowables = array('type', 'template', 'action');
-      foreach($options1 as $v1) {
-        if (!is_array($v1) || array_intersect($sowables,  array_keys($v1)) === array()) continue;
-        $new_values[] = $v1;
-      }
-      return array_merge($new_values, $options2);
-    }
-
-    $result = $options2;
-    foreach($options1 as $key=>$value ) {
-      if (!array_key_exists($key, $result)) {
-        $result[$key] = $value;
-        continue;
-      }
-      if (!is_array($value)) continue;
-      $value2 = $result[$key];
-      if (!is_array($value2)) continue;
-      $result[$key] = page::merge_options($value, $value2);
-    }
-    return $result;
-  }
-
-
 
   static function decode_field($message)
   {
@@ -833,7 +835,8 @@ class page
     global $db;
     $fields = $this->fields[$this->page];
     $result = null_merge($fields, $this->answer, false);
-    $detail = at($action, 'audit');
+    $detail = $action['audit'];
+    if (!isset($detail)) $detail = $action;
     $field = [];
     $context = merge_options($this->fields, $this->context, $_SESSION['variables'], $this->request, $result);
     if (is_array($detail)) {
@@ -859,6 +862,8 @@ class page
     $detail = addslashes($detail);
     $collection = $this->get_module('collection');
     $sid = $this->get_module('auth')->get_session_id();
+    if (!$sid) return;
+    $collection->unhide('user','partner');
     $user = $collection->values('session', $sid, 'user');
     $partner = $collection->values('session', $sid, 'partner');
     $collection->insert('audit','', ['session'=>'$sid'], ['time'=>"/sysdate()"], $user, $partner, ['action'=>$name], ['detail'=>$detail]);
@@ -870,6 +875,9 @@ class page
     if (!isset($this->context['id'])) $this->context['id'] = last($this->path);
     if (!isset($this->context['name'])) $this->context['name'] = $this->name($this->context);
     $this->merge_fields($this->fields);
+    $pre_validation = $invoker['pre_validation'];
+    if ($pre_validation && $this->reply($pre_validation) === false)
+      return false;
     $validate = at($invoker, 'validate');
     if ($validate != 'none' && !$this->validate($this->fields, $validate))
       return null;
@@ -877,9 +885,11 @@ class page
     if ($audit_first)
       $this->audit($invoker,[]);
     $result = $this->reply($invoker);
+    if ($this->aborted) return $result;
     if (!$audit_first && !page::has_errors() && array_key_exists('audit', $invoker))
       $this->audit($invoker);
-    return $this->answer;
+    $this->post("trigger/fire", ["trigger_url"=>implode("/", $this->path)]);
+    return $result;
   }
 
   function replace_sid(&$str)
@@ -887,9 +897,11 @@ class page
     replace_fields($str, ['sid'=>$this->get_module('auth')->get_session_id()]);
   }
 
-  static function replace_sql(&$sql, $options)
+  function replace_sql(&$sql, $options)
   {
     $sql =  replace_vars($sql, $options, function(&$val) {
+      if (is_array($val))
+        $val = json_encode($this->replace_fields($val));
       $val = addslashes($val);
     });
     return $sql;
@@ -899,22 +911,27 @@ class page
   function sql_data($sql)
   {
     $sql = $this->translate_sql($sql);
-    return ['data'=>$this->db->page_through_indices($sql)];
+    $offset = on_null($this->request['offset'], 0);
+    $size = on_null($this->request['size'], 0);
+    $sort = $this->request['sort'];
+    if (isset($sort))
+      $sql .= "order by $sort " . $this->request['sort_order'];
+    return ['data'=>$this->db->page($sql, $size, $offset, null, ['fetch'=>MYSQLI_NUM]), 'count'=>$this->db->row_count()];
   }
 
   function sql($sql)
   {
     if (preg_match('/\s*select/i', $sql)) return $this->sql_data($sql);
     $sql = $this->translate_sql($sql);
-    return ['data'=>$this->db->exec($sql)];
+    return ['data'=>$this->db->exec($sql),'count'=>$this->db->row_count()];
   }
 
   function translate_sql($sql)
   {
     page::replace_sid($sql);
-    page::replace_sql($sql, $this->answer);
-    page::replace_sql($sql, $this->context);
-    page::replace_sql($sql, $this->request);
+    $this->replace_sql($sql, $this->answer);
+    $this->replace_sql($sql, $this->context);
+    $this->replace_sql($sql, $this->request);
     return preg_replace('/\$\w+/', '', $sql);
   }
 
@@ -950,7 +967,7 @@ class page
     list($arg,$value) = assoc_element($arg);
     if ($value[0] == '/')
       $value = substr($value,1);
-    else
+    else if (!is_array($value))
       $value = "'". addslashes($value). "'";
     return [$this->get_db_name($arg), $value];
   }
@@ -970,7 +987,11 @@ class page
     if ($delta_index === false) return;
 
     $delta = trim($this->request['delta']);
-    $delta = $delta==''? null: explode(',', $delta);
+    if (!$delta) {
+      array_splice($args, $delta_index, 1);
+      return;
+    }
+    $delta = explode(',', $delta);
     array_splice($args, $delta_index, 1, $delta);
   }
 
@@ -1051,7 +1072,7 @@ class page
 
   function update_context(&$options)
   {
-    $context = page::merge_options($this->context, $options);
+    $context = merge_options($this->context, $options);
     replace_fields($options, $context);
   }
 
@@ -1079,6 +1100,7 @@ class page
 
   function reply_if($method, $args)
   {
+    $method = str_replace("\n", " ", str_replace("\r", " ", $method));
     $matches = array();
     if (!preg_match('/^if\s+(.+)$/', $method, $matches)) return false;
 
@@ -1099,8 +1121,22 @@ class page
     replace_fields($field, $this->answer, true);
     replace_fields($field, $this->request, true);
     replace_fields($field, $this->context, true);
-    global $config;
-    replace_fields($field, $config);
+    return $field;
+  }
+
+
+  function replace_special_vars(&$parameter)
+  {
+    $replace = function(&$a, $k, $v) {
+      if (empty($a)) return;
+      $pos = array_search('$_'.$k, $a);
+      if ($pos === false) return;
+      $a['_'.$k] = $v;
+      array_splice($a, $pos, 1);
+    };
+    $replace($parameter, 'request', $this->request);
+    $replace($parameter, 'result', $this->answer);
+    $replace($parameter, 'values', null_merge($this->request, $this->answer));
   }
 
   function reply($actions)
@@ -1109,12 +1145,12 @@ class page
     if (isset($post)) $actions = $post;
     if (is_null($actions)) return null;
     if (is_assoc($actions))  $actions = array($actions);
-    $this->merge_fields($actions);
+    $this->merge_fields($actions, $this->fields);
 
     log::debug_json("REPLY ACTIONS", $actions);
 
-    $methods = array('abort', 'alert', 'assert', 'call', 'clear_session', 'clear_values',
-      'close_dialog', 'error', 'foreach', 'let', 'load_lineage', 'logoff', 'read_config',  'read_server', 'read_session', 'read_values',
+    $methods = array('abort', 'alert', 'assert', 'audit', 'call', 'clear_session', 'clear_values',
+      'close_dialog', 'error', 'foreach', 'let', 'load_lineage', 'logoff',  'keep_values', 'post', 'read_config',  'read_server', 'read_session', 'read_values',
        'redirect', 'ref_list', 'show_dialog', 'show_captcha', 'sql', 'sql_exec',
        'sql_rows', 'sql_insert','sql_update', 'sql_values', 'refresh', 'trigger',
        'update', 'upload', 'view_doc', 'write_session');
@@ -1140,6 +1176,8 @@ class page
       $this->replace_sid($method);
       $this->replace_fields($method);
       $this->replace_sid($parameter);
+      $this->replace_special_vars($parameter);
+
       log::debug_json("REPLY ACTION $method", $parameter);
       if ($this->reply_if($method, $parameter)) continue;
 
@@ -1211,7 +1249,9 @@ class page
   static function show_dialog($dialog, $options=null, $values = null)
   {
     page::respond('show_dialog', $dialog);
-    $options['values'] = $values;
+    if (is_string($options))
+      $options = json_decode($options, true);
+    if ($values) $options['values'] = $values;
     if (!is_null($options)) page::respond('options', $options);
   }
 
@@ -1232,7 +1272,9 @@ class page
     $responses = &$result['_responses'];
     $updates = &$responses['update'];
     if (is_array($name))
-      $updates = null_merge ($updates, $name);
+      $updates = merge_options($updates, $name);
+    else if (is_null($value))
+      $updates[$name] = $page->answer[$name];
     else
       $updates[$name] = $value;
   }
@@ -1278,7 +1320,8 @@ class page
       $args = page::parse_args(func_get_args());
     }
     $options = array("event"=>$event);
-    if (!is_null($selector)) $options['sink'] = $selector;
+    if (!$selector) $selector = ".didi-listener";
+    $options['sink'] = $selector;
     if (sizeof($args) > 2) $options['params'] = array_slice($args,2);
     page::respond('trigger', $options);
   }
@@ -1305,10 +1348,12 @@ class page
     $this->parse_delta($vars);
     $session = &$_SESSION['variables'];
     foreach($vars as $var) {
+      $this->replace_fields($var);
       if ($var == 'request' && !isset($this->request['request']))
         call_user_func_array (array($this, 'write_session'), array_keys($this->request));
       else if (is_array($var)) {
         list($var,$value) = assoc_element($var);
+        $this->replace_fields($var);
         $session[$var] = $value;
       }
       else if (isset($this->answer[$var]))
@@ -1318,12 +1363,13 @@ class page
     }
   }
 
-  static function read_settings($settings,$args)
+  function read_settings($settings,$args)
   {
     $vars = page::parse_args($args);
     $values = array();
     foreach($vars as $var) {
       $alias = $var;
+      $this->replace_fields($var);
       if (is_array($var))
         list($alias,$var) = assoc_element($var);
       if (isset($settings[$var]))
@@ -1337,7 +1383,7 @@ class page
     $args = func_get_args();
     $session = &$_SESSION['variables'];
     if (sizeof($args) == 0) return $session;
-    return page::read_settings($session, $args);
+    return $this->read_settings($session, $args);
   }
 
   function read_session_list()
@@ -1349,9 +1395,7 @@ class page
   function read_config()
   {
     global $config;
-    $result = page::read_settings($config, func_get_args());
-    log::debug_json("result", $result);
-    return $result;
+    return $this->read_settings($config, func_get_args());
   }
 
   function read_values($values)
@@ -1362,15 +1406,19 @@ class page
 
   function let($values)
   {
-    return $this->read_values($values);
+    if (is_string($values)) {
+      $values = json_decode($values, true);
+      if (!$values) return;
+    }
+    $this->answer = merge_options($this->answer, $this->read_values($values));
   }
 
   static function abort()
   {
     $args = page::parse_args(func_get_args());
-    if (sizeof($args) > 1) {
-      list($name, $message) = $args;
-      page::error($name, $message);
+    switch(sizeof($args)) {
+      case 1: page::alert($args[0]); break;
+      case 2: page::error($args[0], $args[1]); break;
     }
     return false;
   }
@@ -1400,6 +1448,15 @@ class page
       unset($this->request[$arg]);
     }
   }
+
+  function keep_values()
+  {
+    $args = page::parse_args(func_get_args());
+    foreach($this->answer as $key=>$value) {
+      if (!in_array($key, $args, true)) unset($this->answer[$key]);
+    }
+  }
+
 
   static function verify_args(&$args, $cmd, $min_count)
   {
@@ -1536,11 +1593,11 @@ class page
   {
     $merge = $args['merge'];
     if (!isset($merge) || $merge != false) {
-      $args = page::merge_options($this->answer, $args);
+      $args = merge_options($this->answer, $args);
       $this->update_context($args);
       global $config;
-      $args = page::merge_options($this->get_expanded_field($method), $args);
-      $args = page::merge_options($config[$method], $args);
+      $args = merge_options($this->get_expanded_field($method), $args);
+      $args = merge_options($config[$method], $args);
       replace_fields($args,$args,true);
     }
     return q::put($method, $args);
@@ -1553,20 +1610,31 @@ class page
     $data = $this->reply(array_shift($args));
     if ($data === false) return false;
     $this->foreach = false;
+    $this->broken = false;
     foreach($data as $row) {
-      $this->answer = array_merge($this->answer, $row);
+      $this->answer = null_merge($this->answer, $row);
       foreach($args as $arg) {
         if ($this->reply($arg) === false) return false;
       }
+      if ($this->broken) break;
       ++$i;
     }
+    $this->broken = false;
     return null;
   }
 
 
   function read_server()
   {
-    return $this->read_settings($_SERVER, func_get_args());
+    $args = func_get_args();
+    $result = $this->read_settings($_SERVER, $args);
+    if (!in_array('BASE_URL', $args)) return $result;
+
+    $protocol = 'http';
+    if(isset($_SERVER['HTTPS']))
+      $protocol = ($_SERVER['HTTPS'] && $_SERVER['HTTPS'] != "off") ? "https" : "http";
+    $result['BASE_URL'] = $protocol . "://" . $_SERVER['HTTP_HOST'] . ':' . $_SERVER['SERVER_PORT'];
+    return $result;
   }
 
   function merge_context($setting, &$options)
@@ -1576,5 +1644,16 @@ class page
     $this->merge_fields($options);
     replace_fields($options, $options, true);
     replace_fields($options, $this->answer, true);
+  }
+
+  function post($url, $values=null)
+  {
+    if ($values) $this->let($values);
+    $path = explode('/', $url);
+    $file = array_shift($path);
+    $fields = [$path[0]=>$this->read_external($url)];
+    $this->fields = merge_options($this->fields, $fields);
+    $result = $this->follow_path($path);
+    return $this->reply($result);
   }
 }

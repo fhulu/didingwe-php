@@ -7,12 +7,11 @@ $.widget("ui.plotter", {
   _create: function()
   {
     var self= this;
-    if (this.options.load) {
-      var data = { action: 'data', path: this.options.path + '/load', key: this.options.key };
+    if (this.options.values) {
+      var data = { action: 'values', path: this.options.path , key: this.options.key };
       console.log("about to json", data);
       $.json('/', {data: data}, function(result) {
-        if ($.isArray(result))
-          self.plot(result);
+          self.plot(result.data);
       });
     }
     else if (this.options.data)
@@ -64,6 +63,8 @@ $.widget("ui.plotter", {
     // }
     options.axesDefaults.tickRenderer = $.jqplot.CanvasAxisTickRenderer;
     options.axes.xaxis.renderer = $.jqplot.DateAxisRenderer;
+    options.axes.xaxis.renderer = $.jqplot.CategoryAxisRenderer;
+    options.seriesDefaults.renderer = $.jqplot.BarRenderer;
 
     this.plot = $.jqplot(this.options.id, data, options );
   }

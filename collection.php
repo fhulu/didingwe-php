@@ -1,15 +1,27 @@
 <?php
+require_once("module.php");
 
-class collection
+class collection extends module
 {
-  var $page;
-  var $db;
   var $tables;
+  var $hidden_columns;
+  var $combined_columns;
+  var $star_columns;
+  var $columns;
+  var $sort_columns;
   function __construct($page)
   {
-    $this->page = $page;
-    $this->db = $page->db;
+    parent::__construct($page);
+    $this->auth = $page->get_module('auth');
     $this->read_tables();
+    $this->columns = [];
+    $this->hidden_columns = [];
+    $this->combined_columns = [];
+    $this->star_columns = [];
+    $this->sort_columns = [];
+    $this->dynamic_sorting = true;
+    $this->foreigners = [];
+    $this->sorts = [];
   }
 
   function read_tables()
@@ -28,133 +40,370 @@ class collection
       $table = $this->tables[$collection];
       return $table? $table: $this->tables['default'];
   }
-  function update_sort_order(&$sorting, &$name, &$alias)
+
+  function extract_grouping(&$attr)
   {
     $matches = [];
-    if (!preg_match('/(\w+) (asc|desc)$/', $alias, $matches)) return;
-    if ($name == $alias)
-      $name = $alias = $matches[1];
+    if (!preg_match('/^(\w[\w\.]*)(\s*\+\d+)?(\s+group\s*)?(\s+asc\s*|\s+desc\s*)?$/', $attr['alias'], $matches)) return;
+    if (!$attr['aliased'])
+      $attr['name'] = $attr['alias'] = $matches[1];
     else
-      $alias = $matches[1];
-    $sorting[] = "$alias $matches[2]";
+      $attr['alias'] = $matches[1];
+
+    if ($matches[3]) $attr['group'] = true;
+    if (!$matches[4]) retjurn;
+
+    $attr['sort_order'] = $matches[4];
+    if ($matches[2]) $attr['sort_convert'] = $matches[2];
   }
 
-  function get_name_alias($arg)
+
+  function init_filters()
+  {
+    foreach($this->filters as &$filter) {
+      list($name, $value) = assoc_element($filter);
+      $attr = $this->init_attr($name);
+      if (is_null($value))
+        $value = "= '\$$name'";
+      else if ($value[0] == '/')
+        $value = substr($value,1);
+      else if (!is_array($value))
+        $value = "= '". addslashes($value). "'";
+      $filter = $attr;
+
+      $filter['value'] = $value;
+    }
+  }
+
+  function init_attr($arg)
   {
     if (is_string($arg))
       $name = $alias = $arg;
-    else if (is_assoc($arg)) {
+    else if (($aliased = is_assoc($arg))) {
       list($alias, $name) = assoc_element($arg);
       if (is_assoc($name)) $name = $alias;
     }
-    return [$name,$alias];
-  }
-
-  function get_selection($table, $args, &$where, &$sorting, &$primary_attribute)
-  {
-    $has_primary = false;
-    foreach($args as &$arg) {
-      list($name,$alias) = $this->get_name_alias($arg);
-      if ($alias[0] == '/') continue;
-      $this->update_sort_order($sorting, $name, $alias);
-
-      if ($name == 'identifier') {
-        $selection[] = "m.$name $alias";
+    list($local_name, $foreign_collection, $foreign_name) = explode('.', $name);
+    if (isset($foreign_collection)) {
+      if (!isset($foreign_name)) {
+        $foreign_name = $foreign_collection;
+        $foreign_collection = $local_name;
       }
-      else if (!$has_primary && strpos($name, '.') === false) {
-        $selection[] = "m.value $alias";
-        $has_primary = [$name, $alias];
-        $where .= " and m.attribute  = '$name'";
-      }
-      else
-        $selection[] = $this->get_subquery($table, $name, $alias);
-      ++$index;
+      $name = "$foreign_collection.$foreign_name";
+      $attr['local_name'] = $local_name;
+      $attr['foreign_name'] = $foreign_name;
+      $attr['table'] = $this->get_table($foreign_collection);
+      $attr['collection'] = $foreign_collection;
+      if (!in_array($foreign_name, $this->foreigners))
+        $this->foreigners[] = $foreign_collection;
+      if (!$aliased) $alias = $foreign_name;
     }
-    return implode(",", array_filter($selection));
-  }
-
-  function get_subquery($table, $name, $alias)
-  {
-    if ($name[0] == '/') return;
-    $name = addslashes($name);
-    $alias = addslashes($alias);
-    list($foreign_key, $foreign_name) = explode('.', $name);
-    $value = "value";
-    if (!isset($foreign_name))
-      $query = "select group_concat($value) from $table where collection = m.collection
-           and version <= m.version and identifier=m.identifier and attribute = '$name'";
-
     else {
-      if ($alias == $name) $alias = $foreign_name;
-      $name = $foreign_name;
-      $sub_table = $this->get_table($foreign_key);
-      $query =
-        "select group_concat($value) from $sub_table where collection = '$foreign_key' and version <= m.version and attribute = '$foreign_name'
-          and identifier in (
-            select value from $table where collection = m.collection and version <= m.version
-              and identifier=m.identifier and attribute = '$foreign_key' order by version desc)";
+      $attr['table'] = $this->main_table;
+      $attr['collection'] = $this->main_collection;
     }
-    return "($query order by version desc limit 1) $alias";
+
+    $attr['name'] = $name;
+    $attr['alias'] = $alias;
+    $attr['aliased'] = $name != $alias;
+    $this->extract_grouping($attr);
+    $attr['aggregated'] = $aggregated = $name[0] == '/';
+    if ($aggregated) $this->aggregated = true || $attr['group'];
+
+    return $attr;
   }
 
-
-  function get_joins($table, $filters, &$where="", $primary_attribute="")
+  function init_attributes($args, $parent=null, &$index=1, &$aliases=[])
   {
-    $index = 0;
-    $joins = "";
-    if (empty($filters)) return "";
-    if (!is_array($filters) || is_assoc($filters)) $filters = [$filters];
-
-    // create joins for each filter
-    foreach($filters as $filter) {
-      ++$index;
-      list($name,$value) = $this->page->get_sql_pair($filter);
-      if ($name == 'identifier') {
-        $where .= " and m.$name = $value";
-        continue;
-      }
-
-      $operator = "";
-      if ($value[0] == "'" )
-        $operator = " = ";
-
-      if ($name == $primary_attribute) {
-        $where .= " and m.value $operator $value";
-        continue;
-      }
-      $joins .= " join $table m$index on m$index.collection = m.collection
-          and m$index.version <= m.version and m$index.identifier=m.identifier
-          and m$index.attribute = '$name' and m$index.value $operator $value";
-    }
-    return $joins;
-  }
-
-  function expand_star($collection, &$args)
-  {
-    $expansion = null;
-    $index = -1;
     foreach($args as $arg) {
+      list($alias, $name) = assoc_element($arg);
+      if (is_array($name)) {
+        $aliases[] = $alias;
+        $this->init_attributes($name, $alias, $index);
+        continue;
+      }
+      list($alias, $star_args) = $this->expand_star($arg, $aliases);
+      if (sizeof($star_args)) {
+        $this->init_attributes($star_args, $alias? $alias: $parent, $index, $aliases);
+        continue;
+      }
+
+      $attr = $this->init_attr($arg);
+      if (in_array($attr['alias'], $this->sort_columns) || in_array("$index", $this->sort_columns)) {
+        if (!$attr['sort_order']) $attr['sort_order'] = $this->page->request['sort_order'];
+      }
       ++$index;
-      if ($arg != '*') continue;
-      $table = $this->get_table($collection);
-      $expansion = $this->db->read_column("select distinct attribute from $table where collection = '$collection' and version = 0 ");
-      break;
+      $attr['parent'] = $parent;
+      $this->attributes[] = $attr;
+      $aliases[] = $attr['alias'];
     }
-    if ($expansion) array_splice($args, $index, 1, $expansion);
   }
 
-  function add_custom_filters(&$filters, $args)
+  function create_sort_joins()
   {
+    $joins_sql = "";
+    $order_sql = [];
+    foreach($this->attributes  as $attr) {
+      if (!$attr['sort_order'] || $attr['foreign_name'] || $attr['aggregated']) continue;
+      $sorter = "`sorter_" . $attr['alias']. "`";
+      $name = $attr['name'];
+      $joins_sql .= " left join `$this->main_table` $sorter"
+          . " on $sorter.collection = '$this->main_collection' and `$this->main_collection`.identifier = $sorter.identifier "
+          . " and $sorter.attribute = '$name'";
+      $order_sql[] = " $sorter " . $attr['sort_order'];
+      $conversion = $attr['sort_convert'];
+      $fields[] = "$sorter.value$conversion $sorter";
+    }
+    if (sizeof($order_sql))
+      $order_sql = "order by ". implode(",", $order_sql);
+    else
+      $order_sql = "";
+    return [$fields, $joins_sql, $order_sql];
+  }
+
+  function create_filter_joins($filters, $suffix="")
+  {
+    $sql = "";
+    foreach($filters as &$filter) {
+      $name = $filter['name'];
+      $alias = "filter_$name".$suffix;
+      $value = $filter['value'];
+      $table = $filter['table'];
+      $collection = $filter['collection'];
+      $local_name = $filter['local_name'];
+      if (is_null($local_name)) {
+        $sql .= " join `$table` `$alias` on `$alias`.collection = '$collection'"
+        . " and `$collection`.identifier = `$alias`.identifier";
+        if ($name == 'identifier')
+          $sql .= " and `$alias`.identifier $value";
+        else
+          $sql .= " and `$alias`.attribute = '$name' and `$alias`.value $value ";
+      }
+      else {
+        $foreign_name = $filter['foreign_name'];
+        $sql .= " join `$this->main_table` `main_$alias` on `main_$alias`.collection = `$this->main_collection`.collection"
+          . " and `main_$alias`.identifier = `$this->main_collection`.identifier and `main_$alias`.attribute = '$local_name'"
+          . " join `$table` `$alias` on `$alias`.collection = '$collection' and `$alias`.identifier = `main_$alias`.value"
+          . " and `$alias`.attribute = '$foreign_name' and `$alias`.value $value ";
+      }
+    }
+
+    return $sql;
+  }
+
+  function create_search_join($term)
+  {
+    if ($term == "") return "";
+
+    $sql = "";
+    $searched = [];
+    foreach($this->attributes  as $attr) {
+      $collection = $attr['collection'];
+      if (in_array($collection, $searched)) continue;
+      $searched[] = $collection;
+      $table = $attr['table'];
+      $alias = "`search_$collection`";
+      $sql .= " join `$table` $alias "
+          . " on `$collection`.identifier = $alias.identifier "
+          . " and $alias.value like '%$term%'"
+          . " and " .  $this->get_attribute_filter($collection, [], $alias);
+
+    }
+    log::debug("joins $sql");
+    return $sql;
+  }
+
+  function join_foreigners()
+  {
+    $sql = "";
+    $joined = [];
+    $main = $this->main_collection;
+    foreach($this->attributes as $attr) {
+      $foreign = $attr['foreign_name'];
+      if (!$foreign) continue;
+      $collection = $attr['collection'];
+      if (in_array($collection, $joined)) continue;
+      $table = $attr['table'];
+      $local = $attr['local_name'];
+      $sql .= " left join `$table` `$collection` "
+            . " on  `$collection`.identifier = `$main`.value and `$main`.attribute = '$local' "
+            . " and " .  $this->get_attribute_filter($collection);
+      $joined[] = $collection;
+    }
+    return $sql;
+  }
+
+  function create_inner_select($sort_fields)
+  {
+    $main = "$this->main_collection";
+    $sql = "select `$main`.identifier, `$main`.attribute `$main.attribute`, `$main`.value `$main.value`";
+    $selected = [];
+    foreach($this->attributes as $attr) {
+      if (!$attr['foreign_name']) continue;
+      $collection = $attr['collection'];
+      if (in_array($collection, $selected)) continue;
+      $selected[] = $collection;
+      $sql .= ", `$collection`.attribute `$collection.attribute`, `$collection`.value `$collection.value`";
+    }
+    if ($sort_fields)
+      $sql .= "," . implode(",", $sort_fields);
+    return $sql;
+  }
+
+  function get_attribute_filter($collection, $foreigners=[], $alias="")
+  {
+    $names = [];
+    $set_names = function($collection, $foreign) use (&$names) {
+      foreach($this->attributes as $attr) {
+        if ($attr['aggregated'] || $attr['collection'] != $collection || $attr['name'] == 'identifier') continue;
+        if ($foreign)
+          $name = $attr['local_name'];
+        else if ($attr['foreign_name'])
+          $name = $attr['foreign_name'];
+        else
+          $name = $attr['name'];
+        $names[] = "'$name'";
+      }
+    };
+    $set_names($collection, false);
+    foreach($foreigners as $foreigner) {
+      $set_names($foreigner, true);
+    }
+    if (!$alias) $alias = "`$collection`";
+    $sql = "$alias.collection = '$collection' ";
+    if (empty($names)) return $sql;
+
+    $names = implode(",", $names);
+    return $sql . " and $alias.attribute in ($names)";
+  }
+
+
+
+  function create_outer_select($use_custom_filters, $term)
+  {
+    $prev_parent = null;
+    $values = [];
+    $siblings = [];
+    $count = sizeof($this->attributes);
+    foreach ($this->attributes as $attr) {
+      ++$counted;
+      if ($attr['aggregated']) continue;
+
+      $alias = $attr['alias'];
+      if (!$this->aggregated && in_array($alias, $this->hidden_columns)) continue;
+
+      $name = $attr['foreign_name']? $attr['foreign_name']: $attr['name'];
+      $parent = $attr['parent'];
+      if ($parent)
+        $alias = "";
+      else
+        $alias = "`$alias`";
+      $collection = $attr['collection'];
+      if ($name == 'identifier')
+        $value = "identifier $alias";
+      else
+        $value = "max(case when `$collection.attribute`='$name' then `$collection.value` end) $alias";
+
+      $parent = $attr['parent'];
+      if ($prev_parent && $parent != $prev_parent) {
+        if (sizeof($siblings)) $values[] = "concat_ws(' ',". implode(',', $siblings) . ") `$prev_parent`";
+        $siblings = [$value];
+        $prev_parent = $parent;
+      }
+      else if ($parent)
+        $siblings[] = $value;
+      else {
+        $values[] = $value;
+        $siblings = [];
+      }
+      $prev_parent = $parent;
+    }
+    if (sizeof($siblings))
+      $values[] = "concat_ws(' ',". implode(',', $siblings) . ") `$parent`";
+
+    $values = implode(",\n", $values);
+    list($sort_fields, $sort_joins, $order_sql) = $this->create_sort_joins();
+    $sql =  "select $values from ("
+      . $this->create_inner_select($sort_fields)
+      . " from `$this->main_table` `$this->main_collection` "
+      . $this->create_filter_joins($this->filters)
+      . $this->join_custom_filters($use_custom_filters)
+      . $this->join_foreigners()
+      . $this->create_search_join($term)
+      . "$sort_joins where "
+      . $this->get_attribute_filter($this->main_collection, $this->foreigners);
+
+    if ($this->identifier_filter)
+      $sql .= " and `$this->main_collection`.identifier = '$this->identifier_filter'";
+
+    return $sql . " $order_sql) tmp group by identifier $order_sql";
+  }
+
+  function aggregate($sql)
+  {
+    $groups = [];
+    foreach ($this->attributes as $attr) {
+      $alias = $attr['alias'];
+      if (in_array($alias, $this->hidden_columns)) continue;
+      if ($attr['aggregated'])
+        $names[] = substr($attr['name'], 1) . " `$alias`";
+      else
+        $names[] = "`$alias`";
+      if ($attr['group']) $groups[] = $alias;
+    }
+    $names = implode(",", $names);
+    $sql = "select $names from ($sql) tmp";
+    if (sizeof($groups))
+      $sql .= " group by " . implode(",", $groups);
+    return $sql;
+  }
+
+  function expand_star($arg, $ignore)
+  {
+    $matches = [];
+    list($alias, $name) = assoc_element($arg);
+    if (!$name) {
+      $name = $alias;
+      $alias = null;
+    }
+    if (!is_string($name) || !preg_match('/^(?:(\w+)\.)?\*/', $name, $matches))
+      return [];
+    $collection = $this->main_collection;
+    if (($foreign=$matches[1]))
+      $collection = $matches[1];
+
+    if (empty($this->columns[$collection]))
+      $this->columns[$collection] = $this->get_fields($collection);
+
+    $expanded = array_filter($this->columns[$collection], function($element) use(&$ignore) {
+      return !in_array($element, $ignore);
+    });
+    if ($foreign) {
+      $expanded = array_map(function($v) use ($collection) {
+        return "$collection.$v";
+      }, $expanded);
+    }
+    return [$alias, $expanded];
+  }
+
+  function join_custom_filters($use)
+  {
+    if (!$use) return "";
+
     $index = -1;
     $request = $this->page->request;
-
-    foreach($args as $arg) {
+    $filters = [];
+    foreach($this->attributes as $attr) {
+      $alias = $attr['alias'];
+      if (in_array($alias, $this->hidden_columns, true)) continue;
       ++$index;
       $term = $request["f$index"];
-      if (!isset($term)) continue;
-      list($name,$alias) = $this->get_name_alias($arg);
-      $filters[] = [$alias=>"/like '%$term%'"];
+      if ($term=='') continue;
+      $filter = $attr;
+      $filter['value'] = " like '%$term%'";
+      $filters[] = $filter;
     }
+    return $this->create_filter_joins($filters, "_custom");
   }
 
   function extract_header(&$args)
@@ -165,14 +414,30 @@ class collection
       else
         $size = array_shift($args);
     }
+    else {
+      $offset = $this->page->request['offset'];
+      $size = $this->page->request['size'];
+    }
     list($collection, $filters) = array_splice($args, 0, 2);
     list($collection) = assoc_element($collection);
-    if ($filters == '')
+    $this->identifier_filter = null;
+    if ($filters == '') 
       $filters = [];
-    else if (is_string($filters))
-      $filters = ['identifier'=>$filters];
-    return [$collection, $filters, $offset, $size];
+    else if (is_string($filters)) {
+      $this->identifier_filter = $filters;
+      $filters = [];
+    }
+    else if (is_assoc($filters))
+      $filters = [$filters];
+    $this->main_collection = $collection;
+    $this->main_table = $this->get_table($collection);
+    $this->filters = $filters;
+    $this->offset = $offset;
+    $this->size = $size;
+    $this->aggregated = false;
+    $this->attributes = [];
   }
+
 
   function expand_args(&$args)
   {
@@ -187,66 +452,23 @@ class collection
 
   function set_limits(&$sql, $offset, $size)
   {
-    if (!is_null($offset))
+    if (!is_null($offset) && !is_null($size))
       $sql .= " limit $offset, $size";
     else if (!is_null($size))
       $sql .= " limit $size";
   }
 
-  function set_sorting(&$sql, $sorting, $group=true, $args=[])
-  {
-    if (empty($sorting)) {
-      $request = $this->page->request;
-      $index = $request['sort'];
-      if (!isset($index) || !is_numeric($index)) return;
-      list($field) = assoc_element($args[$index]);
-      if (!$field) return;
-      $sorting = $field . " " . $request['sort_order'];
-    }
-    else {
-      $sorting = implode(',', $sorting);
-    }
-    if ($group)
-      $sql = "select * from ($sql) tmp_sorting";
-    $sql .= " order by $sorting";
-  }
-
-  function wrap_query(&$sql, $args)
-  {
-    $outer = [];
-    $wrapped = false;
-    foreach($args as $arg) {
-      list($alias,$name) = $this->page->get_sql_pair($arg);
-      if ($name[0] == "'") {
-        list($name, $alias) = explode('.', $alias);
-        if (!$alias) $alias = $name;
-        $outer[] = explode(' ',$alias)[0];
-        continue;
-      }
-      $outer[] = "$name $alias";
-      $wrapped = true;
-    }
-    if ($wrapped)
-      $sql = "select " . join(',', $outer) . " from ($sql) tmp";
-    return $wrapped;
-  }
-  function read($args, $use_custom_filters=false)
+  function read($args, $use_custom_filters=false, $term="")
   {
     $args = page::parse_args($args);
-    $size = $this->expand_args($args);
-    list($collection, $filters, $offset, $size) = $this->extract_header($args);
-    $this->expand_star($collection, $args);
-    if ($use_custom_filters)
-      $this->add_custom_filters($filters, $args);
-    $where = " where m.collection = '$collection' and m.version = 0 ";
-    $sorting = [];
-    $table = $this->get_table($collection);
-    $selection = $this->get_selection($table, $args, $where, $sorting, $primary_attribute);
-    $joins = $this->get_joins($table, $filters, $where, $primary_attribute);
-    $sql = "select $selection from $table m $joins $where $search";
-    $this->set_limits($sql, $offset, $size);
-    $wrapped = $this->wrap_query($sql, $args);
-    $this->set_sorting($sql, $sorting, !$wrapped, $args);
+    $this->expand_args($args);
+    $this->extract_header($args);
+    $this->init_attributes($args);
+    $this->init_filters();
+    $sql = $this->create_outer_select($use_custom_filters, $term);
+    if ($this->aggregated)
+      $sql = $this->aggregate($sql);
+    $this->set_limits($sql, $this->offset, $this->size);
     return $this->page->translate_sql($sql);
   }
 
@@ -254,7 +476,9 @@ class collection
   {
     $a = func_get_args();
     if (!is_numeric($a[0])) array_splice($a, 0, 0, 1);
+    $this->dynamic_sorting = false;
     $sql = $this->read($a);
+    $this->dynamic_sorting = true;
     $result = $this->db->read($sql, MYSQLI_ASSOC);
     if ($result) $result = $result[0];
     return $result;
@@ -275,19 +499,22 @@ class collection
     $sql = $this->read(func_get_args(), true);
     if ($this->page->foreach)
       return $this->db->read($sql, MYSQLI_ASSOC);
-    return ['data'=>$this->db->read($sql, MYSQLI_NUM)];
+    return ['data'=>$this->db->read($sql, MYSQLI_NUM), 'count'=>$this->db->row_count()];
   }
 
   function update()
   {
     $args = page::parse_args(func_get_args());
     page::verify_args($args, "collection.update", 3);
-    list($collection, $filters) = $this->extract_header($args);
+    $this->extract_header($args);
     $this->page->parse_delta($args);
-
-    $where = " where m.collection = '$collection' and m.version = 0 ";
-    $table = $this->get_table($collection);
-    $joins = $this->get_joins($table, $filters, $where);
+    $this->init_filters();
+    $joins = $this->create_filter_joins($this->filters);
+    $table = "`$this->main_table`";
+    $collection = $this->main_collection;
+    $where = " where `$collection`.collection = '$collection' and `$collection`.version = 0 ";
+    if ($this->identifier_filter)
+      $where .= " and `$collection`.identifier = '$this->identifier_filter'";
     foreach($args as $arg) {
       list($name,$value) = $this->page->get_sql_pair($arg);
       if ($name == 'identifier') {
@@ -296,11 +523,24 @@ class collection
       }
       else {
         $attribute = 'value';
-        $condition = " and m.attribute = '$name'";
+        $condition = " and `$collection`.attribute = '$name'";
       }
       $attribute = $name== 'identifier'? $name: 'value';
-      $this->page->sql_exec("update $table m $joins set m.$attribute = $value $where $condition");
+      $updated = $this->page->sql_exec("update $table `$collection` $joins set `$collection`.$attribute = $value $where $condition");
+      if ($updated) continue;
+      if (!$this->identifier_filter) continue;
+      $this->page->sql_exec("insert into $table (collection,identifier,attribute,value)
+        select '$collection', '$this->identifier_filter', '$name', $value from dual where not exists (
+          select 1 from $table `$collection` $where $condition)");
     }
+  }
+
+  function encode_array($value)
+  {
+    if (!is_array($value)) return $value;
+    $encoded = json_encode($value);
+    if (!$encoded) return $value;
+    return "'". addslashes($encoded) . "'";
   }
 
   function insert()
@@ -308,8 +548,9 @@ class collection
     $args = page::parse_args(func_get_args());
     page::verify_args($args, "collection.insert", 3);
     list($collection, $identifier) = array_splice($args, 0, 2);
+    list($collection) = assoc_element($collection);
     $table = $this->get_table($collection);
-    $sql = "insert into $table(version,collection,identifier,attribute,value) values";
+    $sql = "insert into `$table`(version,collection,identifier,attribute,value) values";
     $identifier_func = "last_insert_id()";
     foreach($args as &$arg) {
       list($name,$value) = $this->page->get_sql_pair($arg);
@@ -318,53 +559,23 @@ class collection
         $identifier_func = substr($identifier,1);
         $identifier = "";
       }
+      $value = $this->encode_array($value);
       $this->page->sql_exec($sql . "(0,'$collection', '$identifier','$name',$value)");
       if ($identifier) continue;
       list($identifier,$last_id) = $this->db->read_one("select $identifier_func, last_insert_id()");;
-      $this->db->exec("update $table set identifier='$identifier' where id = $last_id");
+      $this->db->exec("update `$table` set identifier='$identifier' where id = $last_id");
     }
     return ["new_${collection}_id"=>$identifier];
   }
 
+
   function search()
   {
     $args = page::parse_args(func_get_args());
-    log::debug_json("collection.search", $args);
-    page::verify_args($args, "collection.search", 1);
-    $term = array_shift($args);
-    $size = $this->expand_args($args);
-    list($collection, $filters, $offset, $size) = $this->extract_header($args);
-    $this->expand_star($collection, $args);
-    $fields = [];
-    $sorting = [];
-    $identifier = false;
-    foreach($args as &$arg) {
-      list($name,$alias) = $this->get_name_alias($arg);
-      $this->update_sort_order($sorting, $name, $alias);
-
-      if ($name == 'identifier') {
-        $fields[] = "$name $alias";
-        $identifier = true;
-        $where .= " and (m.identifier like '%$term%'";
-      }
-      else
-        $fields[] = "max(case when attribute='$name' then value end) $alias";
-    }
-    $table = $this->get_table($collection);
-    $joins = $this->get_joins($table, $filters);
-    $where = " where collection = '$collection' and version <= 0 ";
-    if ($term != "") {
-      if ($identifier)
-        $where .= " and (m.identifier like '%$term%' or m.value like '%$term%')";
-      else
-        $where .= " and m.value like '%$term%'";
-    }
-    $sql = "select ". implode(",", $fields). " from (
-     select m.identifier,m.attribute,m.value FROM $table m $joins $where) tmp
-     group by identifier";
-
-    $this->set_sorting($sql, $sorting, false);
-    $this->set_limits($sql, $offset, $size);
+    $last = array_slice($args,-1)[0];
+    if (is_string($last))
+      array_splice($args, -1, 1, explode(',', $last));
+    $sql = $this->read($args, false, $this->page->request['term']);
     return ['data'=>$this->db->read($sql, MYSQLI_NUM)];
   }
 
@@ -374,6 +585,7 @@ class collection
     $size = sizeof($args);
     if ($size < 2) return false;
     if ($size == 2) {
+      $args[1] = ['identifier'=>$args[1]];
       $args[] = 'identifier';
     }
     else {
@@ -382,10 +594,14 @@ class collection
         $filters[] = [$args[$i]=>$args[$i+1]];
       }
       $args = [$args[0], $filters, 'identifier' ];
-      log::debug_json("args", $args);
     }
     $sql = $this->read($args);
     return $this->db->exists($sql);
+  }
+
+  function unique()
+  {
+    return !call_user_func_array([$this, "exists"], func_get_args());
   }
 
   function scroll()
@@ -395,5 +611,48 @@ class collection
     $page_size = $request['page_size'];
     $args = array_merge([$page_num*$page_size, $page_size], func_get_args());
     return call_user_func_array([$this, "data"], $args);
+  }
+
+  private function get_fields($collection, $key=null, $exclusions=null)
+  {
+    $table = $this->get_table($collection);
+    $sql = "select distinct attribute from `$table` where collection = '$collection'";
+    if (!is_null($key)) $sql .= " and identifier = '$key'";
+    if (!is_null($exclusions)) $sql .= " and attribute not in ('" . implode("','", $exclusions) ."')";
+    return $this->db->read_column($sql);
+  }
+
+  function fields($collection, $key)
+  {
+    $exclusions = array_slice(func_get_args(), 2);
+    $data = $this->get_fields($collection, $key, $exclusions);
+    return ['data'=>$data, 'count'=>sizeof($data)];
+  }
+
+  function hide()
+  {
+    $this->hidden_columns = array_merge($this->hidden_columns, func_get_args());
+  }
+
+  function unhide()
+  {
+    $args = func_get_args();
+    if (sizeof($args) == 0)
+      $this->hidden_columns = [];
+    else
+      $this->hidden_columns = array_diff($this->hidden_columns, $args);
+  }
+
+  function combine()
+  {
+    $this->combined_columns = array_merge($this->combined_columns, func_get_args());
+  }
+
+  function sort_on()
+  {
+    foreach(func_get_args() as $arg) {
+      $columns[] = $this->page->request[$arg];
+    }
+    $this->sort_columns = array_merge($this->sort_columns, $columns);
   }
 }
