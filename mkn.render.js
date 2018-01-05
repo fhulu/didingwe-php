@@ -526,8 +526,13 @@ mkn.render = function(options)
     setDisabled(obj, field);
 
     runJquery(obj, field);
-    obj.data('id',  id);
+    obj.data('didi-field', field);
+    if ('didi-functions' in field) obj.addClass('didi-watcher');
     field['mkn-object'] = obj;
+
+    if ($.isPlainObject(field.position))
+      obj.position(field.position);
+
     initLinks(obj, field).then(function() {
       if (subitem_count) me.setValues(obj, field);
       initEvents(obj, field);
@@ -691,6 +696,7 @@ mkn.render = function(options)
     var events = {};
     if (field.action)
       events['click'] = [field];
+    var id = field.id;
     $.each(field, function(key, value) {
       if (key.indexOf('on_') != 0) return;
       var event = key.substr(3);
@@ -755,7 +761,6 @@ mkn.render = function(options)
       me.respond(result);
     })
     initTooltip(obj);
-    if (!field.action) return;
 
     var tag = obj.prop("tagName");
     if (!tag || ['input','select','textarea'].indexOf(tag.toLowerCase()) < 0) return;
@@ -766,6 +771,7 @@ mkn.render = function(options)
       	me.updateWatchers();
     });
 
+    if (!field.action) return;
     obj.click(function(event) {
       if (field.tag == 'a') {
         event.preventDefault();
