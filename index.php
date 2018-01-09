@@ -1,4 +1,6 @@
-<?php session_start();
+<?php 
+header('Access-Control-Allow-Origin: *'); 
+session_start();
 require_once '../common/log.php';
 require_once('../common/utils.php');
 
