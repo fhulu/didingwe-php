@@ -135,9 +135,9 @@
         return;
       }
       if (this.options.page_size !== undefined) this.showPaging(parseInt(data.total));
-
+      $("#no_records").remove();
       if (data.data.length == 0 && this.body().children().length == 0 && this.no_records)
-        this.element.replaceWith(this.no_records.show());
+        this.element.append(this.no_records.show());
 
       for(var i in data.data) {
         this.addRow(data.data[i]);
