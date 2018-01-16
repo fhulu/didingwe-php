@@ -50,7 +50,7 @@ blank:
 block_text:
   type: plain_text
   class: [block]
-  
+
 bookmark:
   tag: div
   title: $id
@@ -871,8 +871,10 @@ vspaced:
   margin-bottom: $space
 
 watermark:
-  image: $id.png
-  background-image: url("$image_path/$image")
+  image_type: png
+  image: $id.$src_type
+  image_src: $image_path/$image
+  background-image: url("$image_src")
 
 window:
   type: container

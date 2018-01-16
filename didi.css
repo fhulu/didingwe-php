@@ -696,6 +696,8 @@ li.paragraph {text-indent: -1em }
 .background-top { background-position: top}
 .background-center { background-position: center}
 .background-clear { background-color: initial }
+.background-hide { background-size: 0% 0%}
+.background-fade { background-color: rgba(0,0,0,0.6)};
 
 .scroll-table { table-layout: fixed}
 .scroll-table>thead,.scroll-table>tbody { float:left; width: 100%; display: block;table-layout: fixed}
