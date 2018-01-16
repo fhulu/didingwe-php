@@ -546,26 +546,44 @@ class collection extends module
   function insert()
   {
     $args = page::parse_args(func_get_args());
-    page::verify_args($args, "collection.insert", 3);
-    list($collection, $identifier) = array_splice($args, 0, 2);
-    list($collection) = assoc_element($collection);
+    page::verify_args($args, "collection.insert", 2);
+    $collection = array_shift($args);
     $table = $this->get_table($collection);
-    $sql = "insert into `$table`(version,collection,identifier,attribute,value) values";
-    $identifier_func = "last_insert_id()";
+    $fields = $this->get_fields($collection);
+    $columns = [];
+    $values = [];
+    $new_names = [];
+    $index = $first_index = $last_index = -1;
     foreach($args as &$arg) {
       list($name,$value) = $this->page->get_sql_pair($arg);
-      $name = addslashes($name);
-      if ($identifier[0] == '/') {
-        $identifier_func = substr($identifier,1);
-        $identifier = "";
+      $index = array_search($name, $fields);
+      if ($index === false) {
+        $index = $first_index = $last_index+1;
+        $new_names[] = $name;
       }
-      $value = $this->encode_array($value);
-      $this->page->sql_exec($sql . "(0,'$collection', '$identifier','$name',$value)");
-      if ($identifier) continue;
-      list($identifier,$last_id) = $this->db->read_one("select $identifier_func, last_insert_id()");;
-      $this->db->exec("update `$table` set identifier='$identifier' where id = $last_id");
+      $columns[] = "v$index";
+      $values[] = $this->encode_array($value);
+      $last_index = $index;
     }
-    return ["new_${collection}_id"=>$identifier];
+
+    $columns = implode(',', $columns);
+    $db = $this->db;
+    if (empty($fields)) {
+      $new_names = implode("','", $new_names);
+      $db->exec("insert into `$table` (collection, $columns) values('$collection-fields', '$new_names')");
+    }
+    else if (!empty($new_names)) {
+      foreach($new_names as $name) {
+        $sets[] = "v$first_index = '$name'";
+        ++$first_index;
+      }
+      $sets = implode(',', $sets);
+      $db->exec("update `$table` set $sets where collection = '$collection-fields'");
+    };
+
+    $values = implode(',', $values);
+    $id = $db->exec("insert into `$table` (collection, $columns) values('$collection', $values)");
+    return ["new_${collection}_id"=>$id];
   }
 
 
@@ -613,13 +631,22 @@ class collection extends module
     return call_user_func_array([$this, "data"], $args);
   }
 
-  private function get_fields($collection, $key=null, $exclusions=null)
+  private function get_fields($collection, $key=null, $exclusions=['create_time'])
   {
     $table = $this->get_table($collection);
-    $sql = "select distinct attribute from `$table` where collection = '$collection'";
-    if (!is_null($key)) $sql .= " and identifier = '$key'";
-    if (!is_null($exclusions)) $sql .= " and attribute not in ('" . implode("','", $exclusions) ."')";
-    return $this->db->read_column($sql);
+    $sql = "select * from `$table` where collection = ";
+    $names = $this->db->read_column("$sql '$collection-fields'");
+    if (empty($names)) return $names;
+    $exclusions[] = 'collection';
+    $data = [];
+    if (!is_null($key)) $data = $this->db->read_column("$sql '$collection' and id = '$key' ");
+    $i = 0;
+    $result = [];
+    foreach($names as $name) {
+      if (!in_array($name, $exclusions) && !is_null($data[$i])) $result[] = $name;
+      ++$i;
+    }
+    return $result;
   }
 
   function fields($collection, $key)

@@ -144,13 +144,12 @@ confirm_registration:
   post:
     - read_config: [registrant_partner, registrant_role]
     - read_session: title,first_name,last_name,cellphone,email,password,registrant_partner
-    - collection.values: [partner, name: $registrant_partner, partner: identifier]
+    # - collection.values: [partner, name: $registrant_partner, partner: identifier]
     - if $parter == '':
-        - collection.insert: [partner, "", name: $registrant_partner]
+        - collection.insert: [partner, name: $registrant_partner]
         - let: { partner: $new_partner_id }
     - collection.insert:
         - user
-        - ""
         - email
         - password: /password('$password')
         - active: 1
@@ -164,7 +163,6 @@ confirm_registration:
         - time_added: /now()
     - collection.insert:
         - audit
-        - ""
         - action: New Registration
         - time: "/sysdate()"
         - user: $new_user_id
