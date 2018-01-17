@@ -285,7 +285,7 @@ $.fn.insertAtCursor = function(myValue)
 {
   var pos = this.getCursorPosition();
   var val = this.val();
-  this.val(val.substr(0, pos)+ ' ' +myValue+ ' '+val.substr(pos));
+  this.val(val.substr(0, pos) + myValue + val.substr(pos));
 }
 
 $.fn.getCursorPosition = function() {
