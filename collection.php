@@ -287,6 +287,7 @@ class collection extends module
     $siblings = [];
     $count = sizeof($this->attributes);
     $collections = [];
+    $main_collection = $this->main_collection;
     foreach ($this->attributes as $attr) {
       ++$counted;
       if (!$attr['column']) continue;
@@ -318,9 +319,11 @@ class collection extends module
         $siblings = [];
       }
       $prev_parent = $parent;
-      if ($collection == $this->main_collection) continue;
+      if ($collection == $main_collection) continue;
       $table = $attr['table'];
-      $joins .= " join $table `$collection` on `$collection`.id = `$this->main_collection`." . $this->get_column_name($collection);
+      $joins .= " join $table `$collection` on "
+        . " `$collection`.collection = '$collection' ".
+        " and `$collection`.id = `$main_collection`." . $this->get_column_name($collection);
     }
     if (!sizeof($values)) return null;
     if (sizeof($siblings))
@@ -328,7 +331,8 @@ class collection extends module
 
     $values = implode(",\n", $values);
     // list($sort_fields, $sort_joins, $order_sql) = $this->create_sort_joins();
-    $sql =  "select $values from $this->main_table `$this->main_collection` $joins";
+    $sql =  "select $values from $this->main_table `$main_collection` $joins"
+      . " where `$main_collection`.collection = '$main_collection'";
     //   . $this->create_inner_select($sort_fields)
     //   . " from `$this->main_table` `$this->main_collection` "
     //   . $this->create_filter_joins($this->filters)
@@ -596,7 +600,9 @@ class collection extends module
     };
 
     $values = implode(',', $values);
-    $id = $db->exec("insert into `$table` (collection, $columns) values('$collection', $values)");
+
+    $sql = $this->page->translate_sql("insert into `$table` (collection, $columns) values('$collection', $values)");
+    $id = $db->exec($sql);
     return ["new_${collection}_id"=>$id];
   }
 
@@ -653,16 +659,10 @@ class collection extends module
     $table = $this->get_table($collection);
     $sql = "select * from `$table` where collection = ";
     $names = $this->db->read_one("$sql '$collection-fields'", MYSQLI_NUM);
-    log::debug_json("names", $names);
-    if (sizeof($names) < 4) {
+    if (sizeof($names) < 4)
       $names = [];
-    }
-    else {
-      $names = array_slice($names, 3);
-      log::debug_json("names", $names);
-      $names = array_exclude($names, [null]);
-    }
-    log::debug_json("names", $names);
+    else
+      $names = array_exclude(array_slice($names, 3), [null]);
     $this->fields[$collection] = $names;
     if (empty($names) || is_null($key)) return $names;
     $data = [];
@@ -681,7 +681,6 @@ class collection extends module
     if (in_array($field_name, ['id','create_time']))
       return $field_name;
     $fields = $this->get_fields($collection);
-    log::debug_json("fields for $collection.$field_name", $fields);
     $index = array_search($field_name, $fields);
     return $index === false? null: "v$index";
   }
