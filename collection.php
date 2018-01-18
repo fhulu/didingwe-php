@@ -678,11 +678,13 @@ class collection extends module
 
   private function get_column_name($field_name, $collection=null)
   {
-    if (in_array($field_name, ['id','create_time']))
+    if ($field_name == 'create_time')
       return $field_name;
     $fields = $this->get_fields($collection);
     $index = array_search($field_name, $fields);
-    return $index === false? null: "v$index";
+    if ($index !== false) return "v$index";
+    if ($field_name == 'id') return $field_name;
+    return null;
   }
 
   function fields($collection, $key)
