@@ -110,6 +110,7 @@ class collection extends module
     $attr['aggregated'] = $aggregated = $name[0] == '/';
     if ($aggregated) $this->aggregated = true || $attr['group'];
 
+    $attr['column'] = $this->get_column_name($attr['name'], $attr['collection']);
     return $attr;
   }
 
@@ -226,7 +227,7 @@ class collection extends module
       $table = $attr['table'];
       $local = $attr['local_name'];
       $sql .= " left join `$table` `$collection` "
-            . " on  `$collection`.identifier = `$main`.value and `$main`.attribute = '$local' "
+            . " on  `$collection`.id = `$main`.value and `$main`.attribute = '$local' "
             . " and " .  $this->get_attribute_filter($collection);
       $joined[] = $collection;
     }
@@ -285,8 +286,10 @@ class collection extends module
     $values = [];
     $siblings = [];
     $count = sizeof($this->attributes);
+    $collections = [];
     foreach ($this->attributes as $attr) {
       ++$counted;
+      if (!$attr['column']) continue;
       if ($attr['aggregated']) continue;
 
       $alias = $attr['alias'];
@@ -299,10 +302,8 @@ class collection extends module
       else
         $alias = "`$alias`";
       $collection = $attr['collection'];
-      if ($name == 'identifier')
-        $value = "identifier $alias";
-      else
-        $value = "max(case when `$collection.attribute`='$name' then `$collection.value` end) $alias";
+      if (!in_array($collection, $collections)) $collections[] = $collection;
+      $value =  "`$collection`." . $attr['column'] . " $alias";
 
       $parent = $attr['parent'];
       if ($prev_parent && $parent != $prev_parent) {
@@ -317,26 +318,32 @@ class collection extends module
         $siblings = [];
       }
       $prev_parent = $parent;
+      if ($collection == $this->main_collection) continue;
+      $table = $attr['table'];
+      $joins .= " join $table `$collection` on `$collection`.id = `$this->main_collection`." . $this->get_column_name($collection);
     }
+    if (!sizeof($values)) return null;
     if (sizeof($siblings))
       $values[] = "concat_ws(' ',". implode(',', $siblings) . ") `$parent`";
 
     $values = implode(",\n", $values);
-    list($sort_fields, $sort_joins, $order_sql) = $this->create_sort_joins();
-    $sql =  "select $values from ("
-      . $this->create_inner_select($sort_fields)
-      . " from `$this->main_table` `$this->main_collection` "
-      . $this->create_filter_joins($this->filters)
-      . $this->join_custom_filters($use_custom_filters)
-      . $this->join_foreigners()
-      . $this->create_search_join($term)
-      . "$sort_joins where "
-      . $this->get_attribute_filter($this->main_collection, $this->foreigners);
+    // list($sort_fields, $sort_joins, $order_sql) = $this->create_sort_joins();
+    $sql =  "select $values from $this->main_table `$this->main_collection` $joins";
+    //   . $this->create_inner_select($sort_fields)
+    //   . " from `$this->main_table` `$this->main_collection` "
+    //   . $this->create_filter_joins($this->filters)
+    //   . $this->join_custom_filters($use_custom_filters)
+    //   . $this->join_foreigners()
+    //   . $this->create_search_join($term)
+    //   . "$sort_joins where "
+    //   . $this->get_attribute_filter($this->main_collection, $this->foreigners);
 
-    if ($this->identifier_filter)
-      $sql .= " and `$this->main_collection`.identifier = '$this->identifier_filter'";
 
-    return $sql . " $order_sql) tmp group by identifier $order_sql";
+    // if ($this->identifier_filter)
+    //   $sql .= " and `$this->main_collection`.identifier = '$this->identifier_filter'";
+
+    // return $sql . " $order_sql) tmp group by identifier $order_sql";
+    return $sql;
   }
 
   function aggregate($sql)
@@ -421,7 +428,7 @@ class collection extends module
     list($collection, $filters) = array_splice($args, 0, 2);
     list($collection) = assoc_element($collection);
     $this->identifier_filter = null;
-    if ($filters == '') 
+    if ($filters == '')
       $filters = [];
     else if (is_string($filters)) {
       $this->identifier_filter = $filters;
@@ -436,6 +443,7 @@ class collection extends module
     $this->size = $size;
     $this->aggregated = false;
     $this->attributes = [];
+    $this->fields = [];
   }
 
 
@@ -443,7 +451,7 @@ class collection extends module
   {
     $size = sizeof($args);
     switch($size) {
-      case 0: $args = [$this->page->path[sizeof($this->page->path)-2], [], "identifier", "name asc"]; break;
+      case 0: $args = [$this->page->path[sizeof($this->page->path)-2], [], "id", "name asc"]; break;
       case 1: $args = [$args[0],[],'*']; break;
       case 2: $args[] = '*';
     }
@@ -463,9 +471,12 @@ class collection extends module
     $args = page::parse_args($args);
     $this->expand_args($args);
     $this->extract_header($args);
+    $table = $this->get_table($this->collection);
+    $fields = $this->get_fields($this->collection);
     $this->init_attributes($args);
     $this->init_filters();
     $sql = $this->create_outer_select($use_custom_filters, $term);
+    if (!$sql) return null;
     if ($this->aggregated)
       $sql = $this->aggregate($sql);
     $this->set_limits($sql, $this->offset, $this->size);
@@ -478,6 +489,7 @@ class collection extends module
     if (!is_numeric($a[0])) array_splice($a, 0, 0, 1);
     $this->dynamic_sorting = false;
     $sql = $this->read($a);
+    if (!$sql) return [];
     $this->dynamic_sorting = true;
     $result = $this->db->read($sql, MYSQLI_ASSOC);
     if ($result) $result = $result[0];
@@ -491,12 +503,14 @@ class collection extends module
     $last_arg = array_slice($args, -1)[0];
     list($name) = $this->page->get_sql_pair($last_arg);
     $sql = $this->read($args);
+    if (!$sql) return [];
     return [$name=>$this->db->read_column($sql)];
   }
 
   function data()
   {
     $sql = $this->read(func_get_args(), true);
+    if (!$sql) return ['data'=>[], 'count'=>0];
     if ($this->page->foreach)
       return $this->db->read($sql, MYSQLI_ASSOC);
     return ['data'=>$this->db->read($sql, MYSQLI_NUM), 'count'=>$this->db->row_count()];
@@ -603,18 +617,18 @@ class collection extends module
     $size = sizeof($args);
     if ($size < 2) return false;
     if ($size == 2) {
-      $args[1] = ['identifier'=>$args[1]];
-      $args[] = 'identifier';
+      $args[1] = ['id'=>$args[1]];
+      $args[] = 'id';
     }
     else {
       $filters = [];
       for ($i=1; $i < $size; $i+=2) {
         $filters[] = [$args[$i]=>$args[$i+1]];
       }
-      $args = [$args[0], $filters, 'identifier' ];
+      $args = [$args[0], $filters, 'id' ];
     }
     $sql = $this->read($args);
-    return $this->db->exists($sql);
+    return $sql? $this->db->exists($sql): false;
   }
 
   function unique()
@@ -631,22 +645,45 @@ class collection extends module
     return call_user_func_array([$this, "data"], $args);
   }
 
-  private function get_fields($collection, $key=null, $exclusions=['create_time'])
+  private function get_fields($collection=null, $key=null, $exclusions=[])
   {
+    if (is_null($collection)) $collection = $this->main_collection;
+    if (!empty($this->fields[$collection]))
+      return array_exclude($this->fields[$collection], $exclusions);
     $table = $this->get_table($collection);
     $sql = "select * from `$table` where collection = ";
-    $names = $this->db->read_column("$sql '$collection-fields'");
-    if (empty($names)) return $names;
-    $exclusions[] = 'collection';
+    $names = $this->db->read_one("$sql '$collection-fields'", MYSQLI_NUM);
+    log::debug_json("names", $names);
+    if (sizeof($names) < 4) {
+      $names = [];
+    }
+    else {
+      $names = array_slice($names, 3);
+      log::debug_json("names", $names);
+      $names = array_exclude($names, [null]);
+    }
+    log::debug_json("names", $names);
+    $this->fields[$collection] = $names;
+    if (empty($names) || is_null($key)) return $names;
     $data = [];
     if (!is_null($key)) $data = $this->db->read_column("$sql '$collection' and id = '$key' ");
     $i = 0;
     $result = [];
     foreach($names as $name) {
-      if (!in_array($name, $exclusions) && !is_null($data[$i])) $result[] = $name;
+      if (!is_null($data[$i])) $result[] = $name;
       ++$i;
     }
     return $result;
+  }
+
+  private function get_column_name($field_name, $collection=null)
+  {
+    if (in_array($field_name, ['id','create_time']))
+      return $field_name;
+    $fields = $this->get_fields($collection);
+    log::debug_json("fields for $collection.$field_name", $fields);
+    $index = array_search($field_name, $fields);
+    return $index === false? null: "v$index";
   }
 
   function fields($collection, $key)
