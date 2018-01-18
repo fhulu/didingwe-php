@@ -529,3 +529,14 @@ function array_keys_first($array)
   }
   return $array;
 }
+
+
+function array_exclude($array, $exclusions)
+{
+  if (empty($exclusions) || empty($array)) return $array;
+  $result = [];
+  foreach($array as $v) {
+    if (!in_array($v, $exclusions)) $result[] = $v;
+  }
+  return $result;
+}
