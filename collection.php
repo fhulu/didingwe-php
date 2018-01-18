@@ -71,7 +71,10 @@ class collection extends module
         $value = "= '". addslashes($value). "'";
       $filter = $attr;
 
-      $filter['value'] = $value;
+      $collection = $filter['collection'];
+      $column = $this->get_column_name($attr['name'], $collection);
+      if ($column)
+        $filter['criteria'] = "`$collection`.$column$value";
     }
   }
 
@@ -278,7 +281,16 @@ class collection extends module
     return $sql . " and $alias.attribute in ($names)";
   }
 
-
+  private function get_filter_sql($collection)
+  {
+    $criteria = [];
+    foreach($this->filters as $filter) {
+      if ($collection != $filter['collection'] || !$filter['criteria']) continue;
+      $criteria[] = $filter['criteria'];
+    }
+    if (empty($criteria)) return "";
+    return " and " . implode(" and ", $criteria);
+  }
 
   function create_outer_select($use_custom_filters, $term)
   {
@@ -321,7 +333,7 @@ class collection extends module
       $prev_parent = $parent;
       if ($collection == $main_collection) continue;
       $table = $attr['table'];
-      $joins .= " join $table `$collection` on "
+      $joins[$collection] = " join $table `$collection` on "
         . " `$collection`.collection = '$collection' ".
         " and `$collection`.id = `$main_collection`." . $this->get_column_name($collection);
     }
@@ -332,7 +344,8 @@ class collection extends module
     $values = implode(",\n", $values);
     // list($sort_fields, $sort_joins, $order_sql) = $this->create_sort_joins();
     $sql =  "select $values from $this->main_table `$main_collection` $joins"
-      . " where `$main_collection`.collection = '$main_collection'";
+      . " where `$main_collection`.collection = '$main_collection'"
+      . $this->get_filter_sql($main_collection);
     //   . $this->create_inner_select($sort_fields)
     //   . " from `$this->main_table` `$this->main_collection` "
     //   . $this->create_filter_joins($this->filters)
@@ -477,6 +490,7 @@ class collection extends module
     $this->extract_header($args);
     $table = $this->get_table($this->collection);
     $fields = $this->get_fields($this->collection);
+    if (!$fields) return null;
     $this->init_attributes($args);
     $this->init_filters();
     $sql = $this->create_outer_select($use_custom_filters, $term);
@@ -522,6 +536,7 @@ class collection extends module
 
   function update()
   {
+    return;
     $args = page::parse_args(func_get_args());
     page::verify_args($args, "collection.update", 3);
     $this->extract_header($args);
@@ -571,17 +586,20 @@ class collection extends module
     $columns = [];
     $values = [];
     $new_names = [];
-    $index = $first_index = $last_index = -1;
+    $$first_index = null;
+    $id = null;
+    $last_index = sizeof($fields);
     foreach($args as &$arg) {
       list($name,$value) = $this->page->get_sql_pair($arg);
       $index = array_search($name, $fields);
       if ($index === false) {
-        $index = $first_index = $last_index+1;
+        $index = $last_index++;
+        if (!$first_index) $first_index = $index;
         $new_names[] = $name;
       }
       $columns[] = "v$index";
       $values[] = $this->encode_array($value);
-      $last_index = $index;
+      if ($name == 'id') $id = $value;
     }
 
     $columns = implode(',', $columns);
@@ -602,7 +620,8 @@ class collection extends module
     $values = implode(',', $values);
 
     $sql = $this->page->translate_sql("insert into `$table` (collection, $columns) values('$collection', $values)");
-    $id = $db->exec($sql);
+    $db->exec($sql);
+    if (is_null($id)) $id = $db->read_one_value("select last_insert_id()");
     return ["new_${collection}_id"=>$id];
   }
 
