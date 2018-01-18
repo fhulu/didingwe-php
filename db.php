@@ -238,7 +238,7 @@ class db
   function read_one($sql, $fetch_type=MYSQLI_BOTH)
   {
     $rows = db::read($sql, $fetch_type, 1);
-    return at($rows,0);
+    return empty($rows)? $rows: $rows[0];
   }
 
   function read_one_value($sql)
