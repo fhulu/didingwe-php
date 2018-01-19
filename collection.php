@@ -88,11 +88,11 @@ class collection extends module
     }
     list($local_name, $foreign_collection, $foreign_name) = explode('.', $name);
     if (isset($foreign_collection)) {
+      $name = $foreign_name;
       if (!isset($foreign_name)) {
-        $foreign_name = $foreign_collection;
+        $name = $foreign_name = $foreign_collection;
         $foreign_collection = $local_name;
       }
-      $name = "$foreign_collection.$foreign_name";
       $attr['local_name'] = $local_name;
       $attr['foreign_name'] = $foreign_name;
       $attr['table'] = $this->get_table($foreign_collection);
@@ -292,6 +292,22 @@ class collection extends module
     return " and " . implode(" and ", $criteria);
   }
 
+  private function get_filter_joins_sql($processed)
+  {
+    $main_collection = $this->main_collection;
+    $sql = "";
+    foreach($this->filters as $filter) {
+      $collection = $filter['collection'];
+      if (in_array($collection, $processed)) continue;
+      $table = $filter['table'];
+      $sql .= " join $table `$collection` on "
+        . " `$collection`.collection = '$collection' "
+        . " and `$collection`.id = `$main_collection`." . $this->get_column_name($collection)
+        . $this->get_filter_sql($collection);
+    }
+    return $sql;
+  }
+
   function create_outer_select($use_custom_filters, $term)
   {
     $prev_parent = null;
@@ -333,16 +349,20 @@ class collection extends module
       $prev_parent = $parent;
       if ($collection == $main_collection) continue;
       $table = $attr['table'];
-      $joins[$collection] = " join $table `$collection` on "
-        . " `$collection`.collection = '$collection' ".
-        " and `$collection`.id = `$main_collection`." . $this->get_column_name($collection);
+      $joins .= " join $table `$collection` on "
+        . " `$collection`.collection = '$collection' "
+        . " and `$collection`.id = `$main_collection`." . $this->get_column_name($collection)
+        . $this->get_filter_sql($collection);
+
     }
     if (!sizeof($values)) return null;
     if (sizeof($siblings))
       $values[] = "concat_ws(' ',". implode(',', $siblings) . ") `$parent`";
 
     $values = implode(",\n", $values);
+
     // list($sort_fields, $sort_joins, $order_sql) = $this->create_sort_joins();
+    $joins .= $this->get_filter_joins_sql($collections);
     $sql =  "select $values from $this->main_table `$main_collection` $joins"
       . " where `$main_collection`.collection = '$main_collection'"
       . $this->get_filter_sql($main_collection);
