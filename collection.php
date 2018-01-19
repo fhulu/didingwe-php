@@ -304,6 +304,7 @@ class collection extends module
         . " `$collection`.collection = '$collection' "
         . " and `$collection`.id = `$main_collection`." . $this->get_column_name($collection)
         . $this->get_filter_sql($collection);
+      $processed[] = $collection;
     }
     return $sql;
   }
@@ -314,8 +315,8 @@ class collection extends module
     $values = [];
     $siblings = [];
     $count = sizeof($this->attributes);
-    $collections = [];
     $main_collection = $this->main_collection;
+    $collections = [$main_collection];
     foreach ($this->attributes as $attr) {
       ++$counted;
       if (!$attr['column']) continue;
@@ -331,7 +332,6 @@ class collection extends module
       else
         $alias = "`$alias`";
       $collection = $attr['collection'];
-      if (!in_array($collection, $collections)) $collections[] = $collection;
       $value =  "`$collection`." . $attr['column'] . " $alias";
 
       $parent = $attr['parent'];
@@ -347,7 +347,8 @@ class collection extends module
         $siblings = [];
       }
       $prev_parent = $parent;
-      if ($collection == $main_collection) continue;
+      if (in_array($collection, $collections)) continue;
+      $collections[] = $collection;
       $table = $attr['table'];
       $joins .= " join $table `$collection` on "
         . " `$collection`.collection = '$collection' "
