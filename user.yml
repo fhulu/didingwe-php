@@ -146,7 +146,7 @@ confirm_registration:
     - read_session: title,first_name,last_name,cellphone,email,password,registrant_partner
     - collection.values: [partner, name: $registrant_partner, partner: id]
     - if $partner == '':
-        - collection.insert: [partner, name: $registrant_partner]
+        - collection.insert: [partner, name: $registrant_partner, active: 1]
         - let: { partner: $new_partner_id }
     - collection.insert:
         - user
