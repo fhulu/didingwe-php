@@ -345,7 +345,7 @@ history:
 
 
 is_active:
-  valid: collection.exists(user,email,$value,active,1)
+  valid: collection.exists(user,email,$value,partner.active,1,active,1)
   error: |
     Account $value has been deactivated.
     Please ask the administrator to reactivate your account
