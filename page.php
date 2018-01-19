@@ -678,18 +678,16 @@ class page
   {
 
     $post_prefix = $field['post_prefix'];
+    $values = [];
     if ($post_prefix) {
-      $values = [];
       $offset = strlen($post_prefix);
       foreach($this->request as $key=>$value) {
         if (strpos($key, $post_prefix) === 0)
           $values[substr($key,$offset)] = $value;
       }
     }
-    else
-      $values = $this->request;
-    $values = merge_options($values, $this->answer, $this->read_session());
-    $options = merge_options($this->context,$values, $this->answer);
+    $values = merge_options($this->read_session(), $this->request, $this->answer);
+    $options = merge_options($this->context,$values);
     $validators = $this->load_fields('validators');
     $fields = merge_options($this->merge_stack(page::$fields_stack), $this->page_fields, $this->fields);
     $this->validator = new validator($values, $fields, $validators);
