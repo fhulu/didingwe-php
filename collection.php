@@ -555,39 +555,26 @@ class collection extends module
     return ['data'=>$this->db->read($sql, MYSQLI_NUM), 'count'=>$this->db->row_count()];
   }
 
+
   function update()
   {
-    return;
     $args = page::parse_args(func_get_args());
     page::verify_args($args, "collection.update", 3);
     $this->extract_header($args);
     $this->page->parse_delta($args);
     $this->init_filters();
-    $joins = $this->create_filter_joins($this->filters);
-    $table = "`$this->main_table`";
-    $collection = $this->main_collection;
-    $where = " where `$collection`.collection = '$collection' and `$collection`.version = 0 ";
-    if ($this->identifier_filter)
-      $where .= " and `$collection`.identifier = '$this->identifier_filter'";
-    foreach($args as $arg) {
-      list($name,$value) = $this->page->get_sql_pair($arg);
-      if ($name == 'identifier') {
-        $attribute = $name;
-        $condition = "";
-      }
-      else {
-        $attribute = 'value';
-        $condition = " and `$collection`.attribute = '$name'";
-      }
-      $attribute = $name== 'identifier'? $name: 'value';
-      $updated = $this->page->sql_exec("update $table `$collection` $joins set `$collection`.$attribute = $value $where $condition");
-      if ($updated) continue;
-      if (!$this->identifier_filter) continue;
-      $this->page->sql_exec("insert into $table (collection,identifier,attribute,value)
-        select '$collection', '$this->identifier_filter', '$name', $value from dual where not exists (
-          select 1 from $table `$collection` $where $condition)");
+    list($columns, $values) = $this->update_header($args);
+
+    $index = 0;
+    $sets = [];
+    foreach($columns as $column) {
+      $sets[] = "$column = " . $values[$index++];
     }
-  }
+    $sets = implode(',', $sets);
+    $collection = $this->main_collection;
+    $sql = "update `$this->main_table` set $sets where collection = '$collection' ". $this->get_filter_sql($collection);
+    $this->page->sql_exec($sql);
+}
 
   function encode_array($value)
   {
@@ -597,11 +584,10 @@ class collection extends module
     return "'". addslashes($encoded) . "'";
   }
 
-  function insert()
+
+  private function update_header($args)
   {
-    $args = page::parse_args(func_get_args());
-    page::verify_args($args, "collection.insert", 2);
-    $collection = array_shift($args);
+    $collection = $this->main_collection;
     $table = $this->get_table($collection);
     $fields = $this->get_fields($collection);
     $columns = [];
@@ -624,11 +610,11 @@ class collection extends module
       if ($name == 'id') $id_column = $column;
     }
 
-    $columns = implode(',', $columns);
     $db = $this->db;
     if (empty($fields)) {
       $new_names = implode("','", $new_names);
-      $db->exec("insert into `$table` (collection, $columns) values('$collection-fields', '$new_names')");
+      $new_name_columns = implode(',', $columns);
+      $db->exec("insert into `$table` (collection, $new_name_columns) values('$collection-fields', '$new_names')");
     }
     else if (!empty($new_names)) {
       foreach($new_names as $name) {
@@ -638,10 +624,20 @@ class collection extends module
       $sets = implode(',', $sets);
       $db->exec("update `$table` set $sets where collection = '$collection-fields'");
     };
+    return [$columns, $values, $id_column];
+  }
 
+  function insert()
+  {
+    $args = page::parse_args(func_get_args());
+    page::verify_args($args, "collection.insert", 2);
+    $collection = $this->main_collection = array_shift($args);
+    $table = $this->get_table($collection);
+    list($columns, $values, $id_column) = $this->update_header($args);
+    $columns = implode(',', $columns);
     $values = implode(',', $values);
-
     $sql = $this->page->translate_sql("insert into `$table` (collection, $columns) values('$collection', $values)");
+    $db = $this->db;
     $db->exec($sql);
     if (is_null($id_column))
       $id = $db->read_one_value("select last_insert_id()");
