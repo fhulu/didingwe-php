@@ -864,7 +864,7 @@ class page
     $collection->unhide('user','partner');
     $user = $collection->values('session', $sid, 'user');
     $partner = $collection->values('session', $sid, 'partner');
-    $collection->insert('audit','', ['session'=>'$sid'], ['time'=>"/sysdate()"], $user, $partner, ['action'=>$name], ['detail'=>$detail]);
+    $collection->insert('audit', ['session'=>'$sid'], ['time'=>"/sysdate()"], $user, $partner, ['action'=>$name], ['detail'=>$detail]);
   }
 
   function action()
