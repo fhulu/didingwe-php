@@ -607,7 +607,7 @@ class collection extends module
     $values = [];
     $new_names = [];
     $$first_index = null;
-    $id = null;
+    $id_column = null;
     $last_index = sizeof($fields);
     foreach($args as &$arg) {
       list($name,$value) = $this->page->get_sql_pair($arg);
@@ -617,9 +617,10 @@ class collection extends module
         if (!$first_index) $first_index = $index;
         $new_names[] = $name;
       }
-      $columns[] = "v$index";
+      $column = "v$index";
+      $columns[] = $column;
       $values[] = $this->encode_array($value);
-      if ($name == 'id') $id = $value;
+      if ($name == 'id') $id_column = $column;
     }
 
     $columns = implode(',', $columns);
@@ -641,7 +642,10 @@ class collection extends module
 
     $sql = $this->page->translate_sql("insert into `$table` (collection, $columns) values('$collection', $values)");
     $db->exec($sql);
-    if (is_null($id)) $id = $db->read_one_value("select last_insert_id()");
+    if (is_null($id_column))
+      $id = $db->read_one_value("select last_insert_id()");
+    else
+      $id = $db->read_one_value("select $id_column from `$table` where id = last_insert_id()");
     return ["new_${collection}_id"=>$id];
   }
 
