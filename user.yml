@@ -205,15 +205,15 @@ create:
           name: $2
         options:
           - collection.values: [session, $sid, owner: user, partner]
-          - collection.data: [user_group,[partner, owner, active: 1],identifier,name]
+          - collection.data: [user_group,[partner, owner, active: 1],id,name]
   actions:
     - create
   post:
     - collection.values: [session,$sid,partner,user,company_name: partner.name, creator_first_name: user.first_name, creator_last_name: user.last_name]
-    - collection.insert: [user,"",email,password: /password('$password'),active: 0,user_group: $group,attempts: 0,title,first_name,last_name,cellphone,country,role,partner,time_added: /now()]
+    - collection.insert: [user,email,password: /password('$password'),active: 0,user_group: $group,attempts: 0,title,first_name,last_name,cellphone,country,role,partner,time_added: /now()]
     - read_config: [self_activation_validity,program_name]
     - let: { url: /user/activate_self, method: show_dialog }
-    - collection.insert: [token, /md5(last_insert_id()), user: $new_user_id, url, method, active: 1, valid_until: /sysdate() + interval $self_activation_validity]
+    - collection.insert: [token, id: /md5(last_insert_id()), user: $new_user_id, url, method, active: 1, valid_until: /sysdate() + interval $self_activation_validity]
     - read_server: BASE_URL
     - sql_values: select "$BASE_URL/home?token=$new_token_id" user_activation_link
     - emailer.send: {type: create_user_email}
@@ -232,7 +232,7 @@ resend_activation_token:
     - collection.values: [user,$key,first_name,last_name,email]
     - read_config: [self_activation_validity,program_name]
     - let: { url: /user/activate_self, method: show_dialog }
-    - collection.insert: [token, /md5(last_insert_id()), user: $key, url, method, active: 1, valid_until: /sysdate() + interval $self_activation_validity]
+    - collection.insert: [token, id: /md5(last_insert_id()), user: $key, url, method, active: 1, valid_until: /sysdate() + interval $self_activation_validity]
     - read_server: BASE_URL
     - sql_values: select "$BASE_URL/home?token=$new_token_id" user_activation_link
     - emailer.send: {type: create_user_email}
@@ -397,7 +397,7 @@ list:
     - collection.data:
         - user
         - [partner]
-        - identifier
+        - id
         - time_added
         - email
         - first_name
@@ -423,7 +423,7 @@ list_all:
     - collection.data:
         - user
         - []
-        - identifier
+        - id
         - time_added
         - partner.name
         - email
@@ -450,7 +450,7 @@ login:
     - login
     - forgot_password: { action: dialog }
   post:
-    - collection.values: [user, [email], user: identifier, partner, first_name, last_name, cellphone, start_page, role, attempts, partner.type ]
+    - collection.values: [user, [email], user: id, partner, first_name, last_name, cellphone, start_page, role, attempts, partner.type ]
     - if "$start_page" == '':
         - collection.values: [partner, $partner, start_page]
     - if "$start_page" == '': [ read_config: start_page ]
@@ -459,7 +459,7 @@ login:
     - if $attempts > 0:
         - collection.update: [user, $user, attempts: 0]
     - read_server: [HTTP_USER_AGENT,REMOTE_ADDR,REMOTE_HOST,REQUEST_URI]
-    - collection.insert: [session, /sha1(last_insert_id()), user, partner, start_time: /now(), HTTP_USER_AGENT, REMOTE_ADDR,REQUEST_URI]
+    - collection.insert: [session, id: /sha1(last_insert_id()), user, partner, start_time: /now(), HTTP_USER_AGENT, REMOTE_ADDR,REQUEST_URI]
     - auth.login: [$new_session_id, user, $role, $base_roles, $groups, $type]
     - close_dialog
     - redirect: $start_page
@@ -479,9 +479,9 @@ login_password:
     - depends(email, validated)
     - collection.exists(user,email,$email,password,/=password('$value'))
   error:
-    - collection.values: [user, email: $email, user: identifier]
+    - collection.values: [user, email: $email, user: id]
     - collection.update: [user, $user, attempts: /value+1]
-    - collection.insert: [audit, "", user, action: Failed Login attempt, time: /sysdate(), detail: $email]
+    - collection.insert: [audit, user, action: Failed Login attempt, time: /sysdate(), detail: $email]
     - error: [password, Invalid user name or password for $email ]
 
 logout:
@@ -489,7 +489,7 @@ logout:
   audit: yes
   audit_first: yes
   post:
-    - collection.insert: [session, $sid, end_time: /sysdate(6)]
+    - collection.update: [session, $sid, end_time: /sysdate(6)]
     - auth.logoff
     - redirect: "/"
 
@@ -600,7 +600,7 @@ update_password:
     - update_password
   post:
     - read_session: email
-    - collection.values: [user,email: $email, found: identifier]
+    - collection.values: [user,email: $email, found: id]
     - collection.update: [user,$found,password: /password('$password'),attempts: 0]
     - clear_values
     - close_dialog: Password has been changed successfully
