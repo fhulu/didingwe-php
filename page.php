@@ -678,7 +678,6 @@ class page
   {
 
     $post_prefix = $field['post_prefix'];
-    $values = [];
     if ($post_prefix) {
       $offset = strlen($post_prefix);
       foreach($this->request as $key=>$value) {
@@ -686,7 +685,9 @@ class page
           $values[substr($key,$offset)] = $value;
       }
     }
-    $values = merge_options($this->read_session(), $this->request, $this->answer);
+    else
+      $values = $this->request;
+    $values = merge_options($this->read_session(), $values, $this->answer);
     $options = merge_options($this->context,$values);
     $validators = $this->load_fields('validators');
     $fields = merge_options($this->merge_stack(page::$fields_stack), $this->page_fields, $this->fields);
