@@ -555,6 +555,14 @@ class collection extends module
     return ['data'=>$this->db->read($sql, MYSQLI_NUM), 'count'=>$this->db->row_count()];
   }
 
+  private function subst_variables($value, $collection=null)
+  {
+    return preg_replace_callback('/[a-zA-Z_]\w*/', function($matches) use ($collection){
+      $match = $matches[0];
+      $variable = $this->get_column_name($match, $collection);
+      return $variable? $variable: $match;
+    }, $value);
+  }
 
   function update()
   {
@@ -567,14 +575,15 @@ class collection extends module
 
     $index = 0;
     $sets = [];
+    $collection = $this->main_collection;
     foreach($columns as $column) {
-      $sets[] = "$column = " . $values[$index++];
+      $value = $this->subst_variables($values[$index++], $collection);
+      $sets[] = "$column = $value";
     }
     $sets = implode(',', $sets);
-    $collection = $this->main_collection;
     $sql = "update `$this->main_table` set $sets where collection = '$collection' ". $this->get_filter_sql($collection);
     $this->page->sql_exec($sql);
-}
+  }
 
   function encode_array($value)
   {
