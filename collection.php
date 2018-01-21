@@ -154,7 +154,7 @@ class collection extends module
       $convert = $attr['convert'];
       $cols[] = "`$collection`.$column$convert $order";
     }
-    return sizeof($cols)? "order by ". implode(",", $cols): "";
+    return sizeof($cols)? " order by ". implode(",", $cols): "";
   }
 
 
@@ -266,17 +266,13 @@ class collection extends module
 
     $values = implode(",\n", $values);
 
+    if ($use_custom_filters) $this->update_custom_filters($this->filters);
     $joins .= $this->get_filter_joins_sql($collections);
     $sql =  "select $values from $this->main_table `$main_collection` $joins"
       . " where `$main_collection`.collection = '$main_collection'"
-      . $this->get_filter_sql($main_collection)
+      . $this->get_filter_sql($main_collection, $use_custom_filters)
       . $this->get_sort_sql();
-    //   . $this->create_filter_joins($this->filters)
-    //   . $this->join_custom_filters($use_custom_filters)
-    //   . $this->join_foreigners()
     //   . $this->create_search_join($term)
-    //   . "$sort_joins where "
-    //   . $this->get_attribute_filter($this->main_collection, $this->foreigners);
 
 
     return $sql;
@@ -329,10 +325,8 @@ class collection extends module
     return [$alias, $expanded];
   }
 
-  function join_custom_filters($use)
+  function update_custom_filters()
   {
-    if (!$use) return "";
-
     $index = -1;
     $request = $this->page->request;
     $filters = [];
@@ -343,10 +337,9 @@ class collection extends module
       $term = $request["f$index"];
       if ($term=='') continue;
       $filter = $attr;
-      $filter['value'] = " like '%$term%'";
-      $filters[] = $filter;
+      $filter['criteria'] = $attr['column'] . " like '%$term%'";
+      $this->filters[] = $filter;
     }
-    return $this->create_filter_joins($filters, "_custom");
   }
 
   function extract_header(&$args)
