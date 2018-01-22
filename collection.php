@@ -110,10 +110,9 @@ class collection extends module
     $attr['alias'] = $alias;
     $attr['aliased'] = $name != $alias;
     $this->extract_grouping($attr);
-    $attr['aggregated'] = $aggregated = $name[0] == '/';
-    if ($aggregated) $this->aggregated = true || $attr['group'];
 
-    $attr['column'] = $this->get_column_name($attr['name'], $attr['collection']);
+    $attr['derived'] = $name[0] == '/';
+    $attr['column'] = $this->get_column_name($name, $attr['collection']);
     return $attr;
   }
 
@@ -148,7 +147,7 @@ class collection extends module
     $cols = [];
     foreach($this->attributes  as $attr) {
       $order = $attr['sort_order'];
-      if (!$order || $attr['aggregated']) continue;
+      if (!$order) continue;
       $collection = $attr['collection'];
       $column = $attr['column'];
       $convert = $attr['convert'];
@@ -224,10 +223,9 @@ class collection extends module
     foreach ($this->attributes as $attr) {
       ++$counted;
       if (!$attr['column']) continue;
-      if ($attr['aggregated']) continue;
 
       $alias = $attr['alias'];
-      if (!$this->aggregated && in_array($alias, $this->hidden_columns)) continue;
+      if (in_array($alias, $this->hidden_columns)) continue;
 
       $name = $attr['foreign_name']? $attr['foreign_name']: $attr['name'];
       $parent = $attr['parent'];
@@ -236,7 +234,9 @@ class collection extends module
       else
         $alias = "`$alias`";
       $collection = $attr['collection'];
-      $value =  "`$collection`." . $attr['column'] . " $alias";
+        $value = $attr['column'] . " $alias";
+      if (!$attr['derived'])
+        $value =  "`$collection`.$value";
 
       $parent = $attr['parent'];
       if ($prev_parent && $parent != $prev_parent) {
@@ -275,25 +275,6 @@ class collection extends module
     //   . $this->create_search_join($term)
 
 
-    return $sql;
-  }
-
-  function aggregate($sql)
-  {
-    $groups = [];
-    foreach ($this->attributes as $attr) {
-      $alias = $attr['alias'];
-      if (in_array($alias, $this->hidden_columns)) continue;
-      if ($attr['aggregated'])
-        $names[] = substr($attr['name'], 1) . " `$alias`";
-      else
-        $names[] = "`$alias`";
-      if ($attr['group']) $groups[] = $alias;
-    }
-    $names = implode(",", $names);
-    $sql = "select $names from ($sql) tmp";
-    if (sizeof($groups))
-      $sql .= " group by " . implode(",", $groups);
     return $sql;
   }
 
@@ -368,7 +349,6 @@ class collection extends module
     $this->filters = $filters;
     $this->offset = $offset;
     $this->size = $size;
-    $this->aggregated = false;
     $this->attributes = [];
     $this->fields = [];
   }
@@ -405,8 +385,6 @@ class collection extends module
     $this->init_filters();
     $sql = $this->create_outer_select($use_custom_filters, $term);
     if (!$sql) return null;
-    if ($this->aggregated)
-      $sql = $this->aggregate($sql);
     $this->set_limits($sql, $this->offset, $this->size);
     return $this->page->translate_sql($sql);
   }
@@ -616,6 +594,9 @@ class collection extends module
 
   private function get_column_name($field_name, $collection=null)
   {
+    if ($field_name[0] == '/')
+      return $this->subst_variables(substr($field_name,1), $collection);
+
     if ($field_name == 'create_time')
       return $field_name;
     $fields = $this->get_fields($collection);
