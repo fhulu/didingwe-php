@@ -450,7 +450,8 @@ login:
     - login
     - forgot_password: { action: dialog }
   post:
-    - collection.values: [user, [email], user: id, partner, first_name, last_name, cellphone, start_page, role, attempts, partner.type ]
+    - read_server: [HTTP_USER_AGENT,REMOTE_ADDR,REMOTE_HOST]
+    - collection.values: [user, [email], user: id, partner, new_session_id: "/sha1(concat(email,sysdate(4)))", start_page, role, attempts, partner.type ]
     - if "$start_page" == '':
         - collection.values: [partner, $partner, start_page]
     - if "$start_page" == '': [ read_config: start_page ]
@@ -458,8 +459,7 @@ login:
     - collection.listing: [user_group_member, [user: $user], groups: group]
     - if $attempts > 0:
         - collection.update: [user, $user, attempts: 0]
-    - read_server: [HTTP_USER_AGENT,REMOTE_ADDR,REMOTE_HOST,REQUEST_URI]
-    - collection.insert: [session, id: /sha1(last_insert_id()), user, partner, start_time: /now(), HTTP_USER_AGENT, REMOTE_ADDR,REQUEST_URI]
+    - collection.insert: [session, id: $new_session_id, user, partner, start_time: /now(), HTTP_USER_AGENT, REMOTE_ADDR, REMOTE_HOST]
     - auth.login: [$new_session_id, user, $role, $base_roles, $groups, $type]
     - close_dialog
     - redirect: $start_page
