@@ -475,6 +475,7 @@ class collection extends module
     $last_index = sizeof($fields);
     foreach($args as &$arg) {
       list($name,$value) = $this->page->get_sql_pair($arg);
+      if ($name == '') continue;
       $index = array_search($name, $fields);
       if ($index === false) {
         $index = $last_index++;
