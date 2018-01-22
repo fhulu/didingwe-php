@@ -602,7 +602,7 @@ class collection extends module
     $fields = $this->get_fields($collection);
     $index = array_search($field_name, $fields);
     if ($index !== false) return "v$index";
-    if ($field_name == 'id') return $field_name;
+    if (in_array($field_name, ['id','identifier'])) return 'id';
     return null;
   }
 
