@@ -221,6 +221,7 @@ class collection extends module
     $count = sizeof($this->attributes);
     $main_collection = $this->main_collection;
     $collections = [$main_collection];
+    $likes = [];
     foreach ($this->attributes as $attr) {
       ++$counted;
       if (!$attr['column']) continue;
@@ -235,7 +236,7 @@ class collection extends module
       else
         $alias = "`$alias`";
       $collection = $attr['collection'];
-        $value = $attr['column'] . " $alias";
+        $value = $attr['column'];
       if (!$attr['derived'])
         $value =  "`$collection`.$value";
 
@@ -248,9 +249,12 @@ class collection extends module
       else if ($parent)
         $siblings[] = $value;
       else {
-        $values[] = $value;
+        $values[] = "$value $alias";
         $siblings = [];
       }
+      if ($term)
+        $likes[] = "$value like '%$term%'";
+
       $prev_parent = $parent;
       if (in_array($collection, $collections)) continue;
       $collections[] = $collection;
@@ -272,12 +276,10 @@ class collection extends module
     $joins .= $this->get_filter_joins_sql($collections);
     $sql =  "select $values from $this->main_table `$main_collection` $joins"
       . " where `$main_collection`.collection = '$main_collection'"
-      . $this->get_filter_sql($main_collection, $use_custom_filters)
-      . $this->get_sort_sql();
-    //   . $this->create_search_join($term)
-
-
-    return $sql;
+      . $this->get_filter_sql($main_collection, $use_custom_filters);
+    if (sizeof($likes))
+      $sql .= " and (" . implode(" or ", $likes) . ")";
+    return $sql . $this->get_sort_sql();
   }
 
   function expand_star($arg, $ignore)
@@ -533,7 +535,8 @@ class collection extends module
     if (is_string($last))
       array_splice($args, -1, 1, explode(',', $last));
     $sql = $this->read($args, false, $this->page->request['term']);
-    return ['data'=>$this->db->read($sql, MYSQLI_NUM)];
+    $result = $sql? $this->db->read($sql, MYSQLI_NUM): [];
+    return ['data'=> $result];
   }
 
   function exists()
