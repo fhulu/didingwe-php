@@ -424,12 +424,12 @@ class collection extends module
     return ['data'=>$this->db->read($sql, MYSQLI_NUM), 'count'=>$this->db->row_count()];
   }
 
-  private function subst_variables($value, $collection=null)
+  private function subst_variables($value, $collection)
   {
     return preg_replace_callback('/[a-zA-Z_]\w*/', function($matches) use ($collection){
       $match = $matches[0];
       $variable = $this->get_column_name($match, $collection);
-      return $variable? $variable: $match;
+      return $variable? "`$collection`.$variable": $match;
     }, $value);
   }
 
