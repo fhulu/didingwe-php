@@ -64,11 +64,11 @@ class collection extends module
       list($name, $value) = assoc_element($filter);
       $attr = $this->init_attr($name);
       if (is_null($value))
-        $value = "= '\$$name'";
+        $value = " = '\$$name'";
       else if ($value[0] == '/')
         $value = substr($value,1);
       else if (!is_array($value))
-        $value = "= '". addslashes($value). "'";
+        $value = " = '". addslashes($value). "'";
       $filter = $attr;
 
       $collection = $filter['collection'];
@@ -359,10 +359,8 @@ class collection extends module
     $this->identifier_filter = null;
     if ($filters == '')
       $filters = [];
-    else if (is_string($filters)) {
-      $this->identifier_filter = $filters;
-      $filters = [];
-    }
+    else if (is_string($filters))
+      $filters = [ ['id'=>$filters] ] ;
     else if (is_assoc($filters))
       $filters = [$filters];
     $this->main_collection = $collection;
@@ -472,7 +470,7 @@ class collection extends module
       $sets[] = "$column = $value";
     }
     $sets = implode(',', $sets);
-    $sql = "update `$this->main_table` set $sets where collection = '$collection' ". $this->get_filter_sql($collection);
+    $sql = "update `$this->main_table` `$collection` set $sets where collection = '$collection' ". $this->get_filter_sql($collection);
     $this->page->sql_exec($sql);
   }
 
