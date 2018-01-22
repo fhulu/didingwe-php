@@ -111,6 +111,7 @@ class collection extends module
     $attr['aliased'] = $name != $alias;
     $this->extract_grouping($attr);
 
+    $name = $attr['name'];
     $attr['derived'] = $name[0] == '/';
     $attr['column'] = $this->get_column_name($name, $attr['collection']);
     return $attr;
