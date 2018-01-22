@@ -255,9 +255,10 @@ class collection extends module
       if (in_array($collection, $collections)) continue;
       $collections[] = $collection;
       $table = $attr['table'];
+      $local_name = $attr['local_name'];
       $joins .= " join $table `$collection` on "
         . " `$collection`.collection = '$collection' "
-        . " and `$collection`.id = `$main_collection`." . $this->get_column_name($collection)
+        . " and `$collection`.id = `$main_collection`." . $this->get_column_name($local_name)
         . $this->get_filter_sql($collection);
 
     }
