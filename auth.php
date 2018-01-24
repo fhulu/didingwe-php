@@ -1,25 +1,35 @@
 <?php
 class auth {
   var $page;
-  var $roles;
-  var $sid;
 
   function __construct(&$page)
   {
     $this->page = $page;
   }
 
-  function login($sid, $user, $role, $other_roles, $groups, $type)
+  function login($sid, $partner, $user, $role, $other_roles, $groups, $type)
   {
     if (!is_array($other_roles)) $other_roles = explode(',', $other_roles);
     $roles = array_merge($other_roles,[$role, 'auth']);
-    $_SESSION["auth"] = ["id"=>$sid, 'user'=>$user,'roles'=>$roles, 'groups'=>$groups, 'partner_type'=>$type];
+    $_SESSION["auth"] = ["id"=>$sid, 'partner'=>$partner, 'user'=>$user,'roles'=>$roles, 'groups'=>$groups, 'partner_type'=>$type];
   }
 
   function get_session_id()
   {
     $session =  $_SESSION['auth'];
     return isset($session)? $session['id']: null;
+  }
+
+  function get_partner()
+  {
+    $session =  $_SESSION['auth'];
+    return isset($session)? $session['partner']: 0;
+  }
+
+  function get_user()
+  {
+    $session =  $_SESSION['auth'];
+    return isset($session)? $session['user']: 0;
   }
 
   function get_roles()
