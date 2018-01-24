@@ -32,6 +32,11 @@ class auth {
     return isset($session)? $session['user']: 0;
   }
 
+  function get_owner()
+  {
+    return ['partner'=>$this->get_partner(), 'user'=>$this->get_user()];
+  }
+
   function get_roles()
   {
     $session = $_SESSION["auth"];
