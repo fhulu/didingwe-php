@@ -540,3 +540,11 @@ function array_exclude($array, $exclusions)
   }
   return $result;
 }
+
+function json_encode_array($value)
+{
+  if (!is_array($value)) return $value;
+  $encoded = json_encode($value);
+  if (!$encoded) return $value;
+  return "'". addslashes($encoded) . "'";
+}
