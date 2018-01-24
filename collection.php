@@ -9,14 +9,12 @@ class collection extends module
   var $star_columns;
   var $columns;
   var $sort_columns;
-  static $sys_columns = ['partner','user','access','create_time'];
+  static $sys_columns = ['partner', 'user', 'access', 'create_time'];
   function __construct($page)
   {
     parent::__construct($page);
     $this->auth = $page->get_module('auth');
-    $this->partner = $this->auth->get_partner();
-    $this->user = $this->auth->get_user();
-    $this->sys_values = [$this->partner, $this->user, 777, 'now()'];
+    $this->sys_fields = array_merge($this->auth->get_owner(), ['access'=>777, 'create_time'=>'now()']);
     $this->read_tables();
     $this->columns = [];
     $this->hidden_columns = [];
@@ -348,7 +346,7 @@ class collection extends module
     $this->identifier_filter = null;
     if ($filters == '')
       $filters = [];
-    else if (is_string($filters))
+    else if (is_string($filters) || is_numeric($filters))
       $filters = [ ['id'=>$filters] ] ;
     else if (is_assoc($filters))
       $filters = [$filters];
@@ -388,8 +386,9 @@ class collection extends module
     $this->extract_header($args);
     $table = $this->get_table($this->collection);
     $fields = $this->get_fields($this->collection);
-    if (!$fields) return null;
+    if (empty($fields)) return null;
     $this->init_attributes($args);
+    log::debug_json("read filters", $this->filters);
     $this->init_filters();
     $sql = $this->create_outer_select($use_custom_filters, $term);
     if (!$sql) return null;
@@ -446,13 +445,13 @@ class collection extends module
     $this->extract_header($args);
     $this->page->parse_delta($args);
     $this->init_filters();
-    list($columns, $values) = $this->update_header($args);
-
-    $index = 0;
-    $sets = [];
     $collection = $this->main_collection;
-    foreach($columns as $column) {
-      $value = $this->subst_variables($values[$index++], $collection);
+    $this->update_header($collection, $args);
+    $sets = [];
+    foreach($args as $arg) {
+      list($name,$value) = $this->page->get_sql_pair($arg);
+      $column = $this->get_column_name($name, $collection);
+      $value = $this->subst_variables($value, $collection);
       $sets[] = "$column = $value";
     }
     $sets = implode(',', $sets);
@@ -460,103 +459,39 @@ class collection extends module
     $this->page->sql_exec($sql);
   }
 
-  function encode_array($value)
-  {
-    if (!is_array($value)) return $value;
-    $encoded = json_encode($value);
-    if (!$encoded) return $value;
-    return "'". addslashes($encoded) . "'";
-  }
-
-
-  private function set_ownership($type, &$columns, &$fields, &$values)
-  {
-    $index = array_search($type, $columns);
-    if (in_array($type, $columns)) return;
-    array_unshift($columns, $type);
-    $value = $this->{$type};
-    array_unshift($fields, $value);
-    array_unshift($values, $value);
-    log::debug_json("set_ownership $type columns", $columns);
-    log::debug_json("set_ownership $type fields $value", $fields);
-    log::debug_json("set_ownership $type values $value", $values);
-  }
-
-  private function update_header($args)
-  {
-    $collection = $this->main_collection;
-    $table = $this->get_table($collection);
-    $fields = $this->get_fields($collection);
-    $sys_count = sizeof(collection::$sys_columns);
-    $columns = collection::$sys_columns;
-    $values = $this->sys_values;
-    $new_names = [];
-    $id_column = null;
-    $field_count = sizeof($fields);
-    $index = 0;
-    foreach($args as &$arg) {
-      list($name,$value) = $this->page->get_sql_pair($arg);
-      if ($name == '') continue;
-      $column = $this->get_column_name($name);
-      if (!$column) {
-        $column = "v$index";
-        $fields[] = $name;
-        ++$index;
-      }
-      $value = $this->encode_array($value);
-      $prev_index = array_search($column, $columns);
-      if ($prev_index === false) {
-        $columns[] = $column;
-        $values[] = $value;
-      }
-      else {
-        $values[$prev_index] = $value;
-      }
-    }
-
-    $db = $this->db;
-    if ($index == 0) return [$columns, $values];
-    log::debug_json("columns", $columns);
-    log::debug_json("fields", $fields);
-    log::debug_json("values", $values);
-    if ($field_count == $sys_count) {
-      $fields = implode("','", $fields);
-      $column_names = implode(',', $columns);
-      $db->exec("insert into `$table` (collection, $column_names) values('$collection-fields', '$fields')");
-    }
-    else {
-      $index = 0;
-      $sets = [];
-      foreach(array_slice($fields, $field_count) as $field) {
-        $column = $columns[$index];
-        log::debug("setting $column at $index to $field");
-        $sets[] = "$column = '$field'";
-        ++$index;
-      }
-
-      $sets = implode(',', $sets);
-      $db->exec("update `$table` set $sets where collection = '$collection-fields' and partner = $this->partner");
-    };
-    return [$columns, $values, $index];
-  }
-
   function insert()
   {
     $args = page::parse_args(func_get_args());
     page::verify_args($args, "collection.insert", 2);
     $collection = $this->main_collection = array_shift($args);
-    $table = $this->get_table($collection);
-    list($columns, $values) = $this->update_header($args);
+    $this->update_header($collection, $args);
+    $columns = collection::$sys_columns;
+    $values = array_values($this->sys_fields);
+    $custom_id = false;
+    foreach ($args as $arg) {
+      list($name,$value) = $this->page->get_sql_pair($arg);
+      $column = $this->get_column_name($name);
+      $value = json_encode_array($value);
+      $sys_index = array_search($name, collection::$sys_columns);
+      if ($sys_index !== false) {
+        $values[$sys_index] = $value;
+        continue;
+      }
+      $columns[] = $column;
+      $values[] = $value;
+      if (in_array($name,  ['id', 'identifier']))
+        $custom_id = $column;
+
+    }
     $columns = implode(',', $columns);
     $values = implode(',', $values);
+    $table = $this->get_table($collection);
     $sql = $this->page->translate_sql("insert into `$table` (collection, $columns) values('$collection', $values)");
-    $db = $this->db;
-    $db->exec($sql);
-    $id_column = $this->get_column_name('id');
-    if ($id_column == 'id')
-      $id = $db->read_one_value("select last_insert_id()");
+    $new_id = $this->db->insert($sql);
+    if ($custom_id)
+      $id = $db->read_one_value("select $custom_id from `$table` where id = last_insert_id()");
     else
-      $id = $db->read_one_value("select $id_column from `$table` where id = last_insert_id()");
+      $id = $new_id;
     return ["new_${collection}_id"=>$id];
   }
 
@@ -611,18 +546,15 @@ class collection extends module
     if (is_null($collection)) $collection = $this->main_collection;
     if (!empty($this->fields[$collection]))
       return array_exclude($this->fields[$collection], $exclusions);
+    $partner = $this->sys_fields['partner'];
     $table = $this->get_table($collection);
-    $sql = "select * from `$table` where partner = $this->partner and collection = '$collection-fields'";
+    $sql = "select * from `$table` where partner = $partner and collection = '$collection-fields'";
     if ($this->partner>0)
       $sql .= " union select * from `$table` where partner = 0 and collection = '$collection-fields'";
     $names = $this->db->read_one($sql, MYSQLI_NUM);
-    if (!$names) {
-      $names = collection::$sys_columns;
-    }
-    else {
-      array_splice($names, 0, 6, collection::$sys_columns);
-      $names = array_exclude($names, [null]);
-    }
+    if (empty($names)) return $names;
+    $names = array_exclude($names, [null]);
+    array_splice($names, 0, 6, collection::$sys_columns);
     $this->fields[$collection] = $names;
     return $names;
   }
@@ -636,9 +568,60 @@ class collection extends module
 
     $fields = $this->get_fields($collection);
     $index = array_search($field_name, $fields);
-    if ($index !== false) return "v".($index-4);
+    if ($index !== false) return "v".($index-sizeof(collection::$sys_columns));
     if (in_array($field_name, ['id','identifier'])) return 'id';
     return null;
+  }
+
+  private function create_header($collection, $args)
+  {
+    $index = 0;
+    $columns = $sys_names = $fields = collection::$sys_columns;
+    $values = array_values($this->sys_fields);
+    foreach($args as $arg) {
+      list($name,$value) = $this->page->get_sql_pair($arg);
+      $sys_index = array_search($name, $sys_names);
+      if ($sys_index !== false) {
+        $values[$sys_index] = $value;
+        continue;
+      }
+      $columns[] = "v$index";
+      $values[] = "'$name'";
+      $fields[] = $name;
+      ++$index;
+    }
+    $result = [$columns, $values];
+    $columns = implode(",", $columns);
+    $values = implode(",", $values);
+    $table = $this->get_table($collection);
+    $this->db->exec("insert into `$table` (collection, $columns) values('$collection-fields', $values)");
+    $this->fields[$collection] = $fields;
+  }
+
+  private function update_header($collection, $args)
+  {
+    $fields = $this->get_fields($collection);
+    $columns = $values = [];
+    $count = count($fields);
+    if (!$count)
+      return $this->create_header($collection, $args);
+
+    $sets = [];
+    $count -= count(collection::$sys_columns);
+    foreach($args as &$arg) {
+      list($name,$value) = $this->page->get_sql_pair($arg);
+      $column = $this->get_column_name($name, $collection);
+      if ($column) continue;
+      $fields[] = $name;
+      $sets[] = "v$count='$name'";
+      ++$count;
+    }
+    if (empty($sets)) return;
+    $sets = implode(',', $sets);
+    $table = $this->get_table($collection);
+    $partner = $this->sys_fields['partner'];
+    $this->db->exec("update `$table` set $sets where collection = '$collection-fields' and partner = $partner");
+    $this->fields[$collection] = $fields;
   }
 
   function fields($collection, $key)
