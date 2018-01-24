@@ -430,11 +430,12 @@ class collection extends module
   }
 
   private function subst_variables($value, $collection)
-  {
-    return preg_replace_callback('/[a-zA-Z_]\w*/', function($matches) use ($collection){
-      $match = $matches[0];
-      $variable = $this->get_column_name($match, $collection);
-      return $variable? "`$collection`.$variable": $match;
+  {   
+   return preg_replace_callback('/(\$\w*+)|(\w+\()|(\d+)|(\w+)/', function($matches) use ($collection){
+      $variable = $matches[4];
+      if (!$variable) return $matches[0];
+      $column = $this->get_column_name($variable, $collection);
+      return $matches[1].$matches[2].$matchs[3].$column;
     }, $value);
   }
 
