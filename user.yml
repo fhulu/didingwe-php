@@ -460,7 +460,7 @@ login:
     - if $attempts > 0:
         - collection.update: [user, $user, attempts: 0]
     - collection.insert: [session, id: $new_session_id, user, partner, start_time: /now(), HTTP_USER_AGENT, REMOTE_ADDR, REMOTE_HOST]
-    - auth.login: [$new_session_id, user, $role, $base_roles, $groups, $type]
+    - auth.login: [$new_session_id, $partner, user, $role, $base_roles, $groups, $type]
     - close_dialog
     - redirect: $start_page
   audit:
