@@ -388,7 +388,6 @@ class collection extends module
     $fields = $this->get_fields($this->collection);
     if (empty($fields)) return null;
     $this->init_attributes($args);
-    log::debug_json("read filters", $this->filters);
     $this->init_filters();
     $sql = $this->create_outer_select($use_custom_filters, $term);
     if (!$sql) return null;
@@ -432,10 +431,11 @@ class collection extends module
   private function subst_variables($value, $collection)
   {
     return preg_replace_callback('/("[^"]*")|(\'[^\']*\')|(\$\w*+)|(\w+\()|(\d+)|(\w+)/', function($matches) use ($collection, $value){
-      if (count($matches) < 7) return $matches[0];
+      $full_match = array_shift($matches);
+      if (count($matches) < 6) return $full_match;
       $variable = array_pop($matches);
       $column = $this->get_column_name($variable, $collection);
-      return implode($matches).$column;
+      return implode($matches)."`$collection`.$column";
     }, $value);
   }
 
@@ -490,7 +490,7 @@ class collection extends module
     $sql = $this->page->translate_sql("insert into `$table` (collection, $columns) values('$collection', $values)");
     $new_id = $this->db->insert($sql);
     if ($custom_id)
-      $id = $db->read_one_value("select $custom_id from `$table` where id = last_insert_id()");
+      $id = $this->db->read_one_value("select $custom_id from `$table` where id = last_insert_id()");
     else
       $id = $new_id;
     return ["new_${collection}_id"=>$id];
