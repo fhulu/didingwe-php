@@ -15,7 +15,7 @@ class collection extends module
   {
     parent::__construct($page);
     $this->auth = $page->get_module('auth');
-    $this->sys_fields = array_merge($this->auth->get_owner(), ['active'=>1], ['access'=>777, 'create_time'=>'now()']);
+    $this->sys_fields = array_merge($this->auth->get_owner(), ['access'=>777, 'active'=>'1', 'create_time'=>'now()']);
     $this->read_tables();
     $this->columns = [];
     $this->hidden_columns = [];
