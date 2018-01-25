@@ -171,12 +171,14 @@ confirm_registration:
     - write_session: new_user_id,partner
     - let: { registrant_name: $first_name $last_name, registrant_email: $email }
     - clear_values: [first_name, last_name, email]
-    - foreach:
-        - collection.data: [user, [partner: $registrar, role: $registrar_role],first_name, last_name, email]
-        - if $email_new_registration:
-            emailer.send: { type: new_registration_email, to: $first_name $last_name<$email> }
-        - clear_values: [first_name, last_name, email]
-    - keep_values: [new_user_id]
+    - collection.values: [collection, [name: $registrar], registrar: id ]
+    - if $registrar != '':
+        - foreach:
+            - collection.data: [user, [partner: $registrar, role: $registrar_role],first_name, last_name, email]
+            - if $email_new_registration:
+                emailer.send: { type: new_registration_email, to: $first_name $last_name<$email> }
+            - clear_values: [first_name, last_name, email]
+    - keep_values: [new_user_id, partner]
     - clear_session: title,first_name,last_name,cellphone,password
 
 new_registration_email:
@@ -460,7 +462,7 @@ login:
     - if $attempts > 0:
         - collection.update: [user, $user, attempts: 0]
     - collection.insert: [session, id: $new_session_id, user, partner, start_time: /now(), HTTP_USER_AGENT, REMOTE_ADDR, REMOTE_HOST]
-    - auth.login: [$new_session_id, $partner, user, $role, $base_roles, $groups, $type]
+    - auth.login: [$new_session_id, $partner, $user, $role, $base_roles, $groups, $type]
     - close_dialog
     - redirect: $start_page
   audit:
