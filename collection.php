@@ -121,6 +121,8 @@ class collection extends module
     $name = $attr['name'];
     $attr['derived'] = $name[0] == '/';
     $attr['column'] = $this->get_column_name($name, $attr['collection'], $partner);
+    if ($alias == 'style')
+      log::debug_json("style column ", $attr);
     return $attr;
   }
 
@@ -452,7 +454,8 @@ class collection extends module
       if (count($matches) < 6) return $full_match;
       $variable = array_pop($matches);
       $column = $this->get_column_name($variable, $collection, $partner);
-      return implode($matches)."`$collection`.$column";
+      if (!is_null($column)) $variable = "`$collection`.$column";
+      return implode($matches).$variable;
     }, $value);
   }
 
