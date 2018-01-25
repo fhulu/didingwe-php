@@ -17,8 +17,7 @@ user_list:
     - what: { width: 18%, name: Action }
     - detail: { width: 62% }
   values:
-    - collection.values: [session, $sid, user]
-    - collection.data: [audit, [user], time, action, detail]
+    - collection.data: [audit, [user], create_time, action, detail]
     - clear_values: [user]
 
 partner_list:
@@ -33,8 +32,7 @@ partner_list:
   values:
     - _reset
     - collection.sort_on: sort
-    - collection.values: [session, $sid, partner]
-    - collection.data: [audit, [partner], time, user.email, action, detail]
+    - collection.data: [audit, [partner], create_time, user.email, action, detail]
     - clear_values: [partner]
 
 system_list:
@@ -46,4 +44,4 @@ system_list:
   values:
     - _reset
     - collection.sort_on: sort
-    - collection.data: [audit, [], time, partner.name, user.email, action, detail]
+    - collection.data: [audit, [], create_time, partner.name, user.email, action, detail]
