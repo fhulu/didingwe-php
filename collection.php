@@ -66,7 +66,11 @@ class collection extends module
     foreach($this->filters as &$filter) {
       list($name, $value) = assoc_element($filter);
       $attr = $this->init_attr($name, $partner);
-      if (is_null($value))
+      if (in_array($name, collection::$sys_columns) && is_null($value)) {
+        $value = $this->sys_fields[$name];
+        $value = " = if('\$$name'='',$value, '\$$name')";
+      }
+      else if (is_null($value))
         $value = " = '\$$name'";
       else if ($value[0] == '/')
         $value = substr($value,1);
