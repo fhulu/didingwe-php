@@ -267,9 +267,10 @@ class collection extends module
       $collections[] = $collection;
       $table = $attr['table'];
       $local_name = $attr['local_name'];
+      $id_column = $this->get_column_name('id', $collection, $partner);
       $joins .= " join $table `$collection` on "
         . " `$collection`.collection = '$collection' "
-        . " and `$collection`.id = `$main_collection`." . $this->get_column_name($local_name, $main_collection, $partner)
+        . " and `$collection`.$id_column = `$main_collection`." . $this->get_column_name($local_name, $main_collection, $partner)
         . $this->get_filter_sql($collection);
 
     }
