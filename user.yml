@@ -400,7 +400,7 @@ list:
         - user
         - [partner]
         - id
-        - time_added
+        - create_time
         - email
         - first_name
         - last_name
@@ -409,8 +409,6 @@ list:
         - status: /if(active,'active','inactive')
         - style: /if(active,'active','inactive')
         - actions: /if(active,'expand,slide,edit,deactivate',if(password='', 'slide,edit,resend_activation_token','expand,slide,edit,activate'))
-        - active
-        - password
 
 list_all:
   name: System Users
@@ -436,7 +434,6 @@ list_all:
         - status: /if(active,'active','inactive')
         - style: /if(active,'active','inactive')
         - actions: /if(active,'slide,edit,deactivate','slide,edit,activate')
-        - active
 
 
 login:
