@@ -81,7 +81,7 @@ class collection extends module
       $collection = $filter['collection'];
       $column = $this->get_column_name($attr['name'], $collection, $partner);
       if ($column)
-        $filter['criteria'] = "`$collection`.$column$value";
+        $filter['criteria'] = "`$collection`.$column $value";
     }
   }
 
