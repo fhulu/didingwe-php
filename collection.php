@@ -9,13 +9,13 @@ class collection extends module
   var $star_columns;
   var $columns;
   var $sort_columns;
-  static $sys_columns = ['partner', 'user', 'access', 'create_time'];
+  static $sys_columns = ['partner', 'user', 'access', 'active', 'create_time'];
   static $sys_collections = ['partner', 'user', 'session', 'audit'];
   function __construct($page)
   {
     parent::__construct($page);
     $this->auth = $page->get_module('auth');
-    $this->sys_fields = array_merge($this->auth->get_owner(), ['access'=>777, 'create_time'=>'now()']);
+    $this->sys_fields = array_merge($this->auth->get_owner(), ['active'=>1], ['access'=>777, 'create_time'=>'now()']);
     $this->read_tables();
     $this->columns = [];
     $this->hidden_columns = [];
@@ -569,7 +569,7 @@ class collection extends module
     $names = $this->db->read_one($this->page->translate_sql($sql), MYSQLI_NUM);
     if (empty($names)) return $names;
     $names = array_exclude($names, [null]);
-    array_splice($names, 0, 6, collection::$sys_columns);
+    array_splice($names, 0, sizeof(collection::$sys_columns)+2, collection::$sys_columns);
     $this->fields["$collection@$partner"] = $names;
     return $names;
   }
