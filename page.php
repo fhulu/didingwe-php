@@ -860,12 +860,12 @@ class page
     $name = addslashes($name);
     $detail = addslashes($detail);
     $collection = $this->get_module('collection');
-    $sid = $this->get_module('auth')->get_session_id();
+    $auth = $this->get_module('auth');
+    $sid = $auth->get_session_id();
     if (!$sid) return;
-    $collection->unhide('user','partner');
-    $user = $collection->values('session', $sid, 'user');
-    $partner = $collection->values('session', $sid, 'partner');
-    $collection->insert('audit', ['session'=>'$sid'], ['time'=>"/sysdate()"], $user, $partner, ['action'=>$name], ['detail'=>$detail]);
+    $user = $auth->get_user();
+    $partner = $auth->get_partner();
+    $collection->insert('audit', ['session'=>'$sid'], ['partner'=>$partner], ['user'=>$user], ['action'=>$name], ['detail'=>$detail]);
   }
 
   function action()
