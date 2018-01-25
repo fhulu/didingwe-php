@@ -119,10 +119,11 @@ class collection extends module
     $this->extract_grouping($attr);
 
     $name = $attr['name'];
-    $attr['derived'] = $name[0] == '/';
-    $attr['column'] = $this->get_column_name($name, $attr['collection'], $partner);
-    if ($alias == 'style')
-      log::debug_json("style column ", $attr);
+    if ($name == '')
+      $attr['column'] = "''";
+    else
+      $attr['column'] = $this->get_column_name($name, $attr['collection'], $partner);
+    $attr['derived'] = $name[0] == '/' || $name == '';
     return $attr;
   }
 
@@ -233,7 +234,6 @@ class collection extends module
     $likes = [];
     foreach ($this->attributes as $attr) {
       ++$counted;
-      if (!$attr['column']) continue;
 
       $alias = $attr['alias'];
       if (in_array($alias, $this->hidden_columns)) continue;
