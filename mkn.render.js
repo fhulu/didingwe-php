@@ -457,6 +457,25 @@ mkn.render = function(options)
     return obj;
   }
 
+  var setResponsive = function(obj, field) {
+    var responsive = field.responsive;
+    if (!responsive) return;
+    var queries = {
+      small: 'screen and (max-width:600px)',
+      medium: 'screen and (min-width:601px) and (max-width:992px)',
+      large: 'screen and (min-width:993px)'
+    };
+    for (var size in queries) {
+      var classes = responsive[size];
+      if (!classes) continue;
+      enquire.register(queries[size], {
+        match: function() { obj.addClass(classes.join(' ')); },
+        unmatch: function() { obj.removeClass(classes.join(' ')); }
+      });
+    }
+
+  }
+
   this.create =  function(parent, key, init)
   {
     var field = key===undefined? parent: parent[key];
@@ -524,7 +543,7 @@ mkn.render = function(options)
 
     setVisible(obj, field);
     setDisabled(obj, field);
-
+    setResponsive(obj, field);
     runJquery(obj, field);
     obj.data('didi-field', field);
     if ('didi-functions' in field) obj.addClass('didi-watcher');

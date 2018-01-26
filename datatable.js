@@ -135,9 +135,9 @@
         return;
       }
       if (this.options.page_size !== undefined) this.showPaging(parseInt(data.total));
-
+      this.no_records.hide();
       if (data.data.length == 0 && this.body().children().length == 0 && this.no_records)
-        this.element.replaceWith(this.no_records.show());
+        this.element.append(this.no_records.show());
 
       for(var i in data.data) {
         this.addRow(data.data[i]);
@@ -631,8 +631,10 @@
       })
       .on('delete', 'tr', function(e) {
         $(this).remove();
-        e.stopPropagation();
         return $(this);
+      })
+      .on('delete', function(e) {
+        e.stopPropagation();
       })
       .on('setRowStyles', function(e, key, styles) {
         if (!$(e.target).is(el)) return;
