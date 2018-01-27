@@ -12,6 +12,7 @@ class collection extends module
   static $sys_columns = ['partner', 'user', 'access', 'active', 'create_time'];
   static $sys_collections = ['partner', 'user', 'session', 'audit'];
   var $partner;
+  var $joins;
   function __construct($page)
   {
     parent::__construct($page);
@@ -27,6 +28,7 @@ class collection extends module
     $this->dynamic_sorting = true;
     $this->foreigners = [];
     $this->sorts = [];
+    $this->joine = [];
   }
 
   function read_tables()
@@ -67,7 +69,7 @@ class collection extends module
   {
     foreach($this->filters as &$filter) {
       list($name, $value) = assoc_element($filter);
-      $attr = $this->init_attr($name);
+      $this->init_attr($name, $attr);
       if (in_array($name, collection::$sys_columns) && is_null($value)) {
         $value = $this->sys_fields[$name];
         $value = " = if('\$$name'='',$value, '\$$name')";
@@ -80,53 +82,40 @@ class collection extends module
         $value = " = '". addslashes($value). "'";
       $filter = $attr;
 
+      $this->update_joins($filter);
       $collection = $filter['collection'];
-      $column = $this->get_column_name($attr['name'], $collection);
+      $column = $this->get_column_name($attr['name'], $collection, $filter);
       if ($column)
         $filter['criteria'] = "`$collection`.$column $value";
     }
   }
 
-  function init_attr($arg)
+  function init_attr($arg, &$attr)
   {
+    $aliased = false;
     if (is_string($arg))
       $name = $alias = $arg;
     else if (($aliased = is_assoc($arg))) {
       list($alias, $name) = assoc_element($arg);
       if (is_assoc($name)) $name = $alias;
     }
-    list($local_name, $foreign_collection, $foreign_name) = explode('.', $name);
-    if (isset($foreign_collection)) {
-      $name = $foreign_name;
-      if (!isset($foreign_name)) {
-        $name = $foreign_name = $foreign_collection;
-        $foreign_collection = $local_name;
-      }
-      $attr['local_name'] = $local_name;
-      $attr['foreign_name'] = $foreign_name;
-      $attr['table'] = $this->get_table($foreign_collection);
-      $attr['collection'] = $foreign_collection;
-      if (!in_array($foreign_name, $this->foreigners))
-        $this->foreigners[] = $foreign_collection;
-      if (!$aliased) $alias = $foreign_name;
-    }
-    else {
-      $attr['table'] = $this->main_table;
-      $attr['collection'] = $this->main_collection;
-    }
-
     $attr['name'] = $name;
+    $attr['table'] = $this->main_table;
+    $attr['collection'] = $this->main_collection;
     $attr['alias'] = $alias;
     $attr['aliased'] = $name != $alias;
     $this->extract_grouping($attr);
+    $attr['derived'] = $derived = $name[0] == '/' || $name == '';
+    if (!$derived)
+      $this->update_joins($attr);
 
     $name = $attr['name'];
+
     if ($name == '')
-      $attr['column'] = "''";
+      $column = "''";
     else
-      $attr['column'] = $this->get_column_name($name, $attr['collection']);
-    $attr['derived'] = $name[0] == '/' || $name == '';
-    return $attr;
+      $column = $this->get_column_name($name, $attr['collection'], $attr);
+    $attr['column'] = $column;
   }
 
   function init_attributes($args, $parent=null, &$index=1, &$aliases=[])
@@ -144,7 +133,7 @@ class collection extends module
         continue;
       }
 
-      $attr = $this->init_attr($arg);
+      $this->init_attr($arg, $attr);
       if (in_array($attr['alias'], $this->sort_columns) || in_array("$index", $this->sort_columns)) {
         if (!$attr['sort_order']) $attr['sort_order'] = $this->page->request['sort_order'];
       }
@@ -169,34 +158,6 @@ class collection extends module
     return sizeof($cols)? " order by ". implode(",", $cols): "";
   }
 
-
-  function get_attribute_filter($collection, $foreigners=[], $alias="")
-  {
-    $names = [];
-    $set_names = function($collection, $foreign) use (&$names) {
-      foreach($this->attributes as $attr) {
-        if ($attr['aggregated'] || $attr['collection'] != $collection || $attr['name'] == 'identifier') continue;
-        if ($foreign)
-          $name = $attr['local_name'];
-        else if ($attr['foreign_name'])
-          $name = $attr['foreign_name'];
-        else
-          $name = $attr['name'];
-        $names[] = "'$name'";
-      }
-    };
-    $set_names($collection, false);
-    foreach($foreigners as $foreigner) {
-      $set_names($foreigner, true);
-    }
-    if (!$alias) $alias = "`$collection`";
-    $sql = "$alias.collection = '$collection' ";
-    if (empty($names)) return $sql;
-
-    $names = implode(",", $names);
-    return $sql . " and $alias.attribute in ($names)";
-  }
-
   private function get_filter_sql($collection)
   {
     $criteria = [];
@@ -208,19 +169,22 @@ class collection extends module
     return " and " . implode(" and ", $criteria);
   }
 
-  private function get_filter_joins_sql($processed)
+  private function get_joins_sql()
   {
-    $main_collection = $this->main_collection;
     $sql = "";
-    foreach($this->filters as $filter) {
-      $collection = $filter['collection'];
-      if (in_array($collection, $processed)) continue;
-      $table = $filter['table'];
-      $sql .= " join $table `$collection` on "
-        . " `$collection`.collection = '$collection' "
-        . " and `$collection`.id = `$main_collection`." . $this->get_column_name($collection, $main_collection)
+    $main_collection = $this->main_collection;
+    $joined = [];
+    foreach($this->joins as $key=>$join) {
+      if (in_array($key, $joined)) continue;
+      $joined[] = $key;
+      $collection = $join['collection'];
+      $table = $join['table'];
+      $local_name = $join['local_name'];
+      $id_column = $this->get_column_name('id', $collection);
+      $sql .= " join $table `$local_name` on "
+        . " `$local_name`.collection = '$collection' "
+        . " and `$local_name`.$id_column = `$main_collection`." . $this->get_column_name($local_name, $main_collection)
         . $this->get_filter_sql($collection);
-      $processed[] = $collection;
     }
     return $sql;
   }
@@ -232,7 +196,6 @@ class collection extends module
     $siblings = [];
     $count = sizeof($this->attributes);
     $main_collection = $this->main_collection;
-    $collections = [$main_collection];
     $likes = [];
     foreach ($this->attributes as $attr) {
       ++$counted;
@@ -240,7 +203,6 @@ class collection extends module
       $alias = $attr['alias'];
       if (in_array($alias, $this->hidden_columns)) continue;
 
-      $name = $attr['foreign_name']? $attr['foreign_name']: $attr['name'];
       $parent = $attr['parent'];
       if ($parent)
         $alias = "";
@@ -269,15 +231,6 @@ class collection extends module
         $likes[] = "$value like '%$term%'";
 
       $prev_parent = $parent;
-      if (in_array($collection, $collections)) continue;
-      $collections[] = $collection;
-      $table = $attr['table'];
-      $local_name = $attr['local_name'];
-      $id_column = $this->get_column_name('id', $collection);
-      $joins .= " join $table `$collection` on "
-        . " `$collection`.collection = '$collection' "
-        . " and `$collection`.$id_column = `$main_collection`." . $this->get_column_name($local_name, $main_collection)
-        . $this->get_filter_sql($collection);
 
     }
     if (!sizeof($values)) return null;
@@ -287,8 +240,8 @@ class collection extends module
     $values = implode(",\n", $values);
 
     if ($use_custom_filters) $this->update_custom_filters($this->filters);
-    $joins .= $this->get_filter_joins_sql($collections);
-    $sql =  "select $values from $this->main_table `$main_collection` $joins"
+    $sql =  "select $values from $this->main_table `$main_collection`"
+      . $this->get_joins_sql()
       . " where `$main_collection`.collection = '$main_collection'"
       . $this->get_filter_sql($main_collection, $use_custom_filters);
     if (sizeof($likes))
@@ -369,6 +322,7 @@ class collection extends module
     $this->size = $size;
     $this->attributes = [];
     $this->fields = [];
+    $this->joins = [];
   }
 
 
@@ -440,21 +394,50 @@ class collection extends module
 
   function data()
   {
-    $sql = $this->read(func_get_args(), true);
-    if (!$sql) return ['data'=>[], 'count'=>0];
-    if ($this->page->foreach)
-      return $this->db->read($sql, MYSQLI_ASSOC);
-    return ['data'=>$this->db->read($sql, MYSQLI_NUM), 'count'=>$this->db->row_count()];
+     $sql = $this->read(func_get_args(), true);
+     if (!$sql) return ['data'=>[], 'count'=>0];
+     if ($this->page->foreach)
+       return $this->db->read($sql, MYSQLI_ASSOC);
+     return ['data'=>$this->db->read($sql, MYSQLI_NUM), 'count'=>$this->db->row_count()];
+  }
+
+  private function update_joins(&$attr) {
+    list($local_name, $foreign_collection, $foreign_name) = explode('.', $attr['name']);
+    if (!isset($foreign_collection)) return;
+    if (isset($foreign_name)) {
+      $name = $foreign_name;
+    }
+    else {
+      $name = $foreign_name = $foreign_collection;
+      $foreign_collection = $local_name;
+    }
+    $foreign_key = "$local_name.$foreign_collection";
+    $attr['name'] = $name;
+    if (!$attr['aliased']) $attr['alias'] = $name;
+    $attr['local_name'] = $local_name;
+    $attr['foreign_name'] = $foreign_name;
+    $attr['table'] = $this->get_table($foreign_collection);
+    $attr['collection'] = $foreign_collection;
+    if (!array_key_exists($foreign_key, $this->joins))
+      $this->joins[$foreign_key] = $attr;
   }
 
   private function subst_variables($value, $collection)
   {
-    return preg_replace_callback('/("[^"]*")|(\'[^\']*\')|(\$\w*+)|(\w+\()|(\d+)|(\w+)/', function($matches) use ($collection){
+    return preg_replace_callback('/("[^"]*")|(\'[^\']*\')|(\$\w*+)|(\w+\()|(\d+)|(\w+(?:\.\w+)*)/', function($matches) use ($collection){
       $full_match = array_shift($matches);
       if (count($matches) < 6) return $full_match;
       $variable = array_pop($matches);
+      $local_name = $collection;
+      if (strpos($variable, '.') !== false) {
+        $attr['name'] = $variable;
+        $this->update_joins($attr);
+        $collection = $attr['collection'];
+        $variable = $attr['foreign_name'];
+        $local_name = $attr['local_name'];
+      }
       $column = $this->get_column_name($variable, $collection);
-      if (!is_null($column)) $variable = "`$collection`.$column";
+      if (!is_null($column)) $variable = "`$local_name`.$column";
       return implode($matches).$variable;
     }, $value);
   }
