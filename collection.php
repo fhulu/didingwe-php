@@ -101,7 +101,7 @@ class collection extends module
     }
     $attr['name'] = $name;
     $attr['table'] = $this->main_table;
-    $attr['collection'] = $this->main_collection;
+    $attr['table_alias'] = $attr['collection'] = $this->main_collection;
     $attr['alias'] = $alias;
     $attr['aliased'] = $name != $alias;
     $this->extract_grouping($attr);
@@ -208,12 +208,12 @@ class collection extends module
         $alias = "";
       else
         $alias = "`$alias`";
-      $collection = $attr['collection'];
+      $table_alias = $attr['table_alias'];
       $value = $attr['column'];
       if (is_null($value))
         $value = 'null';
       else if (!$attr['derived'])
-        $value =  "`$collection`.$value";
+        $value =  "`$table_alias`.$value";
 
       $parent = $attr['parent'];
       if ($prev_parent && $parent != $prev_parent) {
@@ -415,7 +415,7 @@ class collection extends module
     $foreign_key = "$local_name.$foreign_collection";
     $attr['name'] = $name;
     if (!$attr['aliased']) $attr['alias'] = $name;
-    $attr['local_name'] = $local_name;
+    $attr['local_name'] = $attr['table_alias'] = $local_name;
     $attr['foreign_name'] = $foreign_name;
     $attr['table'] = $this->get_table($foreign_collection);
     $attr['collection'] = $foreign_collection;
