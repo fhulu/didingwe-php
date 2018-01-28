@@ -211,7 +211,7 @@ class collection extends module
       $collection = $attr['collection'];
       $value = $attr['column'];
       if (is_null($value))
-        $value = "''";
+        $value = 'null';
       else if (!$attr['derived'])
         $value =  "`$collection`.$value";
 
@@ -467,7 +467,8 @@ class collection extends module
   {
     $args = page::parse_args(func_get_args());
     page::verify_args($args, "collection.insert", 2);
-    $collection = $this->main_collection = array_shift($args);
+    list($this->main_collection) = assoc_element(array_shift($args));
+    $collection = $this->main_collection;
     $this->update_header($collection, $args, true);
     $columns = collection::$sys_columns;
     $values = array_values($this->sys_fields);
