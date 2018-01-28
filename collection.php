@@ -16,9 +16,9 @@ class collection extends module
   function __construct($page)
   {
     parent::__construct($page);
-    $this->auth = $page->get_module('auth');
-    $this->sys_fields = array_merge($this->auth->get_owner(), ['access'=>777, 'active'=>'1', 'create_time'=>'now()']);
-    $this->partner = $this->sys_fields['partner'];
+    $this->sys_fields = array_merge(array_fill_keys(collection::$sys_columns,null),
+      ['access'=>777, 'active'=>'1', 'create_time'=>'now()']);
+    $this->set_ownership($page->get_module('auth')->get_owner());
     $this->read_tables();
     $this->columns = [];
     $this->hidden_columns = [];
@@ -29,6 +29,10 @@ class collection extends module
     $this->foreigners = [];
     $this->sorts = [];
     $this->joine = [];
+  }
+
+  function set_ownership($owner) {
+    $this->sys_fields = array_merge($this->sys_fields, $owner);
   }
 
   function read_tables()
@@ -550,7 +554,7 @@ class collection extends module
 
   private function get_fields($collection, $exclusions=[])
   {
-    $partner = $this->partner;
+    $partner = $this->sys_fields['partner'];
     if (!empty($this->fields["$collection@$partner"]))
       return array_exclude($this->fields["$collection@$partner"], $exclusions);
     $table = $this->get_table($collection);
@@ -608,7 +612,7 @@ class collection extends module
   private function update_header($collection, $args)
   {
     $partner = $this->get_header_partner($collection, $args);
-    $fields = $this->get_fields($collection, $partner);
+    $fields = $this->get_fields($collection);
     $columns = $values = [];
     $count = count($fields);
     if (!$count)
