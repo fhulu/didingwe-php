@@ -554,7 +554,7 @@ class collection extends module
 
   private function get_fields($collection, $exclusions=[])
   {
-    $partner = $this->sys_fields['partner'];
+    $partner = $this->get_header_partner($collection);
     if (!empty($this->fields["$collection@$partner"]))
       return array_exclude($this->fields["$collection@$partner"], $exclusions);
     $table = $this->get_table($collection);
@@ -564,7 +564,7 @@ class collection extends module
     $names = array_exclude($names, [null]);
     array_splice($names, 0, sizeof(collection::$sys_columns)+2, collection::$sys_columns);
     $this->fields["$collection@$partner"] = $names;
-    return $names;
+    return array_exclude($names, $exclusions);
   }
 
   private function get_column_name($field_name, $collection)
@@ -633,7 +633,6 @@ class collection extends module
     $table = $this->get_table($collection);
     $this->page->sql_exec("update `$table` set $sets where collection = '$collection-fields' and partner = $partner");
     $this->fields["$collection@$partner"] = $fields;
-    return $partner;
   }
 
   function fields($collection, $key)
