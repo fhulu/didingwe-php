@@ -239,11 +239,12 @@ class collection extends module
 
     $values = implode(",\n", $values);
 
-    if ($use_custom_filters) $this->update_custom_filters($this->filters);
+    if ($use_custom_filters)
+      $this->update_custom_filters();
     $sql =  "select $values from $this->main_table `$main_collection`"
       . $this->get_joins_sql()
       . " where `$main_collection`.collection = '$main_collection'"
-      . $this->get_filter_sql($main_collection, $use_custom_filters);
+      . $this->get_filter_sql($main_collection);
     if (sizeof($likes))
       $sql .= " and (" . implode(" or ", $likes) . ")";
     return $sql . $this->get_sort_sql();
@@ -475,6 +476,7 @@ class collection extends module
     $custom_id = false;
     foreach ($args as $arg) {
       list($name,$value) = $this->page->get_sql_pair($arg);
+      if ($name == '') continue;
       $column = $this->get_column_name($name, $collection);
       $value = json_encode_array($value);
       $sys_index = array_search($name, collection::$sys_columns);
@@ -582,6 +584,7 @@ class collection extends module
     $values = array_values($this->sys_fields);
     foreach($args as $arg) {
       list($name,$value) = $this->page->get_sql_pair($arg);
+      if ($name == '') continue;
       $sys_index = array_search($name, $sys_names);
       if ($sys_index !== false) {
         if (collection::is_sys_collection($collection)) continue;
