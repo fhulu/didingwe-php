@@ -10,12 +10,13 @@ class collection extends module
   var $columns;
   var $sort_columns;
   static $sys_columns = ['partner', 'user', 'access', 'active', 'create_time'];
-  static $sys_collections = ['partner', 'user', 'session', 'audit'];
   var $partner;
   var $joins;
   function __construct($page)
   {
     parent::__construct($page);
+    $this->sys_collections = $page->read_config_var("system_collections");
+    log::debug_json("sys_collections", $this->sys_collections);
     $this->sys_fields = array_merge(array_fill_keys(collection::$sys_columns,null),
       ['access'=>777, 'active'=>'1', 'create_time'=>'now()']);
     $this->set_ownership($page->get_module('auth')->get_owner());
@@ -372,12 +373,12 @@ class collection extends module
     return $this->page->translate_sql($sql);
   }
 
-  static function is_sys_collection($collection) {
-    return in_array($collection, collection::$sys_collections);
+  function is_sys_collection($collection) {
+    return in_array($collection, $this->sys_collections);
   }
 
   private function get_header_partner($collection) {
-    return collection::is_sys_collection($collection)? 0: $this->sys_fields['partner'];
+    return $this->is_sys_collection($collection)? 0: $this->sys_fields['partner'];
   }
 
   function values()
@@ -592,7 +593,9 @@ class collection extends module
   {
     $index = 0;
     $columns = $sys_names = $fields = collection::$sys_columns;
-    $values = array_values($this->sys_fields);
+    $values = $this->sys_fields;
+    $values['partner'] = $this->get_header_partner($collection);
+    $values = array_values($values);
     foreach($args as $arg) {
       list($name,$value) = $this->page->get_sql_pair($arg);
       if ($name == '') continue;
