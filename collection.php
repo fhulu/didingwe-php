@@ -302,7 +302,9 @@ class collection extends module
       $term = $request["f$index"];
       if ($term=='') continue;
       $filter = $attr;
-      $filter['criteria'] = $attr['column'] . " like '%$term%'";
+      $value = $attr['column'];
+      if (!$attr['derived']) $value = "`" . $attr['table_alias'] . "`.$value";
+      $filter['criteria'] = "$value like '%$term%'";
       $this->filters[] = $filter;
     }
   }
