@@ -96,6 +96,7 @@ class collection extends module
 
   function init_attr($arg, &$attr)
   {
+    $attr = [];
     $aliased = false;
     if (is_string($arg))
       $name = $alias = $arg;
@@ -201,9 +202,8 @@ class collection extends module
     $count = sizeof($this->attributes);
     $main_collection = $this->main_collection;
     $likes = [];
+    $groups = [];
     foreach ($this->attributes as $attr) {
-      ++$counted;
-
       $alias = $attr['alias'];
       if (in_array($alias, $this->hidden_columns)) continue;
 
@@ -235,8 +235,10 @@ class collection extends module
         $likes[] = "$value like '%$term%'";
 
       $prev_parent = $parent;
-
+      if ($attr['group'])
+        $groups[] = $value;
     }
+
     if (!sizeof($values)) return null;
     if (sizeof($siblings))
       $values[] = "concat_ws(' ',". implode(',', $siblings) . ") `$parent`";
@@ -249,8 +251,13 @@ class collection extends module
       . $this->get_joins_sql()
       . " where `$main_collection`.collection = '$main_collection'"
       . $this->get_filter_sql($main_collection);
+
     if (sizeof($likes))
       $sql .= " and (" . implode(" or ", $likes) . ")";
+
+    if (sizeof($groups))
+      $sql .= " group by " . implode(',', $groups);
+
     return $sql . $this->get_sort_sql();
   }
 
