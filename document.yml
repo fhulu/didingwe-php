@@ -50,7 +50,7 @@ file_uploader:
     - read_config: upload_dir
     - collection.values: [session, $sid, user, partner, partner.upload_dir]
     - collection.values: [user, $user, upload_dir]
-    - collection.insert: [document, "", partner, user, name, active: 1]
+    - collection.insert: [document, name]
     - document.upload: [file, $upload_dir, $new_document_id]
     - collection.update: [document, $new_document_id, path, mime]
     - trigger: "uploaded,#page,$path"
