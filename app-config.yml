@@ -40,7 +40,6 @@ collections:
   billing: [rate,payment,credit,transaction,country_rate]
   document: [document]
   trigger: [trigger,hook,promo_entry]
-system_collections: [user,partner,session,audit,document,mime]
 use_triggers: no
 
 

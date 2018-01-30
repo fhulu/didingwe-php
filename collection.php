@@ -15,8 +15,7 @@ class collection extends module
   function __construct($page)
   {
     parent::__construct($page);
-    $this->sys_collections = $page->read_config_var("system_collections");
-    log::debug_json("sys_collections", $this->sys_collections);
+    $this->partner_collections = $page->read_config_var("partner_collections");
     $this->sys_fields = array_merge(array_fill_keys(collection::$sys_columns,null),
       ['access'=>777, 'active'=>'1', 'create_time'=>'now()']);
     $this->set_ownership($page->get_module('auth')->get_owner());
@@ -375,12 +374,12 @@ class collection extends module
     return $this->page->translate_sql($sql);
   }
 
-  function is_sys_collection($collection) {
-    return in_array($collection, $this->sys_collections);
+  function is_partner_collection($collection) {
+    return in_array($collection, $this->partner_collections);
   }
 
   private function get_header_partner($collection) {
-    return $this->is_sys_collection($collection)? 0: $this->sys_fields['partner'];
+    return $this->is_partner_collection($collection)? $this->sys_fields['partner']: 0;
   }
 
   function values()
@@ -603,7 +602,7 @@ class collection extends module
       if ($name == '') continue;
       $sys_index = array_search($name, $sys_names);
       if ($sys_index !== false) {
-        if (collection::is_sys_collection($collection)) continue;
+        if (!collection::is_partner_collection($collection)) continue;
         if (is_null($value)) $value = "\$$value";
         $values[$sys_index] = $value;
         continue;
