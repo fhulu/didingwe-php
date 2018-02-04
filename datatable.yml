@@ -31,7 +31,7 @@ datatable:
 
   fields:
     - type: none
-    - default: { span: 1}
+    - default: { span: 1, filter: yes}
 
   sow: [slide,slideoff]
 
@@ -56,7 +56,7 @@ datatable:
 
   # row actions
   row_actions:
-    - default: { validate: none }
+    - default: { validate: none}
     - type: actioner
     - action: trigger
     - slide

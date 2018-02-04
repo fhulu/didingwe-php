@@ -296,7 +296,10 @@
         th.toggle(mkn.visible(field));
         th.data('field', field);
         if (field.class) th.addClass(field.class.join(' '));
-        if (id === 'actions') continue;
+        if (id === 'actions') {
+          field.filter = false;
+          continue;
+        }
         if ($.isArray(field.name)) field.name = field.name[field.name.length-1];
         th.html(field.name || toTitleCase(id));
         if (self.hasFlag('sortable')) {
@@ -769,12 +772,15 @@
 
     createEditor: function(template, cls)
     {
-      var editor = template.clone();
+      var editor = template.clone(true);
       var td;
       editor.addClass('datatable-editor').addClass(cls);
       editor.children().each(function(i) {
-        var input = $('<input type=text></input>').css('width','100%');
-        $(this).text('').append(input);
+        var th = $(this).off();
+        th.text('');
+        var field = $(this).data('field');
+        if (!field[cls]) return;
+        th.append($('<input type=text></input>').css('width','100%'));
       });
       editor.insertAfter(template);
       return editor;
@@ -787,7 +793,6 @@
 
       var me = this;
       var titles = me.head().find('.titles');
-      var fields = me.options.fields;
       filter = me.createEditor(titles,'filter').hide();
       var tds = filter.children();
       filter.find('input').bind('keyup cut paste', function(e) {
