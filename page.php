@@ -907,9 +907,36 @@ class page
   }
 
 
+  function update_custom_filters(&$sql) {
+    $matches = [];
+    $sql = preg_replace('/\s/', ' ', $sql);
+    if (!preg_match('/^\s*select\s+(.*)\s+from/im', $sql, $matches)) return;
+
+    if (!preg_match_all("/(\"[^\"]+\"|'[^']+'|\w*\((?:[^()]|(?R))*\)|\w+(?:\.\w+)?)(?:(?: *as)? +\w*)?/im", $matches[1], $matches, PREG_SET_ORDER)) return;
+    $index = 0;
+    $filters = [];
+    foreach($matches as $match) {
+      $value = $this->request["f$index"];
+      ++$index;
+      if (!isset($value)) continue;
+      $filters[] = "$match[1] like '%$value%'";
+    }
+    if (!count($filters)) return;
+    $filters  = implode(" and ", $filters);
+    $pos = strrpos($sql, 'where');
+
+    if (($pos = strrpos($sql, ' where ')) !== false)
+      $sql = substr($sql, 0, $pos + 7) . " $filters and " . substr($sql, $pos + 7);
+    else if (($pos = strrpos($sql, ' group ')) !== false)
+      $sql = substr($sql, 0, $pos) . "where $filters " . substr($sql, $pos);
+    else
+      $sql .= " where $filters ";
+  }
+
   function sql_data($sql)
   {
     $sql = $this->translate_sql($sql);
+    $this->update_custom_filters($sql);
     $offset = on_null($this->request['offset'], 0);
     $size = on_null($this->request['size'], 0);
     $sort = $this->request['sort'];
@@ -920,7 +947,7 @@ class page
 
   function sql($sql)
   {
-    if (preg_match('/\s*select/i', $sql)) return $this->sql_data($sql);
+    if (preg_match('/^\s*select/im', $sql)) return $this->sql_data($sql);
     $sql = $this->translate_sql($sql);
     return ['data'=>$this->db->exec($sql),'count'=>$this->db->row_count()];
   }
