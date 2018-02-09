@@ -155,10 +155,12 @@ class collection extends module
     foreach($this->attributes  as $attr) {
       $order = $attr['sort_order'];
       if (!$order) continue;
-      $collection = $attr['collection'];
-      $column = $attr['column'];
+      $collection = ;
       $convert = $attr['convert'];
-      $cols[] = "`$collection`.$column$convert $order";
+      $column = $attr['column'] . "$convert $order";
+      if (!$attr['derived'])
+        $column = "`".$attr['collection']. "`.$column";
+      $cols[] = $column;
     }
     return sizeof($cols)? " order by ". implode(",", $cols): "";
   }
