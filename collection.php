@@ -28,7 +28,6 @@ class collection extends module
     $this->dynamic_sorting = true;
     $this->foreigners = [];
     $this->sorts = [];
-    $this->joine = [];
   }
 
   function set_ownership($owner) {
@@ -648,9 +647,13 @@ class collection extends module
 
   function fields($collection, $key)
   {
-    // $exclusions = array_slice(func_get_args(), 2);
-    // $data = $this->get_fields($collection, $key, $exclusions);
-    // return ['data'=>$data, 'count'=>sizeof($data)];
+    $exclusions = array_slice(func_get_args(), 2);
+    $values = $this->values($collection, $key, "*");
+    $result = [];
+    foreach($values as $key=>$value) {
+      if (!in_array($key, $exclusions)) $result[] = $key;
+    }
+    return ['data'=>$result, 'count'=>count($result)];
   }
 
   function hide()
