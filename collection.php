@@ -103,6 +103,7 @@ class collection extends module
       list($alias, $name) = assoc_element($arg);
       if (is_assoc($name)) $name = $alias;
     }
+    if ($name == 'identifier') $name = 'id';
     $attr['name'] = $name;
     $attr['table'] = $this->main_table;
     $attr['table_alias'] = $attr['collection'] = $this->main_collection;
