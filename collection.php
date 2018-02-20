@@ -187,7 +187,7 @@ class collection extends module
       $table = $join['table'];
       $local_name = $join['local_name'];
       $id_column = $this->get_column_name('id', $collection);
-      $sql .= " join `$table` `$local_name` on "
+      $sql .= " left join `$table` `$local_name` on "
         . " `$local_name`.collection = '$collection' "
         . " and `$local_name`.$id_column = `$main_collection`." . $this->get_column_name($local_name, $main_collection)
         . $this->get_filter_sql($collection);
