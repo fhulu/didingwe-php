@@ -457,9 +457,9 @@ label_bottom:
   type: labelled
   class: [inline-block]
   label:
-    class: [block]
+    class: [widest]
   subject:
-    class: [block]
+    class: [widest]
   text: $field$label
 
 label_left:
