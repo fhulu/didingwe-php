@@ -16,6 +16,7 @@ class collection extends module
   {
     parent::__construct($page);
     $this->partner_collections = $page->read_config_var("partner_collections");
+    if (!$this->partner_collections) $this->partner_collections = [];
     $this->sys_fields = array_merge(array_fill_keys(collection::$sys_columns,null),
       ['access'=>777, 'active'=>'1', 'create_time'=>'now()']);
     $this->set_ownership($page->get_module('auth')->get_owner());
