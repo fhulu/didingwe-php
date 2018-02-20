@@ -12,7 +12,7 @@ isearch:
     attr: { placeholder: $placeholder }
     class: [isearch-searcher, widest, pad pad-small]
   buttons:
-    class: [absolute top-right, pad pad-tiny]
+    class: [absolute top-right, pad pad-tiny,tallest]
     type: container
     derive: [name,adder,dropper]
     contents: [$adder,$dropper]
