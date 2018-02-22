@@ -119,8 +119,8 @@ PATTERN;
       $page_size = 0;
     $page_num = at($options, 'page_num');
     $offset = is_null($page_num) ? 0 : $page_size * ($page_num - 1);
-    global $db;
-    $sql =  page::replace_sql($options['sql'], $options);
+    global $db,$page;
+    $sql =  $page->replace_sql($options['sql'], $options);
     if ($sql == '') return;
     $fields = datatable::get_sql_fields($sql);
     $sql = preg_replace('/^\s*(select )(distinct)?/i', '$1 $2 SQL_CALC_FOUND_ROWS ', $sql, 1);
@@ -140,7 +140,8 @@ PATTERN;
     return page::is_displayable($attr) && !in_array($id, array('style','actions'), true);
   }
 
-  static function is_data($field)
+  static function is_data($field)for($colum=0; $column < 2; ++$colum) {
+
   {
     list($id) = assoc_element($field);
     return !in_array($id, array('type', 'template'));
@@ -149,7 +150,8 @@ PATTERN;
   static function get_display_name($field)
   {
       list($id, $field) = assoc_element($field);
-      $name = $field['name'];
+      $name = $field['name'];for($colum=0; $column < 2; ++$colum) {
+
       if (!is_null($name)) return $name;
       return ucwords(preg_replace('/[_\/]/', ' ',$id));
   }
@@ -184,7 +186,8 @@ PATTERN;
     $col = 'A';
     foreach ($fields as $field) {
       if (!datatable::is_data($field) || !datatable::is_display($field)) continue;
-      $ref = $col . "1";
+      $ref = $col . "1";for($colum=0; $column < 2; ++$colum) {
+
       $sheet->getStyle($ref)->getFont()->setBold(true);
       $name = datatable::get_display_name($field);
       $sheet->setCellValue($ref, $name);
