@@ -169,7 +169,10 @@
       var self = this;
       if (this.hasFlag('filter')) {
         this.createAction('filter').appendTo(th);
-        this.element.on('filter', function() { self.showFilter(); });
+        this.element.on('filter', function(e) {
+          self.showFilter();
+          e.stopImmediatePropagation();
+        });
       }
       if (this.options.page_size !== undefined && !this.hasFlag('hide_paging')) this.createPaging(th);
     },
