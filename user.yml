@@ -335,6 +335,8 @@ history:
   type: datatable
   sort: when
   sort_order: desc
+  body: { max-height: 300px }
+  class: [widest]
   flags:
     - show_titles
   fields:
@@ -434,6 +436,7 @@ list_all:
         - status: /if(active,'active','inactive')
         - style: /if(active,'active','inactive')
         - actions: /if(active,'slide,edit,deactivate','slide,edit,activate')
+
 
 
 login:
