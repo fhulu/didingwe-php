@@ -89,6 +89,7 @@ datatable:
     desc: Hide options
 
   slideSpeed: 150
+  searchDelay: 250
 
 #todo: fix backend inheritance
 export:

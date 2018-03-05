@@ -789,6 +789,23 @@
       return editor;
     },
 
+    incrementalSearch: function(tds,input) {
+      var me = this;
+      if (!me.searchInputs) {
+        if (me.searchInterval) {
+          clearInterval(me.searchInterval);
+          me.searchInterval = null;
+        }
+        return;
+      }
+      me.searchInputs = 0;
+      me.params.offset = 0;
+      var td = input.parent();
+      var index = tds.index(td);
+      me.params['f'+index] = input.value();
+      me.refresh();
+    },
+
     createFilter: function()
     {
       var filter = this.head().find('.filter');
@@ -798,12 +815,15 @@
       var titles = me.head().find('.titles');
       filter = me.createEditor(titles,'filter').hide();
       var tds = filter.children();
+      this.searchInputs = 0;
       filter.find('input').bind('keyup cut paste', function(e) {
-        me.params.offset = 0;
-        var td = $(this).parent();
-        var index = tds.index(td);
-        me.params['f'+index] = $(this).value();
-        me.refresh();
+        ++me.searchInputs;
+        var input = $(this);
+        if (!me.searchInterval) {
+          me.searchInterval = setInterval(function() {
+            me.incrementalSearch(tds,input);
+          }, me.options.searchDelay);
+        }
       });
       return filter;
     },
