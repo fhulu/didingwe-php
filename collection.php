@@ -55,7 +55,7 @@ class collection extends module
   function extract_grouping(&$attr)
   {
     $matches = [];
-    if (!preg_match('/^(\w[\w\.]*)(\s*\+\d+)?(\s+group\s*)?(\s+asc\s*|\s+desc\s*)?$/', $attr['alias'], $matches)) return;
+    if (!preg_match('/^(\w[\w\.]*)(\s*\+\d+)?(\s+group\s*)?(?:\s+(asc|desc)\s*)?$/', $attr['alias'], $matches)) return;
     if (!$attr['aliased'])
       $attr['name'] = $attr['alias'] = $matches[1];
     else
