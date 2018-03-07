@@ -898,7 +898,7 @@ class page
 
   function replace_sql(&$sql, $options)
   {
-    $sql =  replace_vars($sql, $options, function(&$val) {
+    $sql =  replace_vars($sql, $options, function(&$val) use (&$exclusions) {
       if (is_array($val))
         $val = json_encode($this->replace_fields($val));
       $val = addslashes($val);
@@ -955,7 +955,7 @@ class page
   function translate_sql($sql)
   {
     page::replace_sid($sql);
-    $this->replace_sql($sql, $this->answer);
+    $this->replace_sql($sql, $this->answer) ;
     $this->replace_sql($sql, $this->context);
     $this->replace_sql($sql, $this->request);
     return preg_replace('/\$\w+/', '', $sql);
@@ -1106,6 +1106,10 @@ class page
   {
     $this->merge_fields($this->fields);
     $this->context = $this->follow_path();
+    $name = $this->request['name'];
+    $id = $this->request['id'];
+    if (isset($name)) $this->context['name'] = $name;
+    if (isset($id)) $this->context['id'] = $id;
   }
 
   function call($method)
