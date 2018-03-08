@@ -465,6 +465,7 @@ class collection extends module
     $this->page->parse_delta($args);
     $collection = $this->main_collection;
     $this->update_header($collection, $args);
+    if (empty($args)) return;
     $this->init_filters();
     $sets = [];
     foreach($args as $arg) {
