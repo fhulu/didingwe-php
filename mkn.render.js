@@ -786,8 +786,7 @@ mkn.render = function(options)
 
     var id = getModelId(field)
     obj.on('keyup input cut paste change', function() {
-      var func = me.model["set_"+id];
-      if (func && func($(this).value()))
+    if (me.model["set_"+id]($(this).value()))
       	me.updateWatchers();
     });
 
