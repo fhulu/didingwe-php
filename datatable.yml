@@ -59,7 +59,7 @@ datatable:
     - default: { validate: none}
     - type: actioner
     - action: trigger
-    - slide
+    - slide: {style: {margin-right: 4px}}
     - slideoff
     - action: post
 
