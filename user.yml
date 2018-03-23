@@ -335,7 +335,7 @@ history:
   type: datatable
   sort: when
   sort_order: desc
-  body: { max-height: 300px }
+  body: { max-height: 200px }
   class: [widest]
   flags:
     - show_titles
