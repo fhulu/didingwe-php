@@ -62,7 +62,7 @@ class collection extends module
       $attr['alias'] = $matches[1];
 
     if ($matches[3]) $attr['group'] = true;
-    if (!$matches[4]) retjurn;
+    if (!$matches[4]) return;
 
     $attr['sort_order'] = $matches[4];
     if ($matches[2]) $attr['sort_convert'] = $matches[2];
@@ -134,7 +134,7 @@ class collection extends module
         continue;
       }
       list($alias, $star_args) = $this->expand_star($arg, $aliases);
-      if (sizeof($star_args)) {
+      if (!is_null($star_args) && sizeof($star_args)) {
         $this->init_attributes($star_args, $alias? $alias: $parent, $index, $aliases);
         continue;
       }

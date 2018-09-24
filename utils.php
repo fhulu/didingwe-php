@@ -107,8 +107,8 @@ function caught_error($errNo, $errStr, $errFile, $errLine) {
 function caught_fatal(){
 
     $error = error_get_last();
-
-    if($error && ($error['type'] & E_FATAL)){
+    $type = (int)$error['type'];
+    if(!is_null($error)){
       caught_error($error['type'], $error['message'], $error['file'], $error['line']);
     }
 
@@ -379,7 +379,7 @@ function remove_accents($string) {
     $string = str_replace('´', '.', $string);
     $string = str_replace('±', '+/-', $string);
     $string = str_replace('⁃', '-', $string);
-    
+
     if (seems_utf8($string)) {
         $chars = array(
         // Decompositions for Latin-1 Supplement
