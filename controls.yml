@@ -169,8 +169,6 @@ date_future:
 datetime:
   type: input
   create: datetimepicker
-  script: [/common/jquery.datetimepicker.js]
-  css: [/common/jquery.datetimepicker.css]
   format: Y-m-d H:i
   validateOnBlur: false
   allowBlanks: false
