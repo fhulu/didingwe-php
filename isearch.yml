@@ -27,7 +27,7 @@ isearch:
   dropper:
     type: [font_awesome,fanthom]
     icon: caret-down
-    class: [isearch-dropper, pad-x pad-tiny, inline-block, pointer-cursor]
+    class: [isearch-dropper, pad-x pad-tiny, inline-block, pointer-cursor middle-y]
     desc: Show all items
   drop:
     type: container
