@@ -861,7 +861,7 @@ vspace:
   space: 20
   template: none
   attr: { id: "" }
-  class: [clear widest block]
+  class: [clear widest block, transparent-color]
   style: {padding-bottom: $space}
 
 vspaced:
