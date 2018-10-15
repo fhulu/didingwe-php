@@ -1308,8 +1308,8 @@ mkn.render = function(options)
 
     // create set functions
     var funcs = vars.map(function(v) {
-      return "\tset_"+v+": function(x) {\n\t\tvar changed = this.changed_"+v+"(x);\n\t\t_old_"+v+"="+v+";\n\t\t"+v+"=x\n\t\treturn changed;\n\t},"
-        + "\n\tchanged_"+v+": function(x) { return x!=="+v+";}"
+        return "\tset_"+v+": function(x) {\n\t\tvar changed = ("+v+" !== x);\n\t\t_old_"+v+"="+v+";\n\t\t"+v+"=x\n\t\treturn changed;\n\t},"
+        + "\n\tchanged_"+v+": function(x) {\n\t\treturn x!=="+v+";\n\t}"
     });
 
     // append watchers functions
