@@ -24,6 +24,11 @@ $.widget( "custom.isearch", {
       el.find('.isearch-adder').show().click(function(){ me.drop.hide() })
 
     var dropper = el.find('.isearch-dropper').click(function() {
+      if ($(this).hasClass('disabled')) return;
+      if (me.drop.is(":visible")) {
+        me.drop.hide();
+        return;
+      }
       me.params.offset = 0;
       el.val("");
       me.searcher.val("");
