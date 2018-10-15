@@ -198,6 +198,10 @@
 .border-pale-blue,.hover-border-pale-blue:hover{border-color:#e7ffff}
 .border-lightgrey,.hover-border-lightgrey:hover{border-color:lightgrey}
 
+
+/* status */
+[disabled],.disabled { color: grey !important}
+
 /* cursor */
 .autocursor,.auto-cursor { cursor: auto }
 .pointer-cursor,.cursor-pointer { cursor: pointer}
