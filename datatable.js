@@ -437,6 +437,10 @@
         else if (cell.row_span) {
           td.attr("rowspan", cell.row_span);
         }
+
+        if (cell.col_span)
+          td.attr("colspan", cell.col_span);
+
         if (cell === null || cell === undefined)
           cell = this.options.defaults[field.id];
         else if (field.escapeHtml)
@@ -471,8 +475,11 @@
       if (td.hasClass('expandable'))
         return td.find('.text').eq(0).text(cell.name);
 
+      if (cell.class)
+        td.addClass(cell.class);
+
       var obj = td.children().eq(0);
-      if (!obj.exists())
+      if (!obj.exists()) 
         return td.text(cell.name).attr('title', cell.name);
 
       obj.value(cell.name);
