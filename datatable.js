@@ -104,6 +104,8 @@
       var me = this;
       var opts = me.options;
       me.head().find('.paging [action]').attr('disabled','');
+      if ($.isArray(opts.values))
+        me.populate({data: opts.values});
       var data = $.extend(opts.request, args, {action: 'values'}, me.params);
       var selector = opts.selector;
       if (selector !== undefined) {
@@ -139,8 +141,13 @@
       if (data.data.length == 0 && this.body().children().length == 0 && this.no_records)
         this.element.append(this.no_records.show());
 
+      this.prev_row = null;
       for(var i in data.data) {
-        this.addRow(data.data[i]);
+        var row = data.data[i];
+        if ($.isArray(row)) {
+          this.addRow(row);
+          this.prev_row = row;
+        }
       }
       this.adjustWidths();
     },
@@ -163,7 +170,7 @@
       head.html('');
       var tr = $('<tr class=header></tr>').appendTo(head);
       var th = $('<th></th>').appendTo(tr);
-      if (this.options.name !== undefined)
+      if (this.options.name !== undefined && this.hasFlag('show_header'))
         $('<div class=heading></div>').html(this.options.name).appendTo(th);
 
       var self = this;
@@ -391,7 +398,7 @@
 
     addRow: function(row) {
       var tr = this.row_blueprint.clone();
-      row = $.extend({}, this.options.defaults, row);
+      // row = $.extend({}, this.options.defaults, row);
       this.updateRow(tr, row);
       tr.appendTo(this.body());
     },
@@ -405,24 +412,43 @@
       var fields = this.options.fields;
       var tds = tr.children();
       for (var i in fields) {
+        i = parseInt(i);
         var field = fields[i];
         var cell = data[i];
+        if (field.id == 'style') {
+          me.setRowStyles(tr, cell);
+          continue;
+        }
+        var td = tds.eq(col++);
+        var json;
+        try {
+          json = JSON.parse(cell);
+        }
+        catch {
+          json = { name: cell };
+        }
+        if (!$.isPlainObject(json)) json = { name: json };
+        data[i] = cell = json;
+        if (this.prev_row && this.prev_row[i].row_span > 1) {
+          cell.row_span = parseInt(this.prev_row[i].row_span) - 1;
+          data[i] = cell;
+          td.remove();
+        }
+        else if (cell.row_span) {
+          td.attr("rowspan", cell.row_span);
+        }
         if (cell === null || cell === undefined)
           cell = this.options.defaults[field.id];
         else if (field.escapeHtml)
           cell = mkn.escapeHtml(cell);
 
-        if (field.id == 'style') {
-          me.setRowStyles(tr, cell);
-          continue;
-        }
         if (key === undefined && (field.id === 'key' || field.key))
           tr.attr('key', cell);
 
-        me.setCellValue(tds.eq(col), cell);
-        ++col;
+        me.setCellValue(td, cell);
       }
       me.adjustColWidths(tr);
+      this.prev_row = data;
     },
 
     adjustColWidths: function(tr)
@@ -437,19 +463,19 @@
       });
     },
 
-    setCellValue: function(td, value)
+    setCellValue: function(td, cell)
     {
       if (td.attr('field') == 'actions')
-        return this.createRowActions(td, value);
+        return this.createRowActions(td, cell);
 
       if (td.hasClass('expandable'))
-        return td.find('.text').eq(0).text(value);
+        return td.find('.text').eq(0).text(cell.name);
 
       var obj = td.children().eq(0);
       if (!obj.exists())
-        return td.text(value).attr('title', value);
+        return td.text(cell.name).attr('title', cell.name);
 
-      obj.value(value);
+      obj.value(cell.name);
       return td;
     },
 
@@ -654,7 +680,7 @@
       .on('setCellValue', function(e, key, id, value) {
         if (!$(e.target).is(el)) return;
         var tr = me.getRowByKey(key);
-        me.setCellValue(me.getCellById(tr, id), value);
+        me.setCellValue(me.getCellById(tr, id), {name: value} );
       })
       .on('setRowData', function(e, key, data) {
         if (!$(e.target).is(el)) return;
