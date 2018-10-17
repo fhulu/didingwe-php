@@ -291,6 +291,7 @@ li.paragraph {text-indent: -1em }
 .transparent-color{background-color: transparent}
 
 .veil-black{background-color: rgba(0,0,0,.3)}
+.veil-white{background-color: rgba(255,255,255,.3)}
 
 /* positioning */
 .absolute{position:absolute}
@@ -541,7 +542,7 @@ li.paragraph {text-indent: -1em }
 
   .nav-small {height:100%}
   .hide-small{display:none}
-  .grid.s1>*,.grid.s1.space>*{width:100%;margin-right:0}
+  .grid.s1>*,.grid.s1.space>*,.grid.s2>.span,.grid.s2.space.span{width:100%;margin-right:0;display: inline-block}
   .grid.s2>*{width:50%}
   .grid.s2.space>*{width:49%}
   .grid.s2.space>:nth-child(2n){margin-right:0}
@@ -570,6 +571,7 @@ li.paragraph {text-indent: -1em }
   .grid.s10.space>*{width:8.2%}
   .grid.s10.space>:nth-child(10n+10){margin-right:0}
 
+
   .col.s0,.hide-small{display:none}
   .col.s1{width:8.33333%}
   .col.s1.hspace{width:6.33333%}
@@ -591,7 +593,7 @@ li.paragraph {text-indent: -1em }
 @media only screen and (min-width:601px) and (max-width:992px){
    .font-size-base{font-size: 16px}
 
-  .grid.m1>*,.grid.m1.space>*{width:100%;margin-right:0}
+  .grid.m1>*,.grid.m1.space>*,.grid.m2>.span,.grid.m2.space>.span{width:100%;margin-right:0;display: inline-block}
   .grid.m2>*{width:50%}
   .grid.m2.space>*{width:49%}
   .grid.m2.space>:nth-child(2n){margin-right:0}
@@ -648,7 +650,7 @@ li.paragraph {text-indent: -1em }
   .font-size-base {font-size: 16px}
 
   /* style grid children - enough children */
-  .grid.l1>*,.grid.l1.space>*{width:100%;margin-right:0}
+  .grid.l1>*,.grid.l1.space>*,.grid.m2>.span,.grid.m2.space>.span{width:100%;margin-right:0;display: inline-block}
   .grid.l2>*{width:50%}
   .grid.l2.space>*{width:49%}
   .grid.l2.space>:nth-child(2n){margin-right:0}
@@ -713,4 +715,4 @@ li.paragraph {text-indent: -1em }
 .scroll-table { table-layout: fixed}
 .scroll-table>thead,.scroll-table>tbody { float:left; width: 100%; display: block;table-layout: fixed}
 .scroll-table>tbody { overflow-y: auto }
-.scroll-table>thead>tr,.scroll-table>tbody>tr { width: 100%; display: table; table-layout: fixed}
+.scroll-table>thead>tr,.scroll-table>tbody>tr { width: 100%; table-layout: fixed}
