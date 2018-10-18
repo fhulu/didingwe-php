@@ -411,7 +411,8 @@
       var col = 0;
       var fields = this.options.fields;
       var tds = tr.children();
-      for (var i in fields) {
+      var count = fields.length;
+      for (var i=0; i<count; ++i) {
         i = parseInt(i);
         var field = fields[i];
         var cell = data[i];
@@ -429,7 +430,7 @@
         }
         if (!$.isPlainObject(json)) json = { name: json };
         data[i] = cell = json;
-        if (this.prev_row && this.prev_row[i].row_span > 1) {
+        if (this.prev_row && this.prev_row[i] && this.prev_row[i].row_span > 1) {
           cell.row_span = parseInt(this.prev_row[i].row_span) - 1;
           data[i] = cell;
           td.remove();
@@ -438,8 +439,13 @@
           td.attr("rowspan", cell.row_span);
         }
 
-        if (cell.col_span)
-          td.attr("colspan", cell.col_span);
+        if (cell.col_span) {
+          var span = parseInt(cell.col_span);
+          td.attr("colspan", span);
+          for (var j = 1; j < span; ++j )
+            tds.eq(col++).remove();
+          i += span - 1;
+        }
 
         if (cell === null || cell === undefined)
           cell = this.options.defaults[field.id];
@@ -479,7 +485,7 @@
         td.addClass(cell.class);
 
       var obj = td.children().eq(0);
-      if (!obj.exists()) 
+      if (!obj.exists())
         return td.text(cell.name).attr('title', cell.name);
 
       obj.value(cell.name);
@@ -798,11 +804,6 @@
         ++col;
       }
 
-      tr1.siblings().each(function(i) {
-        $(this).children().each(function(i) {
-          $(this).css('width', tds.eq(i).get(0).style.width);
-        });
-      })
     },
 
 
