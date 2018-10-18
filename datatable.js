@@ -46,6 +46,7 @@
       me.showFooterActions();
       me.showData();
       me.element.on('refresh', function(e, args) {
+        me.element.trigger('refreshing', args);
         me.showData(args);
         e.stopImmediatePropagation();
       })
@@ -106,7 +107,8 @@
       me.head().find('.paging [action]').attr('disabled','');
       if ($.isArray(opts.values))
         me.populate({data: opts.values});
-      var data = $.extend(opts.request, args, {action: 'values'}, me.params);
+      var action = opts.data_from == 'post'? 'action': 'values';
+      var data = $.extend(opts.request, me.params, args, {action: action});
       var selector = opts.selector;
       if (selector !== undefined) {
         $.extend(data, $(selector).values());
@@ -118,7 +120,7 @@
         if (!data) return;
         if (data._responses)
           el.triggerHandler('server_response', [data]);
-        el.trigger('refreshing', [data]);
+        // el.trigger('refreshing', [data]);
         var end = new Date().getTime();
         console.log("Load: ", end - start);
         me.populate(data);
@@ -483,6 +485,11 @@
 
       if (cell.class)
         td.addClass(cell.class);
+      if (cell.style) {
+        var classes = this.options.cell.styles[cell.style];
+        if (classes)
+          td.addClass(classes.join(' '));
+      }
 
       var obj = td.children().eq(0);
       if (!obj.exists())

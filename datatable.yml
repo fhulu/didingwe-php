@@ -18,6 +18,7 @@ datatable:
     class: []
   cell:
     class: [didi]
+    style: {}
   script: [/common/datatable.js]
   row_creator: { type: table_row }
   css: [/common/datatable.css]
