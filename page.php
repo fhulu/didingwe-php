@@ -972,7 +972,7 @@ class page
   function sql_values($sql)
   {
     $sql = $this->translate_sql($sql);
-    return $this->foreach? $this->db->read($sql, MYSQL_ASSOC): $this->db->read_one($sql, MYSQL_ASSOC);
+    return $this->foreach? $this->db->read($sql, MYSQLI_ASSOC): $this->db->read_one($sql, MYSQLI_ASSOC);
   }
 
   function sql_exec($sql)
