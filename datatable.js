@@ -485,11 +485,8 @@
 
       if (cell.class)
         td.addClass(cell.class);
-      if (cell.style) {
-        var classes = this.options.cell.styles[cell.style];
-        if (classes)
-          td.addClass(classes.join(' '));
-      }
+      if (cell.style)
+        this.applyStyle(td, this.options.cell.styles, cell.style)
 
       var obj = td.children().eq(0);
       if (!obj.exists())
@@ -497,6 +494,28 @@
 
       obj.value(cell.name);
       return td;
+    },
+
+    applyStyle: function(obj, reference, styles) {
+      var me = this;
+      styles.split(' ').forEach(function(style) {
+        var classes = reference[style];
+        if (!classes) return;
+        classes.forEach(function(cls) {
+          if (cls[0] == '~')
+            me.removeStyle(obj, reference, cls.substr(1));
+          else if (cls[0] == '^')
+            obj.removeClass(cls.substr(1));
+          else
+            obj.addClass(cls);
+        });
+      })
+    },
+
+    removeStyle: function(obj, reference, style) {
+      var classes = reference[style];
+      if (classes)
+        obj.removeClass(classes.join(' '));
     },
 
     bindAction: function(obj, props, sink, path)
