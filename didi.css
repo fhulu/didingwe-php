@@ -716,3 +716,5 @@ li.paragraph {text-indent: -1em }
 .scroll-table>thead,.scroll-table>tbody { float:left; width: 100%; display: block;table-layout: fixed}
 .scroll-table>tbody { overflow-y: auto }
 .scroll-table>thead>tr,.scroll-table>tbody>tr { width: 100%; table-layout: fixed}
+
+table.didi td { background-clip: padding-box;}
