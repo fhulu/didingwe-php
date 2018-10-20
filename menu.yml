@@ -42,7 +42,6 @@ menu_item:
   type: container
   contents: [menu_link]
   attr: { tabindex: $number, title: $desc}
-  class: [col s12]
 
 menu_link:
   tag: a
