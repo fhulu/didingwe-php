@@ -2,6 +2,7 @@ datatable:
   head: ""
   tooltip: false
   type: table
+  auto_load: true
   text: $head $body $no_records
   class: [data,didi-listener]
   create: datatable

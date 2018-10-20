@@ -36,17 +36,19 @@
       opts.render.expandFields(opts, "row_actions", opts.row_actions);
       me.auto_widths = [];
       me._init_params();
-      me.head().addClass(opts.head.class.join(' ')).prependTo(me.element);
+      var el = me.element;
+      me.head().addClass(opts.head.class.join(' ')).prependTo(el);
       me.showHeader();
       me.showTitles();
       me.createRowBlueprint();
-      if (this.options.no_records)
+      if (opts.no_records)
         this.no_records = this.element.find('#no_records');
       me.head().toggle(me.hasFlag('show_titles') || me.hasFlag('show_header') || me.hasFlag('filter'));
       me.showFooterActions();
-      me.showData();
-      me.element.on('refresh', function(e, args) {
-        me.element.trigger('refreshing', args);
+      if (opts.auto_load)
+        me.showData();
+      el.on('refresh', function(e, args) {
+        el.trigger('refreshing', args);
         me.showData(args);
         e.stopImmediatePropagation();
       })
@@ -58,6 +60,7 @@
     {
       this.params = { page_num: 1, offset: 0};
       var exclude = [ 'create', 'action', 'css', 'id', 'content', 'disabled',
+          'auto_load', 'searchDelay', 'number', 'data_from', 'min_row_height', 'desc', 'index',
           'html','name', 'page_id', 'position', 'sort', 'script','slideSpeed', 'text', 'tag', 'target', 'type'];
       for (var key in this.options) {
         if (exclude.indexOf(key) >= 0 || key.indexOf('on_') ==0) continue;
@@ -134,7 +137,7 @@
 
     populate: function(data)
     {
-      if (data === undefined || data === null) {
+      if (data === undefined || data === null || !data.data) {
         console.log('No table data for table:', this.params.field);
         return;
       }
@@ -460,7 +463,7 @@
           cell = mkn.escapeHtml(cell);
 
         if (key === undefined && (field.id === 'key' || field.key))
-          tr.attr('key', cell);
+          tr.attr('key', cell.name);
 
         me.setCellValue(td, cell);
       }
@@ -494,11 +497,16 @@
       if (cell.style)
         this.applyStyle(td, this.options.cell.styles, cell.style)
 
-      var obj = td.children().eq(0);
-      if (!obj.exists())
-        return td.text(cell.name).attr('title', cell.name);
+      if (cell.key)
+        td.attr("key", cell.key)
 
-      obj.value(cell.name);
+      var obj = td.children().eq(0);
+      if (!cell.name) cell.name = "";
+      if (!cell.value) cell.value = cell.name;
+      if (!obj.exists())
+        return td.text(cell.value).attr('title', cell.name);
+
+      obj.value(cell.value);
       return td;
     },
 
