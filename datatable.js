@@ -388,7 +388,8 @@
 
     setRowStyles: function(row, styles) {
       var row_styles = this.options.row_styles;
-      if (!row_styles) return;
+      if (!row_styles)
+        row_styles = this.options.row.styles;
       row.attr('class','');
       row.addClass(this.row_classes);
       styles.split(',').forEach(function(style) {
@@ -418,20 +419,24 @@
         i = parseInt(i);
         var field = fields[i];
         var cell = data[i];
-        if (field.id == 'style') {
+        if (field.id == 'style' && cell !== undefined) {
           me.setRowStyles(tr, cell);
           continue;
         }
         var td = tds.eq(col++);
-        var json;
-        try {
-          json = JSON.parse(cell);
+        if (cell === undefined )
+          cell = {name: "" }
+        else if (!$.isPlainObject(cell)) {
+          var json;
+          try {
+            json = JSON.parse(cell);
+          }
+          catch {
+            json = { name: cell };
+          }
+          if (!$.isPlainObject(json)) json = { name: json };
+          data[i] = cell = json;
         }
-        catch {
-          json = { name: cell };
-        }
-        if (!$.isPlainObject(json)) json = { name: json };
-        data[i] = cell = json;
         if (this.prev_row && this.prev_row[i] && this.prev_row[i].row_span > 1) {
           cell.row_span = parseInt(this.prev_row[i].row_span) - 1;
           data[i] = cell;
@@ -484,7 +489,8 @@
         return td.find('.text').eq(0).text(cell.name);
 
       if (cell.class)
-        td.addClass(cell.class);
+        td.addClass($.isArray(cell.class)? cell.class.join(' '): cell.class);
+
       if (cell.style)
         this.applyStyle(td, this.options.cell.styles, cell.style)
 
@@ -813,7 +819,8 @@
       this.initWidths(ths,tds);
       this.updateWidths(tds);
       var widths = this.widths;
-      var sum = widths.reduce(function(a,b) { return a + b});
+      if (!widths.length) widths = [];
+      var sum = widths.reduce(function(a,b) { return a + b}, 0);
       var fields = this.options.fields;
       var col = 0;
       for (var i in fields) {
