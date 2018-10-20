@@ -123,8 +123,10 @@ class page
 
   function output()
   {
-    if ($this->result !== false)
+    if ($this->result !== false) {
+      header('Content-Type: application/json');
       echo json_encode($this->result);
+    }
     log::debug_json("OUTPUT", $this->result);
   }
 
