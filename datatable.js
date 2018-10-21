@@ -59,7 +59,7 @@
     _init_params: function()
     {
       this.params = { page_num: 1, offset: 0};
-      var exclude = [ 'create', 'action', 'css', 'id', 'content', 'disabled',
+      var exclude = [ 'create', 'action', 'css', 'id', 'content', 'disabled','parent_name','parent_id','parent_page',
           'auto_load', 'searchDelay', 'number', 'data_from', 'min_row_height', 'desc', 'index',
           'html','name', 'page_id', 'position', 'sort', 'script','slideSpeed', 'text', 'tag', 'target', 'type'];
       for (var key in this.options) {
@@ -159,7 +159,8 @@
       }
       this.adjustWidths();
       render.root = this.element;
-      render.initModel(this.element, opts);
+      if (!opts.js_functions) opts.js_functions = opts.render.root_field.js_functions
+      render.initModel(render.root, opts);
     },
 
 
