@@ -450,6 +450,7 @@
           if (!$.isPlainObject(json)) json = { name: json };
           cell = json;
         }
+        if (cell.id === undefined) cell.id = field.id
         data[i] = cell;
         if (this.prev_row && this.prev_row[i] && this.prev_row[i].row_span > 1) {
           cell.row_span = parseInt(this.prev_row[i].row_span) - 1;
