@@ -627,6 +627,10 @@ plain_text:
   name: $id
   attr: { id: ""}
 
+plain_text_line:
+  type: plain_text
+  class: [block]
+
 plot:
   tag: div
   fixed_xaxis: yes
