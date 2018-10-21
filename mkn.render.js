@@ -451,6 +451,7 @@ mkn.render = function(options)
 
   this.render = function(parent, key) {
     var field = parent[key] = me.initField(parent[key], parent);
+    me.root_field = field;
     var obj = me.root = me.create(parent, key);
     me.initModel(obj, field);
     return obj;
@@ -1293,7 +1294,7 @@ mkn.render = function(options)
     var parent_id = field.id;
 
     // add initial vars
-    if (field.dd_init) $.each(field.dd_init, function(key) {
+    if (field.dd_init) $.each(field.dd_init, function(key, value) {
       vars.push(key);
     });
 
@@ -1320,12 +1321,17 @@ mkn.render = function(options)
     if (!funcs.length) return;
 
     // convert funcs to js source
-    var src = "\nreturn {\n" + funcs.join(",\n") + "}";
+    funcs = "\nreturn {\n" + funcs.join(",\n") + "}";
 
+    var src = "";
     // convert vars and funcs to js source
-    if (vars.length) src = "var " + vars.map(function(v) {
+    if (vars.length) vars = "var " + vars.map(function(v) {
       return v+",_old_"+v;
-    }).join(",") + src;
+    }).join(",");
+
+    src += vars;
+    if (field.js_functions) src += "\n\n" + field.js_functions + "\n\n";
+    src += funcs;
 
     // create model
     me.model = new Function(src)();
