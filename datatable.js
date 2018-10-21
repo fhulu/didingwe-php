@@ -306,7 +306,7 @@
       for (var i in fields) {
         var field = fields[i];
         var id = field.id;
-        if (field.id=='style') continue;
+        if (field.id=='style' || field.data) continue;
         var th = $('<th></th>').addClass(classes).appendTo(tr);
         th.toggle(mkn.visible(field));
         th.data('field', field);
@@ -344,7 +344,7 @@
         var field = fields[i];
         me.defaults[field.id] = field.new;
         delete field.new;
-        if (field.id == 'style') continue;
+        if (field.id == 'style' || field.data) continue;
         var td = $('<td>').appendTo(tr);
         td.attr('field', field.id);
         td.toggle(mkn.visible(field));
@@ -426,9 +426,14 @@
           me.setRowStyles(tr, cell);
           continue;
         }
+        if (field.data) {
+          tr.data(field.id, cell);
+          continue;
+        }
+
         var td = tds.eq(col++);
-        if (cell === undefined )
-          cell = {name: "" }
+        if (cell === "" || cell === undefined)
+          cell = {name: "" };
         else if (!$.isPlainObject(cell)) {
           var json;
           try {
@@ -438,8 +443,9 @@
             json = { name: cell };
           }
           if (!$.isPlainObject(json)) json = { name: json };
-          data[i] = cell = json;
+          cell = json;
         }
+        data[i] = cell;
         if (this.prev_row && this.prev_row[i] && this.prev_row[i].row_span > 1) {
           cell.row_span = parseInt(this.prev_row[i].row_span) - 1;
           data[i] = cell;
@@ -502,7 +508,7 @@
       if (cell.type) {
         var src = this.options.render.create(cell);
         if (!src)
-          console.log("type not declared on cell objects");
+          console.log("type "+cell.type+"not declared on cell objects");
         else {
           td.append(src.clone());
           src.remove();
@@ -801,7 +807,7 @@
       var col = -1;
       for (var i in fields) {
         var field = fields[i];
-        if (field.id == 'style') continue;
+        if (field.id == 'style' || field.type == 'type') continue;
         ++col;
         var th = ths.eq(col);
         var td = tds.eq(col);
@@ -842,7 +848,7 @@
       var col = 0;
       for (var i in fields) {
         var field = fields[i];
-        if (field.id == 'style') continue;
+        if (field.id == 'style' || field.data) continue;
         if (field.width !== undefined) continue;;
         var th = ths.eq(col);
         var width = ((widths[col]/sum)*100) + '%';

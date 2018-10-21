@@ -33,7 +33,7 @@ datatable:
 
   fields:
     - type: none
-    - default: { span: 1, filter: yes}
+    - default: { span: 1, filter: yes, data: false}
 
   sow: [slide,slideoff]
 
