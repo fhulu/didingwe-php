@@ -499,8 +499,17 @@
 
       if (cell.key)
         td.attr("key", cell.key)
-
+      if (cell.type) {
+        var src = this.options.render.create(cell);
+        if (!src)
+          console.log("type not declared on cell objects");
+        else {
+          td.append(src.clone());
+          src.remove();
+        }
+      }
       var obj = td.children().eq(0);
+
       if (!cell.name) cell.name = "";
       if (!cell.value) cell.value = cell.name;
       if (!obj.exists())
