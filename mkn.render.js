@@ -33,7 +33,7 @@ mkn.render = function(options)
 
   this.mergeType = function(field, type, id)
   {
-    if (field === undefined || types === undefined) return field;
+    if (field === null || field === undefined || types === undefined) return field;
     if (type === undefined) type = field.type;
     if (type === undefined && field.html === undefined) {
       if (!id) id = field.id;
