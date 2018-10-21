@@ -647,7 +647,8 @@ processing:
 
 quantity_input:
   type: number_input
-  attr: { min: 0 }
+  max: 99999999999
+  attr: { min: 0, max: $max }
 
 question_input:
   type: label_top
