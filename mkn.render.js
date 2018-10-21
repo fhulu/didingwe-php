@@ -452,8 +452,7 @@ mkn.render = function(options)
   this.render = function(parent, key) {
     var field = parent[key] = me.initField(parent[key], parent);
     var obj = me.root = me.create(parent, key);
-    initModel(obj, field);
-    me.updateWatchers();
+    me.initModel(obj, field);
     return obj;
   }
 
@@ -555,7 +554,7 @@ mkn.render = function(options)
     initLinks(obj, field).then(function() {
       if (subitem_count) me.setValues(obj, field);
       initEvents(obj, field);
-      obj.trigger('created', [field]);
+      obj.triggerHandler('created', [field]);
     });
 
     if (key !== undefined) parent[key] = field;
@@ -1289,7 +1288,7 @@ mkn.render = function(options)
       field['didi-functions'] = funcs;
   }
 
-  var initModel = function(parent, field) {
+  this.initModel = function(parent, field) {
     var vars = [];
     var parent_id = field.id;
 
@@ -1335,10 +1334,13 @@ mkn.render = function(options)
     if (field.dd_init) $.each(field.dd_init, function(key, value) {
       me.model["set_"+key](value);
     });
+
+    me.updateWatchers(parent);
   }
 
 
-  me.updateWatchers = function() {
+  me.updateWatchers = function(root) {
+    if (!root) root = me.root;
 
     function update(obj, field, id) {
       if (!field || !field['didi-model']) return;
@@ -1361,14 +1363,15 @@ mkn.render = function(options)
         });
       })
     }
-    var root_field = me.root.data('didi-field');
+    var root_field = root.data('didi-field');
     if (!root_field) return;
     var root_id = root_field.id;
 
-    me.root.find('.didi-watcher').addBack('.didi-watcher').each(function() {
+    root.find('.didi-watcher').addBack('.didi-watcher').each(function() {
       var obj = $(this);
       var field = obj.data('didi-field');
       if (!field || field.parent_page != root_id) return;
+      if (!field) return;
       var id = field.id;
       update(obj, field, id);
       update(obj, field.style, id);

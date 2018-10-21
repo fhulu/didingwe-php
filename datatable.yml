@@ -20,6 +20,9 @@ datatable:
   cell:
     class: [didi]
     styles: {}
+    controls:
+      type: container
+      contents: []
   script: [/common/datatable.js]
   row_creator: { type: table_row }
   css: [/common/datatable.css]

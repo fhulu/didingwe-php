@@ -141,6 +141,9 @@
         console.log('No table data for table:', this.params.field);
         return;
       }
+      if (this.cell_render) delete this.cell_render;
+      var opts = this.options;
+      var render = this.cell_render = new mkn.render({invoker: opts.render.root, types: opts.render.types, id: opts.id, key: opts.key, request: opts.request});
       if (this.options.page_size !== undefined) this.showPaging(parseInt(data.total));
       this.no_records.hide();
       if (data.data.length == 0 && this.body().children().length == 0 && this.no_records)
@@ -155,6 +158,8 @@
         }
       }
       this.adjustWidths();
+      render.root = this.element;
+      render.initModel(this.element, opts);
     },
 
 
@@ -506,13 +511,8 @@
       if (cell.key)
         td.attr("key", cell.key)
       if (cell.type) {
-        var src = this.options.render.create(cell);
-        if (!src)
-          console.log("type "+cell.type+"not declared on cell objects");
-        else {
-          td.append(src.clone());
-          src.remove();
-        }
+        var src = this.cell_render.create(cell);
+        td.append(src);
       }
       var obj = td.children().eq(0);
 
