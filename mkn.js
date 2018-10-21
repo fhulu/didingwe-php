@@ -177,6 +177,7 @@ var mkn = new function() {
   {
     if (message) alert(message);
     var parent = dialog.closest('.modal');
+    parent.trigger("closing");
     if (parent.exists()) parent.remove();
   }
 
