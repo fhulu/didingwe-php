@@ -401,8 +401,9 @@
         row_styles = this.options.row.styles;
       row.attr('class','');
       row.addClass(this.row_classes);
-      styles.split(' ').forEach(function(style) {
+      styles.split(/[, ]/).forEach(function(style) {
         var classes = row_styles[style];
+        row.addClass(style);
         if (!classes) return;
         row.addClass(classes.join(' '));
       });
@@ -530,6 +531,7 @@
     applyStyle: function(obj, reference, styles) {
       var me = this;
       styles.split(' ').forEach(function(style) {
+        obj.addClass(style)
         var classes = reference[style];
         if (!classes) return;
         classes.forEach(function(cls) {
