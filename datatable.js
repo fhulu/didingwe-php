@@ -401,7 +401,7 @@
         row_styles = this.options.row.styles;
       row.attr('class','');
       row.addClass(this.row_classes);
-      styles.split(',').forEach(function(style) {
+      styles.split(' ').forEach(function(style) {
         var classes = row_styles[style];
         if (!classes) return;
         row.addClass(classes.join(' '));
