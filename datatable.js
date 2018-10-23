@@ -120,7 +120,10 @@
       var el = me.element;
       me.loading = true;
       $.json('/', {data: mkn.plainValues(data)}, function(data) {
-        if (!data) return;
+        if (!data) {
+          el.triggerHandler('refreshed', [data]);
+          return;
+        };
         if (data._responses)
           el.triggerHandler('server_response', [data]);
         // el.trigger('refreshing', [data]);
@@ -402,8 +405,8 @@
       row.attr('class','');
       row.addClass(this.row_classes);
       styles.split(/[, ]/).forEach(function(style) {
-        var classes = row_styles[style];
         row.addClass(style);
+        var classes = row_styles[style];
         if (!classes) return;
         row.addClass(classes.join(' '));
       });
