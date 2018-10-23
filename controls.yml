@@ -426,7 +426,7 @@ labelled:
   sow: [name]
   label:
     classes: label
-    class: [inline-block,vertical-top]
+    class: [inline-block]
   subject:
     attr: { title: $desc }
 
