@@ -461,7 +461,11 @@
           }
         }
 
-        if (cell.id === undefined) cell.id = field.id
+        if (cell.id === undefined) {
+          cell.id = field.id;
+          if (key) cell.id +=  "_" + key;
+        }
+        
         data[i] = cell;
         if (this.prev_row && this.prev_row[i] && this.prev_row[i].row_span > 1) {
           cell.row_span = parseInt(this.prev_row[i].row_span) - 1;
@@ -485,8 +489,10 @@
         else if (field.escapeHtml)
           cell = mkn.escapeHtml(cell);
 
-        if (key === undefined && (field.id === 'key' || field.key))
+        if (key === undefined && (field.id === 'key' || field.key)) {
           tr.attr('key', cell.name);
+          key = cell.name;
+        }
 
         me.setCellValue(td, cell);
       }
