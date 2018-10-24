@@ -445,19 +445,22 @@
         }
 
         var td = tds.eq(col++);
-        if (cell === "" || cell === undefined)
-          cell = {name: "" };
+        if (cell === undefined || cell === null)
+          cell = { name: ""}
         else if (!$.isPlainObject(cell)) {
-          var json;
-          try {
-            json = JSON.parse(cell);
+          if (cell[0] === '{') {
+            try {
+              cell = JSON.parse(cell);
+            }
+            catch {
+              cell = { name: cell };
+            }
           }
-          catch {
-            json = { name: cell };
+          else {
+            cell = { name: cell}
           }
-          if (!$.isPlainObject(json)) json = { name: json };
-          cell = json;
         }
+
         if (cell.id === undefined) cell.id = field.id
         data[i] = cell;
         if (this.prev_row && this.prev_row[i] && this.prev_row[i].row_span > 1) {
