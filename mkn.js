@@ -316,6 +316,15 @@ var mkn = new function() {
     return str;
   }
 
+  this.replaceValues = function(str, data)
+  {
+    for (var key in data) {
+      if (!data.hasOwnProperty(key)) continue;
+      str = str.replace('$'+key, data[key]);
+    }
+    return str;
+  }
+
   this.visible = function(f) {
     return !(f.hide || f.show === false);
   }
