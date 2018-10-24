@@ -348,7 +348,8 @@
       var tr = $('<tr>').addClass(me.row_classes);
       var cls = me.cell.class;
       me.defaults = {}
-      var fields = me.options.fields;
+      var options = me.options;
+      var fields = options.fields;
       for (var i in fields) {
         var field = fields[i];
         me.defaults[field.id] = field.new;
@@ -358,6 +359,8 @@
         td.attr('field', field.id);
         td.toggle(mkn.visible(field));
         td.addClass(cls);
+        if (field.style)
+          this.applyStyle(td,options.cell.styles, field.style)
         if (field.class) td.addClass(field.class.join(' '));
         if (field.html === undefined) continue;
         field = mkn.copy(field);
@@ -533,7 +536,8 @@
 
     applyStyle: function(obj, reference, styles) {
       var me = this;
-      styles.split(' ').forEach(function(style) {
+      if (!$.isArray(styles)) styles = styles.split(' ');
+      styles.forEach(function(style) {
         obj.addClass(style)
         var classes = reference[style];
         if (!classes) return;
