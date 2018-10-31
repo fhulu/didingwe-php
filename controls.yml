@@ -651,7 +651,7 @@ processing:
 
 quantity_input:
   type: number_input
-  max: 99999999999
+  max: 999999
   min: 0
   attr: { min: $min, max: $max }
 
