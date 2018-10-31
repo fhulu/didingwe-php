@@ -12,10 +12,9 @@ datatable:
   min_row_height: 20
   defaults: {}
   row_actions: []
-  row_styles: {}
+  row_styles:
   row:
     actions: []
-    styles: {}
     class: []
   cell:
     class: [didi]
