@@ -480,6 +480,7 @@ class page
   {
     $this->replace_vars($fields);
     walk_recursive_down($fields, function($value, $key, &$parent) {
+      if ($key == "attr") return false;
       if (!is_assoc($parent)) {
         if (is_string($value) && strpos($value, '/') !== false) return;
         list($type, $value) = assoc_element($value);
