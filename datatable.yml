@@ -4,7 +4,7 @@ datatable:
   type: table
   auto_load: true
   text: $head $body $no_records
-  class: [data,didi-listener]
+  class: [data,didi-listener,datatable]
   create: datatable
   head: { class: [didi] }
   title: { class: [didi] }
