@@ -235,7 +235,7 @@
 .bolder { font-weight: bolder; }
 .italic { font-style: italic; }
 .lighter { font-weight: lighter; }
-.font-weight-100,.thin,.thinner{ font-weight: 100; }
+.font-weight-100,.thin,.thinner,.font-weight-thin{ font-weight: 100; }
 .font-weight-200 { font-weight: 200; }
 .font-weight-300 { font-weight: 300; }
 .font-weight-400 { font-weight: 400; }
@@ -521,6 +521,8 @@ li.paragraph {text-indent: -1em }
 
 /* responsive grid */
 .grid>*,.col{float:left}
+.col.centered{float:none}
+.col.float-right{float:right}
 .grid.space>*{margin-bottom:2%;margin-right:2%}
 .center-contents>.col{float:none}
 
