@@ -452,6 +452,7 @@ login:
     - login
     - forgot_password: { action: dialog }
   post:
+    - let: { start_page: "/" }
     - read_server: [HTTP_USER_AGENT,REMOTE_ADDR,REMOTE_HOST]
     - collection.values: [user, [email], user: id, partner, new_session_id: "/sha1(concat(email,sysdate(4)))", start_page, role, attempts, partner.type ]
     - if "$start_page" == '':
