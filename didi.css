@@ -525,7 +525,7 @@ li.paragraph {text-indent: -1em }
 .w-9-11 {width:81.81818%}
 
 /* responsive grid */
-.grid>*,.col{float:left}
+.grid>*,.col{float:left;display: inline-block}
 .col.centered{float:none}
 .col.float-right{float:right}
 .grid.space>*{margin-bottom:2%;margin-right:2%}
