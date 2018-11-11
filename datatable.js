@@ -514,8 +514,10 @@
 
     setCellValue: function(td, cell)
     {
+      if (!cell.name) cell.name = "";
+      if (!cell.value) cell.value = cell.name;
       if (td.attr('field') == 'actions')
-        return this.createRowActions(td, cell);
+        return this.createRowActions(td, cell.value);
 
       if (td.hasClass('expandable'))
         return td.find('.text').eq(0).text(cell.name);
@@ -534,8 +536,6 @@
       }
       var obj = td.children().eq(0);
 
-      if (!cell.name) cell.name = "";
-      if (!cell.value) cell.value = cell.name;
       if (!obj.exists())
         return td.text(cell.value).attr('title', cell.name);
 
