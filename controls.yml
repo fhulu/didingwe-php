@@ -213,6 +213,8 @@ element:
   text: ""
   html: <$tag>$text</$tag>
 
+
+
 email_input:
   type: input
   format: email
@@ -220,6 +222,11 @@ email_input:
 empty:
   tag: div
   text: ""
+
+encloser:
+  templates: div
+  subject: { class: [widest error-sink]}
+  text: $field
 
 fanthom:
   attr: { name: "", id: "", value: ""}
