@@ -598,9 +598,9 @@ update_password:
   inputs:
     - type: password_input
     - password
-    - confirm_password
+    - confirm_password: {type: password_input}
   navigate:
-    - update_password
+    - update_password: {class: [float-right]}
   post:
     - read_session: email
     - collection.values: [user,email: $email, found: id]
