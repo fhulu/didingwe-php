@@ -772,7 +772,8 @@ mkn.render = function(options)
       })
     }
     field.page_id = me.page_id;
-    obj.on('reload', function() {
+    obj.on('reload', function(e, data) {
+      field.params = data;
       loadValues(obj, field);
     })
     .on('server_response', function(event, result) {
@@ -1077,8 +1078,14 @@ mkn.render = function(options)
       return;
     }
     var subject = me.sink.find('#'+field+",[name='"+field+"']");
-    var parents = subject.parents("[for='"+field+"'],.error-sink");
-    var parent = parents.exists()? parents.eq(0): subject;
+    var parent;
+    if (subject.hasClass('error-sink')) {
+      parent = subject;
+    }
+    else {
+      var parents = subject.parents("[for='"+field+"'],.error-sink");
+      parent = parents.exists()? parents.eq(0): subject;
+    }
 
     var box = $("<div class=error>"+error+"</div>");
     parent.after(box);
@@ -1158,7 +1165,8 @@ mkn.render = function(options)
 
   var loadValues =  function(parent, data)
   {
-    $.json('/', serverParams('values', data.path, {key: data.key}), function(result) {
+    var params = $.extend({key: data.key}, data.params);
+    $.json('/', serverParams('values', data.path, params), function(result) {
       if (!result) return;
       parent.trigger('loaded_values', [result]);
       if ($.isPlainObject(result))
