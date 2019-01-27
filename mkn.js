@@ -136,7 +136,9 @@ var mkn = new function() {
 
   this.showPage = function(options, parent)
   {
-    if (parent == undefined) parent = $('body');
+    if (parent == undefined) {
+      parent = options.parent? $(parent): $('body');
+    }
     var defer = $.Deferred();
     this.loadPage(options, parent).done(function(result, options) {
       var object = mkn.createPage(options, result, parent);
