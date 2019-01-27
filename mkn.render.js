@@ -1020,6 +1020,7 @@ mkn.render = function(options)
         action = action[0];
       }
       switch(action) {
+        case 'page': mkn.showPage(field); return;
         case 'dialog': mkn.showDialog(field.url, $.extend({key: field.key}, params[0])); return;
         case 'close_dialog': mkn.closeDialog(obj); break;
         case 'redirect': redirect(field); break;
