@@ -295,6 +295,7 @@ li.paragraph {text-indent: -1em }
 .transparent-color,.hover-transparent-color:hover{background-color: transparent}
 
 .veil-black{background-color: rgba(0,0,0,.3)}
+.veil-grey{background-color: rgba(128,128,128,.3)}
 .veil-white{background-color: rgba(255,255,255,.3)}
 
 /* positioning */
@@ -477,6 +478,10 @@ li.paragraph {text-indent: -1em }
 .vertical-bottom { vertical-align: bottom; }
 .vertical-center,.vertical-middle { vertical-align: middle; }
 .vertical-top { vertical-align: top; }
+
+/* rotate transformation */
+.vertical-up { -webkit-transform:rotate(270deg);transform:rotate(270deg)}
+.vertical-down { -webkit-transform:rotate(90deg);transform:rotate(90deg)}
 
 /* responsive widths */
 /* fractional width */
