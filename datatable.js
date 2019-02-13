@@ -46,10 +46,15 @@
       me.head().toggle(me.hasFlag('show_titles') || me.hasFlag('show_header') || me.hasFlag('filter'));
       me.showFooterActions();
       if (opts.auto_load)
-        me.showData();
+        me.showData({});
       el.on('refresh', function(e, args) {
         el.trigger('refreshing', args);
         me.showData(args);
+        e.stopImmediatePropagation();
+      })
+      .on('addData', function(e, args) {
+        el.trigger('addingData', args);
+        me.load(args);
         e.stopImmediatePropagation();
       })
       me.body().scroll($.proxy(me._scroll,me));
@@ -129,7 +134,7 @@
         // el.trigger('refreshing', [data]);
         var end = new Date().getTime();
         console.log("Load: ", end - start);
-        me.populate(data);
+        me.populate(data, args.insert_at);
         me.loading = false;
         el.triggerHandler('refreshed', [data]);
         delete data.data;
@@ -138,7 +143,7 @@
       });
     },
 
-    populate: function(data)
+    populate: function(data, insert_at)
     {
       if (data === undefined || data === null || !data.data) {
         console.log('No table data for table:', this.params.field);
@@ -156,7 +161,7 @@
       for(var i in data.data) {
         var row = data.data[i];
         if ($.isArray(row)) {
-          this.addRow(row);
+          this.addRow(row, insert_at);
           this.prev_row = row;
         }
       }
@@ -415,11 +420,17 @@
       });
     },
 
-    addRow: function(row) {
+    addRow: function(row, insert_at) {
       var tr = this.row_blueprint.clone();
       // row = $.extend({}, this.options.defaults, row);
       this.updateRow(tr, row);
-      tr.appendTo(this.body());
+      var body = this.body();
+      if (insert_at === undefined)
+        tr.appendTo(body);
+      else if ($.isNumeric(insert_at))
+        tr.insertBefore(body.children().eq(insert_at));
+      else
+        tr.insertBefore(body.find(insert_at));
     },
 
     updateRow: function(tr, data)
@@ -441,6 +452,7 @@
         }
         if (field.data) {
           tr.data(field.id, cell);
+          if (field.attr) tr.attr(field.id, cell);
           continue;
         }
 
@@ -465,7 +477,7 @@
           cell.id = field.id;
           if (key) cell.id +=  "_" + key;
         }
-        
+
         data[i] = cell;
         if (this.prev_row && this.prev_row[i] && this.prev_row[i].row_span > 1) {
           cell.row_span = parseInt(this.prev_row[i].row_span) - 1;
