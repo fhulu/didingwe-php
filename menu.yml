@@ -41,7 +41,7 @@ menu_item:
   mutable: [url]
   type: container
   contents: [menu_link]
-  attr: { tabindex: $number, title: $desc}
+  attr: { tabindex: $number, title: $desc, item: $id}
 
 menu_link:
   tag: a
