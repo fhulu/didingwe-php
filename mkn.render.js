@@ -12,6 +12,7 @@ mkn.render = function(options)
   me.parent = options.parent;
   me.known = {};
   me.root = {};
+  me.request = options.request;
 
   var array_defaults = [ 'type', 'types', 'template', 'action', 'attr', 'wrap', 'default'];
   var geometry = ['left','right','width','top','bottom','height', 'line-height','max-height', 'max-width'];
