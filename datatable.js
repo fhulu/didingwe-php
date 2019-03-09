@@ -45,17 +45,19 @@
         this.no_records = this.element.find('#no_records');
       me.head().toggle(me.hasFlag('show_titles') || me.hasFlag('show_header') || me.hasFlag('filter'));
       me.showFooterActions();
-      if (opts.auto_load)
-        me.showData({});
+      if (opts.auto_load) {
+        var args = $.isPlainObject(r.request)? r.request: {};
+        me.showData(args);
+      }
       el.on('refresh', function(e, args) {
         el.trigger('refreshing', args);
         me.showData(args);
-        e.stopImmediatePropagation();
+        return opts.propagated_events.indexOf(e.type) >= 0;
       })
       .on('addData', function(e, args) {
         el.trigger('addingData', args);
         me.load(args);
-        e.stopImmediatePropagation();
+        return opts.propagated_events.indexOf(e.type) >= 0;
       })
       me.body().scroll($.proxy(me._scroll,me));
       me.bindRowActions()
