@@ -1308,6 +1308,7 @@ mkn.render = function(options)
       vars.push(key);
     });
 
+
     // add input vars
     parent.find('input,select,textarea').addBack('input,select,textarea').each(function() {
       var field = $(this).data('didi-field');
@@ -1338,6 +1339,12 @@ mkn.render = function(options)
     if (vars.length) vars = "var " + vars.map(function(v) {
       return v+",_old_"+v;
     }).join(",");
+
+    if (field.js) {
+      $.each(field.js, function(name, value) {
+        src += "var " + name + " = " + value + ";\n";
+      })
+    }
 
     src += vars;
     if (field.js_functions) src += "\n\n" + field.js_functions + "\n\n";
