@@ -53,12 +53,20 @@ class log
     $message = str_replace("\n", " ", $message);
     $message = str_replace("\r", " ", $message);
 
-    if (!is_null($this->instance))
-      $file = fopen(dirname($_SERVER['SCRIPT_FILENAME']).'/'.$config['log_dir'].'/'.date('Y-m-d').'-'.$this->instance,'a+');
+    if (!is_null($this->instance)) {
+      $file_name = dirname($_SERVER['SCRIPT_FILENAME']).'/'.$config['log_dir']."/$this->instance";
+      if (file_exists($file_name)) {
+        $today = date('Y-m-d');
+        $file_date = date('Y-m-d', filemtime($file_name));
+        if ($file_date != $today)
+          rename($file_name, "$today-$file_name");
+      }
+      $file = fopen($file_name,'a+');
+    }
     else $file = 'STDOUT';
     $pid = getmypid();
     fputs($file, date('Y-m-d H:i:s')." $this->instance($pid) ".log::$subject[$level]. ": $message\n");
-        if ($file != 'STDOUT') fclose($file);
+    if ($file != 'STDOUT') fclose($file);
   }
 
   static function log($level, $message)
