@@ -58,8 +58,10 @@ class log
       if (file_exists($file_name)) {
         $today = date('Y-m-d');
         $file_date = date('Y-m-d', filemtime($file_name));
-        if ($file_date != $today)
-          rename($file_name, "$today-$file_name");
+        if ($file_date != $today) {
+          $old_name = dirname($_SERVER['SCRIPT_FILENAME']).'/'.$config['log_dir']."/$file_date-$this->instance";
+          rename($file_name, $old_name);
+        }
       }
       $file = fopen($file_name,'a+');
     }
