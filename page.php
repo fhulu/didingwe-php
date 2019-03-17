@@ -640,11 +640,11 @@ class page
     $this->types['template'] = $this->get_expanded_field('template');
     $this->remove_items($this->fields);
     $this->remove_items($this->types);
-    return array(
+    return null_merge($this->answer, [
       'path'=>implode('/',$this->path),
       'fields'=>$this->fields,
-      'types'=>$this->types
-    );
+      'types'=>$this->types,
+    ]);
   }
 
 
