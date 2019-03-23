@@ -111,6 +111,7 @@
 
     load: function(args)
     {
+      args = args || {};
       var start = new Date().getTime();
       var me = this;
       var opts = me.options;
