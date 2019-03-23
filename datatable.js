@@ -423,7 +423,7 @@
     },
 
     addRow: function(row, insert_at) {
-      var tr = this.row_blueprint.clone();
+      var tr = this.row_blueprint.clone(true);
       // row = $.extend({}, this.options.defaults, row);
       this.updateRow(tr, row);
       var body = this.body();
@@ -795,7 +795,7 @@
       })
       .on('addNewRow', function(e, data) {
         if (!$(e.target).is(el)) return;
-        var tr = me.row_blueprint.clone();
+        var tr = me.row_blueprint.clone(true);
         me.body().prepend(tr);
         me.setRowData(tr, data);
         me.adjustWidths();
