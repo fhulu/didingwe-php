@@ -59,6 +59,12 @@
         me.load(args);
         return opts.propagated_events.indexOf(e.type) >= 0;
       })
+      .on('updateData', function(e, args) {
+        console.log("updateData", args);
+        el.trigger('updatingData', args);
+        me.updateData(args);
+        return opts.propagated_events.indexOf(e.type) >= 0;
+      });
       me.body().scroll($.proxy(me._scroll,me));
       me.bindRowActions()
     },
@@ -139,10 +145,10 @@
         console.log("Load: ", end - start);
         me.populate(data, args.insert_at);
         me.loading = false;
-        el.triggerHandler('refreshed', [data]);
+        console.log("Populate: ", new Date().getTime() - end);
         delete data.data;
         $.extend(me.params, data);
-        console.log("Populate: ", new Date().getTime() - end);
+        el.triggerHandler('refreshed', [data]);
       });
     },
 
@@ -409,6 +415,42 @@
       me.spanColumns(me.head().find('.header>th'));
     },
 
+    updateData: function(args) {
+      args = args || {start_row: 0, start_col: 0};
+      var start = new Date().getTime();
+      var me = this;
+      var opts = me.options;
+      var action = opts.data_from == 'post'? 'action': 'values';
+      var data = $.extend(opts.request, me.params, args, {action: action});
+      var selector = opts.selector;
+      if (selector !== undefined) {
+        $.extend(data, $(selector).values());
+      }
+
+      var el = me.element;
+      me.loading = true;
+      $.json('/', {data: mkn.plainValues(data)}, function(result) {
+        if (!result) {
+          el.triggerHandler('updated', [result]);
+          return;
+        };
+        if (data._responses)
+          el.triggerHandler('server_response', [resut]);
+        // el.trigger('refreshing', [data]);
+        var end = new Date().getTime();
+        console.log("Load: ", end - start);
+        var row = args.start_row;
+        var col = args.start_col
+        var rows = me.body().children();
+        for (var i in result.data) {
+          me.updateRow(rows.eq(row++), result.data[i], col)
+        }
+        me.loading = false;
+        el.triggerHandler('updated', [data]);
+        console.log("Update: ", new Date().getTime() - end);
+      });
+    },
+
     setRowStyles: function(row, styles) {
       var row_styles = this.options.row_styles;
       if (!row_styles)
@@ -436,18 +478,18 @@
         tr.insertBefore(body.find(insert_at));
     },
 
-    updateRow: function(tr, data)
+    updateRow: function(tr, data, offset)
     {
       var me = this;
       var key;
       var expandable = false;
-      var col = 0;
+      offset = offset || 0;
+      var col = offset;
       var fields = this.options.fields;
       var tds = tr.children();
-      var count = fields.length;
+      var count = fields.length-offset;
       for (var i=0; i<count; ++i) {
-        i = parseInt(i);
-        var field = fields[i];
+        var field = fields[offset++];
         var cell = data[i];
         if (field.id == 'style' && cell !== undefined) {
           me.setRowStyles(tr, cell);
@@ -485,7 +527,7 @@
         if (this.prev_row && this.prev_row[i] && this.prev_row[i].row_span > 1) {
           cell.row_span = parseInt(this.prev_row[i].row_span) - 1;
           data[i] = cell;
-          td.remove();
+          td.addClass('hide');
         }
         else if (cell.row_span) {
           td.attr("rowspan", cell.row_span);
