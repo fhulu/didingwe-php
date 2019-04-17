@@ -374,7 +374,7 @@
         td.toggle(mkn.visible(field));
         td.addClass(cls);
         if (field.style)
-          this.applyStyle(td,options.cell.styles, field.style)
+          td.addStyle(options.cell.style, field.style)
         if (field.class) td.addClass(field.class.join(' '));
         if (field.html === undefined) continue;
         field = mkn.copy(field);
@@ -583,13 +583,16 @@
         td.addClass($.isArray(cell.class)? cell.class.join(' '): cell.class);
 
       if (cell.style)
-        this.applyStyle(td, this.options.cell.styles, cell.style)
+        td.addStyle(this.options.cell.styles, cell.style)
 
       if (cell.key)
         td.attr("key", cell.key)
       if (cell.type) {
         var src = this.cell_render.create(cell);
         td.append(src);
+      }
+      if (cell.data) {
+        td.data(JSON.parse(cell.data));
       }
       var obj = td.children().eq(0);
 

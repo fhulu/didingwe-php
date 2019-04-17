@@ -557,3 +557,37 @@ $.fn.bindFirst = function(name, fn)
 $.fn.findByAttribute = function(attr, value) {
   return this.find("["+attr+"='"+escape(value)+"']");
 }
+
+$.fn.addStyle = function(reference, styles) {
+  if (!$.isArray(styles)) styles = styles.split(' ');
+  var me = this;
+  styles.forEach(function(style) {
+    me.addClass(style)
+    var classes = reference[style];
+    if (!classes) return;
+    classes.forEach(function(cls) {
+      if (cls[0] == '~')
+        me.removeStyle(reference, cls.substr(1));
+      else if (cls[0] == '^')
+        me.removeClass(cls.substr(1));
+      else
+        me.addClass(cls);
+    });
+  })
+  return this;
+}
+
+$.fn.removeStyle = function(reference, styles) {
+  if (!$.isArray(styles)) styles = styles.split(' ');
+
+  var me = this;
+  styles.forEach(function(style) {
+    me.removeClass(style)
+    var classes = reference[style];
+    if (!classes) return;
+    classes.forEach(function(cls) {
+      me.removeClass(cls);
+    });
+  })
+  return this;
+}
