@@ -894,9 +894,12 @@ class page
     return $result;
   }
 
-  function replace_sid(&$str)
+  function replace_auth(&$str)
   {
-    replace_fields($str, ['sid'=>$this->get_module('auth')->get_session_id()]);
+    $auth = $this->get_module('auth');
+    replace_fields($str, ['sid'=>$auth->get_session_id()]);
+    replace_fields($str, ['uid'=>$auth->get_user()]);
+    replace_fields($str, ['pid'=>$auth->get_partner()]);
   }
 
   function replace_sql(&$sql, $options)
@@ -957,7 +960,7 @@ class page
 
   function translate_sql($sql)
   {
-    page::replace_sid($sql);
+    page::replace_auth($sql);
     $this->replace_sql($sql, $this->answer) ;
     $this->replace_sql($sql, $this->context);
     $this->replace_sql($sql, $this->request);
@@ -966,7 +969,7 @@ class page
 
   function translate_context($str)
   {
-    page::replace_sid($str);
+    page::replace_auth($str);
     $str = replace_vars($str, $this->answer);
     $str = replace_vars($str, $this->context);
     return replace_vars($str, $this->request);
@@ -1206,9 +1209,9 @@ class page
       else if (!is_array($parameter) || is_assoc($parameter))
         $parameter = array($parameter);
 
-      $this->replace_sid($method);
+      $this->replace_auth($method);
       $this->replace_fields($method);
-      $this->replace_sid($parameter);
+      $this->replace_auth($parameter);
       $this->replace_special_vars($parameter);
 
       log::debug_json("REPLY ACTION $method", $parameter);
