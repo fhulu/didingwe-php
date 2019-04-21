@@ -591,3 +591,9 @@ $.fn.removeStyle = function(reference, styles) {
   })
   return this;
 }
+
+$.fn.getQuantity = function(key, init) {
+  var v = this.data(key);
+  if (v === undefined) return init || 0;
+  return parseInt(v);
+}
