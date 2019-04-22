@@ -12,6 +12,7 @@
   font-size: inherit;
   font-weight: inherit;
   text-decoration: none;
+  color: inherit;
 }
 
 .didi:focus{outline:none}
