@@ -374,7 +374,7 @@
         td.toggle(mkn.visible(field));
         td.addClass(cls);
         if (field.style)
-          td.addStyle(options.cell.style, field.style)
+          td.addStyle(options.cell.styles, field.style)
         if (field.class) td.addClass(field.class.join(' '));
         if (field.html === undefined) continue;
         field = mkn.copy(field);
