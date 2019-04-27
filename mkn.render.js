@@ -1234,7 +1234,7 @@ mkn.render = function(options)
     function setInlineExpr(parent, key, value) {
       value = value.trim();
       var exprs;
-      if (value[0] == '~')
+      if (/^~|\s*function\s*\([^)]*\)/gm.test(value))
         exprs = [value];
       else
         exprs = value.regexCapture(/(`[^`]+`)/g);
@@ -1246,7 +1246,7 @@ mkn.render = function(options)
         var ret = /\breturn\s/gm.test(expr)?"": "\t\treturn ";
         if (key.indexOf('on_') != 0)
           src = "\tget_"+id+"_"+  index+": function(obj) {\n"+ret;
-        else if (!/^[~`]\s*function\s*\(/gm.test(expr))
+        else if (!/^[~`]?\s*function\s*\(/gm.test(expr))
           src = "\t"+key+"_"+id+": function(event) {\n";
         else {
           src = "\t"+key+"_"+id+": ";
@@ -1267,7 +1267,7 @@ mkn.render = function(options)
       for (var i in scripts) {
         var src = scripts[i]['script'];
         if (!src) return;
-        if (/^[~`]\s*function\s*\(/gm.test(src))  src =  "function(event) { " + src + " }";
+        if (/^[~`]?\s*function\s*\(/gm.test(src))  src =  "function(event) { " + src + " }";
         var sink = obj;
         if (obj.is('body') && event == 'scroll') sink = $(window);
         sink.on(event, $.proxy(Function(src), obj));
