@@ -697,6 +697,7 @@
 
     createRowActions: function(td, row_actions)
     {
+      if (!row_actions) return;
       if (!$.isArray(row_actions)) row_actions = row_actions.split(',');
       if (row_actions.indexOf('expand') >=0)
         this.createExpandActions(td);

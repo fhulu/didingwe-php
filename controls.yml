@@ -282,6 +282,7 @@ filled_text:
   classes: label
   value: ""
   text: $value
+  valid: ignore
 
 google_icon:
   tag: i

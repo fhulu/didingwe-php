@@ -112,6 +112,7 @@ greater_equal:
   error: $name must not be less than $1
 
 in:
+  valid: sql(select 1 from $1 where $2='$v2')
   error: No such $name ($value)
 
 in_collection:
@@ -223,6 +224,26 @@ same_year:
 
 sql:
   error: Invalid $name
+
+sql_exists: # table[,column]
+  2: $name
+  valid: sql(select 1 from $1 where $2='$value')
+  error: $name must exist
+
+sql_exists_foreign: # table, column, foreign[, foreign_column]
+  4: $3
+  valid: sql(select 1 from $1 where $2='$value' and $3='$v4')
+  error: $name must exist
+
+sql_unique: # table[,column]
+  2: $name
+  valid: not(sql_exists($1,$2))
+  error: $name ($value) already exists
+
+sql_unique_foreign: # table, column, foreign[, foreign_column]
+  4: $3
+  valid: not(sql_exists_foreign($1,$2,$3,$4))
+  error: $name ($value) already exists
 
 telephone:
   valid: /^[+0]\d+$/

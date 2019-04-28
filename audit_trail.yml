@@ -3,11 +3,12 @@ user_list:
   type: datatable
   access: auth
   name: My Audit Trail
-  class: [widest,scroll-table]
+  class: [^scroll-table,widest]
   body: { max-height: 500 }
   sort: when
   sort_order: desc
   flags: [show_titles,filter]
+  title: { class: [widest] }
   report_title: User Audit Trail
   actions:
     - print
