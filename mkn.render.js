@@ -13,6 +13,8 @@ mkn.render = function(options)
   me.known = {};
   me.root = {};
   me.request = options.request;
+  me.model_src = options.model_src;
+  me.model_funcs = options.model_funcs;
 
   var array_defaults = [ 'type', 'types', 'template', 'action', 'attr', 'wrap', 'default'];
   var geometry = ['left','right','width','top','bottom','height', 'line-height','max-height', 'max-width'];
@@ -798,7 +800,7 @@ mkn.render = function(options)
         event.preventDefault();
         if (field.url === undefined) field.url = obj.attr('href');
       }
-      if (event.type == 'post') 
+      if (event.type == 'post')
         field = $.extend({}, field, { action: 'post', params: [args] });
       else if (!field.action)
         return;
@@ -1332,6 +1334,11 @@ mkn.render = function(options)
       if (!field || field.parent_page != parent_id) return;
       funcs = funcs.concat(field['didi-functions']);
     });
+
+    if (me.model_funcs)
+      funcs = me.model_funcs.concat(funcs);
+    me.model_funcs = funcs;
+
     if (!funcs.length) return;
 
     // convert funcs to js source
@@ -1345,17 +1352,23 @@ mkn.render = function(options)
 
     if (field.js) {
       $.each(field.js, function(name, value) {
-        src += "var " + name + " = " + value + ";\n";
+        if (/^\s*function\(/.test(value))
+          src += "\n" + value.replace(/^s*function\s*(\([^)]*\))/m, 'function '+name+'$1')+ "\n";
+        else
+          src += "var " + name + " = " + value + ";\n";
       })
     }
 
-    src += vars;
+    src += "\n" + vars;
     if (field.js_functions) src += "\n\n" + field.js_functions + "\n\n";
+    if (me.model_src)
+      src = me.model_src + src;
+    me.model_src  = src;
+
     src += funcs;
 
     // create model
     me.model = new Function(src)();
-
     // set inital vars
     if (field.dd_init) $.each(field.dd_init, function(key, value) {
       me.model["set_"+key](value);
