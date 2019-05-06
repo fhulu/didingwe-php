@@ -160,7 +160,7 @@
       }
       if (this.cell_render) delete this.cell_render;
       var opts = this.options;
-      var render = this.cell_render = new mkn.render({invoker: opts.render.root, types: opts.render.types, id: opts.id, key: opts.key, request: opts.request});
+      var render = this.cell_render = new mkn.render({invoker: opts.render.root, model_src: opts.render.model_src,  model_funcs: opts.render.model_funcs, types: opts.render.types, id: opts.id, key: opts.key, request: opts.request});
       if (this.options.page_size !== undefined) this.showPaging(parseInt(data.total));
       this.no_records.hide();
       if (data.data.length == 0 && this.body().children().length == 0 && this.no_records)
@@ -488,6 +488,7 @@
       var fields = this.options.fields;
       var tds = tr.children();
       var count = fields.length-offset;
+      var col_span = 0;
       for (var i=0; i<count; ++i) {
         var field = fields[offset++];
         var cell = data[i];
@@ -500,6 +501,8 @@
           if (field.attr) tr.attr(field.id, cell);
           continue;
         }
+        if (col_span && --col_span)
+          continue;
 
         var td = tds.eq(col++);
         if (cell === undefined || cell === null)
@@ -534,11 +537,10 @@
         }
 
         if (cell.col_span) {
-          var span = parseInt(cell.col_span);
-          td.attr("colspan", span);
-          for (var j = 1; j < span; ++j )
+          col_span = parseInt(cell.col_span);
+          td.attr("colspan", col_span);
+          for (var j = 1; j < col_span; ++j )
             tds.eq(col++).remove();
-          i += span - 1;
         }
 
         if (cell === null || cell === undefined)
