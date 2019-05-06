@@ -793,14 +793,17 @@ mkn.render = function(options)
       	me.updateWatchers();
     });
 
-    if (!field.action) return;
-    obj.click(function(event) {
+    obj.on('click post', function(event, args) {
       if (field.tag == 'a') {
         event.preventDefault();
         if (field.url === undefined) field.url = obj.attr('href');
       }
+      if (event.type == 'post') 
+        field = $.extend({}, field, { action: 'post', params: [args] });
+      else if (!field.action)
+        return;
       accept(event, $(this), field);
-      if ($.isArray(field.trap) && field.trap.indexOf('click') >=0 ) {
+      if ($.isArray(field.trap) && field.trap.indexOf(event.type) >=0 ) {
         event.stopImmediatePropagation();
       }
     });
