@@ -442,6 +442,7 @@ list_all:
 login:
   access: public
   type: input_page
+  class: [pad-right pad-xlarge]
   position: { my: 'top', at: 'top+150' }
   desc: Fill in your credentials below and click Login to logon
   enter: "#login,[action=login]"
@@ -449,7 +450,7 @@ login:
     - email: { valid: login_email }
     - password: { valid: login_password }
   actions:
-    - login
+    - login: {class: [^pad-xlarge]}
     - forgot_password: { action: dialog }
   post:
     - let: { start_page: "/" }
