@@ -308,6 +308,9 @@ postal_code:
 program:
   name: $program_name
 
+province:
+  desc: A country may be divided into sections. Each section is called a province
+
 query:
   type: button
   call: $class::$invoker($key)
