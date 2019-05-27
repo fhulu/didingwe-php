@@ -35,7 +35,7 @@ isearch:
     desc: Show all items
   drop:
     type: container
-    class: [isearch-drop,overlay,fixed,scroll-y]
+    class: [isearch-drop,overlay,scroll-y]
     text: ""
     height: auto
     show: no
