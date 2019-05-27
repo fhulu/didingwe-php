@@ -206,7 +206,8 @@ dropdown:
 
 dropdown_collection:
   type: dropdown
-  options: [collection.data]
+  options:
+    - collection.data: []
   valid: collection.exists($name,$value)
 
 element:
