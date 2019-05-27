@@ -681,6 +681,7 @@ mkn.render = function(options)
        me.loadData(object, field, name, defaults);
        if (field.values)
          me.loadValues(object, field);
+       return !$.isArray(field.trap) || field.trap.indexOf('reload') < 0;
      })
   };
 
