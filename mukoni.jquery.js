@@ -597,3 +597,12 @@ $.fn.getQuantity = function(key, init) {
   if (v === undefined) return init || 0;
   return parseInt(v);
 }
+
+$.fn.load = function(options) {
+  mkn.showPage(options, this).done(function(obj, result, field) {
+    setStyle(obj, field);
+    setClass(obj, field);
+    this.trigger('dying');
+    this.replaceWith(obj);
+  });
+}
