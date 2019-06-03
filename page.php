@@ -1238,9 +1238,8 @@ class page
         return false;
       };
       if ($this->foreach) return $result;
-      if (is_null($result)) continue;
-      if (!is_array($result)) $result = array($result);
-      $this->answer = merge_options($this->answer, $result);
+      if (is_array($result))
+        $this->answer = merge_options($this->answer, $result);
     }
     return $this->answer;
   }
@@ -1653,7 +1652,7 @@ class page
     $this->foreach = false;
     $this->broken = false;
     foreach($data as $row) {
-      $this->answer = null_merge($this->answer, $row);
+      $this->answer = merge_options($this->answer, $row);
       foreach($args as $arg) {
         if ($this->reply($arg) === false) return false;
       }
