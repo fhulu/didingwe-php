@@ -323,13 +323,20 @@ class page
     return $base_field;
   }
 
-  function read_external($path)
+  function read_external_page($path, $action='read')
   {
     $request = $this->request;
     $request['path'] = $path;
+    $request['action'] = $action;
     $page = new page($request);
     $page->sub_page = true;
     $page->process();
+    return $page;
+  }
+
+  function read_external($path)
+  {
+    $page = $this->read_external_page($path, $this->request['action']);
     $this->types = merge_options($page->types, $this->types);
     return $page->fields;
   }
@@ -366,6 +373,7 @@ class page
     }
     if (!$field) $field = $this->fields;
     foreach($path as $branch) {
+      log::debug_json("BRANCH $branch", $field[$branch]);
       if (is_assoc($field)) {
         $new_parent = $field;
         $field = $field[$branch];
@@ -871,18 +879,20 @@ class page
     $collection->insert('audit', ['session'=>'$sid'], ['partner'=>$partner], ['user'=>$user], ['action'=>$name], ['detail'=>$detail]);
   }
 
-  function action()
+  function action($validate=true)
   {
     $invoker = $this->context;
     if (!isset($this->context['id'])) $this->context['id'] = last($this->path);
     if (!isset($this->context['name'])) $this->context['name'] = $this->name($this->context);
     $this->merge_fields($this->fields);
-    $pre_validation = $invoker['pre_validation'];
-    if ($pre_validation && $this->reply($pre_validation) === false)
-      return false;
-    $validate = at($invoker, 'validate');
-    if ($validate != 'none' && !$this->validate($this->fields, $validate))
-      return null;
+    if ($validate) {
+      $pre_validation = $invoker['pre_validation'];
+      if ($pre_validation && $this->reply($pre_validation) === false)
+        return false;
+      $validate = at($invoker, 'validate');
+      if ($validate != 'none' && !$this->validate($this->fields, $validate))
+        return null;
+    }
     $audit_first = $invoker['audit_first'];
     if ($audit_first)
       $this->audit($invoker,[]);
@@ -1182,7 +1192,10 @@ class page
     $post = at($actions, 'post');
     if (isset($post)) $actions = $post;
     if (is_null($actions)) return null;
-    if (is_assoc($actions))  $actions = array($actions);
+    if (is_string($actions))
+      $actions = [ ['post'=>$actions] ];
+    else if (is_assoc($actions))
+       $actions = [$actions];
     $this->merge_fields($actions, $this->fields);
 
     log::debug_json("REPLY ACTIONS", $actions);
@@ -1692,10 +1705,15 @@ class page
   {
     if ($values) $this->let($values);
     $path = explode('/', $url);
-    $file = array_shift($path);
-    $fields = [$path[0]=>$this->read_external($url)];
-    $this->fields = merge_options($this->fields, $fields);
-    $result = $this->follow_path($path);
-    return $this->reply($result);
+    if ($path[0] == $this->path[0] && $path[1] == $this->path[1]) {
+      log::debug("INTERNAL POST");
+      return $this->reply($this->fields);
+    }
+
+    log::debug("EXTERNAL POST");
+    $page = $this->read_external_page($url);
+    $page->set_context();
+    $page->result = $this->result;
+    return $page->action(false);
   }
 }
