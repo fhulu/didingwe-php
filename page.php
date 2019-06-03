@@ -890,7 +890,9 @@ class page
     if ($this->aborted) return $result;
     if (!$audit_first && !page::has_errors() && array_key_exists('audit', $invoker))
       $this->audit($invoker);
-    $this->post("trigger/fire", ["trigger_url"=>implode("/", $this->path)]);
+    global $config;
+    if ($config['use_triggers'])
+      $this->post("trigger/fire", ["trigger_url"=>implode("/", $this->path)]);
     return $result;
   }
 
