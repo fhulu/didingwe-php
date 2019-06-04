@@ -1707,13 +1707,14 @@ class page
     $path = explode('/', $url);
     if ($path[0] == $this->path[0] && $path[1] == $this->path[1]) {
       log::debug("INTERNAL POST");
-      return $this->reply($this->fields);
+      return $this->reply($this->fields['post']);
     }
 
     log::debug("EXTERNAL POST");
     $page = $this->read_external_page($url);
     $page->set_context();
-    $page->result = $this->result;
-    return $page->action(false);
+    $actions = $page->follow_path();
+    $page->answer = $this->answer;
+    return $page->reply($actions);
   }
 }
