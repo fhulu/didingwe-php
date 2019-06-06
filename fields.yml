@@ -179,7 +179,7 @@ home:
 id:
   name: Reference #
 
-id_no:
+id_number:
   name: ID Number
   question: Please enter your South Africa Identity Number
   desc: Valid South African ID number
@@ -187,8 +187,6 @@ id_no:
   attr: { min: 1000000000000, max: 9999999999999 }
 
 
-id_number:
-  type: id_no
 
 
 last_name:
