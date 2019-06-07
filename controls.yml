@@ -210,6 +210,12 @@ dropdown_collection:
     - collection.data: []
   valid: collection.exists($name,$value)
 
+dropdown_table:
+  type: dropdown
+  options:
+    - select id, name from $name
+  valid: sql_exists($name,id)
+
 element:
   text: ""
   html: <$tag>$text</$tag>
