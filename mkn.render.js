@@ -578,7 +578,7 @@ mkn.render = function(options)
       target.trigger('dying');
       target.replaceWith(obj);
       if (!selector) return;
-      var classes = selector.regexCapture(/(\.\w[\w\.]*)$/g);
+      var classes = selector.regexCapture(/(\.[\w-][\w-\.]*)$/g);
       if (classes.length) obj.addClass(classes[0].replace('.', ' '));
     });
   }
