@@ -323,11 +323,11 @@ class page
     return $base_field;
   }
 
-  function read_external_page($path, $action='read')
+  function read_external_page($path)
   {
     $request = $this->request;
     $request['path'] = $path;
-    $request['action'] = $action;
+    if ($request['action'] == 'action') $request['action'] = 'read';
     $page = new page($request);
     $page->sub_page = true;
     $page->process();
@@ -336,7 +336,7 @@ class page
 
   function read_external($path)
   {
-    $page = $this->read_external_page($path, $this->request['action']);
+    $page = $this->read_external_page($path);
     $this->types = merge_options($page->types, $this->types);
     return $page->fields;
   }
@@ -373,7 +373,6 @@ class page
     }
     if (!$field) $field = $this->fields;
     foreach($path as $branch) {
-      log::debug_json("BRANCH $branch", $field[$branch]);
       if (is_assoc($field)) {
         $new_parent = $field;
         $field = $field[$branch];
