@@ -82,7 +82,11 @@
 .border[class*=border-width-],.hover-border:hover[class*=border-width-] { border-style:solid }
 .borderless,.border-less { border-top-width:0;border-bottom-width:0;border-left-width:0;border-right-width:0}
 .border-collapse{border-collapse: collapse;}
-
+.no-border-left[class*=border-width-]{ border-left-style: none }
+.no-border-right[class*=border-width-]{ border-right-style: none }
+.no-border-top[class*=border-width-]{ border-left-style: none }
+.no-border-bottom[class*=border-width-]{ border-right-style: none }
+.no-x-divider+.no-x-divider[class*=border-width-]{border-left-style: none; border-right-style: none}
 
 /* border divider */
 .hdivider+.hdivider{border-left-style:solid}
@@ -206,7 +210,7 @@
 
 
 /* status */
-[disabled],.disabled { color: grey !important}
+[disabled],.disabled { color: grey !important; pointer-events: none}
 
 /* cursor */
 .autocursor,.auto-cursor { cursor: auto }
