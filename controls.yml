@@ -212,7 +212,6 @@ dropdown_collection:
 
 dropdown_table:
   type: dropdown
-  conditions: where active
   options:
     - sql: select id, name from $parent_id where active
   valid: sql_exists($name,id)
