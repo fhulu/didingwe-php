@@ -743,6 +743,7 @@ class page
   function data()
   {
     if (!isset($this->context['id'])) $this->context['id'] = last($this->path);
+    if (!isset($this->context['parent_id'])) $this->context['parent_id'] = at($this->path, sizeof($this->path)-2);
     return $this->reply($this->context);
   }
 
