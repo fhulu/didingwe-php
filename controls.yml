@@ -213,7 +213,7 @@ dropdown_collection:
 dropdown_table:
   type: dropdown
   options:
-    - select id, name from $name
+    - sql: select id, name from $parent_id
   valid: sql_exists($name,id)
 
 element:
