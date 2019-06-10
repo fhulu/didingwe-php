@@ -1383,7 +1383,8 @@ mkn.render = function(options)
     if (!root) root = me.root;
 
     function update(obj, field, id) {
-      if (!field || !field['didi-model']) return;
+      if (!field || !field['didi-model']) return false;
+      var changed = false;
       $.each(field['didi-model'], function(key, value) {
         if (key.indexOf('on_') == 0) return;
         var vars = value.regexCapture(/\$\{(\d+)\}/g);
@@ -1393,15 +1394,18 @@ mkn.render = function(options)
           if (func === undefined) return;
           var result = func(obj);
           var regex = "\\$\\{"+index+"\\}";
+          var old_value = value;
           if (new RegExp('^'+regex+'$','g').test(value))
             value = result;
           else
             value =  value.replace(new RegExp(regex,'g'), result);
+          if (value !== old_value) changed = true;
           field[key] = value;
           if (key == 'text') obj.text(value);
           if (key == 'value') obj.val(value)
         });
       })
+      return changed;
     }
     var root_field = root.data('didi-field');
     if (!root_field) return;
@@ -1413,14 +1417,14 @@ mkn.render = function(options)
       if (!field || field.parent_page != root_id) return;
       if (!field) return;
       var id = field.id;
-      update(obj, field, id);
-      update(obj, field.style, id);
-      update(obj, field.class, id);
-      setAttr(obj, field);
-      setClass(obj, field);
-      setStyle(obj, field);
-      setVisible(obj, field);
-      setDisabled(obj, field);
+      var changed = update(obj, field, id);
+      var style_changed = update(obj, field.style, id);
+      var class_changed = update(obj, field.class, id);
+      if (changed) setAttr(obj, field);
+      if (changed || class_changed) setClass(obj, field);
+      if (changed || style_changed) setStyle(obj, field);
+      if (changed) setVisible(obj, field);
+      if (changed) setDisabled(obj, field);
     })
   }
 }
