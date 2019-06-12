@@ -74,7 +74,7 @@
       this.params = { page_num: 1, offset: 0};
       var exclude = [ 'create', 'action', 'css', 'id', 'content', 'disabled','parent_name','parent_id','parent_page',
           'auto_load', 'searchDelay', 'number', 'data_from', 'min_row_height', 'desc', 'index',
-          'html','name', 'page_id', 'position', 'sort', 'script','slideSpeed', 'text', 'tag', 'target', 'type'];
+          'html','name', 'page_id', 'position', 'sort', 'script','slideSpeed', 'text', 'tag', 'target', 'type', 'show'];
       for (var key in this.options) {
         if (exclude.indexOf(key) >= 0 || key.indexOf('on_') ==0) continue;
         var val = this.options[key];
@@ -590,8 +590,9 @@
       if (cell.key)
         td.attr("key", cell.key)
       if (cell.type) {
-        var src = this.cell_render.create(cell);
-        td.append(src);
+        cell.path = this.options.path + "/cell/controls/" + cell.type
+        var src = this.cell_render.create(this.options.cell, cell);
+        src && td.append(src);
       }
       if (cell.data) {
         td.data(JSON.parse(cell.data));
