@@ -39,7 +39,7 @@ $.widget( "custom.isearch", {
 
     me.drop = el.find('.isearch-drop').on('click', '.isearch-option', function() {
       el.data('source', $(this).data('source'));
-      el.trigger('selected', [$(this).attr('value'), $(this).attr('chosen')]);
+      $(this).trigger('selected', [$(this).attr('value'), $(this).attr('chosen')]);
     })
     .scroll($.proxy(me._scroll,me))
     .click(function() {  me.drop.hide() })
