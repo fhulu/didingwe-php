@@ -2,10 +2,9 @@ isearch:
   type: container
   create: isearch
   placeholder: Search $name
-  script: [/common/isearch.js]
-  css: [/common/isearch.css]
   class: [ isearch,relative]
   contents: [ $searcher, $buttons, $drop]
+  attr: { value: ""}
   on_disabled: |
     ~ function(e, disable) {
         $(this).find('.isearch-actioner').prop('disabled', disable).toggleClass('disabled', disable)

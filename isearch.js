@@ -33,6 +33,8 @@ $.widget( "custom.isearch", {
       el.val("");
       me.searcher.val("");
       me._load();
+      var offset = el.offset();
+      me.drop.css({left: offset.left, top: (offset.top + parseInt(el.css('height').match(/\d+/)))} );
     });
 
     me.drop = el.find('.isearch-drop').on('click', '.isearch-option', function() {
