@@ -7,6 +7,7 @@ mkn.render = function(options)
   me.invoker = options.invoker;
   var types = me.types = options.types;
   me.id = options.id;
+  me.page_id = options.id;
   me.options = options;
   me.sink = undefined;
   me.parent = options.parent;
@@ -481,8 +482,13 @@ mkn.render = function(options)
 
   this.create =  function(parent, key, init)
   {
-    var field = key===undefined? parent: parent[key];
-    if (!field) field = types[key];
+    var field = parent;
+    if (typeof key == 'string' || $.isNumeric(key)) {
+      field = parent[key];
+      if (!field) field = types[key];
+    }
+    else if ($.isPlainObject(key))
+      field = key;
     if (init === undefined || init) field = this.initField(field, parent);
     if (field.parent_page === undefined) field.parent_page = me.id;
     if (field.sub_page) {
@@ -497,6 +503,7 @@ mkn.render = function(options)
     field.html = field.html.trim().replace(/\$tag(\W)/, field.tag+'$1');
     var table_tag = isTableTag(field.tag);
     var obj = table_tag? $('<'+field.tag+'>'): $(field.html);
+
     if (field.is_body)
       obj = $('body').append(obj.html());
     if (this.sink === undefined) this.sink = obj;
@@ -555,13 +562,13 @@ mkn.render = function(options)
     if ($.isPlainObject(field.position))
       obj.position(field.position);
 
-    initLinks(obj, field).then(function() {
+     initLinks(obj, field).then(function() {
       if (subitem_count) me.setValues(obj, field);
       initEvents(obj, field);
       obj.triggerHandler('created', [field]);
     });
 
-    if (key !== undefined) parent[key] = field;
+    if (typeof key === 'string' || $.isNumeric(key)) parent[key] = field;
     return obj;
   }
 
