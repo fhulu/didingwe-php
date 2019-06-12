@@ -337,7 +337,7 @@ li.paragraph {text-indent: -1em }
 /* scrolling */
 .scroll-horizontal,.scroll-x { overflow-x: auto; }
 .scroll-vertical,.scroll-y { overflow-y: auto; }
-.no-scroll,.noscroll { overflow: hidden}
+.no-scroll,.noscroll,.no-scroll>tbody,.noscroll>tbody { overflow: hidden}
 .no-scroll-x { overflow-x: hidden}
 .no-scroll-y { overflow-y: hidden}
 
@@ -739,5 +739,6 @@ li.paragraph {text-indent: -1em }
 .scroll-table>thead,.scroll-table>tbody { float:left; width: 100%; display: block;table-layout: fixed}
 .scroll-table>tbody { overflow-y: auto }
 .scroll-table>thead>tr,.scroll-table>tbody>tr { width: 100%; table-layout: fixed}
+.plain-table>tbody{display: table}
 
 table.didi td { background-clip: padding-box;}
