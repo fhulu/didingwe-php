@@ -86,19 +86,6 @@ var mkn = new function() {
     return result;
   }
 
-  this.setClass = function(obj, classes)
-  {
-    if (classes === undefined) return;
-    if (typeof classes === 'string') classes = [classes];
-    var del = [], add =[];
-    for (var i in classes) {
-      var cls = classes[i];
-      cls[0]=='^'? del.push(cls.substr(1)): add.push(cls);
-    }
-    obj.addClass(add.join(' '));
-    obj.removeClass(del.join(' '));
-  }
-
   this.loadPage = function(options, parent)
   {
     if (parent == undefined) parent = $('body');
@@ -143,7 +130,7 @@ var mkn = new function() {
     this.loadPage(options, parent).done(function(result, options) {
       var object = mkn.createPage(options, result, parent);
       if ($.isPlainObject(result.fields.parent))
-        mkn.setClass(parent, result.fields.parent.class);
+        parent.setClass(result.fields.parent.class);
       defer.resolve(object,result,options);
     });
     return defer.promise();

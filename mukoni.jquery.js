@@ -592,6 +592,20 @@ $.fn.removeStyle = function(reference, styles) {
   return this;
 }
 
+$.fn.setClass = function(classes) {
+  if (classes === undefined) return;
+  if (typeof classes === 'string') classes = [classes];
+  var del = [], add =[];
+  for (var i in classes) {
+    var cls = classes[i];
+    if (!cls) continue;
+    cls[0]=='^'? del.push(cls.substr(1)): add.push(cls);
+  }
+  this.addClass(add.join(' '));
+  this.removeClass(del.join(' '));
+  return this;
+}
+
 $.fn.getQuantity = function(key, init) {
   var v = this.data(key);
   if (v === undefined) return init || 0;

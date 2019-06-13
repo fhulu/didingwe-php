@@ -879,7 +879,7 @@ mkn.render = function(options)
       }
       return val;
     })
-    mkn.setClass(obj, cls);
+    obj.setClass(cls);
   }
 
 
