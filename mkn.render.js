@@ -722,11 +722,22 @@ mkn.render = function(options)
     });
   }
 
+  var initListeners = function(obj, field) {
+    if (!field.listen) return;
+    var events = $.isArray(field.listen)? field.listen: [field.listen];
+    $.each(events, function(i, event) {
+      obj.on(event, function() {
+        obj.trigger(event + '_' + field.id);
+      });
+    })
+  }
+
   var initOnEvents = function(obj, field) {
     var events = {};
     if (field.action)
       events['click'] = [field];
     var id = field.id;
+    initListeners(obj, field);
     $.each(field, function(key, value) {
       if (key.indexOf('on_') != 0) return;
       var event = key.substr(3);
