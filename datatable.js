@@ -581,8 +581,8 @@
       if (td.hasClass('expandable'))
         return td.find('.text').eq(0).text(cell.name);
 
-      if (cell.class)
-        td.addClass($.isArray(cell.class)? cell.class.join(' '): cell.class);
+      if (cell.class || this.options.cell.class)
+        td.setClass(this.options.cell.class.concat(cell.class));
 
       if (cell.style)
         td.addStyle(this.options.cell.styles, cell.style)
@@ -920,6 +920,7 @@
 
     adjustWidths: function()
     {
+      if (this.options.adjust_widths !== undefined && !this.options.adjust_widths) return;
       var ths = this.head().find('.titles').children();
       var tr1 = this.body().find('tr:first-child');
       var tds = tr1.children();
