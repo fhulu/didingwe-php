@@ -26,8 +26,6 @@ datatable:
   row_creator: { type: table_row }
   css: [/common/datatable.css]
   flags: []
-  values:
-    - collection.sort_on: [sort]
   position: top
   filter:
     name: ""

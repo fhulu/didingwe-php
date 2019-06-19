@@ -122,8 +122,6 @@
       var me = this;
       var opts = me.options;
       me.head().find('.paging [action]').attr('disabled','');
-      if ($.isArray(opts.values))
-        me.populate({data: opts.values});
       var action = opts.data_from == 'post'? 'action': 'values';
       var data = $.extend(opts.request, me.params, args, {action: action});
       var selector = opts.selector;
@@ -457,6 +455,7 @@
         row_styles = this.options.row.styles;
       row.attr('class','');
       row.addClass(this.row_classes);
+      if ($.isPlainObject(styles)) styles = mkn.firstKey(styles);
       styles.split(/[, ]/).forEach(function(style) {
         row.addClass(style);
         var classes = row_styles[style];
