@@ -804,6 +804,15 @@ mkn.render = function(options)
     })
     initTooltip(obj);
 
+    obj.on('post', function(event, args) {
+      field = $.extend({}, field, { action: 'post', params: [args] });
+      accept(event, $(this), field);
+      if ($.isArray(field.trap) && field.trap.indexOf(event.type) >=0 ) {
+        event.stopImmediatePropagation();
+      }
+    });
+
+    // handle input change model
     var tag = obj.prop("tagName");
     if (!tag || ['input','select','textarea'].indexOf(tag.toLowerCase()) < 0) return;
 
@@ -812,21 +821,6 @@ mkn.render = function(options)
       var func = me.model["set_"+id];
       if (!func || func($(this).value()))
       	me.updateWatchers();
-    });
-
-    obj.on('click post', function(event, args) {
-      if (field.tag == 'a') {
-        event.preventDefault();
-        if (field.url === undefined) field.url = obj.attr('href');
-      }
-      if (event.type == 'post')
-        field = $.extend({}, field, { action: 'post', params: [args] });
-      else if (!field.action)
-        return;
-      accept(event, $(this), field);
-      if ($.isArray(field.trap) && field.trap.indexOf(event.type) >=0 ) {
-        event.stopImmediatePropagation();
-      }
     });
   };
 
@@ -1058,14 +1052,14 @@ mkn.render = function(options)
             selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+field.page_id+"$2");
             params = $.extend(params, {invoker: obj, event: event, async: true, post_prefix: field.post_prefix });
             me.sink.find(".error").remove();
+            obj.trigger('posting', [params]);
             $(selector).json('/', params, function(result) {
-              obj.trigger('processed-'+field.id, [result]);
               me.respond(result, obj, event);
             });
             break;
           }
+          obj.trigger('posting');
           $.json('/', params, function(result) {
-            obj.trigger('straight processed', [result]);
             me.respond(result, obj);
           });
           break;
@@ -1112,6 +1106,7 @@ mkn.render = function(options)
       var parents = subject.parents("[for='"+field+"'],.error-sink");
       parent = parents.exists()? parents.eq(0): subject;
     }
+    subject.trigger('error', [error]);
 
     var box = $("<div class=error>"+error+"</div>");
     parent.after(box);
@@ -1130,11 +1125,13 @@ mkn.render = function(options)
 
   this.respond = function(result, invoker, event)
   {
-    if (!result) return;
+    if (!result) {
+      if (invoker) invoker.trigger('post_success');
+      return this;
+    }
     mkn.removeXSS(result);
     var responses = result._responses;
     delete result._responses;
-    if (!$.isPlainObject(responses)) return this;
     var parent = me.sink;
     if (invoker) {
        parent = invoker.parents('#'+me.page_id).eq(0);
@@ -1142,6 +1139,12 @@ mkn.render = function(options)
     }
     else invoker = parent;
 
+    if (!$.isPlainObject(responses)) {
+      invoker.trigger('post_success', [result]);
+      return this;
+    }
+
+    invoker.trigger('post_responses', responses);
     var handle = function(action, val)
     {
       switch(action) {
@@ -1155,7 +1158,12 @@ mkn.render = function(options)
         case 'errors': reportErrors(val); break;
       }
     }
-
+    if ('errors' in responses) {
+      invoker.trigger('post_error', [responses.errors]);
+    }
+    else {
+      invoker.trigger('post_success', [result]);
+    }
     for (var key in responses) {
       var val = responses[key];
       if (!$.isArray(val))
