@@ -30,13 +30,14 @@ class page
   static $fields_stack = array();
   static $post_items = array('audit', 'call', 'clear_session', 'clear_values', 'db_name', 'error', 'let', 'keep_values','post',
     'q', 'valid', 'validate', 'write_session');
-  static $query_items = array('call', 'datarow', 'let', 'keep_values','read_session', 'read_config', 'read_values', 'ref_list', 'sql', 'sql_values', 'refresh');
+  static $query_items = array('call', 'datarow', 'let', 'keep_values','read_session', 'read_config', 'read_values', 'ref_list',
+    'sql', 'sql_values', 'refresh');
   static $atomic_items = array('action', 'attr', 'css', 'datarow', 'html', 'script', 'sql',
     'style', 'template', 'valid');
   static $user_roles = array('public');
   static $non_mergeable = array('action', 'attr', 'audit', 'call', 'clear_session',
     'clear_values', 'datarow', 'error', 'for_each', 'load_lineage', 'keep_values', 'read_session', 'refresh', 'show_dialog',
-    'sql_insert', 'sql_update', 'style', 'trigger', 'valid', 'validate', 'write_session', 'post');
+    'sql_insert', 'sql_update',  'sql_update_insert', 'sql_insert', 'style', 'trigger', 'valid', 'validate', 'write_session', 'post');
   var $request;
   var $object;
   var $method;
@@ -1092,6 +1093,15 @@ class page
     return $this->sql_values("select last_insert_id() new_${table}_id");
   }
 
+  function sql_update_insert()
+  {
+    $args = func_get_args();
+    $rows_updated = call_user_func_array([$this, 'sql_update'], $args);
+    if ($rows_updated) return $rows_updated;
+    array_splice($args, 1, 1);
+    return call_user_func_array([$this, 'sql_insert'], $args);
+  }
+
   function sql_select()
   {
     $args = func_get_args();
@@ -1209,7 +1219,7 @@ class page
     $methods = array('abort', 'alert', 'assert', 'audit', 'call', 'clear_session', 'clear_values',
       'close_dialog', 'datarow',  'error', 'foreach', 'let', 'load_lineage', 'logoff',  'keep_values', 'post', 'read_config',  'read_server', 'read_session', 'read_values',
        'redirect', 'ref_list', 'show_dialog', 'show_captcha', 'sql', 'sql_exec',
-       'sql_rows', 'sql_insert','sql_update', 'sql_values', 'refresh', 'trigger',
+       'sql_rows', 'sql_insert', 'sql_update', 'sql_update_insert', 'sql_values', 'refresh', 'trigger',
        'update', 'upload', 'view_doc', 'write_session');
     foreach($actions as $action) {
       if ($this->aborted) return false;
@@ -1346,7 +1356,6 @@ class page
     $responses = &$result['_responses'];
     $errors = &$responses['errors'];
     $errors[$name] = $value;
-    return false;
   }
 
   static function collapse($field)
