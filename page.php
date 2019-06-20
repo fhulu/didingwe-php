@@ -30,12 +30,12 @@ class page
   static $fields_stack = array();
   static $post_items = array('audit', 'call', 'clear_session', 'clear_values', 'db_name', 'error', 'let', 'keep_values','post',
     'q', 'valid', 'validate', 'write_session');
-  static $query_items = array('call', 'let', 'keep_values','read_session', 'read_config', 'read_values', 'ref_list', 'sql', 'sql_values', 'refresh');
-  static $atomic_items = array('action', 'attr', 'css', 'html', 'script', 'sql',
+  static $query_items = array('call', 'datarow', 'let', 'keep_values','read_session', 'read_config', 'read_values', 'ref_list', 'sql', 'sql_values', 'refresh');
+  static $atomic_items = array('action', 'attr', 'css', 'datarow', 'html', 'script', 'sql',
     'style', 'template', 'valid');
   static $user_roles = array('public');
   static $non_mergeable = array('action', 'attr', 'audit', 'call', 'clear_session',
-    'clear_values', 'error', 'for_each', 'load_lineage', 'keep_values', 'read_session', 'refresh', 'show_dialog',
+    'clear_values', 'datarow', 'error', 'for_each', 'load_lineage', 'keep_values', 'read_session', 'refresh', 'show_dialog',
     'sql_insert', 'sql_update', 'style', 'trigger', 'valid', 'validate', 'write_session', 'post');
   var $request;
   var $object;
@@ -963,11 +963,17 @@ class page
     return ['data'=>$this->db->page($sql, $size, $offset, null, ['fetch'=>MYSQLI_NUM]), 'count'=>$this->db->row_count()];
   }
 
+
   function sql($sql)
   {
     if (preg_match('/^\s*select/im', $sql)) return $this->sql_data($sql);
     $sql = $this->translate_sql($sql);
     return ['data'=>$this->db->exec($sql),'count'=>$this->db->row_count()];
+  }
+
+  function datarow()
+  {
+      return ['data'=>[func_get_args()] ];
   }
 
   function translate_sql($sql)
@@ -1201,7 +1207,7 @@ class page
     log::debug_json("REPLY ACTIONS", $actions);
 
     $methods = array('abort', 'alert', 'assert', 'audit', 'call', 'clear_session', 'clear_values',
-      'close_dialog', 'error', 'foreach', 'let', 'load_lineage', 'logoff',  'keep_values', 'post', 'read_config',  'read_server', 'read_session', 'read_values',
+      'close_dialog', 'datarow',  'error', 'foreach', 'let', 'load_lineage', 'logoff',  'keep_values', 'post', 'read_config',  'read_server', 'read_session', 'read_values',
        'redirect', 'ref_list', 'show_dialog', 'show_captcha', 'sql', 'sql_exec',
        'sql_rows', 'sql_insert','sql_update', 'sql_values', 'refresh', 'trigger',
        'update', 'upload', 'view_doc', 'write_session');
