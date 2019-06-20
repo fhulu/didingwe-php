@@ -76,6 +76,11 @@ class db
     if (!$this->result) throw new db_exception("SQL='$q', ERROR=".$this->mysqli->error);
     if ($this->result === true) {
       $this->rows_affected = $this->mysqli->affected_rows;
+      if (preg_match('/^\s*update\s*/i', $q)) {
+        preg_match_all ('/(\S[^:]+): (\d+)/', $this->mysqli->info, $matches);
+        $info = array_combine ($matches[1], $matches[2]);
+        $this->rows_affected = $info['Rows matched'];
+      }
       return $this->rows_affected;
     }
 
