@@ -1032,6 +1032,12 @@ mkn.render = function(options)
   var accept = function(event, obj, field, action)
   {
     field.page_id = field.page_id || obj.closest(".page").attr('id');
+
+    var trigger_post_result = function(result) {
+      var result = result && $.isPlainObject(result._responses) && 'errors' in result._responses ? 'error': 'success';
+      obj.trigger('post_'+result);
+    }
+
     var dispatch_one = function(action) {
       var params = [];
       if ($.isArray(action)) {
@@ -1054,12 +1060,14 @@ mkn.render = function(options)
             me.sink.find(".error").remove();
             obj.trigger('posting', [params]);
             $(selector).json('/', params, function(result) {
+              trigger_post_result(result);
               me.respond(result, obj, event);
             });
             break;
           }
           obj.trigger('posting');
           $.json('/', params, function(result) {
+            trigger_post_result(result);
             me.respond(result, obj);
           });
           break;
@@ -1125,13 +1133,11 @@ mkn.render = function(options)
 
   this.respond = function(result, invoker, event)
   {
-    if (!result) {
-      if (invoker) invoker.trigger('post_success');
-      return this;
-    }
+    if (!result) return;
     mkn.removeXSS(result);
     var responses = result._responses;
     delete result._responses;
+    if (!$.isPlainObject(responses)) return this;
     var parent = me.sink;
     if (invoker) {
        parent = invoker.parents('#'+me.page_id).eq(0);
@@ -1139,12 +1145,7 @@ mkn.render = function(options)
     }
     else invoker = parent;
 
-    if (!$.isPlainObject(responses)) {
-      invoker.trigger('post_success', [result]);
-      return this;
-    }
 
-    invoker.trigger('post_responses', responses);
     var handle = function(action, val)
     {
       switch(action) {
@@ -1158,12 +1159,7 @@ mkn.render = function(options)
         case 'errors': reportErrors(val); break;
       }
     }
-    if ('errors' in responses) {
-      invoker.trigger('post_error', [responses.errors]);
-    }
-    else {
-      invoker.trigger('post_success', [result]);
-    }
+
     for (var key in responses) {
       var val = responses[key];
       if (!$.isArray(val))
