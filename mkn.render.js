@@ -688,7 +688,6 @@ mkn.render = function(options)
        me.loadData(object, field, name, defaults);
        if (field.values)
          me.loadValues(object, field);
-       return !$.isArray(field.trap) || field.trap.indexOf('reload') < 0;
      })
   };
 
@@ -756,9 +755,6 @@ mkn.render = function(options)
         var sink = obj;
         if (obj.is('body') && key == 'scroll') sink = $(window);
         sink.on(key, function(e) {
-          // trap trapped events
-          if ($.isArray(field.trap) && field.trap.indexOf(key) >=0 )
-            e.stopImmediatePropagation();
 
           if (obj.hasClass('disabled')) return;
           // ignore default action of an anchor
@@ -783,8 +779,20 @@ mkn.render = function(options)
     });
   }
 
+  var initEventTraps = function(obj, field) {
+    var traps = field.trap;
+    if (!traps || $.isPlainObject(traps)) return;
+    if (!$.isArray(traps)) traps = [traps];
+    $.each(traps, function(i, trap) {
+      obj.on(trap, function(e) {
+        e.stopPropagation();
+      })
+    })
+  }
+
   var initEvents = function(obj, field) {
     if ('attr' in field && field.attr.for == field.id) return;
+    initEventTraps(obj, field);
     initTimeEvents(obj, field);
     initOnEvents(obj, field);
     if (typeof field.enter == 'string') {
@@ -807,9 +815,6 @@ mkn.render = function(options)
     obj.on('post', function(event, args) {
       field = $.extend({}, field, { action: 'post', params: [args] });
       accept(event, $(this), field);
-      if ($.isArray(field.trap) && field.trap.indexOf(event.type) >=0 ) {
-        event.stopImmediatePropagation();
-      }
     });
 
     // handle input change model
