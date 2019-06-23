@@ -51,7 +51,7 @@ $.fn.setValue = function(val)
 
   if (typeof val == 'string')  val = mkn.escapeHtml(val, this.attr('parseHtml'), this.attr('escapeHtml'));
   if (this.hasAttr('value'))
-    return this.val(val);
+    return this.attr('value', val).val(val);
   return this.html(val);
 }
 
