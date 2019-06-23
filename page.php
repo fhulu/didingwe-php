@@ -1099,7 +1099,9 @@ class page
     $rows_updated = call_user_func_array([$this, 'sql_update'], $args);
     if ($rows_updated) return $rows_updated;
     array_splice($args, 1, 1);
-    return call_user_func_array([$this, 'sql_insert'], $args);
+    $result = call_user_func_array([$this, 'sql_insert'], $args);
+    $table = $args[0];
+    return [$table => $result["new_{$table}_id"] ];
   }
 
   function sql_select()
