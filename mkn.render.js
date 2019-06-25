@@ -1039,8 +1039,8 @@ mkn.render = function(options)
     field.page_id = field.page_id || obj.closest(".page").attr('id');
 
     var trigger_post_result = function(result) {
-      var result = result && $.isPlainObject(result._responses) && 'errors' in result._responses ? 'error': 'success';
-      obj.trigger('post_'+result);
+      var type = result && $.isPlainObject(result._responses) && 'errors' in result._responses ? 'error': 'success';
+      obj.trigger('post_'+type, [result]);
     }
 
     var dispatch_one = function(action) {
