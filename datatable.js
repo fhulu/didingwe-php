@@ -74,7 +74,7 @@
       this.params = { page_num: 1, offset: 0};
       var exclude = [ 'create', 'action', 'css', 'id', 'content', 'disabled','parent_name','parent_id','parent_page',
           'auto_load', 'searchDelay', 'number', 'data_from', 'min_row_height', 'desc', 'index',
-          'html','name', 'page_id', 'position', 'sort', 'script','slideSpeed', 'text', 'tag', 'target', 'type', 'show'];
+          'html','name', 'page_id', 'position', 'sort', 'script','slideSpeed', 'text', 'tag', 'target', 'type', 'show', 'selector', 'js'];
       for (var key in this.options) {
         if (exclude.indexOf(key) >= 0 || key.indexOf('on_') ==0) continue;
         var val = this.options[key];
