@@ -897,14 +897,14 @@ class page
     $audit_first = $invoker['audit_first'];
     if ($audit_first)
       $this->audit($invoker,[]);
-    $result = $this->reply($invoker);
-    if ($this->aborted) return $result;
+    $this->reply($invoker);
+    if ($this->aborted) return $this->answer;
     if (!$audit_first && !page::has_errors() && array_key_exists('audit', $invoker))
       $this->audit($invoker);
     global $config;
     if ($config['use_triggers'])
       $this->post("trigger/fire", ["trigger_url"=>implode("/", $this->path)]);
-    return $result;
+    return $this->answer;
   }
 
   function replace_auth(&$str)
