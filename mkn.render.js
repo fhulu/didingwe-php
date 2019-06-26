@@ -316,6 +316,26 @@ mkn.render = function(options)
     return $(source).value();
   }
 
+
+  var getArray = function(val) {
+    if (!val || $.isPlainObject(val)) return [];
+    if (!$.isArray(val)) val  = [val];
+    return val;
+  }
+
+  var substArray = function(field, val) {
+    return getArray(val).map(function(val) {
+      var matches = getMatches(val, /\$(\w+)/g)
+      for (var j in matches) {
+        var match = matches[j];
+        var value = field[match];
+        if (value === undefined || typeof value !== 'string') continue;
+        val = val.replace('$'+match, value);
+      }
+      return val;
+    })
+  }
+
   this.expandValue = function(values,value)
   {
     $.each(values, function(code, subst) {
@@ -341,6 +361,7 @@ mkn.render = function(options)
       for (var field in data) {
         var value = data[field];
         if ($.isNumeric(value)) continue;
+        if ($.isArray(value)) data[field] = substArray(data, value);
         if (typeof value !== 'string' || value.indexOf('$') < 0 || exclusions.indexOf(field) >=0) continue;
         var old_value = value = value.replace('$id', parent_id);
         data[field] = value = me.expandValue(data, value, parent_id);
@@ -396,6 +417,7 @@ mkn.render = function(options)
         field[key] = parent[value.substr(1)];
     }
   }
+
 
   this.initField = function(field, parent)
   {
@@ -779,10 +801,9 @@ mkn.render = function(options)
     });
   }
 
+
   var initEventTraps = function(obj, field) {
-    var traps = field.trap;
-    if (!traps || $.isPlainObject(traps)) return;
-    if (!$.isArray(traps)) traps = [traps];
+    var traps = getArray(field.trap);
     $.each(traps, function(i, trap) {
       obj.on(trap, function(e) {
         e.stopPropagation();
@@ -790,8 +811,19 @@ mkn.render = function(options)
     })
   }
 
+  var initEventTriggers = function(obj, field) {
+    var triggers = getArray(field.triggers);
+    if (!triggers.length) return;
+    obj.on('click', function(e) {
+      if (obj.is($(e.target))) $.each(triggers, function(i, action) {
+        obj.trigger(action);
+      });
+    })
+  }
+
   var initEvents = function(obj, field) {
     if ('attr' in field && field.attr.for == field.id) return;
+    initEventTriggers(obj, field)
     initEventTraps(obj, field);
     initTimeEvents(obj, field);
     initOnEvents(obj, field);
@@ -865,20 +897,7 @@ mkn.render = function(options)
 
   var setClass = function(obj, field)
   {
-    var cls = field.class;
-    if (cls === undefined) return;
-    if (typeof cls === 'string') cls = [cls];
-    cls = cls.map(function(val) {
-      var matches = getMatches(val, /\$(\w+)/g)
-      for (var j in matches) {
-        var match = matches[j];
-        var value = field[match];
-        if (value === undefined || typeof value !== 'string') continue;
-        val = val.replace('$'+match, value);
-      }
-      return val;
-    })
-    obj.setClass(cls);
+    obj.setClass(substArray(field, field.class));
   }
 
 
