@@ -16,7 +16,16 @@ $.fn.filterText = function(text) {
 
 $.fn.setValue = function(val)
 {
-  if ($.isPlainObject(val) || $.isArray(val)) return this;
+  if ($.isArray(val)) return this;
+  if ($.isPlainObject(val)) {
+    var me = this;
+    $.each(val, function(k, v) {
+      if (k == 'value')
+        me.setValue(v)
+      else
+        me.find(k).setValue(v);
+    })
+  }
 
   if (this.hasAttr('template'))
     val = this.attr('template').replace(/\$value/,val);
