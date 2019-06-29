@@ -20,10 +20,12 @@ $.fn.setValue = function(val)
   if ($.isPlainObject(val)) {
     var me = this;
     $.each(val, function(k, v) {
-      if (k == 'value')
-        me.setValue(v)
-      else
-        me.find(k).setValue(v);
+      switch(k) {
+        case 'value': me.setValue(v); break;
+        case 'class': me.setClass(v); break;
+        case 'children': $.each(v, function(selector, value) { me.find(selector).setValue(value); } ); break;
+        default: me.attr(k, v);
+      }
     })
   }
 
@@ -603,12 +605,12 @@ $.fn.removeStyle = function(reference, styles) {
 
 $.fn.setClass = function(classes) {
   if (classes === undefined) return;
-  if (typeof classes === 'string') classes = [classes];
+  if (typeof classes === 'string') classes = classes.split(' ');
   var del = [], add =[];
   for (var i in classes) {
     var cls = classes[i];
     if (!cls) continue;
-    cls[0]=='^'? del.push(cls.substr(1)): add.push(cls);
+    cls[0]=='^' || cls[0] == '-'? del.push(cls.substr(1)): add.push(cls);
   }
   this.addClass(add.join(' '));
   this.removeClass(del.join(' '));
