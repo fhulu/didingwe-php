@@ -631,3 +631,20 @@ $.fn.load = function(options) {
     this.replaceWith(obj);
   });
 }
+
+$.fn.getAttributes = function(list) {
+  var result = {}
+  if (list) {
+    for (var i = 0; i< list.length; ++i) {
+      var name = list[i];
+      result[name] = this.attr(name);
+    }
+  }
+  else {
+    var attrs = this[0].attributes;
+    for (var i = 0; i< attrs.length; ++i) {
+      result[attrs[i].name] = attrs[i].value;
+    }
+  }
+  return result;
+}
