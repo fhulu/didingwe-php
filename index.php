@@ -1,8 +1,8 @@
-<?php 
-header('Access-Control-Allow-Origin: *'); 
+<?php
+header('Access-Control-Allow-Origin: *');
 session_start();
-require_once '../common/log.php';
-require_once('../common/utils.php');
+require_once '../didi/log.php';
+require_once('../didi/utils.php');
 
 
 function configure_brand(&$config) {
@@ -33,7 +33,7 @@ function get_active_config_name()
 }
 function configure() {
   global $config;
-  $config = load_yaml("../common/app-config.yml", true);
+  $config = load_yaml("../didi/app-config.yml", true);
   $config = merge_options($config, load_yaml("app-config.yml", false));
 
   $site_config = load_yaml($config['site_config'], false);
@@ -52,7 +52,7 @@ function configure() {
 
 function process_action() {
   if (is_null($_REQUEST['action'])) return false;
-  require_once('../common/page.php');
+  require_once('../didi/page.php');
   return true;
 }
 

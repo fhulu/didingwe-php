@@ -1608,7 +1608,7 @@ class page
   function show_captcha()
   {
     log::debug("showing captcha");
-    require_once('../common/captcha.php');
+    require_once('../didi/captcha.php');
   }
 
   static function base_url()

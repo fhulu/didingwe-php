@@ -22,9 +22,9 @@ datatable:
     controls:
       type: container
       contents: []
-  script: [/common/datatable.js]
+  script: [/didi/datatable.js]
   row_creator: { type: table_row }
-  css: [/common/datatable.css]
+  css: [/didi/datatable.css]
   flags: []
   position: top
   filter:
