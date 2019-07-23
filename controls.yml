@@ -238,6 +238,15 @@ encloser:
 fanthom:
   attr: { name: "", id: "", value: ""}
 
+fa_checkbox:
+  type: label_right
+  subject:
+    class: [absolute transparent zerosize]
+  label:
+    class: [fa fa-square-o text-blue]
+    toggles: [fa-square-o, fa-check-square]
+    text: "&nbsp;$name"
+
 font_awesome:
   tag: i
   icon: $id
