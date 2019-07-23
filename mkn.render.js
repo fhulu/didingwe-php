@@ -821,7 +821,27 @@ mkn.render = function(options)
     })
   }
 
+  var initClassToggle = function(obj, field) {
+    var args = getArray(field.toggles);
+    var class1, class2, event = 'click';
+    switch(args.length) {
+      case 0: return;
+      case 1: class1 = args[0]; break;
+      case 2: class1 = args[0]; class2 = args[1]; break;
+      default: class1 = args[0]; class2 = args[1]; event = args[3];
+    }
+    obj.on(event, function() {
+      if (!class2)
+        obj.toggleClass(class1);
+      else if (obj.hasClass(class1))
+        obj.removeClass(class1).addClass(class2);
+      else
+        obj.removeClass(class2).addClass(class1);
+    })
+  }
+
   var initEvents = function(obj, field) {
+    initClassToggle(obj, field);
     if ('attr' in field && field.attr.for == field.id) return;
     initEventTriggers(obj, field)
     initEventTraps(obj, field);
