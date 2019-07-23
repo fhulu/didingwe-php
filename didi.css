@@ -337,7 +337,10 @@ li.paragraph {text-indent: -1em }
 .right,.bottom-right,.top-right { right: 0; }
 .overlay{ z-index: 1 }
 .top,.top-left,.top-right { top: 0; }
-
+.margin-left-min{ margin-left: 0.1em}
+.margin-left-tiny{ margin-left: 0.25em}
+.margin-left-small{ margin-left: 0.5em}
+.margin-left,.margin-left-medium{ margin-left: 1em}
 /* scrolling */
 .scroll-horizontal,.scroll-x { overflow-x: auto; }
 .scroll-vertical,.scroll-y { overflow-y: auto; }
@@ -548,7 +551,7 @@ li.paragraph {text-indent: -1em }
 
 /* responsive grid */
 .grid>*,.col{float:left;display: inline-block}
-.col.centered{float:none}
+.col.centered{float:none;display:block}
 .col.float-right{float:right}
 .grid.space>*{margin-bottom:2%;margin-right:2%}
 .center-contents>.col{float:none}

@@ -243,7 +243,6 @@ fa_checkbox:
   subject:
     class: [absolute transparent zerosize]
   label:
-    class: [fa fa-square-o text-blue]
     toggles: [fa-square-o, fa-check-square]
     text: "&nbsp;$name"
 
@@ -258,8 +257,7 @@ font_awesome_text:
   text: $name
 
 fieldset:
-  templates: fieldset
-  style: { display: table-column}
+  tag: fieldset
   text: $legend $field
   title: $name
   legend:
