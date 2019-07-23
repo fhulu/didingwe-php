@@ -1,7 +1,7 @@
 <?php
 
-require_once('../common/qworker.php');
-require_once('../common/log.php');
+require_once('../didi/qworker.php');
+require_once('../didi/log.php');
 
 
 class schedule_item
@@ -27,14 +27,14 @@ class schedule_mgr extends qworker
     parent::__construct();
     $this->interval = $this->params['interval'];
     $this->schedules = array();
-  }  
- 
+  }
+
   function __destruct()
   {
     parent::__destruct();
   }
- 
- 
+
+
   function load()
   {
     global $db;
@@ -47,14 +47,14 @@ class schedule_mgr extends qworker
       $this->schedules[$item->id] = $item;
     });
   }
-  
+
   function schedule($item)
   {
     global $db;
     $db->disconnect();
     db::connect_default();
     $db->exec("update mukonin_process.schedule set status = 'busy' where id = $id");
-  
+
     $manger_args = array($item->user_id, $item->type, $item->size);
     $work_args = explode(' ', $item->arguments);
     array_walk($work_args, function(&$value, $index) { $value = urldecode($value); });
@@ -69,19 +69,19 @@ class schedule_mgr extends qworker
       usleep($microseconds);
       $db->exec("update mukonin_process.schedule set done = done - $rate where id = $id");
     } while ($left > 0);
-   
+
     $db->exec("update mukonin_process.schedule set status = 'done' where id = $id");
     exit(0);
   }
-  
+
   function dispatch()
   {
     $now = date('Y-m-d H:i:s');
-    foreach ($this->schedules as $id=>$item) { 
+    foreach ($this->schedules as $id=>$item) {
       if ($item->time > $now) continue;
       $pid = pcntl_fork();
       switch ($pid) {
-        case -1: 
+        case -1:
           log::error("Could not fork!");
           break;
         case 0:
@@ -92,11 +92,11 @@ class schedule_mgr extends qworker
       }
      }
   }
-  
+
   function start($type)
   {
     $this->load();
-    
+
     $self = &$this;
     pcntl_alarm($this->interval);
     pcntl_signal(SIGALRM, function($signo) use (&$self){
@@ -104,7 +104,7 @@ class schedule_mgr extends qworker
       $self->dispatch();
       pcntl_alarm($self->interval);
     });
-    
+
     parent::listen(function($user_id, $type, $start, $load, $options, $work_type, $size, $etc) use (&$self)  {
       $item = new schedule_item();
       $item->type = $work_type;
@@ -122,8 +122,8 @@ class schedule_mgr extends qworker
       $this->schedules[$item->id] = $item;
     });
   }
-} 
+}
 
 $scheduler = new scheduler();
 $scheduler->start();
-?>  
+?>

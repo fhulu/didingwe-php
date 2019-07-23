@@ -7,7 +7,7 @@ class emailer
   function __construct($page)
   {
     $this->page = $page;
-    set_include_path("./common/pear");
+    set_include_path("./didi/pear");
     require_once "Mail.php";
     require_once("Mail/mime.php");
     $this->mime = new Mail_mime("\n");
@@ -28,7 +28,7 @@ class emailer
     $headers['To'] = $to;
 
     $mime = $this->mime;
-    set_include_path("./common/pear");
+    set_include_path("./didi/pear");
     $mime->setHTMLBody($message);
     $message = $mime->get();
     $headers = $mime->headers($headers);

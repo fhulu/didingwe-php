@@ -1,8 +1,8 @@
 <?php
 
-require_once('../common/qworker.php');
-require_once('../common/log.php');
-require_once('../common/curl.php');
+require_once('../didi/qworker.php');
+require_once('../didi/log.php');
+require_once('../didi/curl.php');
 
 class iweb_exception extends exception {};
 
@@ -25,14 +25,14 @@ class iweb extends qworker
     $this->password = $this->provider_params['password'];
     $this->port = $this->provider_params['port'];
   }
-  
- 
+
+
   function __destruct()
   {
     if ($this->is_connected()) $this->logout();
     parent::__destruct();
   }
- 
+
   function login()
   {
     if ($this->is_connected()) $this->logout();
@@ -43,10 +43,10 @@ class iweb extends qworker
     if (!strstr($result, "Success"))
       throw new iweb_exception("Unable to connect to iweb: $result");
 
-    $this->session_id = trim(substr($result,18));  
+    $this->session_id = trim(substr($result,18));
     log::debug("Session ID: $this->session_id");
   }
-  
+
   function is_connected() { return !is_null($this->session_id); }
   function logout()
   {
@@ -54,7 +54,7 @@ class iweb extends qworker
     log::info("Logout $url");
     $this->curl->read($url);
     $session_id = null;
-  } 
+  }
 
   function submit($id, $msisdn, $message, $attempts=1, $encode=true)
   {
@@ -63,14 +63,14 @@ class iweb extends qworker
     $results = $this->curl->read($url);
     log::info("Submit $url");
     $results = explode('&', $results);
-    
+
     //Error&ErrorCode=7&ErrorDescription=Invalid destination&PhoneNumber=888888
-    //Success&MessageReference=110013461443071&PhoneNumber=+27828992177&Credits=1048 
+    //Success&MessageReference=110013461443071&PhoneNumber=+27828992177&Credits=1048
     foreach($results as $result) {
       $value_pair = explode('=', $result);
       if (sizeof($value_pair) == 1)
         $values[] = $value_pair[0];
-      else 
+      else
         $values[$value_pair[0]] = $value_pair[1];
     }
     if ($values[0] == 'Success') {
@@ -89,18 +89,18 @@ class iweb extends qworker
         $status = 'error';
       }
     }
-    
+
     global $db;
     $db->exec("update mukonin_sms.outq set status='$status',attempts=$attempts,esme_reference='$value' where id = $id");
     return $status;
   }
- 
+
   function start()
   {
     $this->login();
-    
+
     //todo: process pending item on queue before listening
-    
+
     global $db;
 //    $this->db_read = $db;
  //   $this->db_update = $db->dup();
@@ -111,7 +111,7 @@ class iweb extends qworker
         return;
       }
       global $db;
-      $sql = "select id,msisdn, message, intref2 from mukonin_sms.outq 
+      $sql = "select id,msisdn, message, intref2 from mukonin_sms.outq
         where $key_name = $key_value and status = 'pnd' limit $load";
       $rows = $db->read($sql);
 //      $self->db_read->each($sql, function($index, $row) use (&$self) {
@@ -122,8 +122,7 @@ class iweb extends qworker
       };
     });
   }
-} 
+}
 
 $iweb = new iweb();
 $iweb->start();
- 

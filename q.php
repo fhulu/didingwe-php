@@ -171,7 +171,7 @@ class q
             . ":" . $options['port']
             . "/" . $options['path'];
     }
-    require_once('../common/curl.php');
+    require_once('../didi/curl.php');
     $curl = new curl();
     $post = $options['post'];
     return isset($options['post'])? $curl->post($url, $post): $curl->read($url);
@@ -188,7 +188,7 @@ class q
   {
     $user = $options['username'];
     $password = $options['password'];
-    require_once('../common/restclient.php');
+    require_once('../didi/restclient.php');
     $api = new RestClient(['username'=>$user, 'password'=>$password]);
 
     $url = $options['url'];

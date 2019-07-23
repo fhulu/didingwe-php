@@ -303,7 +303,7 @@ filled_text:
 google_icon:
   tag: i
   class: [material-icons]
-  css: [/common/google-material-icons.css]
+  css: [/didi/google-material-icons.css]
   icon: $id
   text: $icon
 
@@ -659,13 +659,13 @@ plot:
   tag: div
   fixed_xaxis: yes
   script:
-    - /common/jquery.jqplot.min.js
-    - /common/jquery.jqplot.canvasTextRenderer.min.js
-    - /common/jquery.jqplot.canvasAxisTickRenderer.min.js
-    - /common/jquery.jqplot.dateAxisRenderer.min.js
-    - /common/jquery.jqplot.highlighter.min.js
-    - /common/plot.js
-  css: [/common/jquery.jqplot.min.css]
+    - /didi/jquery.jqplot.min.js
+    - /didi/jquery.jqplot.canvasTextRenderer.min.js
+    - /didi/jquery.jqplot.canvasAxisTickRenderer.min.js
+    - /didi/jquery.jqplot.dateAxisRenderer.min.js
+    - /didi/jquery.jqplot.highlighter.min.js
+    - /didi/plot.js
+  css: [/didi/jquery.jqplot.min.css]
   text: ""
   create: plotter
 
