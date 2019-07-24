@@ -243,6 +243,7 @@ fa_checkbox:
   subject:
     class: [absolute transparent zerosize]
   label:
+    class: [fa fa-square-o]
     toggles: [fa-square-o, fa-check-square]
     text: "&nbsp;$name"
 
