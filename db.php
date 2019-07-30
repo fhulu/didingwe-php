@@ -142,7 +142,7 @@ class db
     global $db;
     if ($db != null) return;
     global $config;
-    $db = new db($config['db_name'], $config['db_user'], $config['db_password']);
+    $db = new db($config['db_name'], $config['db_user'], $config['db_password'], $config['db_host']);
   }
 
   function read($sql, $fetch_type=MYSQLI_BOTH, $max_rows=0, $start=0)
