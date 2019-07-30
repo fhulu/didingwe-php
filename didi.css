@@ -327,6 +327,7 @@ li.paragraph {text-indent: -1em }
 .float-right { float: right; }
 .left,.top-left,.bottom-left { left: 0; }
 .margin-0,.nomargin{ margin: 0 }
+.no-margin-top{ margin-top: 0}
 .margin-left-min{ margin-left: 0.1em}
 .margin-left-tiny{ margin-left: 0.25em}
 .margin-left-small{ margin-left: 0.5em}
