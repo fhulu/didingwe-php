@@ -1090,6 +1090,8 @@ class page
     $values = implode(',', $values);
     $sql = "insert $table($args) values($values)";
     $this->sql_exec($sql);
+    $table_spec = explode(".", $table);
+    $table = sizeof($table_spec)>1? $table_spec[1]: $table_spec[0];
     return $this->sql_values("select last_insert_id() new_${table}_id");
   }
 
@@ -1219,8 +1221,8 @@ class page
     log::debug_json("REPLY ACTIONS", $actions);
 
     $methods = array('abort', 'alert', 'assert', 'audit', 'call', 'clear_session', 'clear_values',
-      'close_dialog', 'datarow',  'error', 'foreach', 'let', 'load_lineage', 'logoff',  'keep_values', 'post', 'read_config',  'read_server', 'read_session', 'read_values',
-       'redirect', 'ref_list', 'show_dialog', 'show_captcha', 'sql', 'sql_exec',
+      'close_dialog', 'datarow',  'error', 'execute', 'foreach', 'let', 'load_lineage', 'logoff',  'keep_values', 'post', 'read_config',  'read_server', 'read_session', 'read_values',
+       'redirect', 'ref_list', 'show_dialog', 'show_captcha', 'split_values', 'sql', 'sql_exec',
        'sql_rows', 'sql_insert', 'sql_update', 'sql_update_insert', 'sql_values', 'refresh', 'trigger',
        'update', 'upload', 'view_doc', 'write_session');
     foreach($actions as $action) {
@@ -1474,6 +1476,22 @@ class page
   {
     $this->replace_fields($values);
     return $values;
+  }
+
+  function split_values($value, $separator) {
+    if (is_numeric($separator))
+      $array = [substr($value, 0, $separator), substr($value, $separator + 1)];
+    else
+      $array = explode($separator, $value);
+    $len = sizeof($array);
+    $result = [];
+    $index = 0;
+    $vars = array_slice(func_get_args(), 2);
+    foreach($vars as $var) {
+      $result[$var] = $array[$index++];
+      if ($index == $len) break;
+    }
+    return $result;
   }
 
   function let($values)
@@ -1733,5 +1751,11 @@ class page
     $actions = $page->follow_path();
     $page->answer = $this->answer;
     return $page->reply($actions);
+  }
+
+  function execute() {
+    $args = implode(' ', func_get_args());
+    exec($args, $output, $return_var);
+    return ["output"=>$output, "return_var"=>$return_var];
   }
 }
