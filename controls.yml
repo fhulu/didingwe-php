@@ -241,11 +241,16 @@ fanthom:
 fa_checkbox:
   type: label_right
   subject:
-    class: [absolute transparent zerosize]
+    class: [transparent zerosize]
   label:
     class: [fa fa-square-o]
     toggles: [fa-square-o, fa-check-square]
     text: "&nbsp;$name"
+    on_click: |
+      function() {
+        var input = this.parent().find("input[type=checkbox]");
+        input.prop('checked', this.hasClass('fa-check-square'));
+      }
 
 font_awesome:
   tag: i
