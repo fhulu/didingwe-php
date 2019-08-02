@@ -304,6 +304,7 @@ mkn.render = function(options)
       if (key.indexOf('on_') == 0) delete field[key];
     }
     item.template = me.initField(mkn.merge(template, field));
+    item.template.id = "";
   };
 
   this.expandFunction = function(value, parent_id)
@@ -1156,7 +1157,8 @@ mkn.render = function(options)
       parent = subject;
     }
     else {
-      var parents = subject.parents("[for='"+field+"'],.error-sink");
+      var parents = subject.parents(".error-sink");
+      if (!parents.exists()) parents = subject.parents("[for='"+field+"']");
       parent = parents.exists()? parents.eq(0): subject;
     }
     subject.trigger('error', [error]);
