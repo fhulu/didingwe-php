@@ -41,7 +41,7 @@ function configure() {
   configure_brand($config);
 
   if ($config['log_dir'] && $config['log_file'])
-    log::init($config['log_file'], log::DEBUG);
+    log::init($config['log_file'], $config['log_level']);
 
   $active = get_active_config_name();
   $active_config = &$config[$active];
