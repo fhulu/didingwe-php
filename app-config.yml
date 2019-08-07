@@ -12,6 +12,7 @@ authenticated:
   content: $path
 log_dir: ../log
 log_file: $brand_name.log
+log_level: 4 # debug
 upload_dir: ../uploads
 start_page: /home
 css:
