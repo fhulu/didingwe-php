@@ -86,7 +86,7 @@ class page
     $this->rendering = $this->method == 'read';
     $this->context = array();
     $this->aborted = false;
-    $this->answer = null;
+    $this->answer = [];
     $this->expand_stack = array();
     $this->sub_page = false;
     $this->modules = ['this'=>$this];
@@ -1283,7 +1283,8 @@ class page
   {
     $values = $this->context['values'];
     if (is_null($values)) $values = $this->context;
-    return $this->reply($values);
+    $this->reply($values);
+    return $this->answer;
   }
 
   static function respond($response, $value=null)
@@ -1310,8 +1311,8 @@ class page
 
   function redirect($url)
   {
-    if (!is_array($url)) $url = array("url"=>$url);
-    $url['url'] = replace_vars($url['url'], $this->context);
+
+    if (!is_array($url)) $url = array("url"=>$this->translate_context($url));
     log::debug_json("REDIRECT", $url);
     page::respond('redirect', $url);
   }
@@ -1532,7 +1533,7 @@ class page
   {
     $args = page::parse_args(func_get_args());
     if (sizeof($args) == 0)
-      $this->answer = null;
+      $this->answer = [];
     else foreach($args as $arg) {
       unset($this->answer[$arg]);
       unset($this->request[$arg]);
@@ -1755,6 +1756,7 @@ class page
 
   function execute() {
     $args = implode(' ', func_get_args());
+    log::debug("EXECUTE $args");
     exec($args, $output, $return_var);
     return ["output"=>$output, "return_var"=>$return_var];
   }
