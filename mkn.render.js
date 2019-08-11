@@ -604,6 +604,7 @@ mkn.render = function(options)
     return mkn.showPage($.extend({request: options.request}, field), target).done(function(obj, result, field) {
       setStyle(obj, field);
       setClass(obj, field);
+      setResponsive(obj, field);
       target.trigger('dying');
       target.replaceWith(obj);
       if (!selector) return;
@@ -831,7 +832,7 @@ mkn.render = function(options)
       default: class1 = args[0]; class2 = args[1]; event = args[3];
     }
     obj.on(event, function() {
-      if (!class2)
+      if (class1==class2)
         obj.toggleClass(class1);
       else if (obj.hasClass(class1))
         obj.removeClass(class1).addClass(class2);
