@@ -14,10 +14,15 @@ class module
     $this->db = $this->page->db;
   }
 
-  function set($vars)
+  function set()
   {
-    foreach($vars as $name=>$value) {
-      $this->$name = $value;
+    $args = func_get_args();
+    foreach($args as $name) {
+      if (is_array($name))
+        list($name,$value) = assoc_element($name);
+      else
+        $value = $this->page->answer[$name];
+      $this->$name = $this->page->translate_context($value);
     }
   }
 
