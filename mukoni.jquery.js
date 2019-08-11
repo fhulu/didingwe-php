@@ -159,7 +159,7 @@ $.send = function(url, options, callback)
     progress.timeout = setTimeout(function() {
       progress.box.find(".message").text(options.progress);
       progress.box.show();
-    }, 500);
+    }, 1000);
 
     if (options.error ===undefined) {
       options.error = function(jqHXR, status, text)
