@@ -451,10 +451,12 @@ label: { tag: label }
 
 labelled:
   templates: div
-  sow: [name]
+  templated: $id
+  sow: [name, templated]
   label:
     classes: label
     class: [inline-block]
+    attr: { for: $templated}
   subject:
     attr: { title: $desc }
 
