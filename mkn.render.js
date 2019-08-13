@@ -842,8 +842,17 @@ mkn.render = function(options)
     })
   }
 
+  var initEventClasses = function(obj, field) {
+    var events = field.events;
+    if (!events) return;
+    obj.on(Object.keys(events).join(' '), function(e) {
+      obj.setClass(events[e.type]);
+    });
+  }
+
   var initEvents = function(obj, field) {
     initClassToggle(obj, field);
+    initEventClasses(obj, field);
     if ('attr' in field && field.attr.for == field.id) return;
     initEventTriggers(obj, field)
     initEventTraps(obj, field);
@@ -1104,6 +1113,7 @@ mkn.render = function(options)
             selector = selector.replace(/(^|[^\w]+)page([^\w]+)/,"$1"+field.page_id+"$2");
             params = $.extend(params, {invoker: obj, event: event, async: true, post_prefix: field.post_prefix });
             me.sink.find(".error").remove();
+            me.sink.find(".in-error").unsetClass('in-error').trigger('clear-error');
             obj.trigger('posting', [params]);
             $(selector).json('/', params, function(result) {
               trigger_post_result(result);
@@ -1111,6 +1121,9 @@ mkn.render = function(options)
             });
             break;
           }
+          me.sink.find(".error").remove();
+          me.sink.find(".in-error").removeClass('in-error').trigger('clear-error');
+          obj.trigger('posting', [params]);
           obj.trigger('posting');
           $.json('/', params, function(result) {
             trigger_post_result(result);
@@ -1161,7 +1174,9 @@ mkn.render = function(options)
       if (!parents.exists()) parents = subject.parents("[for='"+field+"']");
       parent = parents.exists()? parents.eq(0): subject;
     }
-    subject.trigger('error', [error]);
+    subject.trigger('errors', [error]);
+    parent.addClass('in-error').attr('error-message', error);
+    if (parent.hasClass('no-error-box') || subject.hasClass('no-error-box')) return;
 
     var box = $("<div class=error>"+error+"</div>");
     parent.after(box);
