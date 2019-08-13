@@ -452,7 +452,8 @@ label: { tag: label }
 labelled:
   templates: div
   templated: $id
-  sow: [name, templated]
+  prompt: $name
+  sow: [prompt, name, templated]
   label:
     classes: label
     class: [inline-block]
