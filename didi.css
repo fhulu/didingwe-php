@@ -324,6 +324,7 @@ li.paragraph {text-indent: -1em }
 .absolute{position:absolute}
 .fixed{position:fixed }
 .relative{position:relative}
+.static{position:static}
 
 /* placement */
 .bottom,.bottom-left,.bottom-right { bottom: 0; }
