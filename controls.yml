@@ -115,6 +115,7 @@ categorized:
     tag: legend
     derive: [title]
     text: $title
+    style: { position: static } # iOS fieldset bug workaround
 
 char_spaced:
   char_spacing: 8px
