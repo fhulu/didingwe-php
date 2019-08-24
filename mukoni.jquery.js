@@ -603,7 +603,7 @@ $.fn.removeStyle = function(reference, styles) {
   return this;
 }
 
-$.fn.setClass = function(classes) {
+$.fn.setClass = function(classes, remove) {
   if (classes === undefined) return;
   if (typeof classes === 'string') classes = classes.split(' ');
   var del = [], add =[];
@@ -612,9 +612,18 @@ $.fn.setClass = function(classes) {
     if (!cls) continue;
     cls[0]=='^' || cls[0] == '-'? del.push(cls.substr(1)): add.push(cls);
   }
+  if (remove) {
+    var tmp = add;
+    add = del;
+    del = tmp;
+  }
   this.addClass(add.join(' '));
   this.removeClass(del.join(' '));
   return this;
+}
+
+$.fn.unsetClass = function(classes) {
+  return this.setClass(classes,true)
 }
 
 $.fn.getQuantity = function(key, init) {

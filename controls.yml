@@ -115,6 +115,7 @@ categorized:
     tag: legend
     derive: [title]
     text: $title
+    style: { position: static } # iOS fieldset bug workaround
 
 char_spaced:
   char_spacing: 8px
@@ -451,11 +452,14 @@ label: { tag: label }
 
 labelled:
   templates: div
-  sow: [name]
+  templated: $id
+  prompt: $name
+  sow: [prompt, name, templated]
   label:
     classes: label
     attr: {for: $parent_id}
     class: [inline-block]
+    attr: { for: $templated}
   subject:
     attr: { title: $desc }
 
