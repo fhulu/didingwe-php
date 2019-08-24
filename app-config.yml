@@ -29,9 +29,6 @@ scripts:
 modules:
   - auth
   - collection
-  - emailer
-  - sms
-  - document
 
 search_paths: [../didi/,.,$brand_path]
 collections:
@@ -69,10 +66,12 @@ sms.send:
   cellphone: $cellphone
   path: web2sms/submit?uid=$user&pw=$password&sms=$message&da=$msisdn
 emailer.send:
-  smtp:
-    host: smtp.example.com
-    user: me@example.com
-    password: mypassword
+  SMTPDebug: 2
+  isSMTP: true
+  SMTPSecure: tls
+  SMTPAuth: true
+  port: 25
+  isHTML: true
 
 paygate_id: 10011072130
 paygate_secret: secret

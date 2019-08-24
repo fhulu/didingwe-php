@@ -454,6 +454,7 @@ labelled:
   sow: [name]
   label:
     classes: label
+    attr: {for: $parent_id}
     class: [inline-block]
   subject:
     attr: { title: $desc }
