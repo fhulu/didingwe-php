@@ -66,9 +66,9 @@ sms.send:
   cellphone: $cellphone
   path: web2sms/submit?uid=$user&pw=$password&sms=$message&da=$msisdn
 emailer.send:
-  SMTPDebug: 2
+#  SMTPDebug: 2
   isSMTP: true
-  SMTPSecure: tls
+  SMTPSecure: false
   SMTPAuth: true
   port: 25
   isHTML: true
