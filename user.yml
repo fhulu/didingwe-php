@@ -230,7 +230,7 @@ resend_activation_token:
   name: Resend Token
   confirmation: yes
   post:
-    - collection.values: [session,$sid,partner,user,company_name: partner.name, creator_first_name: user.first_name, creator_last_name: user.last_name]
+    - collection.values: [session,$sid,partner,user,company_name: partner.name, creator_first_name: user.first_name, creator_last_name: user.last_name, creator_email: user.email]
     - collection.values: [user,$key,first_name,last_name,email]
     - read_config: [self_activation_validity,program_name]
     - let: { url: /user/activate_self, method: show_dialog }
@@ -241,10 +241,10 @@ resend_activation_token:
 
 
 create_user_email:
-  from: $support_email
-  to: $first_name $last_name <$email>
+  address: [$user_email, $first_name $last_name]
+  replyTo: [$creator_email, $creator_first_name $creator_last_name]
   subject: New User Account
-  message: >
+  body: >
       Dear <b>$first_name $last_name </b> <br><br>
       You have have been registered on $program_name by $creator_first_name $creator_last_name at $company_name. <br>
       Kindly click on this <a href="$user_activation_link">link</a> below to activate your registration.
