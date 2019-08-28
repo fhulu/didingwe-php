@@ -15,7 +15,7 @@ activate:
 
 activate_email:
   from: $support_email
-  to: $first_name $last_name <$email>
+  to: [$mail, $first_name $last_name]
   subject: Your account has been activated
   message: >
     Dear <b>$first_name $last_name</b> <br><br>
@@ -46,7 +46,7 @@ activate_password:
   desc: Please enter your desired password and type it again to confirm it.
   inputs:
     - type: password_input
-    - password
+    - password: { type: password_input }
     - confirm_password
   post:
     - read_session: token
@@ -99,7 +99,7 @@ otp_sms:
 otp_email:
   subject: One Time Password
   from: $support_email
-  to: $first_name $last_name <$email>
+  to: [$email, $first_name $last_name]
   message: >
     Good day<br><br>
     You are currently trying to register on $program_name or change your email address.
@@ -176,7 +176,7 @@ confirm_registration:
         - foreach:
             - collection.data: [user, [partner: $registrar, role: $registrar_role],first_name, last_name, email]
             - if $email_new_registration:
-                emailer.send: { type: new_registration_email, to: $first_name $last_name<$email> }
+                emailer.send: { type: new_registration_email, to: [$email, $first_name $last_name ]}
             - clear_values: [first_name, last_name, email]
     - keep_values: [new_user_id, partner]
     - clear_session: title,first_name,last_name,cellphone,password
@@ -272,7 +272,7 @@ deactivate:
 
 deactivate_email:
   from: $support_email
-  to: $first_name $last_name <$email>
+  to: [$email, $first_name $last_name]
   subject: Your account has been deactivated
   message: >
             Dear <b>$first_name $last_name</b> <br><br>
@@ -451,7 +451,7 @@ login:
     - password: { valid: login_password }
   actions:
     - login: {class: [^pad-xlarge]}
-    - forgot_password: { action: dialog }
+    - forgot_password: { action: dialog, type: link, class: [underlined pointer-cursor] }
   post:
     - let: { start_page: "/" }
     - read_server: [HTTP_USER_AGENT,REMOTE_ADDR,REMOTE_HOST]
