@@ -119,6 +119,10 @@ $.widget( "custom.wizard", {
     var me = this;
     var options = me.options;
     var props = options.steps[index];
+    if (typeof props == 'string')
+      props = { id: props };
+    else if (!props.id)
+      props.id = mkn.firstKey(props);
     var path = options.path;
     if (props.id.indexOf('/') >= 0)
       path = props.id;
