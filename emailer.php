@@ -19,7 +19,10 @@ class emailer extends module {
     $this->page->merge_context('emailer.send', $options);
     log::debug_json("EMAIL OPTIONS", $options);
     $mail = new PHPMailer(true);
+    static $aliases = ["to"=>"address", "message"=>"body"];
     foreach ($options as $name=>$value) {
+      $alias = $aliases[$name];
+      if ($alias) $name = $alias;
       $capitalized = false;
       $capital = strtoupper(substr($name, 0, 1)) . substr($name, 1);
       $setter = "set$capital";
