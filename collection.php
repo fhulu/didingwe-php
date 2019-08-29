@@ -409,6 +409,7 @@ class collection extends module
 
   function data()
   {
+    if ( $this->page->request['sort']) $this->sort_on('sort');
      $sql = $this->read(func_get_args(), true);
      if (!$sql) return ['data'=>[], 'count'=>0];
      if ($this->page->foreach)
