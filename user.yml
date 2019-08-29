@@ -83,8 +83,10 @@ check_otp:
   pre_validation:
     - read_session: [server_otp,time_of_otp]
   values:
-    - sql_values: select lpad(floor(rand()*9999),4,'0') server_otp, now() time_of_otp
-    - write_session: [server_otp,time_of_otp]
+    - read_session: [server_otp,time_of_otp]
+    - if !"$server_otp":
+        - sql_values: select lpad(floor(rand()*9999),4,'0') server_otp, now() time_of_otp
+        - write_session: [server_otp,time_of_otp]
     - read_session: email,first_name,last_name,cellphone
     - read_config: sms_otp,email_otp
     - if $sms_otp:
