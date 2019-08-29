@@ -228,12 +228,12 @@ create:
     - close_dialog
 
 resend_activation_token:
-  class: [green]
+  class: [blue]
   name: Resend Token
   confirmation: yes
   post:
     - collection.values: [session,$sid,partner,user,company_name: partner.name, creator_first_name: user.first_name, creator_last_name: user.last_name, creator_email: user.email]
-    - collection.values: [user,$key,first_name,last_name,email]
+    - collection.values: [user,$key,first_name,last_name,user_email: email]
     - read_config: [self_activation_validity,program_name]
     - let: { url: /user/activate_self, method: show_dialog }
     - collection.insert: [token, id: /md5(last_insert_id()), user: $key, url, method, active: 1, valid_until: /sysdate() + interval $self_activation_validity]
@@ -248,7 +248,7 @@ create_user_email:
   subject: New User Account
   body: >
       Dear <b>$first_name $last_name </b> <br><br>
-      You have have been registered on $program_name by $creator_first_name $creator_last_name at $company_name. <br>
+      You have have been registered on $program_name by $creator_first_name $creator_last_name. <br>
       Kindly click on this <a href="$user_activation_link">link</a> below to activate your registration.
 
       Kind regards, <br><br>
@@ -412,7 +412,7 @@ list:
         - role: role.name
         - status: /if(active,'active','inactive')
         - style: /if(active,'active','inactive')
-        - actions: /if(active,'expand,slide,edit,deactivate',if(password='', 'slide,edit,resend_activation_token','expand,slide,edit,activate'))
+        - actions: /if(active,'expand,slide,edit,deactivate','expand,slide,edit,activate,resend_activation_token')
 
 list_all:
   name: System Users
@@ -437,7 +437,7 @@ list_all:
         - role: role.name
         - status: /if(active,'active','inactive')
         - style: /if(active,'active','inactive')
-        - actions: /if(active,'slide,edit,deactivate','slide,edit,activate')
+        - actions: /if(active,'expand,slide,edit,deactivate','expand,slide,edit,activate,resend_activation_token')
 
 
 
