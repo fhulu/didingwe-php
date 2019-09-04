@@ -32,11 +32,11 @@ class page
     'q', 'valid', 'validate', 'write_session');
   static $query_items = array('call', 'datarow', 'let', 'keep_values','read_session', 'read_config', 'read_values', 'ref_list',
     'sql', 'sql_values', 'refresh');
-  static $atomic_items = array('action', 'attr', 'css', 'datarow', 'html', 'script', 'sql',
+  static $atomic_items = array('action', 'attr', 'css', 'datarow', 'html', 'script', 'sql', 'split_values',
     'style', 'template', 'valid');
   static $user_roles = array('public');
   static $non_mergeable = array('action', 'attr', 'audit', 'call', 'clear_session',
-    'clear_values', 'datarow', 'error', 'for_each', 'load_lineage', 'keep_values', 'read_session', 'refresh', 'show_dialog',
+    'clear_values', 'datarow', 'error', 'for_each', 'load_lineage', 'keep_values', 'read_session', 'refresh', 'show_dialog', 'split_values',
     'sql_insert', 'sql_update',  'sql_update_insert', 'sql_insert', 'style', 'trigger', 'valid', 'validate', 'write_session', 'post');
   var $request;
   var $object;
