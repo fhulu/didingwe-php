@@ -590,7 +590,7 @@
         td.attr("key", cell.key)
       if (cell.type) {
         cell.path = this.options.path + "/cell/controls/" + cell.type
-        var src = this.cell_render.create(this.options.cell, cell);
+        var src = this.cell_render.create(this.options.cell, cell, true, td);
         src && td.append(src);
       }
       if (cell.data) {

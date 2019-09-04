@@ -503,7 +503,16 @@ mkn.render = function(options)
 
   }
 
-  this.create =  function(parent, key, init)
+  var setStyling = function(obj, field) {
+    setVisible(obj, field);
+    setDisabled(obj, field);
+    setResponsive(obj, field);
+    setAttr(obj, field);
+    setClass(obj, field);
+    setStyle(obj, field);
+  };
+
+  this.create =  function(parent, key, init, parent_obj)
   {
     var field = parent;
     if (typeof key == 'string' || $.isNumeric(key)) {
@@ -531,9 +540,6 @@ mkn.render = function(options)
       obj = $('body').append(obj.html());
     if (this.sink === undefined) this.sink = obj;
     var reserved = ['id', 'create', 'css', 'script', 'name', 'desc', 'data'];
-    setAttr(obj, field);
-    setClass(obj, field);
-    setStyle(obj, field);
     setModelFunctions(obj,field);
     if (field.key === undefined) field.key = options.key;
     var values = $.extend({}, this.types, field);
@@ -574,9 +580,11 @@ mkn.render = function(options)
     }
     if (obj.attr('id') === '') obj.removeAttr('id');
 
-    setVisible(obj, field);
-    setDisabled(obj, field);
-    setResponsive(obj, field);
+    setStyling(obj, field);
+    if (field.parent && parent_obj) {
+      setStyling(parent_obj, field.parent);
+    }
+
     runJquery(obj, field);
     obj.data('didi-field', field);
     if ('didi-functions' in field) obj.addClass('didi-watcher');
@@ -926,8 +934,7 @@ mkn.render = function(options)
     if (obj.attr('id') === '') obj.removeAttr('id');
   }
 
-  var setClass = function(obj, field)
-  {
+  var setClass = function(obj, field) {
     obj.setClass(substArray(field, field.class));
   }
 
