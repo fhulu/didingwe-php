@@ -230,6 +230,7 @@
 /* display styles */
 .block { display: block; }
 .hide { display: none; }
+.force-hide { display: none !important}
 .inline { display: inline; }
 .inline-block { display: inline-block; }
 .float-contents > *, .float-contents-left > *{float: left;}
