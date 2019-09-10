@@ -646,7 +646,7 @@ $.fn.getAttributes = function(list) {
   if (list) {
     for (var i = 0; i< list.length; ++i) {
       var name = list[i];
-      result[name] = this.attr(name);
+      result[name] = name=='text'? this.text(): this.attr(name);
     }
   }
   else {
