@@ -503,7 +503,7 @@ li.paragraph {text-indent: -1em }
 .undecorated { text-decoration: none; }
 .nowrap { white-space: nowrap}
 .normal-wrap { white-space: normal}
-.truncate-word,.ellipsis { white-space: nowrap; overflow: hidden; text-overflow: ellipsis}
+.truncate-word,.ellipsis { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .break-word{-ms-hyphens: auto;-moz-hyphens: auto;-webkit-hyphens: auto; hyphens: auto;word-wrap: break-word;overflow-wrap:break-word;text-overflow: ellipsis}
 .bullet-disc{ list-style-type: disc}
 
@@ -529,6 +529,24 @@ li.paragraph {text-indent: -1em }
 .w-1-10,.tenth {width:9.99999%}
 .w-1-11 {width:9.09090%}
 .w-1-12 {width:8.33333%}
+.w-1-13 {width:7.6923%}
+.w-1-14 {width:7.1428%}
+.w-1-15 {width:6.6666%}
+.w-1-16 {width:6.25%}
+.w-1-17 {width:5.8821%}
+.w-1-18 {width:5.5555%}
+.w-1-19 {width:5.2631%}
+.w-1-20 {width:5%}
+.w-1-21 {width:4.7619%}
+.w-1-22 {width:4.5453%}
+.w-1-23 {width:4.3478%}
+.w-1-24 {width:4.1666%}
+.w-1-25 {width:4%}
+.w-1-26 {width:3.8461%}
+.w-1-27 {width:3.7037%}
+.w-1-28 {width:3.5714%}
+.w-1-29 {width:3.4482%}
+.w-1-30 {width:3%}
 .w-2-3,.two-thirds {width:66.66666%}
 .w-2-5 {width:39.99999%}
 .w-2-7 {width:28.57141%}
@@ -756,10 +774,11 @@ li.paragraph {text-indent: -1em }
 .background-hide { background-size: 0% 0%}
 .background-fade { background-color: rgba(0,0,0,0.6)};
 
-.scroll-table { table-layout: fixed}
-.scroll-table>thead,.scroll-table>tbody { float:left; width: 100%; display: block;table-layout: fixed}
-.scroll-table>tbody { overflow-y: auto }
-.scroll-table>thead>tr,.scroll-table>tbody>tr { width: 100%; table-layout: fixed}
+.scroll-table { table-layout: fixed; }
+.scroll-table>thead,scroll-table>.header { display: table; width: 100%}
+.scroll-table>tbody { overflow-y: auto; display: block; }
+.scroll-table>*>tr { width: 100%; display: table; box-sizing: border-box;}
+.scroll-table>*>tr>* { table-layout: fixed; display: inline-block;}
 .plain-table>tbody{display: table}
 
 table.didi td { background-clip: padding-box;}
