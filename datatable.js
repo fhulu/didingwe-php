@@ -405,7 +405,7 @@
       if (opts.page_size == 0 || max_height > 0) {
         var row_height = parseInt($('<tr><td>Loading...</td></tr>').appendTo(body).height());
         if (row_height < 1) row_height = opts.min_row_height;
-        me.params.size = Math.ceil((max_height - me.head().height())/row_height);
+        me.params.size = Math.ceil((max_height - me.head().height())/row_height)+3;
       }
       body.addClass(opts.body.class.join(' '));
       body.empty();
