@@ -456,12 +456,7 @@
       row.attr('class','');
       row.addClass(this.row_classes);
       if ($.isPlainObject(styles)) styles = mkn.firstKey(styles);
-      styles.split(/[, ]/).forEach(function(style) {
-        row.addClass(style);
-        var classes = row_styles[style];
-        if (!classes) return;
-        row.addClass(classes.join(' '));
-      });
+      row.addStyle(row_styles, styles)
     },
 
     addRow: function(row, insert_at) {
