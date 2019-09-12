@@ -405,7 +405,7 @@
       if (opts.page_size == 0 || max_height > 0) {
         var row_height = parseInt($('<tr><td>Loading...</td></tr>').appendTo(body).height());
         if (row_height < 1) row_height = opts.min_row_height;
-        me.params.size = Math.ceil(max_height/row_height)+1;
+        me.params.size = Math.ceil((max_height - me.head().height())/row_height);
       }
       body.addClass(opts.body.class.join(' '));
       body.empty();
@@ -951,13 +951,11 @@
     {
       var editor = template.clone(true);
       var td;
-      editor.addClass('datatable-editor').addClass(cls);
+      editor.addClass('datatable-editor').addClass(cls).removeClass("title");
       editor.children().each(function(i) {
-        var th = $(this).off();
+        var th = $(this);
         th.text('');
-        var field = $(this).data('field');
-        if (!field[cls]) return;
-        th.append($('<input type=text></input>').css('width','100%'));
+        th.append($('<input type=text></input>').addClass("tallest widest"));
       });
       editor.insertAfter(template);
       return editor;
