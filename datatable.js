@@ -405,7 +405,7 @@
       if (opts.page_size == 0 || max_height > 0) {
         var row_height = parseInt($('<tr><td>Loading...</td></tr>').appendTo(body).height());
         if (row_height < 1) row_height = opts.min_row_height;
-        me.params.size = Math.ceil(max_height/row_height)+1;
+        me.params.size = Math.ceil((max_height - me.head().height())/row_height)+3;
       }
       body.addClass(opts.body.class.join(' '));
       body.empty();
@@ -751,9 +751,11 @@
 
     loadSubPages: function(tr, pages)
     {
+
       var expanded = $('<tr class=expanded></tr>');
       var td = $('<td></td>')
               .attr('colspan', tr.children('td').length)
+              .addClass(this.options.expand.class.join(' '))
               .prependTo(expanded);
       expanded.insertAfter(tr);
 
@@ -946,34 +948,18 @@
     {
       var editor = template.clone(true);
       var td;
-      editor.addClass('datatable-editor').addClass(cls);
+      editor.addClass('datatable-editor').addClass(cls).removeClass("title");
       editor.children().each(function(i) {
-        var th = $(this).off();
+        var th = $(this);
+        var field = th.data('field');
+        if (field && field.id == 'actions') return;
         th.text('');
-        var field = $(this).data('field');
-        if (!field[cls]) return;
-        th.append($('<input type=text></input>').css('width','100%'));
+        th.append($('<input type=text></input>').addClass("tallest widest"));
       });
       editor.insertAfter(template);
       return editor;
     },
 
-    incrementalSearch: function(tds,input) {
-      var me = this;
-      if (!me.searchInputs) {
-        if (me.searchInterval) {
-          clearInterval(me.searchInterval);
-          me.searchInterval = null;
-        }
-        return;
-      }
-      me.searchInputs = 0;
-      me.params.offset = 0;
-      var td = input.parent();
-      var index = tds.index(td);
-      me.params['f'+index] = input.value();
-      me.refresh();
-    },
 
     createFilter: function()
     {
@@ -984,16 +970,14 @@
       var titles = me.head().find('.titles');
       filter = me.createEditor(titles,'filter').hide();
       var tds = filter.children();
-      this.searchInputs = 0;
-      filter.find('input').bind('keyup cut paste', function(e) {
-        ++me.searchInputs;
+      filter.find('input').bind('keyup cut paste', mkn.debounce(function(e) {
         var input = $(this);
-        if (!me.searchInterval) {
-          me.searchInterval = setInterval(function() {
-            me.incrementalSearch(tds,input);
-          }, me.options.searchDelay);
-        }
-      });
+        me.params.offset = 0;
+        var td = input.parent();
+        var index = tds.index(td);
+        me.params['f'+index] = input.value();
+        me.refresh();
+      }, me.options.search_delay));
       return filter;
     },
 
