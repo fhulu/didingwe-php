@@ -756,9 +756,11 @@
 
     loadSubPages: function(tr, pages)
     {
+
       var expanded = $('<tr class=expanded></tr>');
       var td = $('<td></td>')
               .attr('colspan', tr.children('td').length)
+              .addClass(this.options.expand.class.join(' '))
               .prependTo(expanded);
       expanded.insertAfter(tr);
 
@@ -954,6 +956,8 @@
       editor.addClass('datatable-editor').addClass(cls).removeClass("title");
       editor.children().each(function(i) {
         var th = $(this);
+        var field = th.data('field');
+        if (field && field.id == 'actions') return;
         th.text('');
         th.append($('<input type=text></input>').addClass("tallest widest"));
       });
@@ -961,22 +965,6 @@
       return editor;
     },
 
-    incrementalSearch: function(tds,input) {
-      var me = this;
-      if (!me.searchInputs) {
-        if (me.searchInterval) {
-          clearInterval(me.searchInterval);
-          me.searchInterval = null;
-        }
-        return;
-      }
-      me.searchInputs = 0;
-      me.params.offset = 0;
-      var td = input.parent();
-      var index = tds.index(td);
-      me.params['f'+index] = input.value();
-      me.refresh();
-    },
 
     createFilter: function()
     {
@@ -987,16 +975,14 @@
       var titles = me.head().find('.titles');
       filter = me.createEditor(titles,'filter').hide();
       var tds = filter.children();
-      this.searchInputs = 0;
-      filter.find('input').bind('keyup cut paste', function(e) {
-        ++me.searchInputs;
+      filter.find('input').bind('keyup cut paste', mkn.debounce(function(e) {
         var input = $(this);
-        if (!me.searchInterval) {
-          me.searchInterval = setInterval(function() {
-            me.incrementalSearch(tds,input);
-          }, me.options.searchDelay);
-        }
-      });
+        me.params.offset = 0;
+        var td = input.parent();
+        var index = tds.index(td);
+        me.params['f'+index] = input.value();
+        me.refresh();
+      }, me.options.search_delay));
       return filter;
     },
 
