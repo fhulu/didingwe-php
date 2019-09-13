@@ -947,7 +947,7 @@ class page
     if (($pos = strrpos($sql, ' where ')) !== false)
       $sql = substr($sql, 0, $pos + 7) . " $filters and " . substr($sql, $pos + 7);
     else if (($pos = strrpos($sql, ' group ')) !== false)
-      $sql = substr($sql, 0, $pos) . "where $filters " . substr($sql, $pos);
+      $sql = substr($sql, 0, $pos) . " where $filters " . substr($sql, $pos);
     else
       $sql .= " where $filters ";
   }
