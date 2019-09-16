@@ -465,7 +465,7 @@
       this.updateRow(tr, row);
       var body = this.body();
       if (insert_at === undefined)
-        tr.appendTo(body);
+        tr.appendTo(tr.hasClass('heading')? this.head(): body);
       else if ($.isNumeric(insert_at))
         tr.insertBefore(body.children().eq(insert_at));
       else
@@ -594,7 +594,7 @@
       var obj = td.children().eq(0);
 
       if (!obj.exists())
-        return td.text(cell.value).attr('title', cell.name);
+        return td.text(cell.value).attr('title', cell.title? cell.title: cell.name);
 
       obj.value(cell.value);
       return td;
