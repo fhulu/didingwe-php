@@ -45,10 +45,16 @@
         me.showData(args);
       }
       el.on('refresh', function(e, args) {
-        el.trigger('refreshing', args);
         me.showData(args);
         return opts.propagated_events.indexOf(e.type) >= 0;
       })
+      .on('refreshing', function() {
+        me.updateWidths();
+      })
+      .on('resize', mkn.debounce(function() {
+        me.updateWidths();
+        me.adjustWidths();
+      }))
       .on('addData', function(e, args) {
         el.trigger('addingData', args);
         me.load(args);
@@ -59,9 +65,14 @@
         el.trigger('updatingData', args);
         me.updateData(args);
         return opts.propagated_events.indexOf(e.type) >= 0;
-      });
+      })
+      .on('shown', function() {
+        alert('shown')
+      })
       me.body().scroll($.proxy(me._scroll,me));
-      me.bindRowActions()
+      me.head().children('.titles').toggle(me.hasFlag('show_titles'));
+      me.bindRowActions();
+
     },
 
     _init_params: function()
@@ -133,7 +144,7 @@
         };
         if (data._responses)
           el.triggerHandler('server_response', [data]);
-        // el.trigger('refreshing', [data]);
+        el.triggerHandler('refreshing', [data]);
         var end = new Date().getTime();
         console.log("Load: ", end - start);
         me.populate(data, args.insert_at);
@@ -360,17 +371,24 @@
         td.css('width', widths[col]);
         td.attr('field', field.id);
         if (field.style)
-          td.addStyle(options.cell.styles, field.style);
+          td.addStyle(opts.cell.styles, field.style);
         ++col;
       }
       me.row_blueprint = tr;
     },
 
-    spanColumns: function(td)
+    spanColumns: function(tds, col, colspan)
     {
-      var tr = this.head().find('.titles');
-      if (!tr.exists()) tr = this.body().children().eq(0);
-      td.attr('colspan', tr.children().length);
+      var widths = this.widths;
+      var td = tds.eq(col);
+      var colspan = colspan || td.attr('colspan') || 1;
+      var width = widths[col];
+      while(--colspan) {
+        width += widths[++col];
+        tds.eq(col).hide();
+      }
+      td.css('width', width);
+      return col;
     },
 
     spanData: function(field, row, col)
@@ -396,7 +414,6 @@
       body.addClass(opts.body.class.join(' '));
       body.empty();
       me.load(args);
-      me.spanColumns(me.head().find('.header>th'));
     },
 
     updateData: function(args) {
@@ -420,7 +437,7 @@
         };
         if (data._responses)
           el.triggerHandler('server_response', [resut]);
-        // el.trigger('refreshing', [data]);
+        el.trigger('refreshing', [data]);
         var end = new Date().getTime();
         console.log("Load: ", end - start);
         var row = args.start_row;
@@ -436,11 +453,8 @@
     },
 
     setRowStyles: function(row, styles) {
-      var row_styles = this.options.row_styles;
-      if (!row_styles)
-        row_styles = this.options.row.styles;
-      row.attr('class','');
-      row.addClass(this.row_classes);
+      var row_styles =  this.options.row.styles;
+
       if ($.isPlainObject(styles)) styles = mkn.firstKey(styles);
       row.addStyle(row_styles, styles)
     },
@@ -469,6 +483,7 @@
       var tds = tr.children();
       var count = fields.length-offset;
       var col_span = 0;
+      var titles = me.head().children('.titles').eq(0);
       for (var i=0; i<count; ++i) {
         var field = fields[offset++];
         var cell = data[i];
@@ -481,12 +496,8 @@
           if (field.attr) tr.attr(field.id, cell);
           continue;
         }
-        if (col_span && --col_span)
-          continue;
-
         var td = tds.eq(col);
         td.css('width', me.widths[col]);
-        ++col;
         if (cell === undefined || cell === null)
           cell = { name: ""}
         else if (!$.isPlainObject(cell)) {
@@ -518,11 +529,11 @@
           td.attr("rowspan", cell.row_span);
         }
 
-        if (cell.col_span) {
-          col_span = parseInt(cell.col_span);
-          td.attr("colspan", col_span);
-          for (var j = 1; j < col_span; ++j )
-            tds.eq(col++).remove();
+        var colspan = cell.colspan || cell.col_span;
+        if (colspan) {
+          colspan = parseInt(colspan);
+          td.attr("colspan", colspan);
+          col = me.spanColumns(tds, col, colspan);
         }
 
         if (cell === null || cell === undefined)
@@ -536,8 +547,8 @@
         }
 
         me.setCellValue(td, cell);
+        ++col;
       }
-      me.adjustColWidths(tr);
       this.prev_row = data;
     },
 
@@ -880,25 +891,36 @@
       };
     },
 
-    updateWidths: function(cells)
+    updateWidths: function()
     {
-      var widths = this.widths;
-      cells.each(function(i) {
-        var width = $(this).width();
-        if (i === widths.length)
-          widths.push(width);
-        else if (width > widths[i])
-          widths[i] = width;
-      })
+      var me = this;
+      var widths = me.widths;
+      var titles = me.head().children('.titles').eq(0);
+      var shown = titles.is(':visible');
+      if (!shown) titles.show();
+      var max = titles.width();
+      titles.children().each(function(i) {
+        widths[i] = $(this).width();
+      });
+      if (!shown) titles.hide();
+
     },
 
     adjustWidths: function()
     {
-      var titles = this.head().children('.titles').eq(0).children('.title');
-      $.each(this.widths, function(i, width) {
-        titles.eq(i).css('width', width);
-      })
-
+      var me = this;
+      var widths = me.widths;
+      var num_cols = widths.length;
+      var adjust = function(rows) {
+        rows.each(function(i, row) {
+          var cells = $(row).children();
+          for (var col=0; col < num_cols; ++col) {
+            col = me.spanColumns(cells, col);
+          }
+        });
+      };
+      adjust(me.head().children('.row'));
+      adjust(me.body().children('.row'));
     },
 
 
@@ -959,7 +981,6 @@
         return action;
       })
       this.options.render.createItems(td, this.options, undefined, actions);
-      this.spanColumns(td);
     },
 
     _scroll: function(e) {

@@ -1,6 +1,8 @@
 dyntable:
   tooltip: false
   classes: container
+  class: [resizable]
+  trap: [resize]
   auto_load: true
   contents: [$head, $body, $footer]
   create: dyntable
@@ -35,7 +37,7 @@ dyntable:
   cell:
     tag: div
     id: ""
-    class: [inline-block]
+    class: [inline-block cell]
     styles: {}
     controls:
       type: container
