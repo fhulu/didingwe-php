@@ -1,0 +1,25 @@
+include: [dyntable]
+dyntest:
+  type: dyntable
+  access: auth
+  name: My Audit Trail
+  class: [scroll-table,widest,scroll-x]
+  body: { max-height: 500 }
+  sort: when
+  sort_order: desc
+  flags: [show_titles,filter]
+  report_title: User Audit Trail
+  # titles:
+  #   class: [blue pad-y pad-medium]
+  actions:
+    - print
+    - export
+  fields:
+    - when: { width: 18%,name: Time }
+    - email: { width: 20%, class: [truncate-word]}
+    - what: { width: 18%, name: Action }
+    - detail: { width: 40%, class: [truncate-word] }
+  values:
+    - collection.sort_on: sort
+    - collection.data: [audit, [partner], create_time, user.email, action, detail]
+    - clear_values: [partner]
