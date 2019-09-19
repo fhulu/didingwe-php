@@ -524,6 +524,16 @@ label_right:
     attr: { title: $desc }
   text: $field $label
 
+label_tick:
+  type: labelled
+  subject:
+    class: [float-right]
+    attr: { title: $desc }
+  label:
+    class: [float-right]
+    text: $name
+  text: $field $label
+
 label_top:
   type: label_bottom
   text: $label$field
@@ -927,5 +937,6 @@ watermark:
 window:
   type: container
   is_body: true
+
 
 ...
