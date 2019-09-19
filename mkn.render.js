@@ -785,7 +785,7 @@ mkn.render = function(options)
       $.each(values, function(i, value) {
         if ($.isPlainObject(value) && !value.path) value.path = field.path + '/on_' + key;
         var sink = obj;
-        if (obj.is('body') && key == 'scroll') sink = $(window);
+        if (obj.is('body') && ['scroll','resize'].indexOf(key) >= 0) sink = $(window);
         sink.on(key, function(e) {
 
           if (obj.hasClass('disabled')) return;

@@ -13,12 +13,7 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 
 (function( $ ) {
-  $.widget( "ui.datatable", {
-    options: {
-      name: 'Untitled',
-      flags: [],
-    },
-
+  $.widget( "ui.dyntable", {
     _create: function()
     {
       var me = this;
@@ -27,33 +22,39 @@
       if (opts.sort) opts.flags.push('sortable');
       var r = opts.render;
       r.expandFields(opts, "fields", opts.fields);
-      var row = r.initField(opts.row, opts);
-      me.row_classes = opts.row.class.join(' ');
+      me.title = r.initField(opts.title, opts);
+      me.row = r.initField(opts.row, opts);
+      opts.row_styles = r.initField(opts.row_styles, opts);
+      $.extend(me.row.styles,opts.row.styles);
+      opts.row_actions = r.initField(opts.row_actions, opts);
+      $.extend(me.row.actions, opts.row_actions);
       me.cell = r.initField(opts.cell, opts);
-      me.cell.class = me.cell.class.join(' ')
-      $.extend(opts.row_styles,opts.row.styles);
-      opts.row_actions = opts.row_actions.concat(opts.row.actions);
-      opts.render.expandFields(opts, "row_actions", opts.row_actions);
+      // opts.render.expandFields(opts, "row_actions", opts.row_actions);
       me.auto_widths = [];
       me._init_params();
       var el = me.element;
-      me.head().addClass(opts.head.class.join(' ')).prependTo(el);
+      me.initWidths();
       me.showHeader();
       me.showTitles();
       me.createRowBlueprint();
       if (opts.no_records)
         this.no_records = this.element.find('#no_records');
-      me.head().toggle(me.hasFlag('show_titles') || me.hasFlag('show_header') || me.hasFlag('filter'));
       me.showFooterActions();
       if (opts.auto_load) {
         var args = $.isPlainObject(r.request)? r.request: {};
         me.showData(args);
       }
       el.on('refresh', function(e, args) {
-        el.trigger('refreshing', args);
         me.showData(args);
         return opts.propagated_events.indexOf(e.type) >= 0;
       })
+      .on('refreshing', function() {
+        me.updateWidths();
+      })
+      .on('resize', mkn.debounce(function() {
+        me.updateWidths();
+        me.adjustWidths();
+      }))
       .on('addData', function(e, args) {
         el.trigger('addingData', args);
         me.load(args);
@@ -64,9 +65,14 @@
         el.trigger('updatingData', args);
         me.updateData(args);
         return opts.propagated_events.indexOf(e.type) >= 0;
-      });
+      })
+      .on('shown', function() {
+        alert('shown')
+      })
       me.body().scroll($.proxy(me._scroll,me));
-      me.bindRowActions()
+      me.head().children('.titles').toggle(me.hasFlag('show_titles'));
+      me.bindRowActions();
+
     },
 
     _init_params: function()
@@ -107,12 +113,12 @@
 
     head: function()
     {
-      return this.element.children('thead').eq(0);
+      return this.element.children('.head').eq(0);
     },
 
     body: function()
     {
-      return this.element.children('tbody').eq(0);
+      return this.element.children('.body').eq(0);
     },
 
     load: function(args)
@@ -138,7 +144,7 @@
         };
         if (data._responses)
           el.triggerHandler('server_response', [data]);
-        // el.trigger('refreshing', [data]);
+        el.triggerHandler('refreshing', [data]);
         var end = new Date().getTime();
         console.log("Load: ", end - start);
         me.populate(data, args.insert_at);
@@ -172,7 +178,7 @@
           this.prev_row = row;
         }
       }
-      this.adjustWidths();
+      //this.adjustWidths();
       render.root = this.element;
       if (!opts.js_functions) opts.js_functions = opts.render.root_field.js_functions
       render.initModel(render.root, opts);
@@ -193,21 +199,16 @@
     showHeader: function()
     {
       var head = this.head();
-      head.html('');
-      var tr = $('<tr class=header></tr>').appendTo(head);
-      var th = $('<th></th>').appendTo(tr);
-      if (this.options.name !== undefined && this.hasFlag('show_header'))
-        $('<div class=heading></div>').html(this.options.name).appendTo(th);
-
-      var self = this;
+      var me = this;
       if (this.hasFlag('filter')) {
-        this.createAction('filter').appendTo(th);
-        this.element.on('filter', function(e) {
-          self.showFilter();
-          e.stopImmediatePropagation();
+        head.children('.filter').on('filter', function(e) {
+          me.showFilter();
         });
       }
+      var opts = this.options;
       if (this.options.page_size !== undefined && !this.hasFlag('hide_paging')) this.createPaging(th);
+      head.children(".titles").toggle(this.hasFlag("show_titles") || opts.titles.show);
+      head.children(".header").toggle(this.hasFlag('show_header') || this.hasFlag('filter') || opts.header.show);
     },
 
     createPaging: function(th)
@@ -247,29 +248,29 @@
 
     bindPaging: function()
     {
-      var self = this;
-      var head = self.head();
+      var me = this;
+      var head = me.head();
       head.find(".paging [type='text']").bind('keyup input cut paste', function(e) {
         if (e.keyCode === 13) {
-          self.params.size = $(this).val();
-          self.refresh();
+          me.params.size = $(this).val();
+          me.refresh();
         }
       });
 
       var page = head.find('#page_num');
       this.element.on('goto_first', function(e, btn) {
-        self.pageTo(btn, 1);
+        me.pageTo(btn, 1);
       })
       .on('goto_prev', function(e, btn) {
-        self.page(btn, -1);
+        me.page(btn, -1);
       })
       .on('goto_next', function(e, btn) {
-        self.page(btn, 1);
+        me.page(btn, 1);
       })
       .on('goto_last', function(e, btn) {
         var size = parseInt(head.find('#page_size').val());
         var total = parseInt(head.find('#page_total').html());
-        self.pageTo(btn, Math.floor(total/size)+1);
+        me.pageTo(btn, Math.floor(total/size)+1);
       })
     },
 
@@ -301,92 +302,93 @@
 
     bindSort: function(th, field)
     {
-      var self = this;
+      var me = this;
       th.click(function() {
         th.siblings().attr('sort','');
         var order = 'asc';
-        if (self.params.sort == field.number)
+        if (me.params.sort == field.number)
           order = th.attr('sort')==='asc'?'desc':'asc';
         th.attr('sort', order);
-        self.params.sort = field.number;
-        self.params.sort_order = order;
-        self.refresh();
+        me.params.sort = field.number;
+        me.params.sort_order = order;
+        me.refresh();
       });
     },
 
     showTitles: function()
     {
-      var head = this.head();
-      var opts = this.options;
-      var tr = head.find('.titles').empty();
-      if (!tr.exists()) tr = $('<tr class=titles>').appendTo(head);
-      if (!this.hasFlag('show_titles')) tr.hide();
-      var self = this;
+      var me = this;
+      var head = me.head();
+      var opts = me.options;
+      var tr = head.children('.titles').eq(0);
+      // var title = opts.render.create(opts, 'title');
       var fields = opts.fields;
-      var classes = opts.title.class.join(' ');
+      var col = 0;
       for (var i in fields) {
         var field = fields[i];
         var id = field.id;
-        if (field.id=='style' || field.data) continue;
-        var th = $('<th></th>').addClass(classes).appendTo(tr);
+        if (id=='style' || field.data) continue;
+        var title = mkn.merge(me.title, field);
+        var th = opts.render.create(title).appendTo(tr);
         th.toggle(mkn.visible(field));
         th.data('field', field);
-        if (field.class) th.addClass(field.class.join(' '));
         if (id === 'actions') {
           field.filter = false;
           continue;
         }
         if ($.isArray(field.name)) field.name = field.name[field.name.length-1];
         th.html(field.name || toTitleCase(id));
-        if (self.hasFlag('sortable')) {
-          if (id === self.params.sort)
-            th.attr('sort', self.params.sort_order);
+        if (me.hasFlag('sortable')) {
+          if (id === me.params.sort)
+            th.attr('sort', me.params.sort_order);
           else
             th.attr('sort','');
         }
-        if (field.width !== undefined) {
-          th.css('width', field.width);
-        }
-        if (self.hasFlag('sortable'))
-          self.bindSort(th, field);
+        th.css('width', this.widths[col]);
+        if (me.hasFlag('sortable'))
+          me.bindSort(th, field);
+        ++col;
       };
-      this.spanColumns(head.find('.header th'));
-      this.updateWidths(head.find('.titles').children());
     },
 
     createRowBlueprint: function()
     {
       var me = this;
-      var tr = $('<tr>').addClass(me.row_classes);
-      var cls = me.cell.class;
+      var widths = me.widths;
+      var opts = me.options;
+      var render = opts.render;
+      var tr = render.create(opts, 'row');
       me.defaults = {}
-      var options = me.options;
-      var fields = options.fields;
+      var fields = opts.fields;
+      var col = 0;
       for (var i in fields) {
         var field = fields[i];
         me.defaults[field.id] = field.new;
         delete field.new;
         if (field.id == 'style' || field.data) continue;
-        var td = $('<td>').appendTo(tr);
+        var cell = mkn.merge(me.cell, field);
+        var td = render.create(cell).appendTo(tr);
+        td.css('width', widths[col]);
         td.attr('field', field.id);
-        td.toggle(mkn.visible(field));
-        td.addClass(cls);
         if (field.style)
-          td.addStyle(options.cell.styles, field.style)
-        if (field.class) td.addClass(field.class.join(' '));
-        if (field.html === undefined) continue;
-        field = mkn.copy(field);
-        delete field.width;
-        td.append(me.options.render.create(field));
+          td.addStyle(opts.cell.styles, field.style);
+        ++col;
       }
       me.row_blueprint = tr;
     },
 
-    spanColumns: function(td)
+    spanColumns: function(tds, col, colspan)
     {
-      var tr = this.head().find('.titles');
-      if (!tr.exists()) tr = this.body().children('tr').eq(0);
-      td.attr('colspan', tr.children().length);
+      var widths = this.widths;
+      var td = tds.eq(col);
+      var colspan = colspan || td.attr('colspan') || 1;
+      var width = widths[col];
+      while(--colspan) {
+        width += widths[++col];
+        tds.eq(col).hide();
+      }
+      td.css('width', width);
+      return col;
     },
 
     spanData: function(field, row, col)
@@ -403,14 +405,15 @@
       var opts = me.options;
       var max_height  = parseInt(body.css('max-height'));
       if (opts.page_size == 0 || max_height > 0) {
-        var row_height = parseInt($('<tr><td>Loading...</td></tr>').appendTo(body).height());
+        var clone = me.row_blueprint.clone();
+        var row_height = clone.appendTo(body).height();
+        clone.remove();
         if (row_height < 1) row_height = opts.min_row_height;
         me.params.size = Math.ceil((max_height - me.head().height())/row_height)+3;
       }
       body.addClass(opts.body.class.join(' '));
       body.empty();
       me.load(args);
-      me.spanColumns(me.head().find('.header>th'));
     },
 
     updateData: function(args) {
@@ -434,7 +437,7 @@
         };
         if (data._responses)
           el.triggerHandler('server_response', [resut]);
-        // el.trigger('refreshing', [data]);
+        el.trigger('refreshing', [data]);
         var end = new Date().getTime();
         console.log("Load: ", end - start);
         var row = args.start_row;
@@ -450,11 +453,8 @@
     },
 
     setRowStyles: function(row, styles) {
-      var row_styles = this.options.row_styles;
-      if (!row_styles)
-        row_styles = this.options.row.styles;
-      row.attr('class','');
-      row.addClass(this.row_classes);
+      var row_styles =  this.options.row.styles;
+
       if ($.isPlainObject(styles)) styles = mkn.firstKey(styles);
       row.addStyle(row_styles, styles)
     },
@@ -483,6 +483,7 @@
       var tds = tr.children();
       var count = fields.length-offset;
       var col_span = 0;
+      var titles = me.head().children('.titles').eq(0);
       for (var i=0; i<count; ++i) {
         var field = fields[offset++];
         var cell = data[i];
@@ -495,10 +496,8 @@
           if (field.attr) tr.attr(field.id, cell);
           continue;
         }
-        if (col_span && --col_span)
-          continue;
-
-        var td = tds.eq(col++);
+        var td = tds.eq(col);
+        td.css('width', me.widths[col]);
         if (cell === undefined || cell === null)
           cell = { name: ""}
         else if (!$.isPlainObject(cell)) {
@@ -530,11 +529,11 @@
           td.attr("rowspan", cell.row_span);
         }
 
-        if (cell.col_span) {
-          col_span = parseInt(cell.col_span);
-          td.attr("colspan", col_span);
-          for (var j = 1; j < col_span; ++j )
-            tds.eq(col++).remove();
+        var colspan = cell.colspan || cell.col_span;
+        if (colspan) {
+          colspan = parseInt(colspan);
+          td.attr("colspan", colspan);
+          col = me.spanColumns(tds, col, colspan);
         }
 
         if (cell === null || cell === undefined)
@@ -548,8 +547,8 @@
         }
 
         me.setCellValue(td, cell);
+        ++col;
       }
-      me.adjustColWidths(tr);
       this.prev_row = data;
     },
 
@@ -627,16 +626,16 @@
     bindAction: function(obj, props, sink, path)
     {
       if (sink === undefined) sink = this.element;
-      var self = this.element;
+      var me = this.element;
       obj.click(function() {
         var action = props.id;
         sink.trigger('action',[obj,action,props]);
         sink.trigger(action, [obj,props]);
         if (props.action === undefined) return;
         var key = sink.attr('key');
-        if (key === undefined) key = self.options.key;
-        var options = $.extend({},self.params, props, {id: action, action: props.action, key: key });
-        var listener = self.closest('.page').eq(0);
+        if (key === undefined) key = me.options.key;
+        var options = $.extend({},me.params, props, {id: action, action: props.action, key: key });
+        var listener = me.closest('.page').eq(0);
         options.path += '/';
         if (path !== undefined) options.path += path + '/';
         options.path += action;
@@ -752,12 +751,9 @@
     loadSubPages: function(tr, pages)
     {
 
-      var expanded = $('<tr class=expanded></tr>');
-      var td = $('<td></td>')
-              .attr('colspan', tr.children('td').length)
-              .addClass(this.options.expand.class.join(' '))
-              .prependTo(expanded);
-      expanded.insertAfter(tr);
+      var expanded = $('<div>')
+          .addClass(this.options.expand.class.join(' '))
+          .insertAfter(tr);
 
       var key = tr.attr('key');
       var tmp = $('<div></div>');
@@ -778,12 +774,12 @@
       var me = this;
       var options = me.options;
       var el = this.element;
-      el.on('slide', 'tr', function(e) {
+      el.on('slide', '.row', function(e) {
         $(e.target).toggle();
         me.slide($(this));
         e.stopPropagation();
       })
-      .on('expand', 'tr', function(e) {
+      .on('expand', '.row', function(e) {
         var tr = $(this);
         tr.find('[action=expand]').hide();
         tr.find('[action=collapse]').show();
@@ -793,7 +789,7 @@
         me.loadSubPages(tr, expand.pages)
         e.stopPropagation();
       })
-      .on('collapse', 'tr', function(e) {
+      .on('collapse', '.row', function(e) {
         var tr = $(this);
         tr.find('[action=collapse]').hide();
         tr.find('[action=expand]').show();
@@ -801,7 +797,7 @@
         if (next.hasClass('expanded')) next.remove();
         e.stopPropagation();
       })
-      .on('action', 'tr', function(e, btn) {
+      .on('action', '.row', function(e, btn) {
         if (!btn.parent('.slide').exists()) return;
         me.slide($(this));
         $(this).find('[action=slide]').toggle();
@@ -809,7 +805,7 @@
         slider.animate({width: 0}, options.slideSpeed*2, function() { slider.hide()});
         e.stopPropagation();
       })
-      .on('delete', 'tr', function(e) {
+      .on('delete', '.row', function(e) {
         $(this).remove();
         return $(this);
       })
@@ -880,67 +876,51 @@
       return (tr.innerHeight()*0.99).toString()+'px';
     },
 
-    initWidths: function(ths,tds)
+    initWidths: function()
     {
       var fields = this.options.fields;
       var widths = this.widths;
       var col = -1;
       for (var i in fields) {
         var field = fields[i];
-        if (field.id == 'style' || field.type == 'type') continue;
+        if (field.data || field.id == 'style' || field.type == 'type') continue;
         ++col;
-        var th = ths.eq(col);
-        var td = tds.eq(col);
         if (field.width !== undefined) {
-          th.css('width', field.width);
-          td.css('width', th.get(0).style.width);
-        }
-        else if (field.width !== 'auto') {
-          th.css('width', 'auto');
-          td.css('width', 'auto')
+          widths[col] = field.width;
         }
       };
     },
 
-    updateWidths: function(cells)
+    updateWidths: function()
     {
-      var widths = this.widths;
-      cells.each(function(i) {
-        var width = $(this).width();
-        if (i === widths.length)
-          widths.push(width);
-        else if (width > widths[i])
-          widths[i] = width;
-      })
+      var me = this;
+      var widths = me.widths;
+      var titles = me.head().children('.titles').eq(0);
+      var shown = titles.is(':visible');
+      if (!shown) titles.show();
+      var max = titles.width();
+      titles.children().each(function(i) {
+        widths[i] = $(this).width();
+      });
+      if (!shown) titles.hide();
+
     },
 
     adjustWidths: function()
     {
-      if (this.options.adjust_widths !== undefined && !this.options.adjust_widths) return;
-      var ths = this.head().find('.titles').children();
-      var tr1 = this.body().find('tr:first-child');
-      var tds = tr1.children();
-      this.initWidths(ths,tds);
-      this.updateWidths(tds);
-      var widths = this.widths;
-      if (!widths.length) widths = [];
-      var sum = widths.reduce(function(a,b) { return a + b}, 0);
-      var fields = this.options.fields;
-      var col = 0;
-      for (var i in fields) {
-        var field = fields[i];
-        if (field.id == 'style' || field.data) continue;
-        if (field.width !== undefined) continue;;
-        var th = ths.eq(col);
-        var width = ((widths[col]/sum)*100) + '%';
-        if (th.exists()) {
-          th.css('width', width);
-          width = th.get(0).style.width
-        }
-        tds.eq(col).css('width', width);
-        ++col;
-      }
-
+      var me = this;
+      var widths = me.widths;
+      var num_cols = widths.length;
+      var adjust = function(rows) {
+        rows.each(function(i, row) {
+          var cells = $(row).children();
+          for (var col=0; col < num_cols; ++col) {
+            col = me.spanColumns(cells, col);
+          }
+        });
+      };
+      adjust(me.head().children('.row'));
+      adjust(me.body().children('.row'));
     },
 
 
@@ -948,7 +928,7 @@
     {
       var editor = template.clone(true);
       var td;
-      editor.addClass('datatable-editor').addClass(cls).removeClass("title");
+      editor.addClass('dyntable-editor').addClass(cls).removeClass("title");
       editor.children().each(function(i) {
         var th = $(this);
         var field = th.data('field');
@@ -985,8 +965,6 @@
     {
       var filter = this.createFilter();
       filter.toggle();
-      if (filter.is(':visible'))
-        this.adjustWidths(filter);
     },
 
     showFooterActions: function()
@@ -994,16 +972,15 @@
       this.options.render.expandFields(this.options, "footer_actions", this.options.footer_actions);
       var actions = this.options.footer_actions;
       if (!actions.length) return;
-      var footer = $('<tfoot>').appendTo(this.element);
-      var tr = $('<tr>').addClass('actions').appendTo(footer);
-      var td = $('<td>').appendTo(tr);
+      var footer = $('<div>').addClass('footer').appendTo(this.element);
+      var tr = $('<div>').addClass('actions').appendTo(footer);
+      var td = $('<div>').appendTo(tr);
       var key = this.options.key;
       actions.map(function(action) {
         action.key = key;
         return action;
       })
       this.options.render.createItems(td, this.options, undefined, actions);
-      this.spanColumns(td);
     },
 
     _scroll: function(e) {

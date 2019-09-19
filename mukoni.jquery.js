@@ -570,11 +570,16 @@ $.fn.findByAttribute = function(attr, value) {
 }
 
 $.fn.addStyle = function(reference, styles) {
-  if (!$.isArray(styles)) styles = styles.split(' ');
+  if (!$.isArray(styles)) styles = styles.split(/[, ]/);
   var me = this;
   styles.forEach(function(style) {
     me.addClass(style)
     var classes = reference[style];
+    if (!classes) return;
+    if ($.isPlainObject(classes)) {
+      me.css(classes.style);
+      classes = classes.class;
+    }
     if (!classes) return;
     classes.forEach(function(cls) {
       if (cls[0] == '~')

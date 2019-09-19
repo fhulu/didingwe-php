@@ -775,8 +775,8 @@ li.paragraph {text-indent: -1em }
 .background-fade { background-color: rgba(0,0,0,0.6)};
 
 .scroll-table { table-layout: fixed; }
-.scroll-table>thead,scroll-table>.header { display: table; width: 100%}
-.scroll-table>tbody { overflow-y: auto; display: block; }
+.scroll-table>thead,.scroll-table>.head { display: table; width: calc(100% - 17px)}
+.scroll-table>tbody,.scroll-table>.body { overflow-y: auto; display: block; }
 .scroll-table>*>tr { width: 100%; display: table; box-sizing: border-box;}
 .scroll-table>*>tr>* { table-layout: fixed; display: inline-block;}
 .plain-table>tbody{display: table}
