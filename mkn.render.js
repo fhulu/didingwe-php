@@ -1507,7 +1507,7 @@ mkn.render = function(options)
       var field = obj.data('didi-field');
       if (!field || field.parent_page != root_id) return;
       if (!field) return;
-      var id = field.id;
+      var id = field.id || obj.attr("for");
       var changed = update(obj, field, id);
       var style_changed = update(obj, field.style, id);
       var class_changed = update(obj, field.class, id);
