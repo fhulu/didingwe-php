@@ -39,8 +39,8 @@ dyntest:
     - datarow: ["", heading, { name: Accomodation, colspan: 8, style: section-title},"","","","","","","",{style: section-cost}, { type: tick_box, style: [section-tick]} ]
     - datarow: ["", title, Facility, Check In, Nights, Room, Adults, Pensioners ,Disabled, Children, {name: Cost, style: subtotal, col_span: 2} ]
     - sql_values: |
-        select min(check_in_date) start_date, max(check_out_date) end_date, r.name resort
-        from booking_facility bf join facility f on bf.facility = f.id and booking = '1305'
+        select booking, min(check_in_date) start_date, max(check_out_date) end_date, r.name resort
+        from booking_facility bf join facility f on bf.facility = f.id and booking = '1303'
         join resort r on f.resort = r.id
     - sql: |
         select id, "facility",
@@ -67,16 +67,16 @@ dyntest:
             bf.quantity rooms, bf.check_in_date, datediff(bf.check_out_date, bf.check_in_date) nights,
             ifnull(rb.adults, 0) adults, ifnull(rb.children, 0) children, ifnull(rb.pensioners, 0) pensioners, ifnull(rb.disabled, 0) disabled, ifnull(rb.name,'') room
           from facility f
-            join booking_facility bf on bf.facility = f.id and bf.booking = 1305 and bf.active
+            join booking_facility bf on bf.facility = f.id and bf.booking = $booking and bf.active
             join facility_rate fr on fr.id = bf.rate
             join (
                 select number, concat(bf.id, '_', number) id, bf.id booking_facilty_id from booking_facility bf
-                  join numbers on number < bf.quantity and bf.booking = 1305
+                  join numbers on number < bf.quantity and bf.booking = $booking
                 order by bf.id, number
             ) rl on booking_facilty_id = bf.id
             left join (
               select r.id, rb.number, r.name, r.facility, rb.adults, rb.children, rb.disabled, rb.pensioners from room_booking rb
-                join room r on rb.room = r.id and rb.booking = 1305 and rb.active
+                join room r on rb.room = r.id and rb.booking = $booking and rb.active
             ) rb on rb.facility = bf.facility and rl.number = rb.number
           ) tmp
           order by 4,3,1

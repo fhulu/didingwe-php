@@ -48,11 +48,10 @@
         me.showData(args);
         return opts.propagated_events.indexOf(e.type) >= 0;
       })
-      .on('refreshing', function() {
-        me.updateWidths();
+      .on('refreshed', function() {
+        me.adjustWidths();
       })
       .on('resize', mkn.debounce(function() {
-        me.updateWidths();
         me.adjustWidths();
       }))
       .on('addData', function(e, args) {
@@ -178,7 +177,7 @@
           this.prev_row = row;
         }
       }
-      //this.adjustWidths();
+      this.adjustWidths();
       render.root = this.element;
       if (!opts.js_functions) opts.js_functions = opts.render.root_field.js_functions
       render.initModel(render.root, opts);
@@ -462,7 +461,6 @@
     addRow: function(row, insert_at) {
       var tr = this.row_blueprint.clone(true);
       // row = $.extend({}, this.options.defaults, row);
-      this.updateRow(tr, row);
       var body = this.body();
       if (insert_at === undefined)
         tr.appendTo(tr.hasClass('heading')? this.head(): body);
@@ -470,6 +468,7 @@
         tr.insertBefore(body.children().eq(insert_at));
       else
         tr.insertBefore(body.find(insert_at));
+      this.updateRow(tr, row);
     },
 
     updateRow: function(tr, data, offset)
@@ -484,6 +483,7 @@
       var count = fields.length-offset;
       var col_span = 0;
       var titles = me.head().children('.titles').eq(0);
+      var height = this.options.min_row_height;
       for (var i=0; i<count; ++i) {
         var field = fields[offset++];
         var cell = data[i];
@@ -523,10 +523,15 @@
         if (this.prev_row && this.prev_row[i] && this.prev_row[i].row_span > 1) {
           cell.row_span = parseInt(this.prev_row[i].row_span) - 1;
           data[i] = cell;
-          td.addClass('hide');
+          // td.next().css('margin-left', td.offset().left + td.width())
+          td.addClass('transparent rowspanned').width(0);
+          console.log('tr', tr);
+          if (cell.row_span <= 1)
+            tr.addClass('clear-after');
         }
         else if (cell.row_span) {
           td.attr("rowspan", cell.row_span);
+          td.addClass('float-left rowspan').height(td.height()*parseInt(cell.row_span))
         }
 
         var colspan = cell.colspan || cell.col_span;
@@ -885,25 +890,8 @@
         var field = fields[i];
         if (field.data || field.id == 'style' || field.type == 'type') continue;
         ++col;
-        if (field.width !== undefined) {
-          widths[col] = field.width;
-        }
+        widths[col] = field.width === undefined? 'auto': field.width;
       };
-    },
-
-    updateWidths: function()
-    {
-      var me = this;
-      var widths = me.widths;
-      var titles = me.head().children('.titles').eq(0);
-      var shown = titles.is(':visible');
-      if (!shown) titles.show();
-      var max = titles.width();
-      titles.children().each(function(i) {
-        widths[i] = $(this).width();
-      });
-      if (!shown) titles.hide();
-
     },
 
     adjustWidths: function()
@@ -911,14 +899,44 @@
       var me = this;
       var widths = me.widths;
       var num_cols = widths.length;
+      var adjusted = widths.slice();
+      var changed = false;
+      var title_row = me.head().children('.titles').eq(0);
+      var max_width = title_row.width();
+      title_row.children().each(function(i, cell) {
+        cell = $(cell);
+        if (cell.is(':visible') && widths[i] != 'auto')
+          max_width -= $(cell).width();
+      })
+
+      var calc = function(rows, max_width) {
+        rows.each(function(i, row) {
+          $(row).children().each(function(j, cell) {
+            cell = $(cell);
+            if (!cell.is(':visible') || widths[j] != 'auto') return;
+            var width = cell.width();
+            if (width > adjusted[j] || adjusted[j] == 'auto') {
+              adjusted[j] = width = width<max_width? width: max_width;
+              max_width -= width;
+              changed = true;
+            }
+          });
+        });
+      }
+
+      calc(me.head().children('.row'), max_width);
+      calc(me.body().children('.row'), max_width);
+
+      if (!changed) return;
+
       var adjust = function(rows) {
         rows.each(function(i, row) {
-          var cells = $(row).children();
-          for (var col=0; col < num_cols; ++col) {
-            col = me.spanColumns(cells, col);
-          }
-        });
-      };
+          $(row).children().each(function(j, cell) {
+            $(cell).css('width', adjusted[j]);
+          });
+        })
+      }
+
       adjust(me.head().children('.row'));
       adjust(me.body().children('.row'));
     },

@@ -16,7 +16,7 @@ dyntable:
     class: [header, widest]
   titles:
     type: container
-    class: [titles, widest]
+    class: [titles row, widest]
   title:
     tag: [div]
     class: [title, inline-block]
