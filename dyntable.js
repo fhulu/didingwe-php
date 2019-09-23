@@ -50,9 +50,11 @@
       })
       .on('refreshed', function() {
         me.adjustWidths();
+        me.adjustHeights();
       })
       .on('resize', mkn.debounce(function() {
         me.adjustWidths();
+        me.adjustHeights();
       }))
       .on('addData', function(e, args) {
         el.trigger('addingData', args);
@@ -178,6 +180,7 @@
         }
       }
       this.adjustWidths();
+      this.adjustHeights();
       render.root = this.element;
       if (!opts.js_functions) opts.js_functions = opts.render.root_field.js_functions
       render.initModel(render.root, opts);
@@ -523,15 +526,14 @@
         if (this.prev_row && this.prev_row[i] && this.prev_row[i].row_span > 1) {
           cell.row_span = parseInt(this.prev_row[i].row_span) - 1;
           data[i] = cell;
-          // td.next().css('margin-left', td.offset().left + td.width())
-          td.addClass('transparent rowspanned').width(0);
-          console.log('tr', tr);
+          td.addClass('transparent rowspanned').hide();
           if (cell.row_span <= 1)
             tr.addClass('clear-after');
         }
         else if (cell.row_span) {
+          td.data('rowspan', parseInt(cell.row_span));
           td.attr("rowspan", cell.row_span);
-          td.addClass('float-left rowspan').height(td.height()*parseInt(cell.row_span))
+          td.addClass('float-left rowspan');
         }
 
         var colspan = cell.colspan || cell.col_span;
@@ -839,6 +841,7 @@
         if (!$(e.target).is(el)) return;
         me.addRow(data);
         me.adjustWidths();
+        me.adjustHeights();
       })
       .on('addNewRow', function(e, data) {
         if (!$(e.target).is(el)) return;
@@ -846,6 +849,7 @@
         me.body().prepend(tr);
         me.setRowData(tr, data);
         me.adjustWidths();
+        me.adjustHeights();
       })
       .on('removeRow', function(e, key) {
         me.getRowByKey(key).remove();
@@ -939,6 +943,25 @@
 
       adjust(me.head().children('.row'));
       adjust(me.body().children('.row'));
+    },
+
+
+    adjustHeights: function() {
+      var spanners = [];
+      this.body().children('.row').each(function(i, row) {
+        row = $(row);
+        row.children().each(function(j, cell) {
+          cell = $(cell);
+          var height = row.height();
+          var span = cell.data('rowspan');
+          if (!span) return;
+          for (var spanned = row; span > 1; --span) {
+             height += spanned.height();
+             spanned = spanned.next();
+          }
+          cell.css('min-height', height);
+        })
+      })
     },
 
 
