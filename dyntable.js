@@ -179,8 +179,6 @@
           this.prev_row = row;
         }
       }
-      this.adjustWidths();
-      this.adjustHeights();
       render.root = this.element;
       if (!opts.js_functions) opts.js_functions = opts.render.root_field.js_functions
       render.initModel(render.root, opts);
@@ -442,7 +440,7 @@
 
     addRow: function(row, insert_at) {
       var tr = this.row_blueprint.clone(true);
-      // row = $.extend({}, this.options.defaults, row);
+      this.updateRow(tr, row);
       var body = this.body();
       if (insert_at === undefined)
         tr.appendTo(tr.hasClass('heading')? this.head(): body);
@@ -450,7 +448,6 @@
         tr.insertBefore(body.children().eq(insert_at));
       else
         tr.insertBefore(body.find(insert_at));
-      this.updateRow(tr, row);
     },
 
     updateRow: function(tr, data, offset)
@@ -535,18 +532,6 @@
         ++col;
       }
       this.prev_row = data;
-    },
-
-    adjustColWidths: function(tr)
-    {
-      var widths = this.widths;
-      tr.children().each(function(i) {
-        var width = $(this).width();
-        if (i==widths.length)
-          widths.push(width);
-        else if (widths[i] < width)
-          widths[i] = width;
-      });
     },
 
     setCellValue: function(td, cell)
@@ -883,20 +868,22 @@
       var num_cols = widths.length;
       var adjusted = widths.slice();
       var changed = false;
-      var title_row = me.head().children('.titles').eq(0);
-      var max_width = title_row.width();
-      title_row.children().each(function(i, cell) {
+      var first_row = me.head().children('.titles').eq(0);
+      if (!first_row.is(":visible")) first_row = me.body().children('.row').eq(0);
+      var max_width = first_row.width();
+      first_row.children().each(function(i, cell) {
         cell = $(cell);
-        if (cell.is(':visible') && widths[i] != 'auto')
-          max_width -= $(cell).width();
+        if (!cell.is(':visible') || widths[i] == 'auto') return;
+        max_width -= $(cell).width();
       })
 
-      var calc = function(rows, max_width) {
-        rows.each(function(i, row) {
+      var calc = function(section, max_width) {
+        section.children('.row').each(function(i, row) {
           $(row).children().each(function(j, cell) {
             cell = $(cell);
-            if (!cell.is(':visible') || widths[j] != 'auto' || cell.data('colspan') > 1) return;
+            if (!cell.is(':visible')) return;
             var width = cell.width();
+            if (widths[j] != 'auto' || cell.data('colspan') > 1 ) return;
             if (width > adjusted[j] || adjusted[j] == 'auto') {
               adjusted[j] = width = width<max_width? width: max_width;
               max_width -= width;
@@ -905,48 +892,57 @@
         });
       }
 
-      calc(me.head().children('.row'), max_width);
-      calc(me.body().children('.row'), max_width);
+      calc(me.head(), max_width);
+      calc(me.body(), max_width);
 
-      var adjust = function(rows) {
-        rows.each(function(i, row) {
-          $(row).children().each(function(j, cell) {
+      var adjust = function(section) {
+        section.children('.row').each(function(i, row) {
+          row = $(row);
+          row.children().each(function(j, cell) {
             $(cell).css('width', adjusted[j]);
           });
-          $(row).children('[colspan]').each(function(j, cell) {
+          row.children('[colspan]').each(function(j, cell) {
             cell = $(cell);
-            var colspan = cell.data('colspan');
-            var width = 0;
-            for (var spanned = cell; colspan; --colspan) {
+            if (cell.hasClass('spanned')) return;
+            var colspan = cell.data('colspan') - 1;
+            var width = cell.width();
+            for (var spanned = cell.next(); colspan; --colspan) {
               width += spanned.width();
-              spanned = spanned.next()
+              spanned.addClass('spanned');
+              spanned = spanned.next();
             }
             cell.css('width', width);
           });
+          row.children('.spanned').hide();
         })
       }
 
-      adjust(me.head().children('.row'));
-      adjust(me.body().children('.row'));
+      adjust(me.head());
+      adjust(me.body());
     },
 
 
     adjustHeights: function() {
-      var spanners = [];
-      this.body().children('.row').each(function(i, row) {
-        row = $(row);
-        row.children().each(function(j, cell) {
-          cell = $(cell);
-          var height = row.height();
-          var span = cell.data('rowspan');
-          if (!span) return;
-          for (var spanned = row; span > 1; --span) {
-             height += spanned.height();
-             spanned = spanned.next();
-          }
-          cell.css('min-height', height);
+      var adjust = function(section) {
+        section.children('.row').each(function(i, row) {
+          row = $(row);
+          if (!row.is(':visible')) return;
+          row.children().each(function(j, cell) {
+            cell = $(cell);
+            var height = row.height();
+            var span = cell.data('rowspan');
+            if (!span) return;
+            cell.addClass('overlay')
+            for (var spanned = row.next(); span > 1; --span) {
+               height += spanned.height();
+               spanned = spanned.next();
+            }
+            cell.css('min-height', height);
+          })
         })
-      })
+      }
+      adjust(this.head());
+      adjust(this.body());
     },
 
 
