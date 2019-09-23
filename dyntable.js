@@ -379,27 +379,6 @@
       me.row_blueprint = tr;
     },
 
-    spanColumns: function(tds, col, colspan)
-    {
-      var widths = this.widths;
-      var td = tds.eq(col);
-      var colspan = colspan || td.attr('colspan') || 1;
-      var width = widths[col];
-      while(--colspan) {
-        width += widths[++col];
-        tds.eq(col).hide();
-      }
-      td.css('width', width);
-      return col;
-    },
-
-    spanData: function(field, row, col)
-    {
-      if (field.span <= 1) return row[col];
-      var span = row.slice(col, col+field.span);
-      return span.join(' ');
-    },
-
     showData: function(args)
     {
       var me = this;
@@ -539,8 +518,7 @@
         var colspan = cell.colspan || cell.col_span;
         if (colspan) {
           colspan = parseInt(colspan);
-          td.attr("colspan", colspan);
-          col = me.spanColumns(tds, col, colspan);
+          td.attr("colspan", colspan).data('colspan', colspan);
         }
 
         if (cell === null || cell === undefined)
@@ -917,12 +895,11 @@
         rows.each(function(i, row) {
           $(row).children().each(function(j, cell) {
             cell = $(cell);
-            if (!cell.is(':visible') || widths[j] != 'auto') return;
+            if (!cell.is(':visible') || widths[j] != 'auto' || cell.data('colspan') > 1) return;
             var width = cell.width();
             if (width > adjusted[j] || adjusted[j] == 'auto') {
               adjusted[j] = width = width<max_width? width: max_width;
               max_width -= width;
-              changed = true;
             }
           });
         });
@@ -931,12 +908,20 @@
       calc(me.head().children('.row'), max_width);
       calc(me.body().children('.row'), max_width);
 
-      if (!changed) return;
-
       var adjust = function(rows) {
         rows.each(function(i, row) {
           $(row).children().each(function(j, cell) {
             $(cell).css('width', adjusted[j]);
+          });
+          $(row).children('[colspan]').each(function(j, cell) {
+            cell = $(cell);
+            var colspan = cell.data('colspan');
+            var width = 0;
+            for (var spanned = cell; colspan; --colspan) {
+              width += spanned.width();
+              spanned = spanned.next()
+            }
+            cell.css('width', width);
           });
         })
       }
