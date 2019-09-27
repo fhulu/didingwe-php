@@ -1258,8 +1258,13 @@ mkn.render = function(options)
       }
       if (id === "query") query_values = true;
     }
-    if (query_values)
-      loadValues(parent, data);
+    if (query_values) {
+      if (parent.auto_load === undefined || parent.auto_load)
+        obj.trigger('load_values');
+      obj.on('load_values', function() {
+        loadValues(parent, data);
+      });
+    }
   }
 
   var loadValues =  function(parent, data)
