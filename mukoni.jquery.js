@@ -571,24 +571,31 @@ $.fn.findByAttribute = function(attr, value) {
 
 $.fn.addStyle = function(reference, styles) {
   if (!$.isArray(styles)) styles = styles.split(/[, ]/);
-  var me = this;
+  var added = [];
+  var removed = [];
+  var css = [];
   styles.forEach(function(style) {
-    me.addClass(style)
+    added.push(style)
     var classes = reference[style];
     if (!classes) return;
     if ($.isPlainObject(classes)) {
-      me.css(classes.style);
+      css.push(classes.style);
       classes = classes.class;
     }
     if (!classes) return;
     classes.forEach(function(cls) {
-      if (cls[0] == '~')
-        me.removeStyle(reference, cls.substr(1));
-      else if (cls[0] == '^')
-        me.removeClass(cls.substr(1));
+      if (cls[0] == '^')
+        removed.push(cls.substr(1));
       else
-        me.addClass(cls);
+        added.push(cls);
     });
+  })
+  if (added.length) this.addClass(added.join(' '));
+  if (removed.length) this.removeClass(removed.join(' '));
+  if (!css.length) return this;
+  var me = this;
+  css.forEach(function(style) {
+    this.css(style);
   })
   return this;
 }
