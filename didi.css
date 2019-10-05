@@ -502,7 +502,7 @@ li.paragraph {text-indent: -1em }
 .uppercase { text-transform: uppercase; }
 .undecorated { text-decoration: none; }
 .nowrap { white-space: nowrap}
-.normal-wrap { white-space: normal}
+.normal-wrap,.wrap { white-space: normal}
 .truncate-word,.ellipsis { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .break-word{-ms-hyphens: auto;-moz-hyphens: auto;-webkit-hyphens: auto; hyphens: auto;word-wrap: break-word;overflow-wrap:break-word;text-overflow: ellipsis}
 .bullet-disc{ list-style-type: disc}
@@ -599,6 +599,10 @@ li.paragraph {text-indent: -1em }
 .grid.fit.space>:first-child:nth-last-child(5),.grid.fit.space>:first-child:nth-last-child(5) ~ *{width:18.4%}
 .grid.fit.space>:last-child{margin-right:0}
 
+/* modern browser grid */
+.modern-grid{display: grid}
+
+/* responsive media queries */
 @media only screen and (max-width:600px){
   .font-size-base {font-size: 18px}
 

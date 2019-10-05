@@ -1,0 +1,149 @@
+datagrid:
+  head: ""
+  tooltip: false
+  type: container
+  create: datagrid
+  contents: [$head, $body, $footer]
+  auto_load: true
+  class: [didi-listener,datagrid, scroll-x nowrap]
+  head:
+    classes: container
+    class: [modern-grid widest]
+    derive: [header, titles]
+    contents: [$header, $titles]
+  header:
+    classes: label
+    class: [block]
+  titles:
+    classes: container
+    class: [widest]
+  title:
+    tag: div
+    class: [inline-block,vertical-top]
+  body:
+    classes: container
+    class: [modern-grid widest no-scroll-x nowrap]
+
+  min_row_height: 20
+  search_delay: 250
+  defaults: {}
+  row_styles: {}
+  row:
+    actions: []
+    class: [widest]
+    styles: {}
+  cell:
+    class: [didi relative]
+    styles: {}
+  script: [/didi/datagrid.js]
+  flags: []
+  position: top
+  filter:
+    name: ""
+    desc: Filter by specific columns
+
+  fields:
+    - type: none
+    - default: { span: 1, filter: yes, data: false}
+
+  sow: [slide,slideoff]
+  propagated_events: []
+
+  #paging
+  paging:
+    - statics
+    - type: actioner
+    - wrap: class
+
+  goto_first:
+    name: First
+    desc: Go to first page
+  goto_prev:
+    name: "<"
+    desc: Go to previous page
+  goto_next:
+    name: ">"
+    desc: Go to next page
+  goto_last:
+    name: Last
+    desc: Go to last page
+
+  # row actions
+  row_actions:
+    - default: { validate: none}
+    - type: $row_action
+    - action: trigger
+    - slide
+    - slideoff
+    - action: post
+
+  row_action:
+    type: actioner
+    class: [tallest inline-block]
+
+  footer_actions:
+    - type: actioner
+
+  no_records:
+    type: datagrid_no_records
+    show: no
+
+  collapse:
+    name: "-"
+    desc: Hide details
+  expand:
+    name: +
+    desc: More details ...
+    pages: []
+    class: []
+
+  slide:
+    event: slide
+    name: "<"
+    class: [absolute float-right tallest pad-x pad-tiny]
+    desc: More options...
+
+  slider:
+    class: [absolute top-right float-right tallest]
+
+  slideoff:
+    event: slideoff
+    name: ">"
+    desc: Hide options
+    class: [pad-x pad-tiny]
+
+  slideSpeed: 150
+  searchDelay: 250
+
+#todo: fix backend inheritance
+export:
+  name: Export to Excel
+  desc: Export to an Excel spreadsheet
+  action: redirect
+  validate: none
+  post:
+    call: datagrid::export(root,$key)
+  query: " "
+  target: _blank
+
+ # todo: fix back-end to contextualise
+print:
+ desc: Print above contents
+ action: redirect
+ validate: none
+ post:
+   - call: datagrid::pdf(root,$key)
+ query: " "
+ target: _blank
+
+
+image_row_action:
+  tag: i
+  name: " "
+  class: [fa, no-backcolor, pad-x pad-tiny, float-right, cursor-pointer]
+
+
+datagrid_no_records:
+  type: p
+  name: No records found.
+  class: [datagrid-no-records]
