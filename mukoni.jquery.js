@@ -350,6 +350,20 @@ $.fn.scrollHeight = function() {
   return this[0].scrollHeight;
 }
 
+$.fn.hasScrollBar = function() {
+  return this[0].scrollHeight > this.height();
+}
+
+$.scrollbarWidth = function() {
+  var parent, child, width;
+
+  parent = $('<div style="width:50px;height:50px;overflow:auto"><div/></div>').appendTo('body');
+  child=parent.children();
+  width=child.innerWidth()-child.height(99).innerWidth();
+  parent.remove();
+
+ return width;
+};
 /**
 * @param scope Object :  The scope in which to execute the delegated function.
 * @param func Function : The function to execute
