@@ -93,7 +93,6 @@
         if (field.id != sort) continue;
         this.params['sort'] = field.number;
       }
-      console.log("style index", this.style_index)
     },
 
     _promote_fields: function(fields)
@@ -188,6 +187,9 @@
       render.root = this.element;
       if (!opts.js_functions) opts.js_functions = opts.render.root_field.js_functions
       render.initModel(render.root, opts);
+      if (this.body().hasScrollBar()) {
+        this.titles().css("width", "calc(100% - "+$.scrollbarWidth() + 'px)');
+      }
     },
 
 
@@ -367,6 +369,7 @@
         me.params.size = Math.ceil((max_height - me.head().height())/row_height)+3;
       }
       body.addClass(opts.body.class.join(' '));
+
       body.empty();
       me.load(args);
     },
@@ -427,6 +430,7 @@
       // row = $.extend({}, this.options.defaults, row);
       this.body().append(tr);
       this.updateRow(tr, row, insert_at);
+
       // var body = this.body();
       // if (insert_at === undefined)
       //   tr.appendTo(tr.hasClass('heading')? this.head(): body);
@@ -483,6 +487,7 @@
           cell.id = field.id;
           if (key) cell.id +=  "_" + key;
         }
+        if (field.class) cell.class = field.class.concat(cell.class);
 
         data[i] = cell;
         td = $('<div>');
