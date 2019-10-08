@@ -39,11 +39,10 @@
       me.slider = r.initField(opts.slider, opts);
       me.auto_widths = [];
       me._init_params();
+      me.initColumns();
       var el = me.element;
-      me.head().addClass(opts.head.class.join(' ')).prependTo(el);
       me.showHeader();
       me.showTitles();
-      me.createRowBlueprint();
       if (opts.no_records)
         this.no_records = this.element.find('#no_records');
       me.head().toggle(me.hasFlag('show_titles') || me.hasFlag('show_header') || me.hasFlag('filter'));
@@ -110,9 +109,15 @@
       this.element.trigger('refresh', [args]);
     },
 
+
     head: function()
     {
       return this.element.children('.head').eq(0);
+    },
+
+    titles: function()
+    {
+      return this.element.children('.titles').eq(0);
     },
 
     body: function()
@@ -126,7 +131,7 @@
       var start = new Date().getTime();
       var me = this;
       var opts = me.options;
-      me.head().find('.paging [action]').attr('disabled','');
+      me.head().children('.paging').eq(0).children('[action]').attr('disabled','');
       var action = opts.data_from == 'post'? 'action': 'values';
       var data = $.extend(opts.request, me.params, args, {action: action});
       var selector = opts.selector;
@@ -208,8 +213,7 @@
       }
       var opts = this.options;
       if (this.options.page_size !== undefined && !this.hasFlag('hide_paging')) this.createPaging(th);
-      head.children(".titles").toggle(this.hasFlag("show_titles") || opts.titles.show);
-      head.children(".header").toggle(this.hasFlag('show_header') || this.hasFlag('filter') || opts.header.show);
+      head.children(".header").toggle(this.hasFlag('show_header') || opts.header.show);
     },
 
     createPaging: function(th)
@@ -319,16 +323,17 @@
     showTitles: function()
     {
       var me = this;
-      var head = me.head();
       var opts = me.options;
-      var tr = head.children('.titles').eq(0);
+      var tr = me.titles();
       var fields = opts.fields;
       var col = 0;
       for (var i in fields) {
-        var field = fields[i];
+        var field = mkn.copy(fields[i]);
+        delete field.width;
         var id = field.id;
         if (id=='style' || field.data) continue;
         var title = mkn.merge(me.title, field);
+        title = mkn.merge(title, field.title);
         var th = opts.render.create(title).appendTo(tr);
         th.toggle(mkn.visible(field));
         th.data('field', field);
@@ -344,42 +349,10 @@
           else
             th.attr('sort','');
         }
-        th.css('width', this.widths[col]);
         if (me.hasFlag('sortable'))
           me.bindSort(th, field);
         ++col;
       };
-    },
-
-    createRowBlueprint: function()
-    {
-      var me = this;
-      var tr = $('<div>');
-      var cls = me.cell.class;
-      me.defaults = {}
-      var options = me.options;
-      var fields = options.fields;
-      var widths = [];
-      for (var i in fields) {
-        var field = fields[i];
-        me.defaults[field.id] = field.new;
-        delete field.new;
-        if (field.id == 'style' || field.data) continue;
-        var td = $('<div>').appendTo(tr);
-        td.attr('field', field.id);
-        td.toggle(mkn.visible(field));
-        td.addClass(cls);
-        if (field.style)
-          td.addStyle(options.cell.styles, field.style)
-        if (field.class) td.addClass(field.class.join(' '));
-        widths.push(field.width !== undefined? field.width: 'auto');
-        if (field.html === undefined) continue;
-        field = mkn.copy(field);
-        delete field.width;
-        td.append(me.options.render.create(field));
-      }
-      me.row_blueprint = tr;
-      me.body().css('grid-template-columns', widths.join(' '));
     },
 
     showData: function(args)
@@ -876,41 +849,30 @@
       return (tr.innerHeight()*0.99).toString()+'px';
     },
 
-    initWidths: function(ths,tds)
+    initColumns: function()
     {
       var fields = this.options.fields;
-      var widths = this.widths;
-      var col = -1;
+      var widths = [];
       for (var i in fields) {
         var field = fields[i];
-        if (field.id == 'style' || field.type == 'type') continue;
-        ++col;
-        var th = ths.eq(col);
-        var td = tds.eq(col);
-        if (field.width !== undefined) {
-          th.css('width', field.width);
-          td.css('width', th.get(0).style.width);
-        }
-        else if (field.width !== 'auto') {
-          th.css('width', 'auto');
-          td.css('width', 'auto')
-        }
-      };
+        if (field.id == 'style' || field.data) continue;
+        widths.push(field.width !== undefined? field.width: 'auto');
+      }
+      this.widths = widths;
+      widths = widths.join(' ');
+      this.body().css('grid-template-columns', widths);
+      this.titles().css('grid-template-columns', widths);
     },
 
-    createEditor: function(template, cls)
+    createEditor: function(cls)
     {
-      var editor = template.clone(true);
       var td;
-      editor.addClass('datagrid-editor').addClass(cls).removeClass("title");
-      editor.each(function(i) {
-        var th = $(this);
-        var field = th.data('field');
-        if (field && field.id == 'actions') return;
-        th.text('');
-        th.append($('<input type=text></input>').addClass("tallest widest"));
+      var editor = $('<div>').addClass('datagrid-editor').addClass(cls).hide();
+      var last = editor;
+      this.widths.forEach(function(width, i) {
+        var cell = $('<div>').addClass('cell cell-editor').insertAfter(last);
+        var input = $('<input type=text>').attr('index', i).addClass('largest').appendTo(cell);
       });
-      editor.insertAfter(template);
       return editor;
     },
 
@@ -921,14 +883,12 @@
       if (filter.exists()) return filter;
 
       var me = this;
-      var titles = me.head().find('.titles');
-      filter = me.createEditor(titles,'filter').hide();
-      var tds = filter;
-      filter.find('input').bind('keyup cut paste', mkn.debounce(function(e) {
+      var head = me.head();
+      filter = me.createEditor('filter').appendTo(head);
+      head.children('.cell-editor>input').bind('keyup cut paste', mkn.debounce(function(e) {
         var input = $(this);
         me.params.offset = 0;
-        var td = input.parent();
-        var index = tds.index(td);
+        var index = input.attr('index')
         me.params['f'+index] = input.value();
         me.refresh();
       }, me.options.search_delay));

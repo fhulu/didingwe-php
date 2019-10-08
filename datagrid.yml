@@ -3,23 +3,19 @@ datagrid:
   tooltip: false
   type: container
   create: datagrid
-  contents: [$head, $body, $footer]
+  contents: [$head, $titles, $body, $footer]
   auto_load: true
   class: [didi-listener,datagrid, scroll-x nowrap]
   head:
     classes: container
-    class: [modern-grid widest]
-    derive: [header, titles]
-    contents: [$header, $titles]
-  header:
-    classes: label
-    class: [block]
+    derive: [header,paging]
+    contents: [$header, $paging]
   titles:
     classes: container
-    class: [widest]
+    class: [widest modern-grid]
   title:
     tag: div
-    class: [inline-block,vertical-top]
+    class: [title]
   body:
     classes: container
     class: [modern-grid widest no-scroll-x nowrap]
