@@ -977,7 +977,10 @@
         var index = tds.index(td);
         me.params['f'+index] = input.value();
         me.refresh();
-      }, me.options.search_delay));
+      }, me.options.search_delay))
+      .on('click', function(e) {
+        e.stopImmediatePropagation();
+      })
       return filter;
     },
 

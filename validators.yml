@@ -124,6 +124,9 @@ int_tel:
     - at_least(10,digits)
   error: Please use international number format without space/s in betweeen for $name, e.g. +27823456789
 
+ip_address:
+  valid: /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
+
 is: must_be($1)
 
 less:
@@ -132,6 +135,9 @@ less:
 less_equal:
   error: $name must not be greater than $1 ($v1)
 
+mac_address:
+  valid: /[0-9a-f]{2}(:[0-9a-f]{2}){5})/
+  
 match:
   valid: equal($1)
   error: $name must be the same as $1

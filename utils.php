@@ -108,7 +108,7 @@ function caught_fatal(){
 
     $error = error_get_last();
 
-    if($error && ($error['type'] & E_FATAL)){          
+    if($error && ($error['type'] & E_FATAL)){
       caught_error($error['type'], $error['message'], $error['file'], $error['line']);
     }
 
@@ -263,7 +263,7 @@ function expand_function($func)
 {
   $matches = array();
 
-  if (!preg_match('/^(\w[\w.]+)(?:\((.*)\))?$/', trim($func), $matches))
+  if (!preg_match('/^(\w[\w.]+)(?:\((.*)\))?$/s', trim($func), $matches))
     throw new Exception("Invalid function specification --$func--");
   $name = $matches[1];
   $args = $matches[2];
