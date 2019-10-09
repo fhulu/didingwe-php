@@ -242,6 +242,7 @@
 .table-row { display: table-row}
 .hide-overflow { overflow: hidden}
 .show-overflow { overflow: visible}
+.flex { display: flex}
 
 /* dropdown */
 .hover-dropdown>.dropdown,.focus-dropdown+.dropdown { display: none;}
@@ -588,6 +589,9 @@ li.paragraph {text-indent: -1em }
 .col.float-right{float:right}
 .grid.space>*{margin-bottom:2%;margin-right:2%}
 .center-contents>.col{float:none}
+
+/* modern browser grid */
+.modern-grid{display: grid}
 
 /* autofit grid */
 .grid.fit>:first-child:nth-last-child(1){width:100%}

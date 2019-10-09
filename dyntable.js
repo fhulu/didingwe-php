@@ -391,6 +391,7 @@
         me.params.size = Math.ceil((max_height - me.head().height())/row_height)+3;
       }
       body.addClass(opts.body.class.join(' '));
+      me.head().children('.heading').remove();
       body.empty();
       me.load(args);
     },
@@ -504,9 +505,10 @@
           data[i] = cell;
           td.addClass('transparent rowspanned').hide();
           if (cell.row_span <= 1)
-            tr.addClass('clear-after');
+            me.setRowStyles(tr, ['end-span']);
         }
         else if (cell.row_span) {
+          tr.addClass('start-span');
           td.data('rowspan', parseInt(cell.row_span));
           td.attr("rowspan", cell.row_span);
           td.addClass('float-left rowspan');
@@ -927,9 +929,11 @@
         section.children('.row').each(function(i, row) {
           row = $(row);
           if (!row.is(':visible')) return;
+          row.children('.cell').css('min-height', 0);
           row.children().each(function(j, cell) {
             cell = $(cell);
             var height = row.height();
+            cell.css('min-height', height);
             var span = cell.data('rowspan');
             if (!span) return;
             cell.addClass('overlay')

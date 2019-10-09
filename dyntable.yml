@@ -33,7 +33,8 @@ dyntable:
     id: ""
     class: [row, widest]
     actions: []
-    styles: {}
+    styles:
+      end-span: [clear-after]
   cell:
     tag: div
     id: ""
