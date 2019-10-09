@@ -177,6 +177,8 @@
 
       this.prev_row = null;
       insert_at = insert_at || 0;
+      var body = this.body();
+      var had_children = body.children().length > 0;
       for(var i in data.data) {
         var row = data.data[i];
         if ($.isArray(row)) {
@@ -187,7 +189,7 @@
       render.root = this.element;
       if (!opts.js_functions) opts.js_functions = opts.render.root_field.js_functions
       render.initModel(render.root, opts);
-      if (this.body().hasScrollBar()) {
+      if (!had_children && this.body().hasScrollBar()) {
         this.titles().css("width", "calc(100% - "+$.scrollbarWidth() + 'px)');
       }
     },
@@ -487,6 +489,7 @@
           cell.id = field.id;
           if (key) cell.id +=  "_" + key;
         }
+        if (field.cell) cell = $.extend({}, field.cell, cell);
         if (field.class) cell.class = field.class.concat(cell.class);
 
         data[i] = cell;
