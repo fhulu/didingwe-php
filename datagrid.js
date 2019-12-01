@@ -448,7 +448,6 @@
       var key;
       var expandable = false;
       offset = offset || 0;
-      var row_spanned = false;
       var fields = this.options.fields;
       var prev = tr;
       var count = fields.length-offset;
@@ -467,7 +466,7 @@
           if (field.attr) tr.attr(field.id, cell);
           continue;
         }
-
+        if (!mkn.visible(field)) continue;
         if (cell === undefined || cell === null)
           cell = { name: ""}
         else if (!$.isPlainObject(cell)) {
@@ -849,7 +848,7 @@
       var widths = [];
       for (var i in fields) {
         var field = fields[i];
-        if (field.id == 'style' || field.data) continue;
+        if (field.id == 'style' || field.data || !mkn.visible(field)) continue;
         field = $.extend(this.options[field.id], field);
         widths.push(field.width !== undefined? field.width: 'auto');
       }

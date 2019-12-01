@@ -3,6 +3,7 @@ datagrid:
   tooltip: false
   type: container
   create: datagrid
+  script: [/didi/datagrid.js]
   contents: [$head, $titles, $body, $footer]
   auto_load: true
   class: [didi-listener,datagrid, scroll-x nowrap]
@@ -10,6 +11,9 @@ datagrid:
     classes: container
     derive: [header,paging]
     contents: [$header, $paging]
+  header:
+    classes: container
+    show: false
   titles:
     classes: container
     class: [widest modern-grid]
