@@ -18,7 +18,7 @@ datagrid:
     class: [title]
   body:
     classes: container
-    class: [modern-grid widest no-scroll-x nowrap]
+    class: [modern-grid widest]
 
   min_row_height: 20
   search_delay: 250
@@ -31,7 +31,6 @@ datagrid:
   cell:
     class: [didi relative]
     styles: {}
-  script: [/didi/datagrid.js]
   flags: []
   position: top
   filter:
@@ -96,11 +95,18 @@ datagrid:
   slide:
     event: slide
     name: "<"
-    class: [absolute float-right tallest pad-x pad-tiny]
+    class: [absolute float-right tallest pad-x pad-tiny blue]
     desc: More options...
 
   slider:
+    parent:
+      class: [nopad]
     class: [absolute top-right float-right tallest]
+    on_slideoff: |
+      function() {
+        console.log("sliding off", $(this));
+      }
+
 
   slideoff:
     event: slideoff

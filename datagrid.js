@@ -461,7 +461,6 @@
       for (var i=0; i<count; ++i) {
         var field = fields[offset++];
         var cell = data[i];
-        // console.log("field", count, offset-1, i, col, cell, field)
         if (field.id == 'style' && cell !== undefined) continue;
         if (field.data) {
           tr.data(field.id, cell);
@@ -489,7 +488,7 @@
           cell.id = field.id;
           if (key) cell.id +=  "_" + key;
         }
-        if (field.cell) cell = $.extend({}, field.cell, cell);
+        if (field.cell) cell = mkn.merge(field.cell, cell);
         if (field.class) cell.class = field.class.concat(cell.class);
 
         data[i] = cell;
@@ -520,26 +519,14 @@
         }
 
         if (row_spanned) continue;
+        td.attr('field', field.id);
         me.setCellValue(td, cell);
         td.addClass('cell row-'+row_index);
         if (style) td.addStyle(row_styles, style);
         td.insertAfter(prev);
         prev = td;
       }
-    //  me.adjustColWidths(tr);
       this.prev_row = data;
-    },
-
-    adjustColWidths: function(tr)
-    {
-      var widths = this.widths;
-      tr.each(function(i) {
-        var width = $(this).width();
-        if (i==widths.length)
-          widths.push(width);
-        else if (widths[i] < width)
-          widths[i] = width;
-      });
     },
 
     setCellValue: function(td, cell)
@@ -702,20 +689,20 @@
         }
       }
       if (slide_actions.length == 1)
-        normal_actions.splice(slide_pos,1);
+        normal_actions.splice(slide_pos-1,1);
       if (normal_actions.length)
         opts.render.createItems(td, {}, undefined, normal_actions);
       if (slide_actions.length < 2) return;
-      if (normal_actions.length < 2)
-        td.width(0);
       td.removeClass('truncate-word').addClass('nowrap');
       var slider = $('<div class="slide">').toggle(false).appendTo(td).addClass(this.slider.class.join(' '));
+      var parent_class = this.slider.parent && this.slider.parent.class;
+      if (parent_class)
+        td.addClass(parent_class.join(' '));
       slider.data('actions', slide_actions);
     },
 
-    slide: function(tr)
+    slide: function(slider)
     {
-      var slider = tr.find('.slide');
       if (slider.children().length == 0) {
         this.options.render.createItems(slider, {}, undefined, slider.data('actions'));
         slider.find('[action]').click(function() {
@@ -757,9 +744,10 @@
       var me = this;
       var options = me.options;
       var el = this.element;
-      el.on('slide', 'tr', function(e) {
-        $(e.target).toggle();
-        me.slide($(this));
+      el.on('slide', function(e) {
+        var btn = $(e.target).toggle();
+        var slider = btn.siblings('.slide').eq(0);
+        me.slide(slider);
         e.stopPropagation();
       })
       .on('expand', 'tr', function(e) {
@@ -780,13 +768,11 @@
         if (next.hasClass('expanded')) next.remove();
         e.stopPropagation();
       })
-      .on('action', 'tr', function(e, btn) {
-        if (!btn.parent('.slide').exists()) return;
-        me.slide($(this));
-        $(this).find('[action=slide]').toggle();
-        var slider = $(this).find('.slide');
+      .on('action', '.slide', function(e, btn) {
+        var slider = $(this);
+        console.log("sliding on ",  e);
+        slider.siblings('[action=slide]').toggle();
         slider.animate({width: 0}, options.slideSpeed*2, function() { slider.hide()});
-        e.stopPropagation();
       })
       .on('delete', 'tr', function(e) {
         $(this).remove();
@@ -864,6 +850,7 @@
       for (var i in fields) {
         var field = fields[i];
         if (field.id == 'style' || field.data) continue;
+        field = $.extend(this.options[field.id], field);
         widths.push(field.width !== undefined? field.width: 'auto');
       }
       this.widths = widths;
