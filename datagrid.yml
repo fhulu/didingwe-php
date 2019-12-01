@@ -22,7 +22,7 @@ datagrid:
     class: [title]
   body:
     classes: container
-    class: [modern-grid widest]
+    class: [modern-grid widest scroll-y]
 
   min_row_height: 20
   search_delay: 250

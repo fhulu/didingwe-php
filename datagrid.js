@@ -42,7 +42,7 @@
       me.initColumns();
       var el = me.element;
       me.showHeader();
-      me.showTitles();
+      if (this.hasFlag('show_titles')) me.showTitles();
       if (opts.no_records)
         this.no_records = this.element.find('#no_records');
       me.head().toggle(me.hasFlag('show_titles') || me.hasFlag('show_header') || me.hasFlag('filter'));
@@ -430,12 +430,10 @@
         .attr('row', insert_at)
         .attr('next', '.row-'+(insert_at+1))
       // row = $.extend({}, this.options.defaults, row);
-      this.body().append(tr);
       this.updateRow(tr, row, insert_at);
 
-      // var body = this.body();
       // if (insert_at === undefined)
-      //   tr.appendTo(tr.hasClass('heading')? this.head(): body);
+      //   tr.appendTo(td.hasClass('title')? this.head(): body);
       // else if ($.isNumeric(insert_at))
       //   tr.insertBefore(body.children().eq(insert_at));
       // else
@@ -457,6 +455,7 @@
       if (me.style_index !== undefined) {
         style = me.getRowStyles(data[me.style_index]);
       }
+      var added_row = false;
       for (var i=0; i<count; ++i) {
         var field = fields[offset++];
         var cell = data[i];
@@ -522,6 +521,10 @@
         me.setCellValue(td, cell);
         td.addClass('cell row-'+row_index);
         if (style) td.addStyle(row_styles, style);
+        if (!added_row) {
+          tr.appendTo(td.hasClass('titles')? this.titles(): this.body());
+          added_row = true;
+        }
         td.insertAfter(prev);
         prev = td;
       }
