@@ -435,7 +435,7 @@ li.paragraph {text-indent: -1em }
 .pad-jumbo.pad,.pad-jumbo.pad-y,.pad-jumbo.pad-bottom{padding-bottom:1}
 
 
-.pad-0,.nopad{padding:0}
+.pad-0,.nopad,.nopad[class*=pad-]{padding:0}
 
 .same-height{ overflow: hidden}
 .same-height>*{ padding-bottom: 100em; margin-bottom: -100em}
