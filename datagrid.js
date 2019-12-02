@@ -42,7 +42,7 @@
       me.initColumns();
       var el = me.element;
       me.showHeader();
-      if (this.hasFlag('show_titles')) me.showTitles();
+      me.showTitles();
       if (opts.no_records)
         this.no_records = this.element.find('#no_records');
       me.head().toggle(me.hasFlag('show_titles') || me.hasFlag('show_header') || me.hasFlag('filter'));
@@ -327,8 +327,9 @@
     showTitles: function()
     {
       var me = this;
+      var tr = me.titles().empty();
+      if (!me.hasFlag('show_titles')) return;
       var opts = me.options;
-      var tr = me.titles();
       var fields = opts.fields;
       var col = 0;
       for (var i in fields) {
@@ -372,6 +373,7 @@
       }
       body.addClass(opts.body.class.join(' '));
 
+      me.showTitles();
       body.empty();
       me.load(args);
     },
