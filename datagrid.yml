@@ -33,7 +33,7 @@ datagrid:
     class: [widest]
     styles: {}
   cell:
-    class: [didi relative]
+    class: [didi relative cell]
     styles: {}
   flags: []
   position: top

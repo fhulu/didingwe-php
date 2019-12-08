@@ -429,6 +429,7 @@
     addRow: function(row, insert_at) {
       if (insert_at > this.last_row) this.last_row = insert_at;
       var tr = $('<div>').hide()
+        .attr('field', 'row')
         .attr('row', insert_at)
         .attr('next', '.row-'+(insert_at+1))
       // row = $.extend({}, this.options.defaults, row);
@@ -457,6 +458,8 @@
       if (me.style_index !== undefined) {
         style = me.getRowStyles(data[me.style_index]);
       }
+      var col_span = 1;
+      var col = -1;
       var added_row = false;
       for (var i=0; i<count; ++i) {
         var field = fields[offset++];
@@ -467,7 +470,6 @@
           if (field.attr) tr.attr(field.id, cell);
           continue;
         }
-        if (!mkn.visible(field)) continue;
         if (cell === undefined || cell === null)
           cell = { name: ""}
         else if (!$.isPlainObject(cell)) {
@@ -483,6 +485,11 @@
             cell = { name: cell}
           }
         }
+        if (field.id === 'key') {
+          tr.attr('key', cell.name);
+          key = cell.name;
+        }
+        if (!mkn.visible(field)) continue;        
 
         if (cell.id === undefined) {
           cell.id = field.id;
@@ -501,11 +508,15 @@
           td.css("grid-row", "auto / span " + cell.row_span);
         }
 
+        col += col_span;
         if (cell.col_span) {
           col_span = parseInt(cell.col_span);
           td.css("grid-column", "auto / span " + cell.col_span);
           i += col_span;
           offset += col_span;
+        }
+        else {
+          col_span = 1;
         }
 
         if (cell === null || cell === undefined)
@@ -513,15 +524,9 @@
         else if (field.escapeHtml)
           cell = mkn.escapeHtml(cell);
 
-        if (key === undefined && (field.id === 'key' || field.key)) {
-          tr.attr('key', cell.name);
-          key = cell.name;
-        }
-
         if (row_spanned) continue;
-        td.attr('field', field.id);
+        td.attr('field', field.id).attr('row', row_index).attr('col', col);
         me.setCellValue(td, cell);
-        td.addClass('cell row-'+row_index);
         if (style) td.addStyle(row_styles, style);
         if (!added_row) {
           tr.appendTo(td.hasClass('titles')? this.titles(): this.body());
