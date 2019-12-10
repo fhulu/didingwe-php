@@ -429,6 +429,7 @@
     addRow: function(row, insert_at) {
       if (insert_at > this.last_row) this.last_row = insert_at;
       var tr = $('<div>').hide()
+        .addClass('row')
         .attr('field', 'row')
         .attr('row', insert_at)
         .attr('next', '.row-'+(insert_at+1))
