@@ -1,7 +1,7 @@
 <?php
 
-require_once('../didi/qworker.php');
-require_once('../didi/log.php');
+require_once('qworker.php');
+require_once('log.php');
 
 
 class schedule_item

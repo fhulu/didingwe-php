@@ -1,6 +1,6 @@
 <?php
 
-require_once('../didi/db_record.php');
+require_once('db_record.php');
 
 
 

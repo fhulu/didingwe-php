@@ -21,7 +21,7 @@ class sms {
             . ":" . $options['port']
             . "/" . $options['path'];
     }
-    require_once('../didi/curl.php');
+    require_once('curl.php');
     $curl = new curl();
     return $curl->read($url);
   }

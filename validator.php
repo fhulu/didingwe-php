@@ -154,7 +154,7 @@ class validator
     if (isset($method)) {
       if (file_exists($file))
         require_once("$class.php");
-      else if (file_exists("../didi/$file"))
+      else if (file_exists("$file"))
         require_once("$class.php");
       else {
         log::error("No such file $file");

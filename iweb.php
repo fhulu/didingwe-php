@@ -1,8 +1,8 @@
 <?php
 
-require_once('../didi/qworker.php');
-require_once('../didi/log.php');
-require_once('../didi/curl.php');
+require_once('qworker.php');
+require_once('log.php');
+require_once('curl.php');
 
 class iweb_exception extends exception {};
 
