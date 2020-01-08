@@ -465,7 +465,7 @@
       this.updateRow(tr, row);
       var body = this.body();
       if (insert_at === undefined)
-        tr.appendTo(tr.hasClass('heading')? this.head(): body);
+        tr.appendTo(body);
       else if ($.isNumeric(insert_at))
         tr.insertBefore(body.children().eq(insert_at));
       else
