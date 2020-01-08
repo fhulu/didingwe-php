@@ -1,5 +1,4 @@
 <?php
-header('Access-Control-Allow-Origin: *');
 session_start();
 require_once '../didi/log.php';
 require_once('../didi/utils.php');
