@@ -1,3 +1,4 @@
+window._seq = 0;
 $.fn.exists = function()
 {
   return this.get(0) != undefined;
@@ -131,7 +132,6 @@ $.send = function(url, options, callback)
     callback = options;
     options = undefined;
   }
-
   if (typeof request_method === 'undefined') request_method = 'post';
   options = $.extend({
     progress: 'Processing...',
@@ -139,12 +139,13 @@ $.send = function(url, options, callback)
     async: true,
     showResult: false,
     invoker: undefined,
+    data: {},
     eval: true,
-    data: {_fakeDataToAvoidCache: new Date() },
     dataType: undefined,
     error: undefined,
     event: undefined
   }, options);
+  options.data._seq = window._seq++;
   //if (options.event !== undefined) options.async = false;
   var ret = this;
   if (options.invoker !== undefined)
@@ -164,6 +165,7 @@ $.send = function(url, options, callback)
     if (options.error ===undefined) {
       options.error = function(jqHXR, status, text)
       {
+        console.log("AJAX ERROR", status, "TEXT", text)
         progress.box.html('<p class=error>Status:'+status+'<br>Text:'+text+'</p').show();
         if (options.event !== undefined) {
           options.event.stopImmediatePropagation();
@@ -181,6 +183,7 @@ $.send = function(url, options, callback)
     cache: false,
     dataType: options.dataType,
     success: function(data) {
+      console.log("AJAX SUCCESS", data);
       if (progress.timeout !== undefined) clearTimeout(progress.timeout);
       if (progress.box !== undefined) progress.box.hide();
       if (callback !== undefined) callback(data, options.event);
@@ -598,7 +601,11 @@ $.fn.addStyle = function(reference, styles) {
     }
     if (!classes) return;
     classes.forEach(function(cls) {
-      if (cls[0] == '^')
+      if (cls[0] == '~')
+        me.removeStyle(reference, cls.substr(1));
+
+      else if (cls[0] == '^')
+
         removed.push(cls.substr(1));
       else
         added.push(cls);
