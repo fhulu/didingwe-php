@@ -226,6 +226,9 @@
 .autocursor,.auto-cursor { cursor: auto }
 .pointer-cursor,.cursor-pointer { cursor: pointer}
 .cursor-not-allowed{cursor:not-allowed}
+.cross-cursor{cursor:crosshair}
+.col-resize-cursor{cursor:col-resize;}
+.row-resize-cursor{cursor:row-resize;}
 
 /* display styles */
 .block { display: block; }
