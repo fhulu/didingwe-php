@@ -68,9 +68,64 @@
         el.trigger('updatingData', args);
         me.updateData(args);
         return opts.propagated_events.indexOf(e.type) >= 0;
-      });
+      })
+      .on('mousemove', '.titles>.cell', function(e)  {
+        me.updateSizing(e);
+      })
+      .on('mousedown', '.titles>.cell', function(e)  {
+        me.startSizing(e);
+      })
+      .on('mouseup', function(e)  {
+        me.stopSizing(e);
+      })
       me.body().scroll($.proxy(me._scroll,me));
       me.bindRowActions()
+    },
+
+    updateWidths: function() {
+      var widths = this.widths.join('px ') + 'px';
+      this.body().css('grid-template-columns', widths);
+      this.titles().css('grid-template-columns', widths);
+    },
+
+    updateSizing: function(e) {
+      if (this.sizing === undefined) {
+        var el = $(e.target);
+        var offset = el.offset();
+        var left = offset.left + this.options.sizing_width/2;
+        var col = parseInt(el.attr('col'));
+        var right = offset.left + this.widths[col] - this.options.sizing_width/2;
+        el.toggleClass('col-resize-cursor',  e.pageX < left || e.pageX > right);
+        return;
+      }
+      var sizing = this.sizing;
+      var diff = e.pageX - sizing.start_x;
+      col = sizing.col;
+      if (sizing.dragging_left) {
+        this.widths[col] -= diff;
+        this.widths[col-1] += diff;
+      }
+      else {
+        this.widths[col] += diff;
+        this.widths[col+1] -= diff;
+      }
+      sizing.start_x = e.pageX;
+      this.updateWidths();
+    },
+
+    startSizing: function(e) {
+      var el = $(e.target);
+      if (!el.hasClass('col-resize-cursor')) return;
+      var left_margin = el.offset().left + this.options.sizing_width/2;
+      this.sizing = {
+        start_x: e.pageX,
+        col: parseInt(el.attr('col')),
+        dragging_left: e.pageX <= left_margin
+      };
+    },
+
+    stopSizing: function() {
+      this.sizing = undefined;
     },
 
     _init_params: function()
@@ -137,7 +192,7 @@
       if (selector !== undefined) {
         $.extend(data, $(selector).values());
       }
-
+      me.stopSizing();
       var el = me.element;
       me.loading = true;
       $.json('/', {data: mkn.plainValues(data)}, function(data) {
@@ -490,7 +545,7 @@
           tr.attr('key', cell.name);
           key = cell.name;
         }
-        if (!mkn.visible(field)) continue;        
+        if (!mkn.visible(field)) continue;
 
         if (cell.id === undefined) {
           cell.id = field.id;
@@ -857,16 +912,18 @@
     {
       var fields = this.options.fields;
       var widths = [];
+      var total = this.element.width();
       for (var i in fields) {
         var field = fields[i];
         if (field.id == 'style' || field.data || !mkn.visible(field)) continue;
         field = $.extend(this.options[field.id], field);
-        widths.push(field.width !== undefined? field.width: 'auto');
+        var width = field.width;
+        if (width.indexOf('%') > 0)
+          width = total * parseFloat(width) / 100;
+        widths.push(width);
       }
       this.widths = widths;
-      widths = widths.join(' ');
-      this.body().css('grid-template-columns', widths);
-      this.titles().css('grid-template-columns', widths);
+      this.updateWidths();
     },
 
     createEditor: function(cls)
