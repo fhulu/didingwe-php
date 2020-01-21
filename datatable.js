@@ -372,7 +372,7 @@
         td.toggle(mkn.visible(field));
         td.addClass(cls);
         if (field.style)
-          td.addStyle(options.cell.styles, field.style)
+          td.addStyle(field.style, options.cell.styles)
         if (field.class) td.addClass(field.class.join(' '));
         if (field.html === undefined) continue;
         field = mkn.copy(field);
@@ -456,7 +456,7 @@
       row.attr('class','');
       row.addClass(this.row_classes);
       if ($.isPlainObject(styles)) styles = mkn.firstKey(styles);
-      row.addStyle(row_styles, styles)
+      row.addStyle(styles, row_styles)
     },
 
     addRow: function(row, insert_at) {
@@ -579,7 +579,7 @@
         td.setClass(this.options.cell.class.concat(cell.class));
 
       if (cell.style)
-        td.addStyle(this.options.cell.styles, cell.style)
+        td.addStyle(cell.style, this.options.cell.styles)
 
       if (cell.key)
         td.attr("key", cell.key)

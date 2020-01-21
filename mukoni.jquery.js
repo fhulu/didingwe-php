@@ -586,11 +586,12 @@ $.fn.findByAttribute = function(attr, value) {
   return this.find("["+attr+"='"+escape(value)+"']");
 }
 
-$.fn.addStyle = function(reference, styles) {
+$.fn.addStyle = function(styles, reference) {
   if (!$.isArray(styles)) styles = styles.split(/[, ]/);
   var added = [];
   var removed = [];
   var css = [];
+  if (!reference) reference = this.data('didi-field').style;
   styles.forEach(function(style) {
     added.push(style)
     var classes = reference[style];
@@ -621,8 +622,9 @@ $.fn.addStyle = function(reference, styles) {
   return this;
 }
 
-$.fn.removeStyle = function(reference, styles) {
+$.fn.removeStyle = function(styles, reference) {
   if (!$.isArray(styles)) styles = styles.split(' ');
+  if (!reference) reference = this.data('didi-field').style;
 
   var me = this;
   styles.forEach(function(style) {

@@ -475,7 +475,7 @@
 
     setRowStyles: function(row, styles) {
       var cols = row.attr('row') == this.last_row? row.nextAll(): row.nextUntil(row.attr('next'));
-      cols.addStyle(this.options.row_styles, this.getRowStyles(styles));
+      cols.addStyle(this.getRowStyles(styles), this.options.row_styles);
       // if (!$.isNumeric(row))
       //   row = row.attr('row');
       // this.body().children('.cell.row-'+row).addStyle(row_styles, styles)
@@ -583,7 +583,7 @@
         if (row_spanned) continue;
         td.attr('field', field.id).attr('row', row_index).attr('col', col);
         me.setCellValue(td, cell);
-        if (style) td.addStyle(row_styles, style);
+        if (style) td.addStyle(style, row_styles);
         if (!added_row) {
           tr.appendTo(td.hasClass('titles')? this.titles(): this.body());
           added_row = true;
@@ -602,7 +602,7 @@
         td.setClass(this.options.cell.class.concat(cell.class));
 
       if (cell.style)
-        td.addStyle(this.options.cell.styles, cell.style)
+        td.addStyle(cell.style, this.options.cell.styles)
 
       if (td.attr('field') == 'actions')
         return this.createRowActions(td, cell.value);
