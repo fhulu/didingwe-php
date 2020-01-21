@@ -580,13 +580,13 @@ mkn.render = function(options)
     }
     if (obj.attr('id') === '') obj.removeAttr('id');
 
+    obj.data('didi-field', field);
     setStyling(obj, field);
     if (field.parent && parent_obj) {
       setStyling(parent_obj, field.parent);
     }
 
     runJquery(obj, field);
-    obj.data('didi-field', field);
     if ('didi-functions' in field) obj.addClass('didi-watcher');
     field['mkn-object'] = obj;
 
@@ -786,11 +786,14 @@ mkn.render = function(options)
         if ($.isPlainObject(value) && !value.path) value.path = field.path + '/on_' + key;
         var sink = obj;
         if (obj.is('body') && ['scroll','resize'].indexOf(key) >= 0) sink = $(window);
-        sink.on(key, function(e) {
-
+        var handler_name = 'on_'+key.replace(/\W/g, '_');
+        var event_pair = key.split('@');
+        var event_name = event_pair[0];
+        var selector = event_pair.length>1? event_pair[1]: null;
+        sink.on(event_name, selector, function(e) {
           if (obj.hasClass('disabled')) return;
           // ignore default action of an anchor
-          if (key == 'click' && obj.prop("tagName").toLowerCase() == 'a') {
+          if (event_name == 'click' && obj.prop("tagName").toLowerCase() == 'a') {
             e.preventDefault();
             if (field.url === undefined) field.url = obj.attr('href');
           }
@@ -800,8 +803,8 @@ mkn.render = function(options)
             mkn.replaceVars(value, value.params);
             accept(e, obj, value);
           }
-          else if ('didi-model' in field && 'on_'+key in field['didi-model']) {
-            var handler = me.model["on_"+key+"_"+ id];
+          else if ('didi-model' in field && handler_name in field['didi-model']) {
+            var handler = me.model[handler_name+"_"+ id];
             if (handler)
               handler.apply(obj, arguments);
             me.updateWatchers();
@@ -1341,6 +1344,7 @@ mkn.render = function(options)
       else
         exprs = value.regexCapture(/(`[^`]+`)/g);
       var replaced = false;
+      key = key.replace(/\W/g, '_');
       exprs.forEach(function(expr, i) {
         if (!expr) return;
         var src;
