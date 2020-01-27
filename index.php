@@ -32,7 +32,7 @@ function get_active_config_name()
 }
 function configure() {
   global $config;
-  $config = load_yaml("app-config.yml", true);
+  $config = load_yaml("didi/app-config.yml", true);
   $config = merge_options($config, load_yaml("app-config.yml", false));
 
   $site_config = load_yaml($config['site_config'], false);
