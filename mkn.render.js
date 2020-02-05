@@ -1262,11 +1262,11 @@ mkn.render = function(options)
       if (id === "query") query_values = true;
     }
     if (query_values) {
-      if (parent.auto_load === undefined || parent.auto_load)
-        obj.trigger('load_values');
-      obj.on('load_values', function() {
+      parent.on('load_values', function(event, data) {
         loadValues(parent, data);
       });
+      if (parent.auto_load === undefined || parent.auto_load)
+        parent.trigger('load_values', [data]);
     }
   }
 
