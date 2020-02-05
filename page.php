@@ -7,6 +7,19 @@ require_once('q.php');
 class user_exception extends Exception {};
 
 try {
+  log::debug("REQUEST SEQ ". $_REQUEST['_seq']);
+  log::debug("SESSION SEQ ". $_SESSION['_seq']);
+  if ($_REQUEST['_seq'] > 0 && isset($_SESSION['_seq']) && $_SESSION['_seq'] == $_REQUEST['_seq']) {
+    log::error("Duplicate request detected at seq ".$_REQUEST['_seq']);
+    $output = json_encode($_SESSION['output']);
+    log::warn("RETURNING PREVOUS OUTPUT", $output);
+    header('Content-Type: application/json');
+    echo $output;
+    return;
+  }
+  if (isset($_REQUEST['_seq']))
+    $_SESSION['_seq'] = $_REQUEST['_seq'];
+
   global $page;
   $page = new page();
   $page->process();
@@ -126,6 +139,7 @@ class page
   {
     if ($this->result !== false) {
       header('Content-Type: application/json');
+      $_SESSION['output'] = $this->result;
       echo json_encode($this->result);
     }
     log::debug_json("OUTPUT", $this->result);
@@ -1627,7 +1641,7 @@ class page
   function show_captcha()
   {
     log::debug("showing captcha");
-    require_once('../didi/captcha.php');
+    require_once('captcha.php');
   }
 
   static function base_url()

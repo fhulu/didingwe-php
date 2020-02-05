@@ -83,6 +83,10 @@ either:
 email:
   valid: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i
 
+empty:
+  valid: /^$/
+  error: $name must be empty
+  
 equals:
   valid: /^\s*$1\s*$/
   error: $name must equal $1

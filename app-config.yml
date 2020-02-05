@@ -10,10 +10,10 @@ authenticated:
   page: /index
   path: /home
   content: $path
-log_dir: ../log
+log_dir: log
 log_file: $brand_name.log
 log_level: 4 # debug
-upload_dir: ../uploads
+upload_dir: uploads
 start_page: /home
 css:
   - /didi/font-awesome/css/font-awesome.min.css
@@ -30,7 +30,7 @@ modules:
   - auth
   - collection
 
-search_paths: [../didi/,.,$brand_path]
+search_paths: [didi/,.,$brand_path]
 collections:
   default: collection
   auth: [user,partner,user_group,user_group_member]

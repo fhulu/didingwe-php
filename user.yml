@@ -51,7 +51,7 @@ activate_password:
   post:
     - read_session: token
     - collection.values: [token, $token, user]
-    - collection.update: [user, $user, password: /password('$password'), attempts: 0, active: 1]
+    - collection.update: [user, $user, password: /password2('$password'), attempts: 0, active: 1]
     - collection.update: [token, $token, active: 0]
     - clear_values
     - alert: Your account has been activated successfully
@@ -483,7 +483,7 @@ login_email:
 login_password:
   valid:
     - depends(email, validated)
-    - collection.exists(user,email,$email,password,/=password('$value'))
+    - collection.exists(user,email,$email,password,/=password2('$value'))
   error:
     - collection.values: [user, email: $email, user: id]
     - collection.update: [user, $user, attempts: /attempts+1]
