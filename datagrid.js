@@ -23,6 +23,7 @@
     {
       var me = this;
       me.widths = [];
+      me.args = {};
       var opts = me.options;
       if (opts.sort) opts.flags.push('sortable');
       var r = opts.render;
@@ -181,7 +182,7 @@
 
     load: function(args)
     {
-      args = args || {};
+      args = this.args = $.extend(this.args, args);
       var start = new Date().getTime();
       var me = this;
       var opts = me.options;
@@ -230,7 +231,6 @@
       if (data.data.length == 0 && this.body().children().length == 0 && this.no_records)
         this.element.append(this.no_records.show());
 
-      this.prev_row = null;
       insert_at = insert_at || 0;
       var body = this.body();
       var had_children = body.children().length > 0;
