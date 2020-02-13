@@ -15,7 +15,7 @@ activate:
 
 activate_email:
   from: $support_email
-  to: [$mail, $first_name $last_name]
+  to: [$email, $first_name $last_name]
   subject: Your account has been activated
   message: >
     Dear <b>$first_name $last_name</b> <br><br>
