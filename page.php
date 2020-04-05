@@ -86,7 +86,7 @@ class page
     $this->includes = [];
 
     if (is_null($request)) $request = $_REQUEST;
-    log::debug_json("REQUEST",$request);
+    log::debug_json("REQUEST from $_SERVER[REMOTE_ADDR] on $_SERVER[HTTP_USER_AGENT]",$request);
     $this->request = $request;
     $this->path = replace_vars($request['path'], $request);
     $this->method = $request['action'];
