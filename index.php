@@ -1,15 +1,28 @@
 <?php
+header('Access-Control-Allow-Origin: *');
 session_start();
-require_once 'log.php';
-require_once('utils.php');
+require_once 'didi/log.php';
+require_once('didi/utils.php');
 
+
+function do_preprocessing(&$config) {
+  $preprocess = $config['preprocess'];
+  if (!$preprocess || !file_exists($preprocess) || in_array($preprocess, get_included_files()) ) return;
+
+  require_once($preprocess);
+  $func = basename($preprocess, ".php");
+  $preprocess_config = $func($config);
+  $config = merge_options($config, $preprocess_config);
+  replace_fields($config,$config,true);
+}
 
 function configure_brand(&$config) {
   $brand_path = $config['brand_path'];
   if ($brand_path && file_exists($brand_path)) {
     $brand_config = load_yaml("$brand_path/app-config.yml", false);
-    if ($brand_config)
+    if ($brand_config) 
       $config = merge_options($config, $brand_config);
+    
     replace_fields($config, $config, true);
 
   }
@@ -30,6 +43,8 @@ function get_active_config_name()
 {
   return $_SESSION['auth']? 'authenticated': 'landing';
 }
+
+
 function configure() {
   global $config;
   $config = load_yaml("didi/app-config.yml", true);
@@ -37,6 +52,8 @@ function configure() {
 
   $site_config = load_yaml($config['site_config'], false);
   $config = merge_options($config, $site_config);
+  do_preprocessing($config);
+
   configure_brand($config);
 
   if ($config['log_dir'] && $config['log_file'])
@@ -47,16 +64,29 @@ function configure() {
   replace_fields($active_config, $_REQUEST, true);
   replace_fields($active_config, $active_config, true);
   $config = merge_options($config, $active_config);
+  do_preprocessing($config);
+  $_SESSION['config'] = $config;
+  return $site_config != null;
 }
 
 function process_action() {
   if (is_null($_REQUEST['action'])) return false;
-  require_once('page.php');
+  require_once('didi/page.php');
+  return true;
+}
+
+function load_default_page() {
+  global $config;
+  $root_path = $config['root_path'];
+  $index_file = "$root_path/index.php";
+  if (!file_exists($index_file)) return false;
+  chdir($root_path);
+  require_once($index_file);
   return true;
 }
 
 configure();
-if (process_action()) return ;
+if (load_default_page() || process_action()) return ;
 ?>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
