@@ -1,7 +1,10 @@
 site_config: .site-config.yml
 brand_name: $program_name
-brand_path: ../$brand_name
+brand_path: $brand_name
 image_path: $brand_link/images
+theme: didi/themes/didi
+theme_path: $theme
+root_path: .
 landing:
   page: /index
   path: /home
@@ -30,7 +33,11 @@ modules:
   - auth
   - collection
 
-search_paths: [didi/,.,$brand_path]
+search_paths: 
+  - didi
+  - $theme_path
+  - .
+  - $brand_path
 collections:
   default: collection
   auth: [user,partner,user_group,user_group_member]
