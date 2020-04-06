@@ -127,7 +127,7 @@ class validator
     return in_array($this->value, func_get_args());
   }
 
-  function depends($field, $arg="equals(1)")
+  function depends($field, $arg)
   {
     $validator = new validator($this->request, $this->fields, $this->predicates, $this->db);
     log::debug("DEPENDS $field $arg");
@@ -154,7 +154,7 @@ class validator
     if (isset($method)) {
       if (file_exists($file))
         require_once("$class.php");
-      else if (file_exists("$file"))
+      else if (file_exists("didi/$file"))
         require_once("$class.php");
       else {
         log::error("No such file $file");
