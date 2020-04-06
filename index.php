@@ -85,8 +85,16 @@ function load_default_page() {
   return true;
 }
 
+function process_redirection() {
+  global $config;
+  $redirect_url = $config['redirect_url'];
+  if (!$redirect_url) return false;
+  header("Location: $redirect_url");
+  return true;
+}
+
 configure();
-if (load_default_page() || process_action()) return ;
+if (process_redirection() || load_default_page() || process_action()) return ;
 ?>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
