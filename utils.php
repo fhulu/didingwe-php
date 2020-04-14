@@ -620,3 +620,9 @@ function get_mime_type($filename) {
      return 'application/octet-stream';
     }
  }
+
+function flatten_array(array $array) {
+    $return = array();
+    array_walk_recursive($array, function($a) use (&$return) { $return[] = $a; });
+    return $return;
+}
