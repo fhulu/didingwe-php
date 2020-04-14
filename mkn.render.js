@@ -504,6 +504,9 @@ mkn.render = function(options)
   }
 
   var setStyling = function(obj, field) {
+    if (!$.isPlainObject(field)) 
+      return obj.setClass(field);
+
     setVisible(obj, field);
     setDisabled(obj, field);
     setResponsive(obj, field);
@@ -651,6 +654,8 @@ mkn.render = function(options)
           templated.append(obj);
         else
           this.replace(templated, obj, id, 'field');
+        if (item.parent) 
+          setStyling(templated, item.parent);
       }
       else {
         templated = obj;
