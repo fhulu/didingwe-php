@@ -42,7 +42,7 @@ class page
 {
   static $fields_stack = array();
   static $post_items = array('audit', 'call', 'clear_session', 'clear_values', 'db_name', 'error', 'let', 'keep_values','post',
-    'q', 'valid', 'validate', 'write_session');
+    'q', 'read', 'valid', 'validate', 'write_session');
   static $query_items = array('call', 'datarow', 'let', 'keep_values', 'post', 'read_session', 'read_config', 'read_values', 'ref_list',
     'sql', 'sql_values', 'refresh');
   static $atomic_items = array('action', 'attr', 'css', 'datarow', 'html', 'script', 'sql', 'split_values',
@@ -652,7 +652,8 @@ class page
       $this->context = $fields;
       return $this->action();
     }
-    return $this->reply($actions);
+    $answer = $this->reply($actions);
+    replace_fields($this->fields, $answer, true);
   }
 
   function read()
