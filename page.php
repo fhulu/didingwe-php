@@ -653,7 +653,8 @@ class page
       return $this->action();
     }
     $answer = $this->reply($actions);
-    replace_fields($this->fields, $answer, true);
+    replace_fields($this->fields, $answer);
+    replace_fields($this->types, $answer);
   }
 
   function read()
