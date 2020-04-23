@@ -127,7 +127,7 @@ class validator
     return in_array($this->value, func_get_args());
   }
 
-  function depends($field, $arg)
+  function depends($field, $arg="is(1)")
   {
     $validator = new validator($this->request, $this->fields, $this->predicates, $this->db);
     log::debug("DEPENDS $field $arg");
