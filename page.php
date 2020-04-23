@@ -41,7 +41,7 @@ $page->output();
 class page
 {
   static $fields_stack = array();
-  static $post_items = array('audit', 'call', 'clear_session', 'clear_values', 'db_name', 'error', 'let', 'keep_values','post',
+  static $post_items = array('audit', 'call', 'clear_session', 'clear_values', 'db_name', 'deleted', 'error', 'let', 'keep_values','post',
     'q', 'read', 'valid', 'validate', 'write_session');
   static $query_items = array('call', 'datarow', 'let', 'keep_values', 'post', 'read_session', 'read_config', 'read_values', 'ref_list',
     'sql', 'sql_values', 'refresh');
@@ -498,6 +498,13 @@ class page
   }
 
 
+  static function remove_deleted(&$parent, $key, $value) {
+    if (is_numeric($key)) list($x,$value) = assoc_element($value);
+    if (!is_array($value) || !isset($value['deleted']) || !$value['deleted'])  return false;
+    unset($parent[$key]);
+    return true;
+  }
+
   function expand_types(&$fields)
   {
     $this->replace_vars($fields);
@@ -635,6 +642,7 @@ class page
   function remove_items(&$fields)
   {
     walk_recursive_down($fields, function(&$value, $key, &$parent) {
+      if (page::remove_deleted($parent, $key, $value)) return;
       if (!$this->is_render_item($key) || $key === 'access')
         unset($parent[$key]);
       if (in_array($key, page::$query_items, true) || page::is_module($key) || preg_match('/^if /', $key))

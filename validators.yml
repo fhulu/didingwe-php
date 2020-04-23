@@ -257,7 +257,7 @@ sql_unique_foreign: # table, column, foreign[, foreign_column]
 
 telephone:
   valid: /^[+0]\d+$/
-  error: $name must be digits,eg 0158745896
+  error: $name must be digits, e.g. 0158745896
 
 time:
   valid:
