@@ -661,6 +661,7 @@ class page
       return $this->action();
     }
     $answer = $this->reply($actions);
+    log::debug_json("PRE-READ ANSWER", $answer);
     replace_fields($this->fields, $answer);
     replace_fields($this->types, $answer);
   }
