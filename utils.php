@@ -108,7 +108,7 @@ function caught_fatal(){
 
     $error = error_get_last();
 
-    if($error && ($error['type'] & E_FATAL)){
+    if($error)  { // && ($error['type'] & E_FATAL)){
       caught_error($error['type'], $error['message'], $error['file'], $error['line']);
     }
 
