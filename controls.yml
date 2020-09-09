@@ -432,7 +432,7 @@ input_page:
   layout: { type: label_left }
   synopsis:
     derive: [desc]
-    type: p
+    type: plain_text
     class: [center-text]
     name: $desc
   inputs:
