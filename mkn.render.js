@@ -1121,6 +1121,7 @@ mkn.render = function(options)
         case 'redirect': redirect(field); break;
         case 'post':
           var url = field.url? field.url: field.path;
+          if (!field.params) field.params = [];
           params = serverParams('action', url, $.extend({key: field.key}, params[0], field.params[0]));
           if ($.isArray(field.params)) params = $.extend({}, params, field.params[0]);
           var selector = field.selector;
