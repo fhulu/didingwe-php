@@ -207,7 +207,7 @@ is_password_for:
     - depends(email,is_registered)
     - depends(email,is_active)
     - depends(email,is_unlocked)
-    - sql(select password=password('$value') from user where email_address = '$v1')
+    - sql(select password=password2('$value') from user where email_address = '$v1')
   error:
     - sql_exec: update user set attempts = attempts+1 where email_address = '$v1'
     - sql_exec: >
