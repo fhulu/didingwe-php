@@ -165,7 +165,7 @@ class page
     $read_one = false;
     $languages = [''];
     global $config;
-    $search_paths = $config['search_paths'];
+    $search_paths = flatten_array($config['search_paths']);
     if ($this->request['lang']) $languages[] = ".". $this->request['lang'];
     foreach($languages as $lang) {
       foreach($search_paths as $path) {
