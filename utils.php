@@ -202,11 +202,11 @@ function replace_fields(&$options, $context, $recurse=false)
 {
   if (!is_array($options)) {
     $options = replace_vars($options, $context);
-    return;
+    return $options;
   }
   $replaced = false;
   walk_recursive_down($options, function(&$value) use(&$context, &$replaced) {
-    if (!is_numeric($value) && !is_string($value)) return;
+    if (!is_numeric($value) && !is_string($value)) return $options;
     $new = replace_vars($value, $context);
     if ($new != $value) {
       $replaced = true;
@@ -214,7 +214,8 @@ function replace_fields(&$options, $context, $recurse=false)
     }
   });
   if ($recurse && $replaced)
-    replace_fields($options, merge_options($context,$options), $recurse);
+    return replace_fields($options, merge_options($context,$options), $recurse);
+  return $options;
 }
 
 function replace_indices($str, $values)
@@ -555,7 +556,7 @@ function get_mime_type($filename) {
     $count_explode = count($idx);
     $idx = strtolower($idx[$count_explode-1]);
 
-    $mimet = array( 
+    $mimet = array(
         'txt' => 'text/plain',
         'htm' => 'text/html',
         'html' => 'text/html',
