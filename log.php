@@ -49,20 +49,24 @@ class log
   {
     if ($this->level < $level) return;
     global $config;
-    if (!$config && !$config['log_dir']) return;
+    $log = $config['log'];
+    if (!$config || !$log) return;
+    $log_dir = $log['dir'];
+    $log_file = $log['path'];
     $message = str_replace("\n", " ", $message);
     $message = str_replace("\r", " ", $message);
 
     if (!is_null($this->instance)) {
-      $file_name = dirname($_SERVER['SCRIPT_FILENAME']).'/'.$config['log_dir']."/$this->instance";
+      $file_name = realpath($this->instance);
       if (file_exists($file_name)) {
         $today = date('Y-m-d');
         $file_date = date('Y-m-d', filemtime($file_name));
         if ($file_date != $today) {
-          $old_name = dirname($_SERVER['SCRIPT_FILENAME']).'/'.$config['log_dir']."/$file_date-$this->instance";
+          $old_name = dirname($file_name)."/$file_date-". basename($file_name);
           rename($file_name, $old_name);
         }
       }
+      if (!$file_name) return;
       $file = fopen($file_name,'a+');
     }
     else $file = 'STDOUT';
