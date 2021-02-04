@@ -382,11 +382,12 @@ class page
 
   function follow_path($path=null, $field=null)
   {
+    if (!$field) $field = $this->fields;
     if (!$path) {
       $path = $this->path;
       array_splice($path,0,2);
+      $parent = $field;
     }
-    if (!$field) $field = $this->fields;
     foreach($path as $branch) {
       if (is_assoc($field)) {
         $new_parent = $field;
