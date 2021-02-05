@@ -41,10 +41,10 @@ $page->output();
 class page
 {
   static $fields_stack = array();
-  static $post_items = array('audit', 'call', 'clear_session', 'clear_values', 'db_name', 'deleted', 'error', 'let', 'keep_values','post',
-    'q', 'read', 'valid', 'validate', 'write_session');
+  static $post_items = array('audit', 'call', 'clear_session', 'clear_values', 'db_name', 'deleted', 'dynamic', 'error', 
+    'let', 'keep_values','post', 'q', 'read', 'valid', 'validate', 'write_session');
   static $query_items = array('call', 'datarow', 'let', 'keep_values', 'post', 'read_session', 'read_config', 'read_values', 'ref_list',
-    'sql', 'sql_values', 'refresh');
+    'sql', 'sql_values', 'sql_values_array', 'refresh');
   static $atomic_items = array('action', 'attr', 'css', 'datarow', 'html', 'script', 'sql', 'split_values',
     'style', 'template', 'valid');
   static $user_roles = array('public');
@@ -517,7 +517,19 @@ class page
       }
       else
         $type = $key;
-
+      if ($type == "dynamic") {
+        $prev_answer = $this->answer;
+        $this->answer = null;
+        $this->reply($value);
+        $data = $this->answer['data'];
+        if (is_null($data)) $data = $this->answer;
+        if (is_numeric($key)) 
+          array_splice($parent, $key, 1, $data);
+        else
+          $parent[$key] = $data;
+        $this->answer = $prev_answer;
+        return;        
+      }
       if ($type == $this->page) return;
       $is_style = ($type === 'styles');
       if (in_array($type, ['types', 'type', 'template', 'wrap', 'styles']) ) {
@@ -1026,6 +1038,19 @@ class page
     return $this->foreach? $this->db->read($sql, MYSQLI_ASSOC): $this->db->read_one($sql, MYSQLI_ASSOC);
   }
 
+  function sql_values_array($sql)
+  {
+    $sql = $this->translate_sql($sql);
+    return $this->db->read($sql, MYSQLI_ASSOC);
+  }
+ 
+  function sql_list($sql)
+  {
+    $sql = $this->translate_sql($sql);
+    return $this->db->read_column($sql);
+  }
+ 
+
   function sql_exec($sql)
   {
     return $this->db->exec($this->translate_sql($sql));
@@ -1248,8 +1273,8 @@ class page
 
     $methods = array('abort', 'alert', 'assert', 'audit', 'call', 'clear_session', 'clear_values',
       'close_dialog', 'datarow',  'error', 'execute', 'foreach', 'let', 'load_lineage', 'logoff',  'keep_values', 'post', 'read_config',  'read_server', 'read_session', 'read_values',
-       'redirect', 'ref_list', 'show_dialog', 'show_captcha', 'split_values', 'sql', 'sql_exec',
-       'sql_rows', 'sql_insert', 'sql_update', 'sql_update_insert', 'sql_values', 'refresh', 'trigger',
+       'redirect', 'ref_list', 'show_dialog', 'show_captcha', 'split_values', 'sql', 'sql_list', 'sql_exec',
+       'sql_rows', 'sql_insert', 'sql_update', 'sql_update_insert', 'sql_values', 'sql_values_array', 'refresh', 'trigger',
        'update', 'upload', 'view_doc', 'write_session');
     foreach($actions as $action) {
       if ($this->aborted) return false;
