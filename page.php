@@ -1043,6 +1043,23 @@ class page
     $sql = $this->translate_sql($sql);
     return $this->db->read($sql, MYSQLI_ASSOC);
   }
+
+  function sql_json_array($sql) {
+    $values = $this->sql_values_array($sql);
+    foreach($values as &$value) {
+      list($key, $object) = assoc_element($value);
+      if (is_array($object)) continue;
+      $id = $value['id'];
+      if (!isset($id)) {
+        $id =  strtolower(str_replace(' ', '_', $value['name']));
+      }
+      else {
+        unset($value['id']);
+      }
+      $value = [$id => $value];
+    }
+    return $values;
+  }
  
   function sql_list($sql)
   {
@@ -1273,7 +1290,7 @@ class page
 
     $methods = array('abort', 'alert', 'assert', 'audit', 'call', 'clear_session', 'clear_values',
       'close_dialog', 'datarow',  'error', 'execute', 'foreach', 'let', 'load_lineage', 'logoff',  'keep_values', 'post', 'read_config',  'read_server', 'read_session', 'read_values',
-       'redirect', 'ref_list', 'show_dialog', 'show_captcha', 'split_values', 'sql', 'sql_list', 'sql_exec',
+       'redirect', 'ref_list', 'show_dialog', 'show_captcha', 'split_values', 'sql', 'sql_list', 'sql_exec', 'sql_json_array',
        'sql_rows', 'sql_insert', 'sql_update', 'sql_update_insert', 'sql_values', 'sql_values_array', 'refresh', 'trigger',
        'update', 'upload', 'view_doc', 'write_session');
     foreach($actions as $action) {
