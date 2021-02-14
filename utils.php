@@ -627,3 +627,9 @@ function flatten_array(array $array) {
     array_walk_recursive($array, function($a) use (&$return) { $return[] = $a; });
     return $return;
 }
+
+function decode_if_json($x) {
+  if (!is_string($x) || !in_array($x[0], ['{', '['])) return $x;
+  $result = json_decode($x);
+  return json_last_error() == JSON_ERROR_NONE? (array)$result: $x;
+}
