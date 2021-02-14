@@ -58,18 +58,18 @@ function replace_vars($str, $values, $callback=null, $value_if_unset=null)
     return isset($values[$key])? $values[$key]: $str;
   }
 
-  if (!preg_match_all('/\$(\w+)/', $str, $matches, PREG_SET_ORDER)) return  $str;
+  if (!preg_match_all('/\$(?:(\w+)\b|\{(\w+)\})/', $str, $matches, PREG_SET_ORDER)) return  $str;
 
   foreach($matches as $match) {
     $key = $match[1];
+    if (!$key) $key = $match[2];
     $value = $values[$key];
     if (!isset($value)) {
       if ($value_if_unset === null) continue;
       $value = $value_if_unset;
     }
     if ($callback && $callback($value, $key) === false) continue;
-    if ($escape) $value = addslashes($value);
-    $str = preg_replace('/\$'.$key.'([^\w]|$)/',"$value$1", $str);
+    $str = preg_replace('/(?:\$'.$key.'|\$\{'.$key.'\})(\b)/',"$value$1", $str);
   }
   return $str;
 }
