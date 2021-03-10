@@ -122,6 +122,10 @@ function merge_options()
 {
   $merge = function($options1, $options2) use(&$merge) {
     if (is_null($options2)) return $options1;
+    if (is_string($options2) && strpos($options2, '...')===0) {
+      $options2 = preg_split('/ *, +/', substr($options2,3));
+      if (!is_array($options1)) $options1 = [$options1];
+    }
     if (!is_array($options1) || $options1 == $options2) return $options2;
     if (!is_array($options2)) return $options2;
     if (!is_assoc($options1) && !is_assoc($options2)) {
