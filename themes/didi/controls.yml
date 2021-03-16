@@ -1,0 +1,51 @@
+big_text:
+  type: plain_text
+  class: [bold font-xxlarge block]
+
+button:
+  class: [pad pad-small rounded]
+
+control:
+  class: [text-dark-grey]
+
+fa_checkbox:
+  label:
+    class: [text-blue]
+
+input:
+  class: [pad pad-tiny]
+
+input_page:
+  class: [pad pad-medium]
+  inputs:
+    - template: label_fieldset
+  actions_pane:
+    template: none
+
+labelled:
+  class: [relative border border-width-thin border-light-grey vspaced]
+
+label_fieldset:
+  type: fieldset
+  class: [ border border-light-grey border-width-thin font-medium rounded pad pad-tiny hide-legend vspace]
+  legend:
+    class: [ margin-left pad-x pad-tiny left-text]
+    style: { position: static }
+  events:
+    focusin: [ show-legend]
+    errors: [ border-red, border-width-small, ^border-light-grey, show-legend]
+    clear-error: [ ^border-red, ^border-width-small, border-light-grey]
+  subject:
+    label: $name
+    attr: { placeholder: $label, title: $desc}
+    class: [widest]
+    events:
+      focusin: [ hide-placeholder]
+      focustout: [ ^hide-placeholder ]
+      errors: [ hide-placeholder]
+link:
+  class: [text-blue undecorated]
+
+small_text:
+  type: plain_text
+  class: [block font-small]

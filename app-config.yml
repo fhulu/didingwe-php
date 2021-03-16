@@ -2,8 +2,7 @@ site_config: .site-config.yml
 brand_name: $program_name
 brand_path: $brand_name
 image_path: $brand_link/images
-theme: didi/themes/didi
-theme_path: $theme
+theme: [didi/themes/didi]
 root_path: .
 landing:
   page: /index
@@ -35,7 +34,7 @@ modules:
 
 search_paths: 
   - didi
-  - $theme_path
+  - $theme
   - .
   - $brand_path
 collections:
