@@ -54,20 +54,17 @@ function remove_nulls(&$array)
 function replace_vars($str, $values, $callback=null)
 {
   $matches = array();
-  if (preg_match('/^\$(\w+)$/', $str, $matches)) {
-    $key = $matches[1];
-    return isset($values[$key])? $values[$key]: $str;
-  }
 
-  if (!preg_match_all('/\$(\w+)/', $str, $matches, PREG_SET_ORDER)) return  $str;
+  if (!preg_match_all('/\$([a-z_]\w*)/mi', $str, $matches, PREG_SET_ORDER)) return  $str;
 
   foreach($matches as $match) {
     $key = $match[1];
-    $value = at($values, $key);
-    if (is_null($value)) continue;
+    if (!isset($values[$key])) continue;
+    $value = $values[$key];
     if ($callback && $callback($value, $key) === false) continue;
-    if ($escape) $value = addslashes($value);
-    $str = preg_replace('/\$'.$key.'([^\w]|$)/',"$value$1", $str);
+    $value = str_replace('$', '{%}',$value);
+    $str = preg_replace('/\$'.$key.'(\W?)/',$value.'$1', $str);
+    $str = str_replace('{%}', '$',$str);
   }
   return $str;
 }
@@ -199,14 +196,14 @@ function assoc_element($element)
   return array($key, $value);
 }
 
-function replace_fields(&$options, $context)
+function replace_fields(&$options, $context, $callback=null)
 {
   if (!is_array($options)) {
-    $options = replace_vars($options, $context);
+    $options = replace_vars($options, $context, $callback);
     return;
   }
-  array_walk_recursive($options, function(&$value) use(&$context) {
-    $value = replace_vars($value, $context);
+  array_walk_recursive($options, function(&$value) use(&$context, $callback) {
+    $value = replace_vars($value, $context, $callback);
   });
 }
 
