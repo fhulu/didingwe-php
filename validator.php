@@ -273,15 +273,21 @@ class validator
         $result = call_user_func_array(array($this, $func), $args);
         array_shift($args);
       }
-      else if ($func == 'is' || !method_exists($this, $func)) {
-        if (!$this->get_custom($func))
-          throw new validator_exception("validator method $func does not exists!");
+      else if (method_exists($this, $func)) {
+        $result = call_user_func_array([$this, $func], $args);        
+      }
+      else if ($this->get_custom($func)) {
         array_unshift($args, $func);
-        $result = call_user_func_array(array($this, 'custom'), $args);
+        $result = call_user_func_array([$this, 'custom'], $args);
         array_shift($args);
       }
-      else
-        $result = call_user_func_array(array($this, $func), $args);
+      else if (is_callable($func)) {
+        replace_fields($args, $this->request);
+        $result = call_user_func_array($func, $args);  
+      }
+      else {
+        throw new validator_exception("validator method $func does not exists!");
+      }
       if ($result === true) continue;
       if ($func == 'depends') return true;
       if ($func == 'provided' && $auto_provided) $this->failed_auto_provided = true;
@@ -426,4 +432,13 @@ class validator
     return true;
   }
 
+  function read_sql($sql) {
+    $sql = replace_vars($sql, $this->request, function($v, $k) {
+      addslashes($v);
+    });
+    $result = $this->db->read_one($sql, MYSQLI_ASSOC);
+    if ($result)
+      $this->request = array_merge($this->request, $result);
+    return true;
+  }
 }
