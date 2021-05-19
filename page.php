@@ -706,13 +706,11 @@ class page
   {
     global $page;
     $user = $page->user;
-    $user_id = $user['uid'];
-    $key = $options['key'];
-    if ($user_id)
-      $sql = preg_replace('/\$uid([^\w]|$)/', "$user_id\$1", $sql);
-    $sql = preg_replace('/\$key([^\w]|$)/', "$key\$1", $sql);
-    return replace_vars($sql, $options, function(&$val) {
-      $val = addslashes($val);
+    
+    $options = null_merge(['uid'=>$user['uid'] ], $options);
+    return replace_vars($sql, $options, function(&$val, $key) {
+      if ($key != "password_hash" && $key != "hash")
+        $val = addslashes($val);
     });
   }
 
@@ -732,11 +730,15 @@ class page
 
   function sql_values($sql)
   {
-    return $this->db->read_one($this->translate_sql($sql), MYSQL_ASSOC);
+    return $this->db->read_one($this->translate_sql($sql), MYSQLI_ASSOC);
   }
 
   function sql_exec($sql)
   {
+    $args = func_get_args();
+    if (sizeof($args) > 1) return $this->sql_exec_prepared(...$args);
+
+    log::debug("SQL_EXEC $sql");
     return $this->db->exec($this->translate_sql($sql));
   }
 
@@ -828,7 +830,7 @@ class page
     log::debug_json("REPLY ACTIONS", $actions);
 
     $methods = array('alert', 'abort', 'call', 'clear_session', 'clear_values',
-      'close_dialog', 'load_lineage', 'post_http', 'read_session', 'read_values', 'redirect',
+      'close_dialog', 'hash_password', 'load_lineage', 'post_http', 'read_session', 'read_values', 'redirect',
       'send_email', 'send_sms', 'show_dialog', 'sql', 'sql_exec','sql_rows', 'sql_insert',
       'sql_update', 'sql_values', 'refresh', 'trigger', 'update', 'write_session');
     foreach($actions as $action) {
@@ -846,9 +848,9 @@ class page
         $parameter = array($parameter);
       global $config;
       $values = merge_options($this->request, $config, $this->answer);
-      replace_fields($parameter, $values);
-      replace_fields($method, $values);
-      log::debug_json("REPLY ACTION $method", $parameter);
+      if (strpos($method, 'sql_') !== 0) // don't replace vars for sql yet
+        replace_fields($parameter, $values, function(&$v) { addslashes($v); } );
+      log::debug_json("REPLY ACTION $method $callback", $parameter);
       if ($this->reply_if($method, $parameter)) continue;
       if (!in_array($method, $methods)) continue;
       $result = call_user_func_array(array($this, $method), $parameter);
@@ -1171,5 +1173,26 @@ class page
     replace_fields($options, $this->fields['send_sms']);
 
     page::post_http($options);
+  }
+
+  function hash_password($password) {
+    $hash = password_hash($password, PASSWORD_DEFAULT);
+    return ['password_hash' => $hash, 'hash'=>$hash ];
+  }
+
+
+  function sql_exec_prepared($types, $sql) {
+    $vars = [];
+    $values = null_merge($this->request, $this->answer, false);
+    $values = null_merge($this->context, $values, false);
+    $sql = replace_vars($sql, $values, function(&$v, $k) use (&$vars) {
+      $vars[] = $v;
+      $v = '?';
+    });
+    log::debug_json("SQL_EXEC_PREPARED: $sql", $vars);
+    $this->db->connect();
+    $stm = $this->db->mysqli->prepare($sql);
+    $stm->bind_param($types, ...$vars);
+    $stm->execute();
   }
 }

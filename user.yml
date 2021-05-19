@@ -104,10 +104,11 @@ confirm_registration:
     validate: none
     post:
       - read_session: title,first_name,last_name,cellphone,email,password
+      - hash_password: $password
       - sql_exec: >
           insert into user(email_address, password, title, first_name,
             last_name,cellphone,active,roles)
-          values('$email',password('$password'),'$title', '$first_name',
+          values('$email','$password_hash','$title', '$first_name',
             '$last_name','$cellphone',1,'reg')
       - sql_values: select last_insert_id() uid
       - write_session: uid
@@ -207,7 +208,8 @@ is_password_for:
     - depends(email,is_registered)
     - depends(email,is_active)
     - depends(email,is_unlocked)
-    - sql(select password=password2('$value') from user where email_address = '$v1')
+    - read_sql(select password hash from user where email_address = '$v1')
+    - password_verify($value,$hash)
   error:
     - sql_exec: update user set attempts = attempts+1 where email_address = '$v1'
     - sql_exec: >
