@@ -53,8 +53,14 @@ function remove_nulls(&$array)
 
 function replace_vars($str, $values, $callback=null)
 {
-  $matches = array();
-
+  $matches = [];
+  if (preg_match('/^\$([a-z_]\w*)$/i', $str, $matches)) {
+    $key = $matches[1];
+    if (!isset($values[$key])) return $str;
+    $value = $values[$key];
+    if ($callback && $callback($value, $key) === false) return $str;
+    return $value;
+  }
   if (!preg_match_all('/\$([a-z_]\w*)/mi', $str, $matches, PREG_SET_ORDER)) return  $str;
 
   foreach($matches as $match) {
