@@ -60,8 +60,9 @@ check_otp:
     - if $email_otp:
         send_email:
           subject: One Time Password
-          from: $support
-          to: $first_name $last_name <$email>
+          from: $no_reply
+          to_email: $email
+          to_user: $first_name $last_name
           message: >
             Good day<br><br>
             You are currently trying to register on $program_name or change your email address.

@@ -3,6 +3,9 @@ require_once 'validator.php';
 require_once 'db.php';
 require_once 'utils.php';
 
+use PHPMailer\PHPMailer\PHPMailer;
+#use PHPMailer\PHPMailer\Exception;
+
 class user_exception extends Exception {};
 
 $page = new page();
@@ -992,27 +995,55 @@ class page
     $this->update_context($options);
     $options = page::merge_options($this->fields['send_email'], $options);
     $options = page::merge_options($this->get_expanded_field('send_email'), $options);
-    $headers = $options['headers'];
+    global $config;
+    $options = page::merge_options($options, $config['send_email']);
+    
+    require_once './PHPMailer/src/Exception.php';
+    require_once './PHPMailer/src/PHPMailer.php';
+    require_once './/PHPMailer/src/SMTP.php';
+    
+    
+    $mail = new PHPMailer(true);
     $from = $options['from'];
-    $to = $options['to'];
-    $message = $options['message'];
-    $subject = $options ['subject'];
-    log::debug("SENDMAIL from $from to $to SUBJECT $subject");
-    $headers['From'] = $from;
-    $headers['Subject'] = $subject;
-    $headers['To'] = $to;
-
-    set_include_path("./common/pear");
-    require_once "Mail.php";
-    require_once("Mail/mime.php");
-    $mime = new Mail_mime("\n");
-    $mime->setHTMLBody($message);
-    $message = $mime->get();
-    $headers = $mime->headers($headers);
-    $smtp = Mail::factory('smtp',  $options['smtp']);
-    $result = $smtp->send($to, $headers, $message);
-    restore_include_path();
-    log::debug("RESULT: $result");
+    if (is_array($from))
+      $options = array_merge($options, ['from'=>$from[0], 'fromName' => $from[1] ] );
+    log::debug_json("EMAIL OPTIONS", $options);
+    static $aliases = ["to"=>"address", "message"=>"body"];
+    foreach ($options as $name=>$value) {
+      $alias = $aliases[$name];
+      if ($alias) $name = $alias;
+      $capitalized = false;
+      $capital = strtoupper(substr($name, 0, 1)) . substr($name, 1);
+      $setter = "set$capital";
+      $adder = "add$capital";
+      if ( method_exists($mail, $name) || $capitalized = method_exists($mail, $capital)) {
+        if ($capitalized) $name = $capital;
+        if (!is_array($value)) $value = [$value] ;
+        log::debug_json("PHPMAIL.$name", $value);
+        call_user_func_array([$mail, $name], $value);
+      }
+      else if ( method_exists($mail, $setter)) {
+        if (!is_array($value)) $value = [$value] ;
+        log::debug_json("PHPMAIL.$setter", $value);
+        call_user_func_array([$mail, $setter], $value);
+      }
+      else if ( method_exists($mail, $adder)) {
+        if (!is_array($value))
+          $value = [ [$value] ];
+        else if (!is_array($value[0]))
+          $value = [ $value ];
+        foreach($value as $args) {
+          log::debug_json("PHPMAIL.$adder", $args);
+          call_user_func_array([$mail, $adder], $args);
+        }
+      }
+      else if ( property_exists($mail, $name) || $capitalized = property_exists($mail, $capital)) {
+        if ($capitalized) $name = $capital;
+        log::debug_json("PHPMAIL.$name", $value);
+        $mail->$name = $value;
+      }
+    }
+    $mail->send();
 
 }
 
