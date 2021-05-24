@@ -848,6 +848,7 @@ class page
         $parameter = array($parameter);
       global $config;
       $values = merge_options($this->request, $config, $this->answer);
+      replace_fields($method, $values);
       if (strpos($method, 'sql_') !== 0) // don't replace vars for sql yet
         replace_fields($parameter, $values, function(&$v) { addslashes($v); } );
       log::debug_json("REPLY ACTION $method $callback", $parameter);
