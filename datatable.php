@@ -7,7 +7,6 @@
  */
 
 require_once 'page.php';
-require_once 'pdf/fpdf.php';
 
 class datatable
 {
@@ -200,7 +199,9 @@ PATTERN;
 
   static function pdf($options, $key)
   {
-    $pdf = new FPDF();
+    require_once "ExtPDF.php";
+
+    $pdf = new ExtPDF();
     $orientation = $options['report_orientation'];
     $page_width = 196;
     if ($orientation == 'landscape') {
