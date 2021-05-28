@@ -322,7 +322,17 @@ class validator
     $valid = replace_vars($valid, $predicate);
     $valid = replace_vars($valid, $this->request);
     $this->replace_args($valid, $args, false, true);
+    $this->replace_default_args($valid, $args, $predicate);
+    // run the validation on the substituted predicate
     return $this->is($valid);
+  }
+
+
+    // replace default args not supplied, but set on the predicate 
+  function replace_default_args(&$str, $args, $predicate) {
+    for($i=sizeof($args)+1; isset($predicate[$i]); ++$i) {
+      $str = str_replace('$'.$i, $predicate[$i], $str);
+    }
   }
 
   function replace_args(&$str, $args, $set_titles=false, $force_value=false)
@@ -368,6 +378,7 @@ class validator
     $error = str_replace('$value', $this->value, $error);
     $error = replace_vars($error, $predicate);
     $this->replace_args($error, $args, true);
+    $this->replace_default_args($error, $args, $predicate);
     $error = replace_vars_except($error, $this->request, $ignore);
     $error = str_replace('$name', $this->title, $error);
   }
