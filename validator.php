@@ -273,10 +273,10 @@ class validator
         $result = call_user_func_array(array($this, $func), $args);
         array_shift($args);
       }
-      else if (method_exists($this, $func)) {
+      else if ($func != 'is' && method_exists($this, $func)) {
         $result = call_user_func_array([$this, $func], $args);        
       }
-      else if ($this->get_custom($func)) {
+      else if ($func == 'is' || $this->get_custom($func)) {
         array_unshift($args, $func);
         $result = call_user_func_array([$this, 'custom'], $args);
         array_shift($args);
