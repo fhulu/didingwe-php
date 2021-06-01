@@ -65,7 +65,7 @@ check_otp:
           to_user: $first_name $last_name
           message: >
             Good day<br><br>
-            You are currently trying to register on <b>$program_name<b> or change your email address.
+            You are currently trying to register on <b>$program_name</b> or change your email address.
             If you have not requested this, please inform the System Adminstrator.<br><br>
             Your One Time Password is : <b>$server_otp</b>. <br><br>
             Regards<br>
