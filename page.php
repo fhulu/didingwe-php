@@ -1005,45 +1005,55 @@ class page
     
     $mail = new PHPMailer(true);
     $from = $options['from'];
+    if (is_string($from)) 
+      $from = email_to_array($from);
     if (is_array($from))
       $options = array_merge($options, ['from'=>$from[0], 'fromName' => $from[1] ] );
+
     log::debug_json("EMAIL OPTIONS", $options);
     static $aliases = ["to"=>"address", "message"=>"body"];
-    foreach ($options as $name=>$value) {
-      $alias = $aliases[$name];
-      if ($alias) $name = $alias;
-      $capitalized = false;
-      $capital = strtoupper(substr($name, 0, 1)) . substr($name, 1);
-      $setter = "set$capital";
-      $adder = "add$capital";
-      if ( method_exists($mail, $name) || $capitalized = method_exists($mail, $capital)) {
-        if ($capitalized) $name = $capital;
-        if (!is_array($value)) $value = [$value] ;
-        log::debug_json("PHPMAIL.$name", $value);
-        call_user_func_array([$mail, $name], $value);
-      }
-      else if ( method_exists($mail, $setter)) {
-        if (!is_array($value)) $value = [$value] ;
-        log::debug_json("PHPMAIL.$setter", $value);
-        call_user_func_array([$mail, $setter], $value);
-      }
-      else if ( method_exists($mail, $adder)) {
-        if (!is_array($value))
-          $value = [ [$value] ];
-        else if (!is_array($value[0]))
-          $value = [ $value ];
-        foreach($value as $args) {
-          log::debug_json("PHPMAIL.$adder", $args);
-          call_user_func_array([$mail, $adder], $args);
+    try {
+      foreach ($options as $name=>$value) {
+        $alias = $aliases[$name];
+        if ($alias) $name = $alias;
+        $capitalized = false;
+        $capital = strtoupper(substr($name, 0, 1)) . substr($name, 1);
+        $setter = "set$capital";
+        $adder = "add$capital";
+        if ( method_exists($mail, $name) || $capitalized = method_exists($mail, $capital)) {
+          if ($capitalized) $name = $capital;
+          if (!is_array($value)) $value = [$value] ;
+          log::debug_json("PHPMAIL.$name", $value);
+          call_user_func_array([$mail, $name], $value);
+        }
+        else if ( method_exists($mail, $setter)) {
+          if (!is_array($value)) $value = [$value] ;
+          log::debug_json("PHPMAIL.$setter", $value);
+          call_user_func_array([$mail, $setter], $value);
+        }
+        else if ( method_exists($mail, $adder)) {
+          if ($alias=='address' && is_string($value)) 
+            $value = email_to_array($value);
+          if (!is_array($value))
+            $value = [ [$value] ];
+          else if (!is_array($value[0]))
+            $value = [ $value ];
+          foreach($value as $args) {
+            log::debug_json("PHPMAIL.$adder", $args);
+            call_user_func_array([$mail, $adder], $args);
+          }
+        }
+        else if ( property_exists($mail, $name) || $capitalized = property_exists($mail, $capital)) {
+          if ($capitalized) $name = $capital;
+          log::debug_json("PHPMAIL.$name", $value);
+          $mail->$name = $value;
         }
       }
-      else if ( property_exists($mail, $name) || $capitalized = property_exists($mail, $capital)) {
-        if ($capitalized) $name = $capital;
-        log::debug_json("PHPMAIL.$name", $value);
-        $mail->$name = $value;
-      }
+      $mail->send();
     }
-    $mail->send();
+    catch(Exception $e) {
+      log::error("SEND-EMAIL ERROR ".$e->getMessage());
+    }
 
 }
 
