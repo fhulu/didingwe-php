@@ -74,11 +74,11 @@ function WriteTable($tcolums)
          // set style
          $this->SetFont($current_col[$b]['font_name'], $current_col[$b]['font_style'], $current_col[$b]['font_size']);
          $color = explode(",", $current_col[$b]['fillcolor']);
-         $this->SetFillColor($color[0], $color[1], $color[2]);
+         if (sizeof($color) > 2) $this->SetFillColor($color[0], $color[1], $color[2]);
          $color = explode(",", $current_col[$b]['textcolor']);
-         $this->SetTextColor($color[0], $color[1], $color[2]);            
+         if (sizeof($color) > 2) $this->SetTextColor($color[0], $color[1], $color[2]);            
          $color = explode(",", $current_col[$b]['drawcolor']);            
-         $this->SetDrawColor($color[0], $color[1], $color[2]);
+         if (sizeof($color) > 2) $this->SetDrawColor($color[0], $color[1], $color[2]);
          $this->SetLineWidth($current_col[$b]['linewidth']);
                      
          $nb = max($nb, $this->NbLines($current_col[$b]['width'], $current_col[$b]['text']));            
@@ -103,22 +103,22 @@ function WriteTable($tcolums)
          // set style
          $this->SetFont($current_col[$b]['font_name'], $current_col[$b]['font_style'], $current_col[$b]['font_size']);
          $color = explode(",", $current_col[$b]['fillcolor']);
-         $this->SetFillColor($color[0], $color[1], $color[2]);
+         if (sizeof($color) > 2) $this->SetFillColor($color[0], $color[1], $color[2]);
          $color = explode(",", $current_col[$b]['textcolor']);
-         $this->SetTextColor($color[0], $color[1], $color[2]);            
+         if (sizeof($color) > 2) $this->SetTextColor($color[0], $color[1], $color[2]);            
          $color = explode(",", $current_col[$b]['drawcolor']);            
-         $this->SetDrawColor($color[0], $color[1], $color[2]);
+         if (sizeof($color) > 2) $this->SetDrawColor($color[0], $color[1], $color[2]);
          $this->SetLineWidth($current_col[$b]['linewidth']);
          
          $color = explode(",", $current_col[$b]['fillcolor']);            
-         $this->SetDrawColor($color[0], $color[1], $color[2]);
+         if (sizeof($color) > 2) $this->SetDrawColor($color[0], $color[1], $color[2]);
          
          
          // Draw Cell Background
          $this->Rect($x, $y, $w, $h, 'FD');
          
          $color = explode(",", $current_col[$b]['drawcolor']);            
-         $this->SetDrawColor($color[0], $color[1], $color[2]);
+         if (sizeof($color) > 2) $this->SetDrawColor($color[0], $color[1], $color[2]);
          
          // Draw Cell Border
          if (substr_count($current_col[$b]['linearea'], "T") > 0)
