@@ -147,6 +147,10 @@ PATTERN;
     $sheet = $excel->setActiveSheetIndex(0);
     $options['page_size'] = 0;
     $fields = $options['fields'];
+    $default_props = [
+      'wrap'=>true,
+      'auto_size'=>true
+    ];
     $data = datatable::read($options, $key, function($row_data, $pagenum, $index) use (&$sheet, &$fields) {
       $row = 2 + $pagenum * 1000 + $index;
       $col = 'A';
@@ -155,10 +159,15 @@ PATTERN;
         if (!datatable::is_data($field)) continue;
         ++$data_idx;
         if (!datatable::is_display($field)) continue;
+        [$id, $props] = assoc_element($field);
+        $props  = null_merge($default_props, $props['excel']);
+  
+        $style = $sheet->getStyle($col);
+        $style->getAlignment()->setWrapText($props['wrap']);
+        $style->getNumberFormat()->setFormatCode($props['format']);
+          
         $cell = $row_data[$data_idx];
-        $sheet->getStyle("$col")->getAlignment()->setWrapText(true);
         $sheet->setCellValue("$col$row", $cell);
-        $sheet->getColumnDimension($col)->setAutoSize(true);
         $sheet->getRowDimension($row)->setRowHeight(20);
         ++$col;
       }
@@ -169,6 +178,11 @@ PATTERN;
     $col = 'A';
     foreach ($fields as $field) {
       if (!datatable::is_data($field) || !datatable::is_display($field)) continue;
+      [$id, $props] = assoc_element($field);
+      $props  = null_merge($default_props, $props['excel']);
+
+      $style = $sheet->getStyle($col);
+      $sheet->getColumnDimension($col)->setAutoSize($props['auto_size']);
       $ref = $col . "1";
       $sheet->getStyle($ref)->getFont()->setBold(true);
       $name = datatable::get_display_name($field);

@@ -37,11 +37,15 @@ calculate_hours:
 calculate_period:
   sql: select ceiling(timestampdiff($prev_unit,'$start_time', '$end_time')/$prev_unit_size)
 
+cell: 
+  excel: { format: '0' }
+
 cellphone:
   desc: |
     The active cellphone or mobile number at which you can be contacted on.
     This number will be used to for OTP verification.
   valid: national_tel
+  excel: { format: '0' }
 
 change_password:
   desc: Change your current password
@@ -155,6 +159,9 @@ goto:
 
 home:
   url: /home
+
+home_tel:
+  excel: { format: '0' }
 
 id:
   name: Reference #
@@ -339,3 +346,6 @@ wizard_post:
   call: $class::$invoker($key)
   action: post
   attr: {wizard-jump: $code}
+
+work_tel:
+  excel: { format: '0' }
