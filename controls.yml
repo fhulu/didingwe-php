@@ -228,13 +228,13 @@ file:
 form:
   tag: form
 
-#footer_actions:
-#  - type: submit
-
 google_map:
+  type: map
+  create: googlemap
+  script: /common/googlemap.js
+
+map:
   tag: div
-  create: mapper
-  script: /common/map.js
   zoom: 5
   pin: blue_map_marker
   icon_path: /
@@ -441,6 +441,12 @@ one_row_table:
     field: $items
   items:
     - template: table_cell
+
+openstreet_map:
+  type: map
+  create: osmap
+  script: /common/openstreetmap.js
+  access_token: pk.eyJ1IjoiZmh1bHUiLCJhIjoiY2twcG83eTZuMDB6MzJ2bXA4N2dxdG93OSJ9.pZiknsEg0gUxkCroqgjzhg
 
 p: { tag: p}
 
