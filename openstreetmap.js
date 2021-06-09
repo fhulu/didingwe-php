@@ -1,5 +1,5 @@
 (function($) {
-  $.widget("ui.osmap", {
+  $.widget("ui.mapper", {
     options: {
       zoom: 8,
       pin: null,
@@ -16,6 +16,10 @@
       this.element.on('customValue', function(event, value) {
         self.val(value);
       });
+
+      this.show();
+      console.log("options", this.options);
+
       if (this.options.center)
         this.location(this.options.center[0], this.options.center[1]);
 
@@ -30,7 +34,6 @@
         this.addPoint(pos);
 
 
-      this.show();
       if (this.options.markOnClick) this.markOnClick();
     },
 
@@ -61,32 +64,18 @@
       if ($.isArray(value)) 
         value = { id: value[0], latitude: value[1], longitude: value[2], color: value[3], hint: value[4] };
       var colors = this.options.colors;
-      var self = this;
-      var map = this.map;
 
-      var color = value[3];
-      var icon_path = this.options.icon_path+colors[color]+'-dot.png';
+      var icon_path = this.options.icon_path+colors[value.color]+'-dot.png';
 
-      var id = value[0];
-      var marker = L.marker([parseFloat(value.latitude), parseFloat(value.longitude)],
-        {icon: {
-          iconUrl: icon_path,
-          iconSize:     [38, 95], // size of the icon
-          shadowSize:   [50, 64], // size of the shadow
-          iconAnchor:   [22, 94], // point of the icon which will correspond to marker's location
-          shadowAnchor: [4, 62],  // the same for the shadow
-          popupAnchor:  [-3, -76]         
-        }
-      }).addTo(this.map);
-      self.markers[id] = marker;
-      // if (value.length < 4) return;
-      // self.hints[id] =  new google.maps.InfoWindow({content: value[4]});
-      // google.maps.event.addDomListener(marker, 'mouseover', function() {
-      //   self.hints[marker.id].open(self.map, marker);
-      // });
-      // google.maps.event.addDomListener(marker, 'mouseout', function() {
-      //   self.hints[marker.id].close();
-      // });
+      icon = L.icon($.extend({iconUrl: icon_path}, this.options));
+      var marker = L.marker(
+        [parseFloat(value.latitude), parseFloat(value.longitude)],
+        {icon: icon }
+      )
+      .bindPopup(value.hint);
+      marker.on('mousemove', () => { marker.openPopup() });
+      marker.addTo(this.map);
+      this.markers[value.id] = marker;
     },
 
     addPoints: function(data)
@@ -99,6 +88,7 @@
 
     show: function()
     {
+      if (this.map) return;
       this.options.zoom = parseInt(this.options.zoom);
       var props = {
         center: this.position,
@@ -120,7 +110,6 @@
 
     location: function(latitude, longitude, show)
     {
-      //this.position = new google.maps.LatLng(latitude, longitude);
       this.options.center = [latitude, longitude];
       if (show === undefined || show === true)
         this.show();
@@ -140,9 +129,9 @@
     {
       var marker = this.markers[id];
       if (!marker) return this;
-      if (on===undefined) on = marker.getAnimation() != null;
-      if (animation === undefined) animation = google.maps.Animation.BOUNCE;
-      marker.setAnimation(on? animation: null);
+      // if (on===undefined) on = marker.getAnimation() != null;
+      // if (animation === undefined) animation = google.maps.Animation.BOUNCE;
+      // marker.setAnimation(on? animation: null);
       return this;
     },
 

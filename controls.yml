@@ -230,20 +230,7 @@ form:
 
 google_map:
   type: map
-  create: googlemap
   script: /common/googlemap.js
-
-map:
-  tag: div
-  zoom: 5
-  pin: blue_map_marker
-  icon_path: /
-  colors:
-   - blue
-   - green
-   - yellow
-   - orange
-   - pink
 
 h1:
   type: heading
@@ -408,6 +395,19 @@ list_text:
   tag: li
   text: $id
 
+map:
+  tag: div
+  zoom: 5
+  pin: blue_map_marker
+  create: mapper
+  icon_path: /
+  colors:
+   - blue
+   - green
+   - yellow
+   - orange
+   - pink
+
 menu:
   type: container
   tag: ul
@@ -444,7 +444,6 @@ one_row_table:
 
 openstreet_map:
   type: map
-  create: osmap
   script: /common/openstreetmap.js
   access_token: pk.eyJ1IjoiZmh1bHUiLCJhIjoiY2twcG83eTZuMDB6MzJ2bXA4N2dxdG93OSJ9.pZiknsEg0gUxkCroqgjzhg
 
