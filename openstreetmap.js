@@ -34,23 +34,25 @@
         this.addPoint(pos);
 
 
-      if (this.options.markOnClick) this.markOnClick();
+      this.markOnClick();
     },
 
     markOnClick: function()
     {
+      if (!this.options.marker.addOnClick) return this;
       var self = this;
-      this.map.addListener('click', function(event) {
-        if (self.options.markOnClick == 'toggle') {
-          var marker = self.markers['click'];
-          if (marker != undefined) marker.setMap(null);
-        }
-        var pos = event.latLng
-        self.markers['click'] = new google.maps.Marker({
-          position: event.latLng,
-          map: self.map
+      this.map.on('click', function(event) {
+        var marker = self.markers['click'];
+        if (marker != undefined && self.options.marker.toggleOnClick) marker.remove(self.map);
+        var pos = [event.latlng.lat, event.latlng.lng];
+        marker = self.addPoint({
+          id: 'click',
+          latitude: pos[0],
+          longitude: pos[1],
+          color: self.options.marker.default_color,
+          hint: self.options.marker.hint
         });
-        self.element.trigger('map_clicked', [pos])
+        self.element.trigger('map_click', [pos, marker])
       });
     },
 
@@ -63,19 +65,23 @@
     {
       if ($.isArray(value)) 
         value = { id: value[0], latitude: value[1], longitude: value[2], color: value[3], hint: value[4] };
-      var colors = this.options.colors;
+      var colors = this.options.marker.colors;
 
-      var icon_path = this.options.icon_path+colors[value.color]+'-dot.png';
+      var icon_path = this.options.marker.path+colors[value.color]+'-dot.png';
 
-      icon = L.icon($.extend({iconUrl: icon_path}, this.options));
+      icon = L.icon($.extend({iconUrl: icon_path}, this.options.marker));
       var marker = L.marker(
         [parseFloat(value.latitude), parseFloat(value.longitude)],
         {icon: icon }
-      )
-      .bindPopup(value.hint);
-      marker.on('mousemove', () => { marker.openPopup() });
+      );
+      if (value.hint) {
+        marker.bindPopup(value.hint)
+         .on('mousemove', () => { marker.openPopup() });
+      }
       marker.addTo(this.map);
       this.markers[value.id] = marker;
+
+      return marker;
     },
 
     addPoints: function(data)
@@ -90,13 +96,7 @@
     {
       if (this.map) return;
       this.options.zoom = parseInt(this.options.zoom);
-      var props = {
-        center: this.position,
-        zoom: this.options.zoom,
-        //mapTypeId: google.maps.MapTypeId.ROADMAP
-      };
-     // this.map = new google.maps.Map(this.element[0], props);
-      console.log("map centre", this.options.center);
+      if (!this.element.exists()) return;
       this.map = L.map(this.element[0].id).setView(this.options.center, this.options.zoom);
       L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
         attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',

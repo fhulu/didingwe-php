@@ -398,15 +398,18 @@ list_text:
 map:
   tag: div
   zoom: 5
-  pin: blue_map_marker
   create: mapper
-  icon_path: /
-  colors:
-   - blue
-   - green
-   - yellow
-   - orange
-   - pink
+  marker:
+    path: /
+    default_color: 0
+    addOnClick: false
+    toggleOnClick: false
+    colors:
+      - blue
+      - green
+      - yellow
+      - orange
+      - pink
 
 menu:
   type: container
@@ -446,6 +449,7 @@ openstreet_map:
   type: map
   script: /common/openstreetmap.js
   access_token: pk.eyJ1IjoiZmh1bHUiLCJhIjoiY2twcG83eTZuMDB6MzJ2bXA4N2dxdG93OSJ9.pZiknsEg0gUxkCroqgjzhg
+  riseOnHover: true
 
 p: { tag: p}
 
