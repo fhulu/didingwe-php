@@ -221,6 +221,7 @@ class validator
 
   function get_internal_function($func)
   {
+    if (is_array($func)) return false;
     if ($func[0] == '/') return 'regex';
     list($func) = expand_function($func);
     return method_exists($this, $func)? $func: false;
@@ -249,20 +250,26 @@ class validator
       }
     }
 
-    foreach($funcs as $func) {
-      $func = trim($func);
-      if ($func[0] == '/') {
-        $args = array($func);
-        $func = 'regex';
+    foreach($funcs as $func) { 
+      if (is_array($func)) {
+        [$func, $args] = assoc_element($func);
+        if (!is_array($args)) $args = [$args];
       }
       else {
-        list($func, $args) = expand_function($func);
-        $matches = array();
-        preg_match_all('/[^,]+|\(.*\)/', $args, $matches);
-        $args = $matches[0];
-        if ($func == 'depends') {
-          $first = array_shift($args);
-          $args = array($first, implode(',', $args));
+        $func = trim($func);
+        if ($func[0] == '/') {
+          $args = array($func);
+          $func = 'regex';
+        }
+        else {
+          list($func, $args) = expand_function($func);
+          $matches = array();
+          preg_match_all('/[^,]+|\(.*\)/', $args, $matches);
+          $args = $matches[0];
+          if ($func == 'depends') {
+            $first = array_shift($args);
+            $args = array($first, implode(',', $args));
+          }
         }
       }
       $this->update_args($args);
