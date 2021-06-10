@@ -69,7 +69,7 @@ function replace_vars($str, $values, $callback=null)
     $value = $values[$key];
     if ($callback && $callback($value, $key) === false) continue;
     $value = str_replace('$', '{%}',$value);
-    $str = preg_replace('/\$'.$key.'(\W?)/',$value.'$1', $str);
+    $str = preg_replace('/\$'.$key.'(\W|\b)/',$value.'$1', $str);
     $str = str_replace('{%}', '$',$str);
   }
   return $str;
