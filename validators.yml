@@ -112,7 +112,7 @@ int_tel:
 is: must_be($1)
 
 less:
-  error: $name must be less that $1 ($v1)
+  error: $name must be less than $1 ($v1)
 
 less_equal:
   error: $name must not be greater than $1 ($v1)
