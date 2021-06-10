@@ -18,10 +18,7 @@
       });
 
       this.show();
-      console.log("options", this.options);
 
-      if (this.options.center)
-        this.location(this.options.center[0], this.options.center[1]);
 
       if (this.options.load) {
         var data = { action: 'data', path: this.options.path + '/load', key: this.options.key };
@@ -94,18 +91,20 @@
 
     show: function()
     {
-      if (this.map) return;
       this.options.zoom = parseInt(this.options.zoom);
-      if (!this.element.exists()) return;
-      this.map = L.map(this.element[0].id).setView(this.options.center, this.options.zoom);
-      L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
-        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
-        maxZoom: 18,
-        id: 'mapbox/streets-v11',
-        tileSize: 512,
-        zoomOffset: -1,
-        accessToken: this.options.access_token
-      }).addTo(this.map);
+      if (!this.map) {
+        this.map = L.map(this.element[0].id);
+        L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+          attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+          maxZoom: 18,
+          id: 'mapbox/streets-v11',
+          tileSize: 512,
+          zoomOffset: -1,
+          accessToken: this.options.access_token
+        }).addTo(this.map);
+      }
+      this.map.setView(this.options.center, this.options.zoom);
+      return this;
     },
 
     location: function(latitude, longitude, show)
@@ -113,6 +112,7 @@
       this.options.center = [latitude, longitude];
       if (show === undefined || show === true)
         this.show();
+      return this;
     },
 
     val: function(value)
@@ -150,9 +150,12 @@
     center: function(id)
     {
       var marker = this.markers[id];
-      if (marker)
-        this.map.setCenter(marker.position);
-      return this;
+      if (!marker) {
+        console.warn("No marker with id", id);
+        return this;
+      }
+      var pos = marker.getLatLng();
+      return this.location(pos.lat, pos.lng);
     },
 
     zoom: function(level)
