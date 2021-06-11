@@ -48,8 +48,8 @@
           longitude: pos[1],
           color: self.options.marker.default_color,
           hint: self.options.marker.hint
-        });
-        self.element.trigger('map_click', [pos, marker])
+        })
+        self.element.trigger('map_click', [pos, marker]);
       });
     },
 
@@ -71,10 +71,14 @@
         [parseFloat(value.latitude), parseFloat(value.longitude)],
         {icon: icon }
       );
-      if (value.hint) {
-        marker.bindPopup(value.hint)
-         .on('mousemove', () => { marker.openPopup() });
-      }
+      var el = this.element;
+      var options = this.options.marker;
+      if (value.hint) marker.bindPopup(value.hint);
+      marker.on('mousemove', () => {
+        if (options.popupOnMouseMove) marker.openPopup();
+        el.trigger('marker_mousemove', [value.id]);
+      })
+      .on('click', () => el.trigger('marker_click', [value.id]));
       marker.addTo(this.map);
       this.markers[value.id] = marker;
 
@@ -107,11 +111,9 @@
       return this;
     },
 
-    location: function(latitude, longitude, show)
+    location: function(latitude, longitude)
     {
       this.options.center = [latitude, longitude];
-      if (show === undefined || show === true)
-        this.show();
       return this;
     },
 
@@ -147,22 +149,24 @@
       return this.toggleBounce(this.bouncing, false);
     },
 
-    center: function(id)
-    {
+    getMarker: function(id, warn) {
       var marker = this.markers[id];
-      if (!marker) {
+      if (!marker && warn) 
         console.warn("No marker with id", id);
-        return this;
-      }
+      return marker;
+    },
+
+    center: function(id) {
+      var marker = this.getMarker(id, true);
+      if (!marker) return this;
       var pos = marker.getLatLng();
       return this.location(pos.lat, pos.lng);
     },
 
-    zoom: function(level)
-    {
-      this.map.setZoom(level);
+    zoom: function(level) {
+      if (!level) level = this.options.marker.zoom;
+      this.options.zoom = level;
       return this;
     }
-
   })
 })(jQuery);
