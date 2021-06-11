@@ -404,6 +404,7 @@ map:
     default_color: 0
     addOnClick: false
     toggleOnClick: false
+    bounceOnClick: true
     colors:
       - blue
       - green
@@ -449,7 +450,11 @@ openstreet_map:
   type: map
   script: /common/openstreetmap.js
   access_token: pk.eyJ1IjoiZmh1bHUiLCJhIjoiY2twcG83eTZuMDB6MzJ2bXA4N2dxdG93OSJ9.pZiknsEg0gUxkCroqgjzhg
-  riseOnHover: true
+  marker:
+      bouncingOptions:
+        bounceHeight: 12
+        bounceSpeed: 48
+        exclusive: true  
 
 p: { tag: p}
 

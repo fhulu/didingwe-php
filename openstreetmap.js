@@ -62,24 +62,29 @@
     {
       if ($.isArray(value)) 
         value = { id: value[0], latitude: value[1], longitude: value[2], color: value[3], hint: value[4] };
-      var colors = this.options.marker.colors;
+        var options = this.options.marker;
+        var colors = options.colors;
 
-      var icon_path = this.options.marker.path+colors[value.color]+'-dot.png';
+      var icon_path = options.path+colors[value.color]+'-dot.png';
 
-      icon = L.icon($.extend({iconUrl: icon_path}, this.options.marker));
+      icon = L.icon($.extend({iconUrl: icon_path}, options));
       var marker = L.marker(
         [parseFloat(value.latitude), parseFloat(value.longitude)],
         {icon: icon }
       );
       var el = this.element;
-      var options = this.options.marker;
       if (value.hint) marker.bindPopup(value.hint);
-      marker.on('mousemove', () => {
+      if (options.bouncingOptions) marker.setBouncingOptions(options.bouncingOptions);
+        marker.on('mousemove', () => {
         if (options.popupOnMouseMove) marker.openPopup();
         el.trigger('marker_mousemove', [value.id]);
       })
-      .on('click', () => el.trigger('marker_click', [value.id]));
-      marker.addTo(this.map);
+      .on('click', () => {
+        if (options.bounceOnClick) marker.toggleBouncing();
+        el.trigger('marker_click', [value.id]);
+      })
+      .addTo(this.map);
+
       this.markers[value.id] = marker;
 
       return marker;
@@ -127,31 +132,20 @@
       return this;
     },
 
-    toggleBounce: function(id, on, animation)
-    {
-      var marker = this.markers[id];
+    toggleBounce: function(id, on) {
+      var marker = this.getMarker(id);
       if (!marker) return this;
-      // if (on===undefined) on = marker.getAnimation() != null;
-      // if (animation === undefined) animation = google.maps.Animation.BOUNCE;
-      // marker.setAnimation(on? animation: null);
+      if (on===undefined) marker.toggleBouncing();
+      on? marker.bounce(): marker.stopBouncing();
       return this;
     },
 
-    bounce: function(id)
-    {
-      this.bouncing = id;
-      return this.toggleBounce(id, true);
-    },
-
-    bounceOff: function()
-    {
-      if (!this.bouncing) return this;
-      return this.toggleBounce(this.bouncing, false);
-    },
-
+    bounce: function(id) { return this.toggleBounce(id, true) },
+    bounceOff: function(id) { return this.toggleBounce(id, true) },
+    
     getMarker: function(id, warn) {
       var marker = this.markers[id];
-      if (!marker && warn) 
+      if (!marker && (warn || warn === undefined)) 
         console.warn("No marker with id", id);
       return marker;
     },
