@@ -253,7 +253,7 @@ class validator
     foreach($funcs as $func) { 
       if (is_array($func)) {
         [$func, $args] = assoc_element($func);
-        if (!is_array($args)) $args = [$args];
+        if (!is_array($args) || is_assoc($args)) $args = [$args];
       }
       else {
         $func = trim($func);
@@ -369,6 +369,7 @@ class validator
   function update_args(&$args)
   {
     foreach($args as &$arg) {
+      if (is_array($arg)) continue;
       $arg = trim($arg);
       if ($arg == 'this' || $arg == '$name')
         $arg = $this->name;
@@ -457,6 +458,11 @@ class validator
     $result = $this->db->read_one($sql, MYSQLI_ASSOC);
     if ($result)
       $this->request = array_merge($this->request, $result);
+    return true;
+  }
+
+  function set($values) {
+    $this->request = array_merge($this->request, $values);
     return true;
   }
 }
