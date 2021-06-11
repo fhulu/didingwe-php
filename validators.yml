@@ -97,6 +97,11 @@ future_time:
 greater:
   error: $name must be greater than $1 ($v1)
 
+greater0:
+  valid:
+    - set: { zero: 0}
+    - greater(zero)
+
 greater_equal:
   error: $name must not be less than $1 ($v1)
 
@@ -113,6 +118,11 @@ is: must_be($1)
 
 less:
   error: $name must be less than $1 ($v1)
+
+less0:
+  valid:
+    - set: { zero: 0}
+    - greater(zero)
 
 less_equal:
   error: $name must not be greater than $1 ($v1)
