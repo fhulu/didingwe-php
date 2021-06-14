@@ -72,6 +72,13 @@ check_otp:
             Customer Operations
     - clear_values
 
+check_session:
+  validate: none
+  post:
+    - read_session: uid
+    - if !$uid:
+        redirect: $landing_content
+
 complete_registration:
   type: wizard_page
   width: 700
@@ -392,3 +399,5 @@ register:
     - check_otp: { clear: true }
     - confirm_registration: { clear: true}
     - complete_registration: { prev: false}
+
+

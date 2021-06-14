@@ -20,9 +20,6 @@
 <link href="/jquery/smoothness/ui.css" media="screen" rel="stylesheet" type="text/css" />
 <link href="/common/jquery.datetimepicker.css" media="screen" rel="stylesheet" type="text/css" />
 
-<!-- Bootstrap -->
-<link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-
 <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
 <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
 <!--[if lt IE 9]>
@@ -61,6 +58,7 @@
 
   global $session;
   log::debug_json("BROWSER REQUEST", $_REQUEST);
+  $config = array_merge($config, ['session_check_interval'=>60]);
   $content = $_REQUEST['content'];
   $prefix = $_SESSION['uid'] == 0? 'landing': 'session';
   $page = $config[$prefix.'_page'];
@@ -78,5 +76,14 @@
 <script>
 $(function() {
   $("body").page(<?=json_encode($options);?>);
+  var session = '<?=isset($_SESSION['uid'])?>';
+  if (session) {
+    setInterval(()=> {
+      var params = {action: 'action', path: 'user/check_session'};
+      $.json('/', {data: params}, (result)=> {
+        $('#<?=$page?>').trigger('server_response', [result]); 
+      })   
+    }, <?=$config['session_check_interval']*1000?>);
+  }
 });
 </script>
