@@ -32,8 +32,7 @@ class validator
     $this->db = is_null($db_conn)? $db: $db_conn;
   }
 
-  function regex($regex)
-  {
+  function regex($regex) {
     return preg_match($regex, $this->value) != 0;
   }
 
@@ -55,11 +54,10 @@ class validator
     return $this->request[$name];
   }
 
-  function equal($name)
-  {
-    return $this->value == $this->value_of($name);
-  }
-
+  function equal($name) { return $this->value == $this->value_of($name); }
+ 
+  function equals($name) { return $this->equal($name); }
+  
   function less($name)
   {
     return $this->value < $this->value_of($name);
