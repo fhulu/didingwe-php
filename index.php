@@ -76,14 +76,14 @@
 <script>
 $(function() {
   $("body").page(<?=json_encode($options);?>);
-  var session = '<?=isset($_SESSION['uid'])?>';
-  if (session) {
-    setInterval(()=> {
-      var params = {action: 'action', path: 'user/check_session'};
-      $.json('/', {data: params}, (result)=> {
-        $('#<?=$page?>').trigger('server_response', [result]); 
-      })   
-    }, <?=$config['session_check_interval']*1000?>);
-  }
+  var timer;
+  var start_timer = ()=> {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(()=> {
+      window.location.href = '/<?=$content?>';
+    }, <?=$config['session_timeout']*1000?>);
+  };
+  start_timer();
+  $(document).bind("mousemove keypress click", start_timer);
 });
 </script>
