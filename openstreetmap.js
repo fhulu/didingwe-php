@@ -119,6 +119,7 @@
     location: function(latitude, longitude)
     {
       this.options.center = [latitude, longitude];
+      this.map.panTo(this.options.center);
       return this;
     },
 
@@ -160,6 +161,7 @@
     zoom: function(level) {
       if (!level) level = this.options.marker.zoom;
       this.options.zoom = level;
+      this.map.setZoom(level);
       return this;
     }
   })
