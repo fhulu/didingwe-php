@@ -1,14 +1,13 @@
-<?php session_start();
+<?php 
   require_once '../common/log.php';
   log::init('index', log::DEBUG);
+  require_once '../common/session.php';
   require_once('../common/utils.php');
-  $action = REQUEST('action');
   if (!is_null($action)) {
     require_once('../common/page.php');
     return;
   }
 
-  require_once '../common/session.php';
   global  $session;
   $tag = is_null($session)?time(): $session->id;
 ?>
@@ -58,7 +57,7 @@
 
   global $session;
   log::debug_json("BROWSER REQUEST", $_REQUEST);
-  $config = array_merge($config, ['session_check_interval'=>60]);
+  $config = array_merge(['session_timeout'=>300], $config);
   $content = $_REQUEST['content'];
   $prefix = $_SESSION['uid'] == 0? 'landing': 'session';
   $page = $config[$prefix.'_page'];
@@ -81,7 +80,7 @@ $(function() {
     if (timer) clearTimeout(timer);
     timer = setTimeout(()=> {
       window.location.href = '/<?=$content?>';
-    }, <?=$config['session_timeout']*1000?>);
+    }, <?=($config['session_timeout']+60)*1000?>);
   };
   start_timer();
   $(document).bind("mousemove keypress click", start_timer);
