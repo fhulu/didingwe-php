@@ -133,8 +133,8 @@ money:
   valid: /^\d+(\.\d+)?$/
 
 must_be:
-  valid: equal($1)
-  error: $name must be $1
+  valid: /^$1$/
+  error: $name must be $2
 
 name:
   valid:
