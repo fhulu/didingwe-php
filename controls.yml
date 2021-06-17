@@ -411,6 +411,14 @@ map:
       - yellow
       - orange
       - pink
+    metadata: 
+      id: 0
+      name: 1
+      latitude: 2
+      longitude: 3
+      color: 4
+      hint: 5
+    
 
 menu:
   type: container
@@ -518,8 +526,11 @@ processing:
 
 question_input:
   templates: div
+  question: $name
   text: <label>$question</label>$field
-  subject: { class: [input] }
+  subject: 
+    class: [input]
+    style: { padding: 6, box-sizing: border-box }
   style:
     margin-top: 16px
     width: 100%

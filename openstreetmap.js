@@ -60,10 +60,14 @@
 
     addPoint: function(value)
     {
-      if ($.isArray(value)) 
-        value = { id: value[0], latitude: value[1], longitude: value[2], color: value[3], hint: value[4] };
-        var options = this.options.marker;
-        var colors = options.colors;
+      var options = this.options.marker;
+      if ($.isArray(value)) {
+        var values = {};
+         $.each(options.metadata, (key, index) => values[key] = value[index]);
+        value = values;
+      }
+
+      var colors = options.colors;
 
       var icon_path = options.path+colors[value.color]+'-dot.png';
 
@@ -77,11 +81,11 @@
       if (options.bouncingOptions) marker.setBouncingOptions(options.bouncingOptions);
         marker.on('mousemove', () => {
         if (options.popupOnMouseMove) marker.openPopup();
-        el.trigger('marker_mousemove', [value.id]);
+        el.trigger('marker_mousemove', [value.id, value]);
       })
       .on('click', () => {
         if (options.bounceOnClick) marker.toggleBouncing();
-        el.trigger('marker_click', [value.id]);
+        el.trigger('marker_click', [value.id, value]);
       })
       .addTo(this.map);
 
