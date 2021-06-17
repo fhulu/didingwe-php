@@ -1,4 +1,5 @@
 <?php
+require_once("log.php");
 $config = load_yaml(".config.yml", true);
 
 function at($array, $index)
