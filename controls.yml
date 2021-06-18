@@ -526,7 +526,6 @@ processing:
 
 question_input:
   templates: div
-  question: $name
   text: <label>$question</label>$field
   subject: 
     class: [input]
