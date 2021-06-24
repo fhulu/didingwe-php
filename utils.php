@@ -209,9 +209,14 @@ function replace_fields(&$options, $context, $callback=null)
     $options = replace_vars($options, $context, $callback);
     return;
   }
-  array_walk_recursive($options, function(&$value) use(&$context, $callback) {
+  $replaced = false;
+  array_walk_recursive($options, function(&$value) use(&$context, $callback, &$replaced) {
+    $old = $value;
     $value = replace_vars($value, $context, $callback);
+    if ($value !== $old) $replaced = true;
   });
+  if ($replaced)
+    replace_fields($options, $context, $callback);
 }
 
 function replace_indices($str, $values)
