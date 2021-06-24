@@ -6,3 +6,4 @@ RewriteRule ^(\w+)(\/\w+)?$ index.php?content=$1&$2 [L]
   Order allow,deny
   Deny from all
 </FilesMatch>
+php_flag zend.exception_ignore_args off

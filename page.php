@@ -9,20 +9,27 @@ use PHPMailer\PHPMailer\PHPMailer;
 class user_exception extends Exception {};
 
 $page = new page();
+$in_exception = false;
 try {
   $page->process();
 }
 catch (user_exception $exception) {
+  if ($in_exception) return;
+  $in_exception = true;
   log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
-  log::stack($exception);
+  $stack = log::stack($exception);
   page::show_dialog('/breach');
+  page::report_error($stack);
 }
 catch (Exception $exception)
 {
-  log::stack($exception);
+  if ($in_exception) return;
+  $in_exception = true;
+  $stack = log::stack($exception);
   log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
   if ($_REQUEST['path'] != 'error_page')
     page::show_dialog('/error_page');
+  page::report_error($stack);
 }
 $page->output();
 
@@ -996,7 +1003,7 @@ class page
     $options = page::merge_options($this->fields['send_email'], $options);
     $options = page::merge_options($this->get_expanded_field('send_email'), $options);
     global $config;
-    $options = page::merge_options($options, $config['send_email']);
+    $options = page::merge_options($config['send_email'], $options);
     
     require_once './PHPMailer/src/Exception.php';
     require_once './PHPMailer/src/PHPMailer.php';
@@ -1010,7 +1017,9 @@ class page
     if (is_array($from))
       $options = array_merge($options, ['from'=>$from[0], 'fromName' => $from[1] ] );
 
-    log::debug_json("EMAIL OPTIONS", $options);
+    replace_fields($options, $config);
+    replace_fields($options, $options);
+    log::debug_json("EMAIL OPTIONS", $options);    
     static $aliases = ["to"=>"address", "message"=>"body"];
     try {
       foreach ($options as $name=>$value) {
@@ -1236,5 +1245,18 @@ class page
     $stm = $this->db->mysqli->prepare($sql);
     $stm->bind_param($types, ...$vars);
     $stm->execute();
+  }
+
+  static function report_error($stack) {
+    global $config;
+    $reporting = $config['error_reporting'];
+    if (!$reporting || !$reporting['send_email']) return;
+    $options = $reporting['email'];
+    $depth = $options['stack_depth'];
+    if ($depth) $stack = array_slice($stack, sizeof($stack) - $depth);
+    $stack = array_map(function($v) { return htmlentities($v); }, $stack);
+    $options['call_stack'] = implode("<br>", $stack);
+    global $page;
+    $page->send_email($options);
   }
 }

@@ -51,39 +51,43 @@ class log
     $message = str_replace("\n", " ", $message);
     $message = str_replace("\r", " ", $message);
 
-  if (!is_null($this->instance))
+    if (!is_null($this->instance))
     $file = fopen(dirname($_SERVER['SCRIPT_FILENAME']).'/../log/'.date('Y-m-d').'-'.$this->instance .'.log','a+');
-  else $file = 'STDOUT';
-  $pid = getmypid();
-  fputs($file, date('Y-m-d H:i:s')." $this->instance($pid) ".log::$subject[$level]. ": $message\n");
-      if ($file != 'STDOUT') fclose($file);
+    else $file = 'STDOUT';
+    $pid = getmypid();
+    $message = date('Y-m-d H:i:s')." $this->instance($pid) ".log::$subject[$level]. ": $message\n";
+    fputs($file, $message);
+    if ($file != 'STDOUT') fclose($file);
+    return $message;
   }
 
   static function log($level, $message)
   {
     global $logger;
     if (is_null($logger)) return;
-    $logger->write($level, $message);
+    return $logger->write($level, $message);
   }
 
   static function stack($exception)
   {
     $index = 0;
     $stack = array_reverse($exception->getTrace());
+    $messages = [];
     foreach($stack as $trace) {
-      log::error("TRACE $index. ".$trace['file']." line ".$trace['line']." function ".$trace['class'] ."::".$trace['function'] ."(".json_encode($trace['args']).')');
+      $messages[]  = log::error("TRACE $index. ".$trace['file']." line ".$trace['line']." function ".$trace['class'] ."::".$trace['function'] ."(".json_encode($trace['args']).')');
       ++$index;
     }
+    return $messages;
   }
 
   static function debug_json($name, $value)
   {
-    log::debug("$name ".json_encode($value));
+    return log::debug("$name ".json_encode($value));
   }
 
-  static function info($message) { log::log(self::INFO, $message); }
-  static function warn($message) { log::log(self::WARNING, $message); }
-  static function error($message) { log::log(self::ERROR, $message); }
-  static function debug($message) { log::log(self::DEBUG, $message); }
-  static function trace($message) { log::log(self::TRACE, $message); }
+  static function info($message) { return log::log(self::INFO, $message); }
+  static function warn($message) { return log::log(self::WARNING, $message); }
+  static function error($message) { return log::log(self::ERROR, $message); }
+  static function debug($message) { return log::log(self::DEBUG, $message); }
+  static function trace($message) { return log::log(self::TRACE, $message); }
 }
