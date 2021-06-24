@@ -73,8 +73,15 @@ class log
     $index = 0;
     $stack = array_reverse($exception->getTrace());
     $messages = [];
+    global $config;
+    $hidden_funcs = $config['log_hidden_functions'];
+    $hidden_marker = $config['log_hidden_marker'];
     foreach($stack as $trace) {
-      $messages[]  = log::error("TRACE $index. ".$trace['file']." line ".$trace['line']." function ".$trace['class'] ."::".$trace['function'] ."(".json_encode($trace['args']).')');
+      $message = "TRACE $index. ".$trace['file']." line ".$trace['line']." function ".$trace['class'] ."::".$trace['function'] ."(".json_encode($trace['args']).')';
+      foreach($hidden_funcs as $func) {
+        $message = preg_replace("/$func\([^)]*\)/","$func($hidden_marker)", $message);
+      }
+      $messages[]  = log::error($message);
       ++$index;
     }
     return $messages;
