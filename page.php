@@ -16,7 +16,7 @@ try {
 catch (user_exception $exception) {
   if ($in_exception) return;
   $in_exception = true;
-  log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
+  $stack[] = log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
   $stack = log::stack($exception);
   page::show_dialog('/breach');
   page::report_error($stack);
@@ -26,7 +26,7 @@ catch (Exception $exception)
   if ($in_exception) return;
   $in_exception = true;
   $stack = log::stack($exception);
-  log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
+  $stack[] = log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
   if ($_REQUEST['path'] != 'error_page')
     page::show_dialog('/error_page');
   page::report_error($stack);

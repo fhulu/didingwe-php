@@ -45,9 +45,21 @@ class log
 	  }
 
 
+  static function replace_hidden_patterns($message) {
+    global $config;
+    if (!$config) return $message;  
+    $patterns = $config['log_hidden_patterns'];
+    if (!isset($patterns) || !is_array($patterns)) return $message;
+    foreach($patterns as $pattern) {
+      [$regex,$replacement] = assoc_element($pattern);
+      $message = preg_replace("/$regex/",$replacement, $message);
+    }
+    return $message;
+  }
+
   function write($level, $message)
   {
-    if ($this->level < $level) return;
+    if ($this->level < $level) return $message;
     $message = str_replace("\n", " ", $message);
     $message = str_replace("\r", " ", $message);
 
@@ -55,6 +67,7 @@ class log
     $file = fopen(dirname($_SERVER['SCRIPT_FILENAME']).'/../log/'.date('Y-m-d').'-'.$this->instance .'.log','a+');
     else $file = 'STDOUT';
     $pid = getmypid();
+    $message = log::replace_hidden_patterns($message);
     $message = date('Y-m-d H:i:s')." $this->instance($pid) ".log::$subject[$level]. ": $message\n";
     fputs($file, $message);
     if ($file != 'STDOUT') fclose($file);
@@ -73,15 +86,9 @@ class log
     $index = 0;
     $stack = array_reverse($exception->getTrace());
     $messages = [];
-    global $config;
-    $hidden_funcs = $config['log_hidden_functions'];
-    $hidden_marker = $config['log_hidden_marker'];
     foreach($stack as $trace) {
       $message = "TRACE $index. ".$trace['file']." line ".$trace['line']." function ".$trace['class'] ."::".$trace['function'] ."(".json_encode($trace['args']).')';
-      foreach($hidden_funcs as $func) {
-        $message = preg_replace("/$func\([^)]*\)/","$func($hidden_marker)", $message);
-      }
-      $messages[]  = log::error($message);
+      $messages[] = log::error($message);
       ++$index;
     }
     return $messages;
