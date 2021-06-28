@@ -19,7 +19,7 @@ catch (user_exception $exception) {
   $stack[] = log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
   $stack = log::stack($exception);
   page::show_dialog('/breach');
-  page::report_error($stack);
+  $page->report_error($stack);
 }
 catch (Exception $exception)
 {
@@ -29,7 +29,7 @@ catch (Exception $exception)
   $stack[] = log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
   if ($_REQUEST['path'] != 'error_page')
     page::show_dialog('/error_page');
-  page::report_error($stack);
+  $page->report_error($stack);
 }
 $page->output();
 
@@ -485,11 +485,9 @@ class page
   {
     $this->types['control'] = $this->get_expanded_field('control');
     $this->types['template'] = $this->get_expanded_field('template');
-    return array(
-      'path'=>implode('/',$this->path),
-      'fields'=>$this->fields,
-      'types'=>$this->types
-    );
+    $path = implode('/',$this->path);
+    $this->report_action('read', $path);
+    return [ 'path'=>$path, 'fields'=>$this->fields, 'types'=>$this->types ];
   }
 
 
@@ -700,12 +698,14 @@ class page
   function action()
   {
     $invoker = $this->context;
-    log::debug_json("ACTION ".last($this->path), $invoker);
+    $action = last($this->path);
+    log::debug_json("ACTION $action", $invoker);
     $validate = at($invoker, 'validate');
     $this->merge_fields($this->fields);
     if ($validate != 'none' && !$this->validate($this->fields, $validate))
       return null;
-
+  
+    $this->report_action($action, $_REQUEST);
     $result = $this->reply($invoker);
     if (!page::has_errors() && array_key_exists('audit', $invoker))
       $this->audit($invoker, $result);
@@ -1247,16 +1247,52 @@ class page
     $stm->execute();
   }
 
-  static function report_error($stack) {
+  function do_reporting($type, $modifier_callback) {
     global $config;
-    $reporting = $config['error_reporting'];
-    if (!$reporting || !$reporting['send_email']) return;
-    $options = $reporting['email'];
-    $depth = $options['stack_depth'];
-    if ($depth) $stack = array_slice($stack, sizeof($stack) - $depth);
+    $options = $config["${type}_reporting"];
+    if (!$options || !sizeof($options['medium'])) return;
+    foreach($options['medium'] as $medium) {
+      // copy over all parent options except the current medium options
+      $copy = $options;
+      unset($copy[$medium]);
+      $medium_options = merge_options($copy, $options[$medium]);
+
+      if ($modifier_callback($medium_options) !== false)
+        $this->{"report_${type}_by_${medium}"}($medium_options);
+    }
+  }
+
+  function report_error($stack) {
+    $this->do_reporting('error', function(&$options) use ($stack) {
+      $depth = $options['stack_depth'];
+      if ($depth) $stack = array_slice($stack, sizeof($stack) - $depth);
+      $options['call_stack'] = $stack;  
+    });
+  }
+
+  function report_error_by_email($options) {
+    $stack = $options['call_stack'];
     $stack = array_map(function($v) { return htmlentities($v); }, $stack);
     $options['call_stack'] = implode("<br>", $stack);
-    global $page;
-    $page->send_email($options);
+    $this->send_email($options);
+  }
+
+  function report_action($action, $arguments) {
+    $this->do_reporting('action', function(&$options) use ($action, $arguments) {
+      foreach ($options['actions'] as $required_action) {
+        [$required_action, $required_arguments] = assoc_element($required_action);
+        if ($required_action != $action) continue;
+        if ($required_arguments && $required_arguments != $arguments) continue;
+        $options['action'] = $action;
+        $options['arguments'] = $arguments;
+        return;
+      }  
+      return false;
+    });
+  }
+
+  function report_action_by_email($options) {
+    $options['arguments'] = log::replace_hidden_patterns(json_encode($options['arguments']));
+    $this->send_email($options);
   }
 }
