@@ -1265,7 +1265,7 @@ class page
   function report_error($stack) {
     $this->do_reporting('error', function(&$options) use ($stack) {
       $depth = $options['stack_depth'];
-      if ($depth) $stack = array_slice($stack, sizeof($stack) - $depth);
+      if ($depth < sizeof($stack)) $stack = array_slice($stack, sizeof($stack) - $depth);
       $options['call_stack'] = $stack;  
     });
   }
