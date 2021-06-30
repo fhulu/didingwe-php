@@ -7,6 +7,7 @@ use PHPMailer\PHPMailer\PHPMailer;
 #use PHPMailer\PHPMailer\Exception;
 
 class user_exception extends Exception {};
+class expired_session_exception extends Exception {};
 
 $page = new page();
 $in_exception = false;
@@ -16,10 +17,16 @@ try {
 catch (user_exception $exception) {
   if ($in_exception) return;
   $in_exception = true;
-  $stack[] = log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
+  $stack[] = log::error("UNCAUGHT EXCEPTION: ". $exception->getMessage());
   $stack = log::stack($exception);
   page::show_dialog('/breach');
-  $page->report_error($stack);
+}
+catch (expired_session_exception $exception) {
+  if ($in_exception) return;
+  $in_exception = true;
+  page::show_dialog('/breach');
+  global $content;
+  page::redirect("/$content");
 }
 catch (Exception $exception)
 {
@@ -691,6 +698,8 @@ class page
     $detail = addslashes($detail);
     $user = $this->read_user();
     $user_id = $user['uid'];
+    if (!$user_id)
+      throw new user_exception("Expired sesssion");
     $db->insert("insert into audit_trail(user_id, action, detail)
       values($user_id, '$name', '$detail')");
   }
@@ -718,10 +727,17 @@ class page
     $user = $page->user;
     
     $options = null_merge(['uid'=>$user['uid'] ], $options);
-    return replace_vars($sql, $options, function(&$val, $key) {
+    $sql = replace_vars($sql, $options, function(&$val, $key) {
+      if ($key == 'uid' && !$val)
+        throw new expired_session_exception();
       if ($key != "password_hash" && $key != "hash")
         $val = addslashes($val);
     });
+
+    if (preg_match('/\$uid\b/', $sql))
+      throw new expired_session_exception();
+
+    return $sql;
   }
 
   function sql($sql)
@@ -1250,7 +1266,7 @@ class page
   function do_reporting($type, $modifier_callback) {
     global $config;
     $options = $config["${type}_reporting"];
-    if (!$options || !sizeof($options['medium'])) return;
+    if (!$options || !is_array($options['medium']) || !sizeof($options['medium'])) return;
     foreach($options['medium'] as $medium) {
       // copy over all parent options except the current medium options
       $copy = $options;
