@@ -7,19 +7,6 @@ require_once('q.php');
 class user_exception extends Exception {};
 
 try {
-  log::debug("REQUEST SEQ ". $_REQUEST['_seq']);
-  log::debug("SESSION SEQ ". $_SESSION['_seq']);
-  if ($_REQUEST['_seq'] > 0 && isset($_SESSION['_seq']) && $_SESSION['_seq'] == $_REQUEST['_seq']) {
-    log::error("Duplicate request detected at seq ".$_REQUEST['_seq']);
-    $output = json_encode($_SESSION['output']);
-    log::warn("RETURNING PREVOUS OUTPUT", $output);
-    header('Content-Type: application/json');
-    echo $output;
-    return;
-  }
-  if (isset($_REQUEST['_seq']))
-    $_SESSION['_seq'] = $_REQUEST['_seq'];
-
   global $page;
   $page = new page();
   $page->process();
@@ -41,7 +28,7 @@ $page->output();
 class page
 {
   static $fields_stack = array();
-  static $post_items = array('audit', 'call', 'clear_session', 'clear_values', 'db_name', 'deleted', 'dynamic', 'error', 
+  static $post_items = array('audit', 'call', 'clear_session', 'clear_values', 'db_name', 'deleted', 'error', 
     'let', 'keep_values','post', 'q', 'read', 'valid', 'validate', 'write_session');
   static $query_items = array('call', 'datarow', 'let', 'keep_values', 'post', 'read_session', 'read_config', 'read_values', 'ref_list',
     'sql', 'sql_values', 'sql_values_array', 'refresh');
@@ -96,7 +83,7 @@ class page
     $this->page_stack = array();
     $this->types = array();
     $this->validated = array();
-    $this->rendering = $this->method == 'read';
+    $this->rendering = $this->method === 'read';
     $this->context = array();
     $this->aborted = false;
     $this->answer = [];
@@ -113,10 +100,10 @@ class page
     $this->roles = $this->get_module('auth')->get_roles();
     log::debug_json("SESSION", $_SESSION);
     $path = $this->path;
-    if ($path[0] == '/') $path = substr ($path, 1);
+    if ($path[0] === '/') $path = substr ($path, 1);
 
     $path = explode('/', $path);
-    if (last($path) == '') array_pop($path);
+    if (last($path) === '') array_pop($path);
 
     $this->object = $this->page = $path[0];
     if (sizeof($path) < 2)
@@ -186,7 +173,7 @@ class page
   function load()
   {
 
-    if (sizeof(page::$fields_stack) == 0) {
+    if (sizeof(page::$fields_stack) === 0) {
       $this->load_field_stack('controls', page::$fields_stack);
       $this->load_field_stack('fields', page::$fields_stack);
     }
@@ -256,7 +243,7 @@ class page
   function merge_type(&$field, &$added = array())
   {
     $type = $field['type'];
-    if (!isset($type) || $type == 'none'  || in_array($type, $this->expand_stack, true)) return $field;
+    if (!isset($type) || $type === 'none'  || in_array($type, $this->expand_stack, true)) return $field;
     if (is_string($type) && strpos($type, '$') !== false) {
       global $config;
       $new_type = replace_vars($type, $this->request);
@@ -286,16 +273,16 @@ class page
       else
         $key = $value;
 
-      if ($key == 'type') {
+      if ($key === 'type') {
         $type = $this->get_merged_field($values);
         continue;
       }
-      if ($key == 'default') {
+      if ($key === 'default') {
         $default = $values;
         continue;
       }
 
-      if ($key[0] == '$') {
+      if ($key[0] === '$') {
         $key = substr($key, 1);
         $values = merge_options($values, $parent[$key]);
       }
@@ -342,7 +329,7 @@ class page
   {
     $request = $this->request;
     $request['path'] = $path;
-    if ($request['action'] == 'action') $request['action'] = 'read';
+    if ($request['action'] === 'action') $request['action'] = 'read';
     $page = new page($request);
     $page->sub_page = true;
     $page->process();
@@ -437,7 +424,7 @@ class page
         $field[$key] = $parent[$key];
       else if (is_array($value))
         $field[$key] = merge_options($parent[$key], $value);
-      else if ($value[0] == '$')
+      else if ($value[0] === '$')
         $field[$key] = $parent[substr($value,1)];
     }
   }
@@ -462,7 +449,7 @@ class page
     list($class, $method) = explode('.', $x);
     $options = $config[$x];
     $active = !isset($options['active']) || $options['active'];
-    return $class == 'this' || in_array($class, $config['modules']) && $active;
+    return $class === 'this' || in_array($class, $config['modules']) && $active;
   }
 
   function get_module($class, &$method="")
@@ -510,14 +497,14 @@ class page
   {
     $this->replace_vars($fields);
     walk_recursive_down($fields, function($value, $key, &$parent) {
-      if ($key == "attr") return false;
-      if (!is_assoc($parent)) {
+      if ($key === "attr") return false;
+      if (is_numeric($key)) {
         if (is_string($value) && strpos($value, '/') !== false) return;
         list($type, $value) = assoc_element($value);
       }
       else
         $type = $key;
-      if ($type == "dynamic") {
+      if ($type === "dynamic") {
         $prev_answer = $this->answer;
         $this->answer = null;
         $this->reply($value);
@@ -530,7 +517,7 @@ class page
         $this->answer = $prev_answer;
         return;        
       }
-      if ($type == $this->page) return;
+      if ($type === $this->page) return;
       $is_style = ($type === 'styles');
       if (in_array($type, ['types', 'type', 'template', 'wrap', 'styles']) ) {
         $type = $value;
@@ -577,9 +564,6 @@ class page
       foreach($added_types as $type) {
         unset($this->types[$type]);
       }
-    },
-    function (&$array) {
-      array_compact($array);
     });
   }
 
@@ -618,12 +602,12 @@ class page
       list($key, $field) = assoc_element($value);
       if (strpos($key, '/') !== false) continue;
       if (page::not_mergeable($key)) continue;
-      if ($key == 'type') {
-        if (is_string($field) && $field[0] == '$') $field = $parent[substr($field,1)];
+      if ($key === 'type') {
+        if (is_string($field) && $field[0] === '$') $field = $parent[substr($field,1)];
         $default_type = $field;
         continue;
       }
-      if ($key == 'default') {
+      if ($key === 'default') {
         $default = $field;
         continue;
       }
@@ -669,7 +653,7 @@ class page
     $this->merge_fields($fields);
     $actions = $fields['read'];
     if (!isset($actions)) return;
-    if ($actions == 'action') {
+    if ($actions === 'action') {
       $this->context = $fields;
       return $this->action();
     }
@@ -764,7 +748,7 @@ class page
       if (!is_null($value) && !is_array($value)) return false;
 
       $valid = $value['valid'];
-      if ($valid == 'ignore') return false;
+      if ($valid === 'ignore') return false;
       if ($valid == "") return;
       $result = $validator->validate($code, $value, $valid);
       if ($result === true) return;
@@ -809,7 +793,7 @@ class page
       return;
     }
 
-    if ($params === '')
+    if ($params == '')
       return call_user_func($function);
 
     $params = explode(',', $params);
@@ -818,9 +802,9 @@ class page
     replace_fields($params, $this->request);
     replace_fields($params, $context);
     foreach($params as &$val) {
-      if ($val == 'context') $val = $context;
-      if ($val == 'request') $val = $this->request;
-      if ($val == 'root') $val = merge_options($this->fields, $context);
+      if ($val === 'context') $val = $context;
+      if ($val === 'request') $val = $this->request;
+      if ($val === 'root') $val = merge_options($this->fields, $context);
     }
     return call_user_func_array($function, $params);
   }
@@ -1084,7 +1068,7 @@ class page
     if (!is_array($arg)) return [$this->get_db_name($arg), "'\$$arg'"];
 
     list($arg,$value) = assoc_element($arg);
-    if ($value[0] == '/')
+    if ($value[0] === '/')
       $value = substr($value,1);
     else if (!is_array($value))
       $value = "'". addslashes($value). "'";
@@ -1303,7 +1287,7 @@ class page
         $method = $action;
         $parameter = array();
       }
-      if ($method == 'break') {
+      if ($method === 'break') {
         $this->broken = true;
         return $this->answer;
       }
@@ -1330,7 +1314,7 @@ class page
       }
       else if (!in_array($method, $methods))
 	      continue;
-      if ($method == 'foreach')
+      if ($method === 'foreach')
         $result = $this->reply_foreach($parameter);
       else {
         $this->replace_fields($parameter);
@@ -1487,7 +1471,7 @@ class page
     $session = &$_SESSION['variables'];
     foreach($vars as $var) {
       $this->replace_fields($var);
-      if ($var == 'request' && !isset($this->request['request']))
+      if ($var === 'request' && !isset($this->request['request']))
         call_user_func_array (array($this, 'write_session'), array_keys($this->request));
       else if (is_array($var)) {
         list($var,$value) = assoc_element($var);
@@ -1520,7 +1504,7 @@ class page
   {
     $args = func_get_args();
     $session = &$_SESSION['variables'];
-    if (sizeof($args) == 0) return $session;
+    if (sizeof($args) === 0) return $session;
     return $this->read_settings($session, $args);
   }
 
@@ -1558,7 +1542,7 @@ class page
     $vars = array_slice(func_get_args(), 2);
     foreach($vars as $var) {
       $result[$var] = $array[$index++];
-      if ($index == $len) break;
+      if ($index === $len) break;
     }
     return $result;
   }
@@ -1600,7 +1584,7 @@ class page
   function clear_values()
   {
     $args = page::parse_args(func_get_args());
-    if (sizeof($args) == 0)
+    if (sizeof($args) === 0)
       $this->answer = [];
     else foreach($args as $arg) {
       unset($this->answer[$arg]);
@@ -1638,7 +1622,7 @@ class page
   {
     $vars = page::parse_args(func_get_args());
     $session = &$_SESSION['variables'];
-    if (sizeof($vars) == 0) $vars = array_keys($session);
+    if (sizeof($vars) === 0) $vars = array_keys($session);
     foreach($vars as $var) {
       if (isset($session[$var]))
         unset($session[$var]);
@@ -1809,7 +1793,7 @@ class page
   {
     if ($values) $this->let($values);
     $path = explode('/', $url);
-    if ($path[0] == $this->path[0] && $path[1] == $this->path[1]) {
+    if ($path[0] === $this->path[0] && $path[1] === $this->path[1]) {
       log::debug("INTERNAL POST");
       return $this->reply($this->fields['post']);
     }
