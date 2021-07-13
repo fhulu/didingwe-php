@@ -97,6 +97,14 @@ class log
     log::debug("$name ".json_encode($value));
   }
 
+  static function debug_if($condition, $message) {
+    if ($condition) log::debug($message);
+  }
+
+  static function debug_json_if($condition, $name, $value) {
+    if ($condition) log::debug_json($name, $value);
+  }
+
   static function info($message) { log::log(self::INFO, $message); }
   static function warn($message) { log::log(self::WARNING, $message); }
   static function error($message) { log::log(self::ERROR, $message); }
