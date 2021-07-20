@@ -58,18 +58,34 @@ function replace_vars($str, $values, $callback=null, $value_if_unset=null)
     return isset($values[$key])? $values[$key]: $str;
   }
 
-  if (!preg_match_all('/\$(?:(\w+)\b|\{(\w+)\})/', $str, $matches, PREG_SET_ORDER)) return  $str;
+  if (!preg_match_all('/\$(?:(\w+)\b|\{(\w+)\})(\?\?|\b)?/', $str, $matches, PREG_SET_ORDER)) return  $str;
 
+  $pattern = "";
   foreach($matches as $match) {
     $key = $match[1];
     if (!$key) $key = $match[2];
+    $pattern .= '\$(?:'.$key.'|\{'.$key.'\})';
     $value = $values[$key];
+    if ($match[3]==='??') {
+      if (!isset($value)) continue;
+      if (!$callback || $callback($value, $key) !== false) 
+        $str = preg_replace('/'.$pattern.'.*$/',"$value$1", $str);
+      $pattern = "";
+      continue;
+    }
     if (!isset($value)) {
-      if ($value_if_unset === null) continue;
+      if ($value_if_unset === null) {
+        $pattern = "";
+        continue;
+      }
       $value = $value_if_unset;
     }
-    if ($callback && $callback($value, $key) === false) continue;
-    $str = preg_replace('/(?:\$'.$key.'|\$\{'.$key.'\})(\b)/',"$value$1", $str);
+    if (!$callback || $callback($value, $key) !== false) 
+      $str = preg_replace('/'.$pattern.'(\b)/',"$value$1", $str);
+    $pattern = "";
+  }
+  if ($pattern) {
+    $str = preg_replace('/'.$pattern.'(/b)/',"$value$1", $str);
   }
   return $str;
 }
@@ -179,7 +195,7 @@ function walk_recursive_down(&$array, $callback, $done_callback = null)
   foreach($array as $key=>&$value) {
     $result = $callback($value, $key, $array);
     if ($result !== false && is_array($value))
-      walk_recursive_down ($value, $callback, $done_callback);
+      walk_recursive_down($value, $callback, $done_callback);
   }
   if ($done_callback)
     $done_callback($array);
