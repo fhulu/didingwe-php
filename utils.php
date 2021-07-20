@@ -64,6 +64,7 @@ function replace_vars($str, $values, $callback=null, $value_if_unset=null)
   foreach($matches as $match) {
     $key = $match[1];
     if (!$key) $key = $match[2];
+    if ($pattern) $pattern .= "\?\?";
     $pattern .= '\$(?:'.$key.'|\{'.$key.'\})';
     $value = $values[$key];
     if ($match[3]==='??') {
@@ -85,7 +86,7 @@ function replace_vars($str, $values, $callback=null, $value_if_unset=null)
     $pattern = "";
   }
   if ($pattern) {
-    $str = preg_replace('/'.$pattern.'(/b)/',"$value$1", $str);
+    $str = preg_replace('/'.$pattern.'(\b)/',"$value$1", $str);
   }
   return $str;
 }
