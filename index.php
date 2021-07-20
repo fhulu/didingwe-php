@@ -40,6 +40,8 @@ function configure() {
   $spa = &$config['spa'];
   $active = get_active_config_name();
   $active_config = $spa = merge_options($spa, $spa[$active]);
+
+  if (!isset($_REQUEST['path'])) $_REQUEST['path'] = $active_config['default_path'];
   replace_fields($active_config, $_REQUEST, true);
   replace_fields($active_config, $active_config, true);
   $config = merge_options($config, $active_config);
@@ -92,7 +94,6 @@ unset($request['path']);
 $page =  $request['page'];
 if (!isset($page)) $page = $active_config['page'];
 $options = ["path"=>$page, 'request'=>$request];
-$var
 ?>
 <script>
 var request_method = '<?=$config['request_method'];?>';
