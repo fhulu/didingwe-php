@@ -650,7 +650,13 @@ function flatten_array(array $array) {
 }
 
 function decode_if_json($x) {
-  if (!is_string($x) || !in_array($x[0], ['{', '['])) return $x;
+  if (!is_string($x) || !preg_match('/^({.*}|\[.*\])$/', $x)) return $x;
   $result = json_decode($x);
   return json_last_error() == JSON_ERROR_NONE? (array)$result: $x;
+}
+
+function decode_json_array(&$data) {
+  array_walk($data, function(&$x) {
+    $x = decode_if_json($x);
+  });
 }
