@@ -510,6 +510,7 @@ class page
         $this->reply($value);
         $data = $this->answer['data'];
         if (is_null($data)) $data = $this->answer;
+        decode_json_array($data);
         if (is_numeric($key)) 
           array_splice($parent, $key, 1, $data);
         else
