@@ -31,7 +31,7 @@ class page
   static $post_items = array('audit', 'call', 'clear_session', 'clear_values', 'db_name', 'deleted', 'error', 
     'let', 'keep_values','post', 'q', 'read', 'valid', 'validate', 'write_session');
   static $query_items = array('call', 'datarow', 'let', 'keep_values', 'post', 'read_session', 'read_config', 'read_values', 'ref_list',
-    'sql', 'sql_values', 'sql_values_array', 'refresh');
+    'sql', 'sql_pivot', 'sql_values', 'sql_values_array', 'refresh');
   static $atomic_items = array('action', 'attr', 'css', 'datarow', 'html', 'script', 'sql', 'split_values',
     'style', 'template', 'valid');
   static $user_roles = array('public');
@@ -1023,6 +1023,11 @@ class page
     return $this->foreach? $this->db->read($sql, MYSQLI_ASSOC): $this->db->read_one($sql, MYSQLI_ASSOC);
   }
 
+  function sql_pivot($sql) {
+    $sql = $this->translate_sql($sql);
+    return $this->db->read_pivot($sql);
+  }
+
   function sql_values_array($sql)
   {
     $sql = $this->translate_sql($sql);
@@ -1275,7 +1280,7 @@ class page
 
     $methods = array('abort', 'alert', 'assert', 'audit', 'call', 'clear_session', 'clear_values',
       'close_dialog', 'datarow',  'error', 'execute', 'foreach', 'let', 'load_lineage', 'logoff',  'keep_values', 'post', 'read_config',  'read_server', 'read_session', 'read_values',
-       'redirect', 'ref_list', 'show_dialog', 'show_captcha', 'split_values', 'sql', 'sql_list', 'sql_exec', 'sql_json_array',
+       'redirect', 'ref_list', 'show_dialog', 'show_captcha', 'split_values', 'sql', 'sql_list', 'sql_exec', 'sql_json_array', 'sql_pivot',
        'sql_rows', 'sql_insert', 'sql_update', 'sql_update_insert', 'sql_values', 'sql_values_array', 'refresh', 'trigger',
        'update', 'upload', 'view_doc', 'write_session');
     foreach($actions as $action) {

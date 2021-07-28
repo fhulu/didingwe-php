@@ -392,6 +392,24 @@ class db
     return $this->exec($sql);
   }
 
+  function read_pivot($sql) {
+    $result = [];
+    $row = [];
+    $this->each($sql, function($index, $data) use (&$result, &$row) {
+      [$key, $name, $value] = $data;
+      if (!sizeof($row)) {
+        $row[] = $key;
+      }
+      else if ( $row[0] !== $key) {
+        $result[] = $row;
+        $row = [$key];
+      }
+      
+      $row[ $name ] = $value;
+    });
+    $result[] = $row;
+    return $result;
+  }
 }
 
 $db = null;
