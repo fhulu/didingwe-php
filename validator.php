@@ -455,9 +455,8 @@ class validator
 
   function validator() {
     $matches = [];
-    preg_match('/^(\w+(?:\(.*\))?$)|(^\/.*\/$)/', $this->value, $matches);
-    log::debug_json("VALIDATOR fsdsd $this->value", $matches);
-    return preg_match('/^(\w+(?:\(.*\))?$)|(^\/.*\/$)/', $this->value, $matches) &&
+    preg_match('/^(\w+)(?:\(.*\))?$|(^\/.*\/$)/', $this->value, $matches);
+    return preg_match('/^(\w+)(?:\(.*\))?$|(^\/.*\/$)/', $this->value, $matches) &&
       (isset($matches[2]) // regex validator
       || in_array($matches[1], array_keys($this->predicates), true)); // named validator with/without parameters 
   }
