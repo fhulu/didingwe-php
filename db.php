@@ -69,7 +69,7 @@ class db
 
   function exec($q, $max_rows=0, $start=0)
   {
-    global $config;
+    $q = $this->translate_sql($q);
     if ($start=='') $start = 0;
     if ($max_rows > 0) $q .= " limit $start, $max_rows";
     log::debug("SQL: $q");
@@ -116,13 +116,6 @@ class db
     return true;
   }
 
-  function insert($q)
-  {
-    $this->exec($q);
-    $this->id = $this->mysqli->insert_id;
-    return $this->id;
-  }
-
   function delete($table, $key, $value)
   {
     $q = "delete from $table where $key  = '$value'";
@@ -137,14 +130,6 @@ class db
   function row_count()
   {
     return $this->read_one_value("select found_rows()");
-  }
-
-  static function init_default()
-  {
-    global $db;
-    if ($db != null) return;
-    global $config;
-    $db = new db($config['db_name'], $config['db_user'], $config['db_password'], $config['db_host']);
   }
 
   function read($sql, $fetch_type=MYSQLI_BOTH, $max_rows=0, $start=0)
@@ -394,7 +379,7 @@ class db
     return $this->exec($sql);
   }
 
-  function read_pivot($sql, ...$names) {
+  function pivot($sql, ...$names) {
     $result = [];
     $row = [];
     $this->each($sql, function($index, $data) use (&$result, &$row) {
@@ -431,8 +416,175 @@ class db
     return preg_replace('/\$\w+/', '', $sql);
 
   }
+
   function values($sql) { 
-    $sql = $this->translate_sql($sql);
     return $this->manager->foreach? $this->read($sql, MYSQLI_ASSOC): $this->read_one($sql, MYSQLI_ASSOC);
   }
+
+  function values_array($sql) {
+    return $this->read($sql, MYSQLI_ASSOC);
+  }
+
+  function update_custom_filters(&$sql) {
+    $matches = [];
+    $sql = preg_replace('/\s/', ' ', $sql);
+    if (!preg_match('/^\s*select\s+(.*)\s+from/im', $sql, $matches)) return;
+
+    if (!preg_match_all("/(\"[^\"]+\"|'[^']+'|\w*\((?:[^()]|(?R))*\)|\w+(?:\.\w+)?)(?:(?: *as)? +\w*)?/im", $matches[1], $matches, PREG_SET_ORDER)) return;
+    $index = 0;
+    $filters = [];
+    foreach($matches as $match) {
+      $value = $this->request["f$index"];
+      ++$index;
+      if (!isset($value)) continue;
+      $filters[] = "$match[1] like '%$value%'";
+    }
+    if (!count($filters)) return;
+    $filters  = implode(" and ", $filters);
+    $pos = strrpos($sql, 'where');
+
+    if (($pos = strrpos($sql, ' where ')) !== false)
+      $sql = substr($sql, 0, $pos + 7) . " $filters and " . substr($sql, $pos + 7);
+    else if (($pos = strrpos($sql, ' group ')) !== false)
+      $sql = substr($sql, 0, $pos) . " where $filters " . substr($sql, $pos);
+    else
+      $sql .= " where $filters ";
+  }
+
+  function data($sql) {
+    $sql = $this->translate_sql($sql);
+    $this->update_custom_filters($sql);
+    $offset = on_null($this->request['offset'], 0);
+    $size = on_null($this->request['size'], 0);
+    $sort = $this->request['sort'];
+    if (isset($sort))
+      $sql .= "order by $sort " . $this->request['sort_order'];
+    return ['data'=>$this->page($sql, $size, $offset, null, ['fetch'=>MYSQLI_NUM]), 'count'=>$this->row_count()];
+  }
+
+
+  function sql($sql) {
+    if (preg_match('/^\s*select/im', $sql)) return $this->data($sql);
+    $sql = $this->translate_sql($sql);
+    return ['data'=>$this->exec($sql),'count'=>$this->row_count()];
+  }
+
+  function json_array($sql) {
+    $values = $this->values_array($sql);
+    foreach($values as &$value) {
+      list($key, $object) = assoc_element($value);
+      if (is_array($object)) continue;
+      $id = $value['id'];
+      if (!isset($id)) {
+        $id =  strtolower(str_replace(' ', '_', $value['name']));
+      }
+      else {
+        unset($value['id']);
+      }
+      $value = [$id => $value];
+    }
+    return $values;
+  }
+
+  function get_db_name($arg)
+  {
+    $field = $this->get_merged_field($arg);
+    return isset($field) && isset($field['db_name'])? $field['db_name']: $arg;
+  }
+
+  function get_sql_pair($arg)
+  {
+    if (!is_array($arg)) return [$this->get_db_name($arg), "'\$$arg'"];
+
+    list($arg,$value) = assoc_element($arg);
+    if ($value[0] === '/')
+      $value = substr($value,1);
+    else if (!is_array($value))
+      $value = "'". addslashes($value). "'";
+    return [$this->get_db_name($arg), $value];
+  }
+
+  function get_sql_pairs($args)
+  {
+    $pairs = [];
+    foreach($args as $arg) {
+      $pairs[] = $this->get_sql_pair($arg);
+    }
+    return $pairs;
+  }
+
+  function update(...$args) {
+    $table = array_shift($args);
+    list($key_name,$key_value) = $this->get_sql_pair(array_shift($args));
+    if (!isset($key_value)) $key_value = "\$$key_name";
+    if (!sizeof($args))
+      throw new Exception("Invalid number of arguments for db.update()");
+
+
+    $this->parse_delta($args);
+
+    if (!sizeof($args)) return null;
+
+    $fields = $this->field_names($table);
+    $sets = array();
+    foreach($args as $arg) {
+      list($arg,$value) = $this->get_sql_pair($arg);
+      if (!in_array($arg, $fields)) continue;
+      $sets[] = "$arg = $value";
+    }
+    if (!sizeof($sets)) return null;
+
+    $sets = implode(',', $sets);
+
+    $sql = "update $table set $sets where $key_name = $key_value";
+    return $this->exec($sql);
+  }
+
+  function insert(...$args) {
+    $table = array_shift($args);
+    if (!sizeof($args))
+      throw new Exception("Invalid number of arguments for sql_insert");
+    $values = array();
+    foreach($args as &$arg) {
+      list($arg,$value) = $this->get_sql_pair($arg);
+      $values[] = $value;
+    }
+    $args = implode(',', $args);
+    $values = implode(',', $values);
+    $sql = "insert $table($args) values($values)";
+    $this->exec($sql);
+    $table_spec = explode(".", $table);
+    $table = sizeof($table_spec)>1? $table_spec[1]: $table_spec[0];
+    return $this->values("select last_insert_id() new_${table}_id");
+  }
+
+  function update_insert(...$args) {
+    $rows_updated = call_user_func_array([$this, 'update'], $args);
+    if ($rows_updated) return $rows_updated;
+    array_splice($args, 1, 1);
+    $result = call_user_func_array([$this, 'insert'], $args);
+    $table = $args[0];
+    return [$table => $result["new_{$table}_id"] ];
+  }
+
+  function select(...$args) {
+    $table = array_shift($args);
+    $key = array_shift($args);
+    if (!sizeof($args))
+      throw new Exception("Invalid number of arguments for db.select");
+    $sql = "select from $table where $key = '\$$key'";
+    return $this->exec($sql);
+  }
+
+  function decode_sql($message)
+  {
+    $matches = [];
+    preg_match_all('/sql\s*\((.+)\)/ims', $message, $matches, PREG_SET_ORDER);
+    foreach($matches as $match) {
+      $data = $this->read_one($match[1], MYSQLI_NUM);
+      $message = str_replace($match[0], implode(' ', $data), $message);
+    }
+    return $message;
+  }
+
 }
