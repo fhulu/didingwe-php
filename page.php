@@ -67,8 +67,6 @@ class page
 
   function __construct($request=null, $user_db=null)
   {
-    global $db;
-    $this->db = is_null($user_db)?$db: $user_db;
     $this->result = null;
     $this->includes = [];
 
@@ -90,6 +88,7 @@ class page
     $this->expand_stack = array();
     $this->sub_page = false;
     $this->modules = ['this'=>$this];
+    $this->db = $this->get_module('db');
   }
 
   function process()

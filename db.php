@@ -11,6 +11,7 @@ class db_exception extends Exception {
 
 class db
 {
+  var $manager;
   var $mysqli;
   var $dbname;
   var $user;
@@ -24,13 +25,14 @@ class db
   var $field_names;
   var $rows_affected;
 
-  function __construct($dbname,$user,$passwd,$hostname="localhost")
+  function __construct($manager)
   {
+    $this->manager = $manager;
     $this->mysqli = null;
-    $this->dbname = $dbname;
-    $this->user = $user;
-    $this->passwd = $passwd;
-    $this->hostname = $hostname;
+    global $config;
+    [$this->dbname, $this->user, $this->passwd, $this->hostname] = assoc_to_array($config, 
+      'db_name', 'db_user', 'db_password', 'db_host');
+
  }
 
  function connect($newlink=false)
@@ -392,7 +394,7 @@ class db
     return $this->exec($sql);
   }
 
-  function read_pivot($sql) {
+  function read_pivot($sql, ...$names) {
     $result = [];
     $row = [];
     $this->each($sql, function($index, $data) use (&$result, &$row) {
@@ -401,16 +403,36 @@ class db
         $row[] = $key;
       }
       else if ( $row[0] !== $key) {
-        $result[] = $row;
+        $result[] = count($names)? assoc_to_array($row, ...$names): $row;
         $row = [$key];
       }
-      
-      $row[ $name ] = $value;
+      if (!$names || in_array($name, $names, true))
+        $row[$name] = $value;
     });
-    $result[] = $row;
+    $result[] = count($names)? assoc_to_array($row, ...$names): $row;
     return $result;
   }
-}
 
-$db = null;
-if (!isset($daemon_mode)) db::init_default();
+  function replace_sql(&$sql, $options) {
+    $sql =  replace_vars($sql, $options, function(&$val) use (&$exclusions) {
+      if (is_array($val))
+        $val = json_encode($replace_fields($val));
+      $val = addslashes($val);
+    });
+    return $sql;
+  }
+
+  function translate_sql($sql) {
+    $manager = $this->manager;
+    $manager->replace_auth($sql);
+    $this->replace_sql($sql, $manager->answer) ;
+    $this->replace_sql($sql, $manager->context);
+    $this->replace_sql($sql, $manager->request);
+    return preg_replace('/\$\w+/', '', $sql);
+
+  }
+  function values($sql) { 
+    $sql = $this->translate_sql($sql);
+    return $this->manager->foreach? $this->read($sql, MYSQLI_ASSOC): $this->read_one($sql, MYSQLI_ASSOC);
+  }
+}
