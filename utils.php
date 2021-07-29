@@ -660,3 +660,13 @@ function decode_json_array(&$data) {
     $x = decode_if_json($x);
   });
 }
+
+function assoc_to_array($assoc, ...$names) {
+  if (!$names)
+    return array_values($assoc);
+  $result = [];
+  foreach($names as $name) {
+    $result[] = $assoc[$name];
+  }
+  return $result;
+}
