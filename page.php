@@ -492,8 +492,22 @@ class page
     return true;
   }
 
+  function expand_aliases(&$fields) {
+    global $config;
+    $aliases = $config['aliases'];
+    walk_recursive_down($fields, function($value, $key, &$parent) use ($aliases) {
+      if (is_numeric($key) || !isset($aliases[$key])) return;
+     $aliased = $aliases[$key];
+     [$new_key] = assoc_element($aliased);
+     $parent[$new_key] = $parent[$key];
+     unset($parent[$key]);
+    });
+  }
+
+
   function expand_types(&$fields)
   {
+    $this->expand_aliases($fields);
     $this->replace_vars($fields);
     walk_recursive_down($fields, function($value, $key, &$parent) {
       if ($key === "attr") return false;
@@ -1817,4 +1831,5 @@ class page
     exec($args, $output, $return_var);
     return ["output"=>$output, "return_var"=>$return_var];
   }
+
 }
