@@ -1,8 +1,6 @@
 <?php
 require_once 'validator.php';
-require_once 'db.php';
 require_once 'utils.php';
-require_once('q.php');
 
 class user_exception extends Exception {};
 
@@ -441,26 +439,45 @@ class page
     }
   }
 
-  static function is_module($x, &$class="", &$method="")
+  static function is_module($x, &$method="")
   {
     if (!is_string($x)) return false;
     global $config;
     list($class, $method) = explode('.', $x);
-    $options = $config[$x];
-    $active = !isset($options['active']) || $options['active'];
-    return $class === 'this' || in_array($class, $config['modules']) && $active;
+    if ($class === 'this') return true;
+    $options = $config[$class];
+    foreach($config['modules'] as $module) {
+      [$module, $base_options] = assoc_element($module);
+      if ($module != $class) continue;
+      if (is_string($base_options))
+        $base_options = $config[$base_options];
+      else if (is_assoc($base_options))
+        $base_options = merge_options($config[$base_options], $base_options);
+      else if ($base_options) {
+        log::error("Invalid module configuration for $class");
+        return false;
+      }
+      return merge_options([
+        'class'=>$class,
+        'path'=>"$class.php",
+        'active'=>true ], $base_options, $options);
+    }
   }
 
   function get_module($class, &$method="")
   {
-    if (!page::is_module($class, $class, $method)) return false;
-    $module = $this->modules[$class];
-    if ($module) return $module;
-    require_once("$class.php");
-    $this->modules[$class] =  $module = new $class($this);
-    return $module;
+    $options = page::is_module($class, $method);
+    if (!$options) return false;
+    if (!$options['active']) {
+      log::error("Module $class is not active, please edit config");
+      return false;
+    }
 
+    require_once($options['path']);
+    $class = $options['class'];
+    return $this->modules[$class] =  $module = new $class($this, $options);
   }
+
   function get_module_method($x)
   {
     $module = $this->get_module($x, $method);

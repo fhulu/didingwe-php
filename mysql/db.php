@@ -1,6 +1,4 @@
 <?php
-require_once('log.php');
-require_once('utils.php');
 
 class db_exception extends Exception {
    public function __construct($message, $code = 0)//, Exception $previous = null)
@@ -13,10 +11,12 @@ class db
 {
   var $manager;
   var $mysqli;
-  var $dbname;
+  var $database;
   var $user;
   var $passwd;
   var $hostname;
+  var $port;
+  var $socket;
   var $result;
   var $error;
   var $id;
@@ -25,21 +25,18 @@ class db
   var $field_names;
   var $rows_affected;
 
-  function __construct($manager)
-  {
+  function __construct($manager, $config) {
     $this->manager = $manager;
     $this->mysqli = null;
-    global $config;
-    [$this->dbname, $this->user, $this->passwd, $this->hostname] = assoc_to_array($config, 
-      'db_name', 'db_user', 'db_password', 'db_host');
+    [$this->database, $this->user, $this->passwd, $this->hostname, $this->port, $this->socket] = assoc_to_array($config, 
+      'database', 'user', 'password', 'host', 'port', 'socket');
+  }
 
- }
-
- function connect($newlink=false)
- {
+   function connect($newlink=false)
+  {
     if ($this->connected()) return;
     log::debug("MySQL connect to $this->hostname with user $this->user");
-    $this->mysqli = new mysqli($this->hostname,$this->user,$this->passwd, $this->dbname);
+    $this->mysqli = new mysqli($this->hostname,$this->user,$this->passwd, $this->database, $this->port, $this->socket);
     if ($this->mysqli->connect_errno) throw new db_exception("Could not connect to '$this->dbname' :" . $this->mysqli->connect_error);
     $this->mysqli->set_charset('utf8');
     log::debug("User $this->user connected to MySQL on $this->hostname");

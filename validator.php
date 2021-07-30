@@ -1,5 +1,4 @@
 <?php
-require_once('db.php');
 require_once 'curl.php';
 
 class validator_exception extends Exception {};
