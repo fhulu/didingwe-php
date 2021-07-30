@@ -1,5 +1,4 @@
 <?php
-require_once 'curl.php';
 
 class validator_exception extends Exception {};
 class validator
@@ -19,11 +18,10 @@ class validator
   var $failed_auto_provided;
   var $valids;
   var $tested;
-  function __construct($request, $fields, $predicates=null, $db_conn=null)
-  {
-    $this->request = $request;
-    $this->fields = $fields;
-    $this->predicates = $predicates;
+  var $manager;
+
+  function __construct($manager) {
+    $this->manager = $manager;
     $this->optional = false;
     $this->error = null;
     $this->has_error = false;
@@ -31,10 +29,14 @@ class validator
     $this->checked_provided = false;
     $this->valids = [];
     $this->tested = [];
-    global $db;
-    $this->db = is_null($db_conn)? $db: $db_conn;
   }
 
+  function init($request, $fields, $predicates) {
+    $this->request = $request;
+    $this->fields = $fields;
+    $this->predicates = $predicates;
+  }
+  
   function regex($regex)
   {
     return preg_match($regex, $this->value) != 0;
@@ -42,7 +44,7 @@ class validator
 
   function visitable($bytes=512)
   {
-    $curl = new curl();
+    $curl = $this->manager->get_module('curl');
     return $curl->read($this->value,$bytes) != '';
   }
 
@@ -128,7 +130,8 @@ class validator
 
   function depends($field, $arg="is(1)")
   {
-    $validator = new validator($this->request, $this->fields, $this->predicates, $this->db);
+    $validator = new validator($this->manager);
+    $validator->init($this->request, $this->fields, $this->predicates);
     log::debug("DEPENDS $field $arg");
     $validator->valids = $this->valids;
     return $validator->check($field)->is($arg);
@@ -405,11 +408,13 @@ class validator
     $sql = implode(',', func_get_args());
     $sql = replace_vars($sql, $this->request);
     $sql = str_replace('$name', $this->name, $sql);
+
+    $db = $this->manager->get_module('db');
     if (preg_match('/^(update|insert)\b/ims',$sql)) {
-      $this->db->exec($sql);
+      $db->exec($sql);
       return true;
     }
-    $result = $this->db->read_one($sql, MYSQLI_BOTH);
+    $result = $db->read_one($sql, MYSQLI_BOTH);
     if (!$result) return false;
     if ($result[0]) return true;
     return $result;

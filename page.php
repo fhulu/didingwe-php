@@ -1,5 +1,4 @@
 <?php
-require_once 'validator.php';
 require_once 'utils.php';
 
 class user_exception extends Exception {};
@@ -754,7 +753,8 @@ class page
     $options = merge_options($this->context,$values);
     $validators = $this->load_fields('validators');
     $fields = merge_options($this->merge_stack(page::$fields_stack), $this->page_fields, $this->fields);
-    $this->validator = new validator($values, $fields, $validators);
+    $this->validator = $this->get_module("validator");
+    $this->validator->init($values, $fields, $validators);
 
     $exclude = array('audit','css','post','script','style', 'styles', 'type','valid','validate','values');
 
