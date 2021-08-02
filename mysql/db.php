@@ -483,26 +483,20 @@ class db
     return $values;
   }
 
-  function get_db_name($arg)
-  {
-    $field = $this->get_merged_field($arg);
-    return isset($field) && isset($field['db_name'])? $field['db_name']: $arg;
-  }
 
-  function get_sql_pair($arg)
-  {
-    if (!is_array($arg)) return [$this->get_db_name($arg), "'\$$arg'"];
+  function get_sql_pair($arg) {
+    $manager = $this->manager;
+    if (!is_array($arg)) return [$manager->get_db_name($arg), "'\$$arg'"];
 
     list($arg,$value) = assoc_element($arg);
     if ($value[0] === '/')
       $value = substr($value,1);
     else if (!is_array($value))
       $value = "'". addslashes($value). "'";
-    return [$this->get_db_name($arg), $value];
+    return [$manager->get_db_name($arg), $value];
   }
 
-  function get_sql_pairs($args)
-  {
+  function get_sql_pairs($args) {
     $pairs = [];
     foreach($args as $arg) {
       $pairs[] = $this->get_sql_pair($arg);
@@ -518,7 +512,7 @@ class db
       throw new Exception("Invalid number of arguments for db.update()");
 
 
-    $this->parse_delta($args);
+    $this->manager->parse_delta($args);
 
     if (!sizeof($args)) return null;
 

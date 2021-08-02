@@ -363,6 +363,11 @@ class page
     return $field = merge_options($this->expand_type($code), $merged, $field);
   }
 
+  function get_db_name($arg) {
+    $field = $this->get_merged_field($arg);
+    return isset($field) && isset($field['db_name'])? $field['db_name']: $arg;
+  }
+
   function follow_path($path=null, $field=null)
   {
     if (!$field) $field = $this->fields;
@@ -523,7 +528,6 @@ class page
         break;
       }
       if ($key !== $alias && $aliased !== $replaced) return;
-      log::debug_json("KEY $key ALIAS $alias ALIASED $aliased REPLACED $replaced", $aliased );
       $parent[$aliased] = $parent[$key];
       unset($parent[$key]);
     });
