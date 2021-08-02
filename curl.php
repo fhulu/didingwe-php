@@ -1,7 +1,5 @@
 <?php
 
-require_once('log.php');
-
 class curl_exception extends Exception {};
 
 class curl

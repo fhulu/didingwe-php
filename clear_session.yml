@@ -1,4 +1,0 @@
-clear_session:
-  read:
-    - call: session_destroy()
-    - redirect: /

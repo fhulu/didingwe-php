@@ -58,18 +58,35 @@ function replace_vars($str, $values, $callback=null, $value_if_unset=null)
     return isset($values[$key])? $values[$key]: $str;
   }
 
-  if (!preg_match_all('/\$(\w+)/', $str, $matches, PREG_SET_ORDER)) return  $str;
+  if (!preg_match_all('/\$(?:(\w+)\b|\{(\w+)\})(\?\?|\b)?/', $str, $matches, PREG_SET_ORDER)) return  $str;
 
+  $pattern = "";
   foreach($matches as $match) {
     $key = $match[1];
+    if (!$key) $key = $match[2];
+    if ($pattern) $pattern .= "\?\?";
+    $pattern .= '\$(?:'.$key.'|\{'.$key.'\})';
     $value = $values[$key];
+    if ($match[3]==='??') {
+      if (!isset($value)) continue;
+      if (!$callback || $callback($value, $key) !== false) 
+        $str = preg_replace('/'.$pattern.'.*$/',"$value$1", $str);
+      $pattern = "";
+      continue;
+    }
     if (!isset($value)) {
-      if ($value_if_unset === null) continue;
+      if ($value_if_unset === null) {
+        $pattern = "";
+        continue;
+      }
       $value = $value_if_unset;
     }
-    if ($callback && $callback($value, $key) === false) continue;
-    if ($escape) $value = addslashes($value);
-    $str = preg_replace('/\$'.$key.'([^\w]|$)/',"$value$1", $str);
+    if (!$callback || $callback($value, $key) !== false) 
+      $str = preg_replace('/'.$pattern.'(\b)/',"$value$1", $str);
+    $pattern = "";
+  }
+  if ($pattern) {
+    $str = preg_replace('/'.$pattern.'(\b)/',"$value$1", $str);
   }
   return $str;
 }
@@ -122,6 +139,10 @@ function merge_options()
 {
   $merge = function($options1, $options2) use(&$merge) {
     if (is_null($options2)) return $options1;
+    if (is_string($options2) && strpos($options2, '...')===0) {
+      $options2 = preg_split('/ *, */', substr($options2,3));
+      if (!is_array($options1)) $options1 = [$options1];
+    }
     if (!is_array($options1) || $options1 == $options2) return $options2;
     if (!is_array($options2)) return $options2;
     if (!is_assoc($options1) && !is_assoc($options2)) {
@@ -175,7 +196,7 @@ function walk_recursive_down(&$array, $callback, $done_callback = null)
   foreach($array as $key=>&$value) {
     $result = $callback($value, $key, $array);
     if ($result !== false && is_array($value))
-      walk_recursive_down ($value, $callback, $done_callback);
+      walk_recursive_down($value, $callback, $done_callback);
   }
   if ($done_callback)
     $done_callback($array);
@@ -202,11 +223,11 @@ function replace_fields(&$options, $context, $recurse=false)
 {
   if (!is_array($options)) {
     $options = replace_vars($options, $context);
-    return;
+    return $options;
   }
   $replaced = false;
   walk_recursive_down($options, function(&$value) use(&$context, &$replaced) {
-    if (!is_numeric($value) && !is_string($value)) return;
+    if (!is_numeric($value) && !is_string($value)) return $options;
     $new = replace_vars($value, $context);
     if ($new != $value) {
       $replaced = true;
@@ -214,7 +235,8 @@ function replace_fields(&$options, $context, $recurse=false)
     }
   });
   if ($recurse && $replaced)
-    replace_fields($options, merge_options($context,$options), $recurse);
+    return replace_fields($options, merge_options($context,$options), $recurse);
+  return $options;
 }
 
 function replace_indices($str, $values)
@@ -555,7 +577,7 @@ function get_mime_type($filename) {
     $count_explode = count($idx);
     $idx = strtolower($idx[$count_explode-1]);
 
-    $mimet = array( 
+    $mimet = array(
         'txt' => 'text/plain',
         'htm' => 'text/html',
         'html' => 'text/html',
@@ -625,4 +647,26 @@ function flatten_array(array $array) {
     $return = array();
     array_walk_recursive($array, function($a) use (&$return) { $return[] = $a; });
     return $return;
+}
+
+function decode_if_json($x) {
+  if (!is_string($x) || !preg_match('/^({.*}|\[.*\])$/', $x)) return $x;
+  $result = json_decode($x);
+  return json_last_error() == JSON_ERROR_NONE? (array)$result: $x;
+}
+
+function decode_json_array(&$data) {
+  array_walk($data, function(&$x) {
+    $x = decode_if_json($x);
+  });
+}
+
+function assoc_to_array($assoc, ...$names) {
+  if (!$names)
+    return array_values($assoc);
+  $result = [];
+  foreach($names as $name) {
+    $result[] = $assoc[$name];
+  }
+  return $result;
 }
