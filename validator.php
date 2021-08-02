@@ -230,8 +230,8 @@ class validator
     return method_exists($this, $func)? $func: false;
   }
 
-  static function expand_function($func)
-  {
+  static function expand_function($func) {
+    if (is_array($func)) [$func] = assoc_element($func);
     $func = trim($func);
     return $func[0] == '/'? ['regex', [$func]]: expand_function($func);
   }
@@ -387,15 +387,10 @@ class validator
     $this->error = $error;
   }
 
-  function relate_time($format, $relation)
-  {
+  function relate_time($format, $relation='') {
     $now = Date($format);
-    if ($relation == 'future' && $this->value <= $now)
-      return false;
-
-    if ($relation == 'past' && $this->value >= $now)
-      return false;
-    return true;
+    return $relation==='' || $relation === 'future' && $this->value > $now
+      || $relation === 'past' && $this->value < $now;
   }
 
   function valid()
