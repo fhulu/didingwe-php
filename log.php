@@ -45,6 +45,18 @@ class log
 	  }
 
 
+  static function replace_hidden_patterns($message) {
+    global $config;
+    if (!$config) return $message;  
+    $patterns = $config['log_hidden_patterns'];
+    if (!isset($patterns) || !is_array($patterns)) return $message;
+    foreach($patterns as $pattern) {
+      [$regex,$replacement] = assoc_element($pattern);
+      $message = preg_replace("/$regex/",$replacement, $message);
+    }
+    return $message;
+  }
+
   function write($level, $message)
   {
     if ($this->level < $level) return;
@@ -71,30 +83,36 @@ class log
     }
     else $file = 'STDOUT';
     $pid = getmypid();
-    fputs($file, date('Y-m-d H:i:s')." $this->instance($pid) ".log::$subject[$level]. ": $message\n");
+    $message = log::replace_hidden_patterns($message);
+    $message = date('Y-m-d H:i:s')." $this->instance($pid) ".log::$subject[$level]. ": $message\n";
+    fputs($file, $message);
     if ($file != 'STDOUT') fclose($file);
+    return $message;
   }
 
   static function log($level, $message)
   {
     global $logger;
     if (is_null($logger)) return;
-    $logger->write($level, $message);
+    return $logger->write($level, $message);
   }
 
   static function stack($exception)
   {
     $index = 0;
     $stack = array_reverse($exception->getTrace());
+    $messages = [];
     foreach($stack as $trace) {
-      log::error("TRACE $index. ".$trace['file']." line ".$trace['line']." function ".$trace['class'] ."::".$trace['function'] ."(".json_encode($trace['args']).')');
+      $message = "TRACE $index. ".$trace['file']." line ".$trace['line']." function ".$trace['class'] ."::".$trace['function'] ."(".json_encode($trace['args']).')';
+      $messages[] = log::error($message);
       ++$index;
     }
+    return $messages;
   }
 
   static function debug_json($name, $value)
   {
-    log::debug("$name ".json_encode($value));
+    return log::debug("$name ".json_encode($value));
   }
 
   static function debug_if($condition, $message) {
@@ -105,9 +123,9 @@ class log
     if ($condition) log::debug_json($name, $value);
   }
 
-  static function info($message) { log::log(self::INFO, $message); }
-  static function warn($message) { log::log(self::WARNING, $message); }
-  static function error($message) { log::log(self::ERROR, $message); }
-  static function debug($message) { log::log(self::DEBUG, $message); }
-  static function trace($message) { log::log(self::TRACE, $message); }
+  static function info($message) { return log::log(self::INFO, $message); }
+  static function warn($message) { return log::log(self::WARNING, $message); }
+  static function error($message) { return log::log(self::ERROR, $message); }
+  static function debug($message) { return log::log(self::DEBUG, $message); }
+  static function trace($message) { return log::log(self::TRACE, $message); }
 }

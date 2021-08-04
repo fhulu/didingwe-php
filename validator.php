@@ -37,9 +37,20 @@ class validator
     $this->predicates = $predicates;
   }
   
-  function regex($regex)
-  {
+  function regex($regex) {
     return preg_match($regex, $this->value) != 0;
+  }
+
+  function url($option)
+  {
+    $result = $this->regex('/^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/');
+    if ($result !== true) return $result;
+
+    if ($option == 'visitable') {
+      $curl = new curl();
+      return $curl->read($this->value,512) != 0;
+    }
+    return true;
   }
 
   function visitable($bytes=512)
@@ -54,11 +65,10 @@ class validator
     return $this->request[$name];
   }
 
-  function equal($name)
-  {
-    return $this->value == $this->value_of($name);
-  }
-
+  function equal($name) { return $this->value == $this->value_of($name); }
+ 
+  function equals($name) { return $this->equal($name); }
+  
   function less($name)
   {
     return $this->value < $this->value_of($name);
@@ -225,6 +235,7 @@ class validator
 
   function get_internal_function($func)
   {
+    if (is_array($func)) return false;
     if ($func[0] == '/') return 'regex';
     list($func) = expand_function($func);
     return method_exists($this, $func)? $func: false;
@@ -258,11 +269,23 @@ class validator
       }
     }
 
-    global $page;
     foreach($funcs as $func) {
+      if (is_array($func)) {
+        [$func, $args] = assoc_element($func);
+        if (!is_array($args) || is_assoc($args)) $args = [$args];
+      }
+      else {
+        $func = trim($func);
+        if ($func[0] == '/') {
+          $args = array($func);
+          $func = 'regex';
+        }
+        else {
       list($func, $args) = validator::expand_function($func);
       $this->update_args($args);
-      $module_method  = $page->get_module_method($func);
+      $module_method  = $this->manager->get_module_method($func);
+      if ($args && preg_match_all('/[^,]+|\(.*\)/', $args, $matches))
+        $args = $matches[0];
       if ($module_method) {
         list($context, $method) = $module_method;
         $result = call_user_func_array(array($context, $method), $args);
@@ -274,15 +297,21 @@ class validator
         $result = call_user_func_array(array($this, $func), $args);
         array_shift($args);
       }
-      else if ($func == 'is' || !method_exists($this, $func)) {
-        if (!$this->get_custom($func))
-          throw new validator_exception("validator method $func does not exists!");
+      else if ($func != 'is' && method_exists($this, $func)) {
+        $result = call_user_func_array([$this, $func], $args);        
+      }
+      else if ($func == 'is' || $this->get_custom($func)) {
         array_unshift($args, $func);
-        $result = call_user_func_array(array($this, 'custom'), $args);
+        $result = call_user_func_array([$this, 'custom'], $args);
         array_shift($args);
       }
-      else
-        $result = call_user_func_array(array($this, $func), $args);
+      else if (is_callable($func)) {
+        replace_fields($args, $this->request);
+        $result = call_user_func_array($func, $args);  
+      }
+      else {
+        throw new validator_exception("validator method $func does not exists!");
+      }
       if ($result === true) continue;
       if ($func == 'depends') return true;
       if ($func == 'provided' && $auto_provided) $this->failed_auto_provided = true;
@@ -317,7 +346,17 @@ class validator
     $valid = replace_vars($valid, $predicate);
     $valid = replace_vars($valid, $this->request);
     $this->replace_args($valid, $args, false, true);
+    $this->replace_default_args($valid, $args, $predicate);
+    // run the validation on the substituted predicate
     return $this->is($valid);
+  }
+
+
+    // replace default args not supplied, but set on the predicate 
+  function replace_default_args(&$str, $args, $predicate) {
+    for($i=sizeof($args)+1; isset($predicate[$i]); ++$i) {
+      $str = str_replace('$'.$i, $predicate[$i], $str);
+    }
   }
 
   function replace_args(&$str, $args, $set_titles=false, $force_value=false)
@@ -347,6 +386,7 @@ class validator
   function update_args(&$args)
   {
     foreach($args as &$arg) {
+      if (is_array($arg)) continue;
       $arg = trim($arg);
       if ($arg == 'this' || $arg == '$name')
         $arg = $this->name;
@@ -363,6 +403,7 @@ class validator
     $error = str_replace('$value', $this->value, $error);
     $error = replace_vars($error, $predicate);
     $this->replace_args($error, $args, true);
+    $this->replace_default_args($error, $args, $predicate);
     $error = replace_vars_except($error, $this->request, $ignore);
     $error = str_replace('$name', $this->title, $error);
   }
@@ -427,9 +468,8 @@ class validator
 
   function ref_list()
   {
-    global $page;
     $field = $this->field;
-    $page->expand_ref_list($field, $this->name);
+    $this->manager->expand_ref_list($field, $this->name);
     $sql = str_replace('$value', $this->value, $field['valid_sql']);
     return $this->sql($sql);
   }
@@ -445,6 +485,22 @@ class validator
   function validated()
   {
     return in_array($this->name, $this->valids, true);
+  }
+
+
+  function read_sql($sql) {
+    $sql = replace_vars($sql, $this->request, function($v, $k) {
+      addslashes($v);
+    });
+    $result = $this->db->read_one($sql, MYSQLI_ASSOC);
+    if ($result)
+      $this->request = array_merge($this->request, $result);
+    return true;
+  }
+
+  function set($values) {
+    $this->request = array_merge($this->request, $values);
+    return true;
   }
 
   function checked($code)

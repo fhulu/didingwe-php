@@ -85,6 +85,7 @@ echo_scripts($config['css'], "<link href='\$script' media='screen' rel='styleshe
 echo_scripts($config['scripts'], "<script src='\$script'></script>\n");
 
 log::debug_json("BROWSER REQUEST", $_REQUEST);
+  $config = array_merge(['session_timeout'=>300], $config);
 $spa = $config['spa'];
 $active = get_active_config_name();
 $active_config = merge_options($spa, $spa[$active]);
@@ -99,6 +100,15 @@ $options = ["path"=>$page, 'request'=>$request];
 var request_method = '<?=$config['request_method'];?>';
 $(function() {
   $("body").page(<?=json_encode($options);?>);
+  var timer;
+  var start_timer = ()=> {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(()=> {
+      window.location.href = '/<?=$content?>';
+    }, <?=($config['session_timeout']+60)*1000?>);
+  };
+  start_timer();
+  $(document).bind("mousemove keypress click", start_timer);
 });
 </script>
 <body>

@@ -1,4 +1,6 @@
 <?php
+require_once("log.php");
+$config = load_yaml(".config.yml", true);
 
 function at($array, $index)
 {
@@ -50,17 +52,18 @@ function remove_nulls(&$array)
   return $array;
 }
 
-function replace_vars($str, $values, $callback=null, $value_if_unset=null)
+function replace_vars($str, $values, $callback=null)
 {
-  $matches = array();
-  if (preg_match('/^\$(\w+)$/', $str, $matches)) {
+  $matches = [];
+  if (preg_match('/^\$([a-z_]\w*)$/i', $str, $matches)) {
     $key = $matches[1];
-    return isset($values[$key])? $values[$key]: $str;
+    if (!isset($values[$key])) return $str;
+    $value = $values[$key];
+    if ($callback && $callback($value, $key) === false) return $str;
+    return $value;
   }
+  if (!preg_match_all('/\$([a-z_]\w*)/mi', $str, $matches, PREG_SET_ORDER)) return  $str;
 
-  if (!preg_match_all('/\$(?:(\w+)\b|\{(\w+)\})(\?\?|\b)?/', $str, $matches, PREG_SET_ORDER)) return  $str;
-
-  $pattern = "";
   foreach($matches as $match) {
     $key = $match[1];
     if (!$key) $key = $match[2];
@@ -83,6 +86,8 @@ function replace_vars($str, $values, $callback=null, $value_if_unset=null)
     }
     if (!$callback || $callback($value, $key) !== false) 
       $str = preg_replace('/'.$pattern.'(\b)/',"$value$1", $str);
+        $value = str_replace('$', '{%}',$value);
+  
     $pattern = "";
   }
   if ($pattern) {
@@ -219,24 +224,20 @@ function assoc_element($element)
   return array($key, $value);
 }
 
-function replace_fields(&$options, $context, $recurse=false)
+function replace_fields(&$options, $context, $callback=null)
 {
   if (!is_array($options)) {
-    $options = replace_vars($options, $context);
+    $options = replace_vars($options, $context, $callback);
     return $options;
   }
   $replaced = false;
-  walk_recursive_down($options, function(&$value) use(&$context, &$replaced) {
-    if (!is_numeric($value) && !is_string($value)) return $options;
-    $new = replace_vars($value, $context);
-    if ($new != $value) {
-      $replaced = true;
-      $value = $new;
-    }
+  array_walk_recursive($options, function(&$value) use(&$context, $callback, &$replaced) {
+    $old = $value;
+    $value = replace_vars($value, $context, $callback);
+    if ($value !== $old) $replaced = true;
   });
-  if ($recurse && $replaced)
-    return replace_fields($options, merge_options($context,$options), $recurse);
-  return $options;
+  if ($replaced)
+    replace_fields($options, $context, $callback);
 }
 
 function replace_indices($str, $values)
@@ -669,4 +670,11 @@ function assoc_to_array($assoc, ...$names) {
     $result[] = $assoc[$name];
   }
   return $result;
+}
+
+function email_to_array($str) {
+  $matches = [];
+  if (!preg_match('/([\w.\s-]+)<(\w+@\w+(?:\.\w+)+)>|([\w+.-]*@[\w-]+(?:\.[\w-]+)+)/', $str, $matches)) 
+    return [];
+  return sizeof($matches) == 3? [$matches[2], $matches[1] ]: [$matches[3] ] ;
 }

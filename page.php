@@ -1,24 +1,41 @@
 <?php
 require_once 'utils.php';
 
-class user_exception extends Exception {};
+use PHPMailer\PHPMailer\PHPMailer;
+#use PHPMailer\PHPMailer\Exception;
 
+class user_exception extends Exception {};
+class expired_session_exception extends Exception {};
+
+$in_exception = false;
 try {
   global $page;
   $page = new page();
   $page->process();
 }
 catch (user_exception $exception) {
-  log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
-  log::stack($exception);
+  if ($in_exception) return;
+  $in_exception = true;
+  $stack[] = log::error("UNCAUGHT EXCEPTION: ". $exception->getMessage());
+  $stack = log::stack($exception);
   page::show_dialog('/breach');
+}
+catch (expired_session_exception $exception) {
+  if ($in_exception) return;
+  $in_exception = true;
+  page::show_dialog('/breach');
+  global $content;
+  page::redirect("/$content");
 }
 catch (Exception $exception)
 {
-  log::stack($exception);
-  log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
+  if ($in_exception) return;
+  $in_exception = true;
+  $stack = log::stack($exception);
+  $stack[] = log::error("UNCAUGHT EXCEPTION: " . $exception->getMessage() );
   if ($_REQUEST['path'] != 'error_page')
     page::show_dialog('/error_page');
+  $page->report_error($stack);
 }
 $page->output();
 
@@ -711,13 +728,13 @@ class page
     $this->pre_read($this->fields);
     $this->types['control'] = $this->get_expanded_field('control');
     $this->types['template'] = $this->get_expanded_field('template');
-    $this->remove_items($this->fields);
+    return array(
     $this->remove_items($this->types);
     return null_merge($this->answer, [
-      'path'=>implode('/',$this->path),
-      'fields'=>$this->fields,
-      'types'=>$this->types,
-    ]);
+    $path = implode('/',$this->path);
+    $this->report_action('read', $path);
+      'types'=>$this->types
+    );
   }
 
 
@@ -900,6 +917,7 @@ class page
     if (is_string($detail)) {
       $detail = replace_vars($detail, $user);
       if (!$this->audit_delta($detail)) return;
+      $context = merge_options($this->fields, $this->context, $_SESSION, $this->request, $result);
       $detail = replace_vars($detail, $context);
       $detail = page::decode_field($detail);
       $detail = $this->db->decode_sql($detail);
@@ -918,6 +936,8 @@ class page
     $sid = $auth->get_session_id();
     if (!$sid) return;
     $user = $auth->get_user();
+    if (!$user_id)
+      throw new user_exception("Expired sesssion");
     $partner = $auth->get_partner();
     $collection->insert('audit', ['session'=>'$sid'], ['partner'=>$partner], ['user'=>$user], ['action'=>$name], ['detail'=>$detail]);
   }
@@ -925,7 +945,8 @@ class page
   function action($validate=true)
   {
     $invoker = $this->context;
-    if (!isset($this->context['id'])) $this->context['id'] = last($this->path);
+    $action = last($this->path);
+    log::debug_json("ACTION ".last($this->path), $invoker);
     if (!isset($this->context['name'])) $this->context['name'] = $this->name($this->context);
     $this->merge_fields($this->fields);
     if ($validate) {
@@ -939,10 +960,10 @@ class page
     $audit_first = $invoker['audit_first'];
     if ($audit_first)
       $this->audit($invoker,[]);
-    $this->reply($invoker);
+    $result = $this->reply($invoker);
     if ($this->aborted) return $this->answer;
     if (!$audit_first && !page::has_errors() && array_key_exists('audit', $invoker))
-      $this->audit($invoker);
+      $this->audit($invoker, $result);
     global $config;
     if ($config['use_triggers'])
       $this->post("trigger/fire", ["trigger_url"=>implode("/", $this->path)]);
@@ -951,10 +972,19 @@ class page
 
   function replace_auth(&$str)
   {
-    $auth = $this->get_module('auth');
-    replace_fields($str, ['sid'=>$auth->get_session_id()]);
-    replace_fields($str, ['uid'=>$auth->get_user()]);
-    replace_fields($str, ['pid'=>$auth->get_partner()]);
+    
+    $user_id = $user['uid'];
+    $key = $options['key'];
+      $sql = preg_replace('/\$uid([^\w]|$)/', "$user_id\$1", $sql);
+    return replace_vars($sql, $options, function(&$val) {
+      if ($key == 'uid' && !$val)
+        throw new expired_session_exception();
+      if ($key != "password_hash" && $key != "hash")
+
+    if (preg_match('/\$uid\b/', $sql))
+      throw new expired_session_exception();
+
+    return $sql;
   }
 
   function datarow()
@@ -972,7 +1002,7 @@ class page
 
   function parse_delta(&$args)
   {
-    $delta_index = array_search('delta', $args, true);
+    return $this->db->read_one($this->translate_sql($sql), MYSQL_ASSOC);
     if ($delta_index === false) return;
 
     $delta = trim($this->request['delta']);
@@ -981,6 +1011,10 @@ class page
       return;
     }
     $delta = explode(',', $delta);
+    $args = func_get_args();
+    if (sizeof($args) > 1) return $this->sql_exec_prepared(...$args);
+
+    log::debug("SQL_EXEC $sql");
     array_splice($args, $delta_index, 1, $delta);
   }
 
@@ -1088,7 +1122,7 @@ class page
     log::debug_json("REPLY ACTIONS", $actions);
 
     $methods = array('abort', 'alert', 'assert', 'audit', 'call', 'clear_session', 'clear_values',
-      'close_dialog', 'datarow',  'error', 'execute', 'foreach', 'let', 'load_lineage', 'logoff',  'keep_values', 'post', 'read_config',  'read_server', 'read_session', 'read_values',
+      'close_dialog', 'load_lineage', 'post_http', 'read_session', 'read_values', 'redirect',
        'redirect', 'ref_list', 'show_dialog', 'show_captcha', 'split_values', 'refresh', 'trigger',
        'update', 'upload', 'view_doc', 'write_session');
     foreach($actions as $action) {
@@ -1111,11 +1145,14 @@ class page
         $parameter = array($parameter);
 
       $this->replace_auth($method);
-      $this->replace_fields($method);
-      $this->replace_auth($parameter);
+      global $config;
+      $values = merge_options($this->request, $config, $this->answer);      
+      $this->replace_fields($method, $values);
+      replace_fields($parameter, $values);
       $this->replace_special_vars($parameter);
-
-      log::debug_json("REPLY ACTION $method", $parameter);
+      if (strpos($method, 'sql_') !== 0) // don't replace vars for sql yet
+        replace_fields($parameter, $values, function(&$v) { addslashes($v); } );
+      log::debug_json("REPLY ACTION $method $callback", $parameter);
       if ($this->reply_if($method, $parameter)) continue;
 
       $context = $this;
@@ -1139,8 +1176,7 @@ class page
         return false;
       };
       if ($this->foreach) return $result;
-      if (is_array($result))
-        $this->answer = merge_options($this->answer, $result);
+      $this->answer = merge_options($this->answer, $result);
     }
     return $this->answer;
   }
@@ -1262,6 +1298,75 @@ class page
     page::respond('trigger', $options);
   }
 
+  function send_email($options)
+  {
+    $options = page::merge_options($options, $this->answer);
+    $this->update_context($options);
+    $options = page::merge_options($this->fields['send_email'], $options);
+    $options = page::merge_options($this->get_expanded_field('send_email'), $options);
+    global $config;
+    $options = page::merge_options($config['send_email'], $options);
+    
+    require_once './PHPMailer/src/Exception.php';
+    require_once './PHPMailer/src/PHPMailer.php';
+    require_once './PHPMailer/src/SMTP.php';
+    
+    
+    $mail = new PHPMailer(true);
+    $from = $options['from'];
+    if (is_string($from)) 
+      $from = email_to_array($from);
+    if (is_array($from))
+      $options = array_merge($options, ['from'=>$from[0], 'fromName' => $from[1] ] );
+
+    replace_fields($options, $config);
+    replace_fields($options, $options);
+    log::debug_json("EMAIL OPTIONS", $options);    
+    static $aliases = ["to"=>"address", "message"=>"body"];
+    try {
+      foreach ($options as $name=>$value) {
+        $alias = $aliases[$name];
+        if ($alias) $name = $alias;
+        $capitalized = false;
+        $capital = strtoupper(substr($name, 0, 1)) . substr($name, 1);
+        $setter = "set$capital";
+        $adder = "add$capital";
+        if ( method_exists($mail, $name) || $capitalized = method_exists($mail, $capital)) {
+          if ($capitalized) $name = $capital;
+          if (!is_array($value)) $value = [$value] ;
+          log::debug_json("PHPMAIL.$name", $value);
+          call_user_func_array([$mail, $name], $value);
+        }
+        else if ( method_exists($mail, $setter)) {
+          if (!is_array($value)) $value = [$value] ;
+          log::debug_json("PHPMAIL.$setter", $value);
+          call_user_func_array([$mail, $setter], $value);
+        }
+        else if ( method_exists($mail, $adder)) {
+          if ($alias=='address' && is_string($value)) 
+            $value = email_to_array($value);
+          if (!is_array($value))
+            $value = [ [$value] ];
+          else if (!is_array($value[0]))
+            $value = [ $value ];
+          foreach($value as $args) {
+            log::debug_json("PHPMAIL.$adder", $args);
+            call_user_func_array([$mail, $adder], $args);
+          }
+        }
+        else if ( property_exists($mail, $name) || $capitalized = property_exists($mail, $capital)) {
+          if ($capitalized) $name = $capital;
+          log::debug_json("PHPMAIL.$name", $value);
+          $mail->$name = $value;
+        }
+      }
+      $mail->send();
+    }
+    catch(Exception $e) {
+      log::error("SEND-EMAIL ERROR ".$e->getMessage());
+    }
+
+  }
 
   static function preg_match_test($req)
   {
@@ -1454,6 +1559,37 @@ class page
   {
     page::trigger("refresh,$sink");
   }
+  
+    static function post_http($options)
+  {
+    log::debug_json("HTTP POST", $options);
+    $url = $options['url'];
+    if (!isset($url)) {
+      $url = $options['protocol']
+            . "://" . $options['host']
+            . ":" . $options['port']
+            . "/" . $options['path'];
+    }
+    require_once('../common/curl.php');
+    $curl = new curl();
+    $curl->read($url);
+  }
+
+  function send_sms($options)
+  {
+    log::debug_json("SEND SMS", $options);
+    $options = page::merge_options($options, $this->answer);
+    log::debug_json("SEND SMS af", $options);
+    $this->update_context($options);
+    global $config;
+    $options = merge_options($config['send_sms'], $this->fields['send_sms'], $options);
+    $options = merge_options($this->get_expanded_field('send_sms'), $options);
+    $options['message'] = urlencode($options['message']);
+    replace_fields($options, $options);
+    replace_fields($options, $this->fields['send_sms']);
+
+    page::post_http($options);
+  }
 
   function calender()
   {
@@ -1625,4 +1761,73 @@ class page
     return ["output"=>$output, "return_var"=>$return_var];
   }
 
+  function hash_password($password) {
+    $hash = password_hash($password, PASSWORD_DEFAULT);
+    return ['password_hash' => $hash, 'hash'=>$hash ];
+  }
+
+
+  function sql_exec_prepared($types, $sql) {
+    $vars = [];
+    $values = null_merge($this->request, $this->answer, false);
+    $values = null_merge($this->context, $values, false);
+    $sql = replace_vars($sql, $values, function(&$v, $k) use (&$vars) {
+      $vars[] = $v;
+      $v = '?';
+    });
+    log::debug_json("SQL_EXEC_PREPARED: $sql", $vars);
+    $this->db->connect();
+    $stm = $this->db->mysqli->prepare($sql);
+    $stm->bind_param($types, ...$vars);
+    $stm->execute();
+  }
+
+  function do_reporting($type, $modifier_callback) {
+    global $config;
+    $options = $config["${type}_reporting"];
+    if (!$options || !is_array($options['medium']) || !sizeof($options['medium'])) return;
+    foreach($options['medium'] as $medium) {
+      // copy over all parent options except the current medium options
+      $copy = $options;
+      unset($copy[$medium]);
+      $medium_options = merge_options($copy, $options[$medium]);
+
+      if ($modifier_callback($medium_options) !== false)
+        $this->{"report_${type}_by_${medium}"}($medium_options);
+    }
+  }
+
+  function report_error($stack) {
+    $this->do_reporting('error', function(&$options) use ($stack) {
+      $depth = $options['stack_depth'];
+      if ($depth < sizeof($stack)) $stack = array_slice($stack, sizeof($stack) - $depth);
+      $options['call_stack'] = $stack;  
+    });
+  }
+
+  function report_error_by_email($options) {
+    $stack = $options['call_stack'];
+    $stack = array_map(function($v) { return htmlentities($v); }, $stack);
+    $options['call_stack'] = implode("<br>", $stack);
+    $this->send_email($options);
+  }
+
+  function report_action($action, $arguments) {
+    $this->do_reporting('action', function(&$options) use ($action, $arguments) {
+      foreach ($options['actions'] as $required_action) {
+        [$required_action, $required_arguments] = assoc_element($required_action);
+        if ($required_action != $action) continue;
+        if ($required_arguments && $required_arguments != $arguments) continue;
+        $options['action'] = $action;
+        $options['arguments'] = $arguments;
+        return;
+      }  
+      return false;
+    });
+  }
+
+  function report_action_by_email($options) {
+    $options['arguments'] = log::replace_hidden_patterns(json_encode($options['arguments']));
+    $this->send_email($options);
+  }
 }
