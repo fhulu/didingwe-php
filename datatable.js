@@ -41,6 +41,7 @@
       var self = this;
       this.element.on('refresh', function(e, args) {
         self.load(args);
+        e.stopImmediatePropagation();
       })
     },
 
@@ -307,7 +308,6 @@
       };
       console.log("reset", fields);
       body.page(options);
-//      var tmp = $('<tr>$</tr>');//.appendTo(body);
     },
 
     showData: function(data)
@@ -322,7 +322,7 @@
           self.bindRowActions(tr);
           tr.appendTo(body);
         }
-        tr = $('<tr></tr>');//.appendTo(body);
+        tr = $('<tr></tr>');
         var key;
         var expandable = false;
         var k = 0;
@@ -520,7 +520,6 @@
 
       tr.on('processed_delete', function() {
         tr.remove();
-//        alert('deleted successfullyy ' + JSON.toString(result));
       });
     },
 
