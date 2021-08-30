@@ -590,7 +590,6 @@ section_heading:
   style:
     text-align: center
     font-size: 13pt
-    font-weight: 100
     border-bottom: 1px solid grey
     width: 100%
     margin-top: 8px
