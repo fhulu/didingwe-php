@@ -84,6 +84,7 @@ datatable:
     # - editall
     #
   inherit: [data]
+  validate: none
   post:
     - read_values: { rows: $data}
     - call: datatable::read(context,$key)
