@@ -1,9 +1,6 @@
 <?php
 require_once 'utils.php';
 
-use PHPMailer\PHPMailer\PHPMailer;
-#use PHPMailer\PHPMailer\Exception;
-
 class user_exception extends Exception {};
 class expired_session_exception extends Exception {};
 
@@ -79,7 +76,7 @@ class page
   var $includes;
   var $modules;
 
-  function __construct($request=null, $user_db=null)
+  function __construct($request=null)
   {
     $this->result = null;
     $this->includes = [];
@@ -728,13 +725,23 @@ class page
     $this->pre_read($this->fields);
     $this->types['control'] = $this->get_expanded_field('control');
     $this->types['template'] = $this->get_expanded_field('template');
-    return array(
+    $this->remove_items($this->fields);
     $this->remove_items($this->types);
     return null_merge($this->answer, [
-    $path = implode('/',$this->path);
-    $this->report_action('read', $path);
-      'types'=>$this->types
-    );
+      'path'=>implode('/',$this->path),
+      'fields'=>$this->fields,
+      'types'=>$this->types,
+    ]);
+  }
+
+
+  function expand_params(&$fields)
+  {
+    $request = $this->request;
+    array_walk_recursive($fields, function(&$value, $key) use ($request) {
+      if ($key != 'sql')
+        $value = replace_vars ($value, $request);
+    });
   }
 
 
@@ -972,23 +979,13 @@ class page
 
   function replace_auth(&$str)
   {
-    
-    $user_id = $user['uid'];
-    $key = $options['key'];
-      $sql = preg_replace('/\$uid([^\w]|$)/', "$user_id\$1", $sql);
-    return replace_vars($sql, $options, function(&$val) {
-      if ($key == 'uid' && !$val)
-        throw new expired_session_exception();
-      if ($key != "password_hash" && $key != "hash")
-
-    if (preg_match('/\$uid\b/', $sql))
-      throw new expired_session_exception();
-
-    return $sql;
+    $auth = $this->get_module('auth');
+    replace_fields($str, ['sid'=>$auth->get_session_id()]);
+    replace_fields($str, ['uid'=>$auth->get_user()]);
+    replace_fields($str, ['pid'=>$auth->get_partner()]);
   }
 
-  function datarow()
-  {
+  function datarow() {
       return ['data'=>[func_get_args()] ];
   }
 
