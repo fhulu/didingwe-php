@@ -1,6 +1,5 @@
 <?php
 require_once("log.php");
-$config = load_yaml(".config.yml", true);
 
 function at($array, $index)
 {
@@ -52,46 +51,32 @@ function remove_nulls(&$array)
   return $array;
 }
 
-function replace_vars($str, $values, $callback=null)
-{
+function replace_vars($str, $values, $callback=null, $value_if_unset=null) {
   $matches = [];
-  if (preg_match('/^\$([a-z_]\w*)$/i', $str, $matches)) {
+  if (preg_match('/^\$(?:(\w+)|\{(\w+)\})$/', $str, $matches)) {
     $key = $matches[1];
+    if (!isset($key)) $key = $matches[2];
     if (!isset($values[$key])) return $str;
     $value = $values[$key];
     if ($callback && $callback($value, $key) === false) return $str;
     return $value;
   }
-  if (!preg_match_all('/\$([a-z_]\w*)/mi', $str, $matches, PREG_SET_ORDER)) return  $str;
+
+  if (!preg_match_all('/\$(?:(\w+)\b|\{(\w+)\})/m', $str, $matches, PREG_SET_ORDER)) return  $str;
 
   foreach($matches as $match) {
     $key = $match[1];
-    if (!$key) $key = $match[2];
-    if ($pattern) $pattern .= "\?\?";
-    $pattern .= '\$(?:'.$key.'|\{'.$key.'\})';
+    if (!isset($key)) $key = $match[2];
     $value = $values[$key];
-    if ($match[3]==='??') {
-      if (!isset($value)) continue;
-      if (!$callback || $callback($value, $key) !== false) 
-        $str = preg_replace('/'.$pattern.'.*$/',"$value$1", $str);
-      $pattern = "";
-      continue;
-    }
     if (!isset($value)) {
-      if ($value_if_unset === null) {
-        $pattern = "";
-        continue;
-      }
+      if ($value_if_unset === null) continue;
       $value = $value_if_unset;
     }
-    if (!$callback || $callback($value, $key) !== false) 
-      $str = preg_replace('/'.$pattern.'(\b)/',"$value$1", $str);
-        $value = str_replace('$', '{%}',$value);
-  
-    $pattern = "";
-  }
-  if ($pattern) {
-    $str = preg_replace('/'.$pattern.'(\b)/',"$value$1", $str);
+    if (!$callback || $callback($value, $key) !== false) {
+      $value = str_replace('$', '{%}',$value);
+      $str = preg_replace('/\$(?:'.$key.'(\b)|\{'.$key.'\})/',"$value$1", $str);
+      $str = str_replace('{%}', '$',$str);
+    }
   }
   return $str;
 }
@@ -234,10 +219,9 @@ function replace_fields(&$options, $context, $callback=null)
   array_walk_recursive($options, function(&$value) use(&$context, $callback, &$replaced) {
     $old = $value;
     $value = replace_vars($value, $context, $callback);
-    if ($value !== $old) $replaced = true;
+    $replaced = ($value !== $old);
   });
-  if ($replaced)
-    replace_fields($options, $context, $callback);
+  return $replaced? replace_fields($options, $context, $callback): $options;
 }
 
 function replace_indices($str, $values)
