@@ -6,6 +6,7 @@ class log
 {
   var $level;
   var $instance;
+  var $path;
 
   const OFF = 0;
   const ERROR = 1;
@@ -22,9 +23,14 @@ class log
     self::TRACE => 'TRACE'
   );
 
-  function __construct ($instance, $level=self::INFO)
-  {
-    $this->instance = $instance;
+  function __construct ($path=null, $level=self::INFO) {
+    if (!is_null($path)) {
+      $this->path = realpath($path);
+      $this->instance = basename($path);
+    }
+    else {
+      $this->instance = $this->path = null;
+    }
     $this->level = (int)$level;
     $this->write(self::DEBUG, 'Started '.getmypid());
   }
@@ -35,14 +41,11 @@ class log
     $this->write(self::DEBUG, 'Completed '.getmypid());
   }
 
-  static function init($instance, $level=self::INFO)
-  {
+  static function init($path, $level=self::INFO) {
     global $logger;
 
-    if (is_null($logger)) $logger = new log($instance, $level);
-    $logger->instance = $instance;
-    $logger->level = $level;
-	  }
+    if (is_null($logger)) $logger = new log($path, $level);
+  }
 
 
   static function replace_hidden_patterns($message) {
@@ -60,16 +63,10 @@ class log
   function write($level, $message)
   {
     if ($this->level < $level) return;
-    global $config;
-    $log = $config['log'];
-    if (!$config || !$log) return;
-    $log_dir = $log['dir'];
-    $log_file = $log['path'];
     $message = str_replace("\n", " ", $message);
     $message = str_replace("\r", " ", $message);
-
     if (!is_null($this->instance)) {
-      $file_name = realpath($this->instance);
+      $file_name = $this->path;
       if (file_exists($file_name)) {
         $today = date('Y-m-d');
         $file_date = date('Y-m-d', filemtime($file_name));
