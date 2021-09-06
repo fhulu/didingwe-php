@@ -8,14 +8,14 @@ require_once('utils.php');
 function do_preprocessing(&$config) {
   $preprocess = $config['preprocess'];
   if (!$preprocess || !file_exists($preprocess) || in_array($preprocess, get_included_files()) ) {
-    replace_fields($config,$config,true);
+    replace_fields($config,$config);
     return;
   }
   require_once($preprocess);
   $func = basename($preprocess, ".php");
   $preprocess_config = $func($config);
   $config = merge_options($config, $preprocess_config);
-  replace_fields($config,$config,true);
+  replace_fields($config,$config);
 }
 
 function get_active_config_name()
@@ -42,8 +42,8 @@ function configure() {
   $active_config = $spa = merge_options($spa, $spa[$active]);
 
   if (!isset($_REQUEST['path'])) $_REQUEST['path'] = $active_config['default_path'];
-  replace_fields($active_config, $_REQUEST, true);
-  replace_fields($active_config, $active_config, true);
+  replace_fields($active_config, $_REQUEST);
+  replace_fields($active_config, $active_config);
   $config = merge_options($config, $active_config);
   do_preprocessing($config);
   $_SESSION['config'] = $config;
