@@ -166,7 +166,14 @@ deactivate:
     - refresh: "#main table"
 
 delete:
-  type: deactivate
+  access: admin
+  validate: none
+  desc: Delete this user permanantly
+  confirmation: Are you sure you want to permanently delete this user?
+  audit: sql(select first_name, last_name, email_address from user where id = '$key')
+  post:
+    - sql_exec: update user set active = -1 where id = '$key'
+    - refresh: "#main table"
 
 edit:
   access: [admin]
@@ -205,7 +212,7 @@ history:
 
 
 is_active:
-  valid: sql(select active from user where email_address = '$value')
+  valid: sql(select active>0 from user where email_address = '$value')
   error: |
     Account $value has been deactivated.
     Please ask the administrator to reactivate your account
@@ -254,6 +261,7 @@ list:
     - activate
     - deactivate
     - edit: { action: dialog }
+    - delete
   footer_actions:
     - print
     - export
@@ -276,8 +284,9 @@ list:
        select u.id, u.create_time,email_address, u.first_name, u.last_name,
         u.cellphone, group_concat(r.name) roles,
         if(u.active=1,'active','inactive') status,
-        if(u.active=1,'expand,slide,edit,deactivate','expand,slide,edit,activate') actions
+        if(u.active=1,'expand,slide,edit,deactivate,delete','expand,slide,edit,activate,delete') actions
       from user u left join role r on find_in_set(r.code,u.roles)
+      where u.active >= 0
       group by u.id
     ) tmp where 1 = 1
 
