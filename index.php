@@ -91,6 +91,9 @@ $active = get_active_config_name();
 $active_config = merge_options($spa, $spa[$active]);
 
 $request = merge_options($active_config, $_REQUEST);
+$content = $request['path'];
+if (!isset($content)) $content = $active_config['default_content'];
+$request['content'] = $content;
 unset($request['path']);
 $page =  $request['page'];
 if (!isset($page)) $page = $active_config['page'];
