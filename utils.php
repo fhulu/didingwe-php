@@ -53,16 +53,17 @@ function remove_nulls(&$array)
 
 function replace_vars($str, $values, $callback=null, $value_if_unset=null) {
   $matches = [];
-  if (preg_match('/^\$(?:(\w+)|\{(\w+)\})$/', $str, $matches)) {
+  if (preg_match('/^\$(?:(\w+)|\{(\w+)\})(\.\.\.)?$/', $str, $matches)) {
     $key = $matches[1];
     if (!isset($key)) $key = $matches[2];
     if (!isset($values[$key])) return $str;
     $value = $values[$key];
     if ($callback && $callback($value, $key) === false) return $str;
+    if (isset($matches[3]) && is_array($value)) $value = implode($value);
     return $value;
   }
 
-  if (!preg_match_all('/\$(?:(\w+)\b|\{(\w+)\})/m', $str, $matches, PREG_SET_ORDER)) return  $str;
+  if (!preg_match_all('/\$(?:(\w+)\b|\{(\w+)\})(\.\.\.)?/m', $str, $matches, PREG_SET_ORDER)) return  $str;
 
   foreach($matches as $match) {
     $key = $match[1];
@@ -73,8 +74,9 @@ function replace_vars($str, $values, $callback=null, $value_if_unset=null) {
       $value = $value_if_unset;
     }
     if (!$callback || $callback($value, $key) !== false) {
+      if (isset($matches[3]) && is_array($value)) $value = implode($value);
       $value = str_replace('$', '{%}',$value);
-      $str = preg_replace('/\$(?:'.$key.'(\b)|\{'.$key.'\})/',"$value$1", $str);
+      $str = preg_replace('/\$(?:'.$key.'(\b)|\{'.$key.'\})(\.\.\.)?/',"$value$1", $str);
       $str = str_replace('{%}', '$',$str);
     }
   }
