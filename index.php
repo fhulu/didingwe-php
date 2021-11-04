@@ -43,10 +43,8 @@ function build_tag_lines($tag_type) {
   if (!$tags) $tags = [];
   $lines = [];
   foreach($tags as $tag=>$attrs) {
-    $template = "<$tag" . build_tag_template_attrs($attrs, ['list', 'text']);
-    $list = $attrs['list'];
-    if (!isset($list)) $list = $tag;
-    $list = $config[$list];
+    $template = "<$tag" . build_tag_template_attrs($attrs, ['alias', 'text']);
+    $list = merge_options($config[$tag], $config[ $attrs['alias'] ]);
     if (!isset($list)) continue;
 
     foreach ($list as $value) {
@@ -93,7 +91,7 @@ unset($request['path']);
 
 $page =  $request['page'];
 if (!isset($page)) $page = $active_config['page'];
-$options = ["path"=>$page, 'request'=>$request, 'request_method'=>$config['request_method']];
+$options = ["path"=>$page, 'request'=>$request];
 
 build_tag_lines('head_tag');
 build_tag_lines('body_tag');
