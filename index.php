@@ -41,10 +41,10 @@ function configure() {
   $active = get_active_config_name();
   $active_config = $spa = merge_options($spa, $spa[$active]);
 
-  if (!isset($_REQUEST['path'])) $_REQUEST['path'] = $active_config['default_path'];
   replace_fields($active_config, $_REQUEST);
   replace_fields($active_config, $active_config);
   $config = merge_options($config, $active_config);
+  replace_fields($config, $config);
   do_preprocessing($config);
   $_SESSION['config'] = $config;
   return $site_config != null;
@@ -75,30 +75,78 @@ function process_redirection() {
 }
 
 configure();
-if (process_redirection() || load_default_page() || process_action()) return ;
-?>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name=viewport content="width=device-width, initial-scale=1" />
-<?php
-echo_scripts($config['css'], "<link href='\$script' media='screen' rel='stylesheet' type='text/css' />\n");
-echo_scripts($config['scripts'], "<script src='\$script'></script>\n");
-
 log::debug_json("BROWSER REQUEST", $_REQUEST);
-  $config = array_merge(['session_timeout'=>300], $config);
+if (process_redirection() || load_default_page() || process_action()) return ;
+
+function build_tag_template_attrs($attrs, $exclusions) {
+  $template = "";
+  foreach ($attrs as $name=>$value) {
+    if (in_array($name, $exclusions)) continue;
+    $template .= " $name=\"$value\"";
+  }
+  return $template;
+}
+function echo_head_tags($config) {
+  $tags = $config['head_tags'];
+  if (!$tags) return;
+  foreach($tags as $tag=>$attrs) {
+    $template = "<$tag" . build_tag_template_attrs($attrs, ['list', 'text']);
+    $list = $attrs['list'];
+    if (!isset($list)) $list = $tag;
+    $list = $config[$list];
+    if (!isset($list)) continue;
+
+    foreach ($list as $value) {
+      $line = $template;
+      if (!is_array($value)) {
+        $values = ["value"=>$value];
+      }
+      else if (sizeof($value) == 1) {
+        [$name, $props] = assoc_element($value);
+        $values = is_array($props)? $props: ['value'=>$props];
+        $values['name'] = $name;
+      }
+      else {
+        $values = $value;        
+      }
+      $line .= build_tag_template_attrs($values, ['name', 'value']);
+      $text = $attrs['text'];
+      if (isset($text)) 
+        $line .= ">$text</$tag>";
+      else
+        $line .= "/>";
+  
+      $line = replace_vars($line, $values);
+      $line = preg_replace('/ \w+\s*="\$[^"]+"/', "", $line);
+      echo $line. "\n";
+    }
+  }
+  return $lines;
+}
+
+?>
+<?php
+
+$config = array_merge(['session_timeout'=>300], $config);
 $spa = $config['spa'];
 $active = get_active_config_name();
 $active_config = merge_options($spa, $spa[$active]);
 
-$request = merge_options($active_config, $_REQUEST);
-$content = $request['path'];
-if (!isset($content)) $content = $active_config['default_content'];
+$request = $_REQUEST;
+if (isset($request['path'])) 
+  $content = $request['path'];
+else
+  $content = $active_config['content'];
 $request['content'] = $content;
 unset($request['path']);
 $page =  $request['page'];
 if (!isset($page)) $page = $active_config['page'];
 $options = ["path"=>$page, 'request'=>$request];
 ?>
+<!DOCTYPE html>
+<html>
+<head>
+<?php echo_head_tags($config); ?>
 <script>
 var request_method = '<?=$config['request_method'];?>';
 $(function() {
@@ -114,6 +162,7 @@ $(function() {
   $(document).bind("mousemove keypress click", start_timer);
 });
 </script>
+</head>
 <body>
 <div class="didi processing modal font-large center-text" style="display: none;z-index: 1000">
   <div class="didi light-grey center-text rounded-large shadow pad pad-small col s12 m6 l4 no-float centered">
@@ -122,3 +171,4 @@ $(function() {
   </div>
 </div>
 </body>
+</html>
