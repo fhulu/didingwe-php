@@ -86,9 +86,13 @@ function build_tag_template_attrs($attrs, $exclusions) {
   }
   return $template;
 }
-function echo_head_tags($config) {
-  $tags = $config['head_tags'];
-  if (!$tags) return;
+
+
+function build_tag_lines($tag_type) {
+  global $config;
+  $tags = $config[$tag_type];
+  if (!$tags) $tags = [];
+  $lines = [];
   foreach($tags as $tag=>$attrs) {
     $template = "<$tag" . build_tag_template_attrs($attrs, ['list', 'text']);
     $list = $attrs['list'];
@@ -118,57 +122,31 @@ function echo_head_tags($config) {
   
       $line = replace_vars($line, $values);
       $line = preg_replace('/ \w+\s*="\$[^"]+"/', "", $line);
-      echo $line. "\n";
+      $lines[] = $line . "\n";
     }
   }
-  return $lines;
+  $config[$tag_type] = $lines;
 }
 
-?>
-<?php
 
-$config = array_merge(['session_timeout'=>300], $config);
 $spa = $config['spa'];
 $active = get_active_config_name();
 $active_config = merge_options($spa, $spa[$active]);
 
 $request = $_REQUEST;
 if (isset($request['path'])) 
-  $content = $request['path'];
+  $request['content'] = $request['path'];
 else
-  $content = $active_config['content'];
-$request['content'] = $content;
+  $request['content'] = $active_config['content'];
 unset($request['path']);
 $page =  $request['page'];
 if (!isset($page)) $page = $active_config['page'];
-$options = ["path"=>$page, 'request'=>$request];
-?>
-<!DOCTYPE html>
-<html>
-<head>
-<?php echo_head_tags($config); ?>
-<script>
-var request_method = '<?=$config['request_method'];?>';
-$(function() {
-  $("body").page(<?=json_encode($options);?>);
-  var timer;
-  var start_timer = ()=> {
-    if (timer) clearTimeout(timer);
-    timer = setTimeout(()=> {
-      window.location.href = '/<?=$content?>';
-    }, <?=($config['session_timeout']+60)*1000?>);
-  };
-  start_timer();
-  $(document).bind("mousemove keypress click", start_timer);
-});
-</script>
-</head>
-<body>
-<div class="didi processing modal font-large center-text" style="display: none;z-index: 1000">
-  <div class="didi light-grey center-text rounded-large shadow pad pad-small col s12 m6 l4 no-float centered">
-    <i class="didi fa fa-spin fa-spinner font-large"></i>
-    <p class="didi message"></p>
-  </div>
-</div>
-</body>
-</html>
+$options = ["path"=>$page, 'request'=>$request, 'request_method'=>$config['request_method']];
+
+build_tag_lines('head_tag');
+build_tag_lines('body_tag');
+$config['options'] = json_encode($options);
+$spa_template = file_get_contents($active_config['template']);
+$spa_template = replace_vars($spa_template, $config);
+
+echo $spa_template;
