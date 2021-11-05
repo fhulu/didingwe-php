@@ -7,8 +7,8 @@ activate:
   desc: Activate inactive user
   audit: sql(select first_name, last_name, email_address from user where id = '$key')
   post:
-    - sql_exec: update user set active = 1 where id = '$key'
-    - refresh: "#main table"
+    - sql_exec: update user set active = 1, attempts=0 where id = '$key' 
+    - refresh: "#main>table"
 
 
 audit_trail_base:
@@ -239,7 +239,6 @@ is_registered:
     Click on <b>Register</b> if you would like to register to use the system.
 
 is_unlocked:
-  max_attempts: 5
   valid: sql(select attempts < $max_attempts from user where email_address = '$value')
   error: |
     Account $value locked because of too many incorrect attempts.
@@ -259,6 +258,7 @@ list:
   report_title: User Report
   row_actions:
     - activate
+    - unlock
     - deactivate
     - edit: { action: dialog }
     - delete
@@ -281,10 +281,11 @@ list:
       - user/history
   sql: >
     select id, create_time, email_address, first_name, last_name, cellphone, roles, status, status, actions from (
-       select u.id, u.create_time,email_address, u.first_name, u.last_name,
+       select u.id, u.create_time,email_address, u.first_name, u.last_name, 
         u.cellphone, group_concat(r.name) roles,
-        if(u.active=1,'active','inactive') status,
-        if(u.active=1,'expand,slide,edit,deactivate,delete','expand,slide,edit,activate,delete') actions
+        if(u.active=1, if(attempts < $max_attempts, 'active', 'locked'), 'inactive') status,
+        if(u.active=1, if(attempts < $max_attempts, 'expand,slide,edit,deactivate,delete', 'expand,slide,edit,unlock,delete'),
+          'expand,slide,edit,activate,delete') actions
       from user u left join role r on find_in_set(r.code,u.roles)
       where u.active >= 0
       group by u.id
@@ -409,4 +410,11 @@ register:
     - confirm_registration: { clear: true}
     - complete_registration: { prev: false}
 
-
+unlock:
+  access: admin
+  validate: none
+  desc: Unlock user who exceeded password attempts
+  audit: sql(select first_name, last_name, email_address from user where id = '$key')
+  post:
+    - sql_exec: update user set attempts=0 where id = '$key' 
+    - refresh: "#main>table"
