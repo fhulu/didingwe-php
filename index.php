@@ -81,24 +81,21 @@ log::debug_json("BROWSER REQUEST", $_REQUEST);
 if (process_redirection() || load_default_page() || process_action()) return ;
 
 $spa = $config['spa'];
-$active = get_active_config_name();
-$active_config = merge_options($spa, $spa[$active]);
-
 $request = $_REQUEST;
 if (isset($request['path'])) 
   $request['content'] = $request['path'];
 else
-  $request['content'] = $active_config['content'];
+  $request['content'] = $spa['content'];
 unset($request['path']);
 
 $page =  $request['page'];
-if (!isset($page)) $page = $active_config['page'];
+if (!isset($page)) $page = $spa['page'];
 $options = ["path"=>$page, 'request'=>$request];
 
 build_tag_lines('head_tag');
 build_tag_lines('body_tag');
 $config['options'] = json_encode($options);
-$spa_template = file_get_contents($active_config['template']);
+$spa_template = file_get_contents($spa['template']);
 $spa_template = replace_vars($spa_template, $config);
 
 echo $spa_template;

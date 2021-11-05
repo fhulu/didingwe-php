@@ -15,8 +15,7 @@ function do_preprocessing(&$config) {
   replace_fields($config,$config);
 }
 
-function get_active_config_name()
-{
+function get_active_config_name() {
   return $_SESSION['auth']? 'auth': 'public';
 }
 
@@ -24,11 +23,14 @@ function get_active_config_name()
 function configure() {
   global $config;
   $config = merge_options(['didi_root'=>'../didi'], load_yaml("../vocab/app-config.yml", false));
-  $config = merge_options(['didi_path'=>$config['didi_root'] . "/vocab"], $config);
-  $config = merge_options(load_yaml($config['didi_path'] . "/app-config.yml", false), $config);
+  $config['didi_path'] = $config['didi_root'] . "/vocab";
+  $config = merge_options(load_yaml($config['didi_path'] . "/app-config.yml", true), $config);
+  replace_fields($config, $config);
   do_preprocessing($config);
   $site_config = load_yaml($config['site_config'], false);
   $config = merge_options($config, $site_config);
+  replace_fields($config, $config);
+  do_preprocessing($config);
 
   $log = replace_fields($config['log'], $config);
   if ($log)
@@ -36,13 +38,12 @@ function configure() {
 
   $spa = &$config['spa'];
   $active = get_active_config_name();
-  $active_config = $spa = merge_options($spa, $spa[$active]);
+  $spa = merge_options($spa, $spa[$active]);
 
-  replace_fields($active_config, $_REQUEST);
-  replace_fields($active_config, $active_config);
-  $config = merge_options($config, $active_config);
-  replace_fields($config, $config);
-  do_preprocessing($config);
+  replace_fields($spa, $_REQUEST);
+  replace_fields($spa, $spa);
+  replace_fields($spa, $config);
+
   $_SESSION['config'] = $config;
   return $site_config != null;
 }
