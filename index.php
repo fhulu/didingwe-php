@@ -48,7 +48,7 @@ function build_tag_lines($tag_type) {
     $template = "<$tag_name" . build_tag_template_attrs($attrs, ['alias', 'text', 'tag']);
     $list = merge_options($config[$tag], $config[ $attrs['alias'] ]);
     if (!isset($list)) continue;
-
+    if (is_assoc($list) || !is_array($list)) $list = [$list];
     foreach ($list as $value) {
       $line = $template;
       if (!is_array($value)) {
