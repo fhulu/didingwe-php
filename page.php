@@ -532,7 +532,8 @@ class page
     $options = merge_options($this->context,$this->request);
     $validators = $this->load_fields('validators.yml');
     $fields = merge_options($this->merge_stack(page::$fields_stack), $this->page_fields, $this->fields);
-    $this->validator = new validator(page::merge_options($_SESSION, $this->request), $fields, $validators);
+    global $config;
+    $this->validator = new validator(merge_options($config, $_SESSION, $this->request), $fields, $validators);
 
     $exclude = array('css','post','script','stype','valid','values');
     if ($include != '' &&!is_array($include))
@@ -723,10 +724,11 @@ class page
 
   static function replace_sql($sql, $options)
   {
-    global $page;
+    global $page, $config;
     $user = $page->user;
     
-    $options = null_merge(['uid'=>$user['uid'] ], $options);
+    $options = merge_options($config, ['uid'=>$user['uid'] ], $options);
+
     $sql = replace_vars($sql, $options, function(&$val, $key) {
       if ($key == 'uid' && !$val)
         throw new expired_session_exception();
@@ -750,8 +752,8 @@ class page
 
   function translate_sql($sql)
   {
-    $values = null_merge($this->request, $this->answer, false);
-    return page::replace_sql($sql, null_merge($this->context, $values));
+    $values = merge_options( $this->request, $this->context, $this->answer);
+    return page::replace_sql($sql, $values);
   }
 
   function sql_values($sql)
