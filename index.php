@@ -43,7 +43,9 @@ function build_tag_lines($tag_type) {
   if (!$tags) $tags = [];
   $lines = [];
   foreach($tags as $tag=>$attrs) {
-    $template = "<$tag" . build_tag_template_attrs($attrs, ['alias', 'text']);
+    $tag_name = $tag;
+    if (in_array('tag', array_keys($attrs))) $tag_name = $attrs['tag'];
+    $template = "<$tag_name" . build_tag_template_attrs($attrs, ['alias', 'text', 'tag']);
     $list = merge_options($config[$tag], $config[ $attrs['alias'] ]);
     if (!isset($list)) continue;
 
@@ -63,7 +65,7 @@ function build_tag_lines($tag_type) {
       $line .= build_tag_template_attrs($values, ['name', 'value']);
       $text = $attrs['text'];
       if (isset($text)) 
-        $line .= ">$text</$tag>";
+        $line .= ">$text</$tag_name>";
       else
         $line .= "/>";
   
