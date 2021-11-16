@@ -172,7 +172,7 @@ delete:
   confirmation: Are you sure you want to permanently delete this user?
   audit: sql(select first_name, last_name, email_address from user where id = '$key')
   post:
-    - sql_exec: update user set active = -1, email_address = concat(email_address, "-deleted") where id = '$key'
+    - sql_exec: update user set active = -1, email_address = concat(email_address, "-deleted-$key") where id = '$key'
     - refresh: "#main table"
 
 edit:
