@@ -493,7 +493,9 @@ plain:
   text: $value
 
 plain_text:
-  type: plain
+  tag: span
+  text: $id
+  id: ""
 
 plot:
   tag: div
