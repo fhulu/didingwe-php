@@ -22,9 +22,8 @@ function get_active_config_name() {
 
 function configure() {
   global $config;
-  $config = merge_options(['didi_root'=>'../didi'], load_yaml("../vocab/app-config.yml", false));
-  $config['didi_path'] = $config['didi_root'] . "/vocab";
-  $config = merge_options(load_yaml($config['didi_path'] . "/app-config.yml", true), $config);
+  $config = load_yaml("../vocab/app-config.yml", true);
+  $config = merge_options(load_yaml($config['didi_root'] . "/vocab/app-config.yml", true), $config);
   replace_fields($config, $config);
   do_preprocessing($config);
   $site_config = load_yaml($config['site_config'], false);
