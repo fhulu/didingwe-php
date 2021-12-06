@@ -25,8 +25,8 @@ class log
 
   function __construct ($path=null, $level=self::INFO) {
     if (!is_null($path)) {
-      $this->path = realpath($path);
       $this->instance = basename($path);
+      $this->path = realpath(dirname($path)) . "/$this->instance";
     }
     else {
       $this->instance = $this->path = null;
