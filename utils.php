@@ -2,9 +2,8 @@
 require_once("log.php");
 $config = load_yaml(".config.yml", true);
 
-function at($array, $index)
-{
-  return isset($array[$index])? $array[$index]: null;
+function at($array, $index, $default=null) {
+  return isset($array[$index])? $array[$index]: $default;
 }
 
 function GET($item) { return at($_GET, $item); }
@@ -109,8 +108,8 @@ function caught_error($errNo, $errStr, $errFile, $errLine) {
 function caught_fatal(){
 
     $error = error_get_last();
-
-    if($error && ($error['type'] & E_FATAL)){
+    if ($error) $type = $error['type'];
+    if($error && ($type & (E_ERROR | E_CORE_ERROR | E_COMPILE_ERROR | E_USER_ERROR | E_RECOVERABLE_ERROR  ))){
       caught_error($error['type'], $error['message'], $error['file'], $error['line']);
     }
 
@@ -196,9 +195,9 @@ function walk_leaves(&$array, $callback)
   }
 }
 
-function assoc_element($element)
-{
-  if (!is_array($element)) return array($element);
+function assoc_element($element) { 
+  if (!is_array($element)) return [$element,null];
+  if (!sizeof($element)) return [null,null];
   foreach($element as $key=>$value) {};
   return array($key, $value);
 }
@@ -268,7 +267,7 @@ function expand_function($func)
     throw new Exception("Invalid function specification --$func--");
 
   array_shift($matches);
-  return $matches;
+  return sizeof($matches)==2?$matches: [$matches[0], null];
 }
 
 function array_find(&$array, $callback)
