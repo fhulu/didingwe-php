@@ -624,7 +624,7 @@ class page
       foreach($added_types as $type) {
         unset($this->types[$type]);
       }
-    });
+    }, 'normalize_array');
   }
 
   static function not_mergeable($key)
