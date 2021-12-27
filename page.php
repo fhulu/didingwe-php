@@ -166,7 +166,7 @@ class page
     if ($this->request['lang']) $languages[] = ".". $this->request['lang'];
     foreach($languages as $lang) {
       foreach($search_paths as $path) {
-        $data = load_yaml("$path/$file$lang.yml");
+        $data = load_yaml("$path/vocab/$file$lang.yml");
         if (is_null($data)) continue;
         $read_one = true;
 
@@ -180,12 +180,15 @@ class page
     return $fields;
   }
 
-  function load()
-  {
-
+  function load() {
     if (sizeof(page::$fields_stack) === 0) {
-      $this->load_field_stack('controls', page::$fields_stack);
-      $this->load_field_stack('fields', page::$fields_stack);
+      global $config;
+      foreach($config['controls'] as $file) {
+        $this->load_field_stack($file, page::$fields_stack);
+      }
+      foreach($config['fields'] as $file) {
+        $this->load_field_stack($file, page::$fields_stack);
+      }
     }
 
     if (sizeof($this->page_stack) != 0) return;
