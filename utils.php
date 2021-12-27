@@ -88,6 +88,20 @@ function is_assoc($array)
   return !(bool)count(array_filter(array_keys($array), 'is_int'));
 }
 
+function normalize_array(&$array) {
+  $prev_key = -1;
+  $compacted = [];
+  foreach($array as $key=>$value) {
+    if (!is_numeric($key) || $key <= $prev_key) {
+      $compacted = [];
+      break;
+    }
+    $prev_key = $key;
+    $compacted[] = $value;
+  }
+  if (sizeof($compacted) != 0) $array = $compacted;
+}
+
 function compress_array($array)
 {
   $compressed = array();
