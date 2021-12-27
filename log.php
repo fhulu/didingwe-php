@@ -16,6 +16,7 @@ class log
   const TRACE = 5;
 
   static $subject = array(
+    self::OFF => 'OFF',
     self::ERROR => 'ERROR',
     self::WARNING => 'WARNING',
     self::INFO => 'INFO',
@@ -31,13 +32,12 @@ class log
     else {
       $this->instance = $this->path = null;
     }
+    if (is_string($level) && !is_numeric($level)) $level = array_search($level, log::$subject);
     $this->level = (int)$level;
     $this->write(self::DEBUG, 'Started '.getmypid());
   }
 
-
-  function __destruct()
-  {
+  function __destruct()  {
     $this->write(self::DEBUG, 'Completed '.getmypid());
   }
 
