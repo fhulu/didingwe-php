@@ -77,6 +77,15 @@ function build_tag_lines($tag_type) {
   $config[$tag_type] = $lines;
 }
 
+function search_file_paths($name, $paths, $prefix="") {
+  $paths = array_reverse($paths);
+  foreach ($paths as $path) {
+    $path .= "/$prefix$name";
+    if (file_exists($path)) return $path;
+  }
+  return $name;
+}
+
 log::debug_json("BROWSER REQUEST", $_REQUEST);
 if (process_redirection() || load_default_page() || process_action()) return ;
 
@@ -95,7 +104,7 @@ $options = ["path"=>$page, 'request'=>$request];
 build_tag_lines('head_tag');
 build_tag_lines('body_tag');
 $config['options'] = json_encode($options);
-$spa_template = file_get_contents($spa['template']);
+$template_path = search_file_paths($spa['template'], $config['search_paths'], 'web/');
+$spa_template = file_get_contents($template_path);
 $spa_template = replace_vars($spa_template, $config);
-
 echo $spa_template;
