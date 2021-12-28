@@ -281,10 +281,12 @@ class validator
           $func = 'regex';
         }
         else {
-      list($func, $args) = validator::expand_function($func);
+          list($func, $args) = validator::expand_function($func);
+        }
+      }
       $this->update_args($args);
       $module_method  = $this->manager->get_module_method($func);
-      if ($args && preg_match_all('/[^,]+|\(.*\)/', $args, $matches))
+      if (!is_array($args) && preg_match_all('/[^,]+|\(.*\)/', $args, $matches))
         $args = $matches[0];
       if ($module_method) {
         list($context, $method) = $module_method;
