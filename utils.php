@@ -1,9 +1,8 @@
 <?php
 require_once("log.php");
 
-function at($array, $index)
-{
-  return isset($array[$index])? $array[$index]: null;
+function at($array, $index, $default=null) {
+  return isset($array[$index])? $array[$index]: $default;
 }
 
 function GET($item) { return at($_GET, $item); }
@@ -52,7 +51,15 @@ function remove_nulls(&$array)
 }
 
 function replace_vars($str, $values, $callback=null, $value_if_unset=null) {
+
   $matches = [];
+  // first check for $.variable replacement for variable as is, including arrays
+  if (preg_match('/^\$\.(\w+)$/', $str, $matches)) { 
+    $var = $matches[1];
+    return at($values, $var, $str);
+  }
+
+  // now check for string values
   if (!preg_match_all('/\$(?:(\w+)\b|\{(\w+)\})(\.\.\.)?/m', $str, $matches, PREG_SET_ORDER)) return  $str;
   
   foreach($matches as $match) {
@@ -636,10 +643,12 @@ function get_mime_type($filename) {
     }
  }
 
-function flatten_array(array $array) {
-    $return = array();
-    array_walk_recursive($array, function($a) use (&$return) { $return[] = $a; });
-    return $return;
+function flatten_array(array $a) {
+    $r = [];
+    array_walk_recursive($a, function($v, $k) use (&$r) {
+      if (!is_array($v)) $r[] = $v;
+    });
+    return $r;
 }
 
 function decode_if_json($x) {
