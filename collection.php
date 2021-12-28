@@ -15,6 +15,7 @@ class collection extends module
   function __construct($page)
   {
     parent::__construct($page);
+    $this->db = $this->page->get_module('db');
     $this->partner_collections = $page->read_config_var("partner_collections");
     if (!$this->partner_collections) $this->partner_collections = [];
     $this->sys_fields = array_merge(array_fill_keys(collection::$sys_columns,null),
@@ -491,7 +492,7 @@ class collection extends module
     $values = array_values($this->sys_fields);
     $custom_id = false;
     foreach ($args as $arg) {
-      list($name,$value) = $this->page->get_sql_pair($arg);
+      list($name,$value) = $this->db->get_sql_pair($arg);
       if ($name == '') continue;
       $column = $this->get_column_name($name, $collection);
       $value = json_encode_array($value);
@@ -571,7 +572,7 @@ class collection extends module
       return array_exclude($this->fields["$collection@$partner"], $exclusions);
     $table = $this->get_table($collection);
     $sql = "select * from `$table` where partner in($partner,0) and collection = '$collection-fields'";
-    $names = $this->db->read_one($this->page->translate_sql($sql), MYSQLI_NUM);
+    $names = $this->db->read_one($sql, MYSQLI_NUM);
     if (empty($names)) return $names;
     $names = array_exclude($names, [null]);
     array_splice($names, 0, sizeof(collection::$sys_columns)+2, collection::$sys_columns);
