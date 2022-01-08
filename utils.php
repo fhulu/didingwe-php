@@ -679,3 +679,12 @@ function email_to_array($str) {
     return [];
   return sizeof($matches) == 3? [$matches[2], $matches[1] ]: [$matches[3] ] ;
 }
+
+function preg_match_each($pattern, $str, $callback) {
+  $matches = [];
+  if (!preg_match_all($pattern, $str, $matches, PREG_SET_ORDER)) return $str;
+  $index = 0;
+  foreach($matches as $match) {
+    if ($callback($match, $index++) === false) break;
+  }
+}
