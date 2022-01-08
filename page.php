@@ -367,6 +367,8 @@ class page
     }
     $field = $this->merge_stack_field(page::$fields_stack, $code);
     $this->merge_stack_field($this->page_stack, $code, $field);
+    if ($code != 'control' && isset($field['tag']) && !isset($field['type']))
+      $field['type'] = 'control';
     return $field;
   }
 
@@ -726,8 +728,6 @@ class page
   function read()
   {
     $this->pre_read($this->fields);
-    $this->types['control'] = $this->get_expanded_field('control');
-    $this->types['template'] = $this->get_expanded_field('template');
     $this->remove_items($this->fields);
     $this->remove_items($this->types);
     return null_merge($this->answer, [
