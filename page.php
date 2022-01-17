@@ -1002,7 +1002,7 @@ class page
 
   function parse_delta(&$args)
   {
-    return $this->db->read_one($this->translate_sql($sql), MYSQL_ASSOC);
+    return $this->db->read_one($sql, MYSQL_ASSOC);
     if ($delta_index === false) return;
 
     $delta = trim($this->request['delta']);
