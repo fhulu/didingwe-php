@@ -149,6 +149,8 @@ class page
     if (!isset($files)) return;
     $fields = [];
     foreach($files as $file) {
+      global $config;
+      $file = replace_vars($file, $config);
       if (in_array($file, $this->includes, true)) continue;
       $this->includes[] = $file;
       $this->load_field_stack($file, $fields);
@@ -169,7 +171,8 @@ class page
         $data = load_yaml("$path/vocab/$file$lang.yml");
         if (is_null($data)) continue;
         $read_one = true;
-
+        $ext_config = $data['config']??null;
+        if (!is_null($ext_config)) $config = merge_options($config, $ext_config);
         $this->include_external($data);
         $this->replace_keys($data);
         $fields[] = $data;
