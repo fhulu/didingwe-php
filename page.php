@@ -731,6 +731,7 @@ class page
   function read()
   {
     $this->pre_read($this->fields);
+    $this->types['template'] = $this->get_expanded_field('template');
     $this->remove_items($this->fields);
     $this->remove_items($this->types);
     return null_merge($this->answer, [
