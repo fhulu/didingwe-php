@@ -791,7 +791,7 @@ class page
     $this->validator = $this->get_module("validator");
     $this->validator->init($values, $fields, $validators);
 
-    $exclude = array('audit','css','post','script','style', 'styles', 'type','valid','validate','values');
+    $exclude = ['audit', 'class', 'css', 'derive', 'post','script', 'sow', 'style', 'styles', 'type','valid','validate','values'];
 
     if (is_string($include))
       $include = explode(',', $include);
