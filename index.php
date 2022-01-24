@@ -5,7 +5,7 @@ require_once('config.php');
 
 configure();
 function process_action() {
-  if (is_null($_REQUEST['action'])) return false;
+  if (!at($_REQUEST,'action')) return false;
   require_once('page.php');
   return true;
 }
@@ -22,7 +22,7 @@ function load_default_page() {
 
 function process_redirection() {
   global $config;
-  $redirect_url = $config['redirect_url'];
+  $redirect_url = at($config,'redirect_url');
   if (!$redirect_url) return false;
   header("Location: $redirect_url");
   return true;
@@ -39,15 +39,17 @@ function build_tag_template_attrs($attrs, $exclusions) {
 
 function build_tag_lines($tag_type) {
   global $config;
-  $tags = $config[$tag_type];
-  if (!$tags) $tags = [];
+  $tags = at($config, $tag_type, []);
   $lines = [];
   foreach($tags as $tag=>$attrs) {
     $tag_name = $tag;
     if (in_array('tag', array_keys($attrs))) $tag_name = $attrs['tag'];
     $template = "<$tag_name" . build_tag_template_attrs($attrs, ['alias', 'text', 'tag']);
-    $list = merge_options($config[$tag], $config[ $attrs['alias'] ]);
-    if (!isset($list)) continue;
+    $list = at($config, $tag);
+    $alias = at($attrs, 'alias');
+    if ($alias)
+      $list = merge_options($list, at($config, $alias));
+    if (!$list) continue;
     if (is_assoc($list) || !is_array($list)) $list = [$list];
     foreach ($list as $value) {
       $line = $template;
@@ -63,8 +65,8 @@ function build_tag_lines($tag_type) {
         $values = $value;        
       }
       $line .= build_tag_template_attrs($values, ['name', 'value']);
-      $text = $attrs['text'];
-      if (isset($text)) 
+      $text = at($attrs, 'text');
+      if (!is_null($text)) 
         $line .= ">$text</$tag_name>";
       else
         $line .= "/>";
@@ -91,14 +93,10 @@ if (process_redirection() || load_default_page() || process_action()) return ;
 
 $spa = $config['spa'];
 $request = $_REQUEST;
-if (isset($request['path'])) 
-  $request['content'] = $request['path'];
-else
-  $request['content'] = $spa['content'];
+$request['content'] = at($request, 'path', $spa['content']);  
 unset($request['path']);
 
-$page =  $request['page'];
-if (!isset($page)) $page = $spa['page'];
+$page =  at($request, 'page', $spa['page']);
 $options = ["path"=>$page, 'request'=>$request];
 
 build_tag_lines('head_tag');

@@ -2,7 +2,7 @@
 require_once("log.php");
 
 function at($array, $index, $default=null) {
-  return isset($array[$index])? $array[$index]: $default;
+  return $array[$index]??$default;
 }
 
 function GET($item) { return at($_GET, $item); }
@@ -28,11 +28,10 @@ function last($array)
 }
 
 
-function null_merge($array1, $array2)
-{
+function null_merge($array1, $array2) {
   if (is_null($array2)) return $array1;
   if (!is_array($array2)) return $array2;
-  if ($array2[0] == '_reset')  return array_slice($array2, 1);
+  if (head($array2) == '_reset') return tail($array2);
   return is_array($array1)? array_merge($array1, $array2): $array2;
 }
 
@@ -56,17 +55,20 @@ function replace_vars($str, $values, $callback=null, $value_if_unset=null) {
   // first check for $.variable replacement for variable as is, including arrays
   if (preg_match('/^\$\.(\w+)$/', $str, $matches)) { 
     $var = $matches[1];
-    return at($values, $var, $str);
+    $value = at($values, $var, $str);
+    
+    // if callback is supplied call it and only return substitute value if callback result is false 
+    return !$callback || $callback($value, $var) !== false? $value: $str;
   }
 
-  // now check for string values
   if (!preg_match_all('/\$(?:(\w+)\b|\{(\w+)\})(\.\.\.)?/m', $str, $matches, PREG_SET_ORDER)) return  $str;
-  
+
   foreach($matches as $match) {
-    $key = $match[1];
-    if (!isset($key)) $key = $match[2];
-    $value = $values[$key];
-    if (!isset($value)) {
+    $key = at($match, 1);
+    if (is_null($key)) $key = at($match, 2);
+    if (is_null($key)) continue;
+    $value = at($values, $key);
+    if (is_null($value)) {
       if ($value_if_unset === null) continue;
       $value = $value_if_unset;
     }
@@ -140,8 +142,7 @@ set_error_handler('caught_error');
 register_shutdown_function('caught_fatal');
 
 
-function merge_options()
-{
+function merge_options() {
   $merge = function($options1, $options2) use(&$merge) {
     if (is_null($options2)) return $options1;
     if (is_string($options2) && strpos($options2, '...')===0) {
@@ -151,9 +152,8 @@ function merge_options()
     if (!is_array($options1) || $options1 == $options2) return $options2;
     if (!is_array($options2)) return $options2;
     if (!is_assoc($options1) && !is_assoc($options2)) {
-      if ($options2[0] != '_reset') return array_merge($options1, $options2);
-      array_shift($options2);
-      return $options2;
+      if (head($options2) == '_reset') return tail($options2);
+      return array_merge($options1, $options2);
     }
     $result = $options1;
     foreach($options2 as $key=>$value ) {
@@ -185,53 +185,73 @@ function choose_value(&$array)
   return null;
 }
 
-function walk_recursive(&$array, $callback, $done_callback = null)
-{
+function walk_recursive(&$array, $callback, $options = [], $level = 0) {
+
+  // merge supplied options with default options with supplied options taking precedence
+  $default_options = [
+    'leaves_first' => true,       // indicates whether to walk to leaf nodes before applying callback
+    'leaves_only'=> false,        // indicates whether to only apply callback on leaf nodes or all nodes
+    'exclude' => [],              // ignore all keys specified here
+    'done' => null,               // call back to be called at the end of walking a level
+    'max_level' => PHP_INT_MAX    // maximum number of levels to process
+  ];
+  $options = array_merge($default_options, $options);
+
+  // use options as variables
+  extract($options);
+
+  // return immediately if we are already at the last level
+  if ($level >= $max_level)  return;
+
+  // let's walk
   foreach($array as $key=>&$value) {
-    if (is_array($value))
-      walk_recursive ($value, $callback, $done_callback);
-    $callback($value, $key, $array);
+
+    // exclude keys in supplied exclude list
+    if (in_array($key, $exclude, true)) continue;
+
+    // do callback right away if at leaf level 
+    if (!is_array($value)) {
+      $callback($value, $key, $array, $level);      
+      continue;
+    }
+
+    // walk down the tree first before callback
+    if ($leaves_first) {
+      if ($level < $max_level) walk_recursive($value, $callback, $options, $level+1);
+      if (!$leaves_only) $callback($value, $key, $array, $level); 
+    }
+
+    // run callback first and if result is false don't continue traversing
+    else if ($leaves_only || $callback($value, $key, $array, $level) !== false) {
+      if ($level < $max_level) walk_recursive($value, $callback, $options, $level+1);
+    }
   }
-  if ($done_callback)
-    $done_callback($array);
+  
+  // if supplied, call done callback at the end of each level
+  if ($done) $done($array);
 }
 
-function walk_recursive_down(&$array, $callback, $done_callback = null)
-{
-  foreach($array as $key=>&$value) {
-    $result = $callback($value, $key, $array);
-    if ($result !== false && is_array($value))
-      walk_recursive_down($value, $callback, $done_callback);
-  }
-  if ($done_callback)
-    $done_callback($array);
+function walk_recursive_down(&$array, $callback, $done_callback = null) {
+  walk_recursive($array, $callback, ['leaves_first' => false, 'done'=> $done_callback]);
 }
 
-function walk_leaves(&$array, $callback)
-{
-  foreach($array as $key=>&$value) {
-    if (is_array($value))
-      walk_leaves($value, $callback);
-    else
-      $callback($value, $key, $array);
-  }
+function walk_leaves(&$array, $callback) {
+  walk_recursive($array, $callback, ['leaves_only' => true]);
 }
 
-function assoc_element($element)
-{
-  if (!is_array($element)) return array($element);
+function assoc_element($element) {
+  if (!is_array($element)) return [$element, null];
   foreach($element as $key=>$value) {};
-  return array($key, $value);
+  return [$key, $value];
 }
 
-function replace_fields(&$options, $context, $callback=null)
-{
+function replace_fields(&$options, $context, $callback=null) {
   if (!is_array($options)) {
     $options = replace_vars($options, $context, $callback);
     return $options;
   }
   $replaced = false;
-  array_walk_recursive($options, function(&$value) use(&$context, $callback, &$replaced) {
+  walk_leaves($options, function(&$value) use(&$context, $callback, &$replaced) {
     $old = $value;
     $value = replace_vars($value, $context, $callback);
     $replaced = ($value !== $old);
@@ -636,11 +656,7 @@ function get_mime_type($filename) {
         'ods' => 'application/vnd.oasis.opendocument.spreadsheet',
     );
 
-    if (isset( $mimet[$idx] )) {
-     return $mimet[$idx];
-    } else {
-     return 'application/octet-stream';
-    }
+    return isset( $mimet[$idx] )?  $mimet[$idx]: 'application/octet-stream';
  }
 
 function flatten_array(array $a) {
@@ -668,7 +684,7 @@ function assoc_to_array($assoc, ...$names) {
     return array_values($assoc);
   $result = [];
   foreach($names as $name) {
-    $result[] = $assoc[$name];
+    $result[] = at($assoc, $name);
   }
   return $result;
 }
@@ -687,4 +703,29 @@ function preg_match_each($pattern, $str, $callback) {
   foreach($matches as $match) {
     if ($callback($match, $index++) === false) break;
   }
+}
+
+// allow explode(str, delim) to be use like [x,y,z] = explode(str, delim, 3, default) 
+// for backward compatibility with php ver < 8/
+// so if exploding str result in an array whose less than the minimum quantity, the resultant array 
+// is padded with a default value
+function explode_safe(string $str, string $delim, int $min_quantity, string $default=null) {
+  assert('$min_quantity >= 0');
+  $array = explode($str, $delim);
+  return array_pad($array, $min_quantity, $default);
+}
+
+// return first element of an array
+function car($array) {
+  return $array[0]??null;
+}
+
+// return first element of an array
+function head($array) {
+  return $array[0]??null;
+}
+
+// return last element of an array
+function tail($array) {
+  return array_slice($array, 1);
 }

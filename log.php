@@ -51,8 +51,8 @@ class log
   static function replace_hidden_patterns($message) {
     global $config;
     if (!$config) return $message;  
-    $patterns = $config['log_hidden_patterns'];
-    if (!isset($patterns) || !is_array($patterns)) return $message;
+    $patterns = $config['log_hidden_patterns']??null;
+    if (!$patterns || !is_array($patterns)) return $message;
     foreach($patterns as $pattern) {
       [$regex,$replacement] = assoc_element($pattern);
       $message = preg_replace("/$regex/",$replacement, $message);
@@ -100,7 +100,7 @@ class log
     $stack = array_reverse($exception->getTrace());
     $messages = [];
     foreach($stack as $trace) {
-      $message = "TRACE $index. ".$trace['file']." line ".$trace['line']." function ".$trace['class'] ."::".$trace['function'] ."(".json_encode($trace['args']).')';
+      $message = "TRACE $index. ".$trace['file']." line ".$trace['line']." function ". at($trace, 'class', "") ."::".$trace['function'] ."(".json_encode(at($trace, 'args', [])).')';
       $messages[] = log::error($message);
       ++$index;
     }

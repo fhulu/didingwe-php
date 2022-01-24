@@ -3,7 +3,7 @@ require_once 'log.php';
 require_once('utils.php');
 
 function do_preprocessing(&$config) {
-  $preprocess = $config['preprocess'];
+  $preprocess =at($config, 'preprocess');
   if (!$preprocess || !file_exists($preprocess) || in_array($preprocess, get_included_files()) ) {
     replace_fields($config,$config);
     return;
@@ -16,7 +16,7 @@ function do_preprocessing(&$config) {
 }
 
 function get_active_config_name() {
-  return $_SESSION['auth']? 'auth': 'public';
+  return at($_SESSION, 'auth')? 'auth': 'public';  
 }
 
 
@@ -26,7 +26,8 @@ function configure() {
   $config = load_yaml("$app_path/vocab/app-config.yml", true);
   replace_fields($config, $_SERVER);
   replace_fields($config, $config);
-  $config = merge_options(load_yaml($config['didi_root'] . "/vocab/app-config.yml", true), $config);
+  $didi_config = load_yaml($config['didi_root'] . "/vocab/app-config.yml", true);
+  $config = merge_options($didi_config, $config);
   replace_fields($config, $config);
   do_preprocessing($config);
   $site_config = load_yaml('$app_path/vocab/' . $config['site_config'], false);

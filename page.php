@@ -24,8 +24,7 @@ catch (expired_session_exception $exception) {
   global $content;
   page::redirect("/$content");
 }
-catch (Exception $exception)
-{
+catch (Exception $exception) {
   if ($in_exception) return;
   $in_exception = true;
   $stack = log::stack($exception);
@@ -75,6 +74,8 @@ class page
   var $sub_page;
   var $includes;
   var $modules;
+  var $broken;
+  var $foreach;
 
   function __construct($request=null)
   {
@@ -143,10 +144,9 @@ class page
   }
 
 
-  function include_external(&$data, $files=null)
-  {
-    if (!$files) $files = $data['include'];
-    if (!isset($files)) return;
+  function include_external(&$data, $files=null) {
+    if (!$files) $files = at($data, 'include');
+    if (!$files) return;
     $fields = [];
     foreach($files as $file) {
       global $config;
@@ -165,13 +165,13 @@ class page
     $languages = [''];
     global $config;
     $search_paths = flatten_array($config['search_paths']);
-    if ($this->request['lang']) $languages[] = ".". $this->request['lang'];
+    if (at($this->request, 'lang')) $languages[] = ".". $this->request['lang'];
     foreach($languages as $lang) {
       foreach($search_paths as $path) {
         $data = load_yaml("$path/vocab/$file$lang.yml");
         if (is_null($data)) continue;
         $read_one = true;
-        $ext_config = $data['config']??null;
+        $ext_config = at($data, 'config');
         if (!is_null($ext_config)) $config = merge_options($config, $ext_config);
         $this->include_external($data);
         $this->replace_keys($data);
@@ -206,10 +206,9 @@ class page
     return $this->merge_stack($stack);
   }
 
-  function get_access($field, $key)
-  {
-    $access = $field[$key];
-    if (is_null($access)) return null;
+  function get_access($field, $key) {
+    $access = at($field, $key);
+    if (!$access) return null;
     if (!is_array($access)) $access = [$access];
     return array_keys_first($access);
   }
@@ -231,9 +230,7 @@ class page
   }
 
 
-  function expand_type($type, &$added = array() )
-  {
-
+  function expand_type($type, &$added = [] ){
     if (is_array($type)) {
       $result = [];
       foreach($type as $t) {
@@ -242,9 +239,9 @@ class page
       }
       return $result;
     }
-    $expanded = $this->types[$type];
-    if (isset($expanded) || in_array($type, $this->expand_stack, true)) return $expanded;
-    if (!$expanded['sub_page'])
+    $expanded = at($this->types, $type);
+    if ($expanded || in_array($type, $this->expand_stack, true)) return $expanded;
+    if (!at($expanded,'sub_page'))
       $expanded = merge_options($expanded, $this->get_expanded_field($type));
     if (!is_array($expanded)) return null;
     $added[] = $type;
@@ -256,10 +253,9 @@ class page
     return $result;
   }
 
-  function merge_type(&$field, &$added = array())
-  {
-    $type = $field['type'];
-    if (!isset($type) || $type === 'none'  || in_array($type, $this->expand_stack, true)) return $field;
+  function merge_type(&$field, &$added = array()) {
+    $type = at($field, 'type');
+    if (!$type || $type === 'none'  || in_array($type, $this->expand_stack, true)) return $field;
     if (is_string($type) && strpos($type, '$') !== false) {
       global $config;
       $new_type = replace_vars($type, $this->request);
@@ -268,8 +264,10 @@ class page
       $type = $new_type;
     }
     $expanded = $this->expand_type($type, $added);
-    if (is_null($expanded))
+    if (is_null($expanded)) {
+      log::debug_json("TYPE ERROR on ", $field);
       throw new Exception("Unknown type $type");
+    }
 
     if (isset($expanded['type']))
       $field = merge_options($this->merge_type($expanded, $added), $field);
@@ -330,14 +328,12 @@ class page
     return $fields;
   }
 
- function merge_stack_field(&$stack, $code, &$base_field = null)
- {
+ function merge_stack_field(array &$stack, string $code, array &$base_field = null) {
     foreach ($stack as $fields) {
-      $child_field = $fields[$code];
-      if (!isset($child_field)) continue;
+      $child_field = at($fields, $code);
+      if (!$child_field) continue;
       $base_field = merge_options($base_field, $child_field);
     }
-
     return $base_field;
   }
 
@@ -359,8 +355,7 @@ class page
     return $page->fields;
   }
 
-  function get_expanded_field($code)
-  {
+  function get_expanded_field($code) {
     $matches = [];
     if (preg_match('/^(\/\w+|\w+\/)([\w\/]*)$/', $code, $matches)) {
       $page = str_replace('/','', $matches[1]);
@@ -369,8 +364,11 @@ class page
       $code = str_replace('/','', $matches[2]); //todo: take care of inner paths greater than 2
     }
     $field = $this->merge_stack_field(page::$fields_stack, $code);
-    $this->merge_stack_field($this->page_stack, $code, $field);
-    if ($code != 'control' && isset($field['tag']) && !isset($field['type']))
+    if (!is_array($field)) $field = null;
+    $field = $this->merge_stack_field($this->page_stack, $code, $field);
+
+    // if field has tag attribute, but type is not set, set type to control
+    if ($code != 'control' && at($field, 'tag') && !at($field, 'type'))
       $field['type'] = 'control';
     return $field;
   }
@@ -436,19 +434,19 @@ class page
     return $field = merge_options($parent[$key], $field);
   }
 
-  function derive_parent($parent, &$field)
-  {
-    $derive = $field['derive'];
+  // set field value to parent value in when field does not contain the value
+  function derive_parent($parent, &$field) {
+    $derive = at($field, 'derive');
     if (!is_array($derive)) return $field;
     foreach($derive as $key) {
       if (!is_string($key)) continue;
-      $value = $field[$key];
-      if (!isset($value))
-        $field[$key] = $parent[$key];
+      $value = at($field, $key);
+      if (is_null($value))
+        $field[$key] = at($parent, $key);
       else if (is_array($value))
-        $field[$key] = merge_options($parent[$key], $value);
+        $field[$key] = merge_options(at($parent,$key), $value);
       else if ($value[0] === '$')
-        $field[$key] = $parent[substr($value,1)];
+        $field[$key] = at($parent, substr($value,1));
     }
   }
 
@@ -465,13 +463,21 @@ class page
     }
   }
 
-  static function is_module($x, &$method="")
-  {
-    if (!is_string($x)) return false;
-    global $config;
-    list($class, $method) = explode('.', $x);
+  // checks if x is a module. If it is return module options otherwise return false. 
+  // in the the module is 'this' return true
+  static function is_module($x, &$method="") {
+
+    // if not a string return immediately
+    if (!is_string($x)) return false; 
+    [$class, $method] = explode_safe('.', $x, 2);
+
+    // if class is 'this' return true instead 
     if ($class === 'this') return true;
-    $options = $config[$class];
+
+    $options = at($config, $class, []);
+
+    // read module options from configuration
+    global $config;
     foreach($config['modules'] as $module) {
       [$module, $base_options] = assoc_element($module);
       if ($module != $class) continue;
@@ -490,15 +496,18 @@ class page
     }
   }
 
-  function get_module($class, &$method="")
-  {
+  function get_module($class, &$method="") {
+    // first read the module options
     $options = page::is_module($class, $method);
     if (!$options) return false;
-    if (!$options['active']) {
+
+    // if inactive, log error and return
+    if (!at($options, 'active', true)) {
       log::error("Module $class is not active, please edit config");
       return false;
     }
 
+    // load module from options read when reading the module options and instantiate it
     require_once($options['path']);
     $class = $options['class'];
     return $this->modules[$class] =  $module = new $class($this, $options);
@@ -598,6 +607,7 @@ class page
       }
 
       $added_types = array();
+      $expanded = null;
       if (is_string($type)) {
         if (isset($this->types[$type])) return;
         $expanded = $this->expand_type($type, $added_types);
@@ -645,10 +655,9 @@ class page
       && !page::is_module($key);
   }
 
-  function merge_fields(&$fields, $parent=[], $merged=[])
-  {
+  function merge_fields(&$fields, $parent=[], $merged=[]) {
     if (is_assoc($fields)) {
-      if (isset($fields['type']))
+      if (at($fields, 'type'))
         $this->merge_type($fields);
       $this->derive_parent($parent, $field);
       foreach($fields as $key=>&$value) {
@@ -716,14 +725,13 @@ class page
   function pre_read($fields)
   {
     $this->merge_fields($fields);
-    $actions = $fields['read'];
-    if (!isset($actions)) return;
+    $actions = at($fields,'read');
+    if (!$actions) return;
     if ($actions === 'action') {
       $this->context = $fields;
       return $this->action();
     }
     $answer = $this->reply($actions);
-    log::debug_json("PRE-READ ANSWER", $answer);
     replace_fields($this->fields, $answer);
     replace_fields($this->types, $answer);
   }
@@ -771,8 +779,7 @@ class page
     }
   }
 
-  function validate($field, $include)
-  {
+  function validate($field, $include) {
 
     $post_prefix = $field['post_prefix'];
     if ($post_prefix) {
@@ -791,7 +798,7 @@ class page
     $this->validator = $this->get_module("validator");
     $this->validator->init($values, $fields, $validators);
 
-    $exclude = ['audit', 'class', 'css', 'derive', 'post','script', 'sow', 'style', 'styles', 'type','valid','validate','values'];
+    $exclude = ['audit','css', 'derive', 'post','script', 'sow', 'style', 'styles', 'type','valid','validate','values'];
 
     if (is_string($include))
       $include = explode(',', $include);
@@ -835,13 +842,12 @@ class page
     return $this->reply($this->context);
   }
 
-  function call_method($function, $params)
-  {
+  function call_method($function, $params) {
     log::debug("FUNCTION $function PARAMS:".$params);
-    list($class, $method) = explode('::', $function);
+    list($class, $method) = explode_safe('::', $function, 2);
     global $config;
     $search_paths = array_reverse($config['search_paths']);
-    if (isset($method)) {
+    if ($method) {
       foreach($search_paths as $path) {
         $file_path = "$path/$class.php";
         if (($file_found = file_exists($file_path))) break;
@@ -976,7 +982,7 @@ class page
       $this->audit($invoker,[]);
     $result = $this->reply($invoker);
     if ($this->aborted) return $this->answer;
-    if (!$audit_first && !page::has_errors() && array_key_exists('audit', $invoker))
+    if (!$audit_first && !$this->has_errors() && array_key_exists('audit', $invoker))
       $this->audit($invoker, $result);
     global $config;
     if ($config['use_triggers'])
@@ -1079,6 +1085,7 @@ class page
 
     if (sizeof($args) < 1) throw new Exception("Invalid number of parameters for 'if'");
     $condition = $matches[1];
+    extract($this->answer, EXTR_SKIP);
     if (preg_match('/^(\w+\.\w+)(?:\((.*)\))$/', $condition, $matches)) {
       list($module, $method) = $this->get_module_method($matches[1]);
       if (call_user_func_array([$module,$method],explode(',',$matches[2])))
@@ -1089,11 +1096,10 @@ class page
     return true;
   }
 
-
   function replace_fields(&$field) {
-    replace_fields($field, $this->answer, true);
-    replace_fields($field, $this->request, true);
-    replace_fields($field, $this->context, true);
+    replace_fields($field, $this->answer);
+    replace_fields($field, $this->request);
+    replace_fields($field, $this->context);
     return $field;
   }
 
@@ -1126,7 +1132,7 @@ class page
     log::debug_json("REPLY ACTIONS", $actions);
 
     $methods = array('abort', 'alert', 'assert', 'audit', 'call', 'clear_session', 'clear_values',
-      'close_dialog', 'load_lineage', 'post_http', 'read_session', 'read_values', 'redirect',
+      'close_dialog', 'load_lineage', 'post_http', 'read_session', 'read_values', 'read_config', 'redirect',
        'redirect', 'ref_list', 'show_dialog', 'show_captcha', 'split_values', 'refresh', 'trigger',
        'update', 'upload', 'view_doc', 'write_session');
     foreach($actions as $action) {
@@ -1156,7 +1162,7 @@ class page
       $this->replace_special_vars($parameter);
       if (strpos($method, 'sql_') !== 0) // don't replace vars for sql yet
         replace_fields($parameter, $values, function(&$v) { addslashes($v); } );
-      log::debug_json("REPLY ACTION $method $callback", $parameter);
+      log::debug_json("REPLY ACTION $method", $parameter);
       if ($this->reply_if($method, $parameter)) continue;
 
       $context = $this;
@@ -1180,6 +1186,7 @@ class page
         return false;
       };
       if ($this->foreach) return $result;
+      log::debug_json("REPLY RESULT", $result);
       $this->answer = merge_options($this->answer, $result);
     }
     return $this->answer;
@@ -1198,7 +1205,8 @@ class page
     global $page;
     if (is_null($value)) $value = '';
     $result = &$page->result;
-    $values = $result['_responses'][$response];
+    $responses = at($result, '_responses');
+    $values = $responses? at($responses,$response): null;
     if (is_null($values))
       $values = $value;
     else if (is_assoc($values))
@@ -1278,11 +1286,9 @@ class page
     return $field;
   }
 
-  static function has_errors()
-  {
-    global $page;
-    $result = &$page->result;
-    return !is_null(at($result, 'errors'));
+  function has_errors() {
+    $result = &$this->result;
+    return valid_at($result, 'errors');
   }
 
   static function trigger($event, $selector=null)
@@ -1489,9 +1495,8 @@ class page
     return false;
   }
 
-  function load_lineage($key_name, $table, $name, $parent_name)
-  {
-    $keys = $this->answer[$key_name];
+  function load_lineage($key_name, $table, $name, $parent_name) {
+    $keys = at($this->answer, $key_name, "");
     if (!is_array($keys)) $keys = explode(',', $keys);
     $loaded_values = array();
     foreach ($keys as $value) {
@@ -1530,8 +1535,7 @@ class page
     return $args;
   }
 
-  static function parse_args($args, $cmd="", $min_count=0)
-  {
+  static function parse_args($args, $cmd="", $min_count=0) {
     if (empty($args) || sizeof($args) > 1 || is_array($args[0])) return page::verify_args($args, $cmd, $min_count);
     $args = array_map(function($arg) {
       return trim($arg);
@@ -1741,10 +1745,9 @@ class page
     replace_fields($options, $this->answer, true);
   }
 
-  function post($url, $values=null)
-  {
+  function post($url, $values=null) {
     if ($values) $this->let($values);
-    $path = explode('/', $url);
+    $path = explode_safe('/', $url, 2);
     if ($path[0] === $this->path[0] && $path[1] === $this->path[1]) {
       log::debug("INTERNAL POST");
       return $this->reply($this->fields['post']);
@@ -1788,7 +1791,7 @@ class page
 
   function do_reporting($type, $modifier_callback) {
     global $config;
-    $options = $config["${type}_reporting"];
+    $options = at($config, "${type}_reporting");
     if (!$options || !is_array($options['medium']) || !sizeof($options['medium'])) return;
     foreach($options['medium'] as $medium) {
       // copy over all parent options except the current medium options

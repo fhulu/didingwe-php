@@ -14,22 +14,19 @@ class auth {
     $_SESSION["auth"] = ["id"=>$sid, 'partner'=>$partner, 'user'=>$user,'roles'=>$roles, 'groups'=>$groups, 'partner_type'=>$type];
   }
 
-  function get_session_id()
-  {
-    $session =  $_SESSION['auth'];
-    return isset($session)? $session['id']: null;
+  function get_session_id() {
+    $session = $_SESSION["auth"]??null;
+    return $session? $session['id']: null;
   }
 
-  function get_partner()
-  {
-    $session =  $_SESSION['auth'];
-    return isset($session)? $session['partner']: 0;
+  function get_partner() {
+    $session = $_SESSION["auth"]??null;
+    return $session? $session['partner']: 0;
   }
 
-  function get_user()
-  {
-    $session =  $_SESSION['auth'];
-    return isset($session)? $session['user']: 0;
+  function get_user() {
+    $session = $_SESSION["auth"]??null;
+    return $session? $session['user']: 0;
   }
 
   function get_owner()
@@ -37,22 +34,19 @@ class auth {
     return ['partner'=>$this->get_partner(), 'user'=>$this->get_user()];
   }
 
-  function get_roles()
-  {
-    $session = $_SESSION["auth"];
-    return isset($session)? $session['roles']: ['public'];
+  function get_roles() {
+    $session = $_SESSION["auth"]??null;
+    return $session? $session['roles']: ['public'];
   }
 
-  function get_groups()
-  {
-    $session = $_SESSION["auth"];
-    return isset($session)? $session['groups']: [];
+  function get_groups() {
+    $session = $_SESSION["auth"]??null;
+    return $session? $session['groups']: [];
   }
 
-  function get_partner_type()
-  {
-    $session = $_SESSION["auth"];
-    return isset($session)? $session['partner_type']: 'public';
+  function get_partner_type() {
+    $session = $_SESSION["auth"]??null;
+    return $session? $session['partner_type']: 'public';
   }
 
   private function verify($object_rights, $user_rights)
