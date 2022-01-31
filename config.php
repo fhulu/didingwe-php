@@ -34,6 +34,7 @@ function configure() {
   $config = merge_options($config, $site_config);
   replace_fields($config, $_SERVER);
   replace_fields($config, $config);
+  $config['search_paths'] = flatten_array($config['search_paths']);
   do_preprocessing($config);
 
   $log = replace_fields($config['log'], $config);
