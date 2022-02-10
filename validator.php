@@ -31,8 +31,8 @@ class validator
     $this->tested = [];
   }
 
-  function init($request, $fields, $predicates) {
-    $this->request = $request;
+  function init($values, $fields, $predicates) {
+    $this->values = $values;
     $this->fields = $fields;
     $this->predicates = $predicates;
   }
@@ -61,8 +61,8 @@ class validator
 
   function value_of($name)
   {
-    if (is_numeric($name) || !isset($this->request[$name])) return $name;
-    return $this->request[$name];
+    if (is_numeric($name) || !isset($this->values[$name])) return $name;
+    return $this->values[$name];
   }
 
   function equal($name) { return $this->value == $this->value_of($name); }
@@ -141,19 +141,19 @@ class validator
   function depends($field, $arg="is(1)")
   {
     $validator = new validator($this->manager);
-    $validator->init($this->request, $this->fields, $this->predicates);
+    $validator->init($this->values, $this->fields, $this->predicates);
     log::debug("DEPENDS $field $arg");
     $validator->valids = $this->valids;
     return $validator->check($field)->is($arg);
   }
 
-  function provided()
-  {
+  function provided() {
+    if ($this->checked_provided) return true;
+    $this->checked_provided = true;
     return $this->value != '';
   }
 
-  function blank()
-  {
+  function blank() {
     return trim($this->value) == '';
   }
 
@@ -179,23 +179,22 @@ class validator
       return;
     }
 
-    //replace_fields($params, $this->request);
+    //replace_fields($params, $this->values);
     foreach($params as &$param) {
       $param = trim($param);
       if ($param=='this') $param = $this->name;
-      if (array_key_exists($param, $this->request)) {
-        $param = $this->request[$param];
-        $param = replace_vars ($param, $this->request);
+      if (array_key_exists($param, $this->values)) {
+        $param = $this->values[$param];
+        $param = replace_vars ($param, $this->values);
       }
       else if ($param == 'request')
-        $param = $this->request;
+        $param = $this->values;
     }
     return call_user_func_array($function, $params);
   }
 
-  function get_title($code, $field=null)
-  {
-    if (is_array($field)) $name = $field['name'];
+  function get_title($code, $field=null) {
+    if (is_array($field)) $name = at($field, 'name');
     if ($name == '') $name = ucwords(str_replace ('_', ' ', $code));
     return $name;
   }
@@ -209,7 +208,7 @@ class validator
   {
     $this->field = $field;
     $this->name = $name;
-    $this->value = trim(at($this->request,$name));
+    $this->value = trim(at($this->values,$name));
     $this->checked_provided = $this->failed_auto_provided = false;
     if ($this->prev_name != $name)
       $this->optional = false;
@@ -224,11 +223,10 @@ class validator
     return $this;
   }
 
-  function get_custom($func)
-  {
-    $found = $this->predicates[$func];
+  function get_custom($func) {
+    $found = at($this->predicates, $func);
     if ($found) return $found;
-    $found = $this->fields[$func];
+    $found = at($this->fields, $func);
     if (!$found) return null;
     return $found['valid']? $found: null;
   }
@@ -247,17 +245,28 @@ class validator
     return $func[0] == '/'? ['regex', [$func]]: expand_function($func);
   }
 
-  function is($funcs)
-  {
-    if (!is_array($funcs)) $funcs = array($funcs);
+  function is($funcs) {
+    // convert one func to an array with on element for ease of processing
+    if (!is_array($funcs) || is_assoc($funcs)) {
+      $funcs = [$funcs];
+    }
+
+    // ensure each func is trimmed
+    array_walk($funcs, function(&$func) { 
+      if (!is_array($func)) $func = trim($func);  
+    });
+
     log::debug_json("VALIDATE $this->name=$this->value FUNCTIONS: ", $funcs);
 
     $first = $funcs[0];
     $auto_provided = false;
+    // when first function is 'optional', allow empty value
     if ($first== 'optional') {
       if  ($this->value === '') return true;
       array_shift($funcs);
     }
+
+    // automatically prepend 'provided' validator for internal functions
     else if (!$this->checked_provided && !in_array('provided', $funcs, true)) {
       $pos = array_find($funcs, function($func, $key) {
         $func = $this->get_internal_function($func);
@@ -275,7 +284,6 @@ class validator
         if (!is_array($args) || is_assoc($args)) $args = [$args];
       }
       else {
-        $func = trim($func);
         if ($func[0] == '/') {
           $args = array($func);
           $func = 'regex';
@@ -308,13 +316,16 @@ class validator
         array_shift($args);
       }
       else if (is_callable($func)) {
-        replace_fields($args, $this->request);
+        replace_fields($args, $this->values);
         $result = call_user_func_array($func, $args);  
       }
       else {
         throw new validator_exception("validator method $func does not exists!");
       }
-      if ($result === true) continue;
+      if ($result !== false) {
+        if (is_assoc($result)) $this->values = merge_options($this->values, $result);
+        continue;
+      }
       if ($func == 'depends') return true;
       if ($func == 'provided' && $auto_provided) $this->failed_auto_provided = true;
       $this->has_error = true;
@@ -324,14 +335,11 @@ class validator
     return true;
   }
 
-  function custom($func)
-  {
-    $args = array_slice(func_get_args(), 1);
-
+  function custom($func, ...$args) {
     $predicate = $this->get_custom($func);
     if (!is_array($predicate)) {
       $this->replace_args($predicate, $args, false, true);
-      $predicate = replace_vars($predicate, $this->request);
+      $predicate = replace_vars($predicate, $this->values);
       return $this->is($predicate);
     }
     replace_field_indices($predicate, $args);
@@ -339,36 +347,39 @@ class validator
     $valid = $predicate['valid'];
     if (is_array($valid)) {
       foreach($valid as &$param) {
-        $this->replace_args($param, $args);
+        if (is_string($param))
+          $this->replace_args($param, $args);
       }
+
       return $this->is($valid);
     }
 
     $this->replace_args($valid, $args);
     $valid = replace_vars($valid, $predicate);
-    $valid = replace_vars($valid, $this->request);
+    $valid = replace_vars($valid, $this->values);
     $this->replace_args($valid, $args, false, true);
     $this->replace_default_args($valid, $args, $predicate);
     // run the validation on the substituted predicate
+    
     return $this->is($valid);
   }
 
 
-    // replace default args not supplied, but set on the predicate 
+  // replace default args not supplied, but set on the predicate 
   function replace_default_args(&$str, $args, $predicate) {
     for($i=sizeof($args)+1; isset($predicate[$i]); ++$i) {
       $str = str_replace('$'.$i, $predicate[$i], $str);
     }
   }
 
-  function replace_args(&$str, $args, $set_titles=false, $force_value=false)
-  {
+  // replace the string with arguments or with title and values from request
+  function replace_args(&$str, $args, $set_titles=false, $force_value=false) {
     $i = 0;
     foreach($args as $arg) {
       ++$i;
       if ($arg == 'this') $arg = $this->name;
-      $field = $this->fields[$arg];
-      if ($set_titles && isset($field))
+      $field = at($this->fields, $arg);
+      if ($set_titles && $field)
         $name = $this->get_title($arg, $field);
       else
         $name = $arg;
@@ -376,9 +387,11 @@ class validator
       $str = str_replace('$'.$i, $name, $str);
       if (is_numeric($arg)) continue;
 
-      $value = $this->request[$arg];
-      if (isset($value) && $force_value) $value = $arg;
-      $str = str_replace('$v'.$i, $value, $str);
+      $value = at($this->values, $arg);
+      if (!is_null($value)) {
+        if ($force_value) $value = $arg;
+        $str = str_replace('$v'.$i, $value, $str);
+      }
     }
 
     $str = str_replace('$value', $this->value, $str);
@@ -398,25 +411,26 @@ class validator
   }
 
 
-  function subst_error(&$error, $predicate, $args, $result)
-  {
+  function subst_error(&$error, $predicate, $args, $result) {
     $ignore = array('name');
     if (is_array($result)) $error = replace_vars_except ($error, $result, $ignore);
     $error = str_replace('$value', $this->value, $error);
     $error = replace_vars($error, $predicate);
     $this->replace_args($error, $args, true);
     $this->replace_default_args($error, $args, $predicate);
-    $error = replace_vars_except($error, $this->request, $ignore);
-    $error = str_replace('$name', $this->title, $error);
+    $error = replace_vars_except($error, $this->values, $ignore);
+    if ($this->title)
+      $error = str_replace('$name', $this->title, $error);
   }
 
   function update_error($func, $args, $result=null)
   {
+    $error = null;
     if ($this->failed_auto_provided) $func = 'provided';
     $predicate = $this->get_custom($func);
     $field = $this->fields[$this->name];
-    if (is_array($field) && $field['error'] != '') $predicate = $field;
-    if (is_array($predicate)) $error = $predicate['error'];
+    if (is_array($field) && at($field, 'error')) $predicate = $field;
+    if (is_array($predicate)) $error = at($predicate, 'error');
     if (is_string($result)) $error = $result;
     if (is_null($error)) return;
 
@@ -441,10 +455,9 @@ class validator
     return !$this->has_error;
   }
 
-  function sql()
-  {
-    $sql = implode(',', func_get_args());
-    $sql = replace_vars($sql, $this->request);
+  function sql(...$args) {
+    $sql = implode(',', $args);
+    $sql = replace_vars($sql, $this->values);
     $sql = str_replace('$name', $this->name, $sql);
 
     $db = $this->manager->get_module('db');
@@ -491,17 +504,17 @@ class validator
 
 
   function read_sql($sql) {
-    $sql = replace_vars($sql, $this->request, function($v, $k) {
+    $sql = replace_vars($sql, $this->values, function($v, $k) {
       addslashes($v);
     });
     $result = $this->db->read_one($sql, MYSQLI_ASSOC);
     if ($result)
-      $this->request = array_merge($this->request, $result);
+      $this->values = array_merge($this->values, $result);
     return true;
   }
 
   function set($values) {
-    $this->request = array_merge($this->request, $values);
+    $this->values = array_merge($this->values, $values);
     return true;
   }
 

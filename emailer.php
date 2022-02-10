@@ -1,14 +1,14 @@
 <?php
 
-require_once './didi/module.php';
+require_once 'module.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
 
-require './didi/PHPMailer/src/Exception.php';
-require './didi/PHPMailer/src/PHPMailer.php';
-require './didi/PHPMailer/src/SMTP.php';
+require 'PHPMailer/src/Exception.php';
+require 'PHPMailer/src/PHPMailer.php';
+require 'PHPMailer/src/SMTP.php';
 
 class emailer extends module {
   function __construct($page) {
@@ -21,7 +21,7 @@ class emailer extends module {
     $mail = new PHPMailer(true);
     static $aliases = ["to"=>"address", "message"=>"body"];
     foreach ($options as $name=>$value) {
-      $alias = $aliases[$name];
+      $alias = at($aliases, $name);
       if ($alias) $name = $alias;
       $capitalized = false;
       $capital = strtoupper(substr($name, 0, 1)) . substr($name, 1);

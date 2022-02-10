@@ -30,7 +30,7 @@ function configure() {
   $config = merge_options($didi_config, $config);
   replace_fields($config, $config);
   do_preprocessing($config);
-  $site_config = load_yaml('$app_path/vocab/' . $config['site_config'], false);
+  $site_config = load_yaml("$app_path/vocab/" . $config['site_config'], false);
   $config = merge_options($config, $site_config);
   replace_fields($config, $_SERVER);
   replace_fields($config, $config);

@@ -428,10 +428,10 @@ class page
 
   function parent_sow($parent, $key, &$field)
   {
-    $sow = $parent['sow'];
-    if (!isset($sow)) return $field;
+    $sow = at($parent, 'sow');
+    if (!$sow) return $field;
     if (!in_array($key, $sow, true)) return $field;
-    return $field = merge_options($parent[$key], $field);
+    return $field = merge_options(at($parent,$key), $field);
   }
 
   // set field value to parent value in when field does not contain the value
@@ -463,9 +463,9 @@ class page
     }
   }
 
-  // checks if x is a module. If it is return module options otherwise return false. 
+  // checks if x is a module. If it is return module name and options otherwise return false. 
   // in the the module is 'this' return true
-  static function is_module($x, &$method="") {
+  function is_module($x, &$method="") {
 
     // if not a string return immediately
     if (!is_string($x)) return false; 
@@ -474,33 +474,33 @@ class page
     // if class is 'this' return true instead 
     if ($class === 'this') return true;
 
-    global $config;
-    $options = at($config, $class, []);
-
     // read module options from configuration
     global $config;
-    foreach($config['modules'] as $module) {
-      [$module, $base_options] = assoc_element($module);
-      if ($module != $class) continue;
-      if (is_string($base_options))
-        $base_options = $config[$base_options];
-      else if (is_assoc($base_options))
-        $base_options = merge_options($config[$base_options], $base_options);
-      else if ($base_options) {
-        log::error("Invalid module configuration for $class");
-        return false;
-      }
-      return merge_options([
-        'class'=>$class,
-        'path'=>"$class.php",
-        'active'=>true ], $base_options, $options);
-    }
+    $key = array_find($config['modules'], function($module) use ($class, &$options) {
+      [$module, $options] = assoc_element($module);
+      return $module === $class;      
+    });
+    return $key !== false? [$class, $options]: false;
   }
 
   function get_module($class, &$method="") {
     // first read the module options
-    $options = page::is_module($class, $method);
-    if (!$options) return false;
+    $options = $this->is_module($class, $method);
+    if ($options === false) return false;
+    if ($options === true) return $this;
+
+    [$instance, $module_options] = $options;
+
+    global $config;
+    $instance_options = at($config, $instance);
+
+    if (is_string($module_options)) 
+      $module_options = at($config, $module_options);
+
+    $options = merge_options([
+      'class'=>$instance,
+      'path'=>"$instance.php",
+      'active'=>true ], $module_options, $instance_options);
 
     // if inactive, log error and return
     if (!at($options, 'active', true)) {
@@ -514,8 +514,9 @@ class page
     return $this->modules[$class] =  $module = new $class($this, $options);
   }
 
-  function get_module_method($x)
-  {
+
+  // return name of module and method 
+  function get_module_method($x) {
     $module = $this->get_module($x, $method);
     if (!$module || !$method) return false;
     return [$module,$method];
@@ -598,7 +599,7 @@ class page
         $type = $value;
         $value = null;
       }
-      if (is_null($value)  && page::is_module($type)) {
+      if (is_null($value)  && $this->is_module($type)) {
         $value = [];
         $parent[$key] = [$type=>$value];
       }
@@ -648,12 +649,11 @@ class page
     return preg_match('/^if |\.\w+$/', $key) || in_array($key, page::$non_mergeable, true);
   }
 
-  static function is_render_item($key)
-  {
+  function is_render_item($key) {
     return !preg_match('/^if /', $key)
       && !in_array($key, page::$post_items, true)
       && !in_array($key, page::$query_items, true)
-      && !page::is_module($key);
+      && !$this->is_module($key);
   }
 
   function merge_fields(&$fields, $parent=[], $merged=[]) {
@@ -717,7 +717,7 @@ class page
       if (page::remove_deleted($parent, $key, $value)) return;
       if (!$this->is_render_item($key) || $key === 'access')
         unset($parent[$key]);
-      if (in_array($key, page::$query_items, true) || page::is_module($key) || preg_match('/^if /', $key))
+      if (in_array($key, page::$query_items, true) || $this->is_module($key) || preg_match('/^if /', $key))
         $parent['query'] = " ";
     });
 
@@ -782,7 +782,7 @@ class page
 
   function validate($field, $include) {
 
-    $post_prefix = $field['post_prefix'];
+    $post_prefix = at($field, 'post_prefix');
     if ($post_prefix) {
       $offset = strlen($post_prefix);
       foreach($this->request as $key=>$value) {
@@ -820,7 +820,7 @@ class page
       if (in_array($code, $exclude, true)) return false;
       if (!is_null($value) && !is_array($value)) return false;
 
-      $valid = $value['valid'];
+      $valid = at($value, 'valid');
       if ($valid === 'ignore') return false;
       if ($valid == "") return;
       $result = $validator->validate($code, $value, $valid);
@@ -922,21 +922,19 @@ class page
     return ucwords (str_replace ('_', ' ',$code));
   }
 
-  function audit($action)
-  {
-    $fields = $this->fields[$this->page];
+  function audit($action) {
+    $fields = at($this->fields, $this->page);
     $result = null_merge($fields, $this->answer, false);
-    $detail = $action['audit'];
-    if (!isset($detail)) $detail = $action;
+    $detail = at($action, 'audit');
+    if (!$detail) $detail = $action;
     $field = [];
-    $context = merge_options($this->fields, $this->context, $_SESSION['variables'], $this->request, $result);
+    $context = merge_options($this->fields, $this->context, at($_SESSION, 'variables'), $this->request, $result);
     if (is_array($detail)) {
       $field = $detail;
-      $detail = $field['detail'];
-      replace_fields($field, $context, true);
+      $detail = at($field, 'detail');
+      replace_fields($field, $context);
     }
     if (is_string($detail)) {
-      $detail = replace_vars($detail, $user);
       if (!$this->audit_delta($detail)) return;
       $context = merge_options($this->fields, $this->context, $_SESSION, $this->request, $result);
       $detail = replace_vars($detail, $context);
@@ -945,11 +943,11 @@ class page
       $detail = replace_vars($detail,$this->request);
     }
     else $detail = "";
-    $post = $field['post'];
-    if (isset($post))
+    $post = at($field, 'post');
+    if ($post)
       $this->reply($post);
-    $name = $field['action'];
-    if (!isset($name)) $name = $this->name($action);
+    $name = at($field, 'action');
+    if (!$name) $name = $this->name($action);
     $name = addslashes($name);
     $detail = addslashes($detail);
     $collection = $this->get_module('collection');
@@ -957,28 +955,27 @@ class page
     $sid = $auth->get_session_id();
     if (!$sid) return;
     $user = $auth->get_user();
-    if (!$user_id)
+    if (!$user)
       throw new user_exception("Expired sesssion");
     $partner = $auth->get_partner();
     $collection->insert('audit', ['session'=>'$sid'], ['partner'=>$partner], ['user'=>$user], ['action'=>$name], ['detail'=>$detail]);
   }
 
-  function action($validate=true)
-  {
+  function action($validate=true) {
     $invoker = $this->context;
     $action = last($this->path);
     log::debug_json("ACTION ".last($this->path), $invoker);
-    if (!isset($this->context['name'])) $this->context['name'] = $this->name($this->context);
+    if (!at($this->context, 'name')) $this->context['name'] = $this->name($this->context);
     $this->merge_fields($this->fields);
     if ($validate) {
-      $pre_validation = $invoker['pre_validation'];
+      $pre_validation = at($invoker, 'pre_validation');
       if ($pre_validation && $this->reply($pre_validation) === false)
         return false;
       $validate = at($invoker, 'validate');
       if ($validate != 'none' && !$this->validate($this->fields, $validate))
         return null;
     }
-    $audit_first = $invoker['audit_first'];
+    $audit_first = at($invoker, 'audit_first');
     if ($audit_first)
       $this->audit($invoker,[]);
     $result = $this->reply($invoker);
@@ -986,7 +983,7 @@ class page
     if (!$audit_first && !$this->has_errors() && array_key_exists('audit', $invoker))
       $this->audit($invoker, $result);
     global $config;
-    if ($config['use_triggers'])
+    if (at($config, 'use_triggers'))
       $this->post("trigger/fire", ["trigger_url"=>implode("/", $this->path)]);
     return $this->answer;
   }
@@ -1011,9 +1008,8 @@ class page
     return replace_vars($str, $this->request);
   }
 
-  function parse_delta(&$args)
-  {
-    return $this->db->read_one($sql, MYSQL_ASSOC);
+  function parse_delta(&$args) {
+    $delta_index = array_search('delta', $args, true);
     if ($delta_index === false) return;
 
     $delta = trim($this->request['delta']);
@@ -1022,22 +1018,17 @@ class page
       return;
     }
     $delta = explode(',', $delta);
-    $args = func_get_args();
-    if (sizeof($args) > 1) return $this->sql_exec_prepared(...$args);
-
-    log::debug("SQL_EXEC $sql");
     array_splice($args, $delta_index, 1, $delta);
   }
 
-  function expand_ref_list(&$field, $code)
-  {
+  function expand_ref_list(&$field, $code) {
     if (is_string($field))
       $field = ['list'=>$field];
-    else if (!isset($field['list']))
+    else if (!at($field, 'list'))
       $field['list'] = $code;
     $base = $this->get_expanded_field('ref_list');
     $field = merge_options($base, $field);
-    replace_fields($field, $field, true);
+    replace_fields($field, $field);
   }
 
   function ref_list($field)
@@ -1056,10 +1047,10 @@ class page
   {
     $this->merge_fields($this->fields);
     $this->context = $this->follow_path();
-    $name = $this->request['name'];
-    $id = $this->request['id'];
-    if (isset($name)) $this->context['name'] = $name;
-    if (isset($id)) $this->context['id'] = $id;
+    $name = at($this->request, 'name');
+    $id = at($this->request, 'id');
+    if (!is_null($name)) $this->context['name'] = $name;
+    if (!is_null($id)) $this->context['id'] = $id;
   }
 
   function call($method)
@@ -1119,8 +1110,7 @@ class page
     $replace($parameter, 'values', null_merge($this->request, $this->answer));
   }
 
-  function reply($actions)
-  {
+  function reply($actions) {
     $post = at($actions, 'post');
     if (isset($post)) $actions = $post;
     if (is_null($actions)) return null;
@@ -1132,10 +1122,6 @@ class page
 
     log::debug_json("REPLY ACTIONS", $actions);
 
-    $methods = array('abort', 'alert', 'assert', 'audit', 'call', 'clear_session', 'clear_values',
-      'close_dialog', 'load_lineage', 'post_http', 'read_session', 'read_values', 'read_config', 'redirect',
-       'redirect', 'ref_list', 'show_dialog', 'show_captcha', 'split_values', 'refresh', 'trigger',
-       'update', 'upload', 'view_doc', 'write_session');
     foreach($actions as $action) {
       if ($this->aborted) return false;
       if ($this->broken) return $this->answer;
@@ -1167,15 +1153,15 @@ class page
       if ($this->reply_if($method, $parameter)) continue;
 
       $context = $this;
-      $module_method  = $this->get_module_method($method);
+      $module_method = $this->get_module_method($method);
       if ($module_method)
         list($context, $method) = $module_method;
       else if (is_function($method)) {
         $parameter = [$method];
         $method = 'call';
       }
-      else if (!in_array($method, $methods))
-	      continue;
+      else if (!method_exists($this, $method))
+        continue;
       if ($method === 'foreach')
         $result = $this->reply_foreach($parameter);
       else {
@@ -1424,8 +1410,9 @@ class page
       $this->replace_fields($var);
       if (is_array($var))
         list($alias,$var) = assoc_element($var);
-      if (isset($settings[$var]))
-        $values[$alias] = $settings[$var];
+      $value = at($settings, $var);
+      if (!is_null($value))
+        $values[$alias] = $value;
     }
     return $values;
   }
@@ -1450,9 +1437,8 @@ class page
     return $this->read_settings($config, func_get_args());
   }
 
-  function read_config_var($var)
-  {
-    return $this->read_config($var)[$var];
+  function read_config_var($var) {
+    return at($this->read_config($var), $var);
   }
 
   function read_values($values)
@@ -1689,16 +1675,15 @@ class page
       throw new Exception("Assert failed for $condition");
   }
 
-  function q($method, $args)
-  {
-    $merge = $args['merge'];
-    if (!isset($merge) || $merge != false) {
+  function q($method, $args) {
+    $merge = at($args, 'merge');
+    if (is_null($merge) || $merge !== false) {
       $args = merge_options($this->answer, $args);
       $this->update_context($args);
       global $config;
       $args = merge_options($this->get_expanded_field($method), $args);
       $args = merge_options($config[$method], $args);
-      replace_fields($args,$args,true);
+      replace_fields($args,$args);
     }
     return q::put($method, $args);
   }
@@ -1742,8 +1727,8 @@ class page
     global $config;
     $options = merge_options($config[$setting], $options);
     $this->merge_fields($options);
-    replace_fields($options, $options, true);
-    replace_fields($options, $this->answer, true);
+    replace_fields($options, $options);
+    replace_fields($options, $this->answer);
   }
 
   function post($url, $values=null) {

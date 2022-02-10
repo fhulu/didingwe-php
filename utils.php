@@ -301,14 +301,12 @@ function find_assoc_element($array, $key)
   return null;
 }
 
-function expand_function($func)
-{
-  $matches = array();
-
+function expand_function($func) {
+  $matches = [];
   if (!preg_match('/^(\w[\w.]+)(?:\((.*)\))?$/s', trim($func), $matches))
     throw new Exception("Invalid function specification --$func--");
   $name = $matches[1];
-  $args = $matches[2];
+  $args = at($matches, 2);
   if (is_null($args)) return [$name,[]];
   if (!preg_match_all('/\w*(\(.*\)|[^,]+)/sm', trim($args), $matches))
     throw new Exception("Invalid function parameter specification --$func--");
@@ -705,13 +703,13 @@ function preg_match_each($pattern, $str, $callback) {
   }
 }
 
-// allow explode(str, delim) to be use like [x,y,z] = explode(str, delim, 3, default) 
-// for backward compatibility with php ver < 8/
+// extends explode(delim, str) to be use like [x,y,z] = explode_safe(delim, str, 3, default) 
+// for backward compatibility with php ver < 8
 // so if exploding str result in an array whose less than the minimum quantity, the resultant array 
 // is padded with a default value
-function explode_safe(string $str, string $delim, int $min_quantity, string $default=null) {
+function explode_safe(string $delim, string $str, int $min_quantity=2, string $default=null) {
   assert('$min_quantity >= 0');
-  $array = explode($str, $delim);
+  $array = explode($delim, $str);
   return array_pad($array, $min_quantity, $default);
 }
 

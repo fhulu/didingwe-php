@@ -24,9 +24,11 @@ class db
   var $fields;
   var $field_names;
   var $rows_affected;
+  var $config;
 
   function __construct($manager, $config) {
     $this->manager = $manager;
+    $this->config = $config;
     $this->mysqli = null;
     [$this->database, $this->user, $this->passwd, $this->hostname, $this->port, $this->socket] = assoc_to_array($config, 
       'database', 'user', 'password', 'host', 'port', 'socket');
@@ -396,7 +398,9 @@ class db
   }
 
   function replace_sql(&$sql, $options) {
-    $sql =  replace_vars($sql, $options, function(&$val) use (&$exclusions) {
+    $exclusions  = $this->config['dont_escape'];
+    $sql =  replace_vars($sql, $options, function(&$val, $key) use (&$exclusions) {
+      if (in_array($key, $exclusions)) return;
       if (is_array($val))
         $val = json_encode($replace_fields($val));
       $val = addslashes($val);
@@ -409,9 +413,7 @@ class db
     $manager->replace_auth($sql);
     $this->replace_sql($sql, $manager->answer) ;
     $this->replace_sql($sql, $manager->context);
-    $this->replace_sql($sql, $manager->request);
-    return preg_replace('/\$\w+/', '', $sql);
-
+    return $this->replace_sql($sql, $manager->request);
   }
 
   function values($sql) { 
@@ -459,7 +461,6 @@ class db
     return ['data'=>$this->page($sql, $size, $offset, null, ['fetch'=>MYSQLI_NUM]), 'count'=>$this->row_count()];
   }
 
-
   function sql($sql) {
     if (preg_match('/^\s*select/im', $sql)) return $this->data($sql);
     $sql = $this->translate_sql($sql);
@@ -483,15 +484,14 @@ class db
     return $values;
   }
 
-
   function get_sql_pair($arg) {
     $manager = $this->manager;
     if (!is_array($arg)) return [$manager->get_db_name($arg), "'\$$arg'"];
 
     list($arg,$value) = assoc_element($arg);
-    if ($value[0] === '/')
+    if (is_string($value) && at($value, 0) === '/')
       $value = substr($value,1);
-    else if (!is_array($value))
+    else if (!is_array($value) && !in_array($arg, $this->config['dont_escape']))
       $value = "'". addslashes($value). "'";
     return [$manager->get_db_name($arg), $value];
   }

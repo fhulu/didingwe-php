@@ -50,8 +50,9 @@ class log
 
   static function replace_hidden_patterns($message) {
     global $config;
-    if (!$config) return $message;  
-    $patterns = $config['log_hidden_patterns']??null;
+    if (!$config) return $message;
+    $log_config = $config['log'];  
+    $patterns = $log_config['hidden_patterns']??null;
     if (!$patterns || !is_array($patterns)) return $message;
     foreach($patterns as $pattern) {
       [$regex,$replacement] = assoc_element($pattern);
@@ -81,6 +82,11 @@ class log
     else $file = 'STDOUT';
     $pid = getmypid();
     $message = log::replace_hidden_patterns($message);
+    global $config;
+    if ($config) {
+      $log_config = $config['log'];  
+      $message = substr($message, 0, at($log_config, 'max_response', 1024));
+    }
     $message = date('Y-m-d H:i:s')." $this->instance($pid) ".log::$subject[$level]. ": $message\n";
     fputs($file, $message);
     if ($file != 'STDOUT') fclose($file);

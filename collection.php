@@ -12,6 +12,7 @@ class collection extends module
   static $sys_columns = ['partner', 'user', 'access', 'active', 'create_time'];
   var $partner;
   var $joins;
+  var $offset;
   function __construct($page)
   {
     parent::__construct($page);
@@ -47,9 +48,8 @@ class collection extends module
       }
     }
   }
-  function get_table($collection)
-  {
-    $table = $this->tables[$collection];
+  function get_table($collection) {
+    $table = at($this->tables, $collection);
     return $table? $table: $this->tables['default'];
   }
 
@@ -62,11 +62,11 @@ class collection extends module
     else
       $attr['alias'] = $matches[1];
 
-    if ($matches[3]) $attr['group'] = true;
-    if (!$matches[4]) return;
+    if (at($matches,3)) $attr['group'] = true;
+    if (!at($matches,4)) return;
 
     $attr['sort_order'] = $matches[4];
-    if ($matches[2]) $attr['sort_convert'] = $matches[2];
+    if (at($matches, 2)) $attr['sort_convert'] = $matches[2];
   }
 
 
@@ -151,14 +151,13 @@ class collection extends module
     }
   }
 
-  function get_sort_sql()
-  {
+  function get_sort_sql() {
     $cols = [];
     foreach($this->attributes  as $attr) {
-      $order = $attr['sort_order'];
+      $order = at($attr, 'sort_order');
       if (!$order) continue;
-      $column = $attr['column'] . $attr['convert'] . " $order";
-      if (!$attr['derived'])
+      $column = $attr['column'] . at($attr, 'convert', "") . " $order";
+      if (!at($attr, 'derived'))
         $column = "`".$attr['collection']. "`.$column";
       $cols[] = $column;
     }
@@ -169,8 +168,8 @@ class collection extends module
   {
     $criteria = [];
     foreach($this->filters as $filter) {
-      if ($collection != $filter['collection'] || !$filter['criteria']) continue;
-      $criteria[] = $filter['criteria'];
+      if ($collection != $filter['collection'] || !at($filter, 'criteria')) continue;
+      $criteria[] = at($filter, 'criteria', "");
     }
     if (empty($criteria)) return "";
     return " and " . implode(" and ", $criteria);
@@ -237,7 +236,7 @@ class collection extends module
         $likes[] = "$value like '%$term%'";
 
       $prev_parent = $parent;
-      if ($attr['group'])
+      if (at($attr, 'group'))
         $groups[] = $value;
     }
 
@@ -272,7 +271,7 @@ class collection extends module
       $alias = null;
     }
     if (!is_string($name) || !preg_match('/^(?:(\w+)\.)?\*/', $name, $matches))
-      return [];
+      return [null, null];
     $collection = $this->main_collection;
     if (($foreign=$matches[1]))
       $collection = $matches[1];
@@ -310,8 +309,8 @@ class collection extends module
     }
   }
 
-  function extract_header(&$args)
-  {
+  function extract_header(&$args) {
+    $offset = 0;
     if (is_numeric($args[0])) {
       if (is_numeric($args[1]))
         list($offset, $size) = array_splice($args, 0, 2);
@@ -319,8 +318,8 @@ class collection extends module
         $size = array_shift($args);
     }
     else {
-      $offset = $this->page->request['offset'];
-      $size = $this->page->request['size'];
+      $offset = at($this->page->request, 'offset');
+      $size = at($this->page->request, 'size');
     }
     list($collection, $filters) = array_splice($args, 0, 2);
     list($collection) = assoc_element($collection);
@@ -373,7 +372,7 @@ class collection extends module
     $sql = $this->create_outer_select($use_custom_filters, $term);
     if (!$sql) return null;
     $this->set_limits($sql, $this->offset, $this->size);
-    return $this->page->translate_sql($sql);
+    return $sql;
   }
 
   function is_partner_collection($collection) {
@@ -384,12 +383,10 @@ class collection extends module
     return $this->is_partner_collection($collection)? $this->sys_fields['partner']: 0;
   }
 
-  function values()
-  {
-    $a = func_get_args();
-    if (!is_numeric($a[0])) array_splice($a, 0, 0, 1);
+  function values(...$args) {
+    if (!is_numeric($args[0])) array_splice($args, 0, 0, 1);
     $this->dynamic_sorting = false;
-    $sql = $this->read($a);
+    $sql = $this->read($args);
     if (!$sql) return [];
     $this->dynamic_sorting = true;
     $result = $this->db->read($sql, MYSQLI_ASSOC);
@@ -402,7 +399,7 @@ class collection extends module
     $args = func_get_args();
     page::verify_args($args, "collection.list", 3);
     $last_arg = array_slice($args, -1)[0];
-    list($name) = $this->page->get_sql_pair($last_arg);
+    list($name) = $this->db->get_sql_pair($last_arg);
     $sql = $this->read($args);
     if (!$sql) return [];
     return [$name=>$this->db->read_column($sql)];
@@ -419,9 +416,9 @@ class collection extends module
   }
 
   private function update_joins(&$attr) {
-    list($local_name, $foreign_collection, $foreign_name) = explode('.', $attr['name']);
-    if (!isset($foreign_collection)) return;
-    if (isset($foreign_name)) {
+    [$local_name, $foreign_collection, $foreign_name] = explode_safe('.', $attr['name'], 3);
+    if (!$foreign_collection) return;
+    if ($foreign_name) {
       $name = $foreign_name;
     }
     else {
@@ -459,9 +456,8 @@ class collection extends module
     }, $value);
   }
 
-  function update()
-  {
-    $args = page::parse_args(func_get_args());
+  function update(...$args) {
+    $args = page::parse_args($args);
     page::verify_args($args, "collection.update", 3);
     $this->extract_header($args);
     $this->page->parse_delta($args);
@@ -471,14 +467,15 @@ class collection extends module
     $this->init_filters();
     $sets = [];
     foreach($args as $arg) {
-      list($name,$value) = $this->page->get_sql_pair($arg);
+      list($name,$value) = $this->db->get_sql_pair($arg);
+      log::debug_json("UPDATE NAME $name VALUE $value", $arg);
       $column = $this->get_column_name($name, $collection);
       $value = $this->subst_variables($value, $collection);
-      $sets[] = "$column = $value";
+      $sets[] = "$column = ".$value;
     }
     $sets = implode(',', $sets);
-    $sql = "update `$this->main_table` `$collection` set $sets where collection = '$collection' ". $this->get_filter_sql($collection);
-    $this->page->sql_exec($sql);
+    $sql = "update `$this->main_table` `$collection` set ".$sets." where collection = '$collection' ". $this->get_filter_sql($collection);
+    $this->db->exec($sql);
   }
 
   function insert()
@@ -510,19 +507,15 @@ class collection extends module
     $columns = implode(',', $columns);
     $values = implode(',', $values);
     $table = $this->get_table($collection);
-    $sql = $this->page->translate_sql("insert into `$table` (collection, $columns) values('$collection', $values)");
-    $new_id = $this->db->insert($sql);
+    $this->db->exec("insert into `$table` (collection, $columns) values('$collection', $values)");
+    $id = $this->db->read_one_value("select last_insert_id()");
     if ($custom_id)
-      $id = $this->db->read_one_value("select $custom_id from `$table` where id = last_insert_id()");
-    else
-      $id = $new_id;
+      $id = $this->db->read_one_value("select $custom_id from `$table` where id = $id");
     return ["new_${collection}_id"=>$id];
   }
 
 
-  function search()
-  {
-    $args = page::parse_args(func_get_args());
+  function search(...$args) {
     $last = array_slice($args,-1)[0];
     if (is_string($last))
       array_splice($args, -1, 1, explode(',', $last));
@@ -531,9 +524,7 @@ class collection extends module
     return ['data'=> $result];
   }
 
-  function exists()
-  {
-    $args = func_get_args();
+  function exists(...$args) {
     $size = sizeof($args);
     if ($size < 2) return false;
     if ($size == 2) {
@@ -602,7 +593,7 @@ class collection extends module
     $values['partner'] = $this->get_header_partner($collection);
     $values = array_values($values);
     foreach($args as $arg) {
-      list($name,$value) = $this->page->get_sql_pair($arg);
+      list($name,$value) = $this->db->get_sql_pair($arg);
       if ($name == '') continue;
       $sys_index = array_search($name, $sys_names);
       if ($sys_index !== false) {
@@ -620,12 +611,11 @@ class collection extends module
     $columns = implode(",", $columns);
     $values = implode(",", $values);
     $table = $this->get_table($collection);
-    $this->page->sql_exec("insert into `$table` (collection, $columns) values('$collection-fields', $values)");
+    $this->db->exec("insert into `$table` (collection, $columns) values('$collection-fields', $values)");
     $this->fields["$collection@$partner"] = $fields;
   }
 
-  private function update_header($collection, $args)
-  {
+  private function update_header($collection, $args) {
     $partner = $this->get_header_partner($collection, $args);
     $fields = $this->get_fields($collection);
     $columns = $values = [];
@@ -636,7 +626,7 @@ class collection extends module
     $sets = [];
     $count -= count(collection::$sys_columns);
     foreach($args as &$arg) {
-      list($name,$value) = $this->page->get_sql_pair($arg);
+      list($name,$value) = $this->db->get_sql_pair($arg);
       $column = $this->get_column_name($name, $collection);
       if ($column) continue;
       $fields[] = $name;
@@ -646,7 +636,7 @@ class collection extends module
     if (empty($sets)) return;
     $sets = implode(',', $sets);
     $table = $this->get_table($collection);
-    $this->page->sql_exec("update `$table` set $sets where collection = '$collection-fields' and partner = $partner");
+    $this->db->exec("update `$table` set $sets where collection = '$collection-fields' and partner = $partner");
     $this->fields["$collection@$partner"] = $fields;
   }
 
