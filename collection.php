@@ -273,8 +273,8 @@ class collection extends module
     if (!is_string($name) || !preg_match('/^(?:(\w+)\.)?\*/', $name, $matches))
       return [null, null];
     $collection = $this->main_collection;
-    if (($foreign=$matches[1]))
-      $collection = $matches[1];
+    if (($foreign=at($matches,1)))
+      $collection = $foreign;
 
     if (empty($this->columns[$collection]))
       $this->columns[$collection] = $this->get_fields($collection);
@@ -296,14 +296,14 @@ class collection extends module
     $request = $this->page->request;
     $filters = [];
     foreach($this->attributes as $attr) {
-      $alias = $attr['alias'];
-      if (in_array($alias, $this->hidden_columns, true)) continue;
+      $alias = at($attr, 'alias');
+      if ($alias && in_array($alias, $this->hidden_columns, true)) continue;
       ++$index;
-      $term = $request["f$index"];
-      if ($term=='') continue;
+      $term = at($request, "f$index");
+      if (!$term) continue;
       $filter = $attr;
       $value = $attr['column'];
-      if (!$attr['derived']) $value = "`" . $attr['table_alias'] . "`.$value";
+      if (!at($attr, 'derived')) $value = "`" . $attr['table_alias'] . "`.$value";
       $filter['criteria'] = "$value like '%$term%'";
       $this->filters[] = $filter;
     }
@@ -394,9 +394,7 @@ class collection extends module
     return $result;
   }
 
-  function listing()
-  {
-    $args = func_get_args();
+  function listing(...$args) {
     page::verify_args($args, "collection.list", 3);
     $last_arg = array_slice($args, -1)[0];
     list($name) = $this->db->get_sql_pair($last_arg);
@@ -405,10 +403,9 @@ class collection extends module
     return [$name=>$this->db->read_column($sql)];
   }
 
-  function data()
-  {
-    if ( $this->page->request['sort']) $this->sort_on('sort');
-     $sql = $this->read(func_get_args(), true);
+  function data(...$args) {
+    if (at($this->page->request, 'sort')) $this->sort_on('sort');
+     $sql = $this->read($args, true);
      if (!$sql) return ['data'=>[], 'count'=>0];
      if ($this->page->foreach)
        return $this->db->read($sql, MYSQLI_ASSOC);
@@ -468,7 +465,6 @@ class collection extends module
     $sets = [];
     foreach($args as $arg) {
       list($name,$value) = $this->db->get_sql_pair($arg);
-      log::debug_json("UPDATE NAME $name VALUE $value", $arg);
       $column = $this->get_column_name($name, $collection);
       $value = $this->subst_variables($value, $collection);
       $sets[] = "$column = ".$value;
@@ -478,9 +474,8 @@ class collection extends module
     $this->db->exec($sql);
   }
 
-  function insert()
-  {
-    $args = page::parse_args(func_get_args());
+  function insert(...$args) {
+    $args = page::parse_args($args);
     page::verify_args($args, "collection.insert", 2);
     list($this->main_collection) = assoc_element(array_shift($args));
     $collection = $this->main_collection;

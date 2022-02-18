@@ -1179,10 +1179,8 @@ class page
     return $this->answer;
   }
 
-  function values()
-  {
-    $values = $this->context['values'];
-    if (is_null($values)) $values = $this->context;
+  function values() {
+    $values = at($this->context, 'values', $this->context);
     $this->reply($values);
     return $this->answer;
   }
