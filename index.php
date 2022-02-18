@@ -40,6 +40,7 @@ function build_tag_template_attrs($attrs, $exclusions) {
 function build_tag_lines($tag_type) {
   global $config;
   $tags = at($config, $tag_type, []);
+  $use_minified = at($config, 'use_minified');
   $lines = [];
   foreach($tags as $tag=>$attrs) {
     $tag_name = $tag;
@@ -71,7 +72,13 @@ function build_tag_lines($tag_type) {
       else
         $line .= "/>";
   
-      $line = replace_vars($line, $values);
+      $line = replace_vars($line, $values, function(&$value) use ($use_minified) {
+        if (!$use_minified) return;
+        if (!preg_match('/^(.*\.min\.(?:css|js))$|^(.*\.)(css|js)$/', $value, $resource_matches)) return;
+        [$match, $already_minified, $base, $ext] = array_pad($resource_matches, 4, null);
+        if (!$already_minified && $base && file_exists("./${base}min.$ext"))
+          $value = "${base}min.$ext";
+      });
       $line = preg_replace('/ \w+\s*="\$[^"]+"/', "", $line);
       $lines[] = $line . "\n";
     }
