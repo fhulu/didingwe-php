@@ -345,7 +345,7 @@ class collection extends module
   {
     $size = sizeof($args);
     switch($size) {
-      case 0: $args = [$this->page->path[sizeof($this->page->path)-2], [], "id", "name asc"]; break;
+      case 0: $args = [$this->page->path[sizeof($this->page->path)-1], [], "id", "name asc"]; break;
       case 1: $args = [$args[0],[],'*']; break;
       case 2: $args[] = '*';
     }
@@ -511,9 +511,13 @@ class collection extends module
 
 
   function search(...$args) {
-    $last = array_slice($args,-1)[0];
-    if (is_string($last))
-      array_splice($args, -1, 1, explode(',', $last));
+    if (!empty($args)) {
+      //  allow last arguments to be in a comma delimited string
+      $last = array_slice($args,-1)[0];
+      if (is_string($last))
+        array_splice($args, -1, 1, explode(',', $last));
+    }
+    
     $sql = $this->read($args, false, $this->page->request['term']);
     $result = $sql? $this->db->read($sql, MYSQLI_NUM): [];
     return ['data'=> $result];
