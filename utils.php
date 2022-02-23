@@ -241,6 +241,7 @@ function walk_leaves(&$array, $callback) {
 
 function assoc_element($element) {
   if (!is_array($element)) return [$element, null];
+  if (empty($element)) return [null, null];
   foreach($element as $key=>$value) {};
   return [$key, $value];
 }
