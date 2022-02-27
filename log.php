@@ -106,7 +106,7 @@ class log
     $stack = array_reverse($exception->getTrace());
     $messages = [];
     foreach($stack as $trace) {
-      $message = "TRACE $index. ".$trace['file']." line ".$trace['line']." function ". at($trace, 'class', "") ."::".$trace['function'] ."(".json_encode(at($trace, 'args', [])).')';
+      $message = "TRACE $index. ".at($trace, 'file', "")." line ".at($trace, 'line', "")." function ". at($trace, 'class', "") ."::".$trace['function'] ."(".json_encode(at($trace, 'args', [])).')';
       $messages[] = log::error($message);
       ++$index;
     }

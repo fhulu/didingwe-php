@@ -678,7 +678,7 @@ class page
       if (strpos($key, '/') !== false) continue;
       if (page::not_mergeable($key)) continue;
       if ($key === 'type') {
-        if (is_string($field) && $field[0] === '$') $field = $parent[substr($field,1)];
+        if (is_string($field) && $field[0] === '$') $field = at($parent, substr($field,1));
         $default_type = $field;
         continue;
       }
