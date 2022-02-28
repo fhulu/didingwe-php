@@ -204,11 +204,10 @@ class validator
     return strpos($name, '::') !== false;
   }
 
-  function check($name, $field=null)
-  {
+  function check($name, $field=null) {
     $this->field = $field;
     $this->name = $name;
-    $this->value = trim(at($this->values,$name));
+    $this->value = trim(at($this->values,$name, ""));
     $this->checked_provided = $this->failed_auto_provided = false;
     if ($this->prev_name != $name)
       $this->optional = false;
@@ -298,7 +297,7 @@ class validator
         $args = $matches[0];
       if ($module_method) {
         list($context, $method) = $module_method;
-        $result = call_user_func_array(array($context, $method), $args);
+        $result = $context->$method(...$args);
         array_shift($args);
       }
       else if (validator::is_static_method($func)) {

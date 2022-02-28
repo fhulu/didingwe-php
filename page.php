@@ -822,7 +822,7 @@ class page
 
       $valid = at($value, 'valid');
       if ($valid === 'ignore') return false;
-      if ($valid == "") return;
+      if ($valid == "" || !at($value, 'tag')) return;
       $result = $validator->validate($code, $value, $valid);
       if ($result === true) return;
 
