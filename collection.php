@@ -482,7 +482,7 @@ class collection extends module
     $this->update_header($collection, $args, true);
     $columns = collection::$sys_columns;
     $values = array_values($this->sys_fields);
-    $custom_id = false;
+    $id = false;
     foreach ($args as $arg) {
       list($name,$value) = $this->db->get_sql_pair($arg);
       if ($name == '') continue;
@@ -496,16 +496,15 @@ class collection extends module
       $columns[] = $column;
       $values[] = $value;
       if (in_array($name,  ['id', 'identifier']))
-        $custom_id = $column;
+        $id = $column;
 
     }
     $columns = implode(',', $columns);
     $values = implode(',', $values);
     $table = $this->get_table($collection);
     $this->db->exec("insert into `$table` (collection, $columns) values('$collection', $values)");
-    $id = $this->db->read_one_value("select last_insert_id()");
-    if ($custom_id)
-      $id = $this->db->read_one_value("select $custom_id from `$table` where id = $id");
+    if (!$id)
+      $id = $this->db->read_one_value("select last_insert_id()");
     return ["new_${collection}_id"=>$id];
   }
 
@@ -541,9 +540,8 @@ class collection extends module
     return $sql? $this->db->exists($sql): false;
   }
 
-  function unique()
-  {
-    return !call_user_func_array([$this, "exists"], func_get_args());
+  function unique(...$args) {
+    return !$this->exists(...$args);
   }
 
   function scroll()
