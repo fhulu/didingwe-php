@@ -84,8 +84,10 @@ class log
     $message = log::replace_hidden_patterns($message);
     global $config;
     if ($config) {
-      $log_config = $config['log'];  
-      $message = substr($message, 0, at($log_config, 'max_response', 1024));
+      $log_config = $config['log'];
+      $max_response = at($log_config, 'max_response', 1024);
+      if ($max_response)  
+      $message = substr($message, 0, $max_response);
     }
     $message = date('Y-m-d H:i:s')." $this->instance($pid) ".log::$subject[$level]. ": $message\n";
     fputs($file, $message);
