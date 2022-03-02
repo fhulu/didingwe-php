@@ -99,7 +99,7 @@ class validator
       $field = $this->name;
     }
     else {
-      list($dbname, $table, $field) = explode('.', $table);
+      list($dbname, $table, $field) = explode_safe('.', $table, 3);
       if (!isset($table)) {
         $table = $dbname;
         $field = $this->name;
@@ -427,7 +427,7 @@ class validator
     $error = null;
     if ($this->failed_auto_provided) $func = 'provided';
     $predicate = $this->get_custom($func);
-    $field = $this->fields[$this->name];
+    $field = at($this->fields, $this->name);
     if (is_array($field) && at($field, 'error')) $predicate = $field;
     if (is_array($predicate)) $error = at($predicate, 'error');
     if (is_string($result)) $error = $result;
