@@ -42,10 +42,8 @@ class page
     'let', 'keep_values','post', 'q', 'read', 'valid', 'validate', 'write_session');
   static $query_items = array('call', 'datarow', 'let', 'keep_values', 'post', 'read_session', 'read_config', 'read_values', 'ref_list',
      'refresh');
-  static $atomic_items = array('action', 'attr', 'css', 'datarow', 'html', 'script', 'split_values',
-    'style', 'template', 'valid');
   static $user_roles = array('public');
-  static $non_mergeable = array('action', 'attr', 'audit', 'call', 'clear_session',
+  static $non_mergeable = array('action', 'attr', 'audit', 'call', 'class', 'clear_session',
     'clear_values', 'datarow', 'error', 'for_each', 'load_lineage', 'keep_values', 'read_session', 'refresh', 'show_dialog', 'split_values',
     'style', 'trigger', 'valid', 'validate', 'write_session', 'post');
   var $request;
@@ -302,7 +300,7 @@ class page
       }
       if ($key != $code) continue;
       if (is_assoc($values)) {
-        $own_type = $values['type'];
+        $own_type = at($values, 'type');
         if (is_null($own_type) && !is_null($type))
           $values = merge_options($type, $values);
       }
@@ -571,8 +569,10 @@ class page
   {
     $this->expand_aliases($fields);
     $this->replace_vars($fields);
-    walk_recursive_down($fields, function($value, $key, &$parent) {
-      if ($key === "attr") return false;
+
+    walk_recursive_down($fields, function($value, $key, &$parent)  {
+      static $non_expandable = ['attr', 'class', 'derive', 'css', 'post', 'valid', 'script'];
+      if (in_array($key, $non_expandable, true) || is_string($value) && in_array($value, $non_expandable)) return false;
       if (is_numeric($key)) {
         if (is_string($value) && strpos($value, '/') !== false) return;
         list($type, $value) = assoc_element($value);
@@ -820,9 +820,11 @@ class page
       if (in_array($code, $exclude, true)) return false;
       if (!is_null($value) && !is_array($value)) return false;
 
+      // check if validate is set to false, if so dont validate value and its children
+      if (!at($value, 'validate', true)) return false;
       $valid = at($value, 'valid');
       if ($valid === 'ignore') return false;
-      if ($valid == "" || !at($value, 'tag')) return;
+      if ($valid == "") return;
       $result = $validator->validate($code, $value, $valid);
       if ($result === true) return;
 
