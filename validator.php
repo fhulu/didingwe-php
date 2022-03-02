@@ -227,7 +227,7 @@ class validator
     if ($found) return $found;
     $found = at($this->fields, $func);
     if (!$found) return null;
-    return $found['valid']? $found: null;
+    return at($found, 'valid');
   }
 
   function get_internal_function($func)
