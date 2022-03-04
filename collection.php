@@ -448,7 +448,7 @@ class collection extends module
         $local_name = $attr['local_name'];
       }
       $column = $this->get_column_name($variable, $collection);
-      if (!is_null($column)) $variable = "`$local_name`.$column";
+      $variable = is_null($column)? 'null': "`$local_name`.$column";
       return implode($matches).$variable;
     }, $value);
   }
