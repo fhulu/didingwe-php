@@ -517,7 +517,7 @@ class collection extends module
         array_splice($args, -1, 1, explode(',', $last));
     }
     
-    $sql = $this->read($args, false, $this->page->request['term']);
+    $sql = $this->read($args, false, at($this->page->request,'term'));
     $result = $sql? $this->db->read($sql, MYSQLI_NUM): [];
     return ['data'=> $result];
   }
