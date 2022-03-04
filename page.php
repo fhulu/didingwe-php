@@ -824,16 +824,15 @@ class page
       if (!at($value, 'validate', true)) return false;
       $valid = at($value, 'valid');
       if ($valid === 'ignore') return false;
-      if ($valid == "") return;
+      if ($valid == "") return at($value, 'validate_children', true);
       $result = $validator->validate($code, $value, $valid);
-      if ($result === true) return;
+      if ($result === true) return false;
 
       $error = $validator->error;
       if (is_array($error))
         $this->reply($validator->error);
       else if (!is_null($error))
         page::error($code, $error);
-
     });
     return $this->validator->valid();
   }
