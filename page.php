@@ -396,11 +396,10 @@ class page
     }
     foreach($path as $branch) {
       if (is_assoc($field)) {
-        $new_parent = $field;
-        $field = $field[$branch];
-        // $this->merge_fields($field, $parent);
         if ($parent)
           $this->derive_parent($parent, $field);
+        $new_parent = $field;
+        $field =  $field[$branch];
         $parent = $new_parent;
       }
       else {
@@ -417,8 +416,8 @@ class page
   {
     walk_recursive_down($fields, function($value, $key, &$parent) {
       if (is_numeric($key) || $key[0] != '$') return;
-      $new_key = $this->request[substr($key,1)];
-      if (!isset($new_key)) return;
+      $new_key = at($this->request, substr($key,1));
+      if (is_null($new_key)) return;
       $parent[$new_key] = $value;
       unset($parent[$key]);
     });
@@ -675,7 +674,7 @@ class page
     $default = null;
     foreach($fields as &$value) {
       list($key, $field) = assoc_element($value);
-      if (strpos($key, '/') !== false) continue;
+      if (is_null($key) || strpos($key, '/') !== false) continue;
       if (page::not_mergeable($key)) continue;
       if ($key === 'type') {
         if (is_string($field) && $field[0] === '$') $field = at($parent, substr($field,1));
