@@ -112,11 +112,11 @@ class collection extends module
     $attr['alias'] = $alias;
     $attr['aliased'] = $name != $alias;
     $this->extract_grouping($attr);
-    $attr['derived'] = $derived = $name[0] == '/' || $name == '';
+    $attr['derived'] = $derived = $name == '' || $name[0] == '/';
     if (!$derived)
       $this->update_joins($attr);
 
-    $name = $attr['name'];
+    $name = at($attr,'name');
 
     if ($name == '')
       $column = "''";
