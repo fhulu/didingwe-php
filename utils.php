@@ -322,5 +322,5 @@ function email_to_array($str) {
   $matches = [];
   if (!preg_match('/([\w.\s-]+)<(\w+@\w+(?:\.\w+)+)>|([\w+.-]*@[\w-]+(?:\.[\w-]+)+)/', $str, $matches)) 
     return [];
-  return sizeof($matches) == 3? [$matches[2], $matches[1] ]: [$matches[3] ] ;
+  return sizeof($matches) == 3? [$matches[2], $matches[1] ]: [$matches[3], $matches[3] ] ;
 }
