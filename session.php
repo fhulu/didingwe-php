@@ -144,5 +144,6 @@ if (!isset($daemon_mode)) {
     $session = null;
 }
 
-log::debug_json("USER is", $_SESSION['uid']);
+if ($_SESSION && isset($_SESSION['uid']))
+  log::debug_json("USER is", $_SESSION['uid']);
 

@@ -119,8 +119,8 @@ class page
     log::debug_json("PATH".sizeof($path), $path);
     $this->root = $path[0];
     if (sizeof($path) > 1) {
-      $level1 = $this->page_fields[$this->root];
-      if (!isset($level1) || !array_key_exists($path[1], $level1)) {
+      $level1 = at($this->page_fields, $this->root);
+      if (is_null($level1) || !array_key_exists($path[1], $level1)) {
         $this->root = $path[1];
         $this->page = $this->root;
         array_shift($path);
@@ -144,9 +144,11 @@ class page
   {
     if (!$reload && $this->user && $this->user['uid']) return $this->user;
     log::debug_json("SESSION", $_SESSION);
-    $user = $this->read_session('uid,partner_id,roles,groups,email_address,first_name,last_name,cellphone');
-    $user['full_name'] = $user['first_name'] . " ". $user['last_name'];
-    if (is_null($user['roles'])) $user['roles'] = array('public');
+    $user = $this->read_session('uid,partner_id,roles,groups,email,first_name,last_name,cellphone');
+    if ($user && isset($user['roles']))
+      $user['full_name'] = $user['first_name'] . " ". $user['last_name'];
+    else
+      $user['roles'] = array('public');
     $this->user = $user;
     log::debug_json("USER",$this->user);
     return $this->user;
@@ -191,8 +193,8 @@ class page
   function allowed($field, $throw=false)
   {
     if (!is_array($field)) return true;
-    $access = $field['access'];
-    if (!isset($access)) return true;
+    $access = at($field,'access');
+    if (is_null($access)) return true;
 
     if (!is_array($access)) $access = explode (',', $access);
 
@@ -210,8 +212,8 @@ class page
 
   function expand_type($type, &$added = array() )
   {
-    $expanded = $this->types[$type];
-    if (isset($expanded)) return $expanded;
+    $expanded = at($this->types, $type);
+    if (!is_null($expanded)) return $expanded;
     $expanded = $this->get_expanded_field($type);
     if (!is_array($expanded)) return null;
     $added[] = $type;
@@ -223,8 +225,8 @@ class page
 
   function merge_type(&$field, &$added = array())
   {
-    $type = $field['type'];
-    if (!isset($type) || $type == 'none') return $field;
+    $type = at($field, 'type');
+    if (is_null($type) || $type == 'none') return $field;
     $expanded = $this->expand_type($type, $added);
     if (is_null($expanded)) {
       log::warn("Unknown type $type");
@@ -260,7 +262,7 @@ class page
 
       if ($key != $code) continue;
       if (is_assoc($values)) {
-        $own_type = $values['type'];
+        $own_type = at($values,'type');
         if (is_null($own_type) && !is_null($type))
           $values = merge_options($type, $values);
       }
@@ -287,8 +289,8 @@ class page
  function merge_stack_field(&$stack, $code, &$base_field = null)
   {
     foreach ($stack as $fields) {
-      $child_field = $fields[$code];
-      if (!isset($child_field)) continue;
+      $child_field = at($fields, $code);
+      if (is_null($child_field)) continue;
       $base_field = merge_options($base_field, $child_field);
     }
 
@@ -341,8 +343,8 @@ class page
 
   function inherit_parent($parent, $key, &$field)
   {
-    $inherit = $parent['inherit'];
-    if (!isset($inherit)) return $field;
+    $inherit = at($parent,'inherit');
+    if (is_null($inherit)) return $field;
     if (!in_array($key, $inherit, true)) return $field;
     return $field = merge_options($parent[$key], $field);
   }
@@ -551,7 +553,7 @@ class page
 
 
       $this->get_merged_field($code, $value);
-      $valid = $value['valid'];
+      $valid = at($value, 'valid');
       if ($valid == "") return;
 
       $validated[] = $code;
@@ -580,9 +582,10 @@ class page
   function call_method($function, $params)
   {
     log::debug("FUNCTION $function PARAMS:".$params);
-    list($class, $method) = explode('::', $function);
-    $file = "$class.php";
-    if (isset($method)) {
+    $class_method = explode('::', $function);
+    if (sizeof($class_method) > 1) {
+      [$class,$method] = $class_method;
+      $file = "$class.php";
       if (file_exists($file))
         require_once("$class.php");
       else if (file_exists("../common/$file"))
@@ -727,7 +730,7 @@ class page
     global $page, $config;
     $user = $page->user;
     
-    $options = merge_options($config, ['uid'=>$user['uid'] ], $options);
+    $options = merge_options($config, ['uid'=>at($user,'uid') ], $options);
 
     $sql = replace_vars($sql, $options, function(&$val, $key) {
       if ($key == 'uid' && !$val)
@@ -811,7 +814,7 @@ class page
   function set_context($path)
   {
     $context = $this->follow_path($path);
-    if (!is_null($this->user) && is_assoc($context)) {
+    if (!is_null($this->user) && is_assoc($context) && isset($this->user['uid'])) {
       $user = $this->user;
       $context['user_full_name'] = $user['first_name'].  " ". $user['last_name'];
       $context['user_email'] = $user['email'];
@@ -879,7 +882,7 @@ class page
       replace_fields($method, $values);
       if (strpos($method, 'sql_') !== 0) // don't replace vars for sql yet
         replace_fields($parameter, $values, function(&$v) { addslashes($v); } );
-      log::debug_json("REPLY ACTION $method $callback", $parameter);
+      log::debug_json("REPLY ACTION $method ", $parameter);
       if ($this->reply_if($method, $parameter)) continue;
       if (!in_array($method, $methods)) continue;
       $result = call_user_func_array(array($this, $method), $parameter);
@@ -920,7 +923,8 @@ class page
     global $page;
     if (is_null($value)) $value = '';
     $result = &$page->result;
-    $values = $result['_responses'][$response];
+    $responses = at($result, '_responses');
+    $values = $responses? at($responses, $response): null;
     if (is_null($values))
       $values = $value;
     else if (is_assoc($values))
@@ -1018,7 +1022,7 @@ class page
   {
     $options = page::merge_options($options, $this->answer);
     $this->update_context($options);
-    $options = page::merge_options($this->fields['send_email'], $options);
+    $options = page::merge_options(at($this->fields,'send_email'), $options);
     $options = page::merge_options($this->get_expanded_field('send_email'), $options);
     global $config;
     $options = page::merge_options($config['send_email'], $options);
@@ -1033,7 +1037,7 @@ class page
     if (is_string($from)) 
       $from = email_to_array($from);
     if (is_array($from))
-      $options = array_merge($options, ['from'=>$from[0], 'fromName' => $from[1] ] );
+      $options = array_merge($options, ['from'=>$from[0], 'fromName' => at($from, 1, $from[0]) ] );
 
     replace_fields($options, $config);
     replace_fields($options, $options);
@@ -1041,7 +1045,7 @@ class page
     static $aliases = ["to"=>"address", "message"=>"body"];
     try {
       foreach ($options as $name=>$value) {
-        $alias = $aliases[$name];
+        $alias = at($aliases, $name);
         if ($alias) $name = $alias;
         $capitalized = false;
         $capital = strtoupper(substr($name, 0, 1)) . substr($name, 1);
@@ -1267,9 +1271,11 @@ class page
 
   function do_reporting($type, $modifier_callback) {
     global $config;
-    $options = $config["${type}_reporting"];
-    if (!$options || !is_array($options['medium']) || !sizeof($options['medium'])) return;
-    foreach($options['medium'] as $medium) {
+    $options = at($config, "${type}_reporting");
+    if (!$options) return;
+    $mediums = at($options, 'medium');
+    if (!$mediums || !sizeof($options['medium'])) return;
+    foreach($mediums as $medium) {
       // copy over all parent options except the current medium options
       $copy = $options;
       unset($copy[$medium]);
