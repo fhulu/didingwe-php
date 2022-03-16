@@ -51,9 +51,10 @@ check_otp:
   inputs:
     - otp
   values:
-    - sql_values: select lpad(floor(rand()*9999),4,'0') server_otp, now() time_of_otp
-    - write_session: server_otp,time_of_otp
     - read_session: email,first_name,last_name,cellphone
+    - sql_values: select lpad(floor(rand()*9999),4,'0') server_otp, now() time_of_otp 
+    - write_session: server_otp,time_of_otp
+    - sql_values: select cellphone from user where email_address = '$email' 
     - if $sms_otp:
         send_sms:
           message: Your OTP for $program_name is $server_otp
