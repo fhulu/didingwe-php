@@ -121,7 +121,7 @@ class page
     $this->load();
 
     $this->root = $path[0];
-    log::debug_json("PATH".sizeof($path), $path);
+    log::debug_json("PATH ".sizeof($path), $path);
     $this->root = $path[1];
     $this->set_fields();
     if (!$this->rendering)
@@ -701,10 +701,11 @@ class page
     return $fields;
   }
 
-  function set_fields()
-  {
+  function set_fields() {
     $this->fields = $this->merge_stack_field(page::$fields_stack, $this->root);
     $this->merge_stack_field($this->page_stack, $this->root, $this->fields);
+    if (!$this->fields) 
+      throw new exception("Unable to access path ". implode('/', $this->path));
     $this->expand_types($this->fields);
     if (!$this->sub_page)
       $this->verify_access($this->fields);
