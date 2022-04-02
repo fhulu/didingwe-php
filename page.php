@@ -38,6 +38,7 @@ $page->output();
 class page
 {
   static $fields_stack = array();
+  static $render_items = ['triggers'];
   static $post_items = array('audit', 'call', 'clear_session', 'clear_values', 'db_name', 'deleted', 'error', 
     'let', 'keep_values','post', 'q', 'read', 'valid', 'validate', 'write_session');
   static $query_items = array('call', 'datarow', 'let', 'keep_values', 'post', 'read_session', 'read_config', 'read_values', 'ref_list',
@@ -714,6 +715,7 @@ class page
   function remove_items(&$fields)
   {
     walk_recursive_down($fields, function(&$value, $key, &$parent) {
+      if (in_array($key, page::$render_items)) return false;
       if (page::remove_deleted($parent, $key, $value)) return;
       if (!$this->is_render_item($key) || $key === 'access')
         unset($parent[$key]);
@@ -1277,8 +1279,7 @@ class page
     return valid_at($result, 'errors');
   }
 
-  static function trigger($event, $selector=null)
-  {
+  function trigger($event, $selector=null) {
     if (strpos($event, ',') !== false) {
       $args = explode(',',$event);
       list($event, $selector) = $args;
@@ -1290,7 +1291,19 @@ class page
     $options = array("event"=>$event);
     if (!$selector) $selector = ".didi-listener";
     $options['sink'] = $selector;
-    if (sizeof($args) > 2) $options['params'] = array_slice($args,2);
+    if (sizeof($args) > 2) {
+      $params = array_slice($args,2);
+      // expand array elements into name value pairs
+      foreach($params as &$param) {
+        if (!is_array($param)) continue;
+        $transformed = [];
+        foreach($param as $key) {
+          $transformed[$key] = at($this->answer, $key, "");
+        }
+        $param = $transformed;
+      }
+      $options['params'] = $params;
+    }
     page::respond('trigger', $options);
   }
 
@@ -1549,9 +1562,8 @@ class page
     return true;
   }
 
-  static function refresh($sink)
-  {
-    page::trigger("refresh,$sink");
+  function refresh($sink) {
+    $this->trigger("refresh,$sink");
   }
   
     static function post_http($options)
