@@ -1278,31 +1278,34 @@ class page
     $result = &$this->result;
     return valid_at($result, 'errors');
   }
+  
 
-  function trigger($event, $selector=null) {
-    if (strpos($event, ',') !== false) {
-      $args = explode(',',$event);
-      list($event, $selector) = $args;
-      log::debug_json("TRIGGER ", $args);
+  function extract_value_pairs($args) {
+    // if no event arguments, use current answer as value pairs
+    if (sizeof($args) == 0) 
+      return $this->answer;  
+
+    // either extract each arg's value pair from answer or send as given
+    $values = [];
+    foreach($args as $arg) {
+      if (is_array($arg)) 
+        $values = array_merge($values, $arg);
+      else if (!is_null($value = at($this->answer, $arg))) 
+        $values[$arg] = $value;
     }
-    else {
-      $args = page::parse_args(func_get_args());
-    }
+    return $values;
+  }
+
+  function trigger($event, $selector=null, ...$args) {
     $options = array("event"=>$event);
     if (!$selector) $selector = ".didi-listener";
     $options['sink'] = $selector;
-    if (sizeof($args) > 2 && ($params = array_slice($args,2)) && !is_assoc($params)) {
-      // expand array elements into name value pairs
-      foreach($params as &$param) {
-        if (!is_array($param)) continue;
-        $transformed = [];
-        foreach($param as $key) {
-          $transformed[$key] = at($this->answer, $key, "");
-        }
-        $param = $transformed;
-      }
-      $options['params'] = $params;
-    }
+
+    // treat values and reload event arguments as name value pairs
+    if (in_array($event, ['values', 'reload'], true)) 
+      $args = $this->extract_value_pairs($args);
+
+    $options['params'] = $args;
     page::respond('trigger', $options);
   }
 
