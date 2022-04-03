@@ -715,7 +715,7 @@ class page
   function remove_items(&$fields)
   {
     walk_recursive_down($fields, function(&$value, $key, &$parent) {
-      if (in_array($key, page::$render_items)) return false;
+      if (in_array($key, page::$render_items, true)) return false;
       if (page::remove_deleted($parent, $key, $value)) return;
       if (!$this->is_render_item($key) || $key === 'access')
         unset($parent[$key]);
@@ -1291,8 +1291,7 @@ class page
     $options = array("event"=>$event);
     if (!$selector) $selector = ".didi-listener";
     $options['sink'] = $selector;
-    if (sizeof($args) > 2) {
-      $params = array_slice($args,2);
+    if (sizeof($args) > 2 && ($params = array_slice($args,2)) && !is_assoc($params)) {
       // expand array elements into name value pairs
       foreach($params as &$param) {
         if (!is_array($param)) continue;
