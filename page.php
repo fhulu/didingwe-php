@@ -1415,8 +1415,7 @@ class page
     }
   }
 
-  function read_settings($settings,$args)
-  {
+  function read_settings($settings,$args) {
     $vars = page::parse_args($args);
     $values = array();
     foreach($vars as $var) {
@@ -1424,6 +1423,7 @@ class page
       $this->replace_fields($var);
       if (is_array($var))
         list($alias,$var) = assoc_element($var);
+      [$var] = assoc_element($var);
       $value = at($settings, $var);
       if (!is_null($value))
         $values[$alias] = $value;
@@ -1431,26 +1431,26 @@ class page
     return $values;
   }
 
-  function read_session()
-  {
-    $args = func_get_args();
+  function read_session(...$args) {
     $session = &$_SESSION['variables'];
     if (sizeof($args) === 0) return $session;
     return $this->read_settings($session, $args);
   }
 
-  function read_session_list()
-  {
-    $values = call_user_func_array(array($this, 'read_session'), func_get_args());
+  function read_session_list(...$args) {
+    $values = call_user_func_array(array($this, 'read_session'), $args);
     return array_values($values);
   }
 
-  function read_config()
-  {
+  function read_config(...$args) {
     global $config;
-    return $this->read_settings($config, func_get_args());
+    return $this->read_settings($config, $args);
   }
 
+  function read_page(...$args) {
+    return $this->read_settings($this->fields, $args);
+  }
+  
   function read_config_var($var) {
     return at($this->read_config($var), $var);
   }
