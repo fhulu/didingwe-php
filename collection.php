@@ -175,8 +175,7 @@ class collection extends module
     return " and " . implode(" and ", $criteria);
   }
 
-  private function get_joins_sql()
-  {
+  private function get_joins_sql() {
     $sql = "";
     $main_collection = $this->main_collection;
     $joined = [];
@@ -186,13 +185,19 @@ class collection extends module
       $collection = $join['collection'];
       $table = $join['table'];
       $local_name = $join['local_name'];
-      $id_column = $this->get_column_name('id', $collection);
+
       $sql .= " left join `$table` `$local_name` on "
         . " `$local_name`.collection = '$collection' "
-        . " and `$local_name`.$id_column = `$main_collection`." . $this->get_column_name($local_name, $main_collection)
+        . " and " . $this->get_join_column('id', $collection, $local_name) . " = " . $this->get_join_column($local_name, $main_collection)
         . $this->get_filter_sql($collection);
     }
     return $sql;
+  }
+
+  private function get_join_column($name, $collection, $table_alias=null) {
+    if (!$table_alias) $table_alias = $collection;
+    $col = $this->get_column_name($name, $collection);
+    return $col? "`$table_alias`.`$col`": 'null';
   }
 
   function create_outer_select($use_custom_filters, $term)
