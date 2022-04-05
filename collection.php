@@ -81,7 +81,7 @@ class collection extends module
       }
       else if (is_null($value))
         $value = " = '\$$name'";
-      else if ($value[0] == '/')
+      else if (at($value, 0) == '/')
         $value = substr($value,1);
       else if (!is_array($value))
         $value = " = '". addslashes($value). "'";
@@ -177,19 +177,18 @@ class collection extends module
 
   private function get_joins_sql() {
     $sql = "";
-    $main_collection = $this->main_collection;
     $joined = [];
     foreach($this->joins as $key=>$join) {
       if (in_array($key, $joined)) continue;
       $joined[] = $key;
-      $collection = $join['collection'];
-      $table = $join['table'];
-      $local_name = $join['local_name'];
-
-      $sql .= " left join `$table` `$local_name` on "
-        . " `$local_name`.collection = '$collection' "
-        . " and " . $this->get_join_column('id', $collection, $local_name) . " = " . $this->get_join_column($local_name, $main_collection)
-        . $this->get_filter_sql($collection);
+      extract($join);
+      $left_table = $this->get_table($left_col);
+      $right_table = $this->get_table($right_col);
+     
+      $sql .= " left join `$right_table` `$local_name` on "
+        . " `$local_name`.collection = '$right_col' "
+        . " and " . $this->get_join_column('id', $right_col, $local_name) . " = " . $this->get_join_column($local_name, $left_col)
+        . $this->get_filter_sql($right_col);
     }
     return $sql;
   }
@@ -418,24 +417,24 @@ class collection extends module
   }
 
   private function update_joins(&$attr) {
-    [$local_name, $foreign_collection, $foreign_name] = explode_safe('.', $attr['name'], 3);
-    if (!$foreign_collection) return;
-    if ($foreign_name) {
-      $name = $foreign_name;
+    $names = explode('.', $attr['name']);
+    if (sizeof($names) < 2) return;
+
+    $collection = $this->main_collection;  
+    while (sizeof($names) > 1) { // client.name
+      $foreign_spec = array_shift($names);
+      [$local_name, $foreign_collection] = explode_safe('@', $foreign_spec, 2, $foreign_spec);
+      $foreign_key = "$local_name.$foreign_collection";
+      if (!array_key_exists($foreign_key, $this->joins))
+        $this->joins[$foreign_key] = ['left_col'=>$collection, 'right_col'=>$foreign_collection, 'local_name'=>$local_name];
+      $collection = $foreign_collection;
     }
-    else {
-      $name = $foreign_name = $foreign_collection;
-      $foreign_collection = $local_name;
-    }
-    $foreign_key = "$local_name.$foreign_collection";
-    $attr['name'] = $name;
+    $name = array_shift($names);
+    $attr['name'] = $foreign_name = $name;
     if (!$attr['aliased']) $attr['alias'] = $name;
     $attr['local_name'] = $attr['table_alias'] = $local_name;
     $attr['foreign_name'] = $foreign_name;
-    $attr['table'] = $this->get_table($foreign_collection);
     $attr['collection'] = $foreign_collection;
-    if (!array_key_exists($foreign_key, $this->joins))
-      $this->joins[$foreign_key] = $attr;
   }
 
   private function subst_variables($value, $collection)
