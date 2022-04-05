@@ -182,13 +182,20 @@ class collection extends module
       if (in_array($key, $joined)) continue;
       $joined[] = $key;
       extract($join);
-      $left_table = $this->get_table($left_col);
-      $right_table = $this->get_table($right_col);
+      $left_table = $this->get_table($left_collection);
+      $right_table = $this->get_table($right_collection);
+      if ($local_name != 'id') {
+        $right_table_alias = $local_name;
+        $right_column = $this->get_join_column('id', $right_collection, $local_name);      }
+      else {
+        $right_table_alias = $right_collection;
+        $right_column = $this->get_join_column($left_collection, $right_collection);
+      }
      
-      $sql .= " left join `$right_table` `$local_name` on "
-        . " `$local_name`.collection = '$right_col' "
-        . " and " . $this->get_join_column('id', $right_col, $local_name) . " = " . $this->get_join_column($local_name, $left_col)
-        . $this->get_filter_sql($right_col);
+      $sql .= " left join `$right_table` `$right_table_alias` on "
+        . " `$right_table_alias`.collection = '$right_collection' "
+        . " and $right_column = " . $this->get_join_column($local_name, $left_collection)
+        . $this->get_filter_sql($right_collection);
     }
     return $sql;
   }
@@ -426,12 +433,12 @@ class collection extends module
       [$local_name, $foreign_collection] = explode_safe('@', $foreign_spec, 2, $foreign_spec);
       $foreign_key = "$local_name.$foreign_collection";
       if (!array_key_exists($foreign_key, $this->joins))
-        $this->joins[$foreign_key] = ['left_col'=>$collection, 'right_col'=>$foreign_collection, 'local_name'=>$local_name];
+        $this->joins[$foreign_key] = ['left_collection'=>$collection, 'right_collection'=>$foreign_collection, 'local_name'=>$local_name];
       $collection = $foreign_collection;
     }
     $name = array_shift($names);
     $attr['name'] = $foreign_name = $name;
-    if (!$attr['aliased']) $attr['alias'] = $name;
+    if (!at($attr,'aliased')) $attr['alias'] = $name;
     $attr['local_name'] = $attr['table_alias'] = $local_name;
     $attr['foreign_name'] = $foreign_name;
     $attr['collection'] = $foreign_collection;
@@ -439,7 +446,7 @@ class collection extends module
 
   private function subst_variables($value, $collection)
   {
-    return preg_replace_callback('/("[^"]*")|(\'[^\']*\')|(\$\w*+)|(\w+\()|(\d+)|(\w+(?:\.\w+)*)/', function($matches) use ($collection){
+    return preg_replace_callback('/("[^"]*")|(\'[^\']*\')|(\$\w*+)|(\w+\()|(\d+)|([\w@]+(?:\.[\w@]+)*)/', function($matches) use ($collection){
       $full_match = array_shift($matches);
       if (count($matches) < 6) return $full_match;
       $variable = array_pop($matches);
@@ -451,8 +458,9 @@ class collection extends module
         $variable = $attr['foreign_name'];
         $local_name = $attr['local_name'];
       }
+      $alias = $local_name === 'id'? $collection: $local_name; 
       $column = $this->get_column_name($variable, $collection);
-      $variable = is_null($column)? 'null': "`$local_name`.$column";
+      $variable = is_null($column)? 'null': "`$alias`.$column";
       return implode($matches).$variable;
     }, $value);
   }
