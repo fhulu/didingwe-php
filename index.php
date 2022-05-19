@@ -75,14 +75,14 @@
 <script>
 $(function() {
   $("body").page(<?=json_encode($options);?>);
-  var timer;
-  var start_timer = ()=> {
+  let timer;
+  let start_timer = ()=> {
     if (timer) clearTimeout(timer);
     timer = setTimeout(()=> {
       window.location.href = '/<?=$content?>';
     }, <?=($config['session_timeout']+60)*1000?>);
   };
   start_timer();
-  $(document).bind("mousemove keypress click", start_timer);
+  $(document).bind("mousemove keypress click input", start_timer);
 });
 </script>
