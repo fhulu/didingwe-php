@@ -55,7 +55,7 @@ PATTERN;
       list($id, $values) = assoc_element($field);
       if (in_array($id, array('type','template'))) continue;
       ++$index;
-      if (is_array($field) && $field['hide']) continue;
+      if (is_array($field) && at($field, 'hide') ) continue;
       if ($id == $code ) return $index;
     }
     throw new Exception("No such sort field $code");

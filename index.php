@@ -58,8 +58,8 @@
   global $session;
   log::debug_json("BROWSER REQUEST", $_REQUEST);
   $config = array_merge(['session_timeout'=>300], $config);
-  $content = $_REQUEST['content'];
-  $prefix = $_SESSION['uid'] == 0? 'landing': 'session';
+  $content = at($_REQUEST,'content');
+  $prefix = at($_SESSION,'uid')? 'landing': 'session';
   $page = $config[$prefix.'_page'];
   if ($content == '')  $content = $config[$prefix.'_content'];
   $_SESSION['content'] = $content;

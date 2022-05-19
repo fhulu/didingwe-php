@@ -180,7 +180,7 @@ class validator
 
   function get_title($code, $field=null)
   {
-    if (is_array($field)) $name = $field['name'];
+    if (is_array($field)) $name = at($field, 'name');
     if ($name == '') $name = ucwords(str_replace ('_', ' ', $code));
     return $name;
   }
@@ -210,9 +210,9 @@ class validator
 
   function get_custom($func)
   {
-    $found = $this->predicates[$func];
+    $found = at($this->predicates, $func);
     if ($found) return $found;
-    $found = $this->fields[$func];
+    $found = at($this->fields, $func);
     if (!$found) return null;
     return $found['valid']? $found: null;
   }
