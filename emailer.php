@@ -24,7 +24,7 @@ class emailer extends module {
       $alias = at($aliases, $name);
       if ($alias) $name = $alias;
       $capitalized = false;
-      $capital = strtoupper(substr($name, 0, 1)) . substr($name, 1);
+      $capital = ucwords($name);
       $setter = "set$capital";
       $adder = "add$capital";
       if ( method_exists($mail, $name) || $capitalized = method_exists($mail, $capital)) {
