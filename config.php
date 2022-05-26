@@ -50,6 +50,8 @@ function configure() {
   replace_fields($spa, $config);
 
   $_SESSION['config'] = $config;
+
+  set_include_path(get_include_path() . PATH_SEPARATOR . __DIR__);
   return $site_config != null;
 }
 
