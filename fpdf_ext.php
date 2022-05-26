@@ -7,13 +7,13 @@
  */
 
 /**
- * Description of ExtPDF
+ * Description of fpdf_ext
  *
  * @author luxolo
  */
-require_once('fpdf/fpdf.php');
+require_once('FPDF/fpdf.php');
 
-class ExtPDF extends FPDF {
+class fpdf_ext extends FPDF {
 
   var $header;
   var $footer;
