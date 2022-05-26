@@ -95,7 +95,7 @@ class page
     $this->rendering = $this->method === 'read';
     $this->context = array();
     $this->aborted = false;
-    $this->answer = [];
+    $this->answer = null;
     $this->expand_stack = array();
     $this->sub_page = false;
     $this->modules = ['this'=>$this];
@@ -134,7 +134,7 @@ class page
 
   function output()
   {
-    if ($this->result !== false) {
+    if (is_array($this->result)) {
       header('Content-Type: application/json');
       $_SESSION['output'] = $this->result;
       echo json_encode($this->result);
