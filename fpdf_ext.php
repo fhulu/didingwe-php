@@ -22,6 +22,8 @@ class fpdf_ext extends FPDF {
   var $right = 10;
   var $top = 10;
   var $bottom = 10;
+  var $height;
+  var $cell;
  
 //  function __construct($header, $footer) 
 //  {
@@ -59,30 +61,27 @@ class fpdf_ext extends FPDF {
 //    $this->Cell(0,10,'Page '.$this->PageNo(),0,0,'C');
 //}
 
-function WriteTable($tcolums)
+function WriteTable($rows)
 {
    // go through all colums
-   for ($i = 0; $i < sizeof($tcolums); $i++)
-   {
-      $current_col = $tcolums[$i];
+   foreach ($rows as $row) {
       $height = 0;
       
       // get max height of current col
       $nb=0;
-      for($b = 0; $b < sizeof($current_col); $b++)
-      {
+      foreach ($row as $cell) {
          // set style
-         $this->SetFont($current_col[$b]['font_name'], $current_col[$b]['font_style'], $current_col[$b]['font_size']);
-         $color = explode(",", $current_col[$b]['fillcolor']);
+         $this->SetFont($cell['font_name'], $cell['font_style'], $cell['font_size']);
+         $color = explode(",", $cell['fillcolor']);
          if (sizeof($color) > 2) $this->SetFillColor($color[0], $color[1], $color[2]);
-         $color = explode(",", $current_col[$b]['textcolor']);
+         $color = explode(",", $cell['textcolor']);
          if (sizeof($color) > 2) $this->SetTextColor($color[0], $color[1], $color[2]);            
-         $color = explode(",", $current_col[$b]['drawcolor']);            
+         $color = explode(",", $cell['drawcolor']);            
          if (sizeof($color) > 2) $this->SetDrawColor($color[0], $color[1], $color[2]);
-         $this->SetLineWidth($current_col[$b]['linewidth']);
+         $this->SetLineWidth($cell['linewidth']);
                      
-         $nb = max($nb, $this->NbLines($current_col[$b]['width'], $current_col[$b]['text']));            
-         $height = $current_col[$b]['height'];
+         $nb = max($nb, $this->NbLines($cell['width'], $cell['text']));            
+         $height = $cell['height'];
       }  
       $h=$height*$nb;
       
@@ -91,59 +90,55 @@ function WriteTable($tcolums)
       $this->CheckPageBreak($h);
       
       // Draw the cells of the row
-      for($b = 0; $b < sizeof($current_col); $b++)
-      {
-         $w = $current_col[$b]['width'];
-         $a = $current_col[$b]['align'];
+      foreach ($row as $cell) {
+         $w = $cell['width'];
+         $a = $cell['align'];
          
          // Save the current position
          $x=$this->GetX();
          $y=$this->GetY();
          
          // set style
-         $this->SetFont($current_col[$b]['font_name'], $current_col[$b]['font_style'], $current_col[$b]['font_size']);
-         $color = explode(",", $current_col[$b]['fillcolor']);
+         $this->SetFont($cell['font_name'], $cell['font_style'], $cell['font_size']);
+         $color = explode(",", $cell['fill_color']);
          if (sizeof($color) > 2) $this->SetFillColor($color[0], $color[1], $color[2]);
-         $color = explode(",", $current_col[$b]['textcolor']);
+         $color = explode(",", $cell['text_color']);
          if (sizeof($color) > 2) $this->SetTextColor($color[0], $color[1], $color[2]);            
-         $color = explode(",", $current_col[$b]['drawcolor']);            
+         $color = explode(",", $cell['draw_color']);            
          if (sizeof($color) > 2) $this->SetDrawColor($color[0], $color[1], $color[2]);
-         $this->SetLineWidth($current_col[$b]['linewidth']);
+         $this->SetLineWidth($cell['line_width']);
          
-         $color = explode(",", $current_col[$b]['fillcolor']);            
-         if (sizeof($color) > 2) $this->SetDrawColor($color[0], $color[1], $color[2]);
+         $color = explode(",", $cell['fillcolor']);            
+         if (sizeof($color) > 2) $this->SetDraw_Color($color[0], $color[1], $color[2]);
          
          
          // Draw Cell Background
          $this->Rect($x, $y, $w, $h, 'FD');
          
-         $color = explode(",", $current_col[$b]['drawcolor']);            
+         $color = explode(",", $cell['drawcolor']);            
          if (sizeof($color) > 2) $this->SetDrawColor($color[0], $color[1], $color[2]);
          
          // Draw Cell Border
-         if (substr_count($current_col[$b]['linearea'], "T") > 0)
-         {
+         $border_side = at($cell, 'linearea', []);
+         if (!is_array($border_side))  $border_side = str_split($border_side);
+         if (in_array("T", $border_side) > 0) {
             $this->Line($x, $y, $x+$w, $y);
          }            
-         
-         if (substr_count($current_col[$b]['linearea'], "B") > 0)
-         {
+         if (in_array("B", $border_side)) {
             $this->Line($x, $y+$h, $x+$w, $y+$h);
          }            
          
-         if (substr_count($current_col[$b]['linearea'], "L") > 0)
-         {
+         if (in_array("L", $border_side)) {
             $this->Line($x, $y, $x, $y+$h);
          }
                      
-         if (substr_count($current_col[$b]['linearea'], "R") > 0)
-         {
+         if (in_array("R", $border_side) > 0) {
             $this->Line($x+$w, $y, $x+$w, $y+$h);
          }
          
          
          // Print the text
-         $this->MultiCell($w, $current_col[$b]['height'], $current_col[$b]['text'], 0, $a, 0);
+         $this->MultiCell($w, $cell['height'], $cell['text'], 0, $a, 0);
          
          // Put the position to the right of the cell
          $this->SetXY($x+$w, $y);         
