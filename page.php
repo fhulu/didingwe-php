@@ -412,6 +412,10 @@ class page
     }
     return $field;
   }
+  
+   function current_field() { return $this->follow_path(); }
+
+   function current_id() { return $this->page->path[sizeof($this->page->path)-1]; }
 
   function replace_keys(&$fields)
   {
