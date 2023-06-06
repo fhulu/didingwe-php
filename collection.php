@@ -356,7 +356,10 @@ class collection extends module
   {
     $size = sizeof($args);
     switch($size) {
-      case 0: $args = [$this->page->path[sizeof($this->page->path)-1], [], "id", "name asc"]; break;
+      case 0: 
+        $field = $this->page->follow_path();
+        $collection = $field['collection']??$this->page->current_id();
+        $args = [$collection, [], "id", "name asc"]; break;
       case 1: $args = [$args[0],[],'*']; break;
       case 2: $args[] = '*';
     }
