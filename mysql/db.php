@@ -30,6 +30,7 @@ class db
     $this->manager = $manager;
     $this->config = $config;
     $this->mysqli = null;
+    $this->request = $manager->request;
     [$this->database, $this->user, $this->passwd, $this->hostname, $this->port, $this->socket] = assoc_to_array($config, 
       'database', 'user', 'password', 'host', 'port', 'socket');
   }
