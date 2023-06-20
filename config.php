@@ -22,6 +22,7 @@ function get_active_config_name() {
 
 function configure() {
   global $config;
+  if (!isset($_SERVER['APP_PATH'])) $_SERVER['APP_PATH'] = $_SERVER['REDIRECT_APP_PATH'];
   $app_path = $_SERVER['APP_PATH'];
   $config = load_yaml("$app_path/vocab/app-config.yml", true);
   replace_fields($config, $_SERVER);

@@ -104,7 +104,7 @@ $request['content'] = at($request, 'path', $spa['content']);
 unset($request['path']);
 
 $page =  at($request, 'page', $spa['page']);
-$options = ["path"=>$page, 'request'=>$request];
+$options = ["path"=>$page, 'request'=>$request, "processor"=>$config['processor'] ];
 
 build_tag_lines('head_tag');
 build_tag_lines('body_tag');
