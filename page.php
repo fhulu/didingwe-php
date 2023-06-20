@@ -1569,7 +1569,7 @@ class page
   }
 
   function refresh($sink) {
-    $this->trigger("refresh,$sink");
+    $this->trigger("refresh", $sink);
   }
   
     static function post_http($options)
