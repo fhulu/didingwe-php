@@ -40,7 +40,7 @@ class page
   static $fields_stack = array();
   static $render_items = ['triggers'];
   static $post_items = array('audit', 'call', 'clear_session', 'clear_values', 'db_name', 'deleted', 'error', 
-    'let', 'keep_values','post', 'q', 'read', 'valid', 'validate', 'write_session');
+    'let', 'keep_values','post', 'q', 'read', 'valid', 'validate', 'write_session', 'full_db_reader', 'row_db_reader', 'row_db_filter');
   static $query_items = array('call', 'datarow', 'let', 'keep_values', 'post', 'read_session', 'read_config', 'read_values', 'ref_list',
      'refresh');
   static $user_roles = array('public');
@@ -1308,6 +1308,12 @@ class page
     // treat values and reload event arguments as name value pairs
     if (in_array($event, ['values', 'reload'], true)) 
       $args = $this->extract_value_pairs($args);
+
+    // treat _values as substitute for name value args for current answer
+    $values_index = array_search('_values', $args);
+    if ($values_index !== false) {
+      $args[$values_index] = $this->answer;
+    }
 
     $options['params'] = $args;
     page::respond('trigger', $options);
