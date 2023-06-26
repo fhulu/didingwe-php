@@ -41,18 +41,6 @@ class validator
     return preg_match($regex, $this->value) != 0;
   }
 
-  function url($option)
-  {
-    $result = $this->regex('/^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/');
-    if ($result !== true) return $result;
-
-    if ($option == 'visitable') {
-      $curl = new curl();
-      return $curl->read($this->value,512) != 0;
-    }
-    return true;
-  }
-
   function visitable($bytes=512)
   {
     $curl = $this->manager->get_module('curl');
