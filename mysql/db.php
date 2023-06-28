@@ -434,10 +434,10 @@ class db
     $index = 0;
     $filters = [];
     foreach($matches as $match) {
-      $value = $this->request["f$index"];
+      $value = at($this->request, "f$index", null);
       ++$index;
-      if (!isset($value)) continue;
-      $filters[] = "$match[1] like '%$value%'";
+      if (!is_null($value))
+        $filters[] = "$match[1] like '%$value%'";
     }
     if (!count($filters)) return;
     $filters  = implode(" and ", $filters);
