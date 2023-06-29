@@ -425,6 +425,18 @@ class db
     return $this->read($sql, MYSQLI_ASSOC);
   }
 
+  static function append_dynamic_conditions(&$sql, $conditions, $combiner) {
+    if (empty($conditions)) return;
+    $conditions = implode(" $combiner ", $conditions);
+
+    if (($pos = strrpos($sql, ' where ')) !== false)
+      $sql = substr($sql, 0, $pos + 7) . " ($conditions) and " . substr($sql, $pos + 7);
+    else if (($pos = strrpos($sql, ' group ')) !== false)
+      $sql = substr($sql, 0, $pos) . " where ($conditions) " . substr($sql, $pos);
+    else
+      $sql .= " where ($conditions) ";
+  } 
+
   function update_custom_filters(&$sql) {
     $matches = [];
     $sql = preg_replace('/\s/', ' ', $sql);
@@ -433,22 +445,19 @@ class db
     if (!preg_match_all("/(\"[^\"]+\"|'[^']+'|\w*\((?:[^()]|(?R))*\)|\w+(?:\.\w+)?)(?:(?: *as)? +\w*)?/im", $matches[1], $matches, PREG_SET_ORDER)) return;
     $index = 0;
     $filters = [];
+    $terms = [];
+    $term = at($this->request, 'term', null);
     foreach($matches as $match) {
       $value = at($this->request, "f$index", null);
       ++$index;
       if (!is_null($value))
         $filters[] = "$match[1] like '%$value%'";
+      if (!is_null($term))
+        $terms[] = "$match[1] like '%$term%'";
     }
-    if (!count($filters)) return;
-    $filters  = implode(" and ", $filters);
-    $pos = strrpos($sql, 'where');
 
-    if (($pos = strrpos($sql, ' where ')) !== false)
-      $sql = substr($sql, 0, $pos + 7) . " $filters and " . substr($sql, $pos + 7);
-    else if (($pos = strrpos($sql, ' group ')) !== false)
-      $sql = substr($sql, 0, $pos) . " where $filters " . substr($sql, $pos);
-    else
-      $sql .= " where $filters ";
+    db::append_dynamic_conditions($sql, $filters, "and");
+    db::append_dynamic_conditions($sql, $terms, "or");
   }
 
   function data($sql) {
