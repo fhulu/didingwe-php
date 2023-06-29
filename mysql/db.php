@@ -465,9 +465,13 @@ class db
     $this->update_custom_filters($sql);
     $offset = on_null($this->request['offset'], 0);
     $size = on_null($this->request['size'], 0);
+    if ($size > 0)
+      $sql = preg_replace('/^(\s*SELECT)/i', '$1 SQL_CALC_FOUND_ROWS', $sql);
+  
     $sort = $this->request['sort'];
     if (isset($sort))
       $sql .= "order by $sort " . $this->request['sort_order'];
+    
     return ['data'=>$this->page($sql, $size, $offset, null, ['fetch'=>MYSQLI_NUM]), 'count'=>$this->row_count()];
   }
 
