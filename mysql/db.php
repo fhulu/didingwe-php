@@ -450,7 +450,7 @@ class db
     foreach($matches as $match) {
       $value = at($this->request, "f$index", null);
       ++$index;
-      if (!is_null($value))
+      if (!is_null($value) && $value !== "")
         $filters[] = "$match[1] like '%$value%'";
       if (!is_null($term))
         $terms[] = "$match[1] like '%$term%'";
@@ -471,6 +471,7 @@ class db
     $sort = $this->request['sort'];
     if (isset($sort))
       $sql .= "order by $sort " . $this->request['sort_order'];
+  
     
     return ['data'=>$this->page($sql, $size, $offset, null, ['fetch'=>MYSQLI_NUM]), 'count'=>$this->row_count()];
   }
