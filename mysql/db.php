@@ -448,12 +448,19 @@ class db
     $terms = [];
     $term = at($this->request, 'term', null);
     foreach($matches as $match) {
+      $name = $match[1];
       $value = at($this->request, "f$index", null);
       ++$index;
-      if (!is_null($value) && $value !== "")
-        $filters[] = "$match[1] like '%$value%'";
+      if (!is_null($value) && $value !== "" && $value != "=") {
+        if ($value[0 ]== '=' ) {
+          $value = substr($value, 1);
+          $filters[] = "$name = '$value'";
+        }
+        else
+          $filters[] = "$name like '%$value%'";
+      }
       if (!is_null($term))
-        $terms[] = "$match[1] like '%$term%'";
+        $terms[] = "$name like '%$term%'";
     }
 
     db::append_dynamic_conditions($sql, $filters, "and");
