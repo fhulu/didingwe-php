@@ -506,11 +506,12 @@ class page
 
     // if inactive, log error and return
     if (!at($options, 'active', true)) {
-      log::error("Module $class is not active, please edit config");
+      log::error("Module $instance is not active, please edit config");
       return false;
     }
 
     // load module from options read when reading the module options and instantiate it
+    log::debug_json("Load module $instance", $options);
     require_once($options['path']);
     $class = $options['class'];
     return $this->modules[$class] =  $module = new $class($this, $options);
@@ -978,8 +979,8 @@ class page
       $pre_validation = at($invoker, 'pre_validation');
       if ($pre_validation && $this->reply($pre_validation) === false)
         return false;
-      $validate = at($invoker, 'validate');
-      if ($validate != 'none' && !$this->validate($this->fields, $validate))
+      $validate = at($invoker, 'validate', true);
+      if ($validate && $validate != 'none' && !$this->validate($this->fields, $validate))
         return null;
     }
     $audit_first = at($invoker, 'audit_first');
@@ -1084,7 +1085,8 @@ class page
 
     if (sizeof($args) < 1) throw new Exception("Invalid number of parameters for 'if'");
     $condition = $matches[1];
-    extract($this->answer, EXTR_SKIP);
+    if ($this->answer)
+      extract($this->answer, EXTR_SKIP);
     if (preg_match('/^(\w+\.\w+)(?:\((.*)\))$/', $condition, $matches)) {
       list($module, $method) = $this->get_module_method($matches[1]);
       if (call_user_func_array([$module,$method],explode(',',$matches[2])))
@@ -1846,4 +1848,26 @@ class page
     $options['arguments'] = log::replace_hidden_patterns(json_encode($options['arguments']));
     $this->send_email($options);
   }
+
+  static function is_display($field)
+  {
+    list($id,$attr) = assoc_element($field);
+    return page::is_displayable($attr) && !in_array($id, array('style','actions'), true);
+  }
+
+  static function is_data($field)
+  {
+    list($id) = assoc_element($field);
+    return !in_array($id, ['type', 'template', 'default', 'class']);
+  }
+
+  static function get_display_name($field)
+  {
+      list($id, $field) = assoc_element($field);
+      $name = $field['name'];
+      if (!is_null($name)) return $name;
+      return ucwords(preg_replace('/[_\/]/', ' ',$id));
+  }
+
+
 }

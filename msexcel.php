@@ -6,37 +6,14 @@
  * and open the template in the editor.
  */
 
-require_once 'page.php';
+require_once 'module.php';
 
-class datatable
+class msexcel extends module
 {
-  static function get_sql_fields($sql)
-  {
-    $matches = array();
-    $sql = preg_replace('/[\n\r\s]/', ' ', $sql);
-    if (!preg_match('/^select (((?!from).)*)(?:from.+)?$/', $sql, $matches))
-      throw new Exception("Invalid or complex SQL while parsing fields");
-    $pattern = <<< PATTERN
-/[^,]*\((?>[^()]|(?R))*\)( [^,]+)?|[^,]*'(?>[^()]|(?R))*'( [^,]+)?|[^,]*"(?>[^()]|(?R))*"( [^,]+)?|[^,]+/
-PATTERN;
-    $fields_sql = $matches[1];
-    if (!preg_match_all($pattern, $fields_sql, $matches))
-      throw new Exception("Invalid or complex SQL while splitting fields $fields_sql");
-
-    $fields = array();
-    foreach ($matches[0] as $field) {
-      $aliases = array();
-      if (!preg_match('/^(.+end) +as .*$|^(.+end) .*$|^(.+) +as .*$|^(.+)$/', $field, $aliases))
-        throw new Exception ("Invalid SQL field $field");
-      array_shift($aliases);
-      foreach ($aliases as $alias) {
-        if ($alias!='') break;
-      }
-      $fields[] = trim($alias);
-    }
-    return $fields;
+  function __construct($page) {
+    parent::__construct($page);
   }
-
+  
   static function field_named($fields, $name)
   {
     foreach ($fields as $field) {
@@ -119,53 +96,43 @@ PATTERN;
     return array('rows' => $rows, 'total' => $total);
   }
 
-  static function is_display($field)
-  {
-    list($id,$attr) = assoc_element($field);
-    return page::is_displayable($attr) && !in_array($id, array('style','actions'), true);
-  }
-
-  static function is_data($field)
-  {
-    list($id) = assoc_element($field);
-    return !in_array($id, array('type', 'template'));
-  }
-
-  static function get_display_name($field)
-  {
-      list($id, $field) = assoc_element($field);
-      $name = $field['name'];
-      if (!is_null($name)) return $name;
-      return ucwords(preg_replace('/[_\/]/', ' ',$id));
-  }
-
-  static function export($options, $key) {
+  function export() {
+    log::debug("starting excel export");
     ini_set('memory_limit', '512M');
     require_once 'PHPExcel/Classes/PHPExcel.php';
-
     $excel = new PHPExcel();
     $sheet = $excel->setActiveSheetIndex(0);
+    $page = $this->page;
+    $options = $page->fields;
     $options['page_size'] = 0;
-    $fields = $options['fields'];
     $default_props = [
       'wrap'=>true,
       'auto_size'=>true
     ];
-    $data = datatable::read($options, $key, function($row_data, $pagenum, $index) use (&$sheet, &$fields) {
-      $row = 2 + $pagenum * 1000 + $index;
+    $db = $page->get_module('db');
+    $fetch_size = 1000;
+    $export_options = $options['export'];
+    unset($options['export']);
+    $options = merge_options($options, $export_options);
+
+    $fields = $options['fields'];
+    // get populate data
+    $sql = $options['full_db_reader'];
+    $page_num = 0;
+    $data = $db->page_indices($sql, $fetch_size, 0, function($row_data, $index) use (&$sheet, &$fields, $page_num) {
+      $row = 2 + $fetch_size*$page_num + $index;
       $col = 'A';
       $data_idx = -1;
       foreach($fields as $field) {
-        if (!datatable::is_data($field)) continue;
+        if (!page::is_data($field)) continue;
         ++$data_idx;
-        if (!datatable::is_display($field)) continue;
+        if (!page::is_display($field)) continue;
         [$id, $props] = assoc_element($field);
         $props  = null_merge($default_props, $props['excel']);
   
         $style = $sheet->getStyle($col);
         $style->getAlignment()->setWrapText($props['wrap']);
         $style->getNumberFormat()->setFormatCode($props['format']);
-          
         $cell = $row_data[$data_idx];
         $sheet->setCellValue("$col$row", $cell);
         $sheet->getRowDimension($row)->setRowHeight(20);
@@ -175,9 +142,11 @@ PATTERN;
       $sheet->setCellValue("$col$row", ''); // take care of PHPExcel bug which fails to remove the last column
       return true;
     });
+
+    // Page Titles
     $col = 'A';
     foreach ($fields as $field) {
-      if (!datatable::is_data($field) || !datatable::is_display($field)) continue;
+      if (!page::is_data($field) || !page::is_display($field)) continue;
       [$id, $props] = assoc_element($field);
       $props  = null_merge($default_props, $props['excel']);
 
@@ -185,10 +154,12 @@ PATTERN;
       $sheet->getColumnDimension($col)->setAutoSize($props['auto_size']);
       $ref = $col . "1";
       $sheet->getStyle($ref)->getFont()->setBold(true);
-      $name = datatable::get_display_name($field);
+      $name = page::get_display_name($field);
       $sheet->setCellValue($ref, $name);
       ++$col;
     }
+
+    // File properties
     $heading = choose_value($options, 'report_title', 'name');
     global $session;
     $user = $session->user->first_name . " " . $session->user->last_name;
