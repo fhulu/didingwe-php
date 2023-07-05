@@ -118,6 +118,7 @@ class msexcel extends module
     $fields = $options['fields'];
     // get populate data
     $sql = $options['full_db_reader'];
+    $db->update_custom_filters($sql);
     $page_num = 0;
     $data = $db->page_indices($sql, $fetch_size, 0, function($row_data, $index) use (&$sheet, &$fields, $page_num) {
       $row = 2 + $fetch_size*$page_num + $index;
