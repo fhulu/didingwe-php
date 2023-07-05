@@ -135,7 +135,7 @@ class db
   function read($sql, $fetch_type=MYSQLI_BOTH, $max_rows=0, $start=0)
   {
     $rows = array();
-    $this->each($sql, function($index, $row) use (&$rows) {
+    $this->each($sql, function($row) use (&$rows) {
       $rows[] = $row;
     }, array('fetch'=>$fetch_type, 'size'=>$max_rows, 'start'=>$start));
 
@@ -158,7 +158,7 @@ class db
     $index = 0;
 
     while (($row = $this->result->fetch_array( $fetch))) {
-      if ($callback($index, $row)===false) break;
+      if ($callback($row, $index)===false) break;
       ++$index;
     }
   }
@@ -168,9 +168,9 @@ class db
     $options['start'] = $start;
     $options['size'] = $size;
     $rows = array();
-    $this->each($sql, function($index, $row) use (&$rows,$callback) {
+    $this->each($sql, function($row, $index) use (&$rows,$callback) {
       if ($callback)
-        $callback($index, $row);
+        $callback($row, $index);
       else
         $rows[] = $row;
     }, $options);
@@ -382,7 +382,7 @@ class db
   function pivot($sql, ...$names) {
     $result = [];
     $row = [];
-    $this->each($sql, function($index, $data) use (&$result, &$row) {
+    $this->each($sql, function($data, $index) use (&$result, &$row) {
       [$key, $name, $value] = $data;
       if (!sizeof($row)) {
         $row[] = $key;
@@ -437,18 +437,25 @@ class db
       $sql .= " where ($conditions) ";
   } 
 
-  function update_custom_filters(&$sql) {
+  static function get_sql_fields($sql) {
     $matches = [];
     $sql = preg_replace('/\s/', ' ', $sql);
-    if (!preg_match('/^\s*select\s+(.*)\s+from/im', $sql, $matches)) return;
+    if (!preg_match('/^\s*select\s+(.*)\s+from/im', $sql, $matches)) return [];
 
-    if (!preg_match_all("/(\"[^\"]+\"|'[^']+'|\w*\((?:[^()]|(?R))*\)|\w+(?:\.\w+)?)(?:(?: *as)? +\w*)?/im", $matches[1], $matches, PREG_SET_ORDER)) return;
+    if (!preg_match_all("/(\"[^\"]+\"|'[^']+'|\w*\((?:[^()]|(?R))*\)|\w+(?:\.\w+)?)(?:(?: *as)? +\w*)?/im", $matches[1], $matches, PREG_SET_ORDER)) return [];
+    array_walk($matches, function(&$match) {
+      $match = $match[1];
+    });
+    return $matches;
+  }
+
+  function update_custom_filters(&$sql) {
+    $fields = db::get_sql_fields($sql);
     $index = 0;
     $filters = [];
     $terms = [];
     $term = at($this->request, 'term', null);
-    foreach($matches as $match) {
-      $name = $match[1];
+    foreach($fields as $name) {
       $value = at($this->request, "f$index", null);
       ++$index;
       if (!is_null($value) && $value !== "" && $value != "=") {
