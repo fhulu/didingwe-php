@@ -175,14 +175,27 @@ function merge_options() {
   return $result;
 }
 
-function choose_value(&$array)
+function choose_value($array, ...$keys)
 {
-  $args = func_get_args();
-  array_shift($args);
-  foreach ($args as $arg) {
-    if ($array[$arg] != '') return $array[$arg];
+  foreach ($keys as $key) {
+    if (at($array, $key) !== null) return $array[$key];
   }
   return null;
+}
+
+function choose_from_arrays($key, ...$arrays) {
+  foreach($arrays as $array) {
+    if (($value = at($array, $key)) !== null) return $value;
+  }
+  return null;
+}
+
+function merge_options_at($key, $first_options, ...$other_options) {
+  $result = at($first_options, $key);
+  foreach($other_options as $options) {
+    $result = merge_options($result, at($options, $key));
+  }
+  return $result;
 }
 
 function walk_recursive(&$array, $callback, $options = [], $level = 0) {
