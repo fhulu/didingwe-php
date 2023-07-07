@@ -320,8 +320,12 @@ class db
     return $this->read_column("show columns from $table");
   }
 
-  static function name_value($arg, $values)
-  {
+
+  static function quoted_value($value) {
+    return $value[0]=='/'? substr($value, 1): "'". addslashes($value). "'";
+  }
+
+  static function name_value($arg, $values) {
     if (is_array($arg))
       list($arg,$value) = assoc_element($arg);
     else if (is_array($values[$arg]))
@@ -329,13 +333,7 @@ class db
     else
       $value = $values[$arg];
 
-    if ($value[0] == '/') {
-      $value = substr($value,1);
-      if ($value[0] == '/') $value = "'". addslashes($value). "'";
-    }
-    else
-      $value = "'". addslashes($value). "'";
-    return [$arg, $value];
+    return [$arg, db::quoted_value($value)];
   }
 
   function insert_array($table, $options)
@@ -449,6 +447,7 @@ class db
     return $matches;
   }
 
+
   function update_custom_filters(&$sql) {
     $sql = preg_replace('/\s/', ' ', $sql);
     $fields = db::get_sql_fields($sql);
@@ -459,10 +458,22 @@ class db
     foreach($fields as $name) {
       $value = at($this->request, "f$index", null);
       ++$index;
-      if (!is_null($value) && $value !== "" && $value != "=") {
-        if ($value[0 ]== '=' ) {
-          $value = substr($value, 1);
-          $filters[] = "$name = '$value'";
+      if (!is_null($value) && $value !== "" && $value !== "=") {
+        // check for range operators
+        // value will be extracted from either be <=x, =x, <x, etc
+        // for range values, values will be preceded by <>min|max
+        $matches = [];
+        if (preg_match('/^\s*(<>|<=|=|<|>=|>)\s*([^|]+)(\\|.*)?$/', $value, $matches)) {
+          $operator = $matches[1];
+          $value = db::quoted_value($matches[2]);
+          log::debug_json("CUSTOM OPERATORS $value", $matches );
+          if ($operator == '<>') {
+              $value2 = db::quoted_value(substr($matches[3], 1));
+              $filters[] = "$name between $value and $value2";
+          }
+          else { 
+            $filters[] = "$name $operator $value";
+          }
         }
         else
           $filters[] = "$name like '%$value%'";
