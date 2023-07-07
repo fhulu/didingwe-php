@@ -1861,10 +1861,9 @@ class page
     return !in_array($id, ['type', 'template', 'default', 'class']);
   }
 
-  static function get_display_name($field)
-  {
+  static function get_display_name($field) {
       list($id, $field) = assoc_element($field);
-      $name = $field['name'];
+      $name = at($field, 'name');
       if (!is_null($name)) return $name;
       return ucwords(preg_replace('/[_\/]/', ' ',$id));
   }
