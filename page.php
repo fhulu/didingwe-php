@@ -1743,7 +1743,7 @@ class page
     $protocol = 'http';
     if(isset($_SERVER['HTTPS']))
       $protocol = ($_SERVER['HTTPS'] && $_SERVER['HTTPS'] != "off") ? "https" : "http";
-    $result['BASE_URL'] = $protocol . "://" . $_SERVER['HTTP_HOST'] . ':' . $_SERVER['SERVER_PORT'];
+    $result['BASE_URL'] = $protocol . "://" . $_SERVER['HTTP_HOST'];
     return $result;
   }
 
