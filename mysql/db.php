@@ -431,16 +431,16 @@ class db
 
     if (($pos = strrpos($sql, ' where ')) !== false)
       $sql = substr($sql, 0, $pos + 7) . " ($conditions) and " . substr($sql, $pos + 7);
-    else if (($pos = strrpos($sql, ' group ')) !== false)
+    else if (($pos = strrpos($sql, ' group by ')) !== false)
       $sql = substr($sql, 0, $pos) . " where ($conditions) " . substr($sql, $pos);
     else
       $sql .= " where ($conditions) ";
   } 
 
   static function get_sql_fields($sql) {
-    $matches = [];
     $sql = preg_replace('/\s/', ' ', $sql);
-    if (!preg_match('/^\s*select\s+(.*)\s+from/im', $sql, $matches)) return [];
+    $matches = [];
+    if (!preg_match('/^\s*select\s+(?:distinct\s+)?(.*)\s+from/im', $sql, $matches)) return [];
 
     if (!preg_match_all("/(\"[^\"]+\"|'[^']+'|\w*\((?:[^()]|(?R))*\)|\w+(?:\.\w+)?)(?:(?: *as)? +\w*)?/im", $matches[1], $matches, PREG_SET_ORDER)) return [];
     array_walk($matches, function(&$match) {
@@ -450,6 +450,7 @@ class db
   }
 
   function update_custom_filters(&$sql) {
+    $sql = preg_replace('/\s/', ' ', $sql);
     $fields = db::get_sql_fields($sql);
     $index = 0;
     $filters = [];
