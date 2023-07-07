@@ -14,88 +14,6 @@ class msexcel extends module
     parent::__construct($page);
   }
   
-  static function field_named($fields, $name)
-  {
-    foreach ($fields as $field) {
-      $props = db::parse_column_name($field);
-      if ($props['alias'] == $name)
-        return $props['spec'];
-    }
-    return null;
-  }
-
-  static function get_field_index($fields, $code)
-  {
-    $index = -1;
-    foreach($fields as $field) {
-
-      list($id, $values) = assoc_element($field);
-      if (in_array($id, array('type','template'))) continue;
-      ++$index;
-      if (is_array($field) && $field['hide']) continue;
-      if ($id == $code ) return $index;
-    }
-    throw new Exception("No such sort field $code");
-  }
-
-  static function sort(&$sql, $fields, $options)
-  {
-    $sort_field = at($options, 'sort');
-    if (is_null($sort_field))
-      return;
-    $index = datatable::get_field_index($options['fields'], $sort_field);
-    $db_sort_field = at($fields, $index);
-    $sort_order = at($options, 'sort_order');
-    if (is_array($sort_order)) $sort_order = last($sort_order);
-    $sql .= " order by $db_sort_field $sort_order";
-  }
-
-  static function filter(&$sql, $fields, $options) {
-    $filter = at($options, 'filtered');
-    if (is_null($filter))
-      return;
-
-    $index = -1;
-    $where = '';
-    foreach (explode('|', $filter) as $value) {
-      ++$index;
-      if (trim($value) === '') continue;
-      $field = $fields[$index];
-      $where .= " and $field like '%$value%' ";
-    }
-
-    if ($where === '')
-      return;
-    $where_pos = strripos($sql, "where ");
-    $where = substr($where, 5);
-    if ($where_pos === false)
-      $sql .= " where $where";
-    else
-      $sql = substr($sql, 0, $where_pos + 6) . "$where and " . substr($sql, $where_pos + 6);
-  }
-
-  static function read($options, $key, $callback=null)
-  {
-    $page_size = at($options, 'page_size');
-    if (is_null($page_size))
-      $page_size = 0;
-    $page_num = at($options, 'page_num');
-    $offset = is_null($page_num) ? 0 : $page_size * ($page_num - 1);
-    global $db;
-    $sql =  page::replace_sql($options['sql'], $options);
-    if ($sql == '') return;
-    $fields = datatable::get_sql_fields($sql);
-    $sql = preg_replace('/^\s*(select )/i', '$1 SQL_CALC_FOUND_ROWS ', $sql, 1);
-    datatable::filter($sql, $fields, $options);
-    datatable::sort($sql, $fields, $options);
-    if ($page_size == 0)
-      $rows = $db->page_through_indices($sql, 1000, 0, $callback);
-    else
-      $rows = $db->page_indices($sql, $page_size, $offset, $callback);
-    $total = $db->row_count();
-    return array('rows' => $rows, 'total' => $total);
-  }
-
   function export() {
     log::debug("starting excel export");
     ini_set('memory_limit', '512M');
@@ -103,56 +21,55 @@ class msexcel extends module
     $excel = new PHPExcel();
     $sheet = $excel->setActiveSheetIndex(0);
     $page = $this->page;
-    $options = $page->fields;
-    $options['page_size'] = 0;
-    $default_props = [
-      'wrap'=>true,
-      'auto_size'=>true
-    ];
     $db = $page->get_module('db');
-    $fetch_size = 1000;
-    $export_options = $options['export'];
-    unset($options['export']);
-    $options = merge_options($options, $export_options);
 
-    $fields = $options['fields'];
+    // retrive options
+    $page_options = $page->fields;
+    $page_types = $page->types;
+    $page_excel_options = at($page_options, 'excel');
+    $invoker_options = $page->context;
+    $invoker_excel_options = at($invoker_options, 'excel');
+    $fields = choose_from_arrays('fields', $invoker_excel_options, $page_excel_options, $invoker_options, $page_options);
+
+    log::debug_json("INVOKER EXCEL OPTIONS", $invoker_excel_options);
+    $default_props = merge_options($page_excel_options, $invoker_excel_options);
+    if (isset($default_props['name']))
+      unset($default_props['name']);
+
     // get populate data
-    $sql = $options['full_db_reader'];
+    $sql = choose_from_arrays('full_db_reader', $invoker_excel_options, $page_excel_options, $invoker_options, $page_options);
     $db->update_custom_filters($sql);
-    $page_num = 0;
-    $data = $db->page_indices($sql, $fetch_size, 0, function($row_data, $index) use (&$sheet, &$fields, $page_num) {
-      $row = 2 + $fetch_size*$page_num + $index;
-      $col = 'A';
-      $data_idx = -1;
-      foreach($fields as $field) {
-        if (!page::is_data($field)) continue;
-        ++$data_idx;
-        if (!page::is_display($field)) continue;
-        [$id, $props] = assoc_element($field);
-        $props  = null_merge($default_props, $props['excel']);
-  
-        $style = $sheet->getStyle($col);
-        $style->getAlignment()->setWrapText($props['wrap']);
-        $style->getNumberFormat()->setFormatCode($props['format']);
-        $cell = $row_data[$data_idx];
-        $sheet->setCellValue("$col$row", $cell);
-        $sheet->getRowDimension($row)->setRowHeight(20);
-        ++$col;
-      }
 
-      $sheet->setCellValue("$col$row", ''); // take care of PHPExcel bug which fails to remove the last column
-      return true;
-    });
+    // if no fields given, run query for one row to get the field names
+    $auto_fields = $fields === 'auto';
+    if ($auto_fields) {
+      $row = $db->read_one($sql, MYSQLI_ASSOC);
 
-    // Page Titles
+      $fields = array_map(function($field) use($invoker_options) { 
+        return [$field=>at($invoker_options, $field)];
+      }, array_keys($row));
+    }
+
+    // Column heading and styles
     $col = 'A';
     foreach ($fields as $field) {
-      if (!page::is_data($field) || !page::is_display($field)) continue;
+      if (!$auto_fields && (!page::is_data($field) || !page::is_display($field))) continue;
       [$id, $props] = assoc_element($field);
-      $props  = null_merge($default_props, $props['excel']);
+      $props  = null_merge($default_props, at($props, 'excel'));
+      $sheet->getStyle($col)->getAlignment()->setWrapText(at($props, 'wrap'));
 
-      $style = $sheet->getStyle($col);
-      $sheet->getColumnDimension($col)->setAutoSize($props['auto_size']);
+      // set column data format
+      $format = at($props, 'format');
+      if ($format !== null) {
+        $sheet->getStyle($col)->getNumberFormat()->setFormatCode($format);
+      }
+
+      $auto_size = at($props, 'auto_size');
+      if ($auto_size !== null) {
+        $sheet->getColumnDimension($col)->setAutoSize($auto_size);
+      }
+      
+      // set heading text and style
       $ref = $col . "1";
       $sheet->getStyle($ref)->getFont()->setBold(true);
       $name = page::get_display_name($field);
@@ -160,12 +77,40 @@ class msexcel extends module
       ++$col;
     }
 
+    $fetch_size = 1000;
+    $page_num = 0;
+    $data = $db->page_indices($sql, $fetch_size, 0, function($row_data, $index) 
+        use (&$sheet, &$fields, $page_num, $fetch_size) {
+      $row = 2 + $fetch_size*$page_num + $index;
+      $col = 'A';
+      $data_idx = -1;
+      foreach($fields as $field) {
+        if (!$auto_fields && !page::is_data($field)) continue;
+        ++$data_idx;
+        [$id, $props] = assoc_element($field);
+        if (!$auto_fields && !page::is_display($field)) continue;
+  
+
+        $cell = $row_data[$data_idx];
+        log::debug_json("$id $row $col $cell", $props);
+        $sheet->setCellValue("$col$row", $cell);
+        $sheet->getRowDimension($row)->setRowHeight(20);
+        
+        ++$col;
+      }
+
+      // $sheet->setCellValue("$col$row", ''); // take care of PHPExcel bug which fails to remove the last column
+      return true;
+    });
+
+    if ($options['auto_filter']) {
+      // $sheet->setAutoFilter($sheet->calculateWorksheetDimension());
+    }
     // File properties
-    $heading = choose_value($options, 'report_title', 'name');
-    global $session;
-    $user = $session->user->first_name . " " . $session->user->last_name;
-    $excel->getProperties()->setCreator($user)
-      ->setLastModifiedBy($user)
+    $heading = choose_from_arrays('name', $page_excel_options, $invoker_excel_options, $page_options, $invoker_options);
+    $creator = choose_from_arrays('creator', $page_excel_options, $invoker_excel_options, $page_options, $invoker_options);
+    $excel->getProperties()->setCreator($creator)
+      ->setLastModifiedBy($creator)
       ->setTitle($heading)
       ->setSubject($heading)
       ->setDescription($heading)
@@ -182,89 +127,4 @@ class msexcel extends module
 
     return false;
   }
-
-  static function pdf($options, $key)
-  {
-    require_once "ExtPDF.php";
-
-    $pdf = new ExtPDF();
-    $orientation = $options['report_orientation'];
-    $page_width = 196;
-    if ($orientation == 'landscape') {
-      $pdf->AddPage('L');
-      $page_width *= 4 / 3;
-    }
-    else
-      $pdf->AddPage ('P');
-
-    if (file_exists($options['report_image'])) {
-      $pdf->Image($options['report_image'], $page_width/2, 10, 35);
-      $pdf->Ln(40);
-    }
-    $pdf->SetFont('Arial', 'B', 10);
-    $options['page_size'] = 0;
-    $flags = $options['flags'];
-    $fields = $options['fields'];
-    $columns = array(array(),array()); // reserve space for heading and titles
-    $data = datatable::read($options, $key, function($row_data, $pagenum, $index) use (&$columns, $page_width, $fields) {
-      $fill_color = $index % 2 === 0? '225,225,225': '255,255,255';
-      $col = array();
-      $index = 0;
-      $data_idx = -1;
-      foreach($fields as $field) {
-        if (!datatable::is_data($field)) continue;
-        ++$data_idx;
-        if (!datatable::is_display($field)) continue;
-        $value = $row_data[$data_idx];
-        list($id, $field) = assoc_element($field);
-        $width = max(5,$page_width*(float)$field['width']/100);
-        $col[] = array('text' => $value, 'width' =>  $width, 'height' => '5', 'align' => 'L', 'font_name' => 'Arial', 'font_size' => '7', 'font_style' => '', 'fillcolor' => "$fill_color", 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linewidth' => '0.1', 'linearea' => 'LTBR');
-      }
-      $columns[] = $col;
-    });
-
-    $titles = &$columns[1];
-    $sql_titles = $options['sql_titles'];
-    if ($sql_titles)
-      datatable::insert_sql_titles($titles, $fields, $page_width, $sql_titles);
-    else
-      datatable::insert_fixed_titles($titles, $fields, $page_width);
-
-    $heading = &$columns[0];
-    $now = new DateTime();
-    $now->getTimestamp();
-    $now->setTimezone(new DateTimeZone('Europe/London'));
-    $now = $now->format('Y-m-d');
-    $report_title=$options['report_title'];
-    $heading[] = array('text' =>$report_title, 'width' =>  $total_width, 'height' => '5', 'align' => 'C', 'font_name' => 'Arial', 'font_size' => '11', 'font_style' => 'B', 'fillcolor' => '255,255,255', 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linearea' => '');
-    $pdf->WriteTable($columns,80,10);
-    $pdf->Output();
-  }
-
-  static function insert_fixed_titles(&$titles, $fields, $page_width)
-  {
-    foreach ($fields as $field) {
-      if (!datatable::is_data($field) || !datatable::is_display($field)) continue;
-      $name = datatable::get_display_name($field);
-      list($id, $field) = assoc_element($field);
-      $width = max(5,$page_width*(float)$field['width']/100);
-      $titles[] = array('text' => $name, 'width' => $width, 'height' => '5', 'align' => 'L', 'font_name' => 'Arial', 'font_size' => '8', 'font_style' => 'B', 'fillcolor' => '128,128,128', 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linewidth' => '0.1', 'linearea' => 'LTBR');
-    }
-  }
-
-  static function insert_sql_titles(&$titles, $fields, $page_width, $sql)
-  {
-    global $db;
-    $names = $db->read_one($sql);
-    $index = 0;
-    foreach ($fields as $field) {
-      if (!datatable::is_data($field) || !datatable::is_display($field)) continue;
-      $name = $names[$index++];
-      if (is_null($name)) $name = datatable::get_display_name($field);
-      list($id, $field) = assoc_element($field);
-      $width = max(5,$page_width*(float)$field['width']/100);
-      $titles[] = array('text' => $name, 'width' => $width, 'height' => '5', 'align' => 'L', 'font_name' => 'Arial', 'font_size' => '8', 'font_style' => 'B', 'fillcolor' => '128,128,128', 'textcolor' => '0,0,0', 'drawcolor' => '0,0,0', 'linewidth' => '0.1', 'linearea' => 'LTBR');
-    }
-  }
-
 }
