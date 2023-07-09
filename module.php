@@ -3,10 +3,15 @@
 class module
 {
   var $page;
-  function __construct($context=null)
+  var $manager;
+  var $config;
+  var $request;
+  function __construct($context=null, $config=null)
   {
     global $page;
-    $this->page = $context? $context: $page;
+    $this->page = $this->manager = $context? $context: $page;
+    $this->config = $config;
+    $this->request = $this->page->request;
   }
 
   function set()
