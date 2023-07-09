@@ -39,7 +39,7 @@ class page
 {
   static $fields_stack = array();
   static $render_items = ['triggers'];
-  static $post_items = array('audit', 'call', 'clear_session', 'clear_values', 'db_name', 'deleted', 'error', 
+  static $post_items = array('audit', 'call', 'clear_session', 'clear_values', 'db_name', 'deleted', 'error', 'filter_sql',
     'let', 'keep_values','post', 'q', 'read', 'valid', 'validate', 'write_session', 'full_db_reader', 'row_db_reader', 'row_db_filter');
   static $query_items = array('call', 'datarow', 'let', 'keep_values', 'post', 'read_session', 'read_config', 'read_values', 'ref_list',
      'refresh');
@@ -1318,6 +1318,7 @@ class page
     $values_index = array_search('_values', $args);
     if ($values_index !== false) {
       $args[$values_index] = $this->answer;
+      log::debug_json("args $values_index", $args);
     }
 
     $options['params'] = $args;
