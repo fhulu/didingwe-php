@@ -15,7 +15,6 @@ class msexcel extends module
   }
   
   function export() {
-    log::debug("starting excel export");
     ini_set('memory_limit', '512M');
     require_once 'PHPExcel/Classes/PHPExcel.php';
     $excel = new PHPExcel();
@@ -31,7 +30,6 @@ class msexcel extends module
     $invoker_excel_options = at($invoker_options, 'excel');
     $fields = choose_from_arrays('fields', $invoker_excel_options, $page_excel_options, $invoker_options, $page_options);
 
-    log::debug_json("INVOKER EXCEL OPTIONS", $invoker_excel_options);
     $default_props = merge_options($page_excel_options, $invoker_excel_options);
     if (isset($default_props['name']))
       unset($default_props['name']);
@@ -45,8 +43,9 @@ class msexcel extends module
     if ($auto_fields) {
       $row = $db->read_one($sql, MYSQLI_ASSOC);
 
-      $fields = array_map(function($field) use($invoker_options) { 
-        return [$field=>at($invoker_options, $field)];
+      $fields = array_map(function($col_alias) use($invoker_options, $page) { 
+        $field = $page->field_at($col_alias);
+        return [$col_alias=>$field];
       }, array_keys($row));
     }
 
