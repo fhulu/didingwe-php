@@ -86,10 +86,10 @@ class page
     $this->request = $request;
     $this->path = replace_vars($request['path'], $request);
     $this->method = $request['action'];
-    $this->page_offset = 1;
+    $this->manager_offset = 1;
     $this->fields = array();
-    $this->page_fields = array();
-    $this->page_stack = array();
+    $this->manager_fields = array();
+    $this->manager_stack = array();
     $this->types = array();
     $this->validated = array();
     $this->rendering = $this->method === 'read';
@@ -115,7 +115,7 @@ class page
     $path = explode('/', $path);
     if (last($path) === '') array_pop($path);
 
-    $this->object = $this->page = $path[0];
+    $this->object = $this->manager = $path[0];
     if (sizeof($path) < 2)
       array_unshift($path, $path[0]);
     $this->path = $path;
@@ -193,10 +193,10 @@ class page
       }
     }
 
-    if (sizeof($this->page_stack) != 0) return;
+    if (sizeof($this->manager_stack) != 0) return;
 
-    $this->load_field_stack($this->path[0], $this->page_stack);
-    $this->page_fields = $this->merge_stack($this->page_stack);
+    $this->load_field_stack($this->path[0], $this->manager_stack);
+    $this->manager_fields = $this->merge_stack($this->manager_stack);
   }
 
   function load_fields($file)
@@ -358,13 +358,13 @@ class page
     $matches = [];
     if (preg_match('/^(\/\w+|\w+\/)([\w\/]*)$/', $code, $matches)) {
       $page = str_replace('/','', $matches[1]);
-      if ($page != $this->page)
+      if ($page != $this->manager)
         return $this->read_external($code);
       $code = str_replace('/','', $matches[2]); //todo: take care of inner paths greater than 2
     }
     $field = $this->merge_stack_field(page::$fields_stack, $code);
     if (!is_array($field)) $field = null;
-    $field = $this->merge_stack_field($this->page_stack, $code, $field);
+    $field = $this->merge_stack_field($this->manager_stack, $code, $field);
 
     // if field has tag attribute, but type is not set, set type to control
     if ($code != 'control' && at($field, 'tag') && !at($field, 'type'))
@@ -395,6 +395,9 @@ class page
       array_splice($path,0,2);
       $parent = $field;
     }
+    else if (is_string($path)) {
+      $path = explode('/', $path);
+    }
     foreach($path as $branch) {
       if (is_assoc($field)) {
         if ($parent)
@@ -415,7 +418,7 @@ class page
   
    function current_field() { return $this->follow_path(); }
 
-   function current_id() { return $this->page->path[sizeof($this->page->path)-1]; }
+   function current_id() { return $this->manager->path[sizeof($this->manager->path)-1]; }
 
   function replace_keys(&$fields)
   {
@@ -598,7 +601,7 @@ class page
         $this->answer = $prev_answer;
         return;        
       }
-      if ($type === $this->page) return;
+      if ($type === $this->manager) return;
       $is_style = ($type === 'styles');
       if (in_array($type, ['types', 'type', 'template', 'wrap', 'styles']) ) {
         $type = $value;
@@ -709,7 +712,7 @@ class page
 
   function set_fields() {
     $this->fields = $this->merge_stack_field(page::$fields_stack, $this->root);
-    $this->merge_stack_field($this->page_stack, $this->root, $this->fields);
+    $this->merge_stack_field($this->manager_stack, $this->root, $this->fields);
     if (!$this->fields) 
       throw new exception("Unable to access path ". implode('/', $this->path));
     $this->expand_types($this->fields);
@@ -802,7 +805,7 @@ class page
     $values = merge_options($this->read_session(), $values, $this->answer);
     $options = merge_options($this->context,$values);
     $validators = $this->load_fields('validators');
-    $fields = merge_options($this->merge_stack(page::$fields_stack), $this->page_fields, $this->fields);
+    $fields = merge_options($this->merge_stack(page::$fields_stack), $this->manager_fields, $this->fields);
     $this->validator = $this->get_module("validator");
     $this->validator->init($values, $fields, $validators);
 
@@ -931,7 +934,7 @@ class page
   }
 
   function audit($action) {
-    $fields = at($this->fields, $this->page);
+    $fields = at($this->fields, $this->manager);
     $result = null_merge($fields, $this->answer, false);
     $detail = at($action, 'audit');
     if (!$detail) $detail = $action;
@@ -1065,11 +1068,11 @@ class page
   {
     if ($method == '') return null;
     $method = preg_replace('/\$class([^\w]|$)/', "$this->object\$1", $method);
-    $method = preg_replace('/\$page([^\w]|$)/', "$this->page\$1", $method);
+    $method = preg_replace('/\$page([^\w]|$)/', "$this->manager\$1", $method);
     $path_len = sizeof($this->path);
     $invoker = $this->path[$path_len-1];
     $method = preg_replace('/\$invoker([^\w]|$)/', "$invoker\$1", $method);
-    $method = preg_replace('/\$default([^\w]|$)/', "$this->object::$this->page\$1", $method);
+    $method = preg_replace('/\$default([^\w]|$)/', "$this->object::$this->manager\$1", $method);
 
     $matches = array();
     if (!preg_match('/^([^\(]+)(?:\(([^\)]*)\))?/', $method, $matches) )
@@ -1869,4 +1872,8 @@ class page
   }
 
 
+  function field_at($key) {
+    return at($this->fields, $key, 
+      at($this->types, $key));
+  }
 }
