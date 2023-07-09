@@ -1,5 +1,6 @@
 <?php
 
+require_once("module.php");
 class db_exception extends Exception {
    public function __construct($message, $code = 0)//, Exception $previous = null)
    {
@@ -7,9 +8,7 @@ class db_exception extends Exception {
    }
 };
 
-class db
-{
-  var $manager;
+class db extends module {
   var $mysqli;
   var $database;
   var $user;
@@ -24,13 +23,11 @@ class db
   var $fields;
   var $field_names;
   var $rows_affected;
-  var $config;
 
-  function __construct($manager, $config) {
-    $this->manager = $manager;
-    $this->config = $config;
+  function __construct($page, $config) {
+    parent::__construct($page, $config);
+
     $this->mysqli = null;
-    $this->request = $manager->request;
     [$this->database, $this->user, $this->passwd, $this->hostname, $this->port, $this->socket] = assoc_to_array($config, 
       'database', 'user', 'password', 'host', 'port', 'socket');
   }
@@ -322,6 +319,7 @@ class db
 
 
   static function quoted_value($value) {
+    if (is_numeric($value)) return $value;
     return $value[0]=='/'? substr($value, 1): "'". addslashes($value). "'";
   }
 
@@ -447,43 +445,76 @@ class db
     return $matches;
   }
 
+  static function get_simple_filter_sql($is_distinct, $col_name, $value) {
+    // use equality operator for distinct field
+    if ($is_distinct)
+      return "$col_name = " . db::quoted_value($value);
+
+    // use 'like' when neither filtersql
+    return "$col_name like '%" . addslashes($value) . "%'";
+  }
+
+  function get_filter_sql($col_name, $field_path, $value) {
+    $matches = [];
+    $field = $this->page->follow_path($field_path);
+    $is_distinct = at($field, 'distinct');
+
+    // check if value uses filter_sql, take care of filter_sql first
+    if (!preg_match('/^(\w+)\.filter_sql(\..*)?$/', $value, $matches)) 
+      return db::get_simple_filter_sql($is_distinct, $col_name, $value);
+
+    //  use specified filter sql function
+    $function = $matches[1];
+    $param = at($matches, 2);
+    
+    // get the field filter_sql from page context
+    $field = $this->page->field_at($function);
+    $sql = at($field, 'filter_sql');
+
+    // if item doesnt define filter_sql, use simple filter sql with function as value
+    if (!$sql) 
+      return db::get_simple_filter_sql($is_distinct, $col_name, $function);
+    
+    // 1=1 is used to ignore, so don't add the filter
+    if ($sql === '1=1') return null;
+
+    // replace _col_ and _val_ with actual selected sql column name and value respectively
+    $sql = str_replace('_col_', $col_name, $sql);
+    if ($param !== null)
+      $sql = str_replace('_val_', substr($param, 1), $sql);
+  
+    return $sql;
+  }
 
   function update_custom_filters(&$sql) {
     $sql = preg_replace('/\s/', ' ', $sql);
-    $fields = db::get_sql_fields($sql);
-    $index = 0;
-    $filters = [];
-    $terms = [];
+    $col_names = db::get_sql_fields($sql);
+
+    // check term against any of the sql columns 
     $term = at($this->request, 'term', null);
-    foreach($fields as $name) {
-      $value = at($this->request, "f$index", null);
-      ++$index;
-      if (!is_null($value) && $value !== "" && $value !== "=") {
-        // check for range operators
-        // value will be extracted from either be <=x, =x, <x, etc
-        // for range values, values will be preceded by <>min|max
-        $matches = [];
-        if (preg_match('/^\s*(<>|<=|=|<|>=|>)\s*([^|]+)(\\|.*)?$/', $value, $matches)) {
-          $operator = $matches[1];
-          $value = db::quoted_value($matches[2]);
-          log::debug_json("CUSTOM OPERATORS $value", $matches );
-          if ($operator == '<>') {
-              $value2 = db::quoted_value(substr($matches[3], 1));
-              $filters[] = "$name between $value and $value2";
-          }
-          else { 
-            $filters[] = "$name $operator $value";
-          }
-        }
-        else
-          $filters[] = "$name like '%$value%'";
+    if ($term) {
+      $terms = [];
+      foreach($col_names as $name) {
+        $terms[] = "$name like '%". addslashes($term) . "%'";
       }
-      if (!is_null($term))
-        $terms[] = "$name like '%$term%'";
+      db::append_dynamic_conditions($sql, $terms, "or");
     }
 
+    // apply filter on each given request parameter in the form of
+    // filtern@path
+    $filters = [];
+    array_walk($this->request, function($value, $path) use ($col_names, &$filters) {
+      $matches = [];
+      if (!preg_match('/^filter(\d+)@(.+$)/', $path, $matches)) return;
+      $index = $matches[1];
+      $col_name = $col_names[$index];
+      $path = $matches[2];
+      $filter_sql = $this->get_filter_sql($col_name, $path, $value);
+      if ($filter_sql) 
+        $filters[] = $filter_sql;
+    });
+
     db::append_dynamic_conditions($sql, $filters, "and");
-    db::append_dynamic_conditions($sql, $terms, "or");
   }
 
   function data($sql) {
