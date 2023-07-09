@@ -433,6 +433,16 @@ class db extends module {
       $sql .= " where ($conditions) ";
   } 
 
+
+  function insert_where($sql_var, $conditions, $combiner = "and") {
+    $sql = $this->page->answer[$sql_var];
+    $sql = preg_replace('/\s+/', ' ', $sql);
+    if (is_string($conditions)) $conditions = [$conditions];
+    db::append_dynamic_conditions($sql, $conditions, $combiner);
+    $this->page->answer[$sql_var] = $sql;
+  }
+
+
   static function get_sql_fields($sql) {
     $sql = preg_replace('/\s/', ' ', $sql);
     $matches = [];
@@ -487,7 +497,7 @@ class db extends module {
   }
 
   function update_custom_filters(&$sql) {
-    $sql = preg_replace('/\s/', ' ', $sql);
+    $sql = preg_replace('/\s+/', ' ', $sql);
     $col_names = db::get_sql_fields($sql);
 
     // check term against any of the sql columns 
