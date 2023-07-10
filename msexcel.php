@@ -71,6 +71,9 @@ class msexcel extends module
       // set heading text and style
       $ref = $col . "1";
       $sheet->getStyle($ref)->getFont()->setBold(true);
+      $fill = $sheet->getStyle($ref)->getFill();
+      $fill->setFillType('solid');
+      $fill->getStartColor()->setARGB('FF60C5BA');
       $name = page::get_display_name($field);
       $sheet->setCellValue($ref, $name);
       ++$col;
