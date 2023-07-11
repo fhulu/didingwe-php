@@ -22,9 +22,14 @@ function get_active_config_name() {
 
 function configure() {
   global $config;
-  if (!isset($_SERVER['APP_PATH'])) $_SERVER['APP_PATH'] = $_SERVER['REDIRECT_APP_PATH'];
-  $app_path = $_SERVER['APP_PATH'];
+  $app_path = at($_SERVER, 'APP_PATH', 
+    at($_SERVER, 'REDIRECT_APP_PATH',
+    dirname(__FILE__) . '/..'));
+  
   $config = load_yaml("$app_path/vocab/app-config.yml", true);
+
+  if (!at($config, 'APP_PATH')) $config['APP_PATH'] = $app_path;
+
   replace_fields($config, $_SERVER);
   replace_fields($config, $config);
   $didi_config = load_yaml($config['didi_root'] . "/vocab/app-config.yml", true);
