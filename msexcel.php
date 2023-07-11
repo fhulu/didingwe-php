@@ -1,5 +1,6 @@
 <?php
 
+require_once 'vendor/autoload.php';
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
@@ -15,9 +16,10 @@ class msexcel extends module
   }
   
   function export() {
-    ini_set('memory_limit', '512M');
-    require_once 'PHPExcel/Classes/PHPExcel.php';
-    $excel = new PHPExcel();
+    set_time_limit(0);
+
+    $excel = new \PhpOffice\PhpSpreadsheet\Spreadsheet();;
+
     $sheet = $excel->setActiveSheetIndex(0);
     $page = $this->page;
     $db = $page->get_module('db');
@@ -94,7 +96,6 @@ class msexcel extends module
   
 
         $cell = $row_data[$data_idx];
-        log::debug_json("$id $row $col $cell", $props);
         $sheet->setCellValue("$col$row", $cell);
         $sheet->getRowDimension($row)->setRowHeight(20);
         
@@ -121,11 +122,11 @@ class msexcel extends module
 
     // Redirect output to a client’s web browser (Excel5)
     header('Content-Type: application/vnd.ms-excel');
-    header("Content-Disposition: attachment;filename=\"$heading.xls\"");
+    header("Content-Disposition: attachment;filename=\"$heading.xlsx\"");
     header('Cache-Control: max-age=0');
 
-    $objWriter = PHPExcel_IOFactory::createWriter($excel, 'Excel5');
-    $objWriter->save('php://output');
+    $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($excel);
+    $writer->save('php://output');
 
     return false;
   }
