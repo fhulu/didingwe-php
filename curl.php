@@ -15,16 +15,17 @@ class curl
     curl_close($this->session);
   }
 
-  function read($url, $limit=0)
+  function read($url, $limit=0, $timeout=10)
   {
     log::debug("CURL Read $url");
     curl_setopt($this->session, CURLOPT_URL, $url);
     if ($limit > 0)
-	     $range = "0-$limit";
+      $range = "0-$limit";
 	  else
       $range = "0-";
   	curl_setopt ($this->session, CURLOPT_HTTPHEADER, array("Range: $range"));
     curl_setopt($this->session, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($this->session, CURLOPT_TIMEOUT, $timeout);
 
     return curl_exec($this->session);
   }

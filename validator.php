@@ -41,10 +41,10 @@ class validator
     return preg_match($regex, $this->value) != 0;
   }
 
-  function visitable($bytes=512)
+  function visitable($bytes=512, $timeout=5)
   {
     $curl = $this->manager->get_module('curl');
-    return $curl->read($this->value,$bytes) != '';
+    return $curl->read($this->value,$bytes, $timeout) != '';
   }
 
   function value_of($name)
