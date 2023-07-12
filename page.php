@@ -983,7 +983,7 @@ class page
       if ($pre_validation && $this->reply($pre_validation) === false)
         return false;
       $validate = at($invoker, 'validate', true);
-      if ($validate && $validate != 'none' && !$this->validate($this->fields, $validate))
+      if ($validate && $validate !== 'none' && !$this->validate($this->fields, $validate))
         return null;
     }
     $audit_first = at($invoker, 'audit_first');
