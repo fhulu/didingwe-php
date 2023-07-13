@@ -613,10 +613,23 @@ class db extends module {
     return $this->exec($sql);
   }
 
+  function detect_supplied_columns($table_name) {
+    $field_names = $this->field_names($table_name);
+    $page = $this->manager;
+    return array_filter($field_names, function($col) use ($page) {
+        return choose_from_arrays($col, $page->answer, $page->context, $page->request) !== null;
+    });
+  }
+
   function insert(...$args) {
+    $count = sizeof($args);
+    if (!$count)
+      throw new Exception("Invalid number of arguments for db.insert");
+      
     $table = array_shift($args);
-    if (!sizeof($args))
-      throw new Exception("Invalid number of arguments for sql_insert");
+    if ($count == 1) 
+      $args = $this->detect_supplied_columns($table);
+    
     $values = array();
     foreach($args as &$arg) {
       list($arg,$value) = $this->get_sql_pair($arg);
