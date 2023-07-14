@@ -20,8 +20,9 @@ class db extends module {
   var $error;
   var $id;
   var $row;
-  var $fields;
-  var $field_names;
+  var $index_check;
+  var $table_names;
+  var $table_col_names;
   var $rows_affected;
 
   function __construct($page, $config) {
@@ -30,6 +31,7 @@ class db extends module {
     $this->mysqli = null;
     [$this->database, $this->user, $this->passwd, $this->hostname, $this->port, $this->socket] = assoc_to_array($config, 
       'database', 'user', 'password', 'host', 'port', 'socket');
+    $this->index_check = at($config, 'index_check', false);
   }
 
    function connect($newlink=false)
@@ -73,22 +75,25 @@ class db extends module {
     $this->connect();
     $this->result = $this->mysqli->query($q);
     if (!$this->result) throw new db_exception("SQL='$q', ERROR=".$this->mysqli->error);
-    if ($this->result === true) {
-      $this->rows_affected = $this->mysqli->affected_rows;
-      if (preg_match('/^\s*update\s*/i', $q)) {
-        preg_match_all ('/(\S[^:]+): (\d+)/', $this->mysqli->info, $matches);
-        $info = array_combine ($matches[1], $matches[2]);
-        $this->rows_affected = $info['Rows matched'];
-      }
-      return $this->rows_affected;
+
+    // for select statement, reset rows affected and return early.
+    if ($this->result !== true) {
+      $this->rows_affected = null;
+      return true;
     }
 
-    $this->fields = $this->result->fetch_fields();
-    $this->field_names = array();
-    foreach($this->fields as $field) {
-      $this->field_names[] = $field->name;
+    $this->rows_affected = $this->mysqli->affected_rows;
+
+    // for insert or delete, set rows affected and return early.
+    if (!preg_match('/^\s*update\s*/i', $q)) {
+      return $this->rows_affected = $this->mysqli->affected_rows;
     }
-   }
+
+    // for update, read rows affected from mysqli.info
+    preg_match_all ('/(\S[^:]+): (\d+)/', $this->mysqli->info, $matches);
+    $info = array_combine ($matches[1], $matches[2]);
+    return $this->rows_affected = $info['Rows matched'];
+  }
 
   function send($q) { return $this->exec($q); }
 
@@ -294,27 +299,11 @@ class db extends module {
     return db::stripslashes($array);
   }
 
-  static function parse_column_name($name)
-  {
-    $list = explode(' ',$name); //todo: use regex for calculated fields
-    $spec = $list[0];
-    $alias = at($list,1);
-    $parts = explode('.', $spec);
-    $schema = null;
-    $table = null;
-    switch(sizeof($parts)) {
-      case 0:
-      case 1: $column = $spec; break;
-      case 2: list($table, $column)= $parts; break;
-      case 3: list($schema, $table, $column)= $parts; break;
-    }
-    if (is_null($alias)) $alias = $column;
-    return array('spec'=>$spec, 'schema'=>$schema, 'table'=>$table, 'column'=>$column, 'alias'=>$alias);
-  }
 
-  function field_names($table)
-  {
-    return $this->read_column("show columns from $table");
+  function get_table_col_names($table) {
+    $names = at($this->table_col_names, $table);
+    if ($names) return $names;
+    return $this->table_col_names = $this->read_column("show columns from $table");
   }
 
 
@@ -338,7 +327,7 @@ class db extends module {
   {
     $names = func_get_args();
     array_splice($names, 0, 2, array_keys($options));
-    $fields = $this->field_names($table);
+    $fields = $this->get_table_col_names($table);
     $temp = $names;
     $names = $values = [];
     foreach($temp as $name) {
@@ -443,7 +432,7 @@ class db extends module {
   }
 
 
-  static function get_sql_fields($sql) {
+  static function get_query_col_names($sql) {
     $sql = preg_replace('/\s/', ' ', $sql);
     $matches = [];
     if (!preg_match('/^\s*select\s+(?:distinct\s+)?(.*)\s+from/im', $sql, $matches)) return [];
@@ -496,15 +485,80 @@ class db extends module {
     return $sql;
   }
 
+  function get_table_names($sql) {
+    $matches = [];
+    if (!preg_match_all('/\s(?:FROM|JOIN)\s+(\w+(?:\.\w+)?)\s+(?:AS\s+)?(\w+)?/im', $sql, $matches, PREG_SET_ORDER)) return [];
+
+    $names = [];
+    foreach($matches as $match) {
+      $table = $match[1];
+      $alias = at($match, 2, $table);
+      $names[$alias] = $table;
+    }
+
+    return $names;
+  }
+
+  function detect_table_alias($col_name) {
+    foreach($this->table_names as $alias=>$table) {
+      if (in_array($col_name, $this->get_table_col_names($table))) 
+        return $table;
+    }
+    return null;
+  }
+
+  function report_no_index($col_spec) {
+    $report_method = $this->index_check;
+    $message = "No index on search/filter $col_spec for current SQL query";
+    if ($report_method === 'throw')
+      throw new db_exception($message);
+    log::$report_method($message);
+    return false;
+  }
+
+  function validate_index($col_spec) {
+    [$schema, $table_alias, $col ] = explode_safe('.', $col_spec, 3);
+    if (!$table_alias) {  // only column name supplied
+      $col = $schema;
+      $table_alias = $this->detect_table_alias($col_name);
+      if (!$table_alias) 
+        return $this->report_no_index($col_spec);
+
+      $schema = $this->config['database']; // not quite sure of schema yet, we assume default schema for now
+    }
+    else if (!$col) { // only table name/alias and column name supplied
+      $col = $table_alias;
+      $table_alias = $schema;
+      $schema = $this->config['database'];
+    }
+
+    $table_name = at($this->table_names, $table_alias);
+    if (!$table_name)
+      return $this->report_no_index($col_spec);
+
+    $sql = "SELECT 1 FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = '$schema' 
+      AND TABLE_NAME = '$table_name' AND COLUMN_NAME = '$col'";
+
+    if (!$this->read_one_value($sql))
+      return $this->report_no_index($col_spec);
+
+    // todo: report error when column specified is not first in sequence on index 
+    // and previous columns are not part of the search criteria
+  }
+
   function update_custom_filters(&$sql) {
     $sql = preg_replace('/\s+/', ' ', $sql);
     $col_names = db::get_sql_fields($sql);
+
+    if ($this->index_check)
+      $this->table_names = $this->get_table_names($sql);
 
     // check term against any of the sql columns 
     $term = at($this->request, 'term', null);
     if ($term) {
       $terms = [];
       foreach($col_names as $name) {
+        if ($this->index_check) $this->check_index($name);
         $terms[] = "$name like '%". addslashes($term) . "%'";
       }
       db::append_dynamic_conditions($sql, $terms, "or");
@@ -513,11 +567,13 @@ class db extends module {
     // apply filter on each given request parameter in the form of
     // filtern@path
     $filters = [];
-    array_walk($this->request, function($value, $path) use ($col_names, &$filters) {
+    $self = $this;
+    array_walk($this->request, function($value, $path) use ($col_names, &$filters, $self) {
       $matches = [];
       if (!preg_match('/^filter(\d+)@(.+$)/', $path, $matches)) return;
       $index = $matches[1];
       $col_name = $col_names[$index];
+      if ($self->index_check) $self->validate_index($col_name);
       $path = $matches[2];
       $filter_sql = $this->get_filter_sql($col_name, $path, $value);
       if ($filter_sql) 
