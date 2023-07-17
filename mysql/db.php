@@ -548,8 +548,8 @@ class db extends module {
 
   function update_custom_filters(&$sql) {
     $sql = preg_replace('/\s+/', ' ', $sql);
-    $col_names = db::get_sql_fields($sql);
-
+    $col_names = db::get_query_col_names($sql);
+    
     if ($this->index_check)
       $this->table_names = $this->get_table_names($sql);
 
