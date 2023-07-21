@@ -348,7 +348,7 @@ class db extends module {
     list($key_name,$key_value) = db::name_value(array_shift($names), $options);
 
 
-    $fields = $this->field_names($table);
+    $fields = $this->get_table_col_names($table);
     $sets = array();
     $temp = $names;
     foreach($temp as $name) {
@@ -549,7 +549,7 @@ class db extends module {
   function update_custom_filters(&$sql) {
     $sql = preg_replace('/\s+/', ' ', $sql);
     $col_names = db::get_query_col_names($sql);
-    
+
     if ($this->index_check)
       $this->table_names = $this->get_table_names($sql);
 
@@ -559,7 +559,7 @@ class db extends module {
       $terms = [];
       foreach($col_names as $name) {
         if ($this->index_check) $this->check_index($name);
-        $terms[] = "$name like '%". addslashes($term) . "%'";
+        $terms[] = "$name like " . addslashes($term) . "%'";
       }
       db::append_dynamic_conditions($sql, $terms, "or");
     }
@@ -654,7 +654,7 @@ class db extends module {
 
     if (!sizeof($args)) return null;
 
-    $fields = $this->field_names($table);
+    $fields = $this->get_table_col_names($table);
     $sets = array();
     foreach($args as $arg) {
       list($arg,$value) = $this->get_sql_pair($arg);
@@ -670,7 +670,7 @@ class db extends module {
   }
 
   function detect_supplied_columns($table_name) {
-    $field_names = $this->field_names($table_name);
+    $field_names = $this->get_table_col_names($table_name);
     $page = $this->manager;
     return array_filter($field_names, function($col) use ($page) {
         return choose_from_arrays($col, $page->answer, $page->context, $page->request) !== null;
